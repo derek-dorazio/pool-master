@@ -1,0 +1,2216 @@
+{
+  "data": [
+    {
+      "id": 5056001,
+      "home_team_name": "New York Yankees",
+      "away_team_name": "Boston Red Sox",
+      "home_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 2,
+        "slug": "boston-red-sox",
+        "abbreviation": "BOS",
+        "display_name": "Boston Red Sox",
+        "short_display_name": "Sox",
+        "name": "Sox",
+        "location": "Boston Red",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-09-30T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056002,
+      "home_team_name": "New York Yankees",
+      "away_team_name": "Boston Red Sox",
+      "home_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 2,
+        "slug": "boston-red-sox",
+        "abbreviation": "BOS",
+        "display_name": "Boston Red Sox",
+        "short_display_name": "Sox",
+        "name": "Sox",
+        "location": "Boston Red",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-01T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056003,
+      "home_team_name": "Boston Red Sox",
+      "away_team_name": "New York Yankees",
+      "home_team": {
+        "id": 2,
+        "slug": "boston-red-sox",
+        "abbreviation": "BOS",
+        "display_name": "Boston Red Sox",
+        "short_display_name": "Sox",
+        "name": "Sox",
+        "location": "Boston Red",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-02T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056004,
+      "home_team_name": "Cleveland Guardians",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 6,
+        "slug": "cleveland-guardians",
+        "abbreviation": "CLE",
+        "display_name": "Cleveland Guardians",
+        "short_display_name": "Guardians",
+        "name": "Guardians",
+        "location": "Cleveland",
+        "league": "American",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-09-30T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056005,
+      "home_team_name": "Cleveland Guardians",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 6,
+        "slug": "cleveland-guardians",
+        "abbreviation": "CLE",
+        "display_name": "Cleveland Guardians",
+        "short_display_name": "Guardians",
+        "name": "Guardians",
+        "location": "Cleveland",
+        "league": "American",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-01T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056006,
+      "home_team_name": "Detroit Tigers",
+      "away_team_name": "Cleveland Guardians",
+      "home_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 6,
+        "slug": "cleveland-guardians",
+        "abbreviation": "CLE",
+        "display_name": "Cleveland Guardians",
+        "short_display_name": "Guardians",
+        "name": "Guardians",
+        "location": "Cleveland",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-02T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056007,
+      "home_team_name": "Chicago Cubs",
+      "away_team_name": "San Diego Padres",
+      "home_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 24,
+        "slug": "san-diego-padres",
+        "abbreviation": "SD",
+        "display_name": "San Diego Padres",
+        "short_display_name": "Padres",
+        "name": "Padres",
+        "location": "San Diego",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-09-30T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056008,
+      "home_team_name": "Chicago Cubs",
+      "away_team_name": "San Diego Padres",
+      "home_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 24,
+        "slug": "san-diego-padres",
+        "abbreviation": "SD",
+        "display_name": "San Diego Padres",
+        "short_display_name": "Padres",
+        "name": "Padres",
+        "location": "San Diego",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-01T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056009,
+      "home_team_name": "San Diego Padres",
+      "away_team_name": "Chicago Cubs",
+      "home_team": {
+        "id": 24,
+        "slug": "san-diego-padres",
+        "abbreviation": "SD",
+        "display_name": "San Diego Padres",
+        "short_display_name": "Padres",
+        "name": "Padres",
+        "location": "San Diego",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-02T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056010,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Cincinnati Reds",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 17,
+        "slug": "cincinnati-reds",
+        "abbreviation": "CIN",
+        "display_name": "Cincinnati Reds",
+        "short_display_name": "Reds",
+        "name": "Reds",
+        "location": "Cincinnati",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-09-30T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056011,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Cincinnati Reds",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 17,
+        "slug": "cincinnati-reds",
+        "abbreviation": "CIN",
+        "display_name": "Cincinnati Reds",
+        "short_display_name": "Reds",
+        "name": "Reds",
+        "location": "Cincinnati",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-01T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056012,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "New York Yankees",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-04T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056013,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "New York Yankees",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-05T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056014,
+      "home_team_name": "New York Yankees",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-06T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056015,
+      "home_team_name": "New York Yankees",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 10,
+        "slug": "new-york-yankees",
+        "abbreviation": "NYY",
+        "display_name": "New York Yankees",
+        "short_display_name": "Yankees",
+        "name": "Yankees",
+        "location": "New York",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-07T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056016,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-04T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056017,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-05T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056018,
+      "home_team_name": "Detroit Tigers",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-06T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056019,
+      "home_team_name": "Detroit Tigers",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-07T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056020,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Detroit Tigers",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 7,
+        "slug": "detroit-tigers",
+        "abbreviation": "DET",
+        "display_name": "Detroit Tigers",
+        "short_display_name": "Tigers",
+        "name": "Tigers",
+        "location": "Detroit",
+        "league": "American",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-08T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056021,
+      "home_team_name": "Milwaukee Brewers",
+      "away_team_name": "Chicago Cubs",
+      "home_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-04T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056022,
+      "home_team_name": "Milwaukee Brewers",
+      "away_team_name": "Chicago Cubs",
+      "home_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-05T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056023,
+      "home_team_name": "Chicago Cubs",
+      "away_team_name": "Milwaukee Brewers",
+      "home_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-06T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056024,
+      "home_team_name": "Chicago Cubs",
+      "away_team_name": "Milwaukee Brewers",
+      "home_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-07T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056025,
+      "home_team_name": "Milwaukee Brewers",
+      "away_team_name": "Chicago Cubs",
+      "home_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 16,
+        "slug": "chicago-cubs",
+        "abbreviation": "CHC",
+        "display_name": "Chicago Cubs",
+        "short_display_name": "Cubs",
+        "name": "Cubs",
+        "location": "Chicago",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-08T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056026,
+      "home_team_name": "Philadelphia Phillies",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 22,
+        "slug": "philadelphia-phillies",
+        "abbreviation": "PHI",
+        "display_name": "Philadelphia Phillies",
+        "short_display_name": "Phillies",
+        "name": "Phillies",
+        "location": "Philadelphia",
+        "league": "National",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-04T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056027,
+      "home_team_name": "Philadelphia Phillies",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 22,
+        "slug": "philadelphia-phillies",
+        "abbreviation": "PHI",
+        "display_name": "Philadelphia Phillies",
+        "short_display_name": "Phillies",
+        "name": "Phillies",
+        "location": "Philadelphia",
+        "league": "National",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-05T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056028,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Philadelphia Phillies",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 22,
+        "slug": "philadelphia-phillies",
+        "abbreviation": "PHI",
+        "display_name": "Philadelphia Phillies",
+        "short_display_name": "Phillies",
+        "name": "Phillies",
+        "location": "Philadelphia",
+        "league": "National",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-06T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056029,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Philadelphia Phillies",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 22,
+        "slug": "philadelphia-phillies",
+        "abbreviation": "PHI",
+        "display_name": "Philadelphia Phillies",
+        "short_display_name": "Phillies",
+        "name": "Phillies",
+        "location": "Philadelphia",
+        "league": "National",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-07T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056030,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-12T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056031,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-13T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056032,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-14T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056033,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-15T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056034,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-16T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056035,
+      "home_team_name": "Seattle Mariners",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-17T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056036,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Seattle Mariners",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 25,
+        "slug": "seattle-mariners",
+        "abbreviation": "SEA",
+        "display_name": "Seattle Mariners",
+        "short_display_name": "Mariners",
+        "name": "Mariners",
+        "location": "Seattle",
+        "league": "American",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-18T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056037,
+      "home_team_name": "Milwaukee Brewers",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-13T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056038,
+      "home_team_name": "Milwaukee Brewers",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-14T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056039,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Milwaukee Brewers",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-15T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056040,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Milwaukee Brewers",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 19,
+        "slug": "milwaukee-brewers",
+        "abbreviation": "MIL",
+        "display_name": "Milwaukee Brewers",
+        "short_display_name": "Brewers",
+        "name": "Brewers",
+        "location": "Milwaukee",
+        "league": "National",
+        "division": "Central"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-16T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056041,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-24T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056042,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-25T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056043,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-26T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056044,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-27T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056045,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-28T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056046,
+      "home_team_name": "Los Angeles Dodgers",
+      "away_team_name": "Toronto Blue Jays",
+      "home_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "away_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-29T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 9,
+        "runs": 5,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 7,
+        "runs": 3,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    },
+    {
+      "id": 5056047,
+      "home_team_name": "Toronto Blue Jays",
+      "away_team_name": "Los Angeles Dodgers",
+      "home_team": {
+        "id": 14,
+        "slug": "toronto-blue-jays",
+        "abbreviation": "TOR",
+        "display_name": "Toronto Blue Jays",
+        "short_display_name": "Jays",
+        "name": "Jays",
+        "location": "Toronto Blue",
+        "league": "American",
+        "division": "East"
+      },
+      "away_team": {
+        "id": 18,
+        "slug": "los-angeles-dodgers",
+        "abbreviation": "LAD",
+        "display_name": "Los Angeles Dodgers",
+        "short_display_name": "Dodgers",
+        "name": "Dodgers",
+        "location": "Los Angeles",
+        "league": "National",
+        "division": "West"
+      },
+      "season": 2025,
+      "postseason": true,
+      "season_type": "postseason",
+      "date": "2025-10-30T23:08:00.000Z",
+      "home_team_data": {
+        "hits": 6,
+        "runs": 2,
+        "errors": 0,
+        "inning_scores": []
+      },
+      "away_team_data": {
+        "hits": 10,
+        "runs": 6,
+        "errors": 1,
+        "inning_scores": []
+      },
+      "venue": "",
+      "period": 9,
+      "status": "STATUS_FINAL",
+      "status_state": "final"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
