@@ -319,6 +319,12 @@ administration area (root admin included), reusing the same shared components.
    bigger is a full page with its own route (`FormPage`). Other dialogs only
    confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.
+   A form page's parts are `FormSection`s, numbered in a filled circle only when
+   the form is a sequence (Create contest), each with its how-it-works behind
+   the title's (?). A setup form whose result members see shows it as they will,
+   in `FormPage`'s `preview` slot under the fields (`MemberPreview` for a
+   contest); a pick from a list is selectable `SectionRow`s with "N chosen" in
+   the `SectionCard` title's trailing slot, never a raw checkbox list.
 5. **One edit for all properties.** An entity's editable properties are edited
    together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
@@ -588,7 +594,8 @@ extra text answers:
 1. **No inline explainer text.** No sentence in a page, section or form body says
    what the page, section or setting is or how it works. It goes in a `HelpTip`
    (1 to 3 plain sentences, at most one link on), or it is removed. A section
-   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help`, and a
+   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help` (a form's part
+   as `FormSection`'s), and a
    page header in its `titleAside`.
 2. **Facts stay when they serve the page.** A fact line, a row's fact or a value
    that the page exists to show stays inline; secondary facts about one thing go in

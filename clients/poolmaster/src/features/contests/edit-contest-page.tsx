@@ -23,9 +23,10 @@ import {
   formatDateDisplay,
   FormField,
   FormPage,
-  Heading,
+  FormSection,
   Input,
   LoadingState,
+  Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
@@ -42,6 +43,8 @@ import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
+import { MemberPreview } from './member-preview';
+import { membersWillSeeRules } from './members-will-see';
 
 const editContestFormSchema = z.object({
   ...CONTEST_RULES_FORM_SHAPE,
@@ -53,13 +56,13 @@ type EditContestFormValues = z.infer<typeof editContestFormSchema>;
 function FixedValue({ children, label }: { children: string; label: string }) {
   return (
     <div className="space-y-2">
-      <div className="text-sm font-medium">{label}</div>
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-sm">
-        <span>{children}</span>
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+      <Text as="div" variant="strong">{label}</Text>
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2.5">
+        <Text size="sm">{children}</Text>
+        <Text className="inline-flex items-center gap-1.5" variant="caption">
           <Lock aria-hidden size={13} />
           Fixed
-        </span>
+        </Text>
       </div>
     </div>
   );
@@ -158,6 +161,11 @@ function EditContestForm({
     },
   });
 
+  const parsedPreview = parseRules(values);
+  const previewRules = parsedPreview.configuration
+    ? membersWillSeeRules(parsedPreview.configuration, null, { participant, roundName, salaryCap, tierCount })
+    : null;
+
   const errorMessage = rulesError
     ?? form.formState.errors.contestName?.message
     ?? (saveMutation.isError
@@ -170,7 +178,6 @@ function EditContestForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      help="The format is fixed once the contest exists. Events are added from the contest's Events section."
       errorMessage={errorMessage}
       isPending={saveMutation.isPending}
       onSubmit={(submitEvent) => {
@@ -185,24 +192,34 @@ function EditContestForm({
         })(submitEvent);
       }}
       pendingLabel="Saving..."
+      preview={previewRules === null ? null : (
+        <MemberPreview eventName={event.name} name={values.contestName} rules={previewRules} />
+      )}
       submitLabel="Save"
       submitTestId="edit-contest-save"
       testId="edit-contest-page"
       title="Edit contest"
     >
-      <FormField label="Contest name">
-        <Input
-          data-testid="contest-name"
-          type="text"
-          {...form.register('contestName')}
-        />
-      </FormField>
-      <div className="grid gap-4 md:grid-cols-2">
-        <FixedValue label={contest.sportEvents.length > 1 ? 'First event' : 'Event'}>{`${event.name} · ${formatDateDisplay(event.startDate, displayPreferences)}`}</FixedValue>
-        <FixedValue label="Format">{formatSelectionTypeName(contest.selectionType)}</FixedValue>
-      </div>
-      <div className="space-y-3">
-        <Heading level={3} variant="card" size="base" tone="inherit">Rules</Heading>
+      <FormSection testId="edit-contest-name" title="Name">
+        <FormField label="Contest name">
+          <Input
+            data-testid="contest-name"
+            type="text"
+            {...form.register('contestName')}
+          />
+        </FormField>
+      </FormSection>
+      <FormSection
+        help="The format is fixed once the contest exists. Events are added from the contest's Events section."
+        testId="edit-contest-event"
+        title="Event and format"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <FixedValue label={contest.sportEvents.length > 1 ? 'First event' : 'Event'}>{`${event.name} · ${formatDateDisplay(event.startDate, displayPreferences)}`}</FixedValue>
+          <FixedValue label="Format">{formatSelectionTypeName(contest.selectionType)}</FixedValue>
+        </div>
+      </FormSection>
+      <FormSection testId="edit-contest-rules" title="Rules">
         <ContestRulesFields
           bracketStartRounds={bracketStartRounds}
           onChange={(next: Partial<ContestRulesValues>) => {
@@ -216,7 +233,7 @@ function EditContestForm({
           tierCount={tierCount}
           values={values}
         />
-      </div>
+      </FormSection>
     </FormPage>
   );
 }

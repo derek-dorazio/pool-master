@@ -20,7 +20,7 @@ import { EventPage } from '@/features/event-pages/event-page';
 import { ClutchCardPage } from '@/features/event-pages/clutch-card-page';
 import { StartPage } from '@/features/event-pages/start-page';
 import { LeagueContestTypesPage } from '@/features/contest-types/league-contest-types-page';
-import { CreateContestPage } from '@/features/contests/create-contest-page';
+import { CreateContestPage } from '@/features/contests/create-contest/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ContestEntryLeagueRedirect } from '@/features/contests/contest-entry-league-redirect';
