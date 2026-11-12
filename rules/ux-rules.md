@@ -266,7 +266,8 @@ administration area (root admin included), reusing the same shared components.
    and tabs fit in about 100px on a desktop and 120px on a phone.
 4. **Small edits in a dialog, bigger ones on a page.** An edit of up to three
    simple fields with no sub-sections opens a dialog (`FormModal`) over the page
-   it edits, opened by a query parameter so Back and links still work; anything
+   it edits, opened by a query parameter so Back and links still work; a save
+   closes it and confirms with a toast, never a success box. Anything
    bigger is a full page with its own route (`FormPage`). Other dialogs only
    confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.

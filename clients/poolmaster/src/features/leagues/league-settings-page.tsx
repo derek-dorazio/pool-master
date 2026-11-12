@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
@@ -33,6 +33,8 @@ import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/p
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
+  isLeagueSettingsEditOpenedInApp,
+  LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE,
   LEAGUE_SETTINGS_EDIT_PARAM,
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
@@ -57,6 +59,8 @@ export function LeagueSettingsPage() {
   const sportLeaguesQuery = useSportLeaguesQuery();
   const { isRootAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // A commissioner is a membership role, and the membership carries the member (#1202).
   const commissionerNames = useMemo(() => {
@@ -79,6 +83,12 @@ export function LeagueSettingsPage() {
   // An inactive league is read-only, so its Edit never opens, even from an old link.
   const isEditingGeneral = !isInactive && searchParams.get(LEAGUE_SETTINGS_EDIT_PARAM) === 'general';
   const closeGeneralEdit = () => {
+    // Opened by the Edit link: step back over the entry it pushed. Opened by an old link or a
+    // reload: there is nothing behind it to return to, so drop the query in place.
+    if (isLeagueSettingsEditOpenedInApp(location.state)) {
+      void navigate(-1);
+      return;
+    }
     setSearchParams((params) => {
       params.delete(LEAGUE_SETTINGS_EDIT_PARAM);
       return params;
@@ -113,6 +123,7 @@ export function LeagueSettingsPage() {
             data-testid="league-settings-edit"
             isDisabled={isInactive}
             size="sm"
+            state={LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE}
             to={buildLeagueAdminEditPath(league.leagueCode)}
             variant="secondary"
           >

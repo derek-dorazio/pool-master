@@ -9,11 +9,13 @@ import {
   FormModal,
   IconPalette,
   Input,
+  MutationActionToast,
+  type MutationActionWorkflowResult,
   Text,
   Textarea,
+  useMutationActionWorkflow,
 } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { syncLeagueCaches } from './league-cache';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
@@ -28,29 +30,14 @@ type EditLeagueFormValues = z.infer<typeof editLeagueFormSchema>;
 
 /**
  * League settings › General's Edit: name, description and icon in one dialog with one Save
- * (rules/ux-rules.md §12 item 4: three simple fields, so a dialog, not a page). A save closes it.
+ * (rules/ux-rules.md §12 item 4: three simple fields, so a dialog, not a page). A save closes it
+ * and confirms with a toast.
  */
 export function EditLeagueDialog({ league, onClose, open }: { league: LeagueDto; onClose: () => void; open: boolean }) {
-  // Mounted only while open, so each opening starts from the league as it is, and a background
-  // refetch never overwrites what the commissioner has typed (rules/react-ui-rules.md §5 Server
-  // Data Form-State Hazard).
-  return open ? <EditLeagueForm league={league} onClose={onClose} /> : null;
-}
-
-function EditLeagueForm({ league, onClose }: { league: LeagueDto; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const form = useForm<EditLeagueFormValues>({
-    resolver: zodResolver(editLeagueFormSchema),
-    defaultValues: {
-      name: league.name,
-      description: league.description ?? '',
-      iconKey: league.iconKey,
-    },
-  });
-  const iconKey = form.watch('iconKey');
-
-  const saveMutation = useInvalidatingMutation({
-    mutationFn: async (values: EditLeagueFormValues) => {
+  // The save lives here, not in the form, so its toast outlives the dialog it closes.
+  const save = useMutationActionWorkflow({
+    action: async (values: EditLeagueFormValues) => {
       // One request carries all three fields, so a save never lands half-applied. An empty
       // description is left out, which the contract reads as clearing it.
       const response = await updateLeagueDetails({
@@ -68,23 +55,59 @@ function EditLeagueForm({ league, onClose }: { league: LeagueDto; onClose: () =>
     },
     onSuccess: (updated) => {
       syncLeagueCaches(queryClient, updated);
-      onClose();
     },
-    invalidates: [],
+    onClose,
+    successToast: { title: 'League saved', tone: 'success' },
   });
+  const cancel = () => {
+    // A failed save's reason belongs to that attempt; the next opening starts clean.
+    save.reset();
+    onClose();
+  };
+
+  return (
+    <>
+      {/* Mounted only while open, so each opening starts from the league as it is, and a
+          background refetch never overwrites what the commissioner has typed
+          (rules/react-ui-rules.md §5 Server Data Form-State Hazard). */}
+      {open ? <EditLeagueForm league={league} onCancel={cancel} save={save} /> : null}
+      <MutationActionToast onDismiss={save.dismissToast} toast={save.toast} />
+    </>
+  );
+}
+
+type LeagueSave = MutationActionWorkflowResult<LeagueDto, EditLeagueFormValues>;
+
+function EditLeagueForm({ league, onCancel, save }: { league: LeagueDto; onCancel: () => void; save: LeagueSave }) {
+  const form = useForm<EditLeagueFormValues>({
+    resolver: zodResolver(editLeagueFormSchema),
+    defaultValues: {
+      name: league.name,
+      description: league.description ?? '',
+      iconKey: league.iconKey,
+    },
+  });
+  const iconKey = form.watch('iconKey');
+  // Typing again clears a failed save's reason, but never a toast already showing.
+  const clearError = () => {
+    if (save.isError) {
+      save.reset();
+    }
+  };
 
   return (
     <FormModal
-      error={saveMutation.isError ? saveMutation.error : null}
+      error={save.error}
       errorFallback="We could not save the league."
-      isPending={saveMutation.isPending}
-      onCancel={onClose}
+      isPending={save.isPending}
+      onCancel={onCancel}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          onClose();
+          onCancel();
         }
       }}
-      onSave={() => void form.handleSubmit((values) => saveMutation.mutateAsync(values).catch(() => undefined))()}
+      // A failed save shows its reason in the dialog, so the rejection is already handled.
+      onSave={() => void form.handleSubmit((values) => save.run(values).catch(() => undefined))()}
       open
       pendingLabel="Saving..."
       saveLabel="Save league"
@@ -97,10 +120,10 @@ function EditLeagueForm({ league, onClose }: { league: LeagueDto; onClose: () =>
         <FormField error={form.formState.errors.name?.message} id="edit-league-name" label="League name">
           <Input
             data-testid="edit-league-name"
-            disabled={saveMutation.isPending}
+            disabled={save.isPending}
             id="edit-league-name"
             type="text"
-            {...form.register('name', { onChange: () => saveMutation.reset() })}
+            {...form.register('name', { onChange: clearError })}
           />
         </FormField>
 
@@ -112,9 +135,9 @@ function EditLeagueForm({ league, onClose }: { league: LeagueDto; onClose: () =>
         >
           <Textarea
             data-testid="edit-league-description"
-            disabled={saveMutation.isPending}
+            disabled={save.isPending}
             id="edit-league-description"
-            {...form.register('description', { onChange: () => saveMutation.reset() })}
+            {...form.register('description', { onChange: clearError })}
           />
         </FormField>
 
@@ -122,15 +145,12 @@ function EditLeagueForm({ league, onClose }: { league: LeagueDto; onClose: () =>
           <legend><Text variant="strong">Icon</Text></legend>
           <IconPalette
             aria-label="League icon"
-            disabled={saveMutation.isPending}
+            disabled={save.isPending}
+            iconTone="primary"
             onSelect={(key) => form.setValue('iconKey', key, { shouldDirty: true })}
             optionTestIdPrefix="league-icon"
             options={LEAGUE_ICON_OPTIONS}
-            renderOptionIcon={(icon) => (
-              <div className="flex justify-center text-primary">
-                <LeagueIcon iconKey={icon.key} size="md" />
-              </div>
-            )}
+            renderOptionIcon={(icon) => <LeagueIcon iconKey={icon.key} size="md" />}
             testId="league-icon-palette"
             value={iconKey}
           />

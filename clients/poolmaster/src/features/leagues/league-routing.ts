@@ -156,6 +156,17 @@ export function buildLeagueAdminInvitesPath(leagueCode: string) {
 /** League settings with General's Edit dialog open; the query keeps it open on reload and Back closes it. */
 export const LEAGUE_SETTINGS_EDIT_PARAM = 'edit';
 
+/**
+ * Router state the in-app Edit link carries, so closing the dialog steps Back over the entry the
+ * link pushed instead of leaving a second League settings entry in history. A dialog reached by
+ * an old link or a reload has no such entry to step over.
+ */
+export const LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE = { leagueSettingsEditOpenedInApp: true } as const;
+
+export function isLeagueSettingsEditOpenedInApp(state: unknown): boolean {
+  return typeof state === 'object' && state !== null && 'leagueSettingsEditOpenedInApp' in state;
+}
+
 export function buildLeagueAdminEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin?${LEAGUE_SETTINGS_EDIT_PARAM}=general`;
 }
