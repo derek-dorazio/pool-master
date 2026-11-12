@@ -283,16 +283,14 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.getByText('Provider returned no live-score updates for the requested event.'),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
-    await user.click(screen.getByRole('button', { name: 'Show provider payload' }));
+    // Each payload opens in place, under its own row: no second dialog.
+    await user.click(await screen.findByTestId('root-admin-sync-payload-provider-toggle'));
 
-    expect(await screen.findByText('Provider payload')).toBeInTheDocument();
     expect(screen.getByText(/"rawCaptured": true/)).toBeInTheDocument();
     expect(screen.getByText(/"contestants": \[\]/)).toBeInTheDocument();
   });
 
   it('says no rows changed and points to the raw provider payload when a sync changed nothing', async () => {
-    const user = userEvent.setup();
     listProviderSyncRunsMock.mockResolvedValue({
       data: {
         syncRuns: [
@@ -346,16 +344,15 @@ describe('RootAdminSyncDashboardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'Details' }));
 
     expect(
       await screen.findByText(
-        'No Primetime Commissioner rows changed in this sync. Use the Payloads tab to inspect the raw provider payload.',
+        'No Primetime Commissioner rows changed in this sync. Open the provider payload below to see what the provider sent.',
       ),
     ).toBeInTheDocument();
   });
 
-  it('pool-master-rop.68.1.4 renders normalized write rows and opens before-after JSON details', async () => {
+  it('pool-master-rop.68.1.4 lists each written row and opens its before-after JSON in place', async () => {
     const user = userEvent.setup();
     listProviderSyncRunsMock.mockResolvedValue({
       data: {
@@ -503,29 +500,25 @@ describe('RootAdminSyncDashboardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'Details' }));
 
-    expect(await screen.findByTestId('root-admin-sync-detail-grid')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-sync-detail-rows')).toBeInTheDocument();
     expect(screen.getByText('Jordan Example')).toBeInTheDocument();
     expect(screen.getByText('Casey Example')).toBeInTheDocument();
     expect(screen.getByText('UPDATED')).toBeInTheDocument();
     expect(screen.getByText('CREATED')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'View JSON details for Jordan Example' }));
+    await user.click(screen.getByRole('button', { name: 'JSON for UPDATED SportEventParticipant Jordan Example' }));
 
-    expect(await screen.findByText('UPDATED SportEventParticipant')).toBeInTheDocument();
     expect(screen.getByText(/"before": \{/)).toBeInTheDocument();
     expect(screen.getByText(/"oddsToWin": 18/)).toBeInTheDocument();
     expect(screen.getByText(/"after": \{/)).toBeInTheDocument();
     expect(screen.getByText(/"oddsToWin": 12/)).toBeInTheDocument();
 
-    await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByTestId('root-admin-sync-payload-request-toggle'));
 
-    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
-    await user.click(screen.getByRole('button', { name: 'Show request payload' }));
-
-    expect(await screen.findByText('Request payload')).toBeInTheDocument();
-    expect(screen.getByText(/"eventId": "masters-2026"/)).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('root-admin-sync-payload-request-details')).getByText(/"eventId": "masters-2026"/),
+    ).toBeInTheDocument();
   });
 
   it('loads a run\'s detailed diagnostics only when the run is opened, by its id', async () => {
@@ -545,7 +538,6 @@ describe('RootAdminSyncDashboardPage', () => {
   });
 
   it('says a run that has not started has no details yet, and offers no provider or job payload', async () => {
-    const user = userEvent.setup();
     listProviderSyncRunsMock.mockResolvedValue({
       data: {
         syncRuns: [
@@ -568,39 +560,32 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
-    await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
     expect(await screen.findByText('This run hasn\'t started yet, so it has no details.')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Payloads' }));
-    expect(screen.queryByRole('button', { name: 'Show provider payload' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Show job payload' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sync-payload-provider')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sync-payload-job')).not.toBeInTheDocument();
   });
 
   it('says details are kept for 30 days when a finished run has none left', async () => {
-    const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
-    await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
     expect(
       await screen.findByText('Detailed diagnostics are kept for 30 days. None are stored for this run.'),
     ).toBeInTheDocument();
   });
 
-  it('shows an error in the details tab when a run\'s details cannot be loaded', async () => {
-    const user = userEvent.setup();
+  it('shows the server\'s reason under Changes when a run\'s details cannot be loaded', async () => {
     getProviderSyncRunMock.mockResolvedValue({ error: { error: { code: 'SYNC_RUN_NOT_FOUND', message: 'No sync run sync-run-1' } } });
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
-    await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
     expect(await screen.findByText('No sync run sync-run-1')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-sync-detail-grid')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sync-detail-rows')).not.toBeInTheDocument();
   });
 });

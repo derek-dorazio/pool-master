@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProviderSyncRun, listProviderSyncRuns } from '@/lib/api';
@@ -15,16 +14,11 @@ import {
   ReadOnlyDetailModal,
   SectionCard,
   StatusBadge,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   buildCompactStatsSummary,
   buildPayloadSummary,
-  buildStatsSummary,
   formatRequestedFeed,
   getDetailsSection,
   getPayloadOutcome,
@@ -41,22 +35,11 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
+import { SyncRunDetail, type SyncRunEvidenceRow } from './sync-run-detail';
 import { useProvidersQuery } from './use-providers-query';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
-type SyncRunEvidenceRow = {
-  id: string;
-  disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
-  entityType: string;
-  identifier: string;
-  name: string;
-  providerId: string;
-  eventId: string;
-  participantId: string;
-  detailsPayload: unknown;
-};
 
-const evidenceColumnHelper = createColumnHelper<SyncRunEvidenceRow>();
 
 const WORKFLOW_STEPS = [
   'Participants',
@@ -155,10 +138,6 @@ function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined
 export function RootAdminSyncDashboardPage() {
   const displayPreferences = useDisplayPreferences();
   const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
-  const [jsonPayload, setJsonPayload] = useState<{
-    title: string;
-    payload: unknown;
-  } | null>(null);
   const providersQuery = useProvidersQuery();
 
   const syncRunsQuery = useQuery({
@@ -204,8 +183,6 @@ export function RootAdminSyncDashboardPage() {
       lastStartedAt: recentRuns.at(0)?.startedAt ?? recentRuns.at(0)?.createdAt ?? null,
     };
   }, [recentRuns]);
-  const payloadStats = payloadRun ? buildStatsSummary(payloadRun.payload) : [];
-  const payloadWarnings = payloadRun ? getPayloadWarnings(payloadRun.payload) : [];
   const evidenceRows = useMemo(() => buildRunEvidenceRows(runDetails), [runDetails]);
   const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
   const providerPayload = getDetailsSection(runDetails, 'providerPayload');
@@ -216,61 +193,8 @@ export function RootAdminSyncDashboardPage() {
       : 'Detailed diagnostics are kept for 30 days. None are stored for this run.'
     : [
         `No ${PRODUCT_NAME} rows changed in this sync.`,
-        providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
+        providerPayload?.rawCaptured === true ? 'Open the provider payload below to see what the provider sent.' : null,
       ].filter(Boolean).join(' ');
-
-  const evidenceColumns = useMemo(
-    () => [
-      evidenceColumnHelper.accessor('disposition', {
-        header: 'Operation',
-        cell: ({ getValue }) => (
-          <StatusBadge tone={getValue() === 'UPDATED' || getValue() === 'CREATED' || getValue() === 'DELETED' ? 'warning' : 'neutral'}>
-            {getValue()}
-          </StatusBadge>
-        ),
-      }),
-      evidenceColumnHelper.accessor('entityType', {
-        header: 'Entity',
-        cell: ({ getValue }) => <span className="text-foreground">{getValue()}</span>,
-      }),
-      evidenceColumnHelper.accessor('name', {
-        header: 'Name',
-        cell: ({ getValue }) => <span className="text-foreground">{getValue()}</span>,
-      }),
-      evidenceColumnHelper.accessor('identifier', {
-        header: 'Identifier',
-        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
-      }),
-      evidenceColumnHelper.accessor('participantId', {
-        header: 'Participant',
-        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
-      }),
-      evidenceColumnHelper.accessor('providerId', {
-        header: 'Provider',
-        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
-      }),
-      evidenceColumnHelper.display({
-        id: 'details',
-        header: 'Details',
-        cell: ({ row }) => (
-          <Button
-            aria-label={`View JSON details for ${row.original.name}`}
-            className="inline-flex items-center gap-2"
-            onClick={() => setJsonPayload({
-              title: `${row.original.disposition} ${row.original.entityType}`,
-              payload: row.original.detailsPayload,
-            })}
-            type="button"
-            variant="secondary"
-          >
-            <Search aria-hidden="true" className="size-4" />
-            View JSON
-          </Button>
-        ),
-      }),
-    ],
-    [],
-  );
 
   const syncHistoryColumns = useMemo(
     () => [
@@ -462,117 +386,20 @@ export function RootAdminSyncDashboardPage() {
         ) : null}
       </SectionCard>
       <ReadOnlyDetailModal
-        description="Provider sync run outcome, stats, warnings, and payload drill-downs."
+        description="What the run did, what it changed, and the payloads it captured."
         detailContent={
           payloadRun ? (
-            <Tabs defaultValue="summary">
-              <TabsList>
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="payloads">Payloads</TabsTrigger>
-              </TabsList>
-              <TabsContent className="mt-4 space-y-4" value="summary">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {buildPayloadSummary(payloadRun.payload)}
-                  </p>
-                  {payloadWarnings.length > 0 ? (
-                    <div className="mt-3 space-y-2">
-                      {payloadWarnings.map((warning, index) => (
-                        <Notice key={`${warning.code}-${index}`} tone="warning">
-                          {warning.message}
-                        </Notice>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                {payloadStats.length > 0 ? (
-                  <MetricGrid className="md:grid-cols-3">
-                    {payloadStats.map((stat) => (
-                      <MetricTile
-                        key={stat.key}
-                        label={stat.label}
-                        value={stat.value}
-                      />
-                    ))}
-                  </MetricGrid>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No sync stats were captured for this run.
-                  </p>
-                )}
-              </TabsContent>
-              <TabsContent className="mt-4" value="details">
-                {runDetailQuery.isError ? (
-                  <Notice className="mb-4" tone="danger">
-                    {extractErrorMessage(
-                      runDetailQuery.error,
-                      { fallback: 'We could not load this run\'s details right now.' },
-                    )}
-                  </Notice>
-                ) : null}
-                {runDetailQuery.isPending ? (
-                  <p className="text-sm text-muted-foreground">Loading details…</p>
-                ) : null}
-                {runDetailQuery.isSuccess ? (
-                  <DataGrid
-                    columns={evidenceColumns}
-                    data={evidenceRows}
-                    emptyMessage={evidenceEmptyMessage}
-                    filterTestIdPrefix="root-admin-sync-detail-filter"
-                    getRowId={(row) => row.id}
-                    rowTestId={(row) => `root-admin-sync-detail-row-${row.id}`}
-                    tableTestId="root-admin-sync-detail-grid"
-                  />
-                ) : null}
-              </TabsContent>
-              <TabsContent className="mt-4 space-y-3" value="payloads">
-                <div className="flex flex-wrap gap-3">
-                  {requestPayload ? (
-                    <Button
-                      onClick={() => setJsonPayload({
-                        title: 'Request payload',
-                        payload: requestPayload,
-                      })}
-                      type="button"
-                      variant="secondary"
-                    >
-                      Show request payload
-                    </Button>
-                  ) : null}
-                  {jobPayload ? (
-                    <Button
-                      onClick={() => setJsonPayload({
-                        title: 'Job payload',
-                        payload: jobPayload,
-                      })}
-                      type="button"
-                      variant="secondary"
-                    >
-                      Show job payload
-                    </Button>
-                  ) : null}
-                  {providerPayload ? (
-                    <Button
-                      onClick={() => setJsonPayload({
-                        title: 'Provider payload',
-                        payload: providerPayload,
-                      })}
-                      type="button"
-                      variant="secondary"
-                    >
-                      Show provider payload
-                    </Button>
-                  ) : null}
-                </div>
-                {!requestPayload && !jobPayload && !providerPayload ? (
-                  <p className="text-sm text-muted-foreground">
-                    No request, job, or provider payload was captured for this run.
-                  </p>
-                ) : null}
-              </TabsContent>
-            </Tabs>
+            <SyncRunDetail
+              detailQuery={runDetailQuery}
+              evidenceEmptyMessage={evidenceEmptyMessage}
+              evidenceRows={evidenceRows}
+              payloads={[
+                { key: 'request', label: 'Request payload', payload: requestPayload },
+                { key: 'job', label: 'Job payload', payload: jobPayload },
+                { key: 'provider', label: 'Provider payload', payload: providerPayload },
+              ]}
+              run={payloadRun}
+            />
           ) : null
         }
         details={
@@ -600,24 +427,6 @@ export function RootAdminSyncDashboardPage() {
         open={Boolean(payloadRun)}
         testId="root-admin-sync-payload-modal"
         title="Sync run details"
-      />
-      <ReadOnlyDetailModal
-        description="Raw JSON captured for this run."
-        detailContent={
-          <pre className="whitespace-pre-wrap break-words">
-            {formatJsonPayload(jsonPayload?.payload ?? null)}
-          </pre>
-        }
-        onCancel={() => setJsonPayload(null)}
-        copyText={jsonPayload ? formatJsonPayload(jsonPayload.payload) : undefined}
-        onOpenChange={(open) => {
-          if (!open) {
-            setJsonPayload(null);
-          }
-        }}
-        open={Boolean(jsonPayload)}
-        testId="root-admin-sync-json-payload-modal"
-        title={jsonPayload?.title ?? 'Sync payload'}
       />
     </section>
   );
