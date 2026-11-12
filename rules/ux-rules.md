@@ -372,7 +372,8 @@ administration area (root admin included), reusing the same shared components.
    reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
    ends with a toast. A row with no quick actions shows no "⋯". A manage list's
    views (Active / History, Pending / Expired), each with its count, sit with its
-   search in one header inside the grid's card (`DataGrid`'s `views`); the page's
+   search in one header inside the grid's card (`DataGrid`'s `views`), a filter of
+   one view (History's season) beside it (`views.end`); the page's
    main action stays in its `PageHeader`, and the views are never a second row of
    `PageTabs` under the area's own.
 8. **Summary first.** A landing page leads with what needs the member now (the

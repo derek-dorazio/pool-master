@@ -89,8 +89,9 @@ Use page templates when a page matches an existing workflow shape:
 - `PublicInviteJoinPage` for public invitation or join surfaces.
 
 `DataGrid` takes an optional `search` (one box matching every text column),
-`views` (a `ViewFilter` in the card's header, whose `status` stands in for the
-table while the chosen view loads or fails),
+`views` (a `ViewFilter` in the card's header, with `end` for a filter of the
+chosen view beside it, and a `status` that stands in for the table while the
+chosen view loads or fails),
 `pageSize` (rows per page, with a Previous/Next pager once there is more than
 one page) and `showColumnFilters` (on by default). A list that can grow to
 hundreds of rows uses `search` and `pageSize` (`rules/ux-rules.md` §12). A list
@@ -138,7 +139,8 @@ filter that changes every tab or the whole page, such as a season or a sport, is
 tab is scrolled fully into view on open and whenever it changes, and an edge fades
 only while more tabs sit beyond it. A page that reads one year at a time picks it
 with `YearPicker`, the `FilterPicker` labelled "Season": in `tabsEnd` on a page with
-tabs, else at the end of its section's title row. A
+tabs, beside the view it narrows when a `DataGrid`'s `views` hold it (`views.end`, as
+Contests' History), else at the end of its section's title row. A
 `SegmentedControl` is only for choosing a value inside a form or panel, never for
 switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
