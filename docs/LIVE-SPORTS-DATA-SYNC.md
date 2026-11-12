@@ -153,7 +153,7 @@ flowchart TD
 
 | Table | Key | Written |
 |---|---|---|
-| `participants` | `id` | Created only when no mapping and no unique same-name match exists. |
+| `participants` | `id` | Created only when no mapping and no unique same-name match exists. The same-name match reads through `participants_sport_id_name_idx` (#1537). |
 | `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when created, `HIGH` when linked by name. This mapping is how every later sync finds the participant. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
