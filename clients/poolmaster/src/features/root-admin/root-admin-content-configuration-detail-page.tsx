@@ -5,12 +5,12 @@ import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
 import { SelectionType, getSportDefinition, describeBracketRules, describePickEmRules  } from '@poolmaster/shared/domain';
 import {
-  AsyncPage,
   Button,
   Checkbox,
   FormEditorSection,
   FormField,
   PageHeader,
+  QueryState,
   Input,
   StatusBadge,
   Textarea,
@@ -105,14 +105,6 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
 
   useManageBreadcrumbOverride(templateKey || undefined, template?.name);
 
-  const pageState = templatesQuery.isError
-    ? 'error'
-    : templatesQuery.isLoading
-      ? 'loading'
-      : draft
-        ? 'ready'
-        : 'empty';
-
   // The size field and the tiers note name the template's sport's participants and events.
   const vocabulary = draft ? getSportDefinition(draft.sport).vocabulary : null;
   // A roster template edits its size and scores that count; a pick'em template has neither.
@@ -120,18 +112,20 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
   const sizeField = rosterConfiguration && vocabulary ? templateSizeFields(vocabulary)[rosterConfiguration.selectionType] : null;
 
   return (
-    <AsyncPage
-      emptyBody={`No contest template matched ${templateKey}.`}
-      emptyTitle="Template not found"
-      errorBody={extractErrorMessage(
-        templatesQuery.error,
-        { fallback: 'We could not load this contest template right now.' },
-      )}
-      loadingBody="Loading contest template..."
-      state={pageState}
-      testId="root-admin-content-configuration-detail-page"
-    >
-      {draft && vocabulary ? (
+    <section className="space-y-6" data-testid="root-admin-content-configuration-detail-page">
+      <QueryState
+        empty={`Template not found: no contest template matched ${templateKey}.`}
+        error={extractErrorMessage(
+          templatesQuery.error,
+          { fallback: 'We could not load this contest template right now.' },
+        )}
+        isEmpty={() => !draft}
+        loading="Loading contest template..."
+        query={templatesQuery}
+        size="tile"
+        testId="root-admin-content-configuration-detail"
+      >
+        {() => (draft && vocabulary ? (
         <>
           <PageHeader
             icon={<LayoutTemplate aria-hidden size={22} />}
@@ -273,7 +267,8 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
               ) : null}
           </FormEditorSection>
         </>
-      ) : null}
-    </AsyncPage>
+        ) : null)}
+      </QueryState>
+    </section>
   );
 }

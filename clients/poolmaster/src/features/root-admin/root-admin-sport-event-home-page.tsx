@@ -2,8 +2,8 @@ import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
-  AsyncPage,
   Notice,
+  QueryState,
   LinkButton,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -41,40 +41,37 @@ export function RootAdminSportEventHomePage() {
 
   const rounds = useMemo(() => roundsQuery.data ?? [], [roundsQuery.data]);
 
-  const pageState = tournamentQuery.isLoading
-    ? 'loading'
-    : tournamentQuery.isError
-      ? 'error'
-      : 'ready';
-
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: `We could not load this ${eventNoun} right now.`,
-      })}
-      loadingBody={`Loading ${eventNoun}...`}
-      state={pageState}
-      testId="root-admin-sport-event-home-page"
-    >
-      {tournament ? (
+    <section data-testid="root-admin-sport-event-home-page">
+      <QueryState
+        error={extractErrorMessage(tournamentQuery.error, {
+          fallback: `We could not load this ${eventNoun} right now.`,
+        })}
+        loading={`Loading ${eventNoun}...`}
+        query={tournamentQuery}
+        size="tile"
+        testId="root-admin-sport-event-home"
+      >
+        {(tournament) => (
         <div className="space-y-6">
           <SportEventHeader current="overview" tournament={tournament} />
 
           {tournament.syncScope !== SportEventSyncScope.NONE && tournament.loadedParticipantCount === 0 ? (
-            <Notice tone="info">
-              <p className="font-medium">The participant field is not loaded yet</p>
-              <p className="mt-1 text-sm">
-                {`This ${eventNoun} is linked to a provider event. Open Field and use Load Participant Field to pull the field in.`}
-              </p>
-              <div className="mt-3">
+            <Notice
+              action={(
                 <LinkButton
                   data-testid="root-admin-sport-event-home-load-field"
+                  size="sm"
                   to={`${buildSportEventPath(tournament.sport, eventId)}/field`}
                   variant="secondary"
                 >
                   Open Field
                 </LinkButton>
-              </div>
+              )}
+              data-testid="root-admin-sport-event-home-field-missing"
+              tone="info"
+            >
+              Field not loaded
             </Notice>
           ) : null}
 
@@ -89,7 +86,8 @@ export function RootAdminSportEventHomePage() {
 
           <SportEventScoreSourceCard eventId={eventId} tournament={tournament} />
         </div>
-      ) : null}
-    </AsyncPage>
+        )}
+      </QueryState>
+    </section>
   );
 }

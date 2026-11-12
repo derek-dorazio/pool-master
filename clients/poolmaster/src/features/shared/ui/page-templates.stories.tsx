@@ -1,34 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
 import { FormField, Input } from "./form-field";
-import { AsyncPage, EntityDetailPage, FormEditorSection, PublicInviteJoinPage } from "./page-templates";
+import { FormEditorSection, PublicInviteJoinPage } from "./page-templates";
 import { Text } from "./text";
 
 const meta = {
-  title: "Page/AsyncPage",
-  component: AsyncPage,
-  args: { children: <Text>Page content</Text>, header: { title: "Members" } },
-} satisfies Meta<typeof AsyncPage>;
+  title: "Page/Templates",
+  component: FormEditorSection,
+} satisfies Meta<typeof FormEditorSection>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Ready: Story = {};
-export const Loading: Story = { args: { state: "loading" } };
-export const Failed: Story = { args: { state: "error", error: new Error("The server did not answer.") } };
-export const Empty: Story = { args: { state: "empty", emptyTitle: "No members yet" } };
-
-
-/** Being retired (#1562). */
-export const RetiringEntityDetailPage: StoryObj = {
-  render: () => (
-    <EntityDetailPage
-      actions={<Button variant="secondary">Reset password</Button>}
-      details={<Text>Sam Rivera · sam@example.com</Text>}
-      header={{ title: "Sam Rivera" }}
-    />
-  ),
-};
 
 export const EditorSection: StoryObj = {
   render: () => (

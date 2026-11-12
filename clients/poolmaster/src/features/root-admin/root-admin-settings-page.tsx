@@ -2,11 +2,12 @@ import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listSettingsGroupHistory, type SettingsGroup } from '@/lib/api';
 import {
-  AsyncPage,
   Button,
   DateDisplay,
   HelpTip,
   LinkButton,
+  PageHeader,
+  QueryState,
   SectionCard,
   SettingsRow,
   SettingsRows,
@@ -40,29 +41,30 @@ import {
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
 
-  const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
-
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load settings right now.' })}
-      loadingBody="Loading settings..."
-      header={{
-        testId: 'root-admin-settings-header',
-        title: 'Settings',
-        titleAside: (
+    <section className="space-y-6" data-testid="root-admin-settings-page">
+      <PageHeader
+        testId="root-admin-settings-header"
+        title="Settings"
+        titleAside={(
           <HelpTip label="About settings" testId="root-admin-settings-help">
             How the app behaves, changeable without a deploy. A saved change reaches every server
             within 30 seconds.
           </HelpTip>
-        ),
-      }}
-      state={pageState}
-      testId="root-admin-settings-page"
-    >
-      {settingsQuery.data?.map((group) => (
-        <SettingsGroupSection group={group} key={group.key} />
-      ))}
-    </AsyncPage>
+        )}
+      />
+      <QueryState
+        error={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load settings right now.' })}
+        loading="Loading settings..."
+        query={settingsQuery}
+        size="tile"
+        testId="root-admin-settings"
+      >
+        {(groups) => groups.map((group) => (
+          <SettingsGroupSection group={group} key={group.key} />
+        ))}
+      </QueryState>
+    </section>
   );
 }
 

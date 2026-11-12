@@ -43,8 +43,7 @@ The shared UI layer is split into three levels:
    which carries its own Show password eye button; never hand-type
    `type="password"` on an `Input`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
-   as `EntityDetailPage`, `FormModal`, and
-   `ConfirmDialog`.
+   as `FormModal`, `ConfirmDialog` and `FormEditorSection`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
@@ -82,8 +81,8 @@ Use page templates when a page matches an existing workflow shape:
   expired link, or the done or confirm step after a link from an email. A
   symbol (`kind`), a title, one plain line and one primary action, centred in
   the 8px card; a failed try's `Notice` goes in as children above the action.
-- `EntityDetailPage` for profile/entity details with a summary above, details
-  on the left and less frequent actions on the right.
+- A page that waits on a read is no template either: its `PageHeader` stays put
+  and `QueryState` (`size="tile"`) stands in for the body while it loads or fails.
 - `FormEditorSection` for repeated editable configuration sections with
   consistent title, errors, and footer actions.
 - `PublicInviteJoinPage` for public invitation or join surfaces.

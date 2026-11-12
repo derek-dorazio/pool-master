@@ -1,179 +1,7 @@
 import type { ReactNode } from "react";
-import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "./class-names";
-import { DetailsActionsLayout } from "./details-actions-layout";
-import { PageHeader, type PageHeaderProps } from "./page-header";
-import { EmptyState, ErrorState, LoadingState } from "./state";
-import { LOADING_TEXT } from "./state-copy";
-import { Tile } from "./tile";
 import { Heading } from "./heading";
-
-type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
-
-// #84 — one id for every template page's load-failure state, so a browser spec can tell a
-// page that rendered its landmark around an error from one that loaded.
-const SHARED_ERROR_STATE_TEST_ID = "shared-error-state";
-
-// The permission state is its own id, not the load-failure one: "you may not see this" and
-// "this did not load" fail a spec for different reasons and should not report as one.
-const SHARED_FORBIDDEN_STATE_TEST_ID = "shared-forbidden-state";
-
-type AsyncPageStateProps = {
-  emptyAction?: ReactNode;
-  emptyBody?: ReactNode;
-  emptyTitle?: ReactNode;
-  errorBody?: ReactNode;
-  error?: Error | null;
-  errorAction?: ReactNode;
-  errorTitle?: ReactNode;
-  loadingBody?: ReactNode;
-  onRetry?: () => void;
-  permissionBody?: ReactNode;
-  permissionTitle?: ReactNode;
-  retryLabel?: string;
-  state?: TemplateState;
-};
-
-function renderAsyncState({
-  emptyAction,
-  emptyBody,
-  emptyTitle,
-  error,
-  errorAction,
-  errorBody,
-  errorTitle,
-  loadingBody,
-  onRetry,
-  permissionBody,
-  permissionTitle,
-  retryLabel,
-  state = "ready",
-}: AsyncPageStateProps) {
-  if (state === "loading") {
-    return <LoadingState body={loadingBody ?? LOADING_TEXT} />;
-  }
-
-  if (state === "error") {
-    return (
-      <ErrorState
-        action={errorAction}
-        body={
-          error
-            ? extractErrorMessage(error, {
-                fallback: typeof errorBody === "string" ? errorBody : "We could not load this information right now.",
-              })
-            : errorBody ?? "We could not load this information right now."
-        }
-        onRetry={onRetry}
-        retryLabel={retryLabel}
-        testId={SHARED_ERROR_STATE_TEST_ID}
-        title={errorTitle}
-      />
-    );
-  }
-
-  if (state === "empty") {
-    return (
-      <EmptyState
-        action={emptyAction}
-        body={emptyBody ?? "There is nothing to show yet."}
-        title={emptyTitle}
-      />
-    );
-  }
-
-  if (state === "forbidden") {
-    return (
-      <ErrorState
-        body={permissionBody ?? "You do not have access to this page."}
-        testId={SHARED_FORBIDDEN_STATE_TEST_ID}
-        title={permissionTitle ?? "Access unavailable"}
-      />
-    );
-  }
-
-  return null;
-}
-
-type TemplatePageShellProps = AsyncPageStateProps & {
-  children: ReactNode;
-  className?: string;
-  contentClassName?: string;
-  header?: PageHeaderProps;
-  testId?: string;
-};
-
-function TemplatePageShell({
-  children,
-  className,
-  contentClassName,
-  header,
-  testId,
-  ...stateProps
-}: TemplatePageShellProps) {
-  const stateContent = renderAsyncState(stateProps);
-
-  return (
-    <section className={cn("space-y-6", className)} data-testid={testId}>
-      {header ? <PageHeader {...header} /> : null}
-      <div className={cn("space-y-6", contentClassName)}>
-        {stateContent ?? children}
-      </div>
-    </section>
-  );
-}
-
-export type AsyncPageProps = TemplatePageShellProps;
-
-export function AsyncPage(props: AsyncPageProps) {
-  return <TemplatePageShell {...props} />;
-}
-
-export type EntityDetailPageProps = AsyncPageStateProps & {
-  actions: ReactNode;
-  actionsClassName?: string;
-  actionsListClassName?: string;
-  actionsTestId?: string;
-  actionsTitle?: ReactNode;
-  className?: string;
-  details: ReactNode;
-  detailsClassName?: string;
-  header?: PageHeaderProps;
-  layoutClassName?: string;
-  summary?: ReactNode;
-  summaryClassName?: string;
-  testId?: string;
-};
-
-export function EntityDetailPage({
-  actions,
-  actionsClassName,
-  actionsListClassName,
-  actionsTestId,
-  actionsTitle,
-  details,
-  detailsClassName,
-  layoutClassName,
-  summary,
-  summaryClassName,
-  ...shellProps
-}: EntityDetailPageProps) {
-  return (
-    <TemplatePageShell {...shellProps}>
-      {summary ? <div className={summaryClassName}>{summary}</div> : null}
-      <DetailsActionsLayout
-        actions={actions}
-        actionsClassName={actionsClassName}
-        actionsListClassName={actionsListClassName}
-        actionsTestId={actionsTestId}
-        actionsTitle={actionsTitle}
-        className={layoutClassName}
-        details={details}
-        detailsClassName={detailsClassName}
-      />
-    </TemplatePageShell>
-  );
-}
+import { Tile } from "./tile";
 
 export type FormEditorSectionProps = {
   actions?: ReactNode;
@@ -223,7 +51,7 @@ export function FormEditorSection({
   );
 }
 
-export type PublicInviteJoinPageProps = AsyncPageStateProps & {
+export type PublicInviteJoinPageProps = {
   children: ReactNode;
   className?: string;
   context?: ReactNode;
@@ -241,10 +69,7 @@ export function PublicInviteJoinPage({
   secondaryAction,
   testId,
   title,
-  ...stateProps
 }: PublicInviteJoinPageProps) {
-  const stateContent = renderAsyncState(stateProps);
-
   return (
     <main
       className={cn("mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10", className)}
@@ -255,7 +80,7 @@ export function PublicInviteJoinPage({
           {title}
         </Heading>
         {context ? <div className="mt-5">{context}</div> : null}
-        <div className="mt-6">{stateContent ?? children}</div>
+        <div className="mt-6">{children}</div>
         {primaryAction || secondaryAction ? (
           <div className="mt-6 flex flex-wrap gap-3">
             {primaryAction}

@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   Notice,
-  AsyncPage,
   Button,
   Checkbox,
   FormEditorSection,
   FormField,
   HelpTip,
   Input,
+  PageHeader,
+  QueryState,
   SectionCard,
   Tile,
 } from '@/features/shared/ui';
@@ -99,18 +100,10 @@ export function RootAdminIngestionSchedulePage() {
     });
   }
 
-  const pageState = ingestionConfigQuery.isError
-    ? 'error'
-    : ingestionConfigQuery.isLoading || !draft
-      ? 'loading'
-      : 'ready';
-
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
-      loadingBody="Loading ingestion schedule configuration..."
-      header={{
-        actions: (
+    <section className="space-y-6" data-testid="root-admin-ingestion-schedule-page">
+      <PageHeader
+        actions={(
         <Button
           disabled={resetIngestionConfigMutation.isPending}
           onClick={() => {
@@ -124,22 +117,18 @@ export function RootAdminIngestionSchedulePage() {
             ? 'Resetting...'
             : 'Reset ingestion schedule'}
         </Button>
-        ),
-        testId: 'root-admin-ingestion-schedule-header',
-        title: 'Global Ingestion Schedule',
-        titleAside: (
+        )}
+        testId="root-admin-ingestion-schedule-header"
+        title="Global Ingestion Schedule"
+        titleAside={(
           <HelpTip label="About the ingestion schedule" testId="root-admin-ingestion-schedule-help">
-        Control the default cadence and lifecycle windows that scheduled ingestion uses across
-        sports before per-sport overrides apply.
+            Control the default cadence and lifecycle windows that scheduled ingestion uses across
+            sports before per-sport overrides apply.
           </HelpTip>
-        ),
-      }}
-      state={pageState}
-      testId="root-admin-ingestion-schedule-page"
-    >
+        )}
+      />
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
         <Notice
-          className="mb-4"
           data-testid="root-admin-ingestion-page-error"
           tone="danger"
         >
@@ -152,7 +141,18 @@ export function RootAdminIngestionSchedulePage() {
               })}
         </Notice>
       ) : null}
-      {draft ? (
+      <QueryState
+        error={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
+        loading="Loading ingestion schedule configuration..."
+        query={{
+          data: draft ?? undefined,
+          isError: ingestionConfigQuery.isError,
+          refetch: ingestionConfigQuery.refetch,
+        }}
+        size="tile"
+        testId="root-admin-ingestion-schedule"
+      >
+        {(loadedDraft) => (
         <FormEditorSection
           footer={(
             <Button
@@ -160,7 +160,7 @@ export function RootAdminIngestionSchedulePage() {
               disabled={ingestionConfigMutation.isPending}
               onClick={() => {
                 resetIngestionConfigMutation.reset();
-                ingestionConfigMutation.mutate(draft);
+                ingestionConfigMutation.mutate(loadedDraft);
               }}
               type="button"
             >
@@ -189,7 +189,7 @@ export function RootAdminIngestionSchedulePage() {
                         <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">
                           <span>Enabled</span>
                           <Checkbox
-                            checked={draft[field.key].enabled}
+                            checked={loadedDraft[field.key].enabled}
                             data-testid={`root-admin-ingestion-page-${field.key}-enabled`}
                             onChange={(event) =>
                               updateDraftValue(
@@ -211,7 +211,7 @@ export function RootAdminIngestionSchedulePage() {
                             event.target.value,
                           )}
                         type="number"
-                        value={draft[field.key][field.intervalKey] ?? ''}
+                        value={loadedDraft[field.key][field.intervalKey] ?? ''}
                       />
                     </FormField>
                     {extraKey ? (
@@ -225,7 +225,7 @@ export function RootAdminIngestionSchedulePage() {
                               event.target.value,
                             )}
                           type="number"
-                          value={draft[field.key][extraKey] ?? ''}
+                          value={loadedDraft[field.key][extraKey] ?? ''}
                         />
                       </FormField>
                     ) : (
@@ -237,7 +237,8 @@ export function RootAdminIngestionSchedulePage() {
             })}
           </div>
         </FormEditorSection>
-      ) : null}
-    </AsyncPage>
+        )}
+      </QueryState>
+    </section>
   );
 }

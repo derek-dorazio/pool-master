@@ -7,12 +7,12 @@ import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { updateEvent } from '@/lib/api';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 import {
-  AsyncPage,
   DateTimeField,
   dateTimeLocalValueToIso,
   FormField,
   FormPage,
   Input,
+  QueryState,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -186,14 +186,16 @@ export function RootAdminSportEventEditPage() {
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(tournamentQuery.error, {
+    <QueryState
+      error={extractErrorMessage(tournamentQuery.error, {
         fallback: 'We could not load this event right now.',
       })}
-      loadingBody="Loading event..."
-      state={tournamentQuery.isLoading ? 'loading' : tournamentQuery.isError ? 'error' : 'ready'}
+      loading="Loading event..."
+      query={tournamentQuery}
+      size="tile"
+      testId="root-admin-sport-event-edit"
     >
-      {tournament ? <SportEventEditForm tournament={tournament} /> : null}
-    </AsyncPage>
+      {(loaded) => <SportEventEditForm tournament={loaded} />}
+    </QueryState>
   );
 }

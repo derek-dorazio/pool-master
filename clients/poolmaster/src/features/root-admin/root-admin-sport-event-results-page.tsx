@@ -1,5 +1,5 @@
 import { useParams } from 'react-router';
-import { AsyncPage } from '@/features/shared/ui';
+import { QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
@@ -23,20 +23,23 @@ export function RootAdminSportEventResultsPage() {
   useManageBreadcrumbOverride('results', familyUi?.resultsLabel);
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(eventQuery.error, {
-        fallback: `We could not load this ${definition.vocabulary.event.one} right now.`,
-      })}
-      loadingBody="Loading results..."
-      state={eventQuery.isLoading ? 'loading' : eventQuery.isError ? 'error' : 'ready'}
-      testId="root-admin-sport-event-results-page"
-    >
-      {event && familyUi ? (
-        <div className="space-y-6">
-          <SportEventHeader current="results" tournament={event} />
-          <familyUi.ResultsPanel event={event} />
-        </div>
-      ) : null}
-    </AsyncPage>
+    <section data-testid="root-admin-sport-event-results-page">
+      <QueryState
+        error={extractErrorMessage(eventQuery.error, {
+          fallback: `We could not load this ${definition.vocabulary.event.one} right now.`,
+        })}
+        loading="Loading results..."
+        query={eventQuery}
+        size="tile"
+        testId="root-admin-sport-event-results"
+      >
+        {(loaded) => (familyUi ? (
+          <div className="space-y-6">
+            <SportEventHeader current="results" tournament={loaded} />
+            <familyUi.ResultsPanel event={loaded} />
+          </div>
+        ) : null)}
+      </QueryState>
+    </section>
   );
 }

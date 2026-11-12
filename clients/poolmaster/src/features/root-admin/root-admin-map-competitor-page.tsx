@@ -8,7 +8,7 @@ import {
   listSports,
   type UnmappedProviderParticipantDto,
 } from '@/lib/api';
-import { AsyncPage, FormField, FormPage, Input, Select } from '@/features/shared/ui';
+import { FormField, FormPage, Input, QueryState, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -147,25 +147,20 @@ export function RootAdminMapCompetitorPage() {
   const providerId = searchParams.get('provider') ?? '';
   const externalId = searchParams.get('competitor') ?? '';
   const unmappedQuery = useUnmappedCompetitorQuery(providerId, externalId);
-  const competitor = unmappedQuery.data ?? null;
 
   return (
-    <AsyncPage
-      emptyBody="This competitor is already mapped, or the provider no longer reports them."
-      emptyTitle="Nothing to map"
-      errorBody={extractErrorMessage(unmappedQuery.error, {
+    <QueryState
+      empty="Nothing to map: this competitor is already mapped, or the provider no longer reports them."
+      error={extractErrorMessage(unmappedQuery.error, {
         fallback: 'We could not load unmapped competitors right now.',
       })}
-      loadingBody="Loading competitor..."
-      state={unmappedQuery.isLoading
-        ? 'loading'
-        : unmappedQuery.isError
-          ? 'error'
-          : competitor
-            ? 'ready'
-            : 'empty'}
+      isEmpty={(competitor) => competitor === null}
+      loading="Loading competitor..."
+      query={unmappedQuery}
+      size="tile"
+      testId="root-admin-map-competitor"
     >
-      {competitor ? <MapCompetitorForm competitor={competitor} /> : null}
-    </AsyncPage>
+      {(competitor) => (competitor ? <MapCompetitorForm competitor={competitor} /> : null)}
+    </QueryState>
   );
 }
