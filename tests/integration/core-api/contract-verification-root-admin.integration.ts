@@ -314,7 +314,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   const registry = new ProviderRegistry();
   if (provider) registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
-    onEventDetail: async () => emptySyncWriteDiagnostics(),
+    onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
