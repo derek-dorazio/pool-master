@@ -141,6 +141,15 @@ describe('ci-changed-areas: rule-scanner baselines', () => {
       { code: true, service: false, client: true });
   });
 
+  it('runs only the client suites when a root admin sweep shrinks the query-states baseline', () => {
+    const r = classifyChanges([
+      'clients/poolmaster/src/features/root-admin/root-admin-events-page.tsx',
+      'eslint-rules/query-states-baseline.mjs',
+    ]);
+    assert.deepEqual({ code: r.code, service: r.service, client: r.client },
+      { code: true, service: false, client: true });
+  });
+
   it('still runs everything when the scanner script beside a baseline changes', () => {
     const r = classifyChanges(['scripts/text-style-baseline.json', 'scripts/check-text-styles.mjs']);
     assert.deepEqual({ code: r.code, service: r.service, client: r.client },
@@ -175,6 +184,20 @@ describe('ci-changed-areas: UI batch pull requests', () => {
       'clients/poolmaster/src/features/contests/pick-em-games.tsx',
       'scripts/card-corner-baseline.json',
     ]), []);
+  });
+
+  it('accepts a sweep that moves a root admin page onto QueryState and drops it from the query-states baseline', () => {
+    assert.deepEqual(uiBatchViolations([
+      'clients/poolmaster/src/features/root-admin/root-admin-events-page.tsx',
+      'eslint-rules/query-states-baseline.mjs',
+    ]), []);
+  });
+
+  it('still refuses a change to the lint rule itself beside its baseline', () => {
+    assert.deepEqual(uiBatchViolations([
+      'eslint-rules/query-states-baseline.mjs',
+      'eslint-rules/no-hand-written-query-states.mjs',
+    ]), ['eslint-rules/no-hand-written-query-states.mjs']);
   });
 
   it('refuses shared, service, test, script and dependency changes (the web app\'s package.json too), which need the full suites', () => {
