@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Toaster } from '@/features/shared/ui';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
 import {
@@ -18,21 +19,25 @@ import { ManageContestsPage } from './manage-contests-page';
 import type { ContestDto, SportEventDto } from '@/lib/api';
 import { buildContest, buildSportEvent } from './test/contest-admin-fixtures';
 
+const deleteContestMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listContestFinishedYearsMock = vi.fn();
 const listContestsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
+const openContestMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
+  deleteContest: deleteContestMock,
   getEvent: getEventMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContestFinishedYears: listContestFinishedYearsMock,
   listContests: listContestsMock,
   listLeagueSquads: listLeagueSquadsMock,
+  openContest: openContestMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -48,12 +53,15 @@ function renderManageContestsPage() {
               <Route element={<CommissionerRouteGuard />} path="/league/:leagueCode/admin">
                 <Route element={<CommissionerToolsLayout />}>
                   <Route element={<ManageContestsPage />} path="contests" />
+                  <Route element={<div data-testid="manage-contest-destination" />} path="contests/:contestId" />
                 </Route>
               </Route>
             </Route>
             <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
             <Route element={<div data-testid="welcome-destination" />} path="/welcome" />
+            <Route element={<div data-testid="member-contest-destination" />} path="/league/:leagueCode/contests/:contestId/*" />
           </Routes>
+          <Toaster />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,
@@ -109,12 +117,12 @@ function rowOrder() {
 
 describe('ManageContestsPage', () => {
   afterEach(() => {
-    for (const mock of [getCurrentUserMock, getEventMock, getLeagueByCodeMock, listContestFinishedYearsMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock]) {
+    for (const mock of [deleteContestMock, openContestMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock, listContestFinishedYearsMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock]) {
       mock.mockReset();
     }
   });
 
-  it('shows each contest with its format, readable status, event and entries, and one action naming the next step', async () => {
+  it('shows each contest with its format, readable status, event and entries, and no per-row Manage button', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [
@@ -127,19 +135,21 @@ describe('ManageContestsPage', () => {
 
     const notOpen = within(await screen.findByTestId('manage-contests-row-contest-1'));
     expect(notOpen.getByText('Tiered')).toBeInTheDocument();
-    expect(notOpen.getByText('Draft')).toBeInTheDocument();
+    expect(notOpen.getByText('Set up')).toBeInTheDocument();
     expect(await notOpen.findByText('The Masters')).toBeInTheDocument();
     expect(notOpen.getByText(/^Starts/)).toBeInTheDocument();
     expect(notOpen.getByText('Not open')).toBeInTheDocument();
-    expect(notOpen.getByRole('link', { name: 'Finish setup' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1');
+    expect(notOpen.getByRole('link', { name: /Masters One-and-Done/ })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1');
+    expect(notOpen.queryByRole('link', { name: 'Finish setup' })).not.toBeInTheDocument();
 
     const open = within(screen.getByTestId('manage-contests-row-contest-2'));
-    expect(open.getByText('Open for entries')).toBeInTheDocument();
+    expect(open.getByText('Open')).toBeInTheDocument();
     expect(await open.findByText(/^Entries close/)).toBeInTheDocument();
     // The league context counts the active teams, so no team list is read.
     expect(await open.findByText('of 2 members')).toBeInTheDocument();
     expect(listLeagueSquadsMock).not.toHaveBeenCalled();
-    expect(open.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-2');
+    expect(open.getByRole('link', { name: /Heritage Tiers/ })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-2');
+    expect(open.queryByRole('link', { name: 'Manage' })).not.toBeInTheDocument();
     expect(screen.queryByText(/TIERED|STROKE_PLAY/)).not.toBeInTheDocument();
   });
 
@@ -276,9 +286,86 @@ describe('ManageContestsPage', () => {
     renderManageContestsPage();
 
     await screen.findByTestId('manage-contests-row-contest-0');
-    expect(screen.getAllByText('Finish setup')).toHaveLength(25);
+    expect(screen.getAllByRole('button', { name: /^Actions for Contest/ })).toHaveLength(25);
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getAllByText('Finish setup')).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: /^Actions for Contest/ })).toHaveLength(5);
+  });
+
+  it('opens a contest\'s Manage page from a click anywhere on its row', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
+    }));
+
+    renderManageContestsPage();
+    await userEvent.click(within(await screen.findByTestId('manage-contests-row-contest-1')).getByText('Not open'));
+
+    expect(await screen.findByTestId('manage-contest-destination')).toBeInTheDocument();
+  });
+
+  it('opens a contest in setup to the league from its "⋯" once the commissioner confirms, and says so', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
+    }));
+    openContestMock.mockResolvedValue(apiSuccess({ contest: buildContest({ id: 'contest-1', status: 'OPEN' }) }));
+
+    renderManageContestsPage();
+    await userEvent.click(await screen.findByRole('button', { name: 'Actions for Masters One-and-Done' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Open to league' }));
+    expect(await screen.findByRole('dialog', { name: 'Open this contest to the league?' })).toBeInTheDocument();
+    expect(openContestMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId('contest-open-confirm'));
+
+    await waitFor(() => expect(openContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', contestId: 'contest-1' } })));
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Masters One-and-Done is open to the league');
+    expect(screen.queryByTestId('manage-contest-destination')).not.toBeInTheDocument();
+  });
+
+  it('deletes a contest in setup from its "⋯" once the commissioner confirms, says so, and stays on the list', async () => {
+    primeCommonMocks();
+    listContestsMock
+      .mockResolvedValueOnce(apiSuccess({
+        contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
+      }))
+      .mockResolvedValue(apiSuccess({ contests: [] }));
+    deleteContestMock.mockResolvedValue({ data: undefined });
+
+    renderManageContestsPage();
+    await userEvent.click(await screen.findByRole('button', { name: 'Actions for Masters One-and-Done' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    expect(await screen.findByRole('dialog', { name: 'Delete this contest?' })).toHaveTextContent('Masters One-and-Done will be removed for good.');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete contest' }));
+
+    await waitFor(() => expect(deleteContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1' } })));
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Masters One-and-Done deleted');
+    expect(screen.queryByTestId('manage-contest-destination')).not.toBeInTheDocument();
+  });
+
+  it('offers a contest members can see only a way to view it as they do, from its "⋯"', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContest({ id: 'contest-2', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) })],
+    }));
+
+    renderManageContestsPage();
+    await userEvent.click(await screen.findByRole('button', { name: 'Actions for Heritage Tiers' }));
+
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'View as members see it' }));
+    expect(await screen.findByTestId('member-contest-destination')).toBeInTheDocument();
+  });
+
+  it('offers no quick actions on a contest in setup while the league is inactive', async () => {
+    primeCommonMocks({ leagueActive: false });
+    listContestsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
+    }));
+
+    renderManageContestsPage();
+
+    await screen.findByTestId('manage-contests-row-contest-1');
+    expect(screen.queryByRole('button', { name: 'Actions for Masters One-and-Done' })).not.toBeInTheDocument();
   });
 
   it('sends a member who opens Commissioner tools contests to League Home, without loading the contests', async () => {

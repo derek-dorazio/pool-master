@@ -241,13 +241,13 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
     background: tint,
     art: (
       <>
-        {['A', 'B', 'C'].map((tier, row) => (
-          <g key={tier}>
-            <text className="font-display" fill={ink} fontSize="13" fontWeight="900" x="16" y={30 + row * 24}>{tier}</text>
-            {[0, 1, 2, 3].map((column) => pill(34 + column * 30, 20 + row * 24, 26, column === [1, 3, 0][row] ? gold : chip, column))}
+        {/* Three tiers of four, one pick in each. */}
+        {[1, 3, 0].map((pick, row) => (
+          <g key={pick}>
+            {[0, 1, 2, 3].map((column) => pill(22 + column * 30, 20 + row * 24, 26, column === pick ? gold : chip, column))}
           </g>
         ))}
-        <path d="M73 26 l4 4 l7 -8" fill="none" stroke={goldInk} strokeWidth="2" />
+        <path d="M61 26 l4 4 l7 -8" fill="none" stroke={goldInk} strokeWidth="2" />
       </>
     ),
   },
@@ -444,12 +444,13 @@ const STEP_SCENES: Record<StepPicture, Scene> = {
 };
 
 /** A scene's svg: announced by `label` when given, otherwise hidden beside its name. */
-function Illustration({ scene, className, label }: { scene: Scene; className?: string; label?: string }) {
+function Illustration({ scene, className, label, testId }: { scene: Scene; className?: string; label?: string; testId?: string }) {
   return (
     <svg
       aria-hidden={label === undefined || undefined}
       aria-label={label}
       className={cn('block', className)}
+      data-testid={testId}
       preserveAspectRatio="xMidYMid slice"
       role={label === undefined ? undefined : 'img'}
       viewBox="0 0 160 100"
@@ -466,8 +467,8 @@ export function SportIllustration({ sport, className, decorative = false }: { sp
 }
 
 /** A way to play's picture, always beside its name. */
-export function FormatIllustration({ selectionType, className }: { selectionType: SelectionType; className?: string }) {
-  return <Illustration className={className} scene={FORMAT_SCENES[selectionType]} />;
+export function FormatIllustration({ selectionType, className, testId }: { selectionType: SelectionType; className?: string; testId?: string }) {
+  return <Illustration className={className} scene={FORMAT_SCENES[selectionType]} testId={testId} />;
 }
 
 /** A how-it-works step's picture, always beside the step's title. */

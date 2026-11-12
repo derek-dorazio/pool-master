@@ -6,7 +6,7 @@ import { reorderById } from './tier-board-utils';
 import {
   Notice,
   Button,
-  ConfirmationModal,
+  ConfirmDialog,
   FormField,
   Input,
   SectionCard,
@@ -47,7 +47,7 @@ function toBody(draft: readonly TierDraft[]): TierBody[] {
 
 /**
  * plans/124 §6.3 — the left panel: add / rename / reorder a tournament's tier
- * definitions, plus a per-tier delete `ConfirmationModal` that surfaces the
+ * definitions, plus a per-tier delete `ConfirmDialog` that surfaces the
  * orphan count and (when non-zero) requires a reassignment target. How many
  * picks each tier takes is the contest's setting, not the tier's (#479).
  */
@@ -262,7 +262,7 @@ export function TierDefinitionsPanel({
         </div>
       ) : null}
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Delete tier"
         confirmTestId="root-admin-tier-def-delete-confirm"
         description={
@@ -272,7 +272,7 @@ export function TierDefinitionsPanel({
               : `Delete ${deleteTarget.label}? It has no ${participant.many} assigned.`
             : ''
         }
-        errorMessage={
+        error={
           saveMutation.isError && deleteTarget
             ? extractErrorMessage(saveMutation.error, {
                 fallback: 'We could not delete this tier.',
@@ -314,7 +314,7 @@ export function TierDefinitionsPanel({
             </Select>
           </FormField>
         ) : null}
-      </ConfirmationModal>
+      </ConfirmDialog>
     </SectionCard>
   );
 }

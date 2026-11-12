@@ -15,6 +15,8 @@ import {
 } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
+import { EmptyPickSlot } from './empty-pick-slot';
+import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
 import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
 
@@ -192,7 +194,7 @@ function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; ga
   );
 }
 
-function GameCard({
+function PickEmGameCard({
   canChange,
   game,
   gamePicks,
@@ -221,10 +223,9 @@ function GameCard({
   const isTiebreakerGame = game.sportEventMatchId === gamePicks.tiebreakerMatchId;
   const tiebreakerShown = gamePicks.tiebreakerValue !== null;
   return (
-    <li className="space-y-3 rounded-2xl border border-border bg-background p-4" data-testid={`pick-em-game-${game.matchNumber}`}>
-      <Text as="div" className="flex flex-wrap items-center justify-between gap-2" variant="caption">
-        <span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>
-        <span className="flex flex-wrap items-center gap-2">
+    <GameCard
+      aside={(
+        <>
           {isTiebreakerGame ? <Chip tone="info">Tiebreaker game</Chip> : null}
           {game.locked ? (
             <span className="inline-flex items-center gap-1" data-testid={`pick-em-game-${game.matchNumber}-locked`}>
@@ -233,8 +234,11 @@ function GameCard({
             </span>
           ) : null}
           {outcome ? <Chip data-testid={`pick-em-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip> : null}
-        </span>
-      </Text>
+        </>
+      )}
+      label={<span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>}
+      testId={`pick-em-game-${game.matchNumber}`}
+    >
       <div className={cn('grid gap-2', gamePicks.tiePicksOffered ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
         {gameTeams(game).flatMap((team, index) => {
           // A pool that takes tie picks offers the tie between the two teams (#792).
@@ -251,9 +255,7 @@ function GameCard({
           )] : [];
           if (!team) {
             return [...tieChoice, (
-              <Text as="div" className="flex h-9 items-center rounded-2xl border border-dashed border-border px-3" key={index} variant="meta">
-                To be decided
-              </Text>
+              <EmptyPickSlot key={index}>To be decided</EmptyPickSlot>
             )];
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
@@ -292,7 +294,7 @@ function GameCard({
           {tiebreakerShown ? `Tiebreaker: ${gamePicks.tiebreakerValue} total points.` : 'No tiebreaker was saved.'}
         </Text>
       ) : null}
-    </li>
+    </GameCard>
   );
 }
 
@@ -332,7 +334,7 @@ export function PickEmGames({
   return (
     <ul className="grid gap-3 lg:grid-cols-2" data-testid="pick-em-games">
       {games.map((game) => (
-        <GameCard
+        <PickEmGameCard
           canChange={canChange}
           game={game}
           gamePicks={gamePicks}

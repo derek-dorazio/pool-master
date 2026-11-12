@@ -13,7 +13,7 @@ import {
   getTieredRosterSize,
   isSecondChanceBracket,
 } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, Input, SegmentedControl, Select, Text } from '@/features/shared/ui';
+import { Checkbox, FormField, HelpTip, Input, SegmentedControl, Select, Text } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
 import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
@@ -55,10 +55,14 @@ function TieredRulesInputs({
         />
       </FormField>
       <FormField
-        helperText={tierCount > 0
-          ? `The first tiers only, in tier order. Leave empty for all ${tierCount}.`
-          : 'The first tiers only, in tier order. Leave empty for every tier.'}
         label="Tiers to pick from"
+        labelAddon={(
+          <HelpTip label="About tiers to pick from" testId="contest-tiered-tiers-used-help">
+            {tierCount > 0
+              ? `The first tiers only, in tier order. Leave empty for all ${tierCount}.`
+              : 'The first tiers only, in tier order. Leave empty for every tier.'}
+          </HelpTip>
+        )}
       >
         <Input
           data-testid="contest-tiered-tiers-used"

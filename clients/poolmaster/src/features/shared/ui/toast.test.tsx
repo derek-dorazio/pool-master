@@ -14,4 +14,18 @@ describe("pool-master-3lo.15: shared Toast primitives", () => {
     expect(screen.getByText("Saved")).toBeInTheDocument();
     expect(screen.getByText("The profile was updated.")).toBeInTheDocument();
   });
+
+  it.each(["default", "success", "danger"] as const)(
+    "draws a %s toast on an opaque card, so the page under it never shows through",
+    (tone) => {
+      render(
+        <ToastProvider>
+          <Toast data-testid="toast" open title="Profile saved" tone={tone} />
+          <ToastViewport />
+        </ToastProvider>,
+      );
+
+      expect(screen.getByTestId("toast")).toHaveClass("bg-card");
+    },
+  );
 });

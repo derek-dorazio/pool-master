@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -134,19 +135,42 @@ describe('Commissioner tools › Teams', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('lists every member\'s squad with a Manage link, marks the commissioner\'s from the owners\' league roles on the team list without reading the roster, and highlights Members in the menu', async () => {
+  it('lists every member\'s squad with its row linked to its Manage page, marks the commissioner\'s from the owners\' league roles on the team list without reading the roster, and highlights Members in the menu', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams');
 
     const first = within(await screen.findByTestId('admin-team-team-1'));
-    expect(first.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/teams/team-1');
+    const teamLinks = first.getAllByRole('link');
+    expect(teamLinks).toHaveLength(1);
+    expect(teamLinks[0]).toHaveAttribute('href', '/league/BIGDAWGS/admin/teams/team-1');
+    expect(first.queryByRole('link', { name: 'Manage' })).not.toBeInTheDocument();
     expect(await first.findByText('Commissioner')).toBeInTheDocument();
     expect(within(screen.getByTestId('admin-team-team-2')).queryByText('Commissioner')).not.toBeInTheDocument();
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveTextContent('Members');
     expect(screen.getByTestId('admin-teams-invite')).toHaveAttribute('href', '/league/BIGDAWGS/admin/invites');
     expect(listLeagueMembersMock).not.toHaveBeenCalled();
+  });
+
+  it('opens a team\'s Manage page from a click anywhere on its row', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams');
+    const row = await screen.findByTestId('admin-team-team-1');
+    await userEvent.click(await within(row).findByText('Commissioner'));
+
+    expect(await screen.findByTestId('manage-team-page')).toBeInTheDocument();
+  });
+
+  it('offers the team\'s own page from its row\'s "⋯"', async () => {
+    primeMocks();
+
+    renderAdmin('/league/BIGDAWGS/admin/teams');
+    const row = within(await screen.findByTestId('admin-team-team-1'));
+    await userEvent.click(row.getByRole('button', { name: /^Actions for / }));
+
+    expect(screen.getByRole('menuitem', { name: 'View team page' })).toHaveAttribute('href', '/league/BIGDAWGS/teams/team-1');
   });
 
   it('narrows the list to teams with a commissioner, or to inactive teams', async () => {

@@ -4,7 +4,7 @@ import { autoAssignEventTiers } from '@/lib/api';
 import type { AutoAssignSportEventTiersRequest } from '@/lib/api';
 import {
   Button,
-  ConfirmationModal,
+  ConfirmDialog,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -79,7 +79,7 @@ export function TierAutoAssignActions({
       >
         Auto-assign tiers from ranking
       </Button>
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Replace tier assignments"
         confirmTestId="root-admin-tier-auto-tiers-confirm"
         description={
@@ -87,7 +87,7 @@ export function TierAutoAssignActions({
             ? `Every ${participant.one} is re-tiered by odds-to-win. Manual tier assignments will be replaced. Prices are untouched.`
             : `Every ${participant.one} is re-tiered by ranking. Manual tier assignments will be replaced. Prices are untouched.`
         }
-        errorMessage={
+        error={
           autoTiersMutation.isError
             ? extractErrorMessage(autoTiersMutation.error, {
                 fallback: 'We could not auto-assign tiers.',

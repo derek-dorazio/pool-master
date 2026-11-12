@@ -6,6 +6,5 @@
  */
 export const SELF_USER_ID = 'me';
 
-export function buildUserPath(userId: string) {
-  return `/users/${userId}`;
-}
+/** My account, the signed-in member's own settings page. */
+export const MY_ACCOUNT_PATH = '/my-account';

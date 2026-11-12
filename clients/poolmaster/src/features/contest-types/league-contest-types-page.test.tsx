@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { SPORT_BLURBS } from './sport-blurbs';
 import { LeagueContestTypesPage } from './league-contest-types-page';
 
 const { getLeagueByCodeMock, listContestConfigTemplatesMock, listEventsMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
@@ -95,11 +96,11 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isAc
   }));
 }
 
-function renderPage() {
+function renderPage(path = '/league/BIGDAWGS/admin/contest-types') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contest-types']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route element={<LeagueContestTypesPage />} path="/league/:leagueCode/admin/contest-types" />
         </Routes>
@@ -129,6 +130,36 @@ describe('League › Contest types', () => {
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
   });
 
+  it('narrows the page with the same sport switch as How to Play, in the header: a sport shows only its section, a league only its group, and All sports every one', async () => {
+    primeMocks('MEMBER');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=basketball');
+
+    expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
+    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    const filter = within(screen.getByTestId('contest-types-header-tab-row')).getByRole('combobox', { name: 'Sport' });
+    expect(filter).toHaveValue('basketball');
+    expect(within(filter).getAllByRole('option').map((option) => option.textContent)).toEqual(['All sports', 'All basketball', 'NBA', 'All american football', 'NFL']);
+
+    fireEvent.change(filter, { target: { value: 'american-football/nfl' } });
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(screen.queryByTestId('contest-types-sport-BASKETBALL')).not.toBeInTheDocument();
+
+    fireEvent.change(filter, { target: { value: '' } });
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
+  });
+
+  it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {
+    primeMocks('COMMISSIONER');
+    renderPage();
+
+    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
+    expect(football).not.toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    fireEvent.click(within(football).getByRole('button', { name: 'How this section works' }));
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    expect(screen.queryByTestId('contest-types-inactive')).not.toBeInTheDocument();
+  });
+
   it('keeps a variation\'s description behind its (?) help tip, shown on a tap, not in a title tooltip', async () => {
     primeMocks('MEMBER');
     renderPage();
@@ -153,12 +184,12 @@ describe('League › Contest types', () => {
     expect(screen.queryByTestId(`contest-types-stat-pool-${NBA}`)).not.toBeInTheDocument();
   });
 
-  it('gives the commissioner of an inactive league the menu without any create links, saying it can run them once active again', async () => {
+  it('gives the commissioner of an inactive league the menu without any create links, with a notice that it can run them once active again', async () => {
     primeMocks('COMMISSIONER', { isActive: false });
     renderPage();
 
     await screen.findByTestId('contest-type-nfl-tiered-doubling');
-    expect(screen.getByTestId('league-contest-types-page')).toHaveTextContent('once the league is active again');
+    expect(screen.getByTestId('contest-types-inactive')).toHaveTextContent('once the league is active again');
     expect(screen.queryByText('Create this contest')).not.toBeInTheDocument();
     expect(screen.queryByText('No upcoming events yet')).not.toBeInTheDocument();
     expect(listEventsMock).not.toHaveBeenCalled();

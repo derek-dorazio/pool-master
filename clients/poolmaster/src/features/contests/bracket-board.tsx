@@ -1,4 +1,4 @@
-import { Chip, Heading, Text } from '@/features/shared/ui';
+import { Chip, Heading } from '@/features/shared/ui';
 import {
   describeOpenSide,
   describePickOutcome,
@@ -7,9 +7,11 @@ import {
   type BracketRound,
   type BracketTeam,
 } from './bracket-layout';
+import { EmptyPickSlot } from './empty-pick-slot';
+import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
 
-function GameCard({
+function BracketGameCard({
   canPick,
   game,
   isBusy,
@@ -28,26 +30,23 @@ function GameCard({
   const outcome = game.pick && (game.locked || game.revealed) ? describePickOutcome(game.pick) : null;
   const choosable = canPick && !game.locked;
   return (
-    <li
-      className="space-y-2 rounded-2xl border border-border bg-background p-3"
-      data-testid={`bracket-game-${game.matchNumber}`}
+    <GameCard
+      aside={outcome ? (
+        <Chip data-testid={`bracket-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip>
+      ) : undefined}
+      density="compact"
+      label={<span>{`Game ${game.matchNumber}`}</span>}
+      testId={`bracket-game-${game.matchNumber}`}
     >
-      <Text as="div" className="flex items-center justify-between gap-2" variant="caption">
-        <span>{`Game ${game.matchNumber}`}</span>
-        {outcome ? (
-          <Chip data-testid={`bracket-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip>
-        ) : null}
-      </Text>
       {offeredTeams(game).map((team, index) => {
         if (!team) {
           return (
-            <div
-              className="flex h-9 items-center rounded-2xl border border-dashed border-border px-3 text-sm text-muted-foreground"
-              data-testid={`bracket-game-${game.matchNumber}-open-${index === 0 ? 'home' : 'away'}`}
+            <EmptyPickSlot
               key={index === 0 ? 'home' : 'away'}
+              testId={`bracket-game-${game.matchNumber}-open-${index === 0 ? 'home' : 'away'}`}
             >
               {openSide}
-            </div>
+            </EmptyPickSlot>
           );
         }
         const isPicked = team.sportEventParticipantId === pickedId;
@@ -68,7 +67,7 @@ function GameCard({
           </PickedLine>
         );
       })}
-    </li>
+    </GameCard>
   );
 }
 
@@ -103,7 +102,7 @@ export function BracketBoard({
               ) : null}
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {region.games.map((game) => (
-                  <GameCard
+                  <BracketGameCard
                     canPick={canPick}
                     game={game}
                     isBusy={isBusy}
