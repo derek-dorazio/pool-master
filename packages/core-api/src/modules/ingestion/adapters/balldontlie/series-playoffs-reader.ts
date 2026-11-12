@@ -25,7 +25,11 @@ import {
 /** A league's own reads, normalized. */
 export interface PlayoffsSource {
   league: PlayoffsLeague;
-  /** Every postseason game of a season. */
+  /**
+   * A season's postseason games as the league's games endpoint returns them for its postseason
+   * query. The reader keeps only the games marked as that season's postseason, so an endpoint
+   * that ignores a filter cannot pass a regular season or another season off as the playoffs.
+   */
   games(season: number): Promise<PlayoffGame[]>;
   /** Every team of the league. */
   teams(): Promise<PlayoffTeam[]>;
@@ -48,7 +52,7 @@ export class PlayoffsReader {
   async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
     const games: PlayoffGame[] = [];
     for (const season of this.seasonsFor(dateRange)) {
-      games.push(...await this.source.games(season));
+      games.push(...await this.postseasonGames(season));
     }
     return toPlayoffsEvents(this.source.league, games)
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
@@ -56,7 +60,7 @@ export class PlayoffsReader {
 
   /** A season's playoffs with the teams in them; null when the vendor has no postseason game yet. */
   async eventDetails(season: number): Promise<SportEventDetail | null> {
-    const games = await this.source.games(season);
+    const games = await this.postseasonGames(season);
     if (games.length === 0) return null;
     const participants = toPlayoffsFieldParticipants(this.source.league, games);
     return { ...toPlayoffsEvent(this.source.league, season, games, participants.length), participants };
@@ -69,8 +73,13 @@ export class PlayoffsReader {
 
   /** Every game of a season's postseason, with its teams, state and score. */
   async liveScores(season: number): Promise<LiveScoreResult> {
-    const games = await this.source.games(season);
+    const games = await this.postseasonGames(season);
     return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(this.source.league, games) };
+  }
+
+  /** The season's games the vendor marks as its postseason, whatever the query's filters did. */
+  private async postseasonGames(season: number): Promise<PlayoffGame[]> {
+    return (await this.source.games(season)).filter((game) => game.postseason && game.season === season);
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {

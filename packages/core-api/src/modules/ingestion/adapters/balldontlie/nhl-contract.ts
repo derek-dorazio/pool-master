@@ -35,6 +35,7 @@ export const nhlTeamListSchema = z.object({
 export const nhlGameSchema = z.object({
   id: z.number().int().optional(),
   season: z.number().int().optional(),
+  postseason: z.boolean().optional(),
   game_date: z.iso.date().optional(),
   home_team: nhlTeamSchema.optional(),
   away_team: nhlTeamSchema.optional(),

@@ -53,6 +53,7 @@ export function toNhlPlayoffGame(game: NhlGame): PlayoffGame {
   return {
     id: required(game.id, GAMES_PATH, row, 'id'),
     season: required(game.season, GAMES_PATH, row, 'season'),
+    postseason: required(game.postseason, GAMES_PATH, row, 'postseason'),
     start: Date.parse(required(game.game_date, GAMES_PATH, row, 'game_date')),
     home: toNhlPlayoffTeam(required(game.home_team, GAMES_PATH, row, 'home_team'), GAMES_PATH),
     away: toNhlPlayoffTeam(required(game.away_team, GAMES_PATH, row, 'away_team'), GAMES_PATH),

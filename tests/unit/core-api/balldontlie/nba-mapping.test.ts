@@ -16,6 +16,7 @@ const GAME = {
   date: '2025-06-05',
   datetime: '2025-06-06T00:30:00Z',
   season: 2024,
+  postseason: true,
   status_state: CompetitionStatusState.FINAL,
   home_team_score: 110,
   visitor_team_score: 111,
@@ -34,6 +35,10 @@ describe('NBA playoffs normalizers', () => {
 
   it('refuses a game with neither a tip-off nor a day, since it cannot be placed in the playoffs', () => {
     expect(() => toNbaPlayoffGame({ ...GAME, date: undefined, datetime: null })).toThrow('game 18444001 has no date');
+  });
+
+  it('refuses a game that does not say whether it is a playoff game, rather than guessing', () => {
+    expect(() => toNbaPlayoffGame({ ...GAME, postseason: undefined })).toThrow('game 18444001 has no postseason');
   });
 
   it('reads a game with no score yet as having none, not 0-0', () => {

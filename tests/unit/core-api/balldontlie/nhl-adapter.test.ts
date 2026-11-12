@@ -159,6 +159,18 @@ describe('BalldontlieAdapter (NHL)', () => {
     ]);
   });
 
+  it('keeps only the asked season\'s playoff games even when the vendor ignores the season and postseason filters', async () => {
+    const regularSeason = { ...games[0], id: 2024020001, postseason: false };
+    const harness = setup({ ...defaultRoutes, '/nhl/v1/games': pagedRoute([...games, regularSeason]) });
+    restore = harness.restore;
+
+    const detail = await harness.adapter.getEventDetails('nhl-2025-postseason');
+    const result = await harness.adapter.getLiveScores('nhl-2025-postseason');
+
+    expect(detail).toMatchObject({ externalId: 'nhl-2025-postseason', status: 'IN_PROGRESS', participantCount: 8, startDate: new Date('2026-04-18T00:00:00Z') });
+    expect(result.category === 'GAME' ? result.games.map((game) => game.externalGameId) : []).toEqual(['2025030111', '2025030121', '2025030131']);
+  });
+
   it('reads every page of a postseason\'s games, so the writer counts every game of each series', async () => {
     const harness = setup();
     restore = harness.restore;

@@ -135,7 +135,8 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 
 - NHL: `/nhl/v1/games` takes its season filter as `seasons`, as the document declares it, not
   `seasons[]` as the other leagues' documents do; `postseason=true` returns the playoffs and
-  nothing else. `--game-event nhl-2024-postseason` prints the game count (a full NHL postseason
+  nothing else. The shared reader also keeps only games marked as that season's postseason, so a
+  filter the API ignores costs requests, not a wrong event. `--game-event nhl-2024-postseason` prints the game count (a full NHL postseason
   has 15 series, about 85 games), and a postseason is called complete only once its final
   series has a side at four wins.
 - NHL: a game's `id`, `season`, `game_date` and both teams' `id` and `full_name` are always

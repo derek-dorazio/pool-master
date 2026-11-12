@@ -74,7 +74,7 @@ describe('toNhlPlayoffGame', () => {
     expect(toNhlPlayoffGame(without(without(partialScheduled, 'home_score'), 'away_score'))).toMatchObject({ homeScore: null, awayScore: null });
   });
 
-  it.each(['id', 'season', 'game_date', 'home_team', 'away_team'] as const)('refuses a game with no %s, naming it', (field) => {
+  it.each(['id', 'season', 'postseason', 'game_date', 'home_team', 'away_team'] as const)('refuses a game with no %s, naming it', (field) => {
     const game = without(partialFinal, field);
     const row = field === 'id' ? 'game (no id)' : 'game 2025030111';
     expect(() => toNhlPlayoffGame(game)).toThrow(new BalldontlieContractError('/nhl/v1/games', [`${row} has no ${field}`]));

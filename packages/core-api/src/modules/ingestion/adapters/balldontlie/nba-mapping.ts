@@ -58,6 +58,7 @@ export function toNbaPlayoffGame(game: NbaGame): PlayoffGame {
   return {
     id: required(game.id, GAMES_PATH, row, 'id'),
     season: required(game.season, GAMES_PATH, row, 'season'),
+    postseason: required(game.postseason, GAMES_PATH, row, 'postseason'),
     start: Date.parse(start),
     home: toNbaPlayoffTeam(required(game.home_team, GAMES_PATH, row, 'home_team'), GAMES_PATH),
     away: toNbaPlayoffTeam(required(game.visitor_team, GAMES_PATH, row, 'visitor_team'), GAMES_PATH),
