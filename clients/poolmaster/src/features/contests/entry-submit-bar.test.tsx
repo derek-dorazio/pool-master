@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EntrySubmitBar } from './entry-submit-bar';
 
 const submit = (overrides: Partial<{ disabled: boolean; isSubmitting: boolean }> = {}) => ({
@@ -11,7 +11,52 @@ const submit = (overrides: Partial<{ disabled: boolean; isSubmitting: boolean }>
   ...overrides,
 });
 
+/** A stand-in IntersectionObserver whose callback the test fires, as the browser would on scroll. */
+function stubIntersectionObserver() {
+  const callbacks: IntersectionObserverCallback[] = [];
+  vi.stubGlobal('IntersectionObserver', class {
+    constructor(callback: IntersectionObserverCallback) {
+      callbacks.push(callback);
+    }
+    disconnect() {}
+    observe() {}
+  });
+  return (isIntersecting: boolean) => act(() => callbacks.forEach((callback) => callback([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver)));
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('EntrySubmitBar', () => {
+  it('keeps the progress and Submit in a bar at the bottom of a phone while the section is out of view, and drops it once the section scrolls in', () => {
+    const scroll = stubIntersectionObserver();
+    const action = submit();
+    render(<EntrySubmitBar progress="3 of 8 picked" submit={action} testId="bar" />);
+
+    scroll(false);
+    expect(screen.getByTestId('bar-sticky')).toHaveClass('fixed', 'bottom-0', 'md:hidden');
+    expect(screen.getByTestId('bar-sticky-progress')).toHaveTextContent('3 of 8 picked');
+    fireEvent.click(screen.getByTestId('submit-sticky'));
+    expect(action.onSubmit).toHaveBeenCalledTimes(1);
+
+    scroll(true);
+    expect(screen.queryByTestId('bar-sticky')).not.toBeInTheDocument();
+  });
+
+  it('keeps the phone bar\'s Submit closed while the section\'s is, and shows no phone bar with nothing to submit', () => {
+    const scroll = stubIntersectionObserver();
+    const { rerender } = render(<EntrySubmitBar submit={submit({ disabled: true, isSubmitting: true })} testId="bar" />);
+
+    scroll(false);
+    expect(screen.getByTestId('submit-sticky')).toBeDisabled();
+    expect(screen.getByTestId('submit-sticky')).toHaveTextContent('Submitting...');
+    expect(screen.queryByTestId('bar-sticky-progress')).not.toBeInTheDocument();
+
+    rerender(<EntrySubmitBar submit={null} testId="bar" />);
+    expect(screen.queryByTestId('bar-sticky')).not.toBeInTheDocument();
+  });
+
   it('titles the section Submit and shows the progress fact in its title bar', () => {
     render(<EntrySubmitBar progress="3 of 8 picked" progressTestId="progress" testId="bar" />);
 

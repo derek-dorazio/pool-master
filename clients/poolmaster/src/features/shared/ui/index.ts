@@ -117,6 +117,7 @@ export { ExpandableRow } from "./expandable-row";
 export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep } from "./numbered-steps";
+export { StickyActionBar } from "./sticky-action-bar";
 export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
 export { LockedSection } from "./locked-section";
 export { Text, type TextProps } from "./text";
