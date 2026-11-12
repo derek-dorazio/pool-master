@@ -134,7 +134,6 @@ export function LeagueSettingsPage() {
           label="League code"
           value={<span className="font-mono">{league.leagueCode}</span>}
         />
-        <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')} />
         <SettingsRow
           action={(
             <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
