@@ -1,142 +1,30 @@
-import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProviderSyncRun, listProviderSyncRuns } from '@/lib/api';
+import { listProviderSyncRuns } from '@/lib/api';
 import {
-  Notice,
-  Button,
-  DataGrid,
   formatDateTimeDisplay,
   LinkButton,
   PageHeader,
-  ReadOnlyDetailModal,
-  SectionCard,
-  StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import {
-  buildCompactStatsSummary,
-  buildPayloadSummary,
-  formatRequestedFeed,
-  getDetailsSection,
-  getPayloadOutcome,
-  getPayloadSection,
-  getPayloadWarnings,
-  getProviderName,
-  type ProviderSyncRun,
-  type ProviderSyncRunDetail,
-  type ProviderSyncRunDetails,
-  type ProviderSyncRunPayload,
-  formatJsonPayload,
-} from './root-admin-sync-utils';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
-import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
-import { SyncRunDetail, type SyncRunEvidenceRow } from './sync-run-detail';
-import { useProvidersQuery } from './use-providers-query';
 import { plural } from '@/lib/plural';
+import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun } from './root-admin-sync-utils';
+import { SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
+import { SyncRunDialog } from './sync-run-dialog';
+import { SyncRunHistory } from './sync-run-history';
+import { SyncStatusSection } from './sync-status-section';
+import { useProvidersQuery } from './use-providers-query';
 
-const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
-
-
-const WORKFLOW_STEPS = [
-  'Participants',
-  'Mock state',
-  'Live scores',
-] as const;
-
-function toSortableTimestamp(isoString: string | null | undefined) {
-  if (!isoString) {
-    return 0;
-  }
-
-  const parsed = Date.parse(isoString);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function formatEventValue(eventId: string | null | undefined) {
-  if (!eventId || eventId.trim().length === 0) {
-    return 'No event';
-  }
-
-  return eventId;
-}
-
-function getStatusTone(status: string) {
-  switch (status) {
-    case 'COMPLETED':
-    case 'HEALTHY':
-      return 'success';
-    case 'FAILED':
-    case 'UNHEALTHY':
-      return 'danger';
-    case 'IN_PROGRESS':
-    case 'SUBMITTED':
-      return 'warning';
-    default:
-      return 'neutral';
-  }
-}
-
-function getRunStatusTone(run: ProviderSyncRun) {
-  const warnings = getPayloadWarnings(run.payload);
-  const severity = getPayloadSeverity(run.payload);
-  if (severity === 'WARNING' || warnings.length > 0) {
-    return 'warning';
-  }
-  if (severity === 'ERROR') {
-    return 'danger';
-  }
-
-  return getStatusTone(run.status);
-}
-
-function getRunStatusLabel(run: ProviderSyncRun) {
-  const warnings = getPayloadWarnings(run.payload);
-  if (run.status === ProviderSyncRunStatus.COMPLETED && (getPayloadSeverity(run.payload) === 'WARNING' || warnings.length > 0)) {
-    return 'COMPLETED WITH WARNINGS';
-  }
-
-  return run.status;
-}
-
-function getPayloadSeverity(payload: ProviderSyncRunPayload) {
-  return getPayloadOutcome(payload)?.severity ?? null;
-}
-
-function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined): SyncRunEvidenceRow[] {
-  const writeRows = details?.writeDiagnostics?.rows;
-  if (!writeRows) {
-    return [];
-  }
-
-  return writeRows.map((row) => ({
-    id: row.id,
-    disposition: row.disposition,
-    entityType: row.entityType,
-    identifier: row.internalId ?? row.externalId ?? row.participantExternalId ?? row.id,
-    name: row.name ?? 'No name',
-    providerId: row.providerId ?? 'No provider',
-    eventId: row.externalId ?? 'No event',
-    participantId: row.participantExternalId ?? 'No participant',
-    detailsPayload: {
-      disposition: row.disposition,
-      entityType: row.entityType,
-      providerId: row.providerId ?? null,
-      externalId: row.externalId ?? null,
-      participantExternalId: row.participantExternalId ?? null,
-      internalId: row.internalId ?? null,
-      name: row.name ?? null,
-      ...(row.before === undefined ? {} : { before: row.before }),
-      ...(row.after === undefined ? {} : { after: row.after }),
-    },
-  }));
-}
-
+/**
+ * /manage/sync: the run counts in the header with its two actions, the sync order and provider
+ * health, and the recent runs; a run opens its detail dialog. Each section is its own file.
+ */
 export function RootAdminSyncDashboardPage() {
   const displayPreferences = useDisplayPreferences();
-  const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
+  const [openRun, setOpenRun] = useState<ProviderSyncRun | null>(null);
   const providersQuery = useProvidersQuery();
 
   const syncRunsQuery = useQuery({
@@ -154,22 +42,6 @@ export function RootAdminSyncDashboardPage() {
     retry: false,
   });
 
-  // The list carries each run's summary only; its detailed diagnostics load when it is opened (#1174).
-  const payloadRunId = payloadRun?.id ?? null;
-  const runDetailQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.providerSyncRun(payloadRunId),
-    queryFn: async (): Promise<ProviderSyncRunDetail> => {
-      const response = await getProviderSyncRun({ path: { syncRunId: payloadRunId ?? '' } });
-      if (!response.data) {
-        throwApiError(response.error, 'Provider sync run response is missing data.');
-      }
-      return response.data;
-    },
-    enabled: payloadRunId !== null,
-    retry: false,
-  });
-  const runDetails = runDetailQuery.data?.details;
-
   const recentRuns = useMemo(() => syncRunsQuery.data ?? [], [syncRunsQuery.data]);
   const summary = useMemo(() => {
     // poolmaster-allow-list-lookup: the runs listed on this screen, capped by the server's six-hour window
@@ -182,121 +54,6 @@ export function RootAdminSyncDashboardPage() {
       lastStartedAt: recentRuns.at(0)?.startedAt ?? recentRuns.at(0)?.createdAt ?? null,
     };
   }, [recentRuns]);
-  const evidenceRows = useMemo(() => buildRunEvidenceRows(runDetails), [runDetails]);
-  const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
-  const providerPayload = getDetailsSection(runDetails, 'providerPayload');
-  const jobPayload = getDetailsSection(runDetails, 'jobPayload');
-  const evidenceEmptyMessage = runDetails === null
-    ? payloadRun?.status === ProviderSyncRunStatus.SUBMITTED
-      ? 'This run hasn\'t started yet, so it has no details.'
-      : 'Detailed diagnostics are kept for 30 days. None are stored for this run.'
-    : [
-        `No ${PRODUCT_NAME} rows changed in this sync.`,
-        providerPayload?.rawCaptured === true ? 'Open the provider payload below to see what the provider sent.' : null,
-      ].filter(Boolean).join(' ');
-
-  const syncHistoryColumns = useMemo(
-    () => [
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt, displayPreferences),
-        {
-          id: 'started',
-          header: 'Started',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.startedAt ?? left.original.createdAt)
-            - toSortableTimestamp(right.original.startedAt ?? right.original.createdAt),
-          cell: ({ getValue }) => (
-            <span className="text-foreground">{getValue()}</span>
-          ),
-        },
-      ),
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.completedAt, displayPreferences),
-        {
-          id: 'completed',
-          header: 'Completed',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.completedAt)
-            - toSortableTimestamp(right.original.completedAt),
-          cell: ({ getValue }) => (
-            <span className="text-muted-foreground">{getValue()}</span>
-          ),
-        },
-      ),
-      syncRunColumnHelper.accessor(
-        (run) => `${getProviderName(run.providerId, providersQuery.data)} ${run.providerId}`,
-        {
-          id: 'provider',
-          header: 'Provider',
-          cell: ({ row }) => (
-            <div>
-              <div className="font-medium text-foreground">
-                {getProviderName(row.original.providerId, providersQuery.data)}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {row.original.providerId}
-              </div>
-            </div>
-          ),
-        },
-      ),
-      syncRunColumnHelper.accessor('sport', {
-        header: 'Sport',
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
-        ),
-      }),
-      syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
-        id: 'feed',
-        header: 'Feed',
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
-        ),
-      }),
-      syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
-        id: 'event',
-        header: 'Event',
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{getValue()}</span>
-        ),
-      }),
-      syncRunColumnHelper.accessor('status', {
-        header: 'Status',
-        cell: ({ row }) => (
-          <StatusBadge tone={getRunStatusTone(row.original)}>
-            {getRunStatusLabel(row.original)}
-          </StatusBadge>
-        ),
-      }),
-      syncRunColumnHelper.accessor((run) => buildPayloadSummary(run.payload), {
-        id: 'summary',
-        header: 'Summary',
-        cell: ({ row }) => (
-          <div className="text-muted-foreground">
-            <div>{buildPayloadSummary(row.original.payload)}</div>
-            <div className="mt-1 text-xs">
-              {buildCompactStatsSummary(row.original.payload)}
-            </div>
-            {getPayloadWarnings(row.original.payload).length > 0 ? (
-              <div className="mt-1 text-xs text-[color:var(--status-warning-text)]">
-                {getPayloadWarnings(row.original.payload).length} warning
-                {getPayloadWarnings(row.original.payload).length === 1 ? '' : 's'}
-              </div>
-            ) : null}
-            <Button
-              className="mt-2 h-auto rounded-none p-0 text-xs uppercase"
-              onClick={() => setPayloadRun(row.original)}
-              type="button"
-              variant="ghost"
-            >
-                View details
-            </Button>
-          </div>
-        ),
-      }),
-    ],
-    [displayPreferences, providersQuery.data],
-  );
 
   return (
     <section
@@ -336,103 +93,11 @@ export function RootAdminSyncDashboardPage() {
         testId="root-admin-sync-header"
         title="Sync"
       />
-      <SectionCard padded title="Sync status">
-        <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">
-          {WORKFLOW_STEPS.map((step) => (
-            <StatusBadge key={step} tone="neutral">
-              {step}
-            </StatusBadge>
-          ))}
-        </div>
-
-        {providersQuery.data && providersQuery.data.length > 0 ? (
-          <div className="mt-6 flex flex-wrap gap-3">
-            {providersQuery.data.map((provider) => (
-              <StatusBadge key={provider.providerId} tone="neutral">
-                <span className="font-medium text-foreground">
-                  {provider.providerName}
-                </span>
-                <StatusBadge className="ml-2 px-2 py-0.5" tone={getStatusTone(provider.status)}>
-                  {provider.status}
-                </StatusBadge>
-              </StatusBadge>
-            ))}
-          </div>
-        ) : null}
-
-        {providersQuery.isError ? (
-          <Notice className="mt-4">
-            Provider health context is temporarily unavailable, but sync runs are
-            still shown below.
-          </Notice>
-        ) : null}
-      </SectionCard>
-
-      <SectionCard bare title="Recent runs">
-        {syncRunsQuery.isError ? (
-          <Notice tone="danger">
-            {extractErrorMessage(
-              syncRunsQuery.error,
-              { fallback: 'We could not load provider sync runs right now.' },
-            )}
-          </Notice>
-        ) : null}
-
-        {!syncRunsQuery.isError ? (
-          <DataGrid
-            columns={syncHistoryColumns}
-            data={recentRuns}
-            emptyMessage="No sync runs matched the current filters."
-            getRowId={(run) => run.id}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
-            rowTestId={(run) => `root-admin-sync-run-${run.id}`}
-            tableTestId="root-admin-sync-history-table"
-          />
-        ) : null}
-      </SectionCard>
-      <ReadOnlyDetailModal
-        description="What the run did, what it changed, and the payloads it captured."
-        detailContent={
-          payloadRun ? (
-            <SyncRunDetail
-              detailQuery={runDetailQuery}
-              evidenceEmptyMessage={evidenceEmptyMessage}
-              evidenceRows={evidenceRows}
-              payloads={[
-                { key: 'request', label: 'Request payload', payload: requestPayload },
-                { key: 'job', label: 'Job payload', payload: jobPayload },
-                { key: 'provider', label: 'Provider payload', payload: providerPayload },
-              ]}
-              run={payloadRun}
-            />
-          ) : null
-        }
-        details={
-          payloadRun
-            ? [
-                { id: 'status', label: 'Status', value: getRunStatusLabel(payloadRun) },
-                { id: 'feed', label: 'Feed', value: formatRequestedFeed(payloadRun.payload) },
-                { id: 'sport', label: 'Sport', value: payloadRun.sport },
-                { id: 'event', label: 'Event', value: formatEventValue(payloadRun.eventId) },
-                {
-                  id: 'provider',
-                  label: 'Provider',
-                  value: getProviderName(payloadRun.providerId, providersQuery.data),
-                },
-              ]
-            : undefined
-        }
-        onCancel={() => setPayloadRun(null)}
-        copyText={payloadRun ? formatJsonPayload({ payload: payloadRun.payload, details: runDetails ?? null }) : undefined}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPayloadRun(null);
-          }
-        }}
-        open={Boolean(payloadRun)}
-        testId="root-admin-sync-payload-modal"
-        title="Sync run details"
-      />
+      <SyncStatusSection providers={providersQuery.data} providersFailed={providersQuery.isError} />
+      <SyncRunHistory onOpenRun={setOpenRun} providers={providersQuery.data} runsQuery={syncRunsQuery} />
+      {openRun ? (
+        <SyncRunDialog onClose={() => setOpenRun(null)} providers={providersQuery.data} run={openRun} />
+      ) : null}
     </section>
   );
 }
