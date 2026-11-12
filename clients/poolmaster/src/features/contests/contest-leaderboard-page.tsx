@@ -93,11 +93,16 @@ function matchesSearch(entry: LeaderboardEntryRow, search: string) {
     || entry.squadName.toLowerCase().includes(needle);
 }
 
-/** Position, name and total take fixed tracks (the name takes the slack); the family's columns follow. */
+/**
+ * Position, name and total take fixed tracks (the name takes the slack); the family's columns
+ * follow. Every track keeps a real minimum, the name's too: where the row is narrower than the
+ * minimums (a phone, a stat pool with five games), the board scrolls sideways instead of
+ * squeezing the name to nothing.
+ */
 function leaderboardGridColumns(view: LeaderboardView) {
   return [
     'minmax(36px,0.3fr)',
-    'minmax(0,1.5fr)',
+    'minmax(6rem,1.5fr)',
     'minmax(48px,0.4fr)',
     ...view.detailColumns.map((column) => column.width),
   ].join(' ');
@@ -443,41 +448,49 @@ export function ContestLeaderboardPage() {
             </Button>
           </div>
         ) : null}
-        <div
-          // A board whose pick rows open (a stat pool's games) keeps room for their chevron.
-          className={cn('grid gap-2 rounded-lg bg-surface-inverse py-2 pl-4 text-xs font-medium uppercase text-primary', hasPickBreakdowns ? 'pr-11' : 'pr-4')}
-          data-testid="contest-leaderboard-column-headers"
-          style={{ gridTemplateColumns }}
-        >
-          <span>Pos</span>
-          <span>{upperFirst(participantNoun.one)}</span>
-          <span className="text-right">Tot</span>
-          {view.detailColumns.map((column) => (
-            <span className="text-right" data-testid={column.testId} key={column.key}>
-              {column.label}
-            </span>
-          ))}
-        </div>
+        {/*
+          The column heads and the entries scroll sideways together, inside the board, when the
+          columns' minimum widths are wider than the screen; the page itself never widens.
+        */}
+        <div className="overflow-x-auto" data-testid="contest-leaderboard-board">
+          <div className="min-w-min" data-testid="contest-leaderboard-board-content">
+            <div
+              // A board whose pick rows open (a stat pool's games) keeps room for their chevron.
+              className={cn('grid gap-2 rounded-lg bg-surface-inverse py-2 pl-4 text-xs font-medium uppercase text-primary', hasPickBreakdowns ? 'pr-11' : 'pr-4')}
+              data-testid="contest-leaderboard-column-headers"
+              style={{ gridTemplateColumns }}
+            >
+              <span>Pos</span>
+              <span>{upperFirst(participantNoun.one)}</span>
+              <span className="text-right">Tot</span>
+              {view.detailColumns.map((column) => (
+                <span className="text-right" data-testid={column.testId} key={column.key}>
+                  {column.label}
+                </span>
+              ))}
+            </div>
 
-        <div className="space-y-3" data-testid="contest-leaderboard-entries">
-          {view.entries.length === 0 ? (
-            <EmptyState body="No entries have been scored in this contest yet." />
-          ) : matchingEntries.length === 0 ? (
-            <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
-          ) : (
-            pageEntries.map((entry) => (
-              <EntryBlock
-                entry={entry}
-                contestEvents={contestEvents}
-                gridTemplateColumns={gridTemplateColumns}
-                isCollapsed={collapsedEntryIds.has(entry.entryId)}
-                isMine={isMySquadsEntry(mySquadId)(entry)}
-                key={entry.entryId}
-                league={{ code: leagueCode, id: contest.leagueId }}
-                onToggle={() => toggleEntry(entry.entryId)}
-              />
-            ))
-          )}
+            <div className="space-y-3" data-testid="contest-leaderboard-entries">
+              {view.entries.length === 0 ? (
+                <EmptyState body="No entries have been scored in this contest yet." />
+              ) : matchingEntries.length === 0 ? (
+                <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
+              ) : (
+                pageEntries.map((entry) => (
+                  <EntryBlock
+                    entry={entry}
+                    contestEvents={contestEvents}
+                    gridTemplateColumns={gridTemplateColumns}
+                    isCollapsed={collapsedEntryIds.has(entry.entryId)}
+                    isMine={isMySquadsEntry(mySquadId)(entry)}
+                    key={entry.entryId}
+                    league={{ code: leagueCode, id: contest.leagueId }}
+                    onToggle={() => toggleEntry(entry.entryId)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
         </div>
         <div className="px-4 pt-3">
           <Pager
