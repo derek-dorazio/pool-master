@@ -4,7 +4,6 @@
   "clients/poolmaster/src/features/event-pages/clutch-card-page.tsx": 1,
   "clients/poolmaster/src/features/event-pages/coming-up-row.tsx": 1,
   "clients/poolmaster/src/features/root-admin/bracket-panel.tsx": 1,
-  "clients/poolmaster/src/features/root-admin/event-field-add-participants-modal.tsx": 1,
   "clients/poolmaster/src/features/root-admin/event-field-grid-card.tsx": 1,
   "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx": 1,
   "clients/poolmaster/src/features/root-admin/root-admin-sport-overrides-page.tsx": 1,
