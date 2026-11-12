@@ -35,8 +35,12 @@ import {
   LeagueMembershipStatus,
   contestEntryEventStatus,
   isPredictionSelectionType,
+  type BudgetContestRules,
   type ContestEntry,
   type Participant,
+  type SportEvent,
+  type SportEventParticipant,
+  type TieredContestRules,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -61,7 +65,7 @@ import {
 } from '../contest-entry-picks';
 import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
 import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
-import type { SportEventTierService } from '../events/sport-event-tier-service';
+import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
 import { selectionErrors, type SelectionError } from './selection-errors';
 import {
   buildSelectionTiers,
@@ -77,6 +81,7 @@ import { dealRandomDraw } from './selection-engines/random-draw';
 import {
   SelectionOutcomeKind,
   SelectionRejectCode,
+  type EngineRules,
   type EntryPick,
   type SelectionEngine,
   type SelectionRejection,
@@ -84,6 +89,7 @@ import {
 import {
   LineupIssueKind,
   type LineupIssue,
+  type LineupPreview,
   type SelectionContext,
   type SelectionEntry,
   type PickHistoryRow,
@@ -91,6 +97,7 @@ import {
   type SelectionGroup,
   type SelectionParticipant,
   type SelectionPickResult,
+  type SelectionTierConfig,
 } from './types';
 import { errorMessage } from '../../core/error-message';
 
@@ -139,6 +146,14 @@ export interface GetSelectionStateInput {
   actorIsRootAdmin?: boolean;
 }
 
+/** A roster setup's pick preview (#1612): its event, its unsaved rules and the trial picks. */
+export interface PreviewLineupInput {
+  sportEventId: string;
+  rules: TieredContestRules | BudgetContestRules;
+  /** The field rows tapped so far, as an entry's picks. */
+  sportEventParticipantIds: readonly string[];
+}
+
 export interface PickChangeInput {
   contestId: string;
   entryId: string;
@@ -172,6 +187,55 @@ export interface SubmitEntryInput {
 
 export class SelectionService {
   constructor(private readonly deps: SelectionServiceDeps) {}
+
+  /**
+   * A roster setup's pick screen before the contest is saved (#1612): the event's field grouped as
+   * the setup's rules group it, with the commissioner's trial picks marked and summarised. It reads
+   * the event, its field and its tiers the way the room does, and writes nothing. A budget setup
+   * picks under the event's salary cap, so an event never priced answers 409
+   * CONTEST_EVENT_NOT_PRICED; a trial pick outside the event's field answers 400.
+   */
+  async previewLineup(input: PreviewLineupInput): Promise<LineupPreview> {
+    const sportEvent = (await this.deps.sportEvents.findByIds([input.sportEventId])).at(0);
+    if (!sportEvent) throw selectionErrors.sportEventNotFound(input.sportEventId);
+    const { rules } = input;
+    const configuration = previewConfiguration(rules, sportEvent);
+
+    const field = await this.deps.field.findBySportEvent(sportEvent.id);
+    const { selectionParticipants, tierGroups } = await this.readEventField(sportEvent, field);
+    const participantByRowId = new Map(selectionParticipants.map((row) => [row.sportEventParticipantId, row]));
+    const picked = input.sportEventParticipantIds.map((rowId) => {
+      const row = participantByRowId.get(rowId);
+      if (!row) throw selectionErrors.previewPickNotInEvent(rowId, sportEvent.id);
+      return row;
+    });
+
+    const engine = getSelectionEngine(rules.selectionType);
+    const tiers = selectionTiersOf(configuration, tierGroups);
+    const rosterSize = engine.rosterSize({ configuration, tiers });
+    const pickedIds = new Set(picked.map((row) => row.sportEventParticipantId));
+    const lineup = {
+      configuration,
+      rosterSize,
+      tiers,
+      picks: picked.map((row) => ({ participantId: row.participantId, price: row.price })),
+    };
+    const available = buildAvailableParticipantIds({ selectionParticipants });
+
+    return {
+      sportEventId: sportEvent.id,
+      selectionType: rules.selectionType,
+      rosterSize,
+      selectionGroups: buildSelectionGroups({ tiers, selectionParticipants }, engine, rosterSize, pickedIds),
+      availableSportEventParticipantIds: [...available],
+      pickCount: picked.length,
+      isComplete: rosterSize > 0 && engine.findLineupIssues(lineup).length === 0,
+      lineupSummary: engine.summarizeLineup({
+        ...lineup,
+        openField: openFieldOf({ selectionParticipants }, available, pickedIds),
+      }),
+    };
+  }
 
   /**
    * The selection room as the actor should see it. 404 for an unknown contest, and for a DRAFT
@@ -409,8 +473,7 @@ export class SelectionService {
           participantId: pick.participant.participantId,
           price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
         })),
-        openField: context.selectionParticipants.filter((participant) =>
-          available.has(participant.sportEventParticipantId) && !held.has(participant.sportEventParticipantId)),
+        openField: openFieldOf(context, available, held),
       }),
     };
   }
@@ -666,10 +729,9 @@ export class SelectionService {
     ]);
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
-    const [squadMemberships, participants, { tiers: tierGroups, valuations }] = await Promise.all([
+    const [squadMemberships, { selectionParticipants, tierGroups, valuations }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
-      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
-      this.deps.tiers.getEffectiveTiersAndValuations(sportEventId, field),
+      this.readEventField(sportEvent, field),
     ]);
 
     return {
@@ -680,17 +742,30 @@ export class SelectionService {
       entries,
       squadMemberships,
       valuations,
-      // A configuration without typed settings takes no picks per tier: its roster is 0, and the
-      // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
-      tiers: configuration?.configJson?.selectionType === SelectionType.TIERED
-        ? buildSelectionTiers(tierGroups, configuration.configJson.picksPerTier, configuration.configJson.tiersUsed)
-        : buildSelectionTiers(tierGroups, 0),
+      tiers: selectionTiersOf(configuration, tierGroups),
       // One rule for every pick change: see contests/entry-window.
       acceptsPicks: areEventPicksOpen(contest, sportEvent, now),
       picksRevealed: areEventPicksRevealed(contest, sportEvent, now),
+      selectionParticipants,
+    };
+  }
+
+  /**
+   * An event's field as members pick from it: each row with its participant, price and ranking,
+   * and the event's tiers and valuations. The room and a setup's preview both read it here, in
+   * two parallel batches whatever the field's size; the field is read once and handed in (#1196).
+   */
+  private async readEventField(sportEvent: SportEvent, field: readonly SportEventParticipant[]) {
+    const [participants, { tiers: tierGroups, valuations }] = await Promise.all([
+      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
+      this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field),
+    ]);
+    return {
+      tierGroups,
+      valuations,
       selectionParticipants: buildSelectionParticipants({
         field,
-        participantsById: new Map(participants.map((p: Participant) => [p.id, p])),
+        participantsById: new Map(participants.map((participant: Participant) => [participant.id, participant])),
         valuationBySportEventParticipantId: buildValuationLookup(valuations),
         event: sportEvent,
       }),
@@ -801,7 +876,7 @@ export class SelectionService {
         priceBySportEventParticipantId,
         engine,
       }),
-      selectionGroups: this.buildSelectionGroups(context, engine, rosterSize, selectedSportEventParticipantIds),
+      selectionGroups: buildSelectionGroups(context, engine, rosterSize, selectedSportEventParticipantIds),
       availableSportEventParticipantIds: [...availableSportEventParticipantIds],
       myEntryId,
       selectedEntryId: resolvedSelectedEntryId,
@@ -817,9 +892,7 @@ export class SelectionService {
             participantId: pick.participant.participantId,
             price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
           })),
-          openField: context.selectionParticipants.filter((participant) =>
-            availableSportEventParticipantIds.has(participant.sportEventParticipantId)
-            && !selectedSportEventParticipantIds.has(participant.sportEventParticipantId)),
+          openField: openFieldOf(context, availableSportEventParticipantIds, selectedSportEventParticipantIds),
         })
         : null,
     };
@@ -877,30 +950,70 @@ export class SelectionService {
   }
 
   /** The field as the engine groups it, with which rows the viewed entry holds. */
-  private buildSelectionGroups(
-    context: SelectionContext,
-    engine: SelectionEngine,
-    rosterSize: number,
-    selectedSportEventParticipantIds: ReadonlySet<string>,
-  ): SelectionGroup[] {
-    return engine
-      .groupField({ tiers: context.tiers, participants: context.selectionParticipants, rosterSize })
-      .map((group) => ({
-        ...group,
-        participants: group.participants.map((participant) => ({
-          ...participant,
-          isSelected: selectedSportEventParticipantIds.has(participant.sportEventParticipantId),
-        })),
-      }));
-  }
+}
 
+/**
+ * The field as the room groups it, each row marked selected when the viewed lineup holds it. The
+ * room and a pick preview (#1612) both draw it from here.
+ */
+function buildSelectionGroups(
+  field: Pick<SelectionContext, 'tiers' | 'selectionParticipants'>,
+  engine: SelectionEngine,
+  rosterSize: number,
+  selectedSportEventParticipantIds: ReadonlySet<string>,
+): SelectionGroup[] {
+  return engine
+    .groupField({ tiers: field.tiers, participants: field.selectionParticipants, rosterSize })
+    .map((group) => ({
+      ...group,
+      participants: group.participants.map((participant) => ({
+        ...participant,
+        isSelected: selectedSportEventParticipantIds.has(participant.sportEventParticipantId),
+      })),
+    }));
+}
+
+/**
+ * A preview's unsaved rules as the engines read a contest's (#1612). A budget contest is built
+ * under its event's salary cap, which creating one copies onto its rules, so a budget preview does
+ * the same, and an event never priced has none to preview under.
+ */
+function previewConfiguration(
+  rules: TieredContestRules | BudgetContestRules,
+  sportEvent: Pick<SportEvent, 'id' | 'pricingConfig'>,
+): EngineRules {
+  if (rules.selectionType === SelectionType.TIERED) return { configJson: rules };
+  const salaryCap = sportEvent.pricingConfig?.salaryCap;
+  if (salaryCap === undefined) throw selectionErrors.eventNotPriced(sportEvent.id);
+  return { configJson: { ...rules, salaryCap } };
+}
+
+/**
+ * The event's tiers as a tiered contest picks from them: each tier in play with its picks. Any
+ * other rules, and a configuration without typed settings, take no picks per tier: the roster is
+ * 0, and the room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
+ */
+function selectionTiersOf(configuration: EngineRules, tierGroups: readonly SportEventTierGroup[]): SelectionTierConfig[] {
+  return configuration?.configJson?.selectionType === SelectionType.TIERED
+    ? buildSelectionTiers(tierGroups, configuration.configJson.picksPerTier, configuration.configJson.tiersUsed)
+    : buildSelectionTiers(tierGroups, 0);
 }
 
 /** What is still selectable: every field row that is itself available. */
-function buildAvailableParticipantIds(context: SelectionContext): Set<string> {
+function buildAvailableParticipantIds(context: Pick<SelectionContext, 'selectionParticipants'>): Set<string> {
   return new Set(context.selectionParticipants
     .filter((participant) => participant.isAvailable)
     .map((participant) => participant.sportEventParticipantId));
+}
+
+/** The field a lineup could still add: available rows it does not hold, for a budget's cheapest fill. */
+function openFieldOf(
+  context: Pick<SelectionContext, 'selectionParticipants'>,
+  available: ReadonlySet<string>,
+  held: ReadonlySet<string>,
+): SelectionContext['selectionParticipants'] {
+  return context.selectionParticipants.filter((participant) =>
+    available.has(participant.sportEventParticipantId) && !held.has(participant.sportEventParticipantId));
 }
 
 /** The shape an engine reasons over: a pick's id, whom it points at, and its place. */

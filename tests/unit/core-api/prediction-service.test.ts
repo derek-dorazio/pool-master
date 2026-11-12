@@ -773,3 +773,63 @@ describe('PredictionService — tie picks (#792)', () => {
     expect((await context.service.getGamePicks(context.input)).tiePicksOffered).toBe(false);
   });
 });
+
+describe('PredictionService.previewGames on a pick\'em setup, before it is saved', () => {
+  const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false } as const;
+
+  it('lists the week\'s games without the cancelled one, with the trial picks and the setup\'s mode', async () => {
+    const context = setup();
+
+    const preview = await context.service.previewGames({
+      sportEventId: context.sportEvent.id,
+      rules: CONFIDENCE,
+      picks: [context.pick(context.games.thursday, 3), context.pick(context.games.sunday, 1, 'away')],
+    });
+
+    expect(preview.mode).toBe(PickEmMode.CONFIDENCE);
+    expect(preview.gameCount).toBe(3);
+    expect(preview.games.map((row) => row.match.matchNumber)).toEqual([1, 2, 3]);
+    expect(preview.pickedCount).toBe(2);
+    expect(preview.games[0].pick).toMatchObject({ sportEventParticipantId: context.games.thursday.homeSportEventParticipantId, confidence: 3 });
+    expect(context.storedPicks()).toEqual([]);
+  });
+
+  it('drops a confidence value the setup does not take, keeping the pick', async () => {
+    const context = setup();
+
+    const preview = await context.service.previewGames({
+      sportEventId: context.sportEvent.id,
+      rules: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
+      picks: [context.pick(context.games.thursday, 3)],
+    });
+
+    expect(preview.mode).toBe(PickEmMode.STRAIGHT_UP);
+    expect(preview.games[0].pick).toMatchObject({ confidence: null });
+  });
+
+  it('locks the games that have kicked off (one with no time yet at its event\'s start) and leaves Sunday\'s open, as they will be once the contest opens', async () => {
+    const context = setup();
+    context.setNow(at(3));
+
+    const preview = await context.service.previewGames({ sportEventId: context.sportEvent.id, rules: CONFIDENCE, picks: [] });
+
+    expect(preview.games.map((row) => row.locked)).toEqual([true, false, true]);
+  });
+
+  it('offers tie picks where the sport does, and drops a tie pick where it does not', async () => {
+    const offered = setup({ tiePicks: true });
+    const withTies = await offered.service.previewGames({
+      sportEventId: offered.sportEvent.id, rules: CONFIDENCE, picks: [offered.tiePick(offered.games.thursday, null)],
+    });
+    const plain = setup();
+    const withoutTies = await plain.service.previewGames({
+      sportEventId: plain.sportEvent.id, rules: CONFIDENCE, picks: [plain.tiePick(plain.games.thursday, null)],
+    });
+
+    expect(withTies.tiePicksOffered).toBe(true);
+    expect(withTies.games[0].pick).toMatchObject({ predictedResult: PredictedResult.TIE });
+    expect(withoutTies.tiePicksOffered).toBe(false);
+    expect(withoutTies.games[0].pick).toBeNull();
+    expect(withoutTies.pickedCount).toBe(0);
+  });
+});

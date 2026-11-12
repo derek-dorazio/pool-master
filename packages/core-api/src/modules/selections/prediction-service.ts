@@ -41,16 +41,19 @@ import {
   getSportDefinition,
   isPredictionSelectionType,
   isTeamChoice,
+  type BracketContestRules,
   type Contest,
   type ContestConfiguration,
   type ContestEntry,
   type ContestEntryMatchPrediction,
+  type PickEmContestRules,
   type PredictionSelectionType,
   type Sport,
   type SportDefinition,
   type SportEvent,
   type SportEventMatch,
   type SportEventParticipant,
+  type SurvivorContestRules,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -192,6 +195,40 @@ export interface GamePicksSurvivorView {
   usedParticipantIds: string[] | null;
 }
 
+/** A game setup's pick preview (#1612): its event, its unsaved rules and the trial picks. */
+export interface PreviewGamesInput {
+  sportEventId: string;
+  rules: PickEmContestRules | BracketContestRules | SurvivorContestRules;
+  picks: readonly WeekPrediction[];
+}
+
+/** One game of a pick preview, with the trial pick that stands on it. */
+export interface GamePreview extends Omit<GamePickGame, 'revealed' | 'pick' | 'pickScore'> {
+  pick: WeekPrediction | null;
+}
+
+/**
+ * A game setup's pick screen before its contest is saved (#1612): no contest, entry or pick
+ * stands behind it.
+ */
+export interface GamesPreview {
+  sportEventId: string;
+  selectionType: PredictionSelectionType;
+  mode: PickEmMode | null;
+  againstTheSpread: boolean;
+  tiePicksOffered: boolean;
+  pickedCount: number;
+  gameCount: number;
+  tiebreakerMatchId: string | null;
+  games: GamePreview[];
+}
+
+/**
+ * The contest a preview's games lock as: open, and not drawn, which is how its entries will pick
+ * once it opens.
+ */
+const OPENED_CONTEST = { status: ContestStatus.OPEN, drawnAt: undefined } as const;
+
 /** A change to a week's picks, with the picks that stand after it, which its status is judged on. */
 interface WeekChange {
   after: readonly WeekPrediction[];
@@ -200,9 +237,14 @@ interface WeekChange {
   tiebreakerValue?: number | null;
 }
 
-interface WeekContext {
-  contest: Contest;
-  configuration: ContestConfiguration | null;
+/** A game setup's rules: what a saved contest holds, and what a preview (#1612) is handed unsaved. */
+type GameRules = PickEmContestRules | BracketContestRules | SurvivorContestRules;
+
+/**
+ * What a game setup's rules make of one event, whether the contest is saved or only previewed
+ * (#1612): one computation, so a preview can never show a rule the saved week no longer has.
+ */
+interface WeekSetup {
   engine: PredictionEngine;
   selectionType: PredictionSelectionType;
   mode: PickEmMode | null;
@@ -219,16 +261,46 @@ interface WeekContext {
   seedOf: Map<string, number | null>;
   /** The field rows withdrawn after the draw (#704): a pick of one made before stands, and loses. */
   withdrawn: Set<string>;
-  entry: ContestEntry & { squadName: string };
   /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
   games: SportEventMatch[];
   /** The game whose total points the tiebreaker guesses, among `games`. */
   tiebreakerGame: SportEventMatch | null;
+}
+
+interface WeekContext extends WeekSetup {
+  contest: Contest;
+  configuration: ContestConfiguration | null;
+  entry: ContestEntry & { squadName: string };
   predictions: ContestEntryMatchPrediction[];
   /** The entry's other weeks, for an engine that reads them (survivor); else null. */
   season: PredictionSeason | null;
   ownEntry: boolean;
   now: Date;
+}
+
+/**
+ * One game as a pick screen draws it, for a saved entry's week and a setup's preview alike: when
+ * it kicks off, its real and predicted sides (a bracket's from the picks before it), and whether
+ * its pick is closed for the contest given, an opened one for a preview.
+ */
+function gameRow(
+  setup: Pick<WeekSetup, 'engine' | 'openingRound' | 'sportEvent' | 'window'>,
+  contest: Pick<Contest, 'status' | 'drawnAt'>,
+  team: (fieldId: string | null) => GamePickTeam | null,
+  match: SportEventMatch,
+  sides: PredictedSides | undefined,
+  now: Date,
+): Omit<GamePreview, 'pick'> {
+  const shownSides = sides ?? { home: match.homeSportEventParticipantId, away: match.awaySportEventParticipantId };
+  return {
+    match,
+    kickoff: match.scheduledDate ?? setup.sportEvent.startDate,
+    home: team(match.homeSportEventParticipantId),
+    away: team(match.awaySportEventParticipantId),
+    predictedHome: team(shownSides.home),
+    predictedAway: team(shownSides.away),
+    locked: !areMatchPicksOpen(setup.engine.pickWindow, contest, setup.window, match, setup.openingRound, now),
+  };
 }
 
 export class PredictionService {
@@ -611,18 +683,43 @@ export class PredictionService {
     if (!sportEvent) throw selectionErrors.eventNotInContest(sportEventId, contestId);
     const rules = configuration?.configJson;
     if (rules?.selectionType !== selectionType) throw selectionErrors.selectionConfigInvalid(contestId);
+    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    const now = this.now();
+
+    return {
+      ...setup,
+      contest,
+      configuration,
+      entry,
+      predictions,
+      season: setup.engine.readsEarlierWeeks
+        ? await this.loadSeason(contest, entry, { sportEvent, matches }, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
+        : null,
+      ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
+      now,
+    };
+  }
+
+  /**
+   * What a game setup's rules make of an event: the games an entry picks (a bracket's from its
+   * starting round, never a cancelled game), the mode and spread, whether ties may be picked, the
+   * window the picks close on, the seeds and withdrawals a bracket resolves with, and the
+   * tiebreaker game. A saved week and a setup's preview both start here.
+   */
+  private weekSetup(
+    rules: GameRules,
+    sportEvent: SportEvent,
+    matches: SportEventMatch[],
+    field: SportEventParticipant[],
+  ): WeekSetup {
     const games = rules.selectionType === SelectionType.BRACKET
       ? contestBracketGames(matches, rules.startsAtRound)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
-    const engine = getPredictionEngine(selectionType);
-    const now = this.now();
+    const engine = getPredictionEngine(rules.selectionType);
     const sportDefinition = (this.deps.sportDefinitionOf ?? getSportDefinition)(sportEvent.sport);
-
     return {
-      contest,
-      configuration,
       engine,
-      selectionType,
+      selectionType: rules.selectionType,
       mode: rules.selectionType === SelectionType.PICK_EM ? rules.mode : null,
       againstTheSpread: rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread,
       tiePicksOffered: engine.takesTiePicks && sportDefinition.pickEm?.tiePicks === true,
@@ -632,15 +729,8 @@ export class PredictionService {
       field,
       seedOf: knockoutSeeds(field),
       withdrawn: withdrawnRowIds(field, matches),
-      entry,
       games,
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
-      predictions,
-      season: engine.readsEarlierWeeks
-        ? await this.loadSeason(contest, entry, { sportEvent, matches }, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
-        : null,
-      ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
-      now,
     };
   }
 
@@ -690,14 +780,7 @@ export class PredictionService {
 
   private async buildView(context: WeekContext): Promise<GamePicksView> {
     const { contest, engine, sportEvent, window, openingRound, entry, games, now, ownEntry, field } = context;
-    const participants = await this.deps.participants.findByIds(field.map((row) => row.participantId));
-    const nameByParticipantId = new Map(participants.map((participant) => [participant.id, participant.name]));
-    const teamByFieldId = new Map(field.map((row) => [row.id, {
-      sportEventParticipantId: row.id,
-      participantId: row.participantId,
-      name: nameByParticipantId.get(row.participantId) ?? '',
-    }]));
-    const team = (fieldId: string | null) => (fieldId === null ? null : teamByFieldId.get(fieldId) ?? null);
+    const team = await this.teamLookup(field);
     const predictionByMatchId = new Map(context.predictions.map((prediction) => [prediction.sportEventMatchId, prediction]));
     const resolved = this.resolvePicks(context, context.predictions);
     const score = await this.scorePicks(context, resolved.kept);
@@ -708,16 +791,8 @@ export class PredictionService {
       const shown = ownEntry || revealed;
       const prediction = predictionByMatchId.get(match.id) ?? null;
       // Another team's predicted sides would show its picks, so until they are revealed it sees the game's own.
-      const sides: PredictedSides = (shown ? resolved.sides.get(match.id) : undefined)
-        ?? { home: match.homeSportEventParticipantId, away: match.awaySportEventParticipantId };
       return {
-        match,
-        kickoff: match.scheduledDate ?? sportEvent.startDate,
-        home: team(match.homeSportEventParticipantId),
-        away: team(match.awaySportEventParticipantId),
-        predictedHome: team(sides.home),
-        predictedAway: team(sides.away),
-        locked: !areMatchPicksOpen(engine.pickWindow, contest, window, match, openingRound, now),
+        ...gameRow(context, contest, team, match, shown ? resolved.sides.get(match.id) : undefined, now),
         revealed,
         pick: shown ? prediction : null,
         pickScore: shown && prediction !== null ? score?.picks.get(match.id) ?? null : null,
@@ -756,6 +831,74 @@ export class PredictionService {
       maxPossiblePoints: everyPickShown ? score?.maxPossiblePoints ?? null : null,
       games: viewGames,
     };
+  }
+
+  /**
+   * A game setup's pick screen before the contest is saved (#1612): the event's games as the
+   * setup's rules have an entry pick them, with the commissioner's trial picks on them. Each
+   * game's lock is the one it would have once the contest opens. It resolves the trial picks as a
+   * week resolves an entry's (a bracket's later games hold the teams the earlier picks put there,
+   * and a pick that no longer follows is dropped), and writes nothing. 404 for an unknown event,
+   * or a trial pick on a game the setup does not pick.
+   */
+  async previewGames(input: PreviewGamesInput): Promise<GamesPreview> {
+    const sportEvent = (await this.deps.sportEvents.findByIds([input.sportEventId])).at(0);
+    if (!sportEvent) throw selectionErrors.sportEventNotFound(input.sportEventId);
+    const { rules } = input;
+    const [matches, field] = await Promise.all([
+      this.deps.matches.findBySportEvent(sportEvent.id),
+      this.deps.field.findBySportEvent(sportEvent.id),
+    ]);
+    const team = await this.teamLookup(field);
+    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    const { engine, games } = setup;
+    const gameIds = new Set(games.map((game) => game.id));
+    const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventMatchId));
+    if (unknown) throw selectionErrors.gameNotFound(unknown.sportEventMatchId, sportEvent.id);
+
+    // A saved pick with a confidence value the pool does not take is refused; a trial one is
+    // dropped, as a tie pick the sport does not offer is, so the screen shows what would stand.
+    const resolved = engine.resolvePicks({
+      games,
+      predictions: input.picks.map((pick) => ({
+        ...pick,
+        confidence: engine.acceptsConfidence({ configuration: rules, confidence: pick.confidence, gameCount: games.length })
+          ? pick.confidence
+          : null,
+      })),
+      seedOf: setup.seedOf,
+      withdrawn: setup.withdrawn,
+    });
+    const kept = resolved.kept.filter((pick) => setup.tiePicksOffered || isTeamChoice(pick));
+    const pickByMatchId = new Map(kept.map((pick) => [pick.sportEventMatchId, pick]));
+    const now = this.now();
+
+    return {
+      sportEventId: sportEvent.id,
+      selectionType: setup.selectionType,
+      mode: setup.mode,
+      againstTheSpread: setup.againstTheSpread,
+      tiePicksOffered: setup.tiePicksOffered,
+      pickedCount: pickByMatchId.size,
+      gameCount: games.length,
+      tiebreakerMatchId: setup.tiebreakerGame?.id ?? null,
+      games: games.map((match) => ({
+        ...gameRow(setup, OPENED_CONTEST, team, match, resolved.sides.get(match.id), now),
+        pick: pickByMatchId.get(match.id) ?? null,
+      })),
+    };
+  }
+
+  /** Each field row as a game names its team, by row id: null for a side still to be decided. */
+  private async teamLookup(field: readonly SportEventParticipant[]): Promise<(fieldId: string | null) => GamePickTeam | null> {
+    const participants = await this.deps.participants.findByIds(field.map((row) => row.participantId));
+    const nameByParticipantId = new Map(participants.map((participant) => [participant.id, participant.name]));
+    const teamByFieldId = new Map(field.map((row) => [row.id, {
+      sportEventParticipantId: row.id,
+      participantId: row.participantId,
+      name: nameByParticipantId.get(row.participantId) ?? '',
+    }]));
+    return (fieldId) => (fieldId === null ? null : teamByFieldId.get(fieldId) ?? null);
   }
 
   /**
