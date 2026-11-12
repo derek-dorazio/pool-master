@@ -240,6 +240,9 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     fireEvent.click(screen.getByTestId('create-league-submit'));
 
     await screen.findByText('League code is already taken.');
+    // The refusal is the shared danger Notice, announced to screen readers, not a hand-drawn box.
+    expect(screen.getByRole('alert')).toHaveTextContent('League code is already taken.');
+    expect(screen.getByRole('alert')).not.toHaveClass('rounded-2xl');
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.failed',

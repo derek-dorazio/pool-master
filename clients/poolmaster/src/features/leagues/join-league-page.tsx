@@ -10,12 +10,14 @@ import {
   Chip,
   ErrorState,
   FormField,
-  Heading,
   IconPalette,
   Input,
   LinkButton,
   LoadingState,
   PublicInviteJoinPage,
+  SectionCard,
+  Text,
+  Tile,
 } from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
 import { describeUnusableInvitation } from './unusable-invitation';
@@ -322,13 +324,14 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
           {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
         </div>
 
-        <div className="rounded-3xl border border-border bg-background p-4 sm:p-5">
-          <Heading level={3} variant="card" size="base">Your team</Heading>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later.
-          </p>
-
-          <div className="mt-5 space-y-4">
+        <SectionCard
+          headingLevel={3}
+          help="Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later."
+          padded
+          testId="join-league-your-team"
+          title="Your team"
+        >
+          <div className="space-y-4">
             <FormField label="Your team name">
               <Input
                 data-testid="join-league-team-name"
@@ -340,15 +343,13 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
 
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
-              <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4">
+              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm" radius="sm">
                 <TeamAvatar iconKey={selectedIconKey} size="lg" />
                 <div className="min-w-0">
-                  <div className="text-xs uppercase text-muted-foreground">
-                    Selected icon
-                  </div>
-                  <div className="mt-1 text-base font-medium text-foreground">{selectedIcon.label}</div>
+                  <Text as="div" variant="caption">Selected icon</Text>
+                  <Text as="div" size="base" variant="strong">{selectedIcon.label}</Text>
                 </div>
-              </div>
+              </Tile>
               <IconPalette
                 aria-label="Your icon"
                 onSelect={setSelectedIconKey}
@@ -360,7 +361,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
               />
             </fieldset>
           </div>
-        </div>
+        </SectionCard>
       </div>
 
       {invitationQuery.data && !unusableInvitationMessage ? (

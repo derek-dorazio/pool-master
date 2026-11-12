@@ -170,6 +170,13 @@ describe('ci-changed-areas: UI batch pull requests', () => {
     ]), []);
   });
 
+  it('accepts a sweep that lowers the card-corner baseline, like the other rule baselines', () => {
+    assert.deepEqual(uiBatchViolations([
+      'clients/poolmaster/src/features/contests/pick-em-games.tsx',
+      'scripts/card-corner-baseline.json',
+    ]), []);
+  });
+
   it('refuses shared, service, test, script and dependency changes (the web app\'s package.json too), which need the full suites', () => {
     const refused = [
       'packages/shared/domain/brand.ts',

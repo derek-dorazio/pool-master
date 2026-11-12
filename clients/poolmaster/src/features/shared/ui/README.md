@@ -160,7 +160,10 @@ hand-build a heading inside a `Tile`. A section inside another section's padded
 body titles itself one level down (`headingLevel={4}` under a level 3). Data is
 never a raw `ul`/`li`: rows are `SectionRow`s, and a list that is not rows is a
 named composite in its feature folder, such as `FeatureList` in `features/plans`
-for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13).
+for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13). A box
+inside a section (a selected icon, the team you'll co-own) is a `Tile` with
+`radius="sm"`, the same 8px corner as `SectionCard` and `Notice`; a page never
+types `rounded-2xl`, `rounded-3xl` or `rounded-4xl` itself.
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and

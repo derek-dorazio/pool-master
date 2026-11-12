@@ -5,6 +5,8 @@ import { Modal } from "./modal";
 type ConfirmDialogProps = {
   cancelLabel?: string;
   children?: ReactNode;
+  /** The close button's accessible name; the modal's own default when left out. */
+  closeLabel?: string;
   confirmLabel: string;
   confirmTestId?: string;
   description: ReactNode;
@@ -23,6 +25,7 @@ type ConfirmDialogProps = {
 export function ConfirmDialog({
   cancelLabel = "Cancel",
   children,
+  closeLabel,
   confirmLabel,
   confirmTestId,
   description,
@@ -39,6 +42,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal
+      closeLabel={closeLabel}
       description={description}
       footer={(
         <DialogActions

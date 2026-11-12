@@ -355,6 +355,20 @@ describe('Joining a league from an invite link', () => {
     expect(acceptInvitationMock).not.toHaveBeenCalled();
   });
 
+  it('puts the team name and icon in a titled Your team section, with how teams work behind its (?), not in a hand-drawn box', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));
+
+    renderJoinLeaguePage();
+
+    const section = await screen.findByRole('region', { name: 'Your team' });
+    expect(section).toHaveClass('rounded-lg');
+    expect(screen.getByTestId('join-league-your-team-help')).toBeInTheDocument();
+    expect(screen.queryByText(/Every member plays in the league as a team/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('join-league-selected-icon')).toHaveClass('rounded-lg');
+    expect(screen.getByTestId('invitation-context-card')).toHaveClass('rounded-lg');
+  });
+
   it('will not join with a blank name in this league', async () => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview())));

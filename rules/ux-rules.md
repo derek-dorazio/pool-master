@@ -440,6 +440,17 @@ administration area (root admin included), reusing the same shared components.
     the contest lifecycle panel that #1609 replaces; no other Commissioner
     tools file may be added.
 
+    Pages never draw their own rounded box (#1591). A box that holds content
+    is a `SectionCard` (titled) or a `Tile` (untitled, `radius="sm"` for the
+    shared 8px corner inside a section), a box telling the user something
+    they must know is a `Notice`, and a clickable box is a `Button` or a link
+    row; a choice in a dialog is a `ConfirmDialog` with Cancel and its one
+    action. `npm run rules:check:card-corners` counts `rounded-2xl`,
+    `rounded-3xl` and `rounded-4xl` outside `features/shared/ui`; its
+    baseline, `scripts/card-corner-baseline.json`, lists the pages still
+    waiting for their cleanup (the picks pages #1579 rebuilds among them) and
+    only ever shrinks.
+
 ## 13. Event Pages
 
 An event page (`/play/<sport>/<slug>`) is the public page for one event a fan would name

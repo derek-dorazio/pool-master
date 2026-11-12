@@ -10,12 +10,12 @@ import {
   Button,
   Chip,
   ErrorState,
-  Eyebrow,
-  Heading,
   LinkButton,
   LoadingState,
   PublicInviteJoinPage,
+  SectionCard,
   Text,
+  Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -191,29 +191,26 @@ export function JoinTeamOwnerPage() {
               message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
               title="Co-owner invite"
             />
-            <div className="rounded-3xl border border-border bg-background p-5">
+            <SectionCard headingLevel={3} padded testId="team-invite-joining" title="What you're joining">
               <div className="flex items-center gap-4">
                 <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
-                <div>
-                  <Heading level={3} variant="card" size="sm">What you&apos;re joining</Heading>
-                  <Text as="p" className="mt-1" variant="meta">
-                    You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
-                    <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
-                  </Text>
-                </div>
+                <Text as="p" variant="meta">
+                  You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
+                  <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
+                </Text>
               </div>
-            </div>
+            </SectionCard>
           </div>
         ) : null}
         {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
-          <div className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5" data-testid="team-invite-register">
-            <div>
-              <Heading level={3} variant="card" size="sm">Create your account</Heading>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your account uses the email this invitation was sent to, so there is nothing to
-                confirm — you&apos;ll land straight in the league.
-              </p>
-            </div>
+          <SectionCard
+            className="mt-5"
+            headingLevel={3}
+            help="Your account uses the email this invitation was sent to, so there is nothing to confirm. You'll land straight in the league."
+            padded
+            testId="team-invite-register"
+            title="Create your account"
+          >
             <SignUpForm
               errorMessages={{
                 // The one case worth its own words: the invited address already has an
@@ -228,7 +225,7 @@ export function JoinTeamOwnerPage() {
               submitLabel="Create account and join"
               mode={{ kind: 'teamInvite', inviteCode }}
             />
-          </div>
+          </SectionCard>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
           <LinkButton
@@ -261,7 +258,7 @@ export function JoinTeamOwnerPage() {
         This invitation makes you a co-owner alongside the people already playing under this name.
       </p>
 
-      <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
+      <div className="mt-6 space-y-4 text-sm text-muted-foreground">
         {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="team-owner-invite-loading" /> : null}
         {invitationQuery.isError ? (
           <ErrorState
@@ -279,10 +276,10 @@ export function JoinTeamOwnerPage() {
               message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
               title="Ready to join"
             />
-            <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+            <Tile className="flex items-center gap-4" data-testid="team-invite-co-own" padding="sm" radius="sm">
               <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
               <div className="min-w-0">
-                <Eyebrow tone="muted">You&apos;ll co-own</Eyebrow>
+                <Text as="div" variant="caption">You&apos;ll co-own</Text>
                 <Text as="div" size="base" truncate variant="strong" weight="semibold">
                   {invitationQuery.data.team.name}
                 </Text>
@@ -290,7 +287,7 @@ export function JoinTeamOwnerPage() {
                   League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
                 </Text>
               </div>
-            </div>
+            </Tile>
           </div>
         ) : null}
         {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}

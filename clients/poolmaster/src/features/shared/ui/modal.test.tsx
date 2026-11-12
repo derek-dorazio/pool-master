@@ -39,4 +39,14 @@ describe("pool-master-3lo.3: shared Modal primitive", () => {
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
+
+  it("announces its description as the dialog's accessible description even when no descriptionId is passed", () => {
+    render(
+      <Modal description="They will leave the league." onOpenChange={() => undefined} open title="Remove owner">
+        <p>Body</p>
+      </Modal>,
+    );
+
+    expect(screen.getByRole("dialog", { name: "Remove owner" })).toHaveAccessibleDescription("They will leave the league.");
+  });
 });

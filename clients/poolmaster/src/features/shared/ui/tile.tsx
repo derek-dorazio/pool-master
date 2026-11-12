@@ -28,6 +28,8 @@ const tileVariants = cva("border", {
       lg: "p-5 sm:p-8",
     },
     radius: {
+      /** The shared 8px corner that `SectionCard` and `Notice` use: a box inside a page section. */
+      sm: "rounded-lg",
       md: "rounded-2xl",
       lg: "rounded-3xl",
       xl: "rounded-3xl sm:rounded-4xl",
