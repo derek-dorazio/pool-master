@@ -1,6 +1,6 @@
 import { getSportDefinition, MatchResultSource, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto, SportEventMatchDto } from '@/lib/api';
-import { Alert, Heading, SectionCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
+import { Notice, Heading, SectionCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
@@ -39,9 +39,9 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
 
   if (bracketQuery.isError || fieldQuery.isError) {
     return (
-      <Alert data-testid="root-admin-bracket-error" title="Couldn't load the bracket" tone="danger">
+      <Notice data-testid="root-admin-bracket-error" title="Couldn't load the bracket" tone="danger">
         {extractErrorMessage(bracketQuery.error ?? fieldQuery.error, { fallback: 'Try again in a moment.' })}
-      </Alert>
+      </Notice>
     );
   }
   if (!bracketQuery.data || !fieldQuery.data) {

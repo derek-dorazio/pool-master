@@ -9,7 +9,7 @@ import {
 import type { ReactNode } from 'react';
 import type { SportEventDto } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Chip,
   ChoiceCard,
   formatDateTimeDisplay,
@@ -85,7 +85,7 @@ export function SportPicker({ onChange, value }: { onChange: (sport: Sport) => v
 export function NoEligibleEventsAlert({ sport }: { sport: SportDefinition }) {
   const { event } = sport.vocabulary;
   return (
-    <Alert
+    <Notice
       data-testid="create-contest-no-events"
       title={`No ${sport.name.toLowerCase()} events are currently available for contest setup.`}
       tone="warning"
@@ -94,7 +94,7 @@ export function NoEligibleEventsAlert({ sport }: { sport: SportDefinition }) {
         An event appears here once an admin releases it for contests, until it starts. Check back
         when the next {event.one} is released.
       </p>
-    </Alert>
+    </Notice>
   );
 }
 

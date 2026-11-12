@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Input, SectionCard, SectionEmpty, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Notice, Button, Input, SectionCard, SectionEmpty, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -172,7 +172,7 @@ export function TierBoard({
       try {
         await assignmentsMutation.mutateAsync();
       } catch {
-        // Assignments failed — its own error Alert covers it; do not attempt
+        // Assignments failed — its own error Notice covers it; do not attempt
         // the price PATCH so the two steps can't half-land.
         return;
       }
@@ -338,9 +338,9 @@ export function TierBoard({
       ) : null}
     >
       {saveError ? (
-        <Alert data-testid="root-admin-tier-board-error" tone="danger">
+        <Notice data-testid="root-admin-tier-board-error" tone="danger">
           {saveError}
-        </Alert>
+        </Notice>
       ) : null}
 
       <div className="flex gap-4 overflow-x-auto pb-2">

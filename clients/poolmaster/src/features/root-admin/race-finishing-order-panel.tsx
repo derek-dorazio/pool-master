@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   formatOrdinal,
   BulkUploadPanel,
   Checkbox,
@@ -258,9 +258,9 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           renderPreview={(rows) => (
             <div className="space-y-3">
               {orderErrors.map((orderError) => (
-                <Alert data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
+                <Notice data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
                   {orderErrorMessages(vocabulary)[orderError]}
-                </Alert>
+                </Notice>
               ))}
               <UploadPreviewTable
                 change={{
@@ -305,11 +305,11 @@ export function RaceFinishingOrderPanel({ event }: { event: SportEventDto }) {
   return (
     <div className="space-y-6" data-testid="root-admin-race-results-panel">
       {fieldQuery.isError ? (
-        <Alert data-testid="root-admin-race-result-field-error" tone="danger">
+        <Notice data-testid="root-admin-race-result-field-error" tone="danger">
           {extractErrorMessage(fieldQuery.error, {
             fallback: 'We could not load the field, so the current result is not shown and a finishing order cannot be loaded.',
           })}
-        </Alert>
+        </Notice>
       ) : null}
       {fieldQuery.isSuccess ? (
         <>

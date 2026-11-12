@@ -1,7 +1,7 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
 import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
-import { Heading, LinkButton, Tile } from '@/features/shared/ui';
+import { Heading, HelpTip, LinkButton, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';
 
 interface ContestTypeTileCardProps {
@@ -36,7 +36,12 @@ export function ContestTypeTileCard({ tile, createPathFor }: ContestTypeTileCard
               const variationPath = createPathFor?.(variation);
               return (
                 <li className="flex flex-wrap items-center justify-between gap-2 text-sm" key={variation.id}>
-                  <span title={variation.description}>{variation.name}</span>
+                  <span className="flex items-center">
+                    {variation.name}
+                    <HelpTip className="-my-2" label={`How ${variation.name} works`} testId={`contest-type-${variation.templateKey}-help`}>
+                      {variation.description}
+                    </HelpTip>
+                  </span>
                   {variationPath ? (
                     <LinkButton
                       data-testid={`contest-type-create-${variation.templateKey}`}

@@ -10,6 +10,7 @@
 import { RuleTester } from 'eslint';
 import tseslintParser from '@typescript-eslint/parser';
 
+import noAdHocMoreInfo from '../no-ad-hoc-more-info.mjs';
 import noBareUiControls from '../no-bare-ui-controls.mjs';
 import noButtonRowOverride from '../no-button-row-override.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
@@ -102,6 +103,24 @@ ruleTester.run('no-mocked-api', noMockedApi, {
       code: "jest.mock('@/lib/api');",
       errors: [{ messageId: 'mockedApi' }],
     },
+  ],
+});
+
+ruleTester.run('no-ad-hoc-more-info', noAdHocMoreInfo, {
+  valid: [
+    // The four patterns come from shared/ui.
+    "import { DetailsPeek, HelpTip } from '@/features/shared/ui';",
+    // A component's title prop is a heading, not a tooltip.
+    'const a = <SectionCard title="Standings" />;',
+    'const b = <Notice title="Invite failed">Two bounced.</Notice>;',
+    // Other attributes on DOM elements are fine.
+    'const c = <span aria-label="Event winner" />;',
+  ],
+  invalid: [
+    { code: "import { InfoPopover } from '@/features/shared/ui';", errors: [{ messageId: 'infoPopover' }] },
+    { code: "import { InfoPopover as Pop } from './info-popover';", errors: [{ messageId: 'infoPopover' }] },
+    { code: 'const a = <span title="Set when the contest was made">x</span>;', errors: [{ messageId: 'titleTooltip' }] },
+    { code: 'const b = <abbr title={text}>W</abbr>;', errors: [{ messageId: 'titleTooltip' }] },
   ],
 });
 

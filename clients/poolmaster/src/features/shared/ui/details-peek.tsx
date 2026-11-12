@@ -45,7 +45,7 @@ export function DetailsPeek({
   );
 }
 
-export type PeekFact = { label: string; value: ReactNode };
+export type PeekFact = { label: string; testId?: string; value: ReactNode };
 
 /**
  * A peek card: the thing's name, a short subtitle, two to four label and value facts, and an
@@ -72,7 +72,7 @@ export function PeekCard({
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3">
         {facts.map((fact) => (
-          <div className="contents" key={fact.label}>
+          <div className="contents" data-testid={fact.testId} key={fact.label}>
             <dt className="text-muted-foreground">{fact.label}</dt>
             <dd className="m-0 font-semibold text-foreground">{fact.value}</dd>
           </div>

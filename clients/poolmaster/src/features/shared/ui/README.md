@@ -90,8 +90,8 @@ A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
 
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
-straight on the page (never in a card) with an optional `titleAside` such as an
-info icon, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
+straight on the page (never in a card) with an optional `titleAside` such as a
+`HelpTip`, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
 · 2 active contests"), and a right slot: `actions` for at most two small
 buttons, or `search` for the page's search box, which takes a full-width line on a
 phone. The `status` slot holds one compact chip, a status, count or summary
@@ -120,8 +120,8 @@ type font size, weight, case or text colour classes (`rules/react-ui-rules.md` �
 Styling Discipline*).
 
 A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
-`SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
-that holds the section's explanation, and an optional `trailing` slot for one
+`SectionTitle` in a ruled bar (house uppercase italic, an optional `help` (?)
+`HelpTip` that holds how the section works, and an optional `trailing` slot for one
 badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
@@ -145,13 +145,14 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 `PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
 lives in `features/event-pages/components`.
 
-`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
-callout opens on mouse hover or on a tap, for a phone. It is the base the "show
-more" parts build on, never used on a page by itself. `DetailsPeek` is the (i) after
-the name of one thing (an entry, an event, a golfer): it opens a `PeekCard` after a
-short hover delay, so scanning a list does not flash every row, and mounts the card
-only when it opens, so a peek that reads data reads it then (`EntryDetailsPeek` in
-`features/contests` reads an entry's team and owners this way).
+Extra information is one of the four more-info pieces, chosen by the question it
+answers (`rules/ux-rules.md` §15 *Showing More*): `HelpTip` (?) says how something
+works, `DetailsPeek` (i) with its `PeekCard` says who or what one thing is,
+`ExpandableRow` opens a row's breakdown on a click, and `Notice` holds what the reader
+must know now. `InfoPopover` is their internal base and is not exported.
+`DetailsPeek` opens after a short hover delay, so scanning a list does not flash every
+row, and mounts its card only when it opens, so a peek that reads data reads it then
+(`EntryDetailsPeek` in `features/contests` reads an entry's team and owners this way).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
@@ -179,7 +180,7 @@ success and error feedback, query invalidation, modal close behavior, optional
 navigation, and lifecycle logging so pages do not each re-create the same
 mutation ceremony.
 
-Use inline `Alert`, `ServerErrorBar`, or `FormModal` errors for blocking form
+Use inline `Notice`, `ServerErrorBar`, or `FormModal` errors for blocking form
 validation that the user must fix before submitting. Use mutation action toasts
 for completed create, update, lifecycle, copy, invite, and delete outcomes where
 the page can keep the user oriented after the mutation finishes. Avoid raw

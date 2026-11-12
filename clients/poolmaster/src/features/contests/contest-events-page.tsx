@@ -185,7 +185,7 @@ function ContestEventsForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      description={removalsLocked
+      help={removalsLocked
         ? 'The contest has started, so you can add events but not remove them. Entries make picks for each event before it starts.'
         : 'Choose the events this contest covers. Entries make picks for each event before it starts, and the contest is final when the last one ends.'}
       errorMessage={saveMutation.isError

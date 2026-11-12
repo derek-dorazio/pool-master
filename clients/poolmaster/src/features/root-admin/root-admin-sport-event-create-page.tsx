@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Callout,
+  Notice,
   LinkButton,
   SegmentedControl,
 } from '@/features/shared/ui';
@@ -57,7 +57,7 @@ export function RootAdminSportEventCreatePage() {
         className="space-y-4"
         data-testid="root-admin-sport-event-create-page"
       >
-        <Callout tone="warning">
+        <Notice tone="warning">
           <p className="font-medium">
             Create a {sportLeagueNoun.one} before creating a {event.one}
           </p>
@@ -74,7 +74,7 @@ export function RootAdminSportEventCreatePage() {
               Go to {upperFirst(sportLeagueNoun.many)}
             </LinkButton>
           </div>
-        </Callout>
+        </Notice>
       </section>
     );
   }

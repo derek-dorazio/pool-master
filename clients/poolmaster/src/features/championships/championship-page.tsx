@@ -56,7 +56,7 @@ export function ChampionshipPage() {
   return (
     <div className="space-y-6" data-testid="championship">
       <SectionCard
-        info={championship.isOver ? undefined : `The trophy is presented on 1 January. Contests still live then count toward ${year + 1}.`}
+        help={championship.isOver ? undefined : `The trophy is presented on 1 January. Contests still live then count toward ${year + 1}.`}
         padded
         testId="championship-summary"
         title={championship.name}
@@ -91,7 +91,7 @@ export function ChampionshipPage() {
       </MetricGrid>
 
       <SectionCard
-        info={league ? (
+        help={league ? (
           <>
             Points table: {describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}.
             Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
@@ -109,7 +109,7 @@ export function ChampionshipPage() {
       </SectionCard>
 
       <SectionCard
-        info={filter ? undefined : 'Tap a count in the table to see its contests.'}
+        help={filter ? undefined : 'Tap a count in the table to see its contests.'}
         title={describeContestResultFilter(filter, filteredSquadName, year)}
         titleTestId="championship-contests-heading"
         trailing={filter ? (

@@ -3,7 +3,7 @@ import { undoEmailChange } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { Alert, Button, LinkButton, SectionCard } from "@/features/shared/ui";
+import { Notice, Button, LinkButton, SectionCard } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { useLinkToken } from "./use-link-token";
@@ -80,7 +80,7 @@ export function UndoEmailChangePage() {
         it, you included, and its password is cleared, so you&apos;ll set a new one.
       </p>
       {undoMutation.isError ? (
-        <Alert data-testid="undo-email-change-error" tone="danger">
+        <Notice data-testid="undo-email-change-error" tone="danger">
           {extractErrorMessage(undoMutation.error, {
             codeMessages: {
               EMAIL_CHANGE_UNDO_ADDRESS_TAKEN:
@@ -88,7 +88,7 @@ export function UndoEmailChangePage() {
               EMAIL_CHANGE_UNDO_RATE_LIMITED: "Too many tries. Wait a minute and try again.",
             },
           })}
-        </Alert>
+        </Notice>
       ) : null}
       <Button
         data-testid="undo-email-change-submit"

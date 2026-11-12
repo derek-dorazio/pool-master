@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { extractErrorMessage, type ExtractErrorMessageOptions } from "@/lib/errors";
-import { Alert } from "./alert";
+import { Notice } from "./notice";
 import { Button } from "./button";
 
 export type ServerErrorDisplayProps = ExtractErrorMessageOptions & {
@@ -31,7 +31,7 @@ export function ServerErrorBar({
   ) : null;
 
   return (
-    <Alert
+    <Notice
       action={action ?? retryAction}
       className={className}
       data-testid={testId}
@@ -39,6 +39,6 @@ export function ServerErrorBar({
       tone="danger"
     >
       <p>{extractErrorMessage(error, { codeMessages, fallback })}</p>
-    </Alert>
+    </Notice>
   );
 }

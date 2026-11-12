@@ -359,7 +359,7 @@ export function HowToPlayPage() {
       ) : (
         <SectionCard
           bare
-          info={chosenLeague
+          help={chosenLeague
             ? `Every way to play ${chosenLeague.name}. Tap one to see how it works.`
             : chosenSport ? `Every way to play ${chosenSport.name.toLowerCase()}. Tap one to see how it works.` : 'Tap one to see how it works, or pick a league.'}
           testId="how-to-play-formats"

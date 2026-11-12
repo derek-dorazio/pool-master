@@ -313,7 +313,11 @@ export default tseslint.config(
       '**/*.spec.tsx',
     ],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-bare-ui-controls': 'error', 'poolmaster/no-button-row-override': 'error' },
+    rules: {
+      'poolmaster/no-ad-hoc-more-info': 'error',
+      'poolmaster/no-bare-ui-controls': 'error',
+      'poolmaster/no-button-row-override': 'error',
+    },
   },
   {
     // #1587: values on screen are written by the shared format module, in the viewer's locale.

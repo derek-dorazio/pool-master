@@ -170,7 +170,7 @@ function EditContestForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      description="The format is fixed once the contest exists. Events are added from the contest's Events section."
+      help="The format is fixed once the contest exists. Events are added from the contest's Events section."
       errorMessage={errorMessage}
       isPending={saveMutation.isPending}
       onSubmit={(submitEvent) => {

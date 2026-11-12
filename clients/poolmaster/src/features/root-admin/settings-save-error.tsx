@@ -1,4 +1,4 @@
-import { Alert, Button } from '@/features/shared/ui';
+import { Notice, Button } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 
 /**
@@ -25,7 +25,7 @@ export function SettingsSaveError({
     return null;
   }
   return (
-    <Alert
+    <Notice
       action={conflicted ? (
         <Button onClick={() => void onLoadLatest()} type="button" variant="secondary">
           {loadLabel}
@@ -35,6 +35,6 @@ export function SettingsSaveError({
       tone="danger"
     >
       {extractErrorMessage(error, { fallback })}
-    </Alert>
+    </Notice>
   );
 }

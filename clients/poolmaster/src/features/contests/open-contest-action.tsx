@@ -4,7 +4,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { entryWriteKeys } from './use-contest-entries';
 
@@ -93,12 +93,12 @@ export function OpenContestAction({
         title="Open this contest to the league?"
       >
         {openContestMutation.isError ? (
-          <Alert data-testid="contest-open-error" tone="danger">
+          <Notice data-testid="contest-open-error" tone="danger">
             {extractErrorMessage(openContestMutation.error, {
               codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
               fallback: 'We could not open that contest. Please try again.',
             })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </>

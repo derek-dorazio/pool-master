@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
-  Alert,
+  Notice,
   formatDateDisplay,
   IconAvatar,
   LinkButton,
@@ -74,10 +74,10 @@ export function LeagueSettingsPage() {
   return (
     <div className="space-y-8" data-testid="league-settings-page">
       {isInactive ? (
-        <Alert data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
+        <Notice data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
           Members can still see standings and history. Activate the league in the danger zone to
           make changes again.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SectionCard
@@ -92,7 +92,7 @@ export function LeagueSettingsPage() {
             Edit
           </LinkButton>
         )}
-        info="What members see at the top of League Home."
+        help="What members see at the top of League Home."
         testId="league-settings-general"
         title="General"
       >
@@ -148,7 +148,7 @@ export function LeagueSettingsPage() {
               Edit
             </LinkButton>
           )}
-          info="What each finishing place earns toward the championship and every sports league cup."
+          help="What each finishing place earns toward the championship and every sports league cup."
           testId="league-settings-championships"
           title="Championships"
         >
@@ -195,7 +195,7 @@ export function LeagueSettingsPage() {
               Edit
             </LinkButton>
           )}
-          info={describeEventEmailsSection(league)}
+          help={describeEventEmailsSection(league)}
           testId="league-settings-event-emails"
           title="Event emails"
         >
@@ -238,7 +238,7 @@ export function LeagueSettingsPage() {
             Change
           </LinkButton>
         )}
-        info="What the league can do. Every plan is free for now, and members never see which plan it is."
+        help="What the league can do. Every plan is free for now, and members never see which plan it is."
         testId="league-settings-plan"
         title="Plan"
       >

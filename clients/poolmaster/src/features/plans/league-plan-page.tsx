@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -126,9 +126,9 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                   </SectionNote>
                 ) : null}
                 {saveMutation.isError ? (
-                  <Alert data-testid="league-plan-confirm-error" tone="danger">
+                  <Notice data-testid="league-plan-confirm-error" tone="danger">
                     {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
-                  </Alert>
+                  </Notice>
                 ) : null}
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -175,7 +175,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
             }}
           />
 
-          <SectionCard bare info="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
+          <SectionCard bare help="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
               currentPlan={current.plan}
@@ -281,7 +281,7 @@ function PlanChangeWarnings({
   return (
     <div className="space-y-3">
       {effects.entriesLimit !== null ? (
-        <Alert data-testid="league-plan-confirm-entries" tone="warning">
+        <Notice data-testid="league-plan-confirm-entries" tone="warning">
           <ul className="space-y-1">
             {named.map((contest) => (
               <li key={contest.contestId}>{`${contest.name} has ${formatCount(contest.entryCount, 'entry', locale, 'entries')}.`}</li>
@@ -291,12 +291,12 @@ function PlanChangeWarnings({
           <p className="mt-2">
             {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
           </p>
-        </Alert>
+        </Notice>
       ) : null}
       {effects.sportLeaguesOver ? (
-        <Alert data-testid="league-plan-confirm-sport-leagues" tone="warning">
+        <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
           {`This year's contests use ${formatCount(effects.sportLeaguesOver.used, 'sports league', locale)}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests this year can use only these.`}
-        </Alert>
+        </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (
         <div className="text-sm" data-testid="league-plan-confirm-hidden">

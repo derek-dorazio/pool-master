@@ -72,7 +72,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
           {group.source === 'stored' ? 'Saved' : 'Defaults'}
         </StatusBadge>
       )}
-      info={group.description}
+      help={group.description}
       testId={`root-admin-settings-group-${group.key}`}
       title={group.title}
     >

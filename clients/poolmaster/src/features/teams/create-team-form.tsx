@@ -53,7 +53,7 @@ export function CreateTeamForm({
   return (
     <FormPage
       cancelTo={buildLeaguePath(leagueCode)}
-      description="Every member plays in this league as a team, with a name and an icon of their choosing. You can change both later."
+      help="Every member plays in this league as a team, with a name and an icon of their choosing. You can change both later."
       {...formPageSave(form, createMutation, 'We could not save your team.')}
       isSubmitDisabled={isInactiveLeague}
       pendingLabel="Creating..."

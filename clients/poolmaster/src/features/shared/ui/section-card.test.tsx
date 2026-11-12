@@ -50,12 +50,12 @@ describe("SectionCard", () => {
 
   it("tells a danger zone's reader that its actions confirm first, unless the zone says otherwise", () => {
     const { rerender } = render(<SectionCard testId="card" tone="danger"><p>Body</p></SectionCard>);
-    fireEvent.click(screen.getByTestId("card-info"));
-    expect(screen.getByTestId("card-info-callout")).toHaveTextContent("Each of these asks you to confirm.");
+    fireEvent.click(screen.getByTestId("card-help"));
+    expect(screen.getByTestId("card-help-callout")).toHaveTextContent("Each of these asks you to confirm.");
 
-    rerender(<SectionCard info="Leaving asks you to confirm." testId="card" title="Leave" tone="danger"><p>Body</p></SectionCard>);
+    rerender(<SectionCard help="Leaving asks you to confirm." testId="card" title="Leave" tone="danger"><p>Body</p></SectionCard>);
     expect(screen.getByRole("heading", { name: "Leave" })).toBeVisible();
-    expect(screen.getByTestId("card-info-callout")).toHaveTextContent("Leaving asks you to confirm.");
+    expect(screen.getByTestId("card-help-callout")).toHaveTextContent("Leaving asks you to confirm.");
   });
 
   it("renders an h3 heading with its test id when asked for heading level 3", () => {
@@ -87,34 +87,34 @@ describe("SectionCard", () => {
   });
 });
 
-describe("SectionCard info", () => {
-  it("names the info icon after the section's test id, so two sections on a page keep apart", () => {
+describe("SectionCard help", () => {
+  it("names the (?) after the section's test id, so two sections on a page keep apart", () => {
     render(
       <>
-        <SectionCard info="What members see." testId="general" title="General"><p>a</p></SectionCard>
-        <SectionCard info="What each place earns." testId="cups" title="Championships"><p>b</p></SectionCard>
+        <SectionCard help="What members see." testId="general" title="General"><p>a</p></SectionCard>
+        <SectionCard help="What each place earns." testId="cups" title="Championships"><p>b</p></SectionCard>
       </>,
     );
 
-    fireEvent.click(screen.getByTestId("cups-info"));
-    expect(screen.getByTestId("cups-info-callout")).toHaveTextContent("What each place earns.");
-    expect(screen.queryByTestId("general-info-callout")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("cups-help"));
+    expect(screen.getByTestId("cups-help-callout")).toHaveTextContent("What each place earns.");
+    expect(screen.queryByTestId("general-help-callout")).not.toBeInTheDocument();
   });
 });
 
 describe("SectionTitle", () => {
-  it("shows its explanation behind the info icon, not on the page", () => {
-    render(<SectionTitle info="Finished ones are under Past." testId="title" title="Current contests" />);
+  it("shows how the section works behind a (?) help tip, not on the page", () => {
+    render(<SectionTitle help="Finished ones are under Past." testId="title" title="Current contests" />);
 
     expect(screen.queryByText("Finished ones are under Past.")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "About this section" }));
-    expect(screen.getByTestId("title-info-callout")).toHaveTextContent("Finished ones are under Past.");
+    fireEvent.click(screen.getByRole("button", { name: "How this section works" }));
+    expect(screen.getByTestId("title-help-callout")).toHaveTextContent("Finished ones are under Past.");
   });
 
-  it("shows no info icon without an explanation", () => {
+  it("shows no (?) without help text", () => {
     render(<SectionTitle title="Yours" />);
 
-    expect(screen.queryByRole("button", { name: "About this section" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "How this section works" })).not.toBeInTheDocument();
   });
 
   it("puts the trailing badge or count in the title bar beside the title", () => {

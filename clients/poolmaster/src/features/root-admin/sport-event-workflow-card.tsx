@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { transitionEvent, updateEvent } from '@/lib/api';
 import {
   Button,
-  Callout,
+  Notice,
   ConfirmationModal,
   formatDateTimeDisplay,
   LinkButton,
@@ -130,10 +130,10 @@ export function SportEventWorkflowCard({
             </Button>
           ))
         ) : (
-          <Callout tone="info">
+          <Notice tone="info">
             No lifecycle transitions are available from{' '}
             {formatSportEventStatus(tournament.status)} right now.
-          </Callout>
+          </Notice>
         )}
       </div>
 
