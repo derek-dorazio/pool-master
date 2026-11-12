@@ -4,16 +4,16 @@
  *   npm run balldontlie:contract-check -- [--tournament <id>] [--game-event <scope>] [--update-spec]
  *
  * 1. Downloads the vendor's published document for each league the adapter reads (PGA TOUR, NFL,
- *    NCAAB, NCAAW, NBA, EPL and FIFA) and compares it with the vendored copy the contract tests run against
+ *    NCAAF, NCAAB, NCAAW, NBA, EPL and FIFA) and compares it with the vendored copy the contract tests run against
  *    (tests/fixtures/balldontlie/openapi/<league>.yml). A difference fails the check;
  *    `--update-spec` writes the new copy instead, and the contract tests then say whether
  *    anything the adapter reads moved.
  * 2. With BALLDONTLIE_API_KEY set, runs the adapter itself against the live API: the health
- *    read, this season's tournaments, NFL events, NCAA men's and women's tournaments and the NBA playoffs, Premier
- *    League matchweeks and the World Cup's knockout bracket, every NFL, NBA and Division I basketball team, men's and women's, the Premier
+ *    read, this season's tournaments, NFL events and College Football Playoffs, NCAA men's and women's tournaments and the NBA playoffs, Premier
+ *    League matchweeks and the World Cup's knockout bracket, every NFL, college football, NBA and Division I basketball team, men's and women's, the Premier
  *    League's teams, the World Cup's nations, for `--tournament` (a finished stroke-play tournament is
  *    best) its field and its scores, and for `--game-event` (`nfl-2025-postseason`,
- *    `ncaab-2025-tournament`, `ncaaw-2025-tournament`, `nba-2025-postseason`, `nhl-2024-postseason`, `mlb-2025-postseason`, `wnba-2025-postseason`, `epl-2026-matchweek-11` or `fifa-wc-2026-knockout`, say) its teams and its game scores. Every response is parsed with
+ *    `ncaaf-2025-cfp`, `ncaab-2025-tournament`, `ncaaw-2025-tournament`, `nba-2025-postseason`, `nhl-2024-postseason`, `mlb-2025-postseason`, `wnba-2025-postseason`, `epl-2026-matchweek-11` or `fifa-wc-2026-knockout`, say) its teams and its game scores. Every response is parsed with
  *    the same schemas a sync uses, so a field that drifted fails here with the path that broke.
  *
  * Read-only against the vendor. It needs a network that reaches www.balldontlie.io and
@@ -31,7 +31,7 @@ import { countLiveScoreUpdates } from '../src/modules/ingestion/core/live-score-
 import { errorMessageWithCause } from '../src/core/error-message';
 
 /** Each league the adapter reads, by the name of its vendored document, with the name the vendor gives it. */
-const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', mlb: 'MLB', wnba: 'WNBA', epl: 'EPL', fifa: 'FIFA' } as const;
+const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaaf: 'NCAAF', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', mlb: 'MLB', wnba: 'WNBA', epl: 'EPL', fifa: 'FIFA' } as const;
 type League = keyof typeof LEAGUES;
 const HEADER_LINES = 3;
 
@@ -93,8 +93,8 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
       const events = await adapter.getUpcomingEvents(Sport.GOLF, { from: new Date(Date.UTC(year, 0, 1)), to: new Date(Date.UTC(year, 11, 31)) });
       return `${String(events.length)} tournaments`;
     }],
-    ['this season\'s NFL events', async () => `${String((await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL)).length)} weeks and postseasons`],
-    ['NFL teams', async () => `${String((await adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).length)} teams`],
+    ['this season\'s NFL events and the last and next College Football Playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL)).length)} weeks, postseasons and playoffs`],
+    ['NFL and college football teams', async () => `${String((await adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).length)} teams`],
     ['the last and next NCAA men\'s and women\'s tournaments and NBA and WNBA playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.BASKETBALL)).length)} tournaments and playoffs`],
     ['NBA, WNBA and Division I basketball teams, men\'s and women\'s', async () => `${String((await adapter.getParticipants(Sport.BASKETBALL)).length)} teams`],
     ['Premier League matchweeks and the current World Cup bracket', async () => `${String((await adapter.getUpcomingEvents(Sport.SOCCER)).length)} events`],

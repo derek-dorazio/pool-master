@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "id": 64,
+      "conference": "Big Ten",
+      "city": "Bloomington",
+      "name": "Hoosiers",
+      "full_name": "Indiana Hoosiers",
+      "abbreviation": "IND"
+    },
+    {
+      "id": 101,
+      "conference": "Big Ten",
+      "city": "Columbus",
+      "name": "Buckeyes",
+      "full_name": "Ohio State Buckeyes",
+      "abbreviation": "OSU"
+    },
+    {
+      "id": 106,
+      "conference": "Big Ten",
+      "city": "Eugene",
+      "name": "Ducks",
+      "full_name": "Oregon Ducks",
+      "abbreviation": "ORE"
+    },
+    {
+      "id": 76,
+      "conference": "ACC",
+      "city": "Coral Gables",
+      "name": "Hurricanes",
+      "full_name": "Miami Hurricanes",
+      "abbreviation": "MIA"
+    },
+    {
+      "id": 93,
+      "conference": "American",
+      "city": "Annapolis",
+      "name": "Midshipmen",
+      "full_name": "Navy Midshipmen",
+      "abbreviation": "NAVY"
+    }
+  ]
+}

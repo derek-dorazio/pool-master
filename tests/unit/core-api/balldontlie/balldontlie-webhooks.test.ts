@@ -11,6 +11,7 @@ import { parseEplScope } from '../../../../packages/core-api/src/modules/ingesti
 import { parseWorldCupScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-mapping';
 import { parseNcaaTournamentScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping';
 import { parseNflScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-mapping';
+import { parseCfpScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-mapping';
 import { NBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
 import { NHL_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
 import { parsePlayoffRoundScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
@@ -38,6 +39,10 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     });
     expect(read(PAYLOADS.nflGameStarted)).toMatchObject({ subject: 'GAME', gameId: '424095' });
     expect(read(PAYLOADS.nflGamePeriodEnded)).toMatchObject({ subject: 'GAME', gameId: '424095' });
+  });
+
+  it('reads a college football game event as a notification for the College Football Playoff\'s scope, not the NFL\'s', () => {
+    expect(read(PAYLOADS.ncaafGameEnded)).toMatchObject({ sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'ncaaf-', gameId: '5041', phase: 'END' });
   });
 
   it('reads the NBA\'s, each NCAA tournament\'s, the Premier League\'s and the World Cup\'s game events with their own league\'s event prefix', () => {
@@ -90,6 +95,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   it('subscribes to the coarse game events of every league with a reader and golf\'s four tournament events, never a hole', () => {
     expect(BALLDONTLIE_WEBHOOK_EVENT_TYPES).toEqual(expect.arrayContaining([
       'nfl.game.started', 'nfl.game.period_ended', 'nfl.game.ended',
+      'ncaaf.game.started', 'ncaaf.game.period_ended', 'ncaaf.game.ended',
       'ncaab.game.ended', 'ncaaw.game.ended',
       'nhl.game.started', 'nhl.game.period_ended', 'nhl.game.ended',
       'mlb.game.started', 'mlb.game.period_ended', 'mlb.game.ended',
@@ -104,10 +110,11 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 
   it('names each league\'s events by the prefix its reader\'s event ids really start with', () => {
-    const { nfl, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
+    const { nfl, ncaaf, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
     expect(parsePlayoffsScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason`)).toBe(2025);
     expect(parsePlayoffRoundScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason-round-1`)).not.toBeNull();
     expect(parseNflScope(`${nfl.eventIdPrefix}2026-week-11`)).not.toBeNull();
+    expect(parseCfpScope(`${ncaaf.eventIdPrefix}2025-cfp`)).toEqual({ season: 2025 });
     expect(parseNcaaTournamentScope(`${ncaab.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaab');
     expect(parseNcaaTournamentScope(`${ncaaw.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaaw');
     expect(parsePlayoffsScope(NHL_PLAYOFFS, `${nhl.eventIdPrefix}2025-postseason`)).toBe(2025);
@@ -123,6 +130,7 @@ describe('how long a BALLDONTLIE event may stay in play with no notification (#1
 
   it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
     expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
+    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'ncaaf-2025-cfp')).toBe(100);
     expect(quietMinutes(Sport.BASKETBALL, 'nba-2025-postseason')).toBe(75);
     expect(quietMinutes(Sport.BASKETBALL, 'ncaab-2026-tournament')).toBe(90);
     expect(quietMinutes(Sport.BASKETBALL, 'ncaaw-2026-tournament')).toBe(75);

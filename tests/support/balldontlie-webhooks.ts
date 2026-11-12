@@ -20,6 +20,8 @@ export const BALLDONTLIE_WEBHOOK_PAYLOADS = {
     play: { type: 'passing-touchdown', score_value: 7, period: 3, clock: '11:24', home_score: 6, away_score: 13 },
     player: { id: 102, first_name: 'Deebo', last_name: 'Samuel', position: 'Wide Receiver' },
   },
+  // Assumed, as the NFL's are: the vendor's webhook document names no college football event.
+  ncaafGameEnded: { game: { id: 5041 }, event_type: 'ncaaf.game.ended' },
   ncaabGameEnded: { game: { id: 2798627 }, event_type: 'ncaab.game.ended' },
   ncaawGameEnded: { game: { id: 6100 }, event_type: 'ncaaw.game.ended' },
   nbaGameEnded: { game: { id: 21707974 }, event_type: 'nba.game.ended' },
