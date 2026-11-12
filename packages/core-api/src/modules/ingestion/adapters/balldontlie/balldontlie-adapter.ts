@@ -26,6 +26,10 @@
  * event (`nhl-2025-postseason`), its teams, and every playoff game's score in the GAME category,
  * each round a best of seven.
  *
+ * MLB (#1496, `mlb-mapping.ts` through the same shared reader): each season's postseason as an
+ * event (`mlb-2026-postseason`), its teams, and every postseason game's score in the GAME
+ * category, from the best-of-three Wild Card Series to the World Series.
+ *
  * WNBA (#1496, `wnba-mapping.ts` through the same shared reader): each season's playoffs as an
  * event (`wnba-2026-postseason`), its teams, and every playoff game's score in the GAME category.
  *
@@ -57,6 +61,7 @@ import type {
 import { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeague } from './ncaa-tournament-mapping';
 import { NcaaTournamentReader } from './ncaa-tournament-reader';
+import { MLB_POSTSEASON, mlbPostseasonSource } from './mlb-mapping';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
 import { WNBA_PLAYOFFS, wnbaPlayoffsSource } from './wnba-mapping';
 import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
@@ -132,6 +137,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly nfl: NflReader;
   private readonly nba: PlayoffRoundsReader;
   private readonly nhl: PlayoffsReader;
+  private readonly mlb: PlayoffsReader;
   private readonly wnba: PlayoffsReader;
   private readonly epl: EplReader;
   private readonly worldCup: WorldCupReader;
@@ -145,6 +151,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now);
     this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now);
+    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now);
     this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
     this.worldCup = new WorldCupReader(this.client);
@@ -170,6 +177,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         participants: async () => (await Promise.all([this.epl.teams(), this.worldCup.teams()])).flat(),
       }],
       [Sport.HOCKEY, { events: (dateRange) => this.nhl.upcomingEvents(dateRange), participants: () => this.nhl.teams() }],
+      [Sport.BASEBALL, { events: (dateRange) => this.mlb.upcomingEvents(dateRange), participants: () => this.mlb.teams() }],
     ]);
     this.sportsCovered = [...this.leagues.keys()];
   }
@@ -205,7 +213,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament, NFL scope, NCAA tournament, NBA, WNBA or NHL playoffs, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
+  /** The tournament, NFL scope, NCAA tournament, NBA, WNBA or NHL playoffs, MLB postseason, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const scope = parseNflScope(eventId);
     if (scope) {
@@ -231,6 +239,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     if (nhlSeason !== null) {
       return this.nhl.eventDetails(nhlSeason);
     }
+    const mlbSeason = parsePlayoffsScope(MLB_POSTSEASON, eventId);
+    if (mlbSeason !== null) {
+      return this.mlb.eventDetails(mlbSeason);
+    }
     const eplScope = parseEplScope(eventId);
     if (eplScope) {
       return this.epl.eventDetails(eplScope);
@@ -253,7 +265,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team, NBA team and WNBA team, every NHL team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
+  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team, NBA team and WNBA team, every NHL team, every MLB team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return await this.leagues.get(sport)?.participants() ?? [];
   }
@@ -268,7 +280,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * An NFL scope's, an NCAA tournament's, an NBA, WNBA or NHL playoffs', a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
+   * An NFL scope's, an NCAA tournament's, an NBA, WNBA or NHL playoffs', an MLB postseason's, a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
    * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
    * format, fails the sync rather than returning nothing.
    */
@@ -296,6 +308,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
     if (nhlSeason !== null) {
       return this.nhl.liveScores(nhlSeason);
+    }
+    const mlbSeason = parsePlayoffsScope(MLB_POSTSEASON, eventId);
+    if (mlbSeason !== null) {
+      return this.mlb.liveScores(mlbSeason);
     }
     const eplScope = parseEplScope(eventId);
     if (eplScope) {

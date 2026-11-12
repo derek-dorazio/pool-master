@@ -133,6 +133,14 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'FIFAWC' });
   });
 
+  it('seeds golf\'s PGA TOUR sport league with the match keyword PGA TOUR, so its year import finds the provider\'s tournaments rather than refusing it', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.GOLF))?.id ?? '', 'PGA TOUR'))
+      .resolves.toMatchObject({ matchKeyword: 'PGA TOUR' });
+  });
+
   it('seeds basketball\'s NBA sport league with the match keyword NBA, so its year import finds the provider\'s NBA playoffs', async () => {
     const sports = new PrismaSportRepository(getAppPrisma());
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
@@ -156,6 +164,14 @@ describe('Sport and SportLeague repositories', () => {
 
     await expect(leagues.findBySportAndName(basketballId, 'NBA Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Finals' });
     await expect(leagues.findBySportAndName(basketballId, 'NBA Conference Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Conference Finals' });
+  });
+
+  it('seeds baseball\'s MLB sport league with the match keyword MLB', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.BASEBALL))?.id ?? '', 'MLB'))
+      .resolves.toMatchObject({ matchKeyword: 'MLB' });
   });
 
   it('seeds basketball\'s WNBA sport league with the match keyword WNBA', async () => {

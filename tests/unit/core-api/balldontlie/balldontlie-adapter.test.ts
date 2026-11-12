@@ -84,7 +84,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
     restore = harness.restore;
     expect(harness.adapter.providerId).toBe('balldontlie');
     expect(harness.adapter.providerName).toBe('BALLDONTLIE');
-    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER, Sport.HOCKEY]);
+    expect(harness.adapter.sportsCovered).toEqual([Sport.GOLF, Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.SOCCER, Sport.HOCKEY, Sport.BASEBALL]);
   });
 
   describe('getUpcomingEvents', () => {
