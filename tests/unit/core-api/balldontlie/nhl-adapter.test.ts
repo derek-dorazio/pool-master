@@ -62,7 +62,7 @@ describe('BalldontlieAdapter (NHL)', () => {
   });
 
   describe('getUpcomingEvents', () => {
-    it('lists each postseason starting in the range, reading the seasons whose playoffs fall in its years', async () => {
+    it('lists each postseason starting in the range, reading the seasons whose playoffs fall in its years, and no round of it, since no NHL round is a Clutch Card yet', async () => {
       const harness = setup();
       restore = harness.restore;
 

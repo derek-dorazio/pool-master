@@ -93,6 +93,20 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
       return outcomes;
     });
   }
+
+  /** One read for the whole sweep, however many events it asks about. */
+  async findSportEventsWithLiveLines(sportEventIds: readonly string[]): Promise<string[]> {
+    if (sportEventIds.length === 0) return [];
+    const rounds = await this.prisma.sportEventRound.findMany({
+      where: {
+        sportEventId: { in: [...sportEventIds] },
+        participantRounds: { some: { status: ParticipantRoundStatus.IN_PROGRESS, statLines: { some: {} } } },
+      },
+      select: { sportEventId: true },
+      distinct: ['sportEventId'],
+    });
+    return rounds.map((round) => round.sportEventId);
+  }
 }
 
 function roundKey(round: { sportEventParticipantId: string; sportEventRoundId: string }): string {

@@ -149,6 +149,15 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'NHL' });
   });
 
+  it('seeds the NBA Finals and NBA Conference Finals Clutch Card leagues with their round\'s name as match keyword, so each imports only its own round', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const basketballId = (await sports.findBySport(Sport.BASKETBALL))?.id ?? '';
+
+    await expect(leagues.findBySportAndName(basketballId, 'NBA Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Finals' });
+    await expect(leagues.findBySportAndName(basketballId, 'NBA Conference Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Conference Finals' });
+  });
+
   it('seeds each series league\'s best-of lengths by round, first to final, and refuses an even length (#1545)', async () => {
     const lengthsOf = async (name: string) =>
       (await getPrisma().sportLeague.findFirstOrThrow({ where: { name }, select: { roundSeriesLengths: true } })).roundSeriesLengths;

@@ -19,7 +19,14 @@ export const NHL_PLAYOFFS: PlayoffsLeague = {
   tour: 'NHL',
   sport: Sport.HOCKEY,
   eventName: 'NHL Playoffs',
-  finalSeriesLength: 7,
+  // Sixteen teams, every series best of seven. Each round's name is the tour a future NHL Clutch
+  // Card league on that round would match, as the NBA's are.
+  rounds: [
+    { name: 'NHL First Round', seriesLength: 7, seriesCount: 8 },
+    { name: 'NHL Second Round', seriesLength: 7, seriesCount: 4 },
+    { name: 'NHL Conference Finals', seriesLength: 7, seriesCount: 2 },
+    { name: 'Stanley Cup Final', seriesLength: 7, seriesCount: 1 },
+  ],
   // The 2025 season opens in October 2025; its playoffs run from April into June 2026.
   playoffYearOffset: 1,
   // September, ahead of October's opening night.

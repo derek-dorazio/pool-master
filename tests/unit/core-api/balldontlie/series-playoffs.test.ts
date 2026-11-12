@@ -20,7 +20,10 @@ const LEAGUE: PlayoffsLeague = {
   tour: 'TST',
   sport: Sport.BASKETBALL,
   eventName: 'Test Playoffs',
-  finalSeriesLength: 3,
+  rounds: [
+    { name: 'Test Semifinals', seriesLength: 3, seriesCount: 2 },
+    { name: 'Test Final', seriesLength: 3, seriesCount: 1 },
+  ],
   playoffYearOffset: 1,
   seasonRolloverMonth: 8,
 };

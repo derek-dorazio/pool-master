@@ -1,6 +1,6 @@
 import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
 import { nbaTeamListSchema } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-contract';
-import { toNbaPlayoffGame, toNbaPlayoffTeam, toNbaPlayoffTeams } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
+import { toNbaPlayoffGame, toNbaPlayoffPlayer, toNbaPlayoffTeam, toNbaPlayoffTeams, toNbaStatLine } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
 
 /**
  * The NBA normalizers' refusals: the vendor's document leaves every field but the state optional,
@@ -23,6 +23,8 @@ const GAME = {
   home_team: OKC,
   visitor_team: IND,
 };
+
+const LINE = { min: '40:12', pts: 22, reb: 12, ast: 6, player: { id: 3202, first_name: 'Jayson', last_name: 'Tatum' }, game: { id: 18444001 } };
 
 describe('NBA playoffs normalizers', () => {
   it('refuses a team with no name, naming the team and the path it came from', () => {
@@ -58,5 +60,43 @@ describe('NBA playoffs normalizers', () => {
     });
 
     expect(toNbaPlayoffTeams(page.data).map((team) => team.name)).toEqual(['Oklahoma City Thunder', 'Indiana Pacers']);
+  });
+
+  it.each([
+    ['empty', ''],
+    ['zero minutes', '0'],
+    ['zero minutes and seconds', '00:00'],
+    ['missing', undefined],
+  ])('gives no line for a player whose minutes are %s, one who did not get in', (_label, min) => {
+    expect(toNbaStatLine({ ...LINE, min })).toBeNull();
+  });
+
+  it('gives a line for a player on the floor only seconds', () => {
+    expect(toNbaStatLine({ ...LINE, min: '0:12' })).toEqual({
+      gameId: 18444001,
+      playerId: 3202,
+      stats: [{ stat: 'POINTS', value: 22 }, { stat: 'REBOUNDS', value: 12 }, { stat: 'ASSISTS', value: 6 }],
+    });
+  });
+
+  it('refuses a played stat row with no player, no player id or no game, naming what is missing', () => {
+    expect(() => toNbaStatLine({ ...LINE, player: undefined })).toThrow('a stat row has no player');
+    expect(() => toNbaStatLine({ ...LINE, player: {} })).toThrow('a stat row\'s player has no id');
+    expect(() => toNbaStatLine({ ...LINE, game: undefined })).toThrow('player 3202\'s stat row has no game');
+    expect(() => toNbaStatLine({ ...LINE, game: {} })).toThrow('player 3202\'s stat row has no game id');
+  });
+
+  it('refuses a played stat row missing rebounds or assists, which Triple Threat scores', () => {
+    expect(() => toNbaStatLine({ ...LINE, reb: undefined })).toThrow('player 3202\'s stat row has no reb');
+    expect(() => toNbaStatLine({ ...LINE, ast: undefined })).toThrow('player 3202\'s stat row has no ast');
+  });
+
+  it('names a player by whichever of his names the vendor gives, keeping his position and team', () => {
+    expect(toNbaPlayoffPlayer({ id: 7, last_name: 'Nene', position: 'C', team: OKC })).toEqual({ id: 7, name: 'Nene', metadata: { position: 'C', team: 'Oklahoma City Thunder' } });
+  });
+
+  it('refuses a player with no id or no name at all, naming the player', () => {
+    expect(() => toNbaPlayoffPlayer({ first_name: 'Sam' })).toThrow('a player has no id');
+    expect(() => toNbaPlayoffPlayer({ id: 7, first_name: '', last_name: '' })).toThrow('player 7 has no first_name or last_name');
   });
 });

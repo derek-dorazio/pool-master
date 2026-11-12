@@ -4,6 +4,10 @@ import {
   NBA_PLAYOFFS_SEASON_TYPE,
   nbaGameListSchema,
   nbaGameSchema,
+  nbaPlayerListSchema,
+  nbaPlayerSchema,
+  nbaStatsListSchema,
+  nbaStatsSchema,
   nbaTeamListSchema,
   nbaTeamSchema,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-contract';
@@ -28,6 +32,9 @@ describe('BALLDONTLIE NBA fixtures', () => {
     ['teams.json', '/nba/v1/teams', nbaTeamListSchema],
     ['games-2024-finals.json', '/nba/v1/games', nbaGameListSchema],
     ['games-2025-first-round-partial.json', '/nba/v1/games', nbaGameListSchema],
+    ['games-2023-playoffs.json', '/nba/v1/games', nbaGameListSchema],
+    ['stats-2023-finals.json', '/nba/v1/stats', nbaStatsListSchema],
+    ['players-active-finals-teams.json', '/nba/v1/players/active', nbaPlayerListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -47,6 +54,8 @@ describe('BALLDONTLIE NBA fields the adapter reads', () => {
   const pairs: Array<[component: string, adapterSchema: z.ZodType]> = [
     ['NBAGame', nbaGameSchema],
     ['NBATeam', nbaTeamSchema],
+    ['NBAPlayer', nbaPlayerSchema],
+    ['NBAStats', nbaStatsSchema],
     ['Pagination', balldontliePaginationSchema],
   ];
 
@@ -58,6 +67,11 @@ describe('BALLDONTLIE NBA fields the adapter reads', () => {
   it('flags a tip-off read as always set, since the vendor leaves it null until the league sets it', () => {
     const strict = z.toJSONSchema(z.object({ datetime: z.iso.datetime({ offset: true }).optional() }), { io: 'input' }) as Record<string, unknown>;
     expect(contractGaps(strict, spec.component('NBAGame'), 'NBAGame').join('\n')).toContain('NBAGame.datetime');
+  });
+
+  it('asks for a round\'s box scores by game and its stars by team, as the stats and active players endpoints document', () => {
+    expect(spec.queryParameters('/nba/v1/stats').map((each) => each.name)).toContain('game_ids[]');
+    expect(spec.queryParameters('/nba/v1/players/active').map((each) => each.name)).toContain('team_ids[]');
   });
 
   it('asks for the playoffs by a season type the games endpoint documents', () => {

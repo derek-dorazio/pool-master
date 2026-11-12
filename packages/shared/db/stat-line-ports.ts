@@ -40,4 +40,10 @@ export interface SportEventParticipantStatLineRepository {
    * outcome, in the order given.
    */
   replaceGameLines(writes: readonly GameStatLineWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<GameStatLineWriteOutcome[]>;
+
+  /**
+   * Which of these events hold a stat line still IN_PROGRESS: a game a provider has not called
+   * final yet (#1660). The lifecycle sweep holds such an event's completion. Each id once.
+   */
+  findSportEventsWithLiveLines(sportEventIds: readonly string[]): Promise<string[]>;
 }

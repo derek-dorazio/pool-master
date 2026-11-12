@@ -50,14 +50,22 @@ The target:
      reader therefore hands over every game of the event on each sync. The NBA's playoffs are
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
      mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
-     (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series;
+     (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series, read
+     without box scores, so no NHL round is listed as an event until a Clutch Card needs one;
    - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
      live-score category (#1497). The adapter numbers each game within the Clutch Card event
      (game N is round N, and each series' Game N shares it in a round of several series) and maps
      the vendor's stat fields to the stats the composites count. A star's line is found through
      the star's provider mapping, made when the stars are loaded from the provider; a player who
      is not a mapped star is left out. A live game's lines are stored in progress, and the sync
-     is authoritative over an admin's line correction.
+     is authoritative over an admin's line correction. Each playoff round of a series league is
+     an event of its own (`nba-2025-postseason-round-4`, the NBA Finals), its field the round's
+     teams' active players. A round and its players carry the round's name as their tour, and
+     the Clutch Card leagues are keyed to it, so the NBA league imports only the season's
+     playoffs and a star links to the one its league already holds. The vendor names no round, so a series' round is its depth in the
+     bracket: 1 past the later of its two teams' previous series, a bye counting as none, which
+     places MLB's seeded teams in round 2. An event holding a live game's line is not completed
+     by the lifecycle sweep until that line is final (#1660).
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,
    ignores events for nothing we have linked, and queues a background job (#1439 framework).

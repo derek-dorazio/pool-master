@@ -64,3 +64,38 @@ export const nbaGameListSchema = z.object({
   data: z.array(nbaGameSchema),
   meta: balldontliePaginationSchema.optional(),
 });
+
+/** `NBAPlayer`, from `/nba/v1/players/active` and on each stat row (#1497). */
+export const nbaPlayerSchema = z.object({
+  id: z.number().int().optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  position: z.string().optional(),
+  team: nbaTeamSchema.optional(),
+});
+export type NbaPlayer = z.infer<typeof nbaPlayerSchema>;
+
+export const nbaPlayerListSchema = z.object({
+  data: z.array(nbaPlayerSchema),
+  meta: balldontliePaginationSchema.optional(),
+});
+
+/**
+ * `NBAStats`, one player's line in one game, from `/nba/v1/stats` (#1497). `min` is a string of
+ * whole minutes or minutes and seconds ("34", "21:35"); a player who did not play has it empty
+ * or zero.
+ */
+export const nbaStatsSchema = z.object({
+  min: z.string().optional(),
+  pts: z.number().int().optional(),
+  reb: z.number().int().optional(),
+  ast: z.number().int().optional(),
+  player: nbaPlayerSchema.optional(),
+  game: z.object({ id: z.number().int().optional() }).optional(),
+});
+export type NbaStats = z.infer<typeof nbaStatsSchema>;
+
+export const nbaStatsListSchema = z.object({
+  data: z.array(nbaStatsSchema),
+  meta: balldontliePaginationSchema.optional(),
+});

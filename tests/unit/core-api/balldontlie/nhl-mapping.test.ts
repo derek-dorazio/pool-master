@@ -2,6 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { nhlGameListSchema, nhlTeamListSchema, type NhlGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-contract';
 import { isNhlFranchise, NHL_PLAYOFFS, toNhlPlayoffGame, toNhlPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -28,7 +29,21 @@ const florida = rowAt(nhlTeamListSchema.parse(readBalldontlieFixture('nhl', 'tea
 
 describe('NHL playoffs league', () => {
   it('is hockey\'s best-of-seven playoffs, played the year after the season it is numbered by', () => {
-    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', tour: 'NHL', sport: Sport.HOCKEY, finalSeriesLength: 7, playoffYearOffset: 1 });
+    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', tour: 'NHL', sport: Sport.HOCKEY, playoffYearOffset: 1 });
+    expect(NHL_PLAYOFFS.rounds.every((round) => round.seriesLength === 7)).toBe(true);
+  });
+
+  it('names its four rounds with the series each holds, which a real bracket fills exactly', () => {
+    const games = postseason2024.map(toNhlPlayoffGame);
+    const seriesByRound = NHL_PLAYOFFS.rounds.map((_, index) => playoffSeries(games).filter((each) => each.round === index + 1).length);
+
+    expect(NHL_PLAYOFFS.rounds.map((round) => [round.name, round.seriesCount])).toEqual([
+      ['NHL First Round', 8],
+      ['NHL Second Round', 4],
+      ['NHL Conference Finals', 2],
+      ['Stanley Cup Final', 1],
+    ]);
+    expect(seriesByRound).toEqual([8, 4, 2, 1]);
   });
 });
 
