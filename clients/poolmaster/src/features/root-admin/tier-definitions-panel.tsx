@@ -192,7 +192,6 @@ export function TierDefinitionsPanel({
           <Tile
             className="flex items-center gap-2 p-3"
             padding="none"
-            radius="md"
             data-testid={`root-admin-tier-def-row-${tier.tierKey}`}
           >
             {locked ? null : (

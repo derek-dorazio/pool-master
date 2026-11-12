@@ -57,7 +57,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
   });
 
   return (
-    <Tile className="overflow-x-auto" data-testid="plan-comparison-table" padding="none" radius="md">
+    <Tile className="overflow-x-auto" data-testid="plan-comparison-table" padding="none">
       <SimpleTable className="text-xs sm:text-sm">
         <TableHead tone="plain">
           <tr>

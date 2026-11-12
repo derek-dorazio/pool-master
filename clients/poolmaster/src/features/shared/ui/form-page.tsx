@@ -64,7 +64,7 @@ export function FormPage({
           </HelpTip>
         ) : null}
       />
-      <Tile className="space-y-5 p-5" data-testid={testId ? `${testId}-fields` : undefined} padding="none" radius="md">{children}</Tile>
+      <Tile className="space-y-5 p-5" data-testid={testId ? `${testId}-fields` : undefined} padding="none">{children}</Tile>
       {preview}
       {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap items-center justify-end gap-3">

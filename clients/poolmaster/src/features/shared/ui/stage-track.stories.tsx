@@ -13,7 +13,7 @@ type Story = StoryObj<typeof meta>;
 
 export const OnACard: Story = {
   render: (args) => (
-    <Tile padding="md" radius="md">
+    <Tile padding="md">
       <StageTrack {...args} />
     </Tile>
   ),
@@ -22,7 +22,7 @@ export const OnACard: Story = {
 export const OnANavyPanel: Story = {
   args: { currentIndex: 2, surface: "inverse" },
   render: (args) => (
-    <Tile padding="md" radius="md" variant="inverse">
+    <Tile padding="md" variant="inverse">
       <StageTrack {...args} />
     </Tile>
   ),

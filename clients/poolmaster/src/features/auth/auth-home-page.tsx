@@ -240,7 +240,7 @@ export function AuthHomePage() {
   }
 
   return (
-    <Tile className="shadow-lg" padding="lg" radius="xl">
+    <Tile className="shadow-lg" padding="lg" radius="panel">
       {/* On a phone the form comes straight after the headline and the two feature notes follow
           it; on a wide screen the notes sit under the headline, beside the form. */}
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr]">
@@ -295,7 +295,7 @@ export function AuthHomePage() {
           ) : null}
         </div>
 
-        <Tile className="lg:col-start-2 lg:row-span-2 lg:row-start-1" padding="md" radius="xl" variant="subtle">
+        <Tile className="lg:col-start-2 lg:row-span-2 lg:row-start-1" padding="md" radius="panel" variant="subtle">
           <SegmentedControl
             aria-label="Authentication mode"
             onChange={(nextMode) =>
@@ -387,11 +387,11 @@ export function AuthHomePage() {
 
         {inviteContext || teamInviteContext ? null : (
           <div className="grid gap-3 self-start text-sm text-muted-foreground sm:grid-cols-2 lg:col-start-1 lg:row-start-2 lg:-mt-3">
-            <Tile padding="sm" radius="md" variant="subtle">
+            <Tile padding="sm" variant="subtle">
               Commissioners create a league, give it a memorable league code,
               and invite their members.
             </Tile>
-            <Tile padding="sm" radius="md" variant="subtle">
+            <Tile padding="sm" variant="subtle">
               Members join by invitation, create their team,
               and enter contests.
             </Tile>

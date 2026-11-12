@@ -8,7 +8,7 @@ import { Tile } from '@/features/shared/ui';
  */
 export function PhotoHero({ children, sport }: { children: ReactNode; sport: Sport }) {
   return (
-    <Tile className="overflow-hidden" padding="none" radius="lg">
+    <Tile className="overflow-hidden" padding="none" radius="panel">
       {/* Decorative: the name below says what it shows. */}
       <img alt="" className="aspect-[5/2] w-full object-cover" data-testid="event-page-photo" height={480} src={sportHeaderImagePath(sport)} width={1200} />
       <div className="space-y-4 p-5 sm:p-8">{children}</div>

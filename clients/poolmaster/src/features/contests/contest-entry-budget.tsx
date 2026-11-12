@@ -44,7 +44,6 @@ export function BudgetSpendBar({ noun, summary }: { noun: SportNoun; summary: Bu
       className={cn('sticky top-0 z-10 space-y-3', isOverBudget ? 'border-destructive' : null)}
       data-testid="contest-entry-spend-bar"
       padding="sm"
-      radius="lg"
     >
       <ProgressIndicator
         label={`Spent ${formatDollars(spent)} of ${formatDollars(salaryCap)}`}

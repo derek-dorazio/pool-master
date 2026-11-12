@@ -15,5 +15,5 @@ export const Default: Story = {};
 export const Subtle: Story = { args: { variant: "subtle" } };
 export const Inverse: Story = { args: { variant: "inverse" } };
 export const InverseDeep: Story = { args: { variant: "inverseDeep" } };
-export const SmallPadding: Story = { args: { padding: "sm", radius: "md" } };
-export const SharedCorner: Story = { args: { padding: "sm", radius: "sm" } };
+export const SmallPadding: Story = { args: { padding: "sm" } };
+export const Panel: Story = { args: { radius: "panel", variant: "inverse" } };

@@ -321,7 +321,7 @@ export function DataGrid<TData>({
           {jumpButton}
         </div>
       ) : null}
-      <Tile className="overflow-hidden" padding="none" radius="md">
+      <Tile className="overflow-hidden" padding="none">
         {views ? (
           // The views read from the left and the search sits at the right; on a phone the search
           // takes its own line under the views.

@@ -173,7 +173,6 @@ export function InfoPopover({
           <Tile
             className={cn("shadow-xl", padding === "none" && "overflow-hidden", look === "tooltip" && "rounded-lg")}
             padding={padding}
-            radius="lg"
             variant={look === "tooltip" ? "inverse" : "default"}
           >
             {children}
