@@ -261,7 +261,8 @@ score. The writer maps the two teams through `participant_provider_mappings` to 
 1. **Single-game rounds** (NFL, NCAA, World Cup, Premier League). A game no match holds yet is
    linked to the one open match whose two sides are those teams (`gamesToLink`). Two candidates
    either way link nothing; a later sync tries again. Once linked, `@@unique([sport_event_id,
-   external_game_id])` holds it.
+   external_game_id])` holds it. A game naming a First Four winner first fills that side's
+   play-in place (see *First Four* under the NCAA tournaments below).
 2. **Best-of series** (`round_series_lengths[round] > 1`: NBA, NHL, MLB, WNBA). The match links no
    game. Every sync the reader hands over *every* game of the event; the writer counts each final
    game's winner between the match's two teams and writes the wins so far as the live score, and
@@ -336,10 +337,22 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 ### NCAA men's and women's tournaments (#1496 parts 4a, 4b)
 
 - **Registration.** Keywords `NCAAM` / `NCAAW` by migration. One event per season. The bracket
-  starts at the round of 64; First Four games carry no score. Teams carry their seed and their
+  starts at the round of 64; First Four games carry no score (see *First Four* below). Teams carry their seed and their
   league's tour, so a school's men's and women's teams link to their own rows.
 - **Sync.** `NcaaTournamentReader.liveScores(season)` reads the bracket; one reader class serves
   both, configured by `NCAA_MEN` / `NCAA_WOMEN`.
+- **First Four (#1571).** Each First Four pairing is a play-in place on the site ("UMBC / Howard"),
+  which names its two teams only in that label. Once the vendor calls a First Four game final, the
+  winner's round of 64 game carries `playInWinnerTeamExternalId`. The GAME writer finds the one
+  match where the winner's opponent plays a play-in place, and fills that place with the winner
+  through `fillPlayInSlot`, the admin's own path (`head-to-head/play-in-fill.ts`). The game then
+  links and scores like any other, in the same sync. Region and seed are not used: the women's
+  bracket document has no region. Nothing is filled, and a warning is logged
+  (`liveScore.playIn.*`), when:
+  - the winner has no team mapping, or the opponent is not on the field;
+  - the opponent plays no play-in place, or plays two;
+  - `fillPlayInSlot` refuses the winner.
+  In each case the admin fills the place, as before. A place already filled is never touched.
 - **Key code.** `ncaa-tournament-mapping.ts` (`parseNcaaTournamentScope`, the league configs),
   `ncaa-tournament-reader.ts`.
 

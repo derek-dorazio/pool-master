@@ -27,6 +27,9 @@
  * league's reader hands over every game of the event each time. Each final game's winner adds a
  * win; the series takes its result once a side has won more than half of its games, and until then
  * the wins so far are its live score.
+ *
+ * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
+ * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
 import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
@@ -37,11 +40,13 @@ import type { LiveScorePersistenceResult } from '../../ingestion/core/score-publ
 import { summarizeSyncWriteRows, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
 import type { LiveScoreTargetEvent } from '../scoring-family-module';
 import type { MatchResultService } from './match-result-service';
+import { fillPlayInPlaces, type PlayInFillDeps } from './play-in-fill';
 
 export interface GameScoreWriterDeps {
   providerId: string;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'linkGames' | 'applyLiveScores'>;
-  eventParticipants: Pick<SportEventParticipantRepository, 'findByIds'>;
+  eventParticipants: Pick<SportEventParticipantRepository, 'findByIds' | 'findBySportEvent'>;
+  playIns: PlayInFillDeps['playIns'];
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   results: Pick<MatchResultService, 'recordResult'>;
   logger?: FastifyBaseLogger;
@@ -73,6 +78,7 @@ export async function writeGameScores(
 ): Promise<LiveScorePersistenceResult> {
   const sportEventId = event.id;
   const loaded = await deps.matches.findBySportEvent(sportEventId);
+  await fillPlayInPlaces(deps, sportEventId, loaded, games);
   const roundCount = event.rounds ?? loaded.reduce((most, match) => Math.max(most, match.roundNumber), 0);
   const seriesLengthOf = (match: SportEventMatch): number => roundSeriesLength(event.roundSeriesLengths, match.roundNumber, roundCount);
   const seriesMatches = loaded.filter((match): match is SidedMatch => seriesLengthOf(match) > 1 && hasBothSides(match));
