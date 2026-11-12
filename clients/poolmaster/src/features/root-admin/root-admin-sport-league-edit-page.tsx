@@ -11,6 +11,7 @@ import { useManagedSport } from './use-managed-sport';
 import { SportLeaguePage } from './sport-league-page';
 import { useUpdateSportLeague } from './use-update-sport-league';
 import { upperFirst } from '@/lib/upper-first';
+import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -65,5 +66,7 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
 
 /** Edit a sport league's name and match keyword, with one Save. */
 export function RootAdminSportLeagueEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   return <SportLeaguePage>{(sportLeague) => <SportLeagueEditForm sportLeague={sportLeague} />}</SportLeaguePage>;
 }

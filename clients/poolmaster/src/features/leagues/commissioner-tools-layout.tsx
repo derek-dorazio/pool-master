@@ -1,6 +1,5 @@
-import { Settings } from 'lucide-react';
 import { Outlet, useLocation, useParams } from 'react-router';
-import { AdminAreaLayout } from '@/features/shared/ui';
+import { ToolsArea } from '@/features/shared/ui';
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEventEmailsEditPath,
@@ -21,8 +20,8 @@ function isAtOrUnder(pathname: string, path: string) {
 }
 
 /**
- * The Commissioner tools area for one league: its own header with the way back to the league,
- * and a side menu of the tools. `CommissionerRouteGuard` admits the viewer before this renders,
+ * The Commissioner tools area for one league: a slim band with the way back to the league, and
+ * the four tools as tabs (#1562). `CommissionerRouteGuard` admits the viewer before this renders,
  * so the league context is already loaded.
  */
 export function CommissionerToolsLayout() {
@@ -35,18 +34,17 @@ export function CommissionerToolsLayout() {
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
   return (
-    <AdminAreaLayout
+    <ToolsArea
       back={{ label: 'Back to league', testId: 'commissioner-tools-back', to: buildLeaguePath(leagueCode) }}
       eyebrow="Commissioner tools"
-      icon={<Settings aria-hidden size={18} />}
-      menuItems={[
+      tabs={[
         {
           isActive: pathname === settingsPath
             || pathname === buildLeagueAdminEditPath(leagueCode)
             || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode)
             || pathname === buildLeagueAdminEventEmailsEditPath(leagueCode)
             || pathname === buildLeagueAdminPlanPath(leagueCode),
-          label: 'League settings',
+          label: 'Settings',
           testId: 'commissioner-tools-menu-settings',
           to: settingsPath,
         },
@@ -70,11 +68,11 @@ export function CommissionerToolsLayout() {
           to: contestsPath,
         },
       ]}
-      menuLabel="Commissioner tools"
+      tabsLabel="Commissioner tools"
       testId="commissioner-tools"
       title={league?.name ?? leagueCode}
     >
       <Outlet />
-    </AdminAreaLayout>
+    </ToolsArea>
   );
 }

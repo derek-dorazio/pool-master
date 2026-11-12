@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
+import { RootAdminManageLayout } from './root-admin-manage-layout';
 import { RootAdminParticipantEditPage } from './root-admin-participant-edit-page';
 import { RootAdminParticipantHomePage } from './root-admin-participant-home-page';
 import { participantFixture } from './sport-test-fixtures';
@@ -90,6 +91,22 @@ function renderPage(
   );
 }
 
+/** The Edit details page inside Manage's own layout, which titles every page it does not claim. */
+function renderEditUnderManage() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/participants/p-rory/edit']}>
+        <Routes>
+          <Route element={<RootAdminManageLayout />} path="/manage">
+            <Route element={<RootAdminParticipantEditPage />} path="sports/:sport/participants/:participantId/edit" />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 describe('pool-master-rfy RootAdminParticipantHomePage', () => {
   beforeEach(() => {
     listParticipantProviderMappingsMock.mockResolvedValue({ data: { providerMappings: [MAPPING] } });
@@ -122,6 +139,18 @@ describe('pool-master-rfy RootAdminParticipantHomePage', () => {
     expect(listParticipantProviderMappingsMock).toHaveBeenCalledWith(
       expect.objectContaining({ path: { id: 'p-rory' } }),
     );
+  });
+
+  it('opens Edit details under Manage with one page heading, the form\'s own, and never Manage\'s title while it loads', async () => {
+    let resolveParticipant: (value: unknown) => void = () => undefined;
+    getParticipantMock.mockReturnValue(new Promise((resolve) => { resolveParticipant = resolve; }));
+    renderEditUnderManage();
+
+    expect(screen.queryAllByRole('heading', { level: 1 })).toHaveLength(0);
+    resolveParticipant({ data: { participant: player() } });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Edit details' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
   it('pool-master-rfy shows a not-found empty state and an error state', async () => {

@@ -18,7 +18,7 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
@@ -145,6 +145,8 @@ function SportEventScheduleForm({
 
 /** Reschedule an event's rounds, on a page of its own. */
 export function RootAdminSportEventSchedulePage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const { event, round } = useManagedSport().definition.vocabulary;
   const tournamentQuery = useSportEventQuery(eventId);

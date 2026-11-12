@@ -77,6 +77,11 @@ send the version the draft came from and offer the newer one on a conflict.
 A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
 
+Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
+the area, the league and the way back, then the tools as one row of link
+`PageTabs`. Manage keeps `AdminAreaLayout` until it moves to the same frame. A
+`FormPage` opens with its own `PageHeader`.
+
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
 straight on the page (never in a card) with an optional `titleAside` such as an
 info icon, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
