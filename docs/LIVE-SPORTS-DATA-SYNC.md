@@ -112,7 +112,7 @@ The keyword migrations on `main`, and the tour each matches:
 | NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | `20271117000500_set_nba_clutch_card_match_keywords` | the round's `name` in `NBA_PLAYOFFS.rounds` |
 | PGA TOUR | `NULL` in the seed (see *Gaps* below) | none | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
 | NHL | `NHL` | `20271118001000_set_nhl_match_keyword` | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
-| MLB | `MLB` | `20271118001100_set_mlb_match_keyword` | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
+| MLB | `MLB` | `20271118002100_set_mlb_match_keyword` | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
 
 ### 2b. Event rows, by an admin action
 
@@ -379,7 +379,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### MLB postseason bracket (#1496)
 
-- **Registration.** MLB sport league, keyword `MLB` (`20271118001100`), `round_series_lengths
+- **Registration.** MLB sport league, keyword `MLB` (`20271118002100`), `round_series_lengths
   [3,5,7,7]` (`20271117000200`). One event per season (`mlb-2026-postseason`, played the same
   year: `playoffYearOffset: 0`). `MLB_POSTSEASON.rounds` names *MLB Wild Card Series*, *MLB
   Division Series*, *MLB League Championship Series* and *World Series*; the four top seeds' byes
