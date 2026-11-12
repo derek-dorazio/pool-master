@@ -108,6 +108,22 @@ describe('BALLDONTLIE webhook receiver', () => {
     })]);
   });
 
+  it('accepts a delivery with non-ASCII text, signed over its bytes, whose header also carries a retiring secret\'s signature', async () => {
+    await linkedEvent({ sport: Sport.SOCCER, externalId: 'epl-2026-matchweek-11' });
+    const body = { ...PAYLOADS.eplGameHalftime, game: { ...PAYLOADS.eplGameHalftime.game, home_team: { id: 13, name: 'Atlético São Paulo ⚽' } } };
+    const at = new Date();
+    const current = signedBalldontlieDelivery(body, { at });
+    const retiring = signedBalldontlieDelivery(body, { at, secret: 'whsec_retiring' });
+
+    const response = await post({
+      ...current,
+      headers: { ...current.headers, 'x-bdl-webhook-signature': `${retiring.headers['x-bdl-webhook-signature']},${current.headers['x-bdl-webhook-signature']}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect((await queuedSyncs()).map((sync) => sync.dedupeKey)).toEqual(['provider-event-sync:balldontlie:epl-2026-matchweek-11']);
+  });
+
   it('shares one waiting sync among a burst of notifications and a duplicate delivery of the same one', async () => {
     await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
     const delivery = signedBalldontlieDelivery(PAYLOADS.nflGamePeriodEnded);

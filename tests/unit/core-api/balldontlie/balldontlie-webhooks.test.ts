@@ -92,7 +92,8 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
 describe('checking a BALLDONTLIE delivery\'s signature (#1498)', () => {
   const now = new Date('2026-11-15T18:00:00.000Z');
   const timestamp = String(Math.floor(now.getTime() / 1000));
-  const rawBody = JSON.stringify(PAYLOADS.nflGameEnded);
+  const body = JSON.stringify(PAYLOADS.nflGameEnded);
+  const rawBody = Buffer.from(body, 'utf8');
   const signed = { timestamp, signature: balldontlieSignature(timestamp, rawBody), rawBody };
 
   it('accepts a delivery signed with the endpoint secret over its timestamp and exact body', () => {
@@ -110,9 +111,31 @@ describe('checking a BALLDONTLIE delivery\'s signature (#1498)', () => {
   });
 
   it('refuses a body changed after signing, a different secret, and a signature moved to another timestamp', () => {
-    expect(checkBalldontlieSignature({ ...signed, rawBody: rawBody.replace('424095', '424096') }, SECRET, now)).toBe('MISMATCH');
+    expect(checkBalldontlieSignature({ ...signed, rawBody: Buffer.from(body.replace('424095', '424096'), 'utf8') }, SECRET, now)).toBe('MISMATCH');
     expect(checkBalldontlieSignature(signed, 'whsec_other', now)).toBe('MISMATCH');
     expect(checkBalldontlieSignature({ ...signed, timestamp: String(Number(timestamp) - 1) }, SECRET, now)).toBe('MISMATCH');
+  });
+
+  it('checks the body\'s exact bytes, so bytes that do not survive decoding to text still verify and a re-encoded body does not', () => {
+    // A lone 0xff is not UTF-8: decoding it to text would turn it into U+FFFD and change what was hashed.
+    const bytes = Buffer.concat([Buffer.from('{"event_type":"nfl.game.ended","note":"', 'utf8'), Buffer.from([0xff]), Buffer.from('"}', 'utf8')]);
+    const delivery = { timestamp, signature: balldontlieSignature(timestamp, bytes), rawBody: bytes };
+    expect(checkBalldontlieSignature(delivery, SECRET, now)).toBe('VALID');
+    expect(checkBalldontlieSignature({ ...delivery, rawBody: Buffer.from(bytes.toString('utf8'), 'utf8') }, SECRET, now)).toBe('MISMATCH');
+  });
+
+  it('accepts a header carrying several v1 signatures, as sent while the secret rotates, when any one of them matches', () => {
+    const oldSecret = balldontlieSignature(timestamp, rawBody, 'whsec_retiring');
+    expect(checkBalldontlieSignature({ ...signed, signature: `${oldSecret},${signed.signature}` }, SECRET, now)).toBe('VALID');
+    expect(checkBalldontlieSignature({ ...signed, signature: `${signed.signature} ${oldSecret}` }, SECRET, now)).toBe('VALID');
+    expect(checkBalldontlieSignature({ ...signed, signature: `${oldSecret}, ${signed.signature}` }, SECRET, now)).toBe('VALID');
+  });
+
+  it('refuses a header of several v1 signatures when none matches, and ignores tokens of another scheme beside a matching one', () => {
+    const other = balldontlieSignature(timestamp, rawBody, 'whsec_other');
+    const retiring = balldontlieSignature(timestamp, rawBody, 'whsec_retiring');
+    expect(checkBalldontlieSignature({ ...signed, signature: `${other},${retiring}` }, SECRET, now)).toBe('MISMATCH');
+    expect(checkBalldontlieSignature({ ...signed, signature: `v0=abc,${signed.signature}` }, SECRET, now)).toBe('VALID');
   });
 
   it('refuses a delivery without both headers, and one whose headers are not the documented format', () => {
@@ -120,6 +143,7 @@ describe('checking a BALLDONTLIE delivery\'s signature (#1498)', () => {
     expect(checkBalldontlieSignature({ ...signed, timestamp: undefined }, SECRET, now)).toBe('MISSING');
     expect(checkBalldontlieSignature({ ...signed, signature: signed.signature.replace('v1=', 'v2=') }, SECRET, now)).toBe('MALFORMED');
     expect(checkBalldontlieSignature({ ...signed, signature: 'v1=abc' }, SECRET, now)).toBe('MALFORMED');
+    expect(checkBalldontlieSignature({ ...signed, signature: ' , ' }, SECRET, now)).toBe('MALFORMED');
     expect(checkBalldontlieSignature({ ...signed, timestamp: '2026-11-15T18:00:00Z' }, SECRET, now)).toBe('MALFORMED');
   });
 });

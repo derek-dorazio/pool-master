@@ -85,8 +85,8 @@ export interface SignedBalldontlieDelivery {
 }
 
 /** The hex signature the vendor sends for this timestamp and body under `secret`. */
-export function balldontlieSignature(timestamp: string, body: string, secret: string = TEST_BALLDONTLIE_WEBHOOK_SECRET): string {
-  return `v1=${createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex')}`;
+export function balldontlieSignature(timestamp: string, body: string | Buffer, secret: string = TEST_BALLDONTLIE_WEBHOOK_SECRET): string {
+  return `v1=${createHmac('sha256', secret).update(`${timestamp}.`).update(body).digest('hex')}`;
 }
 
 /** A delivery of `body` as BALLDONTLIE posts it, signed at `at` (now by default). */

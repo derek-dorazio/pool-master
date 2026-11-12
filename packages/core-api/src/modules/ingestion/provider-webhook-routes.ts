@@ -38,13 +38,14 @@ export function readBalldontlieWebhookSecret(env: NodeJS.ProcessEnv): string | u
 export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderWebhooksModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
-  // The signature covers the body exactly as posted, so within this module JSON is kept as text
-  // beside its parsed form.
-  const rawBodies = new WeakMap<FastifyRequest, string>();
-  fastify.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
+  // The signature covers the body's bytes exactly as posted, so within this module JSON is kept as
+  // a raw buffer beside its parsed form.
+  const rawBodies = new WeakMap<FastifyRequest, Buffer>();
+  fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     try {
-      rawBodies.set(request, body as string);
-      done(null, JSON.parse(body as string));
+      const raw = body as Buffer;
+      rawBodies.set(request, raw);
+      done(null, JSON.parse(raw.toString('utf8')));
     } catch (err) {
       done(err as Error, undefined);
     }
@@ -58,7 +59,7 @@ export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderW
       tags: ['Ingestion'],
       summary: 'Receive a BALLDONTLIE webhook notification',
       description:
-        'Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment\'s endpoint secret), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. '
+        'Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment\'s endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. '
         + 'A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider\'s current scores, so the notification\'s own contents are never written. '
         + 'A notification about nothing linked, or of a type PoolMaster does not act on, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.',
       operationId: 'receiveBalldontlieWebhook',
@@ -78,7 +79,7 @@ export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderW
         : checkBalldontlieSignature({
             timestamp: singleHeader(request.headers['x-bdl-webhook-timestamp']),
             signature: singleHeader(request.headers['x-bdl-webhook-signature']),
-            rawBody: rawBodies.get(request) ?? '',
+            rawBody: rawBodies.get(request) ?? Buffer.alloc(0),
           }, secret, now());
       if (check === 'VALID') return;
       logger.warn({

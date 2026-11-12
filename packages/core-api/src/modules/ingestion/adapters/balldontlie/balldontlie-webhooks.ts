@@ -89,23 +89,29 @@ export function readBalldontlieNotification(body: BalldontlieWebhookNotification
 export const BALLDONTLIE_SIGNATURE_TOLERANCE_SECONDS = 300;
 
 const SIGNATURE_PATTERN = /^v1=([0-9a-f]{64})$/;
+/** How the signatures in one header are separated: the vendor sends one per active secret while a secret rotates. */
+const SIGNATURE_SEPARATOR = /[\s,]+/;
 const TIMESTAMP_PATTERN = /^\d{1,12}$/;
 
 export interface BalldontlieSignedDelivery {
   /** The `X-BDL-Webhook-Timestamp` header: Unix seconds. */
   timestamp: string | undefined;
-  /** The `X-BDL-Webhook-Signature` header: `v1=` and a hex HMAC-SHA256. */
+  /**
+   * The `X-BDL-Webhook-Signature` header: one or more `v1=<hex HMAC-SHA256>`, separated by commas
+   * or spaces (more than one while the endpoint's secret is being rotated).
+   */
   signature: string | undefined;
-  /** The body exactly as posted. */
-  rawBody: string;
+  /** The body's bytes exactly as posted, so re-encoding can never change what was signed. */
+  rawBody: Buffer;
 }
 
 export type BalldontlieSignatureCheck = 'VALID' | 'MISSING' | 'MALFORMED' | 'STALE' | 'MISMATCH';
 
 /**
  * Whether the delivery was signed with the endpoint's secret: HMAC-SHA256 of
- * `{timestamp}.{body}`, compared in constant time, with a timestamp within the tolerance of now
- * so a captured delivery cannot be replayed later.
+ * `{timestamp}.{body}` over the raw bytes, compared in constant time, with a timestamp within the
+ * tolerance of now so a captured delivery cannot be replayed later. The delivery is valid when any
+ * of its `v1=` signatures matches; tokens of another scheme are ignored.
  */
 export function checkBalldontlieSignature(
   delivery: BalldontlieSignedDelivery,
@@ -113,9 +119,13 @@ export function checkBalldontlieSignature(
   now: Date,
 ): BalldontlieSignatureCheck {
   if (delivery.timestamp === undefined || delivery.signature === undefined) return 'MISSING';
-  const signed = SIGNATURE_PATTERN.exec(delivery.signature);
-  if (!signed || !TIMESTAMP_PATTERN.test(delivery.timestamp)) return 'MALFORMED';
+  const signatures = delivery.signature
+    .split(SIGNATURE_SEPARATOR)
+    .map((token) => SIGNATURE_PATTERN.exec(token)?.[1])
+    .filter((hex): hex is string => hex !== undefined);
+  if (signatures.length === 0 || !TIMESTAMP_PATTERN.test(delivery.timestamp)) return 'MALFORMED';
   if (Math.abs(now.getTime() / 1000 - Number(delivery.timestamp)) > BALLDONTLIE_SIGNATURE_TOLERANCE_SECONDS) return 'STALE';
-  const expected = createHmac('sha256', secret).update(`${delivery.timestamp}.${delivery.rawBody}`).digest();
-  return timingSafeEqual(expected, Buffer.from(signed[1], 'hex')) ? 'VALID' : 'MISMATCH';
+  const expected = createHmac('sha256', secret).update(`${delivery.timestamp}.`).update(delivery.rawBody).digest();
+  const matches = signatures.filter((hex) => timingSafeEqual(expected, Buffer.from(hex, 'hex')));
+  return matches.length > 0 ? 'VALID' : 'MISMATCH';
 }
