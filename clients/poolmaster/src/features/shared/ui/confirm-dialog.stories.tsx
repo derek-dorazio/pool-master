@@ -22,3 +22,12 @@ type Story = StoryObj<typeof meta>;
 export const Danger: Story = {};
 export const Default: Story = { args: { tone: "default", confirmLabel: "Release", title: "Release the field?", description: "Members can start making picks." } };
 export const Pending: Story = { args: { isPending: true, pendingLabel: "Removing" } };
+export const TypeToConfirm: Story = {
+  args: {
+    confirmLabel: "Delete league",
+    confirmationInput: { expectedValue: "BIGDAWGS", label: "League code", onChange: () => undefined, value: "BIG" },
+    description: "Big Dawgs and all its contests are deleted for good.",
+    title: "Delete Big Dawgs?",
+  },
+};
+export const Failed: Story = { args: { error: "Sam Rivera is the league's last commissioner, so they can't be removed." } };

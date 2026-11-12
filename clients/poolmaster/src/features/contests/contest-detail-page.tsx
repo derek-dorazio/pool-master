@@ -26,10 +26,8 @@ import {
   EmptyState,
   ErrorState,
   FactList,
-  FormField,
   Heading,
   HelpTip,
-  Input,
   LinkButton,
   LoadingState,
   SimpleTable,
@@ -46,6 +44,7 @@ import {
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
 import { EntryDetailsPeek } from './entry-details-peek';
+import { EntryNameField } from './entry-name-field';
 import { MY_ENTRIES_PARAM } from './contest-page-view';
 import {
   areContestEntriesOpen,
@@ -494,44 +493,20 @@ export function ContestDetailPage() {
 
                   {canRename ? (
                     isRenaming ? (
-                      <Tile className="mt-4 space-y-3" padding="sm" radius="lg" variant="default">
-                        <FormField label="Entry name">
-                          <Input
-                            data-testid={`contest-board-rename-input-${entry.id}`}
-                            disabled={renameEntryMutation.isPending}
-                            maxLength={100}
-                            onChange={(event) => setRenameDraft(event.target.value)}
-                            value={renameDraft}
-                          />
-                        </FormField>
-                        <div className="flex flex-wrap gap-3">
-                          <Button
-                            data-testid={`contest-board-rename-save-${entry.id}`}
-                            disabled={!renameDraft.trim() || renameEntryMutation.isPending}
-                            isLoading={renameEntryMutation.isPending}
-                            onClick={() =>
-                              void renameEntryMutation.mutateAsync({
-                                entryId: entry.id,
-                                name: renameDraft.trim(),
-                              }).catch(() => undefined)
-                            }
-                          >
-                            {renameEntryMutation.isPending ? 'Saving...' : 'Save name'}
-                          </Button>
-                          <Button
-                            data-testid={`contest-board-rename-cancel-${entry.id}`}
-                            disabled={renameEntryMutation.isPending}
-                            onClick={cancelRenameEntry}
-                            variant="secondary"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                        {renameEntryMutation.isError ? (
-                          <Notice tone="danger">
-                            {extractErrorMessage(renameEntryMutation.error)}
-                          </Notice>
-                        ) : null}
+                      <Tile className="mt-4" padding="sm" radius="lg" variant="default">
+                        <EntryNameField
+                          error={renameEntryMutation.isError ? extractErrorMessage(renameEntryMutation.error) : null}
+                          onChange={setRenameDraft}
+                          save={{
+                            cancelTestId: `contest-board-rename-cancel-${entry.id}`,
+                            isSaving: renameEntryMutation.isPending,
+                            onCancel: cancelRenameEntry,
+                            onSave: (name) => void renameEntryMutation.mutateAsync({ entryId: entry.id, name }).catch(() => undefined),
+                            saveTestId: `contest-board-rename-save-${entry.id}`,
+                          }}
+                          testId={`contest-board-rename-input-${entry.id}`}
+                          value={renameDraft}
+                        />
                       </Tile>
                     ) : (
                       <div className="mt-3">

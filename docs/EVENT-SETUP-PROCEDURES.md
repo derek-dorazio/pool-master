@@ -78,7 +78,8 @@ pick the year on its tournament calendar, and choose *Import {year} from provide
 event the mock lists for that tour and year is created and linked for scores; ones the tour
 already has are skipped, so it is safe to run again. The tour's match keyword must be the
 mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385). The single-event browse
-accepts that keyword too, as well as a substring of event names.
+accepts that keyword too, as well as words in event names: whole words only, so `NBA` does
+not match "WNBA Playoffs".
 
 ## 3. Check the rounds
 
@@ -313,7 +314,7 @@ not offer one. Every other league takes squares on any round.
 
 **Series rounds.** A sport league whose playoff rounds are best-of series names each round's
 length, first to final (`roundSeriesLengths`, set by migration): the NBA and NHL 7, 7, 7, 7, MLB
-3, 5, 7, 7, the WNBA 3, 7, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
+3, 5, 7, 7, the WNBA 3, 5, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
 synced event counts its games' winners against the length and records the series once a side has
 won more than half. An admin who enters a series' result by hand enters the games won (4-2).
 When a league changes its format, change its lengths by migration before the playoffs start.

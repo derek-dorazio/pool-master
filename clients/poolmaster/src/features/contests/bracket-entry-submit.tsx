@@ -1,9 +1,10 @@
 import { ContestEntryStatus, type Sport } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import { Notice, Button, FormField, Heading, Input, Tile } from '@/features/shared/ui';
+import { Notice, Button, FormField, Input, Text } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { formatPickProgress, parseBracketTiebreaker } from './bracket-layout';
 import { contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
+import { EntrySubmitBar } from './entry-submit-bar';
 
 /** Why the bracket cannot be submitted yet, in the order the entry would fix it, or null. */
 function submitHint(gamePicks: GamePicksResponse, sport: Sport | null | undefined): string | null {
@@ -56,13 +57,23 @@ export function BracketSubmitPanel({
   const scoreUnit = contestScoreUnit(sport);
 
   return (
-    <Tile className="space-y-4" data-testid="bracket-submit-panel">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <Heading level={3} variant="card" size="xl" tone="inherit">Tiebreaker and submit</Heading>
-        <span className="text-sm text-muted-foreground" data-testid="bracket-progress">
-          {formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
-        </span>
-      </div>
+    <EntrySubmitBar
+      error={submitError}
+      errorTestId="bracket-submit-error"
+      hint={hint}
+      hintTestId="bracket-submit-hint"
+      progress={formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
+      progressTestId="bracket-progress"
+      submit={isSubmitted ? null : {
+        disabled: !gamePicks.canSubmit || isSubmitting || isSaving,
+        isSubmitting,
+        label: 'Submit bracket',
+        onSubmit,
+        testId: 'bracket-submit',
+      }}
+      testId="bracket-submit-panel"
+      title="Tiebreaker and submit"
+    >
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => {
@@ -99,29 +110,16 @@ export function BracketSubmitPanel({
         </Button>
       </form>
       {gamePicks.tiebreakerValue !== null ? (
-        <p className="text-sm text-muted-foreground" data-testid="bracket-tiebreaker-saved">
+        <Text as="p" data-testid="bracket-tiebreaker-saved" variant="meta">
           {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total ${scoreUnit}.`}
-        </p>
+        </Text>
       ) : null}
       {saveError ? <Notice data-testid="bracket-save-error" tone="danger">{saveError}</Notice> : null}
-
       {isSubmitted ? (
         <Notice data-testid="bracket-submitted" title="Submitted" tone="success">
           {`Your bracket counts. You can still change picks until the ${contestMatchNoun(sport).many} lock; a change that leaves a ${contestMatchNoun(sport).one} unpicked needs submitting again.`}
         </Notice>
-      ) : (
-        <div className="space-y-3">
-          {hint ? <p className="text-sm text-muted-foreground" data-testid="bracket-submit-hint">{hint}</p> : null}
-          <Button
-            data-testid="bracket-submit"
-            disabled={!gamePicks.canSubmit || isSubmitting || isSaving}
-            onClick={onSubmit}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit bracket'}
-          </Button>
-        </div>
-      )}
-      {submitError ? <Notice data-testid="bracket-submit-error" tone="danger">{submitError}</Notice> : null}
-    </Tile>
+      ) : null}
+    </EntrySubmitBar>
   );
 }

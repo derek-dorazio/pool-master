@@ -47,6 +47,10 @@
     --color-red-400: #b05157;
     --color-red-500: #8c3f44;
     --color-red-600: #632c30;
+    /* Done green: a finished stage's check (#1609). 500 clears 3:1 on paper and white text on it;
+       300 is dark mode's, under dark text. */
+    --color-green-500: #2e8150;
+    --color-green-300: #5cb983;
     --color-paper: #f5f5f2;
     /* The one quiet second colour: small labels over titles and the selected tab. */
     --color-field-blue: #3d64a8;
@@ -110,6 +114,9 @@
     --status-completed-surface: color-mix(in srgb, var(--tint-base) 8%, transparent);
     --status-completed-border: color-mix(in srgb, var(--tint-base) 24%, transparent);
     --status-completed-text: var(--text-primary);
+    /* A stage that is done: a filled green circle with a check, and the line up to it. */
+    --status-done: var(--color-green-500);
+    --text-on-done: var(--text-on-inverse);
     --status-danger-surface: color-mix(in srgb, var(--text-danger) 10%, transparent);
     --status-danger-border: color-mix(in srgb, var(--text-danger) 42%, transparent);
     --status-danger-text: var(--text-danger);
@@ -257,6 +264,8 @@
     --text-danger: var(--color-red-300);
     /* White on the lighter dark-mode red is too faint; red buttons take dark text. */
     --text-on-danger: var(--color-graphite-900);
+    --status-done: var(--color-green-300);
+    --text-on-done: var(--color-graphite-900);
     --tint-base: var(--color-graphite-50);
     --border-default: var(--color-graphite-500);
     --border-strong: var(--color-graphite-400);

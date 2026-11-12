@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { refreshEventParticipants } from '@/lib/api';
-import { Notice, Button, ConfirmationModal } from '@/features/shared/ui';
+import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -93,11 +93,11 @@ export function EventFieldRefreshAction({
         </Notice>
       ) : null}
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={label}
         confirmTestId="root-admin-event-field-refresh-confirm"
         description="Pulls the field again from the linked provider event. For every participant the provider reports, rankings, odds, seeds and withdrawals you set in the field grid or by bulk upload are replaced with the provider's values."
-        errorMessage={
+        error={
           refreshMutation.isError && confirmOpen
             ? extractErrorMessage(refreshMutation.error, {
                 fallback: 'We could not start the provider field sync.',

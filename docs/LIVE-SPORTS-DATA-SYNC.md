@@ -96,7 +96,7 @@ the order it happens.
 | `sports` | One per sport (baseline). | Participants and events hang off it. |
 | `sport_leagues` | One per league or Clutch Card league (baseline `20271114000100_baseline_reference_data`). Carries `scoring_family`, `round_names` and `match_keyword` (`round_series_lengths` is added by the next row's migration). | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
 | `sport_leagues.match_keyword` | Set per league by a small migration, only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
-| `sport_leagues.round_series_lengths` | `20271117000200_add_round_series_lengths`: NBA and NHL `[7,7,7,7]`, WNBA `[3,7,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
+| `sport_leagues.round_series_lengths` | `20271117000200_add_round_series_lengths`: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]` (seeded `[3,7,7]`, corrected by `20271118002300_wnba_semifinals_best_of_five`), MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
 | `background_jobs` enum | `20271118000000_add_provider_event_sync_job_type` adds `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
 
 The keyword migrations on `main`, and the tour each matches:
@@ -112,6 +112,8 @@ The keyword migrations on `main`, and the tour each matches:
 | NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | `20271117000500_set_nba_clutch_card_match_keywords` | the round's `name` in `NBA_PLAYOFFS.rounds` |
 | PGA TOUR | `NULL` in the seed (see *Gaps* below) | none | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
 | NHL | `NHL` | `20271118001000_set_nhl_match_keyword` | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
+| MLB | `MLB` | `20271118002100_set_mlb_match_keyword` | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
+| WNBA | `WNBA` | `20271118002200_set_wnba_match_keyword` | `WNBA_PLAYOFFS.tour` (`wnba-mapping.ts`) |
 
 ### 2b. Event rows, by an admin action
 
@@ -313,7 +315,9 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 | NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
 | NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | not yet (see *Gaps*) |
 | NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | not yet |
-| NHL playoffs (bracket) | `nhl-<season>-postseason` | `nhl-team-<id>` | `/nhl/v1/games` (`seasons`, postseason), `/nhl/v1/teams` | `GAME`, as series | `nhl-contract.ts`, `nhl-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nhl.game.*` |
+| NHL playoffs (bracket) | `nhl-<season>-postseason` | `nhl-team-<id>` | `/nhl/v1/games` (`seasons`, postseason), `/nhl/v1/teams` | `GAME`, as series | `nhl-contract.ts`, `nhl-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nhl.game.*` (names assumed, see below) |
+| MLB postseason (bracket) | `mlb-<season>-postseason` | `mlb-team-<id>` | `/mlb/v1/games` (`seasons[]`, postseason), `/mlb/v1/teams` | `GAME`, as series | `mlb-contract.ts`, `mlb-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `mlb.game.*` (names assumed, see below) |
+| WNBA playoffs (bracket) | `wnba-<season>-postseason` | `wnba-team-<id>` | `/wnba/v1/games` (the whole season: no postseason filter), `/wnba/v1/teams` | `GAME`, as series | `wnba-contract.ts`, `wnba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `wnba.game.*` (names assumed) |
 | Premier League | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `/epl/v2/matches`, `/epl/v2/teams` | `GAME` (a draw is a result) | `soccer-contract.ts`, `epl-mapping.ts`, `epl-reader.ts` | `epl.game.*` |
 | FIFA World Cup | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `/fifa/worldcup/v1/matches` (GOAT), `/fifa/worldcup/v1/teams` | `GAME` with shoot-outs | `fifa-world-cup-contract.ts`, `-mapping.ts`, `-reader.ts` | `worldcup.game.*` |
 
@@ -385,6 +389,32 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **Key code.** `nhl-contract.ts`; `nhl-mapping.ts` `NHL_PLAYOFFS`, `nhlPlayoffsSource`,
   `toNhlPlayoffGame`, `isNhlFranchise`.
 
+### MLB postseason bracket (#1496)
+
+- **Registration.** MLB sport league, keyword `MLB` (`20271118002100`), `round_series_lengths
+  [3,5,7,7]` (`20271117000200`). One event per season (`mlb-2026-postseason`, played the same
+  year: `playoffYearOffset: 0`). `MLB_POSTSEASON.rounds` names *MLB Wild Card Series*, *MLB
+  Division Series*, *MLB League Championship Series* and *World Series*; the four top seeds' byes
+  are no series, so their first series is round 2. No round is listed until MLB reads box scores.
+- **Sync.** As the NBA bracket's, a side's runs being its score. The teams list keeps only the
+  American and National League clubs, so an All-Star side is left out.
+- **Key code.** `mlb-contract.ts`; `mlb-mapping.ts` `MLB_POSTSEASON`, `mlbPostseasonSource`,
+  `toMlbPlayoffGame`, `isMlbClub`.
+
+### WNBA playoffs bracket (#1496)
+
+- **Registration.** WNBA sport league, keyword `WNBA` (`20271118002200`), `round_series_lengths
+  [3,5,7]` (`20271118002300` corrects the seeded `[3,7,7]`: the semifinals are best of five). One
+  event per season (`wnba-2026-postseason`, played the same year: `playoffYearOffset: 0`).
+  `WNBA_PLAYOFFS.rounds` names *WNBA First Round*, *WNBA Semifinals* and *WNBA Finals*; no round
+  is listed until the WNBA reads box scores.
+- **Sync.** As the NBA bracket's. The vendor's WNBA games endpoint documents no postseason filter,
+  so the whole season is read (about three pages) and the shared reader keeps the playoffs by each
+  game's `postseason` flag. The event picker matches a keyword in an event's name only as whole
+  words, so the NBA league, whose keyword "WNBA" contains, never lists WNBA events.
+- **Key code.** `wnba-contract.ts`; `wnba-mapping.ts` `WNBA_PLAYOFFS`, `wnbaPlayoffsSource`,
+  `toWnbaPlayoffGame`, `isWnbaFranchise`; `isLeagueEvent` in `event-score-source-service.ts`.
+
 ### NBA Clutch Card rounds (#1497, PRs #1659, #1661, #1663)
 
 - **Registration.** Each round reached is listed as an event of its own
@@ -420,7 +450,6 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| MLB, WNBA playoffs | next in #1496 part 4 | The same shape: a `PlayoffsLeague` (MLB `playoffYearOffset: 0`, rounds of 3, 5, 7, 7; WNBA 3, 7, 7) and a source. `round_series_lengths` is already seeded. |
 | Safety-net poll, reconciliation, quiet alert | #1499 | Per-event cadence (golf 2 min during a round, else 15 min), a second sync 10 minutes after `game.ended` / `tournament.ended` under its own dedupe key, and a new `sport_events.last_provider_notification_at` set by the receiver for a quiet-feed alarm. |
 | Not read yet | | College Football Playoff (the vendor marks no postseason), UCL two-leg ties, MLS best-of-three. |
 
@@ -458,6 +487,10 @@ None is fixed here; each is for the owning thread to confirm.
   `epl` and `worldcup`, not `nba`, so an NBA notification is acknowledged and dropped and NBA
   events sync on the scheduled sweep alone. The prefix `nba-` would cover both the bracket and the
   round events. NHL has its entry (#1662).
+- **NHL, MLB and WNBA webhook event names are assumed.** Their entries subscribe to `game.started`,
+  `game.period_ended` and `game.ended`, the NFL and NCAA names. The vendor's webhook document
+  has not been checked for hockey, baseball or the WNBA (an inning may not be a "period"); confirm the
+  names once the key exists.
 - **PGA TOUR's `match_keyword` is seeded `NULL`.** The comment on `PGA_TOUR_NAME` says the league
   finds these events "with no keyword set by hand", but `listTourEventsForYear` refuses a league
   with no keyword (422), and the browse with a league filter falls back to no filter. Either an

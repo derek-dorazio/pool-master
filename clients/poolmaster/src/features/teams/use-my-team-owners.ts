@@ -8,6 +8,7 @@ import {
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { showToast } from '@/features/shared/ui';
 
 /**
  * Owner management for the My Team page: the co-owner invite and replace-owner drafts and the
@@ -54,8 +55,9 @@ export function useMyTeamOwners({
 
       return response.data.invitation;
     },
-    onSuccess: () => {
+    onSuccess: (_invitation, email) => {
       setCoOwnerEmail('');
+      showToast({ title: `Co-owner invite sent to ${email}`, tone: 'success' });
     },
     // An invitee who already has an account joins the league at once.
     invalidates: ownerChangeKeys,

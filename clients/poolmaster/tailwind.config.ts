@@ -78,6 +78,10 @@ const config: Config = {
         "on-inverse-subtle": "var(--surface-on-inverse-subtle)",
         "on-inverse-hover": "var(--surface-on-inverse-hover)",
         "inverse-border": "var(--border-on-inverse)",
+        done: {
+          DEFAULT: "var(--status-done)",
+          foreground: "var(--text-on-done)",
+        },
         border: themeColor("border"),
         input: themeColor("input"),
         ring: themeColor("ring"),

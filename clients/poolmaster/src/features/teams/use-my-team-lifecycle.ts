@@ -1,14 +1,14 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { type SquadDto, deleteLeagueSquad, inactivateLeagueSquad } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { showToast } from '@/features/shared/ui';
 import type { ActiveTeamDialog } from './my-team-shared';
 
 /**
- * Inactivate and delete for Commissioner tools › Manage team. The inactivation notice belongs
- * to the inactivated team and shows only while that team is selected; delete leaves the page.
+ * Inactivate and delete for Commissioner tools › Manage team. Inactivating closes its dialog and
+ * confirms with a toast; delete leaves the page.
  */
 export function useMyTeamLifecycle({
   leagueId,
@@ -27,10 +27,6 @@ export function useMyTeamLifecycle({
   afterDeletePath: string;
 }) {
   const navigate = useNavigate();
-  // The notice remembers which team it is about, so it shows only while that team is selected.
-  const [inactivationNotice, setInactivationNotice] = useState<{ squadId: string; message: string } | null>(null);
-  const teamInactivationNotice =
-    inactivationNotice && inactivationNotice.squadId === selectedTeam?.id ? inactivationNotice.message : null;
 
   const inactivateTeamMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -51,9 +47,10 @@ export function useMyTeamLifecycle({
     },
     onSuccess: (team) => {
       setActiveDialog(null);
-      setInactivationNotice({
-        squadId: team.id,
-        message: `${team.name} is now inactive. Its owners were removed from this league. Their accounts and their other leagues are untouched, and inviting them back restores it.`,
+      showToast({
+        title: `${team.name} is now inactive`,
+        description: 'Its owners were removed from this league.',
+        tone: 'success',
       });
       resetOwnerForms();
     },
@@ -97,7 +94,6 @@ export function useMyTeamLifecycle({
   });
 
   return {
-    teamInactivationNotice,
     inactivateTeamMutation,
     deleteTeamMutation,
     isPending: inactivateTeamMutation.isPending || deleteTeamMutation.isPending,

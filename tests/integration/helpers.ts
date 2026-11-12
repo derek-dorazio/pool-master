@@ -841,12 +841,14 @@ export async function cleanupTestData(): Promise<void> {
   const providerSportEventParticipantIds = providerSportEventParticipants.map((participant) => participant.id);
 
   // #202 — no `createdBy` arm. Leagues created through the service always carry the
-  // creator's COMMISSIONER membership, so the membership filter covers those. Leagues a
-  // test inserts directly have no membership at all, so they are matched by code prefix.
+  // creator's COMMISSIONER membership, so the membership filter covers those. A league a test
+  // inserts directly often has no membership at all; every real league has its commissioner, so a
+  // league with no member is a test's, whatever its code. The code prefixes cover the rest.
   const leagues = await prisma.league.findMany({
     where: {
       OR: [
         ...(userIds.length ? [{ memberships: { some: { userId: { in: userIds } } } }] : []),
+        { memberships: { none: {} } },
         ...INTEGRATION_TEST_LEAGUE_CODE_PREFIXES.map((prefix) => ({
           leagueCode: { startsWith: prefix },
         })),

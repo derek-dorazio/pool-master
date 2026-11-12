@@ -32,6 +32,18 @@ function renderFormPage(overrides: Partial<FormPageProps> = {}) {
 }
 
 describe("FormPage", () => {
+  it("draws the preview outside the form's card, after the fields and before the buttons", () => {
+    renderFormPage({ preview: <p data-testid="form-preview">Members will see</p>, testId: "edit-league" });
+
+    const preview = screen.getByTestId("form-preview");
+    const field = screen.getByLabelText("League name");
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(field.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(preview.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("edit-league-fields")).toContainElement(field);
+    expect(screen.getByTestId("edit-league-fields")).not.toContainElement(preview);
+  });
+
   it("opens with the page header, its title the page heading, and renders its fields", () => {
     renderFormPage();
 

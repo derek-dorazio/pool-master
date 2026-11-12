@@ -61,6 +61,24 @@ function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean
   return typeof tour === 'string' && isLeagueTour(tour, keyword);
 }
 
+/**
+ * #385 — whether an event belongs to the league whose match keyword this is: its tour is the
+ * keyword, or its name holds the keyword as whole words. A keyword inside a longer word is no
+ * match, so "NBA" does not take "WNBA Playoffs", while a fragment such as "U.S. Open" still takes
+ * "U.S. Open Championship".
+ */
+function isLeagueEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
+  const sought = keyword.trim().toLowerCase();
+  if (sought === '') return false;
+  if (isTourEvent(event, sought)) return true;
+  const name = event.name.toLowerCase();
+  const isWordCharacter = (character: string | undefined) => character !== undefined && /[\p{L}\p{N}]/u.test(character);
+  for (let at = name.indexOf(sought); at !== -1; at = name.indexOf(sought, at + 1)) {
+    if (!isWordCharacter(name[at - 1]) && !isWordCharacter(name[at + sought.length])) return true;
+  }
+  return false;
+}
+
 export class EventScoreSourceService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -92,16 +110,14 @@ export class EventScoreSourceService {
 
     const events = await provider.getUpcomingEvents(sport, dateRange);
 
+    // A blank keyword is no keyword: the league names no tour or words to keep.
     const matchKeyword = options.sportLeagueId
-      ? (await this.prisma.sportLeague.findUnique({ where: { id: options.sportLeagueId } }))?.matchKeyword ?? null
+      ? (await this.prisma.sportLeague.findUnique({ where: { id: options.sportLeagueId } }))?.matchKeyword?.trim() || null
       : null;
     const search = options.search?.trim().toLowerCase() || null;
 
-    // #385 — a league's keyword is either the provider's tour name or a name substring.
     return events
-      .filter((event) => !matchKeyword
-        || isTourEvent(event, matchKeyword)
-        || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
+      .filter((event) => !matchKeyword || isLeagueEvent(event, matchKeyword))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 

@@ -7,7 +7,7 @@ import { readBalldontlieFixture } from './balldontlie-vendor-spec';
  * and filtered as the vendor filters them: the 2025 Finals (the 2024 season's), the 2025
  * season's first round under way, and a whole made-up 2023 bracket whose Finals (Boston v
  * Dallas) are two games in, the third live, with their stat rows and both teams' active players
- * (#1497). Basketball's lists also read the NCAA tournaments, served empty.
+ * (#1497). Basketball's lists also read the NCAA tournaments and the WNBA, served empty.
  */
 
 const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean() });
@@ -36,4 +36,6 @@ export const nbaRoutes: Record<string, FakeRoute> = {
   '/ncaab/v1/teams': emptyTeams,
   '/ncaaw/v1/bracket': emptyBracket,
   '/ncaaw/v1/teams': emptyTeams,
+  '/wnba/v1/games': emptyBracket,
+  '/wnba/v1/teams': emptyTeams,
 };

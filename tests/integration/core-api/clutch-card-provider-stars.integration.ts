@@ -36,7 +36,7 @@ async function roundDetail(provider: BalldontlieAdapter) {
 }
 
 function adapter() {
-  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes: nbaRoutes });
+  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw', 'wnba'], apiKey: API_KEY, routes: nbaRoutes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   restoreFetch = () => {
