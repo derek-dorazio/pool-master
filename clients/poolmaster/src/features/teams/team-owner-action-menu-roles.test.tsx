@@ -51,9 +51,9 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
     await openMenu();
 
-    expect(screen.getByRole('menuitem', { name: 'Promote to commissioner' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Make commissioner' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Remove as commissioner' })).not.toBeInTheDocument();
   });
 
   it('offers demote, but not promote, for an owner who is a commissioner', async () => {
@@ -61,8 +61,8 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
     await openMenu();
 
-    expect(screen.getByRole('menuitem', { name: 'Demote to member' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Remove as commissioner' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Make commissioner' })).not.toBeInTheDocument();
   });
 
   it('offers only removal when the viewer may remove owners but not change league roles', async () => {
@@ -71,8 +71,8 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     await openMenu();
 
     expect(screen.getByRole('menuitem', { name: 'Remove owner' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Promote to commissioner' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Demote to member' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Make commissioner' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Remove as commissioner' })).not.toBeInTheDocument();
   });
 
   it('promotes the owner to commissioner in this league, closes the confirmation and confirms with a toast', async () => {
@@ -81,10 +81,10 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     }));
     renderMenu({ ownerRole: 'MEMBER' });
 
-    await chooseAction('Promote to commissioner');
-    const dialog = within(screen.getByRole('dialog', { name: 'Promote to commissioner' }));
-    expect(dialog.getByText('Jordan Rivers will gain commissioner authority for this league.')).toBeInTheDocument();
-    fireEvent.click(dialog.getByRole('button', { name: 'Promote' }));
+    await chooseAction('Make commissioner');
+    const dialog = within(screen.getByRole('dialog', { name: 'Make commissioner' }));
+    expect(dialog.getByText('Jordan Rivers will help you run this league, with the same Commissioner tools you have.')).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole('button', { name: 'Make commissioner' }));
 
     await waitFor(() => expect(mockApi.changeMemberRole).toHaveBeenCalledWith({
       path: { id: 'league-1', uid: 'user-2' },
@@ -105,14 +105,14 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    await chooseAction('Demote to member');
-    const dialog = within(screen.getByRole('dialog', { name: 'Demote to member' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Demote' }));
+    await chooseAction('Remove as commissioner');
+    const dialog = within(screen.getByRole('dialog', { name: 'Remove as commissioner' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Remove as commissioner' }));
 
     expect(await dialog.findByText(
       'Appoint another active commissioner before removing or demoting the last commissioner.',
     )).toBeInTheDocument();
-    expect(dialog.getByRole('button', { name: 'Demote' })).toBeEnabled();
+    expect(dialog.getByRole('button', { name: 'Remove as commissioner' })).toBeEnabled();
   });
 
   it('clears a previous failure when the confirmation is closed and opened again', async () => {
@@ -121,15 +121,15 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     });
     renderMenu({ ownerRole: 'COMMISSIONER' });
 
-    await chooseAction('Demote to member');
-    const dialog = within(screen.getByRole('dialog', { name: 'Demote to member' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Demote' }));
+    await chooseAction('Remove as commissioner');
+    const dialog = within(screen.getByRole('dialog', { name: 'Remove as commissioner' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Remove as commissioner' }));
     await dialog.findByText('Cannot demote the last commissioner.');
-    fireEvent.click(dialog.getByRole('button', { name: 'Close Demote to member' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Close Remove as commissioner' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
-    await chooseAction('Demote to member');
-    const reopened = within(screen.getByRole('dialog', { name: 'Demote to member' }));
+    await chooseAction('Remove as commissioner');
+    const reopened = within(screen.getByRole('dialog', { name: 'Remove as commissioner' }));
     expect(reopened.queryByText('Cannot demote the last commissioner.')).not.toBeInTheDocument();
   });
 
