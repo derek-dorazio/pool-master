@@ -188,9 +188,11 @@ describe("PageHeader", () => {
     expect(screen.getByTestId("race-title-row")).not.toHaveClass("border-b");
   });
 
-  it("leaves out a tab-row filter when there are no tabs to sit beside", () => {
-    renderHeader(<PageHeader tabsEnd={<span>Season 2026</span>} title="Championships" />);
+  it("gives a page filter with no tabs the bottom line to itself, over the rule, with the title row unruled", () => {
+    renderHeader(<PageHeader tabsEnd={<span>Sport: Golf</span>} testId="how" title="How to Play" />);
 
-    expect(screen.queryByText("Season 2026")).not.toBeInTheDocument();
+    expect(within(screen.getByTestId("how-tab-row")).getByText("Sport: Golf")).toBeInTheDocument();
+    expect(screen.getByTestId("how-tab-row")).toHaveClass("border-b");
+    expect(screen.getByTestId("how-title-row")).not.toHaveClass("border-b");
   });
 });
