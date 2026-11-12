@@ -63,6 +63,7 @@ import {
   PrismaUserRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
+  PrismaSportEventParticipantStatLineRepository,
   PrismaBackgroundJobRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
@@ -182,6 +183,7 @@ export function buildApp() {
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
+    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
     eventLifecycleService,
     jobLock,
     logger: app.log,

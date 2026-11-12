@@ -6,7 +6,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ContestStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
-import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaSportEventParticipantStatLineRepository, PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import { PostgresJobLock } from '../../../packages/core-api/src/core/job-lock';
 import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
@@ -71,6 +71,7 @@ function lifecycleSweep(now: Date) {
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
+    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
     eventLifecycleService: createEventLifecycleService(prisma, {
       logger,
       jobs: jobs.queue,
