@@ -788,6 +788,10 @@ export class InMemorySportEvents {
 
   statLineRepo(): SportEventParticipantStatLineRepository {
     return {
+      findSportEventsWithLiveLines: async (sportEventIds) => [...new Set(this.participantRoundRows
+        .filter((row) => row.status === 'IN_PROGRESS' && this.statLineRows.some((line) => line.participantRoundId === row.id))
+        .map((row) => this.roundRows.find((round) => round.id === row.sportEventRoundId)?.sportEventId)
+        .filter((sportEventId): sportEventId is string => sportEventId !== undefined && sportEventIds.includes(sportEventId)))],
       replaceGameLines: async (writes, jobs) => {
         if (writes.length === 0) return [];
         this.backgroundJobs.push(...(jobs ?? []));

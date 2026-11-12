@@ -248,6 +248,20 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
     expect([...outcomes, ...unchanged].map((outcome) => outcome.disposition)).toEqual(['UPDATED', 'UNCHANGED']);
   });
 
+  it('names each asked event holding a stat line still in progress once, and none whose lines are all completed or asked about by nobody (#1660)', async () => {
+    const live = await seedSeries();
+    const done = await seedSeries();
+    const notAsked = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+    const write = (series: typeof live, status: typeof ParticipantRoundStatus.COMPLETED | typeof ParticipantRoundStatus.IN_PROGRESS) => [series.ace, series.blaze].map((player) => ({
+      sportEventParticipantId: player.id, sportEventRoundId: series.games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], status, completedAt: null,
+    }));
+    await statLines.replaceGameLines([...write(live, ParticipantRoundStatus.IN_PROGRESS), ...write(done, ParticipantRoundStatus.COMPLETED), ...write(notAsked, ParticipantRoundStatus.IN_PROGRESS)]);
+
+    await expect(statLines.findSportEventsWithLiveLines([live.event.id, done.event.id])).resolves.toEqual([live.event.id]);
+    await expect(statLines.findSportEventsWithLiveLines([])).resolves.toEqual([]);
+  });
+
   it('writes nothing and reports nothing for an empty batch', async () => {
     const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
 

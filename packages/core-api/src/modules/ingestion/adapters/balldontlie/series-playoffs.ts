@@ -27,8 +27,11 @@ export interface PlayoffsLeague {
   sport: Sport;
   /** The event's name: "NBA Playoffs". */
   eventName: string;
-  /** How many games the final series is played over: the playoffs end when a side wins it. */
-  finalSeriesLength: number;
+  /**
+   * Each round, first to final (#1497): its event name, how many games each of its series is played
+   * over, and how many series it has. The playoffs end when a side wins the final's one series.
+   */
+  rounds: ReadonlyArray<{ name: string; seriesLength: number; seriesCount: number }>;
   /**
    * The years from the season's number to its playoffs: 1 where a season is numbered by the year
    * it starts and its playoffs fall in the next (the NBA's 2025 season, playoffs in 2026), 0
@@ -75,8 +78,13 @@ export function playoffsTeamExternalId(league: PlayoffsLeague, teamId: number): 
   return `${league.key}-team-${String(teamId)}`;
 }
 
+/** A game's two teams as one key, whichever is at home: two teams meet in one series a postseason. */
+export function pairOf(game: PlayoffGame): string {
+  return [game.home.id, game.away.id].sort((left, right) => left - right).join('|');
+}
+
 /** The side that won a final game, or null when it has no winner on the board. */
-function winnerOf(game: PlayoffGame): PlayoffTeam | null {
+export function winnerOf(game: PlayoffGame): PlayoffTeam | null {
   if (game.state !== CompetitionStatusState.FINAL || game.homeScore === null || game.awayScore === null) return null;
   if (game.homeScore === game.awayScore) return null;
   return game.homeScore > game.awayScore ? game.home : game.away;
@@ -89,7 +97,6 @@ function winnerOf(game: PlayoffGame): PlayoffTeam | null {
  */
 function isComplete(league: PlayoffsLeague, games: readonly PlayoffGame[]): boolean {
   if (!games.every((game) => isDone(PROGRESS_BY_STATE[game.state]))) return false;
-  const pairOf = (game: PlayoffGame) => [game.home.id, game.away.id].sort((left, right) => left - right).join('|');
   const teams = new Set(games.flatMap((game) => [game.home.id, game.away.id]));
   const pairs = new Set(games.map(pairOf));
   if (pairs.size !== teams.size - 1) return false;
@@ -99,7 +106,8 @@ function isComplete(league: PlayoffsLeague, games: readonly PlayoffGame[]): bool
     const winner = pairOf(game) === pairOf(last) ? winnerOf(game) : null;
     if (winner) winsByTeam.set(winner.id, (winsByTeam.get(winner.id) ?? 0) + 1);
   }
-  return [...winsByTeam.values()].some((wins) => wins >= seriesWinsNeeded(league.finalSeriesLength));
+  const finalSeriesLength = league.rounds[league.rounds.length - 1].seriesLength;
+  return [...winsByTeam.values()].some((wins) => wins >= seriesWinsNeeded(finalSeriesLength));
 }
 
 /** One season's playoffs as an event, from its games, which must be at least one. */

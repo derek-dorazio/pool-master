@@ -11,6 +11,14 @@
  * override for a rain delay, a dispute, or any other reason the recorded
  * schedule no longer reflects reality.
  *
+ * An event holding a stat line a provider has not called final yet is not completed (#1660): a
+ * Clutch Card's last game running past its scheduled end would otherwise settle contests on a
+ * partial box score, and the live sync, which reads only in-progress events, would never bring
+ * the final line. The sweep logs the hold and completes the event once the line is final; an
+ * admin can still complete it by hand if a feed never sends final. A game suspended mid-play
+ * leaves its lines in progress for good, so every sweep's line for a hold past `LONG_HOLD_MS` is
+ * a warning rather than info, to stand out in the logs for an admin to finish the event.
+ *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
  * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
@@ -24,7 +32,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
+import type { SportEventParticipantStatLineRepository, SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
@@ -32,11 +40,15 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import { errorMessage } from '../../core/error-message';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+/** How long past its scheduled end an event's completion is held before the hold is a warning. */
+export const LONG_HOLD_MS = 6 * 60 * 60 * 1000;
 const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
 
 export interface EventLifecycleSchedulerOptions {
   sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
   rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
+  /** Which events hold a stat line still in progress, whose completion waits (#1660). */
+  statLines: Pick<SportEventParticipantStatLineRepository, 'findSportEventsWithLiveLines'>;
   eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
@@ -48,6 +60,7 @@ export class EventLifecycleScheduler {
   private readonly lockedSweep: LockedSweep;
   private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
   private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
+  private readonly statLines: EventLifecycleSchedulerOptions['statLines'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
@@ -55,6 +68,7 @@ export class EventLifecycleScheduler {
   constructor(options: EventLifecycleSchedulerOptions) {
     this.sportEvents = options.sportEvents;
     this.rounds = options.rounds;
+    this.statLines = options.statLines;
     this.eventLifecycleService = options.eventLifecycleService;
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
@@ -90,10 +104,14 @@ export class EventLifecycleScheduler {
     const now = this.now();
     const candidates = await this.sportEvents.findAutoLifecycleCandidates();
     const roundsByEvent = await this.rounds.findBySportEvents(candidates.map((candidate) => candidate.id));
+    const schedules = candidates.map((candidate) => ({ candidate, roundSchedule: countedRounds(candidate, roundsByEvent.get(candidate.id) ?? []) }));
+    // One read, and only for the events due to complete this pass.
+    const dueToComplete = schedules.filter(({ candidate, roundSchedule }) => isDueToComplete(candidate, roundSchedule, now)).map(({ candidate }) => candidate.id);
+    const held = new Set(dueToComplete.length === 0 ? [] : await this.statLines.findSportEventsWithLiveLines(dueToComplete));
 
-    for (const candidate of candidates) {
+    for (const { candidate, roundSchedule } of schedules) {
       try {
-        await this.applyDueTransition(candidate, countedRounds(candidate, roundsByEvent.get(candidate.id) ?? []), now);
+        await this.applyDueTransition(candidate, roundSchedule, now, held.has(candidate.id));
       } catch (error) {
         this.logger?.error({
           sportEventId: candidate.id,
@@ -103,7 +121,7 @@ export class EventLifecycleScheduler {
     }
   }
 
-  private async applyDueTransition(candidate: SportEvent, roundSchedule: SportEventRound[], now: Date): Promise<void> {
+  private async applyDueTransition(candidate: SportEvent, roundSchedule: SportEventRound[], now: Date, liveLineHeld: boolean): Promise<void> {
     if (candidate.status === SportEventStatus.SCHEDULED) {
       const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
       if (now >= dueAt) {
@@ -120,20 +138,41 @@ export class EventLifecycleScheduler {
     if (candidate.status === SportEventStatus.IN_PROGRESS) {
       // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
       await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
-      const roundEnds = roundSchedule
-        .map((round) => round.scheduledEndAt)
-        .filter((date): date is Date => date !== null);
-      const dueAt = maxDate(roundEnds) ?? candidate.endDate;
-      if (dueAt && now >= dueAt) {
-        await this.eventLifecycleService.applySportEventStatusTransition({
-          sportEventId: candidate.id,
-          toStatus: SportEventStatus.COMPLETED,
-          actor: { type: 'SYSTEM' },
-          fromStatus: SportEventStatus.IN_PROGRESS,
-        });
+      const dueAt = completionDueAt(candidate, roundSchedule);
+      if (dueAt === undefined || now < dueAt) return;
+      if (liveLineHeld) {
+        const heldMs = now.getTime() - dueAt.getTime();
+        const entry = { action: 'eventLifecycle.completionHeld', data: { sportEventId: candidate.id, heldMs } };
+        if (heldMs >= LONG_HOLD_MS) {
+          this.logger?.warn(entry, 'Held an event\'s completion for hours: a game\'s stat lines are still in progress, so an admin may need to finish it');
+        } else {
+          this.logger?.info(entry, 'Held an event\'s completion: a game\'s stat lines are still in progress');
+        }
+        return;
       }
+      await this.eventLifecycleService.applySportEventStatusTransition({
+        sportEventId: candidate.id,
+        toStatus: SportEventStatus.COMPLETED,
+        actor: { type: 'SYSTEM' },
+        fromStatus: SportEventStatus.IN_PROGRESS,
+      });
     }
   }
+}
+
+/** When an event's schedule ends: its last round's end, or its own end date. */
+function completionDueAt(event: SportEvent, roundSchedule: SportEventRound[]): Date | undefined {
+  const roundEnds = roundSchedule
+    .map((round) => round.scheduledEndAt)
+    .filter((date): date is Date => date !== null);
+  return maxDate(roundEnds) ?? event.endDate;
+}
+
+/** Whether an in-progress event's schedule has ended. */
+function isDueToComplete(event: SportEvent, roundSchedule: SportEventRound[], now: Date): boolean {
+  if (event.status !== SportEventStatus.IN_PROGRESS) return false;
+  const dueAt = completionDueAt(event, roundSchedule);
+  return dueAt !== undefined && now >= dueAt;
 }
 
 /**
