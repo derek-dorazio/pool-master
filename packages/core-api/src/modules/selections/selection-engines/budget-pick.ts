@@ -9,19 +9,20 @@
  * spent against the cap. Money is summed in whole cents, never as floats.
  */
 
-import { SelectionType, toCents, type ContestConfiguration } from '@poolmaster/shared/domain';
+import { SelectionType, toCents } from '@poolmaster/shared/domain';
 import { LineupIssueKind, type LineupIssue, type SelectionParticipant } from '../types';
 import {
   completenessIssues,
   SelectionOutcomeKind,
   SelectionRejectCode,
+  type EngineRules,
   type EntryPick,
   type LineupPick,
   type SelectionEngine,
 } from './selection-engine';
 
 /** The budget rules' salary cap, or null when the contest carries no budget rules. */
-function salaryCapOf(configuration: ContestConfiguration | null): number | null {
+function salaryCapOf(configuration: EngineRules): number | null {
   return configuration?.configJson?.selectionType === SelectionType.BUDGET_PICK
     ? configuration.configJson.salaryCap
     : null;

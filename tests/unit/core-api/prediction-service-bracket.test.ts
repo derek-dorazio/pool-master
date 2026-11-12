@@ -407,3 +407,70 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
     expect(context.storedPicks()).toEqual([['m1', 'LL']]);
   });
 });
+
+describe('PredictionService.previewGames on a bracket setup, before it is saved', () => {
+  const BRACKET_RULES = { selectionType: SelectionType.BRACKET, startsAtRound: 1 } as const;
+  const eventId = (context: ReturnType<typeof setup>) => context.input.sportEventId;
+  const previewed = (games: readonly { match: SportEventMatch; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }[], matchNumber: number) => {
+    const each = expectDefined(games.find((row) => row.match.matchNumber === matchNumber));
+    return [each.predictedHome?.sportEventParticipantId ?? null, each.predictedAway?.sportEventParticipantId ?? null];
+  };
+
+  it('fills each later game with the teams the trial picks send there, as an entry\'s picks would', async () => {
+    const context = setup();
+
+    const preview = await context.service.previewGames({ sportEventId: eventId(context), rules: BRACKET_RULES, picks: CHALK.slice(0, 2) });
+
+    expect(preview.selectionType).toBe(SelectionType.BRACKET);
+    expect(preview.gameCount).toBe(7);
+    expect(preview.pickedCount).toBe(2);
+    expect(previewed(preview.games, 5)).toEqual(['T1', 'T4']);
+    expect(previewed(preview.games, 7)).toEqual([null, null]);
+    expect(preview.tiebreakerMatchId).toBe('m7');
+  });
+
+  it('drops a later trial pick whose team an earlier trial pick knocked out', async () => {
+    const context = setup();
+    const upset = { ...bracketPick(1, 'T8'), confidence: null };
+
+    const preview = await context.service.previewGames({ sportEventId: eventId(context), rules: BRACKET_RULES, picks: [upset, ...CHALK.slice(1, 2), CHALK[4]] });
+
+    expect(expectDefined(preview.games.find((row) => row.match.matchNumber === 5)).pick).toBeNull();
+    expect(previewed(preview.games, 5)).toEqual(['T8', 'T4']);
+    expect(preview.pickedCount).toBe(2);
+  });
+
+  it('locks no game of a bracket that has not started, as members will pick it once the contest opens, and saves no pick', async () => {
+    const context = setup();
+
+    const preview = await context.service.previewGames({ sportEventId: eventId(context), rules: BRACKET_RULES, picks: CHALK });
+
+    expect(preview.games.every((row) => !row.locked)).toBe(true);
+    expect(context.storedPicks()).toEqual([]);
+  });
+
+  it('locks every game once the bracket has tipped off', async () => {
+    const context = setup();
+    context.setNow(at(3));
+
+    const preview = await context.service.previewGames({ sportEventId: eventId(context), rules: BRACKET_RULES, picks: [] });
+
+    expect(preview.games.every((row) => row.locked)).toBe(true);
+  });
+
+  it('answers 404 PREDICTION_GAME_NOT_FOUND for a trial pick on a game the setup does not pick', async () => {
+    const context = setup();
+
+    await expectRefused(
+      context.service.previewGames({ sportEventId: eventId(context), rules: BRACKET_RULES, picks: [{ ...bracketPick(99, 'T1'), confidence: null }] }),
+      'PREDICTION_GAME_NOT_FOUND',
+      404,
+    );
+  });
+
+  it('answers 404 SPORT_EVENT_NOT_FOUND for an unknown event', async () => {
+    const context = setup();
+
+    await expectRefused(context.service.previewGames({ sportEventId: 'no-such-event', rules: BRACKET_RULES, picks: [] }), 'SPORT_EVENT_NOT_FOUND', 404);
+  });
+});

@@ -10,7 +10,7 @@ starts until Derek says so.
 
 Today every real score on the site is entered by an admin or loaded from a data file. The
 only adapter behind the `SportDataProvider` port is the mock contest feed. Live golf has a
-scheduled poll (`ingestion-scheduler`), and the only live-score category is `GOLF`.
+scheduled poll (`ingestion-scheduler`), and the only live-score category was `GOLF`.
 
 The target:
 
@@ -51,7 +51,13 @@ The target:
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
      mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
      (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series;
-   - per-player box scores for Clutch Cards, through `StatLineService`.
+   - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
+     live-score category (#1497). The adapter numbers each game within the Clutch Card event
+     (game N is round N, and each series' Game N shares it in a round of several series) and maps
+     the vendor's stat fields to the stats the composites count. A star's line is found through
+     the star's provider mapping, made when the stars are loaded from the provider; a player who
+     is not a mapped star is left out. A live game's lines are stored in progress, and the sync
+     is authoritative over an admin's line correction.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,
    ignores events for nothing we have linked, and queues a background job (#1439 framework).
