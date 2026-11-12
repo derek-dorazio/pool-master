@@ -14,12 +14,14 @@
 import type {
   SelectionEntryDto,
   PickHistoryDto,
+  RosterPickPreviewResponse,
   SelectionGroupDto,
   SelectionParticipantDto,
   SelectionPickResponse,
   SelectionStateResponse,
 } from '@poolmaster/shared/dto';
 import type {
+  LineupPreview,
   SelectionEntry,
   PickHistoryRow,
   SelectionView,
@@ -127,5 +129,19 @@ export function toSelectionPickResponse(result: SelectionPickResult): SelectionP
     entryStatus: result.entryStatus,
     picks: result.picks.map(toPickHistoryDto),
     lineupSummary: result.lineupSummary,
+  };
+}
+
+/** A roster setup's pick preview (#1612): the field as the rules group it, with the trial picks. */
+export function toRosterPickPreviewResponse(preview: LineupPreview): RosterPickPreviewResponse {
+  return {
+    sportEventId: preview.sportEventId,
+    selectionType: preview.selectionType,
+    rosterSize: preview.rosterSize,
+    selectionGroups: preview.selectionGroups.map(toSelectionGroupDto),
+    availableParticipantIds: preview.availableSportEventParticipantIds,
+    pickCount: preview.pickCount,
+    isComplete: preview.isComplete,
+    lineupSummary: preview.lineupSummary,
   };
 }

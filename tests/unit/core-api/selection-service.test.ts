@@ -1547,3 +1547,103 @@ describe('SelectionService — what one pick reads (#1196)', () => {
     expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(1);
   });
 });
+
+describe('SelectionService.previewLineup: a roster setup\'s pick screen before it is saved', () => {
+  const TIERED_ONE_EACH = { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 } as const;
+  const BUDGET_TWO = { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 } as const;
+
+  /** The service, with the event priced against `salaryCap` (unpriced when null). */
+  function previewSetup(salaryCap: number | null = 250) {
+    const built = setup();
+    const event = {
+      ...eventStarting(new Date('2099-01-01T00:00:00.000Z')),
+      ...(salaryCap === null ? {} : { pricingConfig: { salaryCap, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 } }),
+    };
+    built.deps.sportEvents.findByIds = jest.fn().mockResolvedValue([event]);
+    return built;
+  }
+
+  it('groups the field by the unsaved tiered rules and marks the trial picks, a full lineup when each tier holds its pick', async () => {
+    const { service } = previewSetup();
+
+    const preview = await service.previewLineup({ sportEventId: EVENT_ID, rules: TIERED_ONE_EACH, sportEventParticipantIds: ['sep-a', 'sep-d'] });
+
+    expect(preview.rosterSize).toBe(2);
+    expect(preview.selectionGroups.map((group) => [group.groupName, group.picksFromGroup])).toEqual([['Tier 1', 1], ['Tier 2', 1]]);
+    expect(preview.selectionGroups.flatMap((group) => group.participants.filter((row) => row.isSelected).map((row) => row.sportEventParticipantId)))
+      .toEqual(['sep-a', 'sep-d']);
+    expect(preview.pickCount).toBe(2);
+    expect(preview.isComplete).toBe(true);
+    expect(preview.lineupSummary).toBeNull();
+  });
+
+  it('calls a tiered lineup incomplete while a tier is short, even with the roster\'s number of picks', async () => {
+    const { service } = previewSetup();
+
+    const preview = await service.previewLineup({ sportEventId: EVENT_ID, rules: TIERED_ONE_EACH, sportEventParticipantIds: ['sep-a', 'sep-b'] });
+
+    expect(preview.isComplete).toBe(false);
+  });
+
+  it('shows the screen a member first sees when nothing is tapped: every row unselected, nothing complete', async () => {
+    const { service } = previewSetup();
+
+    const preview = await service.previewLineup({ sportEventId: EVENT_ID, rules: TIERED_ONE_EACH, sportEventParticipantIds: [] });
+
+    expect(preview.selectionGroups.flatMap((group) => group.participants).every((row) => !row.isSelected)).toBe(true);
+    expect([...preview.availableSportEventParticipantIds].sort()).toEqual(['sep-a', 'sep-b', 'sep-c', 'sep-d']);
+    expect(preview.isComplete).toBe(false);
+  });
+
+  it('sums a budget setup\'s trial picks against the event\'s salary cap', async () => {
+    const { service } = previewSetup(250);
+
+    const preview = await service.previewLineup({ sportEventId: EVENT_ID, rules: BUDGET_TWO, sportEventParticipantIds: ['sep-a', 'sep-b'] });
+
+    expect(preview.rosterSize).toBe(2);
+    expect(preview.lineupSummary).toMatchObject({ salaryCap: 250, spent: 190, remaining: 60, isOverBudget: false, openSlots: 0 });
+    expect(preview.isComplete).toBe(true);
+  });
+
+  it('calls a budget lineup over the cap incomplete, as a member could not submit it', async () => {
+    const { service } = previewSetup(150);
+
+    const preview = await service.previewLineup({ sportEventId: EVENT_ID, rules: BUDGET_TWO, sportEventParticipantIds: ['sep-a', 'sep-b'] });
+
+    expect(preview.lineupSummary).toMatchObject({ isOverBudget: true, remaining: -40 });
+    expect(preview.isComplete).toBe(false);
+  });
+
+  it('refuses a budget setup on an event never priced with 409 CONTEST_EVENT_NOT_PRICED', async () => {
+    const { service } = previewSetup(null);
+
+    await expect(service.previewLineup({ sportEventId: EVENT_ID, rules: BUDGET_TWO, sportEventParticipantIds: [] }))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENT_NOT_PRICED', statusCode: 409 });
+  });
+
+  it('answers 404 SPORT_EVENT_NOT_FOUND for an unknown event', async () => {
+    const { service, deps } = previewSetup();
+    deps.sportEvents.findByIds = jest.fn().mockResolvedValue([]);
+
+    await expect(service.previewLineup({ sportEventId: 'missing', rules: TIERED_ONE_EACH, sportEventParticipantIds: [] }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('answers 400 PARTICIPANT_NOT_IN_EVENT for a trial pick outside the event\'s field', async () => {
+    const { service } = previewSetup();
+
+    await expect(service.previewLineup({ sportEventId: EVENT_ID, rules: TIERED_ONE_EACH, sportEventParticipantIds: ['sep-elsewhere'] }))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_EVENT', statusCode: 400 });
+  });
+
+  it('reads no contest and writes no pick, draw or status', async () => {
+    const { service, deps, changeEntryPick, recordDraw, writeStatus } = previewSetup();
+
+    await service.previewLineup({ sportEventId: EVENT_ID, rules: TIERED_ONE_EACH, sportEventParticipantIds: ['sep-a'] });
+
+    expect(deps.contests.findById).not.toHaveBeenCalled();
+    expect(changeEntryPick).not.toHaveBeenCalled();
+    expect(recordDraw).not.toHaveBeenCalled();
+    expect(writeStatus).not.toHaveBeenCalled();
+  });
+});

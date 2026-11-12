@@ -91,9 +91,15 @@ export interface SelectionRequest {
   rosterSize: number;
 }
 
+/**
+ * The rules an engine reads: a contest's stored configuration, or a pick preview's unsaved rules
+ * (#1612). Only the rules themselves are read, so either serves.
+ */
+export type EngineRules = Pick<ContestConfiguration, 'configJson'> | null;
+
 /** What an engine needs to judge a lineup: the contest's rules, its tiers and the entry's picks. */
 export interface LineupInput {
-  configuration: ContestConfiguration | null;
+  configuration: EngineRules;
   rosterSize: number;
   tiers: readonly SelectionTierConfig[];
   /** The entry's picks. */
@@ -105,7 +111,7 @@ export interface SelectionEngine {
 
   /** How many picks a full roster holds. 0 means the contest cannot take picks. */
   rosterSize(input: {
-    configuration: ContestConfiguration | null;
+    configuration: EngineRules;
     tiers: readonly SelectionTierConfig[];
   }): number;
 

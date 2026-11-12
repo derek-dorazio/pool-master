@@ -10,6 +10,7 @@ export * from './contest-management.dto';
 export * from './contests.dto';
 export * from './selections.dto';
 export * from './predictions.dto';
+export * from './pick-preview.dto';
 export * from './participants.dto';
 export * from './config.dto';
 export * from './email-events.dto';
