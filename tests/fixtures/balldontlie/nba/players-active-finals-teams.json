@@ -1,0 +1,122 @@
+{
+  "data": [
+    {
+      "id": 3202,
+      "first_name": "Jayson",
+      "last_name": "Tatum",
+      "position": "F",
+      "height": "6-8",
+      "weight": "210",
+      "jersey_number": "0",
+      "college": "",
+      "country": "USA",
+      "draft_year": 2017,
+      "draft_round": 1,
+      "draft_number": 3,
+      "team": {
+        "id": 2,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Boston",
+        "name": "Celtics",
+        "full_name": "Boston Celtics",
+        "abbreviation": "BOS"
+      }
+    },
+    {
+      "id": 3547,
+      "first_name": "Jaylen",
+      "last_name": "Brown",
+      "position": "G",
+      "height": "6-8",
+      "weight": "210",
+      "jersey_number": "0",
+      "college": "",
+      "country": "USA",
+      "draft_year": 2016,
+      "draft_round": 1,
+      "draft_number": 3,
+      "team": {
+        "id": 2,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Boston",
+        "name": "Celtics",
+        "full_name": "Boston Celtics",
+        "abbreviation": "BOS"
+      }
+    },
+    {
+      "id": 666786,
+      "first_name": "Neemias",
+      "last_name": "Queta",
+      "position": "C",
+      "height": "6-8",
+      "weight": "210",
+      "jersey_number": "0",
+      "college": "",
+      "country": "USA",
+      "draft_year": 2021,
+      "draft_round": 2,
+      "draft_number": 39,
+      "team": {
+        "id": 2,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Boston",
+        "name": "Celtics",
+        "full_name": "Boston Celtics",
+        "abbreviation": "BOS"
+      }
+    },
+    {
+      "id": 132,
+      "first_name": "Luka",
+      "last_name": "Doncic",
+      "position": "G",
+      "height": "6-8",
+      "weight": "210",
+      "jersey_number": "0",
+      "college": "",
+      "country": "USA",
+      "draft_year": 2018,
+      "draft_round": 1,
+      "draft_number": 3,
+      "team": {
+        "id": 7,
+        "conference": "West",
+        "division": "Southwest",
+        "city": "Dallas",
+        "name": "Mavericks",
+        "full_name": "Dallas Mavericks",
+        "abbreviation": "DAL"
+      }
+    },
+    {
+      "id": 56677,
+      "first_name": "Kyrie",
+      "last_name": "Irving",
+      "position": "G",
+      "height": "6-8",
+      "weight": "210",
+      "jersey_number": "0",
+      "college": "",
+      "country": "USA",
+      "draft_year": 2011,
+      "draft_round": 1,
+      "draft_number": 1,
+      "team": {
+        "id": 7,
+        "conference": "West",
+        "division": "Southwest",
+        "city": "Dallas",
+        "name": "Mavericks",
+        "full_name": "Dallas Mavericks",
+        "abbreviation": "DAL"
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

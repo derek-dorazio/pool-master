@@ -36,7 +36,10 @@ published OpenAPI document, not from recorded traffic.
   the 2024 season's playoffs as only their last series, the 2025 Finals (Oklahoma City over
   Indiana in seven, the real scores), so they read as complete; the 2025 season's first round
   under way, made up for the tests, with two finals, a live game and a scheduled one with no
-  tip-off time; and eight teams. Every one must fit the document (`nba-contract.test.ts`).
+  tip-off time; eight teams; and, for a Clutch Card (#1497), a whole made-up 2023 bracket of
+  sixteen teams whose Finals (Boston v Dallas) are two games in with the third live, the first
+  three Finals games' stat rows (one player listed with `"00"` minutes in game 1, who sat it out)
+  and both Finals teams' active players. Every one must fit the document (`nba-contract.test.ts`).
 
 - `epl/*.json` are written to the EPL document's schemas, which give no response examples: the
   2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
@@ -103,6 +106,14 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 - NBA: the playoffs need no paid tier, but basketball's lists read the NCAA brackets in the same
   call, which need GOAT; on a lower plan that read fails and the NBA playoffs are not listed
   either. Confirm the plan in use reads both.
+- NBA: a game names no round, so the adapter works a series' round out from the bracket: a team's
+  first series is round 1 and each later one is one past the later of its two teams' previous
+  series. A season's games must therefore be read whole; a fixture holding one series reads as
+  round 1. `--game-event nba-2025-postseason-round-4` reads the Finals' box scores.
+- NBA: `/nba/v1/stats` lists a player who did not get in with zero or empty `min`; the adapter
+  gives him no line. A played row missing `pts`, `reb` or `ast` fails the sync with the player
+  named. The document names no plan tier for stats or active players; confirm the plan in use
+  reads both with the contract check once the key exists.
 - NBA: a game's `id`, `season`, `date` and both teams' `id` and `full_name` are always sent,
   though the document requires none of them; a game missing one fails the sync with the field
   named. A team's `full_name` is the name the site's NBA teams are loaded under ("Oklahoma City
