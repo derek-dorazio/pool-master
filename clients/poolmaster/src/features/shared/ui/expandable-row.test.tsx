@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { DetailsPeek, PeekCard } from "./details-peek";
@@ -158,5 +158,16 @@ describe("ExpandableRow", () => {
 
     expect(screen.getByTestId("peek-callout")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Picks for Incubus 1" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("hands its toggle button to toggleRef, so a page can move focus to the row it opens", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <ExpandableRow label="Tier 2" summary={<span>Tier 2</span>} testId="tier" toggleRef={ref}>
+        <p>Field</p>
+      </ExpandableRow>,
+    );
+
+    expect(ref.current).toBe(screen.getByTestId("tier-toggle"));
   });
 });

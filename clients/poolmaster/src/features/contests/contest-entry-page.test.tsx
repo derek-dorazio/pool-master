@@ -813,9 +813,9 @@ describe('ContestEntryPage', () => {
       expect(selectContestPickMock).toHaveBeenCalledWith(pickPath('sep-3')),
     );
     await waitFor(() =>
-      expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Jordan Spieth'),
+      expect(screen.getByTestId('contest-entry-group-summary-tier-1')).toHaveTextContent('Jordan Spieth'),
     );
-    expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).not.toHaveTextContent('Rory McIlroy');
+    expect(screen.getByTestId('contest-entry-group-summary-tier-1')).not.toHaveTextContent('Rory McIlroy');
 
     fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
     const scottieButton = screen.getByTestId('contest-entry-participant-sep-1');
@@ -861,7 +861,7 @@ describe('ContestEntryPage', () => {
 
     // The pick fills the tier, so it closes at once, naming Scottie, before the server answers.
     await waitFor(() =>
-      expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Scottie Scheffler'));
+      expect(screen.getByTestId('contest-entry-group-summary-tier-1')).toHaveTextContent('Scottie Scheffler'));
     expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
     expect(screen.getByText('1/1 saved')).toBeInTheDocument();
 
@@ -1003,10 +1003,10 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-3'));
 
     // The tier is still full, so it closes at once, naming the lineup the server will keep.
-    const tierToggle = screen.getByTestId('contest-entry-group-toggle-tier-1');
-    await waitFor(() => expect(tierToggle).toHaveTextContent('Jordan Spieth'));
-    expect(tierToggle).toHaveTextContent('Rory McIlroy');
-    expect(tierToggle).not.toHaveTextContent('Scottie Scheffler');
+    const tierSummary = screen.getByTestId('contest-entry-group-summary-tier-1');
+    await waitFor(() => expect(tierSummary).toHaveTextContent('Jordan Spieth'));
+    expect(tierSummary).toHaveTextContent('Rory McIlroy');
+    expect(tierSummary).not.toHaveTextContent('Scottie Scheffler');
 
     await act(async () => {
       deferred.resolve(pickAnswer(['sep-2', 'sep-3']));
@@ -1048,7 +1048,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       expect.objectContaining({ action: 'contestEntry.pickChange.succeeded' }),
       expect.any(String),
     ));
-    expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Rory McIlroy');
+    expect(screen.getByTestId('contest-entry-group-summary-tier-1')).toHaveTextContent('Rory McIlroy');
     expect(screen.getByText('2/2 saved')).toBeInTheDocument();
     expect(selectContestPickMock).toHaveBeenCalledTimes(1);
     expect([getSelectionStateMock, getContestMock, getContestEntryMock].map((mock) => mock.mock.calls.length))
@@ -1066,10 +1066,10 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     fireEvent.click(await screen.findByTestId('contest-entry-group-toggle-tier-1'));
     fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-3'));
 
-    const tierToggle = screen.getByTestId('contest-entry-group-toggle-tier-1');
-    await waitFor(() => expect(tierToggle).toHaveTextContent('Scottie Scheffler'));
-    expect(tierToggle).toHaveTextContent('Jordan Spieth');
-    expect(tierToggle).not.toHaveTextContent('Rory McIlroy');
+    const tierSummary = screen.getByTestId('contest-entry-group-summary-tier-1');
+    await waitFor(() => expect(tierSummary).toHaveTextContent('Scottie Scheffler'));
+    expect(tierSummary).toHaveTextContent('Jordan Spieth');
+    expect(tierSummary).not.toHaveTextContent('Rory McIlroy');
   });
 
   it('opens the tier again, with the pick put back, when the server refuses the pick that filled it', async () => {
