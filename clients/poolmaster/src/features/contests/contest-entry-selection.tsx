@@ -4,14 +4,14 @@ import { ParticipantLine } from "./participant-line";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
-  Notice,
   Button,
   Checkbox,
   Chip,
   cn,
   FormField,
-  Heading,
   ExpandableRow,
+  SectionCard,
+  SectionEmpty,
   Select,
   SimpleTable,
   StatusBadge,
@@ -21,7 +21,6 @@ import {
   TableHeaderCell,
   TableRow,
   Text,
-  Tile,
 } from "@/features/shared/ui";
 
 type SelectionState = SelectionStateResponse;
@@ -201,12 +200,18 @@ export function EditableSelectionGroup({
   const statusLabel = getGroupStatusLabel(group);
 
   return (
-    <Tile
-      className={cn("overflow-hidden", !isComplete ? "bg-muted/30" : null)}
-      data-testid={`contest-entry-group-${group.groupId}`}
-      padding="none"
-      radius="lg"
-      variant="subtle"
+    <SectionCard
+      headingLevel={4}
+      testId={`contest-entry-group-${group.groupId}`}
+      title={group.groupName}
+      trailing={(
+        <>
+          <Text data-testid={`contest-entry-group-count-${group.groupId}`} variant="meta">
+            {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
+          </Text>
+          <StatusBadge tone={isComplete ? "neutral" : "warning"}>{statusLabel}</StatusBadge>
+        </>
+      )}
     >
       <ExpandableRow
         isOpen={isExpanded}
@@ -214,27 +219,11 @@ export function EditableSelectionGroup({
         look="card"
         onToggle={onToggle}
         summary={(
-          <div className="flex flex-wrap items-start justify-between gap-3" data-testid={`contest-entry-group-summary-${group.groupId}`}>
-            <div>
-              <Heading level={4} variant="subtitle">
-                {group.groupName}
-              </Heading>
-              <Text as="p" className="mt-1" variant="meta">
-                Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
-              </Text>
-              <SelectedParticipantChips group={group} />
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <StatusBadge tone={isComplete ? "neutral" : "warning"}>
-                {statusLabel}
-              </StatusBadge>
-              <Text variant="meta">
-                {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
-              </Text>
-              <Text variant="label">
-                {isExpanded ? "Hide tier" : isComplete ? "Review tier" : "Open tier"}
-              </Text>
-            </div>
+          <div className="space-y-2" data-testid={`contest-entry-group-summary-${group.groupId}`}>
+            <Text as="p" variant="meta">
+              Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
+            </Text>
+            <SelectedParticipantChips group={group} />
           </div>
         )}
         toggleRef={setToggleRef}
@@ -255,7 +244,7 @@ export function EditableSelectionGroup({
           ))}
         </div>
       </ExpandableRow>
-    </Tile>
+    </SectionCard>
   );
 }
 
@@ -279,25 +268,13 @@ export function LockedSelectionGroup({
   const selectedParticipants = getSelectedParticipants(group);
 
   return (
-    <Tile
-      data-testid={`contest-entry-group-${group.groupId}`}
-      padding="sm"
-      radius="lg"
-      variant="subtle"
+    <SectionCard
+      headingLevel={4}
+      testId={`contest-entry-group-${group.groupId}`}
+      title={group.groupName}
+      trailing={<StatusBadge tone="locked">Locked</StatusBadge>}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={4} variant="subtitle">
-            {group.groupName}
-          </Heading>
-          <Text as="p" className="mt-1" variant="meta">
-            Frozen lineup from Tier {group.groupNumber}.
-          </Text>
-        </div>
-        <StatusBadge tone="locked">Locked</StatusBadge>
-      </div>
-
-      <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
+      <div className="overflow-x-auto">
         <SimpleTable className="min-w-[32rem] table-fixed">
             <colgroup>
               {LOCKED_TIER_COLUMNS.map((column) => <col className={column.width} key={column.id} />)}
@@ -345,13 +322,11 @@ export function LockedSelectionGroup({
               ))}
             </TableBody>
         </SimpleTable>
-        {selectedParticipants.length ? null : (
-          <Notice className="m-4">
-            No {noun.one} was saved from this tier.
-          </Notice>
-        )}
-      </Tile>
-    </Tile>
+      </div>
+      {selectedParticipants.length ? null : (
+        <SectionEmpty>{`No ${noun.one} was saved from this tier.`}</SectionEmpty>
+      )}
+    </SectionCard>
   );
 }
 

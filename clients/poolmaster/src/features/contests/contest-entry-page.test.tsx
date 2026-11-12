@@ -459,7 +459,9 @@ describe('ContestEntryPage', () => {
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
     expect(screen.queryByText('Selection progress')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveClass('bg-muted/30');
+    // An unfinished tier says so in its title row: its count and what it still needs.
+    expect(screen.getByTestId('contest-entry-group-count-tier-1')).toHaveTextContent('0/1 saved');
+    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveTextContent('Next up');
     expect(screen.getByTestId('contest-menu-entries')).toBeInTheDocument();
     expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByTestId('contest-entry-view-team-link')).not.toBeInTheDocument();
