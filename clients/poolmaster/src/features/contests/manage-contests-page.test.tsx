@@ -135,7 +135,7 @@ describe('ManageContestsPage', () => {
 
     const notOpen = within(await screen.findByTestId('manage-contests-row-contest-1'));
     expect(notOpen.getByText('Tiered')).toBeInTheDocument();
-    expect(notOpen.getByText('Draft')).toBeInTheDocument();
+    expect(notOpen.getByText('Set up')).toBeInTheDocument();
     expect(await notOpen.findByText('The Masters')).toBeInTheDocument();
     expect(notOpen.getByText(/^Starts/)).toBeInTheDocument();
     expect(notOpen.getByText('Not open')).toBeInTheDocument();
@@ -143,7 +143,7 @@ describe('ManageContestsPage', () => {
     expect(notOpen.queryByRole('link', { name: 'Finish setup' })).not.toBeInTheDocument();
 
     const open = within(screen.getByTestId('manage-contests-row-contest-2'));
-    expect(open.getByText('Open for entries')).toBeInTheDocument();
+    expect(open.getByText('Open')).toBeInTheDocument();
     expect(await open.findByText(/^Entries close/)).toBeInTheDocument();
     // The league context counts the active teams, so no team list is read.
     expect(await open.findByText('of 2 members')).toBeInTheDocument();

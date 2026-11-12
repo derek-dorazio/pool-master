@@ -185,13 +185,12 @@ export function ManageContestPage() {
       <PageHeader
         icon={<Trophy aria-hidden size={22} />}
         meta={(
-          <>
-            <ContestStatusBadge status={contest.status} />
-            <span data-testid="manage-contest-event">
-              {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
-            </span>
-          </>
+          <span data-testid="manage-contest-event">
+            {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
+          </span>
         )}
+        // The stage the lifecycle panel's track shows as current.
+        status={<ContestStatusBadge data-testid="manage-contest-stage" status={contest.status} />}
         title={contest.name}
         testId="manage-contest-identity"
       />
