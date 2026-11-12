@@ -38,7 +38,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   // Owning user, league, squad — enough scaffolding for a real ContestEntry.
   const user = await prisma.user.create({
     data: {
-      email: `partial-uniques-${suffix}@example.com`,
+      email: `partial-uniques-${suffix}@integration.test`,
       username: `partial-uniques-${suffix}`,
       firstName: 'Partial',
       lastName: 'Uniques',

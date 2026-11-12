@@ -94,7 +94,7 @@ function remove(url: string, admin: TestUserResult) {
 }
 
 describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
-  it(`DELETE a sport league: the same 11 statements with ${SMALL} affiliations and empty series as with ${LARGE}, and every one is gone`, async () => {
+  it(`DELETE a sport league: the same 13 statements with ${SMALL} affiliations and empty series as with ${LARGE}, and every one is gone`, async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const small = await tourWithRoster(SMALL);
     const large = await tourWithRoster(LARGE);
@@ -110,6 +110,19 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     expect(await prisma.sportLeague.count({ where: { id: { in: [small, large] } } })).toBe(0);
     expect(await prisma.eventSeries.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
     expect(await prisma.participantLeagueAffiliation.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
+  });
+
+  it('DELETE a sport league counts its own events and cups by their sport league, never by grouping every row of those tables', async () => {
+    const admin = await createTestUser({ isRootAdmin: true });
+    const sportLeagueId = await tourWithRoster(SMALL);
+
+    const run = await recordStatements(() => remove(`/api/v1/sport-leagues/${sportLeagueId}`, admin));
+
+    expect(run.result.statusCode).toBe(204);
+    // Prisma's relation `_count` groups the whole child table and joins the groups back: a read of
+    // every sport event in the catalog, and a plan the index check judges differently from run to run.
+    const wholeTableGroups = run.statements.filter(({ sql }) => /FROM "public"\."(?:sport_events|cups)" WHERE 1=1 GROUP BY/.test(sql));
+    expect(wholeTableGroups.map(({ sql }) => sql)).toEqual([]);
   });
 
   it(`DELETE a participant: the same 7 statements with ${SMALL} affiliations and provider identities as with ${LARGE}, and every one is gone`, async () => {
@@ -201,10 +214,10 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 });
 
 /**
- * Find; then one transaction: begin, lock the sport league, lock its series, its uses (one query
- * and its series' event counts), affiliations, series, the leagues that muted it, the sport
- * league, commit.
+ * Find; then one transaction: begin, lock the sport league, lock its series, its four uses (events,
+ * contest setups, event page offers, cups: one count each), affiliations, series, the leagues that
+ * muted it, the sport league, commit.
  */
-const SPORT_LEAGUE_DELETE_STATEMENTS = 11;
+const SPORT_LEAGUE_DELETE_STATEMENTS = 13;
 /** One transaction: begin, lock the participant, count their field rows, affiliations, provider identities, the participant, commit. */
 const PARTICIPANT_DELETE_STATEMENTS = 7;
