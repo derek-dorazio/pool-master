@@ -61,6 +61,17 @@ function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean
   return typeof tour === 'string' && isLeagueTour(tour, keyword);
 }
 
+/**
+ * #385 — whether an event belongs to the league whose match keyword this is. An event that names
+ * its tour belongs only to that tour's league ("WNBA Playoffs" is no NBA event, though its name
+ * holds "NBA"); one that names none is matched by a name substring.
+ */
+function isLeagueEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
+  return typeof event.metadata.tour === 'string'
+    ? isTourEvent(event, keyword)
+    : event.name.toLowerCase().includes(keyword.toLowerCase());
+}
+
 export class EventScoreSourceService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -97,11 +108,8 @@ export class EventScoreSourceService {
       : null;
     const search = options.search?.trim().toLowerCase() || null;
 
-    // #385 — a league's keyword is either the provider's tour name or a name substring.
     return events
-      .filter((event) => !matchKeyword
-        || isTourEvent(event, matchKeyword)
-        || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
+      .filter((event) => !matchKeyword || isLeagueEvent(event, matchKeyword))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 

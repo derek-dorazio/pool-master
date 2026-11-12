@@ -49,7 +49,10 @@ The target:
      live score and its result once a side has won more than half (#1545). A series league's
      reader therefore hands over every game of the event on each sync. The NBA's playoffs are
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
-     mapping and reader (`series-playoffs.ts`), each supplying only its own reads;
+     mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The WNBA's
+     (`wnba-2026-postseason`) shares basketball with the NBA, whose keyword its name holds, so
+     the event picker matches an event that names its tour by that tour alone, and a name
+     substring only for an event that names none;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

@@ -9,7 +9,7 @@ import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec
  * sends, and every reply it is given, against the vendor's published NBA document (see
  * balldontlie-fake-api.ts). The replies are the fixtures in tests/fixtures/balldontlie/nba: the
  * 2025 Finals (the 2024 season's), Oklahoma City over Indiana in seven, and the 2025 season's
- * first round under way. The basketball lists also read the NCAA tournaments, served empty here.
+ * first round under way. The basketball lists also read the NCAA tournaments and the WNBA, served empty here.
  */
 
 const API_KEY = 'test-api-key';
@@ -35,10 +35,12 @@ const defaultRoutes: Record<string, FakeRoute> = {
   '/ncaab/v1/teams': emptyTeams,
   '/ncaaw/v1/bracket': emptyBracket,
   '/ncaaw/v1/teams': emptyTeams,
+  '/wnba/v1/games': emptyBracket,
+  '/wnba/v1/teams': emptyTeams,
 };
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes });
+  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw', 'wnba'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let clock = now;
@@ -60,7 +62,7 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
   };
 }
 
-/** The NBA requests sent, leaving out the NCAA reads the basketball lists also make. */
+/** The NBA requests sent, leaving out the NCAA and WNBA reads the basketball lists also make. */
 const requestLine = (api: FakeBalldontlie) => api.requests
   .filter((request) => request.path.startsWith('/nba/'))
   .map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
