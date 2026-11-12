@@ -77,6 +77,17 @@ describe('toPlayoffsEvent', () => {
     expect(toPlayoffsEvent(LEAGUE, 2025, games).status).toBe('COMPLETED');
   });
 
+  it('counts no final win for a game called off, a final with no score or a level final, whatever order the games come in', () => {
+    const final = [
+      game(9, 1, 2, 90, 80),
+      game(10, 2, 1, null, null, CompetitionStatusState.CANCELED),
+      game(11, 1, 2, null, null),
+      game(12, 2, 1, 75, 75),
+    ];
+
+    expect(toPlayoffsEvent(LEAGUE, 2025, [...final.reverse(), ...semifinals()]).status).toBe('IN_PROGRESS');
+  });
+
   it('is scheduled, its field open, while no game has started', () => {
     const event = toPlayoffsEvent(LEAGUE, 2025, [game(1, 1, 4, 0, 0, CompetitionStatusState.SCHEDULED)]);
 

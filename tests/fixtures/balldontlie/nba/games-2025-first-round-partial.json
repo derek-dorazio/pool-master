@@ -1,0 +1,139 @@
+{
+  "data": [
+    {
+      "id": 18450001,
+      "date": "2026-04-18",
+      "season": 2025,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2026-04-18T17:00:00Z",
+      "postseason": true,
+      "home_team_score": 112,
+      "visitor_team_score": 98,
+      "home_team": {
+        "id": 20,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "New York",
+        "name": "Knicks",
+        "full_name": "New York Knicks",
+        "abbreviation": "NYK"
+      },
+      "visitor_team": {
+        "id": 6,
+        "conference": "East",
+        "division": "Central",
+        "city": "Cleveland",
+        "name": "Cavaliers",
+        "full_name": "Cleveland Cavaliers",
+        "abbreviation": "CLE"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18450002,
+      "date": "2026-04-18",
+      "season": 2025,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2026-04-18T22:30:00Z",
+      "postseason": true,
+      "home_team_score": 101,
+      "visitor_team_score": 108,
+      "home_team": {
+        "id": 8,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Denver",
+        "name": "Nuggets",
+        "full_name": "Denver Nuggets",
+        "abbreviation": "DEN"
+      },
+      "visitor_team": {
+        "id": 10,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Golden State",
+        "name": "Warriors",
+        "full_name": "Golden State Warriors",
+        "abbreviation": "GSW"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18450003,
+      "date": "2026-04-20",
+      "season": 2025,
+      "status": "3rd Qtr",
+      "period": 3,
+      "time": "5:12",
+      "period_detail": "3rd Qtr",
+      "datetime": "2026-04-20T23:00:00Z",
+      "postseason": true,
+      "home_team_score": 54,
+      "visitor_team_score": 49,
+      "home_team": {
+        "id": 20,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "New York",
+        "name": "Knicks",
+        "full_name": "New York Knicks",
+        "abbreviation": "NYK"
+      },
+      "visitor_team": {
+        "id": 6,
+        "conference": "East",
+        "division": "Central",
+        "city": "Cleveland",
+        "name": "Cavaliers",
+        "full_name": "Cleveland Cavaliers",
+        "abbreviation": "CLE"
+      },
+      "ist_stage": null,
+      "status_state": "in_progress"
+    },
+    {
+      "id": 18450004,
+      "date": "2026-04-21",
+      "season": 2025,
+      "status": "Scheduled",
+      "period": 0,
+      "time": null,
+      "period_detail": "Scheduled",
+      "datetime": null,
+      "postseason": true,
+      "home_team_score": 0,
+      "visitor_team_score": 0,
+      "home_team": {
+        "id": 10,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Golden State",
+        "name": "Warriors",
+        "full_name": "Golden State Warriors",
+        "abbreviation": "GSW"
+      },
+      "visitor_team": {
+        "id": 8,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Denver",
+        "name": "Nuggets",
+        "full_name": "Denver Nuggets",
+        "abbreviation": "DEN"
+      },
+      "ist_stage": null,
+      "status_state": "scheduled"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

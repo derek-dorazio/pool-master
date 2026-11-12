@@ -5,8 +5,8 @@ adapter was built before any account existed, so everything here comes from the 
 published OpenAPI document, not from recorded traffic.
 
 - `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL, NCAA men's and
-  women's basketball, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
+  `openapi/nba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
+  NCAA men's and women's basketball, NBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -32,6 +32,11 @@ published OpenAPI document, not from recorded traffic.
   women's tournament as a round 0 First Four game, two round 1 games and the round 6
   championship, all final, and two teams. Duke's men's and women's teams share the vendor id 150
   and the name, as a school's teams do, which the adapter keeps apart by league.
+- `nba/*.json` are written to the NBA document's schemas, which give no response examples:
+  the 2024 season's playoffs as only their last series, the 2025 Finals (Oklahoma City over
+  Indiana in seven, the real scores), so they read as complete; the 2025 season's first round
+  under way, made up for the tests, with two finals, a live game and a scheduled one with no
+  tip-off time; and eight teams. Every one must fit the document (`nba-contract.test.ts`).
 
 - `epl/*.json` are written to the EPL document's schemas, which give no response examples: the
   2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
@@ -84,6 +89,18 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   import links them rather than adding new ones. The women's teams carry the same names, so a
   team links only to the site's team affiliated with its own league (NCAA Division I Men or
   Women, by match keyword).
+
+- NBA: `season_type=playoffs` returns every playoff game of the season and no play-in game (the
+  document lists `playin` as its own type), since playoffs are called complete only once the
+  games pair one team fewer than they hold and a side has won four of the last series.
+  `--game-event nba-2025-postseason` prints the game count: a full playoffs has 15 series of 4
+  to 7 games.
+- NBA: `season` is the year a season starts (2025 for 2025-26, whose playoffs run in 2026), and
+  `datetime` is a game's tip-off, null until the league sets it; the adapter then takes `date`.
+- NBA: a game's `id`, `season`, `date` and both teams' `id` and `full_name` are always sent,
+  though the document requires none of them; a game missing one fails the sync with the field
+  named. A team's `full_name` is the name the site's NBA teams are loaded under ("Oklahoma City
+  Thunder").
 
 - EPL: a match's `round_number` is its matchweek (1 to 38). The document does not say so; the
   adapter groups a season's matches into matchweek events by it, and leaves out a match with
