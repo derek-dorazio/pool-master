@@ -75,6 +75,10 @@ itself; `poolmaster/no-inline-display-format` enforces it
 Use page templates when a page matches an existing workflow shape:
 
 - `ManagementListPage` for admin list screens backed by `DataGrid`.
+- `StatusPage` for a page that is only a status: not found, a crash, a dead or
+  expired link, or the done or confirm step after a link from an email. A
+  symbol (`kind`), a title, one plain line and one primary action, centred in
+  the 8px card; a failed try's `Notice` goes in as children above the action.
 - `EntityDetailPage` for profile/entity details with a summary above, details
   on the left and less frequent actions on the right.
 - `FormEditorSection` for repeated editable configuration sections with

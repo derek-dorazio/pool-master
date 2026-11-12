@@ -179,6 +179,29 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - For modal tasks, keep the primary action in the predictable confirmation
   position and keep cancellation visually quieter.
 
+Form rules (#1598), for every member and signed-out form:
+
+- Helper text (`FormField helperText`) is one short line about format or
+  result ("They get their own link by email."). How a field works goes behind
+  a (?) on its label (`FormField help`), never as a sentence on the form.
+- An optional field says "(optional)" in its label (`FormField optional`); a
+  required field carries no mark.
+- Field errors go under the field, including a server refusal that is about
+  one field (a taken league web address). A save error is a red `Notice`
+  above the buttons, and the dialog stays open.
+- Buttons are the shared `DialogActions` (in `FormModal`, `ConfirmDialog`) or
+  the `FormPage` footer: Cancel, then the action named for what it does
+  ("Create league", "Send reset link"). Its pending label reads "Creating...".
+- A placeholder is an example value only ("you@example.com"), never an
+  instruction ("Enter your password").
+- A page that is only a status (not found, a crash, a dead or expired link,
+  the done or confirm step after a link from an email) is the shared
+  `StatusPage` (#1600): a symbol, a title, one plain line and one action.
+  Not found offers "Go to my leagues" when signed in and "Sign in" when not.
+- A league's code is called "League web address" on screen and shows in the
+  shared `WebAddressBox`: the full address from the site's own origin, bold
+  and underlined, opening in a new tab once the league exists, with Copy.
+
 ## 8. Accessibility Expectations
 
 - Do not rely on color alone to signal status or interactivity.

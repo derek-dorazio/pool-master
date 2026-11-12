@@ -1,5 +1,8 @@
 export { ActionList, ActionTile } from "./action-list";
 export { Notice } from "./notice";
+export { StatusPage } from "./status-page";
+export { WebAddressBox } from "./web-address-box";
+export type { StatusPageKind } from "./status-page";
 export { AdminAreaLayout, LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";

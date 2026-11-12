@@ -1,6 +1,4 @@
 {
-  "clients/poolmaster/src/features/app-shell/error-boundary.tsx": 1,
-  "clients/poolmaster/src/features/app-shell/not-found-page.tsx": 1,
   "clients/poolmaster/src/features/contest-types/how-to-play-page.tsx": 1,
   "clients/poolmaster/src/features/contests/bracket-board.tsx": 2,
   "clients/poolmaster/src/features/contests/pick-em-games.tsx": 2,

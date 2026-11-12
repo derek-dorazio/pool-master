@@ -5,7 +5,7 @@ import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { Notice, Button, LinkButton, SectionCard, Text } from '@/features/shared/ui';
+import { Button, LinkButton, Notice, StatusPage } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -39,45 +39,49 @@ export function EmailUnsubscribePage() {
 
   if (!token || hasErrorCode(unsubscribeMutation.error, 'EMAIL_UNSUBSCRIBE_LINK_INVALID')) {
     return (
-      <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-invalid" title="This link doesn't work">
-        <Text as="p" variant="meta">
-          Sign in and open Email notifications on your profile to choose which emails you get.
-        </Text>
-        <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
-      </SectionCard>
+      <StatusPage
+        action={<LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>}
+        body="Sign in to choose your emails in Email notifications."
+        kind="notFound"
+        testId="email-unsubscribe-invalid"
+        title="This link doesn't work"
+      />
     );
   }
 
   if (unsubscribeMutation.isSuccess) {
     const { label } = EMAIL_CATEGORY_LABELS[unsubscribeMutation.data.category];
     return (
-      <SectionCard className="mx-auto max-w-md" padded testId="email-unsubscribe-done" title="You're unsubscribed">
-        <Text as="p" variant="meta">
-          You won&apos;t get {label.toLowerCase()} emails from any of your leagues. You can turn them
-          back on, or change other emails, in Email notifications on your profile.
-        </Text>
-        <LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>
-      </SectionCard>
+      <StatusPage
+        action={<LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>}
+        body={`No more ${label.toLowerCase()} emails from any of your leagues.`}
+        kind="done"
+        testId="email-unsubscribe-done"
+        title="You're unsubscribed"
+      />
     );
   }
 
   return (
-    <SectionCard className="mx-auto max-w-md" padded title="Stop these emails?">
-      <Text as="p" variant="meta">
-        This turns off this kind of email from all your leagues. Invitations and account emails are
-        always sent.
-      </Text>
+    <StatusPage
+      action={(
+        <Button
+          data-testid="email-unsubscribe-confirm"
+          disabled={unsubscribeMutation.isPending}
+          onClick={() => unsubscribeMutation.mutate(token)}
+          type="button"
+        >
+          Stop these emails
+        </Button>
+      )}
+      body="This kind of email stops from all your leagues. Invitations and account emails still come."
+      kind="confirm"
+      testId="email-unsubscribe-confirm-page"
+      title="Stop these emails?"
+    >
       {unsubscribeMutation.isError ? (
         <Notice tone="danger">{extractErrorMessage(unsubscribeMutation.error, { fallback: 'We could not unsubscribe you. Try again.' })}</Notice>
       ) : null}
-      <Button
-        data-testid="email-unsubscribe-confirm"
-        disabled={unsubscribeMutation.isPending}
-        onClick={() => unsubscribeMutation.mutate(token)}
-        type="button"
-      >
-        Stop these emails
-      </Button>
-    </SectionCard>
+    </StatusPage>
   );
 }

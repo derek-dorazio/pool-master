@@ -5,6 +5,15 @@ import { readCookie } from '@/lib/cookies';
 
 export const RECENT_LEAGUE_COOKIE = 'poolmaster_recent_league';
 
+/**
+ * A league's full web address on this site, for people to open or share. The code is shown in
+ * lower case, which reads better in a message; the league page takes it in any case
+ * (`CanonicalLeagueCode`).
+ */
+export function buildLeagueWebAddress(leagueCode: string) {
+  return `${window.location.origin}${buildLeaguePath(leagueCode.toLowerCase())}`;
+}
+
 export function buildLeaguePath(leagueCode: string) {
   return `/league/${leagueCode}`;
 }

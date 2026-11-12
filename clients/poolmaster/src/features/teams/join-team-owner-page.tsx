@@ -5,7 +5,8 @@ import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { SignUpForm } from '@/features/auth/sign-up-form';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
-import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
+import { describeUnusableInvitation, UNKNOWN_INVITATION } from '@/features/leagues/unusable-invitation';
+import { InvitationStatusPage } from '@/features/leagues/invitation-status-page';
 import {
   Button,
   Chip,
@@ -31,7 +32,7 @@ import {
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 
 export function JoinTeamOwnerPage() {
   // Memoised: `child()` returns a new logger on every call, and the effects below depend on it,
@@ -175,14 +176,20 @@ export function JoinTeamOwnerPage() {
     return null;
   }, [inviteCode, isAuthenticated]);
 
-  const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
+  const unusableInvitation = hasErrorCode(invitationQuery.error, 'SQUAD_OWNER_INVITATION_NOT_FOUND')
+    ? UNKNOWN_INVITATION
+    : describeUnusableInvitation(invitationQuery.data?.status);
+
+  if (unusableInvitation) {
+    return <InvitationStatusPage invitation={unusableInvitation} />;
+  }
 
   if (redirectMessage) {
     return (
       <PublicInviteJoinPage
         title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Join as a co-owner'}
       >
-        <Text as="p" className="mt-3" variant="meta">{unusableInvitationMessage ?? redirectMessage}</Text>
+        <Text as="p" className="mt-3" variant="meta">{redirectMessage}</Text>
         {invitationQuery.data ? (
           <div className="mt-5 space-y-5">
             <InvitationContextCard
@@ -202,7 +209,7 @@ export function JoinTeamOwnerPage() {
             </SectionCard>
           </div>
         ) : null}
-        {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
+        {inviteCode && invitationQuery.data ? (
           <SectionCard
             className="mt-5"
             headingLevel={3}
@@ -290,13 +297,12 @@ export function JoinTeamOwnerPage() {
             </Tile>
           </div>
         ) : null}
-        {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
         {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this co-owner invitation. Please try again.' })}</p> : null}
         {acceptMutation.isSuccess ? <p>Invitation accepted. Taking you to the league...</p> : null}
       </div>
 
-      {invitationQuery.data && !unusableInvitationMessage ? (
+      {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
           <Button
             data-testid="team-invite-accept"

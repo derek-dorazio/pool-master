@@ -422,7 +422,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.getByTestId('create-league-code').fill(run.leagueCode);
       await page.getByTestId('create-league-name').fill(run.leagueName);
       await page.getByTestId('create-league-description').fill(`Golden journey run ${run.runId}`);
-      await page.getByTestId('create-league-next').click();
       const created = await submitAndRead<{ league: { id: string; leagueCode: string } }>(
         page,
         'create-league-submit',

@@ -42,7 +42,8 @@ describe('ForgotPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
 
     expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
-    expect(screen.getByText(/If an account matches, we've sent a link to reset your password/)).toBeInTheDocument();
+    expect(screen.getByTestId('forgot-password-sent')).toHaveTextContent('If an account matches, a reset link is on its way.');
+    expect(screen.getByTestId('forgot-password-done')).toHaveAttribute('data-kind', 'done');
     expect(requestPasswordResetMock).toHaveBeenCalledWith(
       expect.objectContaining({ body: { identifier: 'riley@example.com' } }),
     );

@@ -341,18 +341,31 @@ describe('Joining a league from an invite link', () => {
   });
 
   it.each([
-    ['EXPIRED', 'This invitation has expired. Ask the commissioner for a new one.'],
-    ['REVOKED', 'This invitation was withdrawn. Ask the commissioner for a new one.'],
-    ['ACCEPTED', 'This invitation has already been used.'],
-  ] as const)('explains a %s invitation cannot be used and offers no join button', async (status, message) => {
+    ['EXPIRED', 'This invitation has expired', 'Ask the commissioner for a new one.'],
+    ['REVOKED', 'This invitation was withdrawn', 'Ask the commissioner for a new one.'],
+    ['ACCEPTED', 'This invitation was already used', 'Open your leagues to reach it.'],
+  ] as const)('shows a dead-link page for a %s invitation and offers no join button', async (status, title, body) => {
     signIn();
     getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(buildInvitationPreview({ status }))));
 
     renderJoinLeaguePage();
 
-    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+    expect(screen.getByText(body)).toBeInTheDocument();
+    expect(screen.getByTestId('invitation-status-page')).toHaveAttribute('data-kind', 'expired');
     expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
     expect(acceptInvitationMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the not-found dead-link page for an invite code the server does not know, instead of a Retry', async () => {
+    signIn();
+    getInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'LEAGUE_INVITATION_NOT_FOUND', message: 'Not found.' } }, status: 404 });
+
+    renderJoinLeaguePage();
+
+    expect(await screen.findByRole('heading', { name: "This invitation link doesn't work" })).toBeInTheDocument();
+    expect(screen.getByTestId('invitation-status-page')).toHaveAttribute('data-kind', 'notFound');
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 
   it('puts the team name and icon in a titled Your team section, with how teams work behind its (?), not in a hand-drawn box', async () => {
