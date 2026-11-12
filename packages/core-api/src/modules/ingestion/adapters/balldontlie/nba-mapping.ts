@@ -24,7 +24,7 @@ import {
 } from './nba-contract';
 import type { PlayoffPlayer, PlayoffStatLine } from './series-playoff-rounds';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
-import type { PlayoffsSource } from './series-playoffs-reader';
+import type { PlayoffRoundsSource } from './series-playoffs-reader';
 
 export const NBA_PLAYOFFS: PlayoffsLeague = {
   key: 'nba',
@@ -80,6 +80,7 @@ export function toNbaPlayoffGame(game: NbaGame): PlayoffGame {
   return {
     id: required(game.id, GAMES_PATH, row, 'id'),
     season: required(game.season, GAMES_PATH, row, 'season'),
+    postseason: required(game.postseason, GAMES_PATH, row, 'postseason'),
     start: Date.parse(start),
     home: toNbaPlayoffTeam(required(game.home_team, GAMES_PATH, row, 'home_team'), GAMES_PATH),
     away: toNbaPlayoffTeam(required(game.visitor_team, GAMES_PATH, row, 'visitor_team'), GAMES_PATH),
@@ -126,7 +127,7 @@ export function toNbaPlayoffPlayer(player: NbaPlayer): PlayoffPlayer {
  * The NBA's reads: a season's playoff games (never the play-in), every team, the stat rows of some
  * games, and some teams' active rosters.
  */
-export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
+export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffRoundsSource {
   return {
     league: NBA_PLAYOFFS,
     async games(season) {

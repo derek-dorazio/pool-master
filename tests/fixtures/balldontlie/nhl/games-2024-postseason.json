@@ -1,0 +1,2587 @@
+{
+  "data": [
+    {
+      "id": 2024030001,
+      "season": 2024,
+      "game_date": "2025-04-21",
+      "start_time_utc": "2025-04-21T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030002,
+      "season": 2024,
+      "game_date": "2025-04-23",
+      "start_time_utc": "2025-04-23T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030003,
+      "season": 2024,
+      "game_date": "2025-04-25",
+      "start_time_utc": "2025-04-25T23:00:00Z",
+      "home_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030004,
+      "season": 2024,
+      "game_date": "2025-04-27",
+      "start_time_utc": "2025-04-27T23:00:00Z",
+      "home_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030005,
+      "season": 2024,
+      "game_date": "2025-04-29",
+      "start_time_utc": "2025-04-29T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 2,
+        "full_name": "Montréal Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030006,
+      "season": 2024,
+      "game_date": "2025-04-20",
+      "start_time_utc": "2025-04-20T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030007,
+      "season": 2024,
+      "game_date": "2025-04-22",
+      "start_time_utc": "2025-04-22T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030008,
+      "season": 2024,
+      "game_date": "2025-04-24",
+      "start_time_utc": "2025-04-24T23:00:00Z",
+      "home_team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030009,
+      "season": 2024,
+      "game_date": "2025-04-26",
+      "start_time_utc": "2025-04-26T23:00:00Z",
+      "home_team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030010,
+      "season": 2024,
+      "game_date": "2025-04-28",
+      "start_time_utc": "2025-04-28T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030011,
+      "season": 2024,
+      "game_date": "2025-04-20",
+      "start_time_utc": "2025-04-20T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030012,
+      "season": 2024,
+      "game_date": "2025-04-22",
+      "start_time_utc": "2025-04-22T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030013,
+      "season": 2024,
+      "game_date": "2025-04-24",
+      "start_time_utc": "2025-04-24T23:00:00Z",
+      "home_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030014,
+      "season": 2024,
+      "game_date": "2025-04-26",
+      "start_time_utc": "2025-04-26T23:00:00Z",
+      "home_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030015,
+      "season": 2024,
+      "game_date": "2025-04-28",
+      "start_time_utc": "2025-04-28T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030016,
+      "season": 2024,
+      "game_date": "2025-04-30",
+      "start_time_utc": "2025-04-30T23:00:00Z",
+      "home_team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030017,
+      "season": 2024,
+      "game_date": "2025-04-22",
+      "start_time_utc": "2025-04-22T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030018,
+      "season": 2024,
+      "game_date": "2025-04-24",
+      "start_time_utc": "2025-04-24T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030019,
+      "season": 2024,
+      "game_date": "2025-04-26",
+      "start_time_utc": "2025-04-26T23:00:00Z",
+      "home_team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030020,
+      "season": 2024,
+      "game_date": "2025-04-28",
+      "start_time_utc": "2025-04-28T23:00:00Z",
+      "home_team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030021,
+      "season": 2024,
+      "game_date": "2025-04-30",
+      "start_time_utc": "2025-04-30T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030022,
+      "season": 2024,
+      "game_date": "2025-04-20",
+      "start_time_utc": "2025-04-20T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030023,
+      "season": 2024,
+      "game_date": "2025-04-22",
+      "start_time_utc": "2025-04-22T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030024,
+      "season": 2024,
+      "game_date": "2025-04-24",
+      "start_time_utc": "2025-04-24T23:00:00Z",
+      "home_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030025,
+      "season": 2024,
+      "game_date": "2025-04-26",
+      "start_time_utc": "2025-04-26T23:00:00Z",
+      "home_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030026,
+      "season": 2024,
+      "game_date": "2025-04-28",
+      "start_time_utc": "2025-04-28T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030027,
+      "season": 2024,
+      "game_date": "2025-04-30",
+      "start_time_utc": "2025-04-30T23:00:00Z",
+      "home_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030028,
+      "season": 2024,
+      "game_date": "2025-05-02",
+      "start_time_utc": "2025-05-02T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030029,
+      "season": 2024,
+      "game_date": "2025-04-19",
+      "start_time_utc": "2025-04-19T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030030,
+      "season": 2024,
+      "game_date": "2025-04-21",
+      "start_time_utc": "2025-04-21T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030031,
+      "season": 2024,
+      "game_date": "2025-04-23",
+      "start_time_utc": "2025-04-23T23:00:00Z",
+      "home_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030032,
+      "season": 2024,
+      "game_date": "2025-04-25",
+      "start_time_utc": "2025-04-25T23:00:00Z",
+      "home_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030033,
+      "season": 2024,
+      "game_date": "2025-04-27",
+      "start_time_utc": "2025-04-27T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030034,
+      "season": 2024,
+      "game_date": "2025-04-29",
+      "start_time_utc": "2025-04-29T23:00:00Z",
+      "home_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030035,
+      "season": 2024,
+      "game_date": "2025-05-01",
+      "start_time_utc": "2025-05-01T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030036,
+      "season": 2024,
+      "game_date": "2025-04-20",
+      "start_time_utc": "2025-04-20T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030037,
+      "season": 2024,
+      "game_date": "2025-04-22",
+      "start_time_utc": "2025-04-22T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030038,
+      "season": 2024,
+      "game_date": "2025-04-24",
+      "start_time_utc": "2025-04-24T23:00:00Z",
+      "home_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030039,
+      "season": 2024,
+      "game_date": "2025-04-26",
+      "start_time_utc": "2025-04-26T23:00:00Z",
+      "home_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030040,
+      "season": 2024,
+      "game_date": "2025-04-28",
+      "start_time_utc": "2025-04-28T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030041,
+      "season": 2024,
+      "game_date": "2025-04-30",
+      "start_time_utc": "2025-04-30T23:00:00Z",
+      "home_team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030042,
+      "season": 2024,
+      "game_date": "2025-04-21",
+      "start_time_utc": "2025-04-21T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030043,
+      "season": 2024,
+      "game_date": "2025-04-23",
+      "start_time_utc": "2025-04-23T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030044,
+      "season": 2024,
+      "game_date": "2025-04-25",
+      "start_time_utc": "2025-04-25T23:00:00Z",
+      "home_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030045,
+      "season": 2024,
+      "game_date": "2025-04-27",
+      "start_time_utc": "2025-04-27T23:00:00Z",
+      "home_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030046,
+      "season": 2024,
+      "game_date": "2025-04-29",
+      "start_time_utc": "2025-04-29T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030047,
+      "season": 2024,
+      "game_date": "2025-05-01",
+      "start_time_utc": "2025-05-01T23:00:00Z",
+      "home_team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030048,
+      "season": 2024,
+      "game_date": "2025-05-05",
+      "start_time_utc": "2025-05-05T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030049,
+      "season": 2024,
+      "game_date": "2025-05-07",
+      "start_time_utc": "2025-05-07T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030050,
+      "season": 2024,
+      "game_date": "2025-05-09",
+      "start_time_utc": "2025-05-09T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 4,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030051,
+      "season": 2024,
+      "game_date": "2025-05-11",
+      "start_time_utc": "2025-05-11T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030052,
+      "season": 2024,
+      "game_date": "2025-05-13",
+      "start_time_utc": "2025-05-13T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030053,
+      "season": 2024,
+      "game_date": "2025-05-15",
+      "start_time_utc": "2025-05-15T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030054,
+      "season": 2024,
+      "game_date": "2025-05-17",
+      "start_time_utc": "2025-05-17T23:00:00Z",
+      "home_team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030055,
+      "season": 2024,
+      "game_date": "2025-05-06",
+      "start_time_utc": "2025-05-06T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030056,
+      "season": 2024,
+      "game_date": "2025-05-08",
+      "start_time_utc": "2025-05-08T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030057,
+      "season": 2024,
+      "game_date": "2025-05-10",
+      "start_time_utc": "2025-05-10T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030058,
+      "season": 2024,
+      "game_date": "2025-05-12",
+      "start_time_utc": "2025-05-12T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030059,
+      "season": 2024,
+      "game_date": "2025-05-14",
+      "start_time_utc": "2025-05-14T23:00:00Z",
+      "home_team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030060,
+      "season": 2024,
+      "game_date": "2025-05-07",
+      "start_time_utc": "2025-05-07T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030061,
+      "season": 2024,
+      "game_date": "2025-05-09",
+      "start_time_utc": "2025-05-09T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030062,
+      "season": 2024,
+      "game_date": "2025-05-11",
+      "start_time_utc": "2025-05-11T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030063,
+      "season": 2024,
+      "game_date": "2025-05-13",
+      "start_time_utc": "2025-05-13T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030064,
+      "season": 2024,
+      "game_date": "2025-05-15",
+      "start_time_utc": "2025-05-15T23:00:00Z",
+      "home_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030065,
+      "season": 2024,
+      "game_date": "2025-05-17",
+      "start_time_utc": "2025-05-17T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030066,
+      "season": 2024,
+      "game_date": "2025-05-06",
+      "start_time_utc": "2025-05-06T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030067,
+      "season": 2024,
+      "game_date": "2025-05-08",
+      "start_time_utc": "2025-05-08T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030068,
+      "season": 2024,
+      "game_date": "2025-05-10",
+      "start_time_utc": "2025-05-10T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030069,
+      "season": 2024,
+      "game_date": "2025-05-12",
+      "start_time_utc": "2025-05-12T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030070,
+      "season": 2024,
+      "game_date": "2025-05-14",
+      "start_time_utc": "2025-05-14T23:00:00Z",
+      "home_team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030071,
+      "season": 2024,
+      "game_date": "2025-05-20",
+      "start_time_utc": "2025-05-20T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030072,
+      "season": 2024,
+      "game_date": "2025-05-22",
+      "start_time_utc": "2025-05-22T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030073,
+      "season": 2024,
+      "game_date": "2025-05-24",
+      "start_time_utc": "2025-05-24T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030074,
+      "season": 2024,
+      "game_date": "2025-05-26",
+      "start_time_utc": "2025-05-26T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030075,
+      "season": 2024,
+      "game_date": "2025-05-28",
+      "start_time_utc": "2025-05-28T23:00:00Z",
+      "home_team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030076,
+      "season": 2024,
+      "game_date": "2025-05-21",
+      "start_time_utc": "2025-05-21T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030077,
+      "season": 2024,
+      "game_date": "2025-05-23",
+      "start_time_utc": "2025-05-23T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030078,
+      "season": 2024,
+      "game_date": "2025-05-25",
+      "start_time_utc": "2025-05-25T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030079,
+      "season": 2024,
+      "game_date": "2025-05-27",
+      "start_time_utc": "2025-05-27T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030080,
+      "season": 2024,
+      "game_date": "2025-05-29",
+      "start_time_utc": "2025-05-29T23:00:00Z",
+      "home_team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030081,
+      "season": 2024,
+      "game_date": "2025-06-04",
+      "start_time_utc": "2025-06-04T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030082,
+      "season": 2024,
+      "game_date": "2025-06-06",
+      "start_time_utc": "2025-06-06T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030083,
+      "season": 2024,
+      "game_date": "2025-06-08",
+      "start_time_utc": "2025-06-08T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030084,
+      "season": 2024,
+      "game_date": "2025-06-10",
+      "start_time_utc": "2025-06-10T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 4,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030085,
+      "season": 2024,
+      "game_date": "2025-06-12",
+      "start_time_utc": "2025-06-12T23:00:00Z",
+      "home_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "home_score": 1,
+      "away_score": 3,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    },
+    {
+      "id": 2024030086,
+      "season": 2024,
+      "game_date": "2025-06-14",
+      "start_time_utc": "2025-06-14T23:00:00Z",
+      "home_team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "away_team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "home_score": 5,
+      "away_score": 2,
+      "game_state": "OFF",
+      "status_state": "final",
+      "period": 3,
+      "time_remaining": null,
+      "in_intermission": false,
+      "postseason": true
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

@@ -133,12 +133,28 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'FIFAWC' });
   });
 
+  it('seeds golf\'s PGA TOUR sport league with the match keyword PGA TOUR, so its year import finds the provider\'s tournaments rather than refusing it', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.GOLF))?.id ?? '', 'PGA TOUR'))
+      .resolves.toMatchObject({ matchKeyword: 'PGA TOUR' });
+  });
+
   it('seeds basketball\'s NBA sport league with the match keyword NBA, so its year import finds the provider\'s NBA playoffs', async () => {
     const sports = new PrismaSportRepository(getAppPrisma());
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
 
     await expect(leagues.findBySportAndName((await sports.findBySport(Sport.BASKETBALL))?.id ?? '', 'NBA'))
       .resolves.toMatchObject({ matchKeyword: 'NBA' });
+  });
+
+  it('seeds hockey\'s NHL sport league with the match keyword NHL', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.HOCKEY))?.id ?? '', 'NHL'))
+      .resolves.toMatchObject({ matchKeyword: 'NHL' });
   });
 
   it('seeds the NBA Finals and NBA Conference Finals Clutch Card leagues with their round\'s name as match keyword, so each imports only its own round', async () => {

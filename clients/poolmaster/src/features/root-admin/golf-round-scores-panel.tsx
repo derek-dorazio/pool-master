@@ -11,12 +11,10 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
-import {
-  golfRoundScoreRows,
-  sportEventHasScoreSync,
-} from './sport-admin-utils';
+import { golfRoundScoreRows } from './sport-admin-utils';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
 import { GolfRoundScoreUploadCard } from './golf-round-score-upload-card';
+import { ScoreSyncNotice } from './score-sync-notice';
 import { useSportEventFieldQuery } from './use-sport-event';
 
 /**
@@ -78,13 +76,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
 
   return (
     <div className="space-y-6" data-testid="root-admin-golf-tournament-scores-page">
-      {sportEventHasScoreSync(tournament.syncScope) ? (
-        <Notice data-testid="root-admin-golf-scores-sync-alert" tone="warning">
-          Scores for this tournament sync automatically from the linked provider.
-          Manual edits here are corrections and may be overwritten by the next sync
-          tick.
-        </Notice>
-      ) : null}
+      <ScoreSyncNotice event={tournament} scores="Scores for this tournament" testId="root-admin-golf-scores-sync-alert" />
 
       {roundsQuery.isError ? (
         <Notice data-testid="root-admin-golf-scores-rounds-error" tone="danger">

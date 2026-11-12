@@ -6,6 +6,9 @@ provider choice and its reasoning are in
 covers how the site takes live data from BALLDONTLIE, and in what order. Epic #1494. No implementation
 starts until Derek says so.
 
+How the built pieces fit together, league by league (the rows each needs, the triggers, the write
+path and the key files), is `docs/LIVE-SPORTS-DATA-SYNC.md`; it outlives this plan.
+
 ## What we are building
 
 Today every real score on the site is entered by an admin or loaded from a data file. The
@@ -49,7 +52,9 @@ The target:
      live score and its result once a side has won more than half (#1545). A series league's
      reader therefore hands over every game of the event on each sync. The NBA's playoffs are
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
-     mapping and reader (`series-playoffs.ts`), each supplying only its own reads;
+     mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
+     (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series, read
+     without box scores, so no NHL round is listed as an event until a Clutch Card needs one;
    - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
      live-score category (#1497). The adapter numbers each game within the Clutch Card event
      (game N is round N, and each series' Game N shares it in a round of several series) and maps

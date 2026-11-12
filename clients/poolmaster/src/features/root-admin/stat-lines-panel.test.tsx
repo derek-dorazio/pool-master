@@ -70,8 +70,8 @@ const guerrero = fieldEntryFixture({
   participant: participantFixture({ id: 'p-2', name: 'Vladimir Guerrero Jr.', externalId: 'mlb-vladimir-guerrero-jr' }),
 });
 
-function renderPage() {
-  getEventMock.mockResolvedValue({ data: { event: worldSeries } });
+function renderPage(event = worldSeries) {
+  getEventMock.mockResolvedValue({ data: { event } });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [ohtani, guerrero] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -103,6 +103,20 @@ describe('RootAdminSportEventResultsPage for a stat pool event', () => {
     expect(screen.getByTestId('root-admin-stat-lines-total-sep-2')).toHaveTextContent('0');
     expect(screen.getByRole('radio', { name: 'Game 7' })).toBeInTheDocument();
     expect(screen.queryByText('World Series')).not.toBeInTheDocument();
+  });
+
+  it('warns that a sync replaces a corrected line for an event whose box scores sync from a provider, and keeps the grid usable', async () => {
+    renderPage({ ...worldSeries, syncScope: 'SCORES_ONLY' });
+
+    expect(await screen.findByTestId('root-admin-stat-lines-sync-alert')).toHaveTextContent('Box scores for this event sync automatically from the linked provider');
+    expect(await screen.findByTestId('root-admin-stat-lines-TOTAL_BASES-sep-1')).toHaveValue('4');
+  });
+
+  it('gives no sync warning for an event loaded by hand', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-stat-lines-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-stat-lines-sync-alert')).not.toBeInTheDocument();
   });
 
   it('saves a corrected line as the player\'s whole line for the game, blank stats left out', async () => {
