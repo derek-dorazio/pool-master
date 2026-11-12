@@ -1,5 +1,5 @@
 import { Trophy } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
@@ -9,6 +9,7 @@ import {
   EmptyState,
   ErrorState,
   ExpandableRow,
+  FactList,
   Input,
   LoadingState,
   Pager,
@@ -139,14 +140,12 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
   return (
     <div data-testid={testId}>
       <ExpandableRow label={`Game by game for ${pick.participantName}`} summary={cells} toggleTestId={`${breakdown.testId}-toggle`}>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3 text-xs text-muted-foreground" data-testid={breakdown.testId}>
-          {breakdown.lines.map((line) => (
-            <Fragment key={line.key}>
-              <dt className="font-medium text-foreground">{line.label}</dt>
-              <dd>{line.text}</dd>
-            </Fragment>
-          ))}
-        </dl>
+        <FactList
+          density="compact"
+          facts={breakdown.lines.map((line) => ({ id: line.key, label: line.label, value: line.text }))}
+          layout="inset"
+          testId={breakdown.testId}
+        />
       </ExpandableRow>
     </div>
   );

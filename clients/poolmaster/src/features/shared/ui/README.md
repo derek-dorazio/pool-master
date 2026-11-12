@@ -29,7 +29,13 @@ The shared UI layer is split into three levels:
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
-   table that needs search or sorting is a `DataGrid`. Copy to clipboard is a
+   table that needs search or sorting is a `DataGrid`. Labels beside their values are a
+   `FactList` (`layout="inline"` by default; `"inset"` under a row that opened
+   it; `"columns"` for a few facts side by side, stacking on a phone;
+   `density="compact"` in a popover or peek card), never a hand-built `<dl>`;
+   a page's headline numbers are a `MetricGrid` instead, and rows with columns
+   of their own a `SimpleTable`. Requirements met or not are a `CheckList`
+   (missing first, `surface="inverse"` on a navy panel). Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,
