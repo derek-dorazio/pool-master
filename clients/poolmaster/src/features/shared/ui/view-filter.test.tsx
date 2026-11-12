@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installScrollRowLayout } from "@/test/scroll-row-layout";
 import { ViewFilter } from "./view-filter";
@@ -39,6 +40,35 @@ describe("ViewFilter", () => {
     render(<ViewFilter aria-label="Invites to show" onChange={() => undefined} options={OPTIONS} value="pending" />);
 
     expect(screen.getByRole("radio", { name: "Expired 1" })).toHaveClass("focus-visible:ring-2", "focus-visible:ring-inset");
+  });
+});
+
+describe("ViewFilter from the keyboard", () => {
+  function Views() {
+    const [value, setValue] = useState("pending");
+    return <ViewFilter aria-label="Invites to show" onChange={setValue} options={OPTIONS} value={value} />;
+  }
+
+  it("is one Tab stop on the chosen view, and the arrow keys move to and pick the next view", async () => {
+    render(<Views />);
+
+    await userEvent.tab();
+    expect(screen.getByRole("radio", { name: "Pending 3" })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: "Expired 1" })).toHaveAttribute("tabindex", "-1");
+
+    await userEvent.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "Expired 1" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Expired 1" })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: "Pending 3" })).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("leaves other keys to the page", async () => {
+    const onChange = vi.fn();
+    render(<ViewFilter aria-label="Invites to show" onChange={onChange} options={OPTIONS} value="pending" />);
+
+    await userEvent.tab();
+    await userEvent.keyboard("a");
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
 
