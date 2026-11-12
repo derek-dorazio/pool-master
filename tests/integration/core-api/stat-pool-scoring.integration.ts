@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { ScoringFamily, Sport, SportStat, TournamentFormat } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, ScoringFamily, Sport, SportStat, TournamentFormat } from '@poolmaster/shared/domain';
 import {
   ContestLeaderboardResponseSchema,
   ContestResponseSchema,
@@ -134,7 +134,7 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
   it('commits the event\'s leaderboard rebuild job with the game\'s lines, and writes neither when the job cannot be written (#1466)', async () => {
     const { prisma, event, games, ace } = await seedSeries();
     const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
-    const lines = (value: number) => [{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value }], completedAt: new Date('2025-10-25T23:00:00.000Z') }];
+    const lines = (value: number) => [{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value }], status: ParticipantRoundStatus.COMPLETED, completedAt: new Date('2025-10-25T23:00:00.000Z') }];
 
     await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => statLines.replaceGameLines(lines(1), [eventRebuildJob(event.id)]))).rejects.toThrow();
     await expect(prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: ace.id } })).resolves.toBe(0);
@@ -150,18 +150,18 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
     const [game1] = games;
     const firstAt = new Date('2025-10-25T23:00:00.000Z');
     await statLines.replaceGameLines([
-      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 2 }], completedAt: firstAt },
-      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.WALKS, value: 1 }, { stat: SportStat.RUNS, value: 1 }], completedAt: firstAt },
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 2 }], status: ParticipantRoundStatus.COMPLETED, completedAt: firstAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.WALKS, value: 1 }, { stat: SportStat.RUNS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: firstAt },
     ]);
     await line(blaze, 1, { STOLEN_BASES: 1 });
     const cruzBefore = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: cruz.id }, include: { statLines: { orderBy: { stat: 'asc' } } } });
     const secondAt = new Date('2025-10-26T01:00:00.000Z');
 
     await statLines.replaceGameLines([
-      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }], completedAt: secondAt },
-      { sportEventParticipantId: blaze.id, sportEventRoundId: game1.id, stats: [], completedAt: secondAt },
-      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 1 }, { stat: SportStat.WALKS, value: 1 }], completedAt: secondAt },
-      { sportEventParticipantId: dash.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 2 }], completedAt: secondAt },
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }], status: ParticipantRoundStatus.COMPLETED, completedAt: secondAt },
+      { sportEventParticipantId: blaze.id, sportEventRoundId: game1.id, stats: [], status: ParticipantRoundStatus.COMPLETED, completedAt: secondAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 1 }, { stat: SportStat.WALKS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: secondAt },
+      { sportEventParticipantId: dash.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 2 }], status: ParticipantRoundStatus.COMPLETED, completedAt: secondAt },
     ]);
 
     const rounds = await prisma.sportEventParticipantRound.findMany({
@@ -180,15 +180,63 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
     const { prisma, games, ace } = await seedSeries();
     const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
     const at = new Date('2025-10-25T23:00:00.000Z');
-    await statLines.replaceGameLines([{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at }]);
+    await statLines.replaceGameLines([{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at }]);
 
     await expect(statLines.replaceGameLines([
-      { sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 3 }], completedAt: at },
-      { sportEventParticipantId: randomUUID(), sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at },
+      { sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 3 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+      { sportEventParticipantId: randomUUID(), sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
     ])).rejects.toThrow();
 
     const lines = await prisma.sportEventParticipantStatLine.findMany({ where: { participantRound: { sportEventParticipantId: ace.id } } });
     expect(lines.map((statLine) => statLine.value)).toEqual([1]);
+  });
+
+  it('reports each write as created, updated, deleted or unchanged, in the order given', async () => {
+    const { games, ace, blaze, cruz, dash, line } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+    const at = new Date('2025-10-25T23:00:00.000Z');
+    const game = games[0].id;
+    await line(ace, 1, { RUNS: 1 });
+    await line(blaze, 1, { RUNS: 1 });
+    await line(cruz, 1, { RUNS: 2 });
+
+    const outcomes = await statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: game, stats: [{ stat: SportStat.RUNS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+      { sportEventParticipantId: blaze.id, sportEventRoundId: game, stats: [{ stat: SportStat.RUNS, value: 3 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game, stats: [], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+      { sportEventParticipantId: dash.id, sportEventRoundId: game, stats: [{ stat: SportStat.RUNS, value: 1 }], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+      { sportEventParticipantId: dash.id, sportEventRoundId: games[1].id, stats: [], status: ParticipantRoundStatus.COMPLETED, completedAt: at },
+    ]);
+
+    expect(outcomes.map((outcome) => [outcome.sportEventParticipantId, outcome.sportEventRoundId, outcome.disposition])).toEqual([
+      [ace.id, game, 'UNCHANGED'],
+      [blaze.id, game, 'UPDATED'],
+      [cruz.id, game, 'DELETED'],
+      [dash.id, game, 'CREATED'],
+      [dash.id, games[1].id, 'UNCHANGED'],
+    ]);
+  });
+
+  it('stores a live game\'s line in progress with no completion time, then completes the same line when the game ends', async () => {
+    const { prisma, games, ace } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+    const live = { sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }] };
+    const endedAt = new Date('2025-10-25T23:00:00.000Z');
+
+    await statLines.replaceGameLines([{ ...live, status: ParticipantRoundStatus.IN_PROGRESS, completedAt: null }]);
+    const during = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: ace.id } });
+    const outcomes = await statLines.replaceGameLines([{ ...live, status: ParticipantRoundStatus.COMPLETED, completedAt: endedAt }]);
+    const after = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: ace.id }, include: { statLines: true } });
+
+    expect([during.status, during.completedAt]).toEqual([ParticipantRoundStatus.IN_PROGRESS, null]);
+    expect(outcomes.map((outcome) => outcome.disposition)).toEqual(['UPDATED']);
+    expect([after.status, after.completedAt, after.statLines.map((statLine) => statLine.value)]).toEqual([ParticipantRoundStatus.COMPLETED, endedAt, [1]]);
+  });
+
+  it('writes nothing and reports nothing for an empty batch', async () => {
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+
+    await expect(statLines.replaceGameLines([])).resolves.toEqual([]);
   });
 });
 

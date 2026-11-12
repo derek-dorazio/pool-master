@@ -789,30 +789,35 @@ export class InMemorySportEvents {
   statLineRepo(): SportEventParticipantStatLineRepository {
     return {
       replaceGameLines: async (writes, jobs) => {
+        if (writes.length === 0) return [];
         this.backgroundJobs.push(...(jobs ?? []));
-        for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
+        return writes.map(({ sportEventParticipantId, sportEventRoundId, stats, status, completedAt }) => {
+          const key = { sportEventParticipantId, sportEventRoundId };
           let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
           const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
-          if (core && core.status === 'COMPLETED' && stats.length > 0 && storedLines.length === stats.length
+          if (core && core.status === status && stats.length > 0 && storedLines.length === stats.length
             && stats.every(({ stat, value }) => storedLines.some((row) => row.stat === stat && row.value === value))) {
-            continue;
+            return { ...key, disposition: 'UNCHANGED' as const };
           }
           if (core) {
             const roundId = core.id;
             this.statLineRows = this.statLineRows.filter((row) => row.participantRoundId !== roundId);
           }
           if (stats.length === 0) {
+            if (!core) return { ...key, disposition: 'UNCHANGED' as const };
             this.participantRoundRows = this.participantRoundRows.filter((row) => row !== core);
-            continue;
+            return { ...key, disposition: 'DELETED' as const };
           }
+          const disposition = core ? 'UPDATED' as const : 'CREATED' as const;
           if (!core) {
-            core = stamp({ id: this.id('participant-round'), sportEventParticipantId, sportEventRoundId, status: 'COMPLETED' as const, completedAt });
+            core = stamp({ id: this.id('participant-round'), sportEventParticipantId, sportEventRoundId, status, completedAt });
             this.participantRoundRows.push(core);
           }
-          Object.assign(core, { status: 'COMPLETED', completedAt });
+          Object.assign(core, { status, completedAt });
           const roundId = core.id;
           this.statLineRows.push(...stats.map(({ stat, value }) => stamp({ id: this.id('stat-line'), participantRoundId: roundId, stat, value })));
-        }
+          return { ...key, disposition };
+        });
       },
     };
   }
