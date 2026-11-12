@@ -14,6 +14,7 @@ export * from './pick-preview.dto';
 export * from './participants.dto';
 export * from './config.dto';
 export * from './email-events.dto';
+export * from './provider-webhooks.dto';
 export * from './email-preferences.dto';
 export * from './email-test.dto';
 export * from './settings.dto';

@@ -75,6 +75,9 @@ const PUBLIC_ROUTES = new Set([
   // #844 — SES delivery events, posted by Amazon SNS. The SNS signature and this environment's
   // topic are the whole authority; the route refuses anything else with 403.
   'POST /api/v1/email/ses-events',
+  // #1498 — BALLDONTLIE webhook notifications. The delivery's HMAC signature under this
+  // environment's endpoint secret is the whole authority; the route refuses anything else with 403.
+  'POST /api/v1/provider-webhooks/balldontlie',
   // #844 slice 5 — one-click unsubscribe from an email's link; its token is its whole authority
   // and can only turn one category of email off for one user.
   'POST /api/v1/email/unsubscribe',

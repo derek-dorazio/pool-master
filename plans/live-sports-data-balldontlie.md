@@ -6,6 +6,9 @@ provider choice and its reasoning are in
 covers how the site takes live data from BALLDONTLIE, and in what order. Epic #1494. No implementation
 starts until Derek says so.
 
+How the built pieces fit together, league by league (the rows each needs, the triggers, the write
+path and the key files), is `docs/LIVE-SPORTS-DATA-SYNC.md`; it outlives this plan.
+
 ## What we are building
 
 Today every real score on the site is entered by an admin or loaded from a data file. The
@@ -134,11 +137,20 @@ Derek accepted every recommendation below on 2026-11-09.
   live. Built (#1496 part 3b): a live game puts `IN_PROGRESS` and its score on its match with
   no winner, and the admin's bracket page shows it. Member pages show no game scores yet.
 - **Q3 (decided). Polling cadence once webhooks run.** Decided: every 15 minutes for linked
-  in-progress events (from 5), plus one reconciliation sync at each game end.
-- **Q4 (decided). Which webhook events to subscribe to.** Decided: game started, period ended,
-  game ended, and golf hole completed and round completed. No per-play events (scored,
-  rebound): one game produces hundreds, and the job refetches the box score anyway. At that
-  level a full season of every covered league stays well under 500,000 deliveries a month.
+  in-progress events (from 5), plus one reconciliation sync at each game end. Golf is the
+  exception (Derek, 2026-11-11): a live tournament is polled every 2 minutes during a round,
+  since it subscribes to no per-hole event.
+- **Q4 (decided). Which webhook events to subscribe to.** Decided: game started, period ended
+  (a soccer match's halftime) and game ended for each league the adapter reads; for golf,
+  tournament started, round started, a player's round completed and tournament ended, but not
+  each hole (Derek, 2026-11-11). No per-play events (scored, rebound): one game produces
+  hundreds, and the job refetches the box score anyway. Built (#1498): a notification for a
+  game or tournament linked to an in-progress event queues one sync of that event, due about a
+  minute out under a dedupe key, so a burst queues one job; the key is released when a worker
+  claims it. Delivery budget: a game sends about six notifications (start, three or four period
+  ends, end) and a golf tournament a few hundred (each player's round, about 70 to 150 a
+  round), so a full season of every covered league stays well under All-Access's 500,000
+  deliveries a month.
 - **Q5 (decided). LPGA.** BALLDONTLIE has no LPGA. Decided: LPGA stays on the pipeline (results
   after each round) for launch. Revisit Goalserve golf if LPGA live leaderboards matter.
 

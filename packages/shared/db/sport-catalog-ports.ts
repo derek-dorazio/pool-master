@@ -151,6 +151,26 @@ export interface SportEventProviderSummary {
   lastChangedAt: Date | null;
 }
 
+/**
+ * Which of a provider's events a notification from it is about (#1498): the one it knows by
+ * `externalId`, or every one whose id starts with `externalIdPrefix` (a league's scopes, such
+ * as `nfl-`). `gameId` names the provider game the notification is about, when it is a game's.
+ */
+export type ProviderNotifiedEventQuery = {
+  providerId: string;
+  sport: Sport;
+  gameId?: string;
+} & ({ externalId: string } | { externalIdPrefix: string });
+
+/** A provider-linked event a notification may sync, and whether it holds the notified game. */
+export interface ProviderNotifiedEvent {
+  sport: Sport;
+  providerId: string;
+  externalId: string;
+  /** Whether one of its matches is linked to the query's `gameId`; false with no `gameId`. */
+  holdsGame: boolean;
+}
+
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
   /** The events with these ids, in no particular order; an unknown id is left out. */
@@ -219,6 +239,11 @@ export interface SportEventRepository {
    * events last changed (null where it has none).
    */
   summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>>;
+  /**
+   * The provider's events a notification from it may sync (#1498): linked for scores
+   * (`SCORES_ONLY`) and `IN_PROGRESS`, as the scheduled live-score sweep reads them. Unordered.
+   */
+  findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]>;
   /**
    * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED` or
    * `IN_PROGRESS`. Unordered.

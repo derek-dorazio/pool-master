@@ -138,6 +138,18 @@ const SCHEDULED_SYNC_ACTOR = {
   type: 'SYSTEM',
   name: 'scheduler',
 } as const;
+const WEBHOOK_SYNC_SOURCE: SyncRequestSource = 'WEBHOOK';
+const WEBHOOK_SYNC_ACTOR = {
+  type: 'SYSTEM',
+  name: 'webhook',
+} as const;
+
+/** One linked event a provider's notification asked to sync (#1498). */
+export interface NotifiedEventSync {
+  sport: Sport;
+  providerId: string;
+  eventId: string;
+}
 
 export class IngestionScheduler {
   private timers: NodeJS.Timeout[] = [];
@@ -465,6 +477,40 @@ export class IngestionScheduler {
     }
   }
 
+  /**
+   * The PROVIDER_EVENT_SYNC job (#1498): one live-score sync of an event its provider's webhook
+   * named, recorded in the sync history as a WEBHOOK run. It reads the provider's current state
+   * over REST, so a duplicated, late or out-of-order notification writes nothing stale. It runs
+   * only where the scheduled sweep would: a sport scheduled for ingestion, with live scores on.
+   */
+  async runNotifiedEventSync(request: NotifiedEventSync): Promise<IngestionJobRecord | null> {
+    const feed = 'EVENTLIVESCORES' as const;
+    if (!(await this.isSportScheduled(request.sport))) {
+      this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
+      return null;
+    }
+    if (!(await this.getSportConfig(request.sport)).eventLiveScores.enabled) {
+      this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because live score syncs are off for the sport');
+      return null;
+    }
+
+    const normalized = this.syncOrchestrator.normalizeRequest({
+      source: WEBHOOK_SYNC_SOURCE,
+      actor: WEBHOOK_SYNC_ACTOR,
+      scope: {
+        type: 'EVENT',
+        sport: request.sport,
+        providerId: request.providerId,
+        eventId: request.eventId,
+        feeds: [feed],
+      },
+    } satisfies SyncOrchestratorRequest);
+    const { scope } = normalized;
+    return this.executeScheduledSyncRun(normalized, () =>
+      this.pollLiveScores(scope.sport, scope.providerId, scope.eventId, scope.providerOptions),
+    'WEBHOOK_EVENT_SYNC');
+  }
+
   private normalizeScheduledEventSync(input: {
     sport: Sport;
     providerId: string;
@@ -487,6 +533,7 @@ export class IngestionScheduler {
   private async executeScheduledSyncRun(
     normalizedRequest: NormalizedSyncRequest,
     run: () => Promise<IngestionJobRecord>,
+    runType: 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC' = 'SCHEDULED_EVENT_SYNC',
   ): Promise<IngestionJobRecord> {
     const syncRunLedger = this.options.syncRunLedger;
     if (!syncRunLedger) {
@@ -497,7 +544,7 @@ export class IngestionScheduler {
       normalizedRequest,
       providerId: normalizedRequest.scope.providerId,
       submittedAt: this.getNow(),
-      runType: 'SCHEDULED_EVENT_SYNC',
+      runType,
     });
     const syncRun = syncRuns.at(0);
 

@@ -61,6 +61,12 @@ on QA binds BALLDONTLIE beside the mock, stores the key as the
 `BALLDONTLIE_API_KEY`. Left empty, BALLDONTLIE stays unbound. Once the secret exists, every
 apply must reuse it (the `apply-terraform` skill, step 3c), or the apply deletes it.
 
+`balldontlie_webhook_secret` (#1498) is the signing secret BALLDONTLIE shows once when the webhook
+endpoint is created or its secret rotated. Set, it is stored as the
+`poolmaster-<env>-balldontlie-webhook-secret` secret and passed to core-api as
+`BALLDONTLIE_WEBHOOK_SECRET`; left empty, the webhook route refuses every delivery with 403. It is
+reused on every apply the same way as the API key.
+
 ## The ALB Admits CloudFront Only
 
 The ALB security group accepts port 80 from CloudFront's origin-facing prefix list

@@ -7,6 +7,7 @@ import type { z } from 'zod';
 import { BackgroundJobType } from '@poolmaster/shared/domain';
 import { AddReleasedEditionToContestJobPayloadSchema } from '../contest-management/released-edition-job-requests';
 import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-job';
+import { ProviderEventSyncJobPayloadSchema } from '../ingestion/provider-event-sync-job';
 import {
   ContestEventChangedEmailsJobPayloadSchema,
   ContestSettledEmailsJobPayloadSchema,
@@ -18,6 +19,7 @@ import { RebuildLeaderboardsJobPayloadSchema } from '../contests/leaderboard-reb
 
 export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.MANUAL_EVENT_SYNC]: ManualEventSyncJobPayloadSchema,
+  [BackgroundJobType.PROVIDER_EVENT_SYNC]: ProviderEventSyncJobPayloadSchema,
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: ContestStartedEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: ContestSettledEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS]: ContestEventChangedEmailsJobPayloadSchema,
