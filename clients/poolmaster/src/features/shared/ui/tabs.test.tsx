@@ -159,4 +159,26 @@ describe("pool-master-3lo.13: shared Tabs and SegmentedControl primitives", () =
     await userEvent.keyboard("{ArrowDown}");
     expect(onChange).toHaveBeenLastCalledWith("active");
   });
+
+  it("lands Shift+Tab on the last segment when none is chosen, as a native radio group does", async () => {
+    render(
+      <>
+        <SegmentedControl
+          aria-label="Contest view"
+          onChange={() => undefined}
+          options={[
+            { label: "Active", value: "active" },
+            { label: "History", value: "history" },
+          ]}
+          value=""
+        />
+        <button type="button">After</button>
+      </>,
+    );
+    screen.getByRole("button", { name: "After" }).focus();
+
+    await userEvent.tab({ shift: true });
+
+    expect(screen.getByRole("radio", { name: "History" })).toHaveFocus();
+  });
 });

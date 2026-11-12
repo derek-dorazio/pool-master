@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import type { FocusEvent, KeyboardEvent } from "react";
 
 type RadioChoice = { disabled?: boolean; value: string };
 
@@ -21,13 +21,17 @@ export function radioTabStop(choices: readonly RadioChoice[], value: string) {
   return (checked ?? choices.find((choice) => !choice.disabled))?.value ?? null;
 }
 
+function radiosIn(group: HTMLElement) {
+  return Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]'));
+}
+
 /**
  * The arrow keys of a radio group, as the ARIA radio group pattern has them: Left/Up and
  * Right/Down move to the previous or next choice and pick it, wrapping at the ends; Home and End
- * pick the first and last. Disabled choices are passed over. Put it on each radio's `onKeyDown`;
- * focus follows the choice to the radio drawn for it in the same group.
+ * pick the first and last. Disabled choices are passed over, and focus follows the choice to its
+ * radio.
  */
-export function handleRadioGroupKeyDown(
+function handleRadioGroupKeyDown(
   event: KeyboardEvent<HTMLElement>,
   choices: readonly RadioChoice[],
   value: string,
@@ -53,7 +57,42 @@ export function handleRadioGroupKeyDown(
   if (next.value !== value) {
     onChange(next.value);
   }
-  const group = event.currentTarget.closest('[role="radiogroup"]');
-  const radios = group ? Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]')) : [];
-  radios[choices.indexOf(next)]?.focus();
+  radiosIn(event.currentTarget)[choices.indexOf(next)]?.focus();
+}
+
+/**
+ * With nothing checked, Shift+Tab into the group lands on its last choice, as a native radio
+ * group's does; Tab still lands on the first, the group's one Tab stop.
+ */
+function handleRadioGroupFocus(event: FocusEvent<HTMLElement>, choices: readonly RadioChoice[], value: string) {
+  const group = event.currentTarget;
+  const from = event.relatedTarget;
+  const enteredBackwards = from instanceof Node
+    && !group.contains(from)
+    && (group.compareDocumentPosition(from) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+  if (!enteredBackwards || choices.some((choice) => choice.value === value && !choice.disabled)) {
+    return;
+  }
+  const lastEnabled = choices.filter((choice) => !choice.disabled).at(-1);
+  if (lastEnabled) {
+    radiosIn(group)[choices.indexOf(lastEnabled)]?.focus();
+  }
+}
+
+/**
+ * The keyboard of a hand-drawn radio group (`SegmentedControl`, `ViewFilter`): spread `group` on
+ * the element with `role="radiogroup"` and give each radio `tabIndex={tabIndexFor(value)}`. The
+ * group owns the arrow keys in one handler, so it takes `tabIndex` -1: focusable from code only,
+ * never a Tab stop of its own.
+ */
+export function radioGroupKeyboard(choices: readonly RadioChoice[], value: string, onChange: (value: string) => void) {
+  const tabStop = radioTabStop(choices, value);
+  return {
+    group: {
+      onFocus: (event: FocusEvent<HTMLElement>) => handleRadioGroupFocus(event, choices, value),
+      onKeyDown: (event: KeyboardEvent<HTMLElement>) => handleRadioGroupKeyDown(event, choices, value, onChange),
+      tabIndex: -1,
+    },
+    tabIndexFor: (choiceValue: string) => (choiceValue === tabStop ? 0 : -1),
+  };
 }

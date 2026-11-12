@@ -1,5 +1,5 @@
 import { cn } from "./class-names";
-import { handleRadioGroupKeyDown, radioTabStop } from "./radio-group-keys";
+import { radioGroupKeyboard } from "./radio-group-keys";
 import { useScrollRow } from "./scroll-row";
 
 export type ViewFilterOption = {
@@ -26,13 +26,14 @@ export type ViewFilterProps = {
  */
 export function ViewFilter({ "aria-label": ariaLabel, onChange, options, value }: ViewFilterProps) {
   const { fadeClassName, ref } = useScrollRow<HTMLDivElement>();
-  const tabStop = radioTabStop(options, value);
+  const keyboard = radioGroupKeyboard(options, value, onChange);
   return (
     <div
       aria-label={ariaLabel}
       className={cn("relative flex min-w-0 gap-5 overflow-x-auto", fadeClassName)}
       ref={ref}
       role="radiogroup"
+      {...keyboard.group}
     >
       {options.map((option) => {
         const isChosen = option.value === value;
@@ -46,9 +47,8 @@ export function ViewFilter({ "aria-label": ariaLabel, onChange, options, value }
             data-testid={option.testId}
             key={option.value}
             onClick={() => onChange(option.value)}
-            onKeyDown={(event) => handleRadioGroupKeyDown(event, options, value, onChange)}
             role="radio"
-            tabIndex={option.value === tabStop ? 0 : -1}
+            tabIndex={keyboard.tabIndexFor(option.value)}
             type="button"
           >
             {option.label}
