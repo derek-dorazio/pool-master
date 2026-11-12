@@ -18897,7 +18897,7 @@
             "description": "Sport league name, e.g. \"PGA Tour\"."
           },
           "matchKeyword": {
-            "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
+            "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words (\"NBA\" does not match \"WNBA Playoffs\"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
             "type": [
               "string",
               "null"
@@ -19122,7 +19122,7 @@
                   "description": "Sport league name, e.g. \"PGA Tour\"."
                 },
                 "matchKeyword": {
-                  "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
+                  "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words (\"NBA\" does not match \"WNBA Playoffs\"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
                   "type": [
                     "string",
                     "null"
@@ -19326,7 +19326,7 @@
                 "description": "Sport league name, e.g. \"PGA Tour\"."
               },
               "matchKeyword": {
-                "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
+                "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words (\"NBA\" does not match \"WNBA Playoffs\"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.",
                 "type": [
                   "string",
                   "null"
