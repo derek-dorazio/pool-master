@@ -6,6 +6,7 @@
  */
 
 import { expect } from '@jest/globals';
+import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import type { EventSyncRequest, IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -30,7 +31,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 function createMockCallbacks(): IngestionCallbacks {
   return {
-    onEventDetail: jest.fn().mockResolvedValue(undefined),
+    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
   };
 }
@@ -213,7 +214,7 @@ describe('IngestionScheduler', () => {
         getEventDetails: jest.fn().mockResolvedValue(detail),
       });
       const registry = createMockRegistry(provider);
-      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({
+      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({ unlinkedRankedParticipants: [], writeDiagnostics: {
         summary: {
           total: 2,
           unchanged: 1,
@@ -239,7 +240,7 @@ describe('IngestionScheduler', () => {
             name: 'Player Two',
           },
         ],
-      });
+      } });
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
       const [job] = await scheduler.runEventSync({
@@ -272,6 +273,25 @@ describe('IngestionScheduler', () => {
         }),
       );
       expect(job.writeDiagnostics?.rows).toHaveLength(2);
+    });
+
+    it.each([
+      ['one ranked participant', [{ participantId: 'p-1', name: 'Luka Dončić', ranking: 2 }],
+        '1 ranked participant has no mock-provider mapping, so its scores will not reach it: Luka Dončić (rank 2). Merge or map each by hand.'],
+      ['two ranked participants, best rank first', [{ participantId: 'p-1', name: 'Jayson Tatum', ranking: 1 }, { participantId: 'p-2', name: 'Luka Dončić', ranking: 2 }],
+        '2 ranked participants have no mock-provider mapping, so its scores will not reach them: Jayson Tatum (rank 1), Luka Dončić (rank 2). Merge or map each by hand.'],
+    ])('warns, naming each, when a field sync leaves %s of the field unlinked from the provider (#1664)', async (_label, unlinkedRankedParticipants, message) => {
+      const detail: SportEventDetail = {
+        externalId: 'evt-1', providerId: 'mock-provider', sport: 'GOLF', name: 'The Masters', startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED', fieldLocked: false, metadata: {},
+        participants: [{ externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} }],
+      };
+      const registry = createMockRegistry(fakeSportDataProvider({ getEventDetails: jest.fn().mockResolvedValue(detail) }));
+      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants });
+
+      const [job] = await new IngestionScheduler(registry, mockCallbacks).runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+
+      expect(job.warnings).toEqual([{ code: 'RANKED_PARTICIPANTS_UNLINKED', message }]);
     });
 
     it('returns a COMPLETED job with no errors when the provider call succeeds', async () => {

@@ -97,8 +97,21 @@ export interface EventSyncRequest {
   mockEventState?: MockEventState;
 }
 
+/** A participant of the event's field with a ranking and no mapping from the event's provider (#1664). */
+export interface UnlinkedRankedParticipant {
+  participantId: string;
+  name: string;
+  ranking: number;
+}
+
+/** What writing a provider's event detail did: its write diagnostics, and the field's ranked participants the provider's names left unlinked. */
+export interface EventDetailPersisted {
+  writeDiagnostics: SyncWriteDiagnostics;
+  unlinkedRankedParticipants: readonly UnlinkedRankedParticipant[];
+}
+
 export interface IngestionCallbacks {
-  onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics>;
+  onEventDetail(detail: SportEventDetail): Promise<EventDetailPersisted>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
 }
 
@@ -581,12 +594,13 @@ export class IngestionScheduler {
         throw new Error(`Provider returned no event detail for event ${eventId}`);
       }
 
-      const writeDiagnostics = await this.callbacks.onEventDetail(detail);
+      const { writeDiagnostics, unlinkedRankedParticipants } = await this.callbacks.onEventDetail(detail);
       this.logger?.info({
         sport,
         eventId,
         providerId: provider.providerId,
         participantCount: detail.participants.length,
+        unlinkedRankedCount: unlinkedRankedParticipants.length,
       }, 'Completed participant sync for event');
       return {
         recordsProcessed: detail.participants.length,
@@ -597,12 +611,15 @@ export class IngestionScheduler {
           ...syncWriteStats(writeDiagnostics),
         },
         writeDiagnostics,
-        warnings: detail.participants.length === 0
-          ? [{
-              code: 'NO_PROVIDER_PARTICIPANTS',
-              message: 'Provider returned event details with no participants.',
-            }]
-          : [],
+        warnings: [
+          ...(detail.participants.length === 0
+            ? [{
+                code: 'NO_PROVIDER_PARTICIPANTS',
+                message: 'Provider returned event details with no participants.',
+              }]
+            : []),
+          ...(unlinkedRankedParticipants.length > 0 ? [unlinkedRankedWarning(provider.providerId, unlinkedRankedParticipants)] : []),
+        ],
       };
     }, eventId);
   }
@@ -803,6 +820,19 @@ export class IngestionScheduler {
       return CONFIG_RECHECK_MS;
     }
   }
+}
+
+/**
+ * The warning a field sync gives when ranked participants of the field have no mapping from the
+ * event's provider (#1664): the provider's box scores and results never reach them, so the root
+ * admin merges or maps each by hand. Listed best rank first.
+ */
+function unlinkedRankedWarning(providerId: string, participants: readonly UnlinkedRankedParticipant[]): IngestionJobWarning {
+  const names = participants.map((participant) => `${participant.name} (rank ${String(participant.ranking)})`).join(', ');
+  return {
+    code: 'RANKED_PARTICIPANTS_UNLINKED',
+    message: `${String(participants.length)} ranked participant${participants.length === 1 ? ' has' : 's have'} no ${providerId} mapping, so its scores will not reach ${participants.length === 1 ? 'it' : 'them'}: ${names}. Merge or map each by hand.`,
+  };
 }
 
 function resolveEventParticipantSyncWindow(

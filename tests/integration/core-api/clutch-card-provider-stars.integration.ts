@@ -84,7 +84,17 @@ async function finalsWithLoadedStar() {
     data: { sportId: basketball.id, name: 'Jayson Tatum', participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id, ranking: 1 } } },
   });
   const tatumEntry = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: tatum.id, ranking: 1 } });
-  return { event, tatum, tatumEntry };
+  return { event, league, tatum, tatumEntry };
+}
+
+/** A star a sport data file loaded into the Clutch Card's field: affiliated with its league and ranked, with no provider mapping. */
+async function loadedStar(eventId: string, league: { id: string; sportId: string }, name: string, ranking: number) {
+  const prisma = getPrisma();
+  const star = await prisma.participant.create({
+    data: { sportId: league.sportId, name, participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id, ranking } } },
+  });
+  await prisma.sportEventParticipant.create({ data: { sportEventId: eventId, participantId: star.id, ranking } });
+  return star;
 }
 
 describe('a Clutch Card\'s stars and box scores from the provider', () => {
@@ -107,6 +117,20 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
       ['Neemias Queta', null],
     ]);
     expect(field.find((entry) => entry.participantId === tatum.id)?.id).toBe(tatumEntry.id);
+  });
+
+  it('links a star the data file spells with accents to the provider player the feed spells without, and lists the ranked star the feed did not name (#1664)', async () => {
+    const { event, league } = await finalsWithLoadedStar();
+    const doncic = await loadedStar(event.id, league, 'Luka Dončić', 2);
+    const porzingis = await loadedStar(event.id, league, 'Kristaps Porziņģis', 3);
+
+    const result = await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(adapter()));
+
+    const prisma = getPrisma();
+    await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-132' } } }))
+      .resolves.toMatchObject({ participantId: doncic.id, confidence: 'HIGH' });
+    await expect(prisma.participant.count({ where: { name: { in: ['Luka Doncic', 'Luka Dončić'] } } })).resolves.toBe(1);
+    expect(result.unlinkedRankedParticipants).toEqual([{ participantId: porzingis.id, name: 'Kristaps Porziņģis', ranking: 3 }]);
   });
 
   it('then writes each played game\'s lines from a live sync, the live game\'s in progress, under the stars the load linked', async () => {
