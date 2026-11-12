@@ -84,6 +84,10 @@ describe('getRunStatusTone', () => {
     expect(getRunStatusTone(run('COMPLETED', outcome('ERROR')))).toBe('danger');
   });
 
+  it('keeps a failed run red even when its outcome lists a warning', () => {
+    expect(getRunStatusTone(run('FAILED', outcome('WARNING', [warning])))).toBe('danger');
+  });
+
   it('shows warnings over an error, so a run with both reads amber', () => {
     expect(getRunStatusTone(run('COMPLETED', outcome('ERROR', [warning])))).toBe('warning');
   });
