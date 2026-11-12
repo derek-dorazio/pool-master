@@ -47,7 +47,7 @@ export function dismissToast(id: number) {
   publish(shown.filter((toast) => toast.id !== id));
 }
 
-/** Clears every toast, such as on sign-out. */
+/** Empties the store: every toast goes at once. */
 export function dismissAllToasts() {
   publish([]);
 }

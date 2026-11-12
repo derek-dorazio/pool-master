@@ -853,7 +853,7 @@ export function UserPage() {
         confirmTestId="user-page-delete-submit"
         confirmationInput={{
           expectedValue: user.email,
-          helperText: "Enter your email exactly to confirm permanent deletion.",
+          helperText: `Enter ${user.email} exactly to confirm.`,
           label: "Email confirmation",
           onChange: setEmailConfirmation,
           testId: "user-page-delete-confirmation",
@@ -883,7 +883,6 @@ export function UserPage() {
         title="Delete account"
         tone="danger"
       />
-
     </section>
   );
 }

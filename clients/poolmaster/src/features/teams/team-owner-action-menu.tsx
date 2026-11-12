@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import {
   Button,
@@ -9,7 +8,9 @@ import {
   DropdownMenuItemText,
   DropdownMenuTriggerSlot,
   ConfirmDialog,
+  LinkButton,
   ReadOnlyDetailModal,
+  showToast,
   Text,
 } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
@@ -70,8 +71,12 @@ export function TeamOwnerActionMenu({
 
       return response.data.membership;
     },
-    onSuccess: () => {
+    onSuccess: (_membership, nextRole) => {
       setActiveAction(null);
+      showToast({
+        title: nextRole === 'COMMISSIONER' ? `${ownerName} is now a commissioner` : `${ownerName} is now a member`,
+        tone: 'success',
+      });
     },
     invalidates: ownerViewKeys,
   });
@@ -90,6 +95,7 @@ export function TeamOwnerActionMenu({
     },
     onSuccess: () => {
       setActiveAction(null);
+      showToast({ title: `${ownerName} removed`, tone: 'success' });
     },
     invalidates: ownerViewKeys,
   });
@@ -161,13 +167,15 @@ export function TeamOwnerActionMenu({
               <Text as="p">
                 {ownerName} is the only active owner, so removing them means inactivating. Use Inactivate in the Danger zone on the Manage page.
               </Text>
-              <Link
-                className="mt-3 inline-flex font-medium text-primary underline-offset-4 hover:underline"
+              <LinkButton
+                className="mt-3"
                 onClick={closeDialog}
+                size="sm"
                 to={buildLeagueAdminTeamPath(leagueCode, teamId)}
+                variant="secondary"
               >
                 Open the Manage page
-              </Link>
+              </LinkButton>
             </>
           ) : (
             <Text as="p">
@@ -211,7 +219,7 @@ export function TeamOwnerActionMenu({
             if (!open) closeDialog();
           }}
           open={activeAction !== null}
-          pendingLabel={activeAction === 'promote' ? 'Promoting' : activeAction === 'demote' ? 'Demoting' : 'Removing'}
+          pendingLabel={activeAction === 'promote' ? 'Promoting...' : activeAction === 'demote' ? 'Demoting...' : 'Removing...'}
           testId={dialogTestId}
           title={dialogTitle}
           tone={activeAction === 'remove' ? 'danger' : 'default'}

@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { mockApi } from '@/test/msw-api';
+import { Toaster } from '@/features/shared/ui';
 import { apiSuccess, buildLeagueMembership, buildLeagueSquadMember } from '@/features/leagues/test/fixtures';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 
@@ -28,6 +29,7 @@ function renderMenu(overrides: Partial<MenuProps> = {}) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <TeamOwnerActionMenu {...props} />
+        <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -73,7 +75,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     expect(screen.queryByRole('menuitem', { name: 'Demote to member' })).not.toBeInTheDocument();
   });
 
-  it('promotes the owner to commissioner in this league and closes the confirmation', async () => {
+  it('promotes the owner to commissioner in this league, closes the confirmation and confirms with a toast', async () => {
     mockApi.changeMemberRole.mockResolvedValue(apiSuccess({
       membership: buildLeagueMembership({ userId: 'user-2', role: 'COMMISSIONER' }),
     }));
@@ -89,6 +91,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
       body: { role: 'COMMISSIONER' },
     }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('app-toast')).toHaveTextContent('Jordan Rivers is now a commissioner');
   });
 
   it('keeps the demote confirmation open with the server reason when the last commissioner cannot step down', async () => {
@@ -145,6 +148,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
       path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
     }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('app-toast')).toHaveTextContent('Jordan Rivers removed');
   });
 
   it('shows the server reason and keeps the dialog open when removing an owner fails', async () => {

@@ -724,7 +724,9 @@ describe('UserPage', () => {
 
     await screen.findByTestId('user-page-inactive-banner');
     fireEvent.click(screen.getByTestId('user-page-open-delete'));
-    await screen.findByTestId('user-page-delete-dialog');
+    const dialog = await screen.findByTestId('user-page-delete-dialog');
+    // The box says which address to type.
+    expect(dialog).toHaveTextContent('Enter derek@example.com exactly to confirm.');
     fireEvent.change(screen.getByTestId('user-page-delete-confirmation'), { target: { value: 'derek@example.com' } });
     fireEvent.click(screen.getByTestId('user-page-delete-submit'));
 
