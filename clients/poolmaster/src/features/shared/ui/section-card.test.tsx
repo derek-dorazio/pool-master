@@ -214,6 +214,26 @@ describe("SectionRow", () => {
     expect(screen.getByRole("checkbox", { name: /League digest/ })).toBeChecked();
   });
 
+  it("leads with its picture before the name when given one, and draws no picture frame without one", () => {
+    const { rerender } = render(
+      <SectionRows>
+        <SectionRow name="Masters Pool" picture={<svg data-testid="picture" />} testId="row" />
+      </SectionRows>,
+    );
+
+    const frame = screen.getByTestId("row-picture");
+    expect(frame).toContainElement(screen.getByTestId("picture"));
+    expect(frame).toHaveClass("aspect-[16/10]");
+    expect(frame.compareDocumentPosition(screen.getByText("Masters Pool")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    rerender(
+      <SectionRows>
+        <SectionRow name="Masters Pool" testId="row" />
+      </SectionRows>,
+    );
+    expect(screen.queryByTestId("row-picture")).not.toBeInTheDocument();
+  });
+
   it("leaves an ordinary row untinted, unmarked and without a figure", () => {
     render(
       <SectionRows>

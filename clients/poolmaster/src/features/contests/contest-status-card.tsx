@@ -1,5 +1,4 @@
 import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
-import type { ReactNode } from 'react';
 import type { ContestDto, SportEventDto } from '@/lib/api';
 import {
   buildLeagueContestLeaderboardPath,
@@ -7,56 +6,18 @@ import {
 } from '@/features/leagues/league-routing';
 import {
   CheckList,
-  DateDisplay,
-  Eyebrow,
-  formatDateTimeDisplay,
-  Heading,
   LinkButton,
-  Tile,
+  Notice,
   formatCount,
+  formatDateTimeDisplay,
   formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
+import { LifecyclePanel } from './lifecycle-panel';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
-
-function StatusCardFrame({
-  children,
-  eyebrow,
-  title,
-}: {
-  children: ReactNode;
-  eyebrow: string;
-  title: ReactNode;
-}) {
-  return (
-    <Tile
-      as="section"
-      className="grid gap-3 px-5 py-5"
-      data-testid="contest-status-card"
-      padding="none"
-      radius="md"
-      variant="inverse"
-    >
-      <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
-      <Heading level={2} variant="card" size="xl" tone="inherit" data-testid="contest-status-card-title">
-        {title}
-      </Heading>
-      {children}
-    </Tile>
-  );
-}
-
-function Stat({ label, testId, value }: { label: string; testId: string; value: ReactNode }) {
-  return (
-    <div className="min-w-24 rounded-xl border border-inverse-border bg-on-inverse-subtle px-3 py-2" data-testid={testId}>
-      <div className="font-display text-xl font-extrabold tabular-nums">{value}</div>
-      <div className="text-xs uppercase tracking-label text-on-inverse-muted">{label}</div>
-    </div>
-  );
-}
 
 /**
  * When a contest's entries close, for a sentence: its event's start, or a second-chance bracket's
@@ -67,8 +28,6 @@ function entriesCloseAt(event: SportEventDto, secondChanceRoundName: string | nu
     ? `the ${getSportDefinition(event.sport).vocabulary.eventStart}`
     : `the first game of the ${secondChanceRoundName}`;
 }
-
-const inverseLinkClassName = 'border-inverse-border bg-transparent text-on-inverse hover:bg-on-inverse-hover';
 
 function NotOpenCard({
   contest,
@@ -85,8 +44,17 @@ function NotOpenCard({
   const isReady = checks.every((check) => check.isMet);
 
   return (
-    <StatusCardFrame
-      eyebrow="Not open yet · only commissioners can see it"
+    <LifecyclePanel
+      actions={(
+        <>
+          <OpenContestAction contestId={contest.id} contestName={contest.name} leagueId={contest.leagueId} />
+          <LinkButton data-testid="contest-preview-as-member" to={buildLeagueContestPath(leagueCode, contest.id)} variant="inverse">
+            Preview as a member
+          </LinkButton>
+        </>
+      )}
+      help={`Only commissioners can see it until it's open. Once it's open, members can enter until ${entriesCloseAt(event, secondChanceRoundName)}, and these settings can't change.`}
+      status={contest.status}
       title={isReady ? 'Ready to open to the league' : 'Not ready to open yet'}
     >
       <CheckList
@@ -99,21 +67,7 @@ function NotOpenCard({
         surface="inverse"
         testId="contest-readiness-checks"
       />
-      <p className="text-sm text-on-inverse-muted">
-        Once it&apos;s open, members can enter until {entriesCloseAt(event, secondChanceRoundName)}, and these settings can&apos;t change.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <OpenContestAction contestId={contest.id} leagueId={contest.leagueId} />
-        <LinkButton
-          className={inverseLinkClassName}
-          data-testid="contest-preview-as-member"
-          to={buildLeagueContestPath(leagueCode, contest.id)}
-          variant="secondary"
-        >
-          Preview as a member
-        </LinkButton>
-      </div>
-    </StatusCardFrame>
+    </LifecyclePanel>
   );
 }
 
@@ -140,52 +94,41 @@ function OpenCard({
   secondChanceRoundName: string | null;
   teamCount: number;
 }) {
-  const contestId = contest.id;
-  const { locale } = useDisplayPreferences();
+  const displayPreferences = useDisplayPreferences();
+  const { locale } = displayPreferences;
   const entered = enteredTeams(contest);
 
   return (
-    <StatusCardFrame
-      eyebrow="Open for entries"
-      title={entered ? `${formatNumber(entered.teamCount, locale)} of ${formatNumber(teamCount, locale)} members have entered` : 'Open for entries'}
-    >
-      {entered ? (
-        <div className="flex flex-wrap gap-2.5">
-          <Stat label="Entries" testId="contest-stat-entries" value={entered.submittedEntryCount} />
-          <Stat label="Yet to enter" testId="contest-stat-teams-to-go" value={Math.max(teamCount - entered.teamCount, 0)} />
-          {/* A second-chance bracket closes at a round's first game, which this card does not read. */}
-          {secondChanceRoundName === null ? (
-            <Stat label="Until close" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
-          ) : null}
-        </div>
-      ) : null}
-      {secondChanceRoundName === null ? (
-        <p className="text-sm text-on-inverse-muted">
-          Entries close at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
-          The contest goes live then and is final when the event ends.
-        </p>
-      ) : (
-        <p className="text-sm text-on-inverse-muted" data-testid="contest-second-chance-close">
-          Entries close at {entriesCloseAt(event, secondChanceRoundName)}. The contest goes live then and is final when the event ends.
-        </p>
-      )}
-      <ViewInLeagueLink contestId={contestId} leagueCode={leagueCode} />
-    </StatusCardFrame>
+    <LifecyclePanel
+      actions={<ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />}
+      help={secondChanceRoundName === null
+        ? `Entries close at the ${getSportDefinition(event.sport).vocabulary.eventStart}, ${formatDateTimeDisplay(event.startDate, displayPreferences)}. The contest goes live then and is final when the event ends.`
+        : (
+          <span data-testid="contest-second-chance-close">
+            {`Entries close at ${entriesCloseAt(event, secondChanceRoundName)}. The contest goes live then and is final when the event ends.`}
+          </span>
+        )}
+      stats={entered
+        ? [
+          { label: 'Entries', testId: 'contest-stat-entries', value: formatNumber(entered.submittedEntryCount, locale) },
+          { label: 'Yet to enter', testId: 'contest-stat-teams-to-go', value: formatNumber(Math.max(teamCount - entered.teamCount, 0), locale) },
+          // A second-chance bracket closes at a round's first game, which this panel does not read.
+          ...(secondChanceRoundName === null
+            ? [{ label: 'Until close', testId: 'contest-stat-until-close', value: formatTimeUntil(event.startDate) }]
+            : []),
+        ]
+        : undefined}
+      status={contest.status}
+      title={entered ? `${formatNumber(entered.teamCount, locale)} of ${formatNumber(teamCount, locale)} members have entered` : 'Members can enter now'}
+    />
   );
 }
 
 function ViewInLeagueLink({ contestId, leagueCode }: { contestId: string; leagueCode: string }) {
   return (
-    <div>
-      <LinkButton
-        className={inverseLinkClassName}
-        data-testid="contest-view-in-league"
-        to={buildLeagueContestPath(leagueCode, contestId)}
-        variant="secondary"
-      >
-        View in league
-      </LinkButton>
-    </div>
+    <LinkButton data-testid="contest-view-in-league" to={buildLeagueContestPath(leagueCode, contestId)} variant="inverse">
+      View in league
+    </LinkButton>
   );
 }
 
@@ -208,53 +151,54 @@ function DrawOpenCard({
   const drawState = useContestDrawState(contest.id);
   const drawnAt = contest.drawnAt;
 
+  const { eventStart, participant } = getSportDefinition(event.sport).vocabulary;
+  const startsAt = formatDateTimeDisplay(event.startDate, displayPreferences);
+  const untilStart = { label: 'Until it starts', testId: 'contest-stat-until-close', value: formatTimeUntil(event.startDate) };
+
   if (drawnAt) {
     return (
-      <StatusCardFrame eyebrow="Drawn · entries closed" title="The draw has run">
-        <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-ran">
-          {`Drawn ${formatDateTimeDisplay(drawnAt, displayPreferences)}. Every entry has its ${getSportDefinition(event.sport).vocabulary.participant.many}, and everyone in the league can see who drew whom. `}
-          The contest goes live at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
-        </p>
-        <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
-      </StatusCardFrame>
+      <LifecyclePanel
+        actions={<ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />}
+        help={`Every entry has its ${participant.many}, and everyone in the league can see who drew whom. Entries are closed, and the contest goes live at the ${eventStart}, ${startsAt}.`}
+        stats={[
+          { label: 'Drawn', testId: 'contest-draw-ran', value: formatDateTimeDisplay(drawnAt, displayPreferences) },
+          untilStart,
+        ]}
+        status={contest.status}
+        title="The draw has run"
+      />
     );
   }
 
   return (
-    <StatusCardFrame
-      eyebrow="Open for entries · waiting for the draw"
-      title={entryCount === undefined ? 'Open for entries' : `${formatCount(entryCount, 'entry', displayPreferences.locale, 'entries')} waiting for the draw`}
+    <LifecyclePanel
+      actions={(
+        <>
+          {drawState.data && entryCount !== undefined ? (
+            <RunDrawAction
+              contestId={contest.id}
+              entryCount={entryCount}
+              leagueId={contest.leagueId}
+              noun={participant}
+              picksPerEntry={drawState.data.rosterSize}
+            />
+          ) : null}
+          <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
+        </>
+      )}
+      help={`Run the draw once everyone has entered, before the ${eventStart}, ${startsAt}. It deals each entry its ${participant.many} at random, enters every entry and closes entries.`}
+      stats={entryCount === undefined
+        ? undefined
+        : [{ label: 'Entries', testId: 'contest-stat-entries', value: formatNumber(entryCount, displayPreferences.locale) }, untilStart]}
+      status={contest.status}
+      title={entryCount === undefined ? 'Members can enter now' : `${formatCount(entryCount, 'entry', displayPreferences.locale, 'entries')} waiting for the draw`}
     >
-      {entryCount !== undefined ? (
-        <div className="flex flex-wrap gap-2.5">
-          <Stat label="Entries" testId="contest-stat-entries" value={entryCount} />
-          <Stat label="Until it starts" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
-        </div>
-      ) : null}
-      <p className="text-sm text-on-inverse-muted">
-        Run the draw once everyone has entered, before the {getSportDefinition(event.sport).vocabulary.eventStart},{' '}
-        <DateDisplay className="text-on-inverse-muted" value={event.startDate} />. It deals each entry its{' '}
-        {getSportDefinition(event.sport).vocabulary.participant.many} at
-        random, enters every entry and closes entries.
-      </p>
       {drawState.isError ? (
-        <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-state-error">
+        <Notice data-testid="contest-draw-state-error" tone="danger">
           We couldn&apos;t check whether the draw has run. Try again in a moment.
-        </p>
+        </Notice>
       ) : null}
-      <div className="flex flex-wrap gap-3">
-        {drawState.data && entryCount !== undefined ? (
-          <RunDrawAction
-            contestId={contest.id}
-            entryCount={entryCount}
-            leagueId={contest.leagueId}
-            noun={getSportDefinition(event.sport).vocabulary.participant}
-            picksPerEntry={drawState.data.rosterSize}
-          />
-        ) : null}
-        <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />
-      </div>
-    </StatusCardFrame>
+    </LifecyclePanel>
   );
 }
 
@@ -267,29 +211,25 @@ function PlayedCard({
   isFinal: boolean;
   leagueCode: string;
 }) {
-  const contestId = contest.id;
+  const { locale } = useDisplayPreferences();
   const entered = enteredTeams(contest);
 
   return (
-    <StatusCardFrame
-      eyebrow={isFinal ? 'Final' : 'Live'}
-      title={isFinal ? 'The event is over and the standings are final' : 'The event is under way'}
-    >
-      {entered ? (
-        <div className="flex flex-wrap gap-2.5">
-          <Stat label="Entries" testId="contest-stat-entries" value={entered.submittedEntryCount} />
-          <Stat label="Entered" testId="contest-stat-teams" value={entered.teamCount} />
-        </div>
-      ) : null}
-      <div>
-        <LinkButton
-          data-testid="contest-status-leaderboard"
-          to={buildLeagueContestLeaderboardPath(leagueCode, contestId)}
-        >
+    <LifecyclePanel
+      actions={(
+        <LinkButton data-testid="contest-status-leaderboard" to={buildLeagueContestLeaderboardPath(leagueCode, contest.id)} variant="inverse">
           {isFinal ? 'See the results' : 'Full leaderboard'}
         </LinkButton>
-      </div>
-    </StatusCardFrame>
+      )}
+      stats={entered
+        ? [
+          { label: 'Entries', testId: 'contest-stat-entries', value: formatNumber(entered.submittedEntryCount, locale) },
+          { label: 'Entered', testId: 'contest-stat-teams', value: formatNumber(entered.teamCount, locale) },
+        ]
+        : undefined}
+      status={contest.status}
+      title={isFinal ? 'The event is over and the standings are final' : 'The event is under way'}
+    />
   );
 }
 

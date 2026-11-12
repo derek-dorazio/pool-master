@@ -321,6 +321,22 @@ export default tseslint.config(
     },
   },
   {
+    // #1599: feature dialogs are one of the four shared types (rules/ux-rules.md §3 *Dialogs and
+    // save feedback*). The files below still draw a raw Modal and are each rebuilt by a ticket of
+    // their own; the list only shrinks.
+    files: ['clients/poolmaster/src/features/**/*.tsx'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/**',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      // #1620: root admin's own pass.
+      'clients/poolmaster/src/features/root-admin/root-admin-events-page.tsx',
+      'clients/poolmaster/src/features/root-admin/event-field-add-participants-modal.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-raw-modal': 'error' },
+  },
+  {
     // #1588: one loading, error and empty look. Shared primitives are where the states are
     // drawn; root admin files still on the old look sit on a shrink-only baseline.
     files: ['clients/poolmaster/src/features/**/*.tsx', 'clients/poolmaster/src/routes/**/*.tsx'],

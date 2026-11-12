@@ -8,7 +8,7 @@ import {
 } from '@/lib/api';
 import {
   Button,
-  ConfirmationModal,
+  ConfirmDialog,
   DataGrid,
   InlineError,
   Input,
@@ -402,7 +402,7 @@ export function SportLeagueRosterGridCard({
         title={`Add ${participant.one} to roster`}
       />
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={`Remove from ${sportLeague.one}`}
         confirmTestId="root-admin-sport-league-roster-remove-confirm"
         description={
@@ -410,7 +410,7 @@ export function SportLeagueRosterGridCard({
             ? `Remove ${removeTarget.participant.name} from this ${sportLeague.one}'s roster. This does not retire the ${participant.one}; do that from the ${participant.one}'s own page.`
             : ''
         }
-        errorMessage={
+        error={
           removeMutation.isError
             ? extractErrorMessage(removeMutation.error, {
                 fallback: `We could not remove this ${participant.one}.`,

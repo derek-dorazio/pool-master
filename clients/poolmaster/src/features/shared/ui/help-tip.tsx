@@ -15,6 +15,7 @@ export function HelpTip({
   className,
   label,
   learnMore,
+  surface = "default",
   testId,
 }: {
   /** One to three sentences, plain text. */
@@ -24,12 +25,14 @@ export function HelpTip({
   label: string;
   /** The one link on, if any. */
   learnMore?: { label: string; to: string };
+  /** What the (?) sits on: a normal card, or a navy panel, where it takes the panel's muted text. */
+  surface?: "default" | "inverse";
   testId: string;
 }) {
   return (
     <InfoPopover
       className={className}
-      icon={<CircleHelp aria-hidden className="text-muted-foreground" size={16} />}
+      icon={<CircleHelp aria-hidden className={surface === "inverse" ? "text-on-inverse-muted" : "text-muted-foreground"} size={16} />}
       label={label}
       look="tooltip"
       testId={testId}

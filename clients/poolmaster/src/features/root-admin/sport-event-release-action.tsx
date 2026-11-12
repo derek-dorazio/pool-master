@@ -1,7 +1,7 @@
 import { getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { releaseEvent } from '@/lib/api';
-import { Button, Notice, ConfirmationModal } from '@/features/shared/ui';
+import { Button, Notice, ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -83,11 +83,11 @@ export function SportEventReleaseAction({
       >
         Release for contests
       </Button>
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Release for contests"
         confirmTestId="root-admin-sport-event-release-confirm"
         description={`Commissioners will be able to create contests on this ${event.one}. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can't be returned to a draft.`}
-        errorMessage={
+        error={
           releaseMutation.isError
             ? extractErrorMessage(releaseMutation.error, {
                 codeMessages: releaseCodeMessages(event, participant),

@@ -43,11 +43,11 @@ function rowNote(contestId: string) {
 }
 
 describe('CurrentContestList', () => {
-  it('heads its groups Live then Open for entries, each row in its group', () => {
+  it('heads its groups Live then Open, each row in its group', () => {
     drawList();
 
     const groups = screen.getAllByRole('region').map((region) => region.getAttribute('aria-label'));
-    expect(groups).toEqual(['Live', 'Open for entries']);
+    expect(groups).toEqual(['Live', 'Open']);
     expect(within(screen.getByTestId('list-group-live')).getByTestId('list-live')).toBeInTheDocument();
     expect(within(screen.getByTestId('list-group-open')).getByTestId('list-submitted')).toBeInTheDocument();
   });

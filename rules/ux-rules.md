@@ -71,6 +71,36 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - Menus should contain quick actions or quick switching, not miniature pages.
 - Dialogs should stay focused on a single task with clear primary and secondary
   actions.
+- **Dialogs and save feedback** (#1599). Every dialog is one of four shared
+  types, never a hand-built `Modal`:
+  - **`FormModal`** to edit something; **`ConfirmDialog`** for yes/no, danger
+    toned when the action destroys or removes, with an optional type-to-confirm
+    box; **`PickerModal`** to choose from a list; **`ReadOnlyDetailModal`** to
+    look only.
+  - A successful save closes the dialog, the page shows the new value at once
+    (the cache is updated, no reload), and a short toast confirms it ("Profile
+    saved"). No green success box on the page or in the dialog.
+  - The exception is a result the person must use next, such as an invite whose
+    email could not be sent: it stays on the page as a `Notice` (info or
+    warning) or a row with a `CopyButton`, never a green box.
+  - A failure stays inside the dialog as a red `Notice` above the buttons, and
+    the dialog stays open.
+  - No description line under a dialog's title unless it says what will happen
+    ("Sam Lee will no longer be an owner of Incubus").
+  - The `poolmaster/no-raw-modal` ESLint rule fails feature code that renders
+    the raw `Modal` or Radix's dialog root; root admin's two remaining files are
+    listed in `eslint.config.js` until #1620 rebuilds them.
+- **Settings sections: see it, then Edit** (#1597). A page of someone's settings
+  (My account; league settings as they move over) shows every setting as it
+  stands, never behind a dialog: a `SettingsSection` per group, its rows
+  `SettingsRow`s with the label left and the value right, and one Edit in the
+  title that opens the group's `FormModal`. A setting that takes effect the
+  moment it is flipped, such as an email notification, is a `Switch` in its row,
+  with no Save; a refused flip goes back and says why in a `Notice`. How a group
+  or a row works sits behind a (?) `HelpTip`, never as a sentence. Destructive
+  rows go in a `SettingsSection` with `tone="danger"`, last, each confirming
+  first. It is a grouped list of label/value rows, so it maps one to one onto a
+  native settings screen.
 - Do not overload compact selector rows with extra icons or multiple competing
   status indicators when space is tight.
 - In constrained navigation components, use subtle visual treatment for status:
@@ -93,6 +123,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
     a thing of its own with several columns, such as an entry's picks.
   - **`CheckList`** for requirements met or not: what is missing first at
     full contrast, then what is done, dimmed.
+  - **`StageTrack`** for where something is in a fixed run of stages, such as
+    a contest's Set up › Open › Live › Final: done stages green with a check,
+    the current one gold and numbered. A status badge for the same thing names
+    the same stage.
   Never a hand-built `<dl>`, a check/cross `<ul>` or a `grid-cols-[…]` table.
 - Prefer card/list/tile layouts for consumer league browsing before reaching
   for tables. A list that can run to hundreds of rows (teams, owners, standings)
@@ -315,18 +349,31 @@ administration area (root admin included), reusing the same shared components.
    bigger is a full page with its own route (`FormPage`). Other dialogs only
    confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.
+   A form page's parts are `FormSection`s, numbered in a filled circle only when
+   the form is a sequence (Create contest), each with its how-it-works behind
+   the title's (?). A setup form whose result members see shows it as they will,
+   in `FormPage`'s `preview` slot under the fields (`MemberPreview` for a
+   contest); a pick from a list is selectable `SectionRow`s with "N chosen" in
+   the `SectionCard` title's trailing slot, never a raw checkbox list.
 5. **One edit for all properties.** An entity's editable properties are edited
    together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
    bottom of the settings page (a `SectionCard` with `tone="danger"` holding
    `DangerZoneAction`s), each with a confirm step, never beside everyday
-   actions. Settings themselves are shown as labelled rows (a `SectionCard`
-   holding `SettingsRows` of `SettingsRow`) with one Edit for the group, in the
-   title bar's trailing slot.
+   actions. Settings themselves are shown as labelled rows with one Edit for the
+   group, in the title bar's trailing slot: a `SettingsSection` (§3 *Settings
+   sections*), or, until a page moves over, a `SectionCard` holding
+   `SettingsRows` of `SettingsRow`.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
    the same `Pager`. A long ranked list also offers a way to jump to the
    viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
+   In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
+   clicks, its first cell is the link a keyboard reaches), with no per-row Manage
+   button. Quick actions that need no page of their own sit in a `RowActionsMenu`
+   ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
+   reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
+   ends with a toast. A row with no quick actions shows no "⋯".
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.
@@ -588,7 +635,8 @@ extra text answers:
 1. **No inline explainer text.** No sentence in a page, section or form body says
    what the page, section or setting is or how it works. It goes in a `HelpTip`
    (1 to 3 plain sentences, at most one link on), or it is removed. A section
-   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help`, and a
+   takes it as `SectionCard`'s `help`, a form page as `FormPage`'s `help` (a form's part
+   as `FormSection`'s), and a
    page header in its `titleAside`.
 2. **Facts stay when they serve the page.** A fact line, a row's fact or a value
    that the page exists to show stays inline; secondary facts about one thing go in

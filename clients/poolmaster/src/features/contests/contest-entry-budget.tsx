@@ -5,13 +5,18 @@ import {
   Notice,
   Button,
   Checkbox,
-  Chip,
   cn,
   FormField,
   Heading,
   InlineError,
   Input,
   ProgressIndicator,
+  SectionBody,
+  SectionCard,
+  SectionEmpty,
+  SectionNote,
+  SectionRow,
+  SectionRows,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
@@ -240,32 +245,33 @@ export function LockedBudgetLineup({
   const picked = group.participants.filter((participant) => participant.isSelected);
 
   return (
-    <Tile data-testid="contest-entry-budget-locked" padding="sm" radius="lg" variant="subtle">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Heading level={4} variant="subtitle">{`Your ${noun.many}`}</Heading>
-        <StatusBadge tone="locked">Locked</StatusBadge>
-      </div>
+    <SectionCard
+      headingLevel={4}
+      testId="contest-entry-budget-locked"
+      title={`Your ${noun.many}`}
+      trailing={<StatusBadge tone="locked">Locked</StatusBadge>}
+    >
       {picked.length ? (
-        <div className="mt-3 divide-y divide-border">
+        <SectionRows>
           {picked.map((participant) => (
-            <div
-              className="flex items-center justify-between gap-3 py-2 text-sm"
-              data-testid={`contest-entry-locked-participant-${participant.sportEventParticipantId}`}
+            <SectionRow
               key={participant.sportEventParticipantId}
-            >
-              <span className="font-medium text-foreground">{selectionParticipantLabel(participant)}</span>
-              <Chip>{formatDollars(participant.price ?? 0)}</Chip>
-            </div>
+              name={selectionParticipantLabel(participant)}
+              testId={`contest-entry-locked-participant-${participant.sportEventParticipantId}`}
+              value={formatDollars(participant.price ?? 0)}
+            />
           ))}
-        </div>
+        </SectionRows>
       ) : (
-        <Notice className="mt-3">{`No ${noun.one} was saved on this entry.`}</Notice>
+        <SectionEmpty>{`No ${noun.one} was saved on this entry.`}</SectionEmpty>
       )}
       {summary ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          {`Spent ${formatDollars(summary.spent)} of the ${formatDollars(summary.salaryCap)} salary cap.`}
-        </p>
+        <SectionBody>
+          <SectionNote testId="contest-entry-budget-locked-spend">
+            {`Spent ${formatDollars(summary.spent)} of the ${formatDollars(summary.salaryCap)} salary cap.`}
+          </SectionNote>
+        </SectionBody>
       ) : null}
-    </Tile>
+    </SectionCard>
   );
 }

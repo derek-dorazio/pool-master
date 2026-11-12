@@ -225,7 +225,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-delete'));
     fireEvent.click(await screen.findByTestId('contest-delete-dialog-confirm'));
 
-    expect(await screen.findByTestId('contest-delete-error')).toHaveTextContent('We could not delete that contest. Please try again.');
+    expect(await screen.findByTestId('contest-delete-dialog-error')).toHaveTextContent('We could not delete that contest. Please try again.');
     expect(screen.queryByTestId('contests-list-destination')).not.toBeInTheDocument();
   });
 
@@ -264,7 +264,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
 
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(/already started/);
+    expect(await screen.findByTestId('contest-open-dialog-error')).toHaveTextContent(/already started/);
   });
 
   it('says in the same words as Create contest when opening is refused because the budget roster cannot be filled', async () => {
@@ -279,7 +279,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
 
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
+    expect(await screen.findByTestId('contest-open-dialog-error')).toHaveTextContent(
       'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
     );
   });
@@ -342,6 +342,43 @@ describe('Commissioner tools › Contests › one contest', () => {
 
     expect(await screen.findByTestId('contest-open-to-league')).toBeInTheDocument();
     expect(getContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1' } }));
+  });
+});
+
+describe('Commissioner tools › Contests › one contest › lifecycle', () => {
+  it.each([
+    ['DRAFT', 0, 'Set up'],
+    ['OPEN', 1, 'Open'],
+    ['ACTIVE', 2, 'Live'],
+    ['COMPLETED', 3, 'Final'],
+  ] as const)('shows a %s contest at stage %i, "%s", on the panel\'s track and in the header\'s badge alike', async (status, index, label) => {
+    primeMocks({
+      contest: buildContest({ status, entryCount: 4, enteredSquadCount: 3 }),
+      managedContest: buildManagedContest({ status }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const current = await screen.findByTestId(`contest-stage-track-${String(index)}`);
+    expect(current).toHaveAttribute('aria-current', 'step');
+    expect(current).toHaveTextContent(label);
+    expect(screen.getByTestId('manage-contest-stage')).toHaveTextContent(label);
+    for (const earlier of [0, 1, 2, 3].filter((stage) => stage < index)) {
+      expect(screen.getByTestId(`contest-stage-track-${String(earlier)}`)).toHaveAttribute('data-state', 'done');
+    }
+  });
+
+  it('gives a live contest\'s panel its numbers without boxes and a plain leaderboard link, not a gold one', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'ACTIVE', entryCount: 4, enteredSquadCount: 3 }),
+      managedContest: buildManagedContest({ status: 'ACTIVE' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('contest-stat-entries')).toHaveTextContent(/^Entries\s*4$|^4\s*Entries$/);
+    expect(screen.getByTestId('contest-stat-teams')).toHaveTextContent('3');
+    expect(screen.getByTestId('contest-status-leaderboard')).not.toHaveClass('bg-primary');
   });
 });
 
@@ -498,7 +535,9 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
       expect.objectContaining({ path: { contestId: 'contest-1' } }),
     ));
     expect(await screen.findByText('The draw has run')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-draw-ran')).toHaveTextContent(/^Drawn .+ Every entry has its golfers/);
+    expect(screen.getByTestId('contest-draw-ran')).toHaveTextContent(/^Drawn.+\d/);
+    fireEvent.click(screen.getByTestId('contest-status-card-help'));
+    expect(screen.getByTestId('contest-status-card-help-callout')).toHaveTextContent('Every entry has its golfers');
     expect(screen.queryByRole('button', { name: 'Run draw' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-run-draw-dialog')).not.toBeInTheDocument();
   });
@@ -521,13 +560,16 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
     expect(screen.getByTestId('contest-run-draw-dialog')).toBeInTheDocument();
   });
 
-  it('shows a drawn contest as drawn with no Run draw', async () => {
+  it('shows a drawn contest as drawn, still at Open until the event starts, with entries closed and no Run draw', async () => {
     primeDrawMocks(DRAWN_AT);
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByText('The draw has run')).toBeInTheDocument();
-    expect(screen.getByText('Drawn · entries closed')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-stage-track-1')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByTestId('manage-contest-stage')).toHaveTextContent('Open');
+    fireEvent.click(screen.getByTestId('contest-status-card-help'));
+    expect(screen.getByTestId('contest-status-card-help-callout')).toHaveTextContent('Entries are closed');
     expect(screen.queryByRole('button', { name: 'Run draw' })).not.toBeInTheDocument();
   });
 
@@ -703,7 +745,7 @@ describe('Commissioner tools › Contests › one contest › Cup weight', () =>
 });
 
 describe('Commissioner tools › Contests › one contest › Edit', () => {
-  it('saves the name and rules together, then returns to the contest page', async () => {
+  it('saves the name and rules together, previewing what members will see as they change, then returns to the contest page', async () => {
     primeMocks({
       managedContest: buildManagedContest({
         configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 2, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
@@ -716,10 +758,15 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
 
     expect(await screen.findByTestId('contest-name')).toHaveValue('Masters One-and-Done');
     expect(screen.getByTestId('contest-max-entries')).toHaveValue(2);
-    expect(screen.getByText('The Masters', { exact: false })).toBeInTheDocument();
+    expect(screen.getByTestId('edit-contest-event')).toHaveTextContent('The Masters');
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters One-and-Done');
+    expect(screen.getByTestId('contest-members-will-see-event')).toHaveTextContent('The Masters');
+    const rulesBefore = screen.getByTestId('contest-members-will-see-rules').textContent;
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Best Four' } });
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '3' } });
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters Best Four');
+    expect(screen.getByTestId('contest-members-will-see-rules')).not.toHaveTextContent(rulesBefore);
     fireEvent.click(screen.getByTestId('edit-contest-save'));
 
     await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(
@@ -845,14 +892,16 @@ describe('Commissioner tools › Contests › one second-chance bracket contest'
     const notStarted = screen.getByTestId('contest-readiness-not-started');
     expect(notStarted).toHaveAttribute('data-met', 'true');
     expect(notStarted).toHaveTextContent('Event under way · the bracket starts at the Sweet 16');
-    expect(screen.getByTestId('contest-status-card')).toHaveTextContent('members can enter until the first game of the Sweet 16');
+    fireEvent.click(screen.getByTestId('contest-status-card-help'));
+    expect(screen.getByTestId('contest-status-card-help-callout')).toHaveTextContent('members can enter until the first game of the Sweet 16');
   });
 
   it('says an open second-chance bracket\'s entries close at its starting round\'s first game, with no countdown to the event\'s start', async () => {
     primeBracketMocks(3, { contest: bracketContest({ status: 'OPEN' }), event: basketballEvent(UNDER_WAY) });
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
-    expect(await screen.findByTestId('contest-second-chance-close'))
+    fireEvent.click(await screen.findByTestId('contest-status-card-help'));
+    expect(screen.getByTestId('contest-second-chance-close'))
       .toHaveTextContent('Entries close at the first game of the Sweet 16.');
     await screen.findByTestId('contest-stat-entries');
     expect(screen.queryByTestId('contest-stat-until-close')).not.toBeInTheDocument();
@@ -864,7 +913,8 @@ describe('Commissioner tools › Contests › one second-chance bracket contest'
 
     await waitFor(() => expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('Fill in the whole bracket before the first game'));
     expect(screen.getByTestId('contest-readiness-not-started')).toHaveAttribute('data-met', 'true');
-    expect(screen.getByTestId('contest-status-card')).toHaveTextContent('members can enter until the opening tip-off');
+    fireEvent.click(screen.getByTestId('contest-status-card-help'));
+    expect(screen.getByTestId('contest-status-card-help-callout')).toHaveTextContent('members can enter until the opening tip-off');
   });
 });
 

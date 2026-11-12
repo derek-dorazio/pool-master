@@ -202,6 +202,20 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     expect(screen.getByTestId('contest-events-chosen-empty')).toHaveTextContent('Choose at least one event.');
   });
 
+  it('counts the season\'s chosen events in its title and highlights their rows as they are ticked', async () => {
+    primeMocks();
+
+    renderAt(EVENTS_PATH);
+
+    await screen.findByTestId('contest-events-option-event-1');
+    expect(screen.getByTestId('contest-events-chosen-count')).toHaveTextContent('1 chosen');
+    expect(screen.getByTestId('contest-events-row-event-1')).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByTestId('contest-events-row-event-2')).not.toHaveAttribute('aria-current');
+    fireEvent.click(option('event-2'));
+    expect(screen.getByTestId('contest-events-chosen-count')).toHaveTextContent('2 chosen');
+    expect(screen.getByTestId('contest-events-row-event-2')).toHaveAttribute('aria-current', 'true');
+  });
+
   it('shows a season that could not load inside that season\'s section', async () => {
     primeMocks();
     listEventsMock.mockImplementation(() => Promise.resolve({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 }));

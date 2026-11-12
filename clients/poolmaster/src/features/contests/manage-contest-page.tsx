@@ -13,11 +13,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { deleteContest, type EffectiveTierDto } from '@/lib/api';
-import { ApiError, extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
+import type { EffectiveTierDto } from '@/lib/api';
+import { hasErrorCode } from '@/lib/errors';
 import { ContestExpansionSection } from '@/features/billing/contest-expansion-section';
 import { CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import {
@@ -29,10 +26,8 @@ import {
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import {
-  Notice,
   Button,
   Chip,
-  ConfirmDialog,
   DangerZoneAction,
   DateDisplay,
   EmptyState,
@@ -53,6 +48,7 @@ import {
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
+import { DeleteContestDialog } from './delete-contest-dialog';
 import { secondChanceRoundName } from './bracket-start-round';
 import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
@@ -113,7 +109,6 @@ function ContestTiersSection({
  * final, its tiers, and Delete contest in the danger zone.
  */
 export function ManageContestPage() {
-  const logger = getLogger().child({ feature: 'manage-contest-page' });
   const navigate = useNavigate();
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
@@ -130,28 +125,6 @@ export function ManageContestPage() {
   const roundName = useEventRoundName(contest?.selectionType === SelectionType.BRACKET ? eventQuery.data ?? null : null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
-
-  const deleteContestMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await deleteContest({ path: { contestId } });
-      if (response.error) {
-        throwApiError(response.error);
-      }
-    },
-    onSuccess: () => {
-      logger.info({ action: 'contest.delete.succeeded', data: { leagueCode, contestId } }, 'Deleted contest');
-      void navigate(contestsPath);
-    },
-    invalidates: [QueryKeys.contests.list({ leagueId }), QueryKeys.managedContests.all],
-    onError: (error) => {
-      const payload = { action: 'contest.delete.failed', data: { leagueCode, contestId }, err: error };
-      if (error instanceof ApiError) {
-        logger.warn(payload, 'Contest delete was rejected');
-      } else {
-        logger.error(payload, 'Contest delete failed unexpectedly');
-      }
-    },
-  });
 
   if (!league) {
     return null;
@@ -207,25 +180,17 @@ export function ManageContestPage() {
     && !coversOneEvent(contest.selectionType);
   const eventNamesById = new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]));
 
-  function closeDeleteDialog() {
-    if (!deleteContestMutation.isPending) {
-      deleteContestMutation.reset();
-      setIsDeleteOpen(false);
-    }
-  }
-
   return (
     <section className="space-y-8" data-testid="manage-contest-page">
       <PageHeader
         icon={<Trophy aria-hidden size={22} />}
         meta={(
-          <>
-            <ContestStatusBadge status={contest.status} />
-            <span data-testid="manage-contest-event">
-              {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
-            </span>
-          </>
+          <span data-testid="manage-contest-event">
+            {event.name} · Starts <DateDisplay tone="inherit" value={event.startDate} />
+          </span>
         )}
+        // The stage the lifecycle panel's track shows as current.
+        status={<ContestStatusBadge data-testid="manage-contest-stage" status={contest.status} />}
         title={contest.name}
         testId="manage-contest-identity"
       />
@@ -391,33 +356,15 @@ export function ManageContestPage() {
         </SectionCard>
       ) : null}
 
-      <ConfirmDialog
-        confirmLabel="Delete contest"
-        description={`${contest.name} will be removed for good. Members never saw it.`}
-        isPending={deleteContestMutation.isPending}
-        onCancel={closeDeleteDialog}
-        onConfirm={() => void deleteContestMutation.mutateAsync().catch(() => undefined)}
-        onOpenChange={(open) => {
-          if (open) {
-            setIsDeleteOpen(true);
-            return;
-          }
-          closeDeleteDialog();
-        }}
+      <DeleteContestDialog
+        contestId={contestId}
+        contestName={contest.name}
+        leagueCode={leagueCode}
+        leagueId={leagueId}
+        onDeleted={() => void navigate(contestsPath)}
+        onOpenChange={setIsDeleteOpen}
         open={isDeleteOpen}
-        pendingLabel="Deleting..."
-        testId="contest-delete-dialog"
-        title="Delete this contest?"
-        tone="danger"
-      >
-        {deleteContestMutation.isError ? (
-          <Notice data-testid="contest-delete-error" tone="danger">
-            {extractErrorMessage(deleteContestMutation.error, {
-              fallback: 'We could not delete that contest. Please try again.',
-            })}
-          </Notice>
-        ) : null}
-      </ConfirmDialog>
+      />
     </section>
   );
 }

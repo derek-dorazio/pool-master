@@ -1,5 +1,6 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
+import { CONTEST_STATUS_LABELS } from './contest-status';
 import { listedContestStartsAt } from './use-contest-schedule';
 
 export const CurrentContestGroup = {
@@ -9,10 +10,11 @@ export const CurrentContestGroup = {
 } as const;
 export type CurrentContestGroup = (typeof CurrentContestGroup)[keyof typeof CurrentContestGroup];
 
+/** Each group is headed by its status's label, the one contest status vocabulary. */
 export const CURRENT_CONTEST_GROUP_LABEL: Record<CurrentContestGroup, string> = {
-  [CurrentContestGroup.LIVE]: 'Live',
-  [CurrentContestGroup.OPEN]: 'Open for entries',
-  [CurrentContestGroup.DRAFT]: 'Draft',
+  [CurrentContestGroup.LIVE]: CONTEST_STATUS_LABELS[ContestStatus.ACTIVE],
+  [CurrentContestGroup.OPEN]: CONTEST_STATUS_LABELS[ContestStatus.OPEN],
+  [CurrentContestGroup.DRAFT]: CONTEST_STATUS_LABELS[ContestStatus.DRAFT],
 };
 
 export type CurrentContestSection = {
@@ -44,7 +46,7 @@ function bySoonestStart(left: ContestDto, right: ContestDto) {
 
 /**
  * A league's current contests in the order every member list shows them (#1390): Live, then
- * Open for entries with the soonest close first, then Draft for commissioners only. Empty groups
+ * Open with the soonest close first, then Set up for commissioners only. Empty groups
  * are dropped; a final contest is not current and is left out.
  */
 export function groupCurrentContests(

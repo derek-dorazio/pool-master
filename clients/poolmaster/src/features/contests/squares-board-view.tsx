@@ -15,11 +15,10 @@ import {
   ConfirmDialog,
   ErrorState,
   FormField,
-  Heading,
   LoadingState,
+  SectionCard,
   Select,
   Text,
-  Tile,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -185,10 +184,17 @@ export function SquaresBoardView({
         />
       ) : null}
 
-      <Tile>
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <Heading level={3} variant="card" size="xl" tone="inherit">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</Heading>
+      <SectionCard
+        headingLevel={3}
+        padded
+        testId="squares-grid-section"
+        title={board.claimsOpen ? 'Claim your boxes' : 'The grid'}
+        trailing={board.drawOpen && canManage ? (
+          <Button data-testid="squares-draw" onClick={() => setIsDrawConfirmOpen(true)} size="sm">
+            Draw numbers
+          </Button>
+        ) : undefined}
+      >
             <Text as="p" data-testid="squares-claim-help" variant="meta">
               {board.claimsOpen
                 ? claimingEntryId === null
@@ -198,15 +204,8 @@ export function SquaresBoardView({
                   ? 'The numbers are drawn. Each quarter is won by the box matching the last digit of each team\'s score.'
                   : 'Boxes can no longer be claimed.'}
             </Text>
-          </div>
-          {board.drawOpen && canManage ? (
-            <Button data-testid="squares-draw" onClick={() => setIsDrawConfirmOpen(true)}>
-              Draw numbers
-            </Button>
-          ) : null}
-        </div>
 
-        <div className="mb-4 flex flex-wrap items-end gap-4">
+        <div className="flex flex-wrap items-end gap-4">
           {canManage && board.claimsOpen && board.entries.length > 0 ? (
             <FormField label="Claim for">
               <Select
@@ -228,7 +227,7 @@ export function SquaresBoardView({
           <Text data-testid="squares-grid-taken" variant="meta">{formatGridTaken(board.boxes.length)}</Text>
         </div>
 
-        {boxError ? <Notice className="mb-4" data-testid="squares-box-error" tone="danger">{boxError}</Notice> : null}
+        {boxError ? <Notice data-testid="squares-box-error" tone="danger">{boxError}</Notice> : null}
 
         <SquaresGrid
           actionFor={actionFor}
@@ -237,7 +236,7 @@ export function SquaresBoardView({
           myEntryIds={myEntryIds}
           onBoxAction={changeBox}
         />
-      </Tile>
+      </SectionCard>
 
       <ConfirmDialog
         confirmLabel="Draw numbers"
