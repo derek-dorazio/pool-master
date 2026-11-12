@@ -13,6 +13,7 @@ import tseslintParser from '@typescript-eslint/parser';
 import noAdHocMoreInfo from '../no-ad-hoc-more-info.mjs';
 import noBareUiControls from '../no-bare-ui-controls.mjs';
 import noButtonRowOverride from '../no-button-row-override.mjs';
+import noRawModal from '../no-raw-modal.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
@@ -214,6 +215,44 @@ ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
     { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
     { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
     { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
+  ],
+});
+
+ruleTester.run('no-raw-modal', noRawModal, {
+  valid: [
+    // The four shared dialog types are what the rule pushes toward.
+    "import { ConfirmDialog } from '@/features/shared/ui';\nconst a = <ConfirmDialog confirmLabel=\"Remove\" title=\"Remove owner\" />;",
+    "import { FormModal } from '@/features/shared/ui';\nconst b = <FormModal saveLabel=\"Save\" title=\"Edit profile\">x</FormModal>;",
+    // A component whose name merely contains Modal is a different component.
+    "import { CreateLeagueModal } from './create-league-modal';\nconst c = <CreateLeagueModal />;",
+    // A local component that happens to be called Modal is not the shared one.
+    'function Modal() { return null; }\nconst d = <Modal />;',
+    // Radix parts other than Root (inside a shared template) are not a dialog on their own.
+    "import * as Dialog from '@radix-ui/react-dialog';\nconst e = <Dialog.Title>Title</Dialog.Title>;",
+  ],
+  invalid: [
+    {
+      code: "import { Modal } from '@/features/shared/ui';\n<Modal open title=\"Leave league\">body</Modal>;",
+      errors: [{ messageId: 'rawModal' }],
+    },
+    {
+      // An alias is still the shared Modal.
+      code: "import { Modal as Dialog } from '@/features/shared/ui';\n<Dialog open title=\"Leave league\" />;",
+      errors: [{ messageId: 'rawModal' }],
+    },
+    {
+      code: "import { Modal } from '../shared/ui/modal';\n<Modal open title=\"Leave league\" />;",
+      errors: [{ messageId: 'rawModal' }],
+    },
+    {
+      // Radix's dialog used directly skips the shared parts altogether.
+      code: "import * as Dialog from '@radix-ui/react-dialog';\n<Dialog.Root open>x</Dialog.Root>;",
+      errors: [{ messageId: 'rawModal' }],
+    },
+    {
+      code: "import { Root as DialogRoot } from '@radix-ui/react-dialog';\n<DialogRoot open>x</DialogRoot>;",
+      errors: [{ messageId: 'rawModal' }],
+    },
   ],
 });
 
