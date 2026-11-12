@@ -1421,3 +1421,70 @@ describe('IngestionScheduler with two providers serving one sport', () => {
     expect(secondary.getLiveScores).toHaveBeenCalledWith('41');
   });
 });
+
+describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
+  const now = new Date('2026-11-12T18:00:00.000Z');
+  const notified = { sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'live-event' };
+
+  function schedulerFor(config: ReturnType<typeof createEnabledScheduleConfig>) {
+    const provider = fakeSportDataProvider();
+    const syncRun = {
+      id: 'webhook-sync-run-1',
+      providerId: 'mock-provider',
+      sport: Sport.GOLF,
+      eventId: 'live-event',
+      status: 'SUBMITTED' as const,
+      startedAt: null,
+      completedAt: null,
+      createdAt: now,
+      payload: { requestedFeed: 'EVENTLIVESCORES' as const },
+    };
+    const syncRunLedger = {
+      createSubmissions: jest.fn().mockResolvedValue([syncRun]),
+      executeFeedRun: jest.fn(async (_syncRun: typeof syncRun, run: () => Promise<unknown>) =>
+        await run() as Awaited<ReturnType<IngestionScheduler['pollLiveScores']>>),
+    };
+    const scheduler = new IngestionScheduler(createMockRegistry(provider, [Sport.GOLF]), createMockCallbacks(), fakeLogger(), {
+      configReader: { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) },
+      now: () => now,
+      syncRunLedger,
+    });
+    return { scheduler, provider, syncRunLedger };
+  }
+
+  it('syncs the notified event\'s live scores from its provider and records the run as a WEBHOOK sync by the webhook receiver', async () => {
+    const { scheduler, provider, syncRunLedger } = schedulerFor(createEnabledScheduleConfig());
+
+    const job = await scheduler.runNotifiedEventSync(notified);
+
+    expect(job?.status).toBe('COMPLETED');
+    expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
+    expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
+      providerId: 'mock-provider',
+      runType: 'WEBHOOK_EVENT_SYNC',
+      normalizedRequest: expect.objectContaining({
+        source: 'WEBHOOK',
+        actor: { type: 'SYSTEM', name: 'webhook' },
+        scope: expect.objectContaining({ sport: Sport.GOLF, eventId: 'live-event', feeds: ['EVENTLIVESCORES'] }),
+      }),
+    }));
+  });
+
+  it('syncs nothing for a sport not scheduled for ingestion, as the scheduled sweep would not', async () => {
+    const { scheduler, provider, syncRunLedger } = schedulerFor({ ...createEnabledScheduleConfig(), scheduledSports: ['AMERICAN_FOOTBALL'] });
+
+    expect(await scheduler.runNotifiedEventSync(notified)).toBeNull();
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+    expect(syncRunLedger.createSubmissions).not.toHaveBeenCalled();
+  });
+
+  it('syncs nothing while live score syncs are switched off for the sport', async () => {
+    const { scheduler, provider } = schedulerFor({
+      ...createEnabledScheduleConfig(),
+      eventLiveScores: { enabled: false, intervalSeconds: 30 },
+    });
+
+    expect(await scheduler.runNotifiedEventSync(notified)).toBeNull();
+    expect(provider.getLiveScores).not.toHaveBeenCalled();
+  });
+});

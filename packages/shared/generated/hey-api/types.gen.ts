@@ -13695,6 +13695,37 @@ export type SnsMessage = {
 };
 
 /**
+ * A BALLDONTLIE webhook notification. Other fields the vendor sends (the play, the player, a best-effort score) are accepted and ignored.
+ */
+export type BalldontlieWebhookNotification = {
+    /**
+     * What happened, as `<league>.<subject>.<event>`, such as `nfl.game.ended` or `pga.tournament.round_started`. The vendor's dashboard test event carries none, and is acknowledged and dropped.
+     */
+    event_type?: string;
+    /**
+     * The game it happened in, for a game's event.
+     */
+    game?: {
+        /**
+         * The vendor's game id.
+         */
+        id: number;
+        [key: string]: unknown;
+    };
+    /**
+     * The tournament it happened in, for a golf event.
+     */
+    tournament?: {
+        /**
+         * The vendor's tournament id.
+         */
+        id: number;
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+};
+
+/**
  * A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
  */
 export type OptionalEmailCategory = 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
@@ -25600,7 +25631,7 @@ export type ProviderSyncRunDto = {
      */
     payload: {
         /**
-         * Sync run source: a manual or scheduled event sync.
+         * Sync run source: a manual, scheduled or webhook-triggered event sync.
          */
         runType?: string;
         /**
@@ -25621,15 +25652,18 @@ export type ProviderSyncRunDto = {
              */
             eventId: string;
             /**
-             * Whether the scheduler or a root admin asked for the sync.
+             * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
              */
-            source: 'SCHEDULED' | 'MANUAL';
+            source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
             /**
              * Who asked for a sync.
              */
             actor: {
                 type: 'SYSTEM';
-                name: 'scheduler';
+                /**
+                 * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                 */
+                name: 'scheduler' | 'webhook';
             } | {
                 type: 'ROOT_ADMIN';
                 /**
@@ -25731,7 +25765,7 @@ export type ProviderSyncRunDetailDto = {
      */
     payload: {
         /**
-         * Sync run source: a manual or scheduled event sync.
+         * Sync run source: a manual, scheduled or webhook-triggered event sync.
          */
         runType?: string;
         /**
@@ -25752,15 +25786,18 @@ export type ProviderSyncRunDetailDto = {
              */
             eventId: string;
             /**
-             * Whether the scheduler or a root admin asked for the sync.
+             * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
              */
-            source: 'SCHEDULED' | 'MANUAL';
+            source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
             /**
              * Who asked for a sync.
              */
             actor: {
                 type: 'SYSTEM';
-                name: 'scheduler';
+                /**
+                 * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                 */
+                name: 'scheduler' | 'webhook';
             } | {
                 type: 'ROOT_ADMIN';
                 /**
@@ -26035,7 +26072,7 @@ export type ProviderSyncRunListResponse = {
          */
         payload: {
             /**
-             * Sync run source: a manual or scheduled event sync.
+             * Sync run source: a manual, scheduled or webhook-triggered event sync.
              */
             runType?: string;
             /**
@@ -26056,15 +26093,18 @@ export type ProviderSyncRunListResponse = {
                  */
                 eventId: string;
                 /**
-                 * Whether the scheduler or a root admin asked for the sync.
+                 * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                  */
-                source: 'SCHEDULED' | 'MANUAL';
+                source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
                 /**
                  * Who asked for a sync.
                  */
                 actor: {
                     type: 'SYSTEM';
-                    name: 'scheduler';
+                    /**
+                     * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                     */
+                    name: 'scheduler' | 'webhook';
                 } | {
                     type: 'ROOT_ADMIN';
                     /**
@@ -26178,7 +26218,7 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         payload: {
             /**
-             * Sync run source: a manual or scheduled event sync.
+             * Sync run source: a manual, scheduled or webhook-triggered event sync.
              */
             runType?: string;
             /**
@@ -26199,15 +26239,18 @@ export type ProviderManualSyncSubmissionResponse = {
                  */
                 eventId: string;
                 /**
-                 * Whether the scheduler or a root admin asked for the sync.
+                 * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                  */
-                source: 'SCHEDULED' | 'MANUAL';
+                source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
                 /**
                  * Who asked for a sync.
                  */
                 actor: {
                     type: 'SYSTEM';
-                    name: 'scheduler';
+                    /**
+                     * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                     */
+                    name: 'scheduler' | 'webhook';
                 } | {
                     type: 'ROOT_ADMIN';
                     /**
@@ -33909,6 +33952,35 @@ export type IngestClientLogsResponses = {
 };
 
 export type IngestClientLogsResponse = IngestClientLogsResponses[keyof IngestClientLogsResponses];
+
+export type ReceiveBalldontlieWebhookData = {
+    body: BalldontlieWebhookNotification;
+    path?: never;
+    query?: never;
+    url: '/api/v1/provider-webhooks/balldontlie';
+};
+
+export type ReceiveBalldontlieWebhookErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ReceiveBalldontlieWebhookError = ReceiveBalldontlieWebhookErrors[keyof ReceiveBalldontlieWebhookErrors];
+
+export type ReceiveBalldontlieWebhookResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: SuccessResponse;
+};
+
+export type ReceiveBalldontlieWebhookResponse = ReceiveBalldontlieWebhookResponses[keyof ReceiveBalldontlieWebhookResponses];
 
 export type ReceiveSesEventData = {
     body: SnsMessage;

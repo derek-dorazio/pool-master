@@ -202,6 +202,13 @@ variable "balldontlie_api_key" {
   default     = ""
 }
 
+variable "balldontlie_webhook_secret" {
+  description = "BALLDONTLIE webhook endpoint signing secret (#1498), shown once when the endpoint is created or its secret rotated. Empty leaves the receiver refusing every delivery. When set, core-api reads it from Secrets Manager as BALLDONTLIE_WEBHOOK_SECRET. Do NOT commit it: set TF_VAR_balldontlie_webhook_secret, reusing the value already in Secrets Manager (apply-terraform skill)."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "balldontlie_requests_per_minute" {
   description = "Requests a minute the BALLDONTLIE plan allows: 5 on the free plan, 600 on All-Access. The adapter paces itself to it."
   type        = number

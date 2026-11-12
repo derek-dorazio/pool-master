@@ -157,14 +157,14 @@ export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
 }).describe('Normalized write-effect diagnostics for a provider sync run. The summary counts every row the sync compared; `rows` keeps only those it created, updated or deleted, so an unchanged golf field stores no rows. Raw provider payload JSON is a separate debug payload.');
 export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
 
-export const SyncRequestSourceSchema = z.enum(['SCHEDULED', 'MANUAL']).describe('Whether the scheduler or a root admin asked for the sync.');
+export const SyncRequestSourceSchema = z.enum(['SCHEDULED', 'MANUAL', 'WEBHOOK']).describe('Who asked for the sync: the scheduler, a root admin, or a provider\'s webhook saying something happened in the event (#1498).');
 export type SyncRequestSource = z.infer<typeof SyncRequestSourceSchema>;
 
 export const SyncRequestActorDtoSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('SYSTEM'),
-    name: z.literal('scheduler'),
-  }).describe('The scheduler, for a SCHEDULED sync.'),
+    name: z.enum(['scheduler', 'webhook']).describe('`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.'),
+  }).describe('The system: the scheduler, or the provider webhook receiver.'),
   z.object({
     type: z.literal('ROOT_ADMIN'),
     userId: z.string().describe('The root admin who asked for the sync.'),
@@ -184,7 +184,7 @@ export const ProviderSyncRequestPayloadDtoSchema = z.object({
 export type ProviderSyncRequestPayloadDto = z.infer<typeof ProviderSyncRequestPayloadDtoSchema>;
 
 export const ProviderSyncRunPayloadDtoSchema = z.object({
-  runType: z.string().optional().describe('Sync run source: a manual or scheduled event sync.'),
+  runType: z.string().optional().describe('Sync run source: a manual, scheduled or webhook-triggered event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
   requestPayload: ProviderSyncRequestPayloadDtoSchema.optional().describe('The request that submitted the sync run.'),

@@ -60,6 +60,10 @@ export TF_VAR_db_password="$(aws ecs describe-task-definition --region us-east-2
 export TF_VAR_balldontlie_api_key="$(aws secretsmanager get-secret-value --region us-east-2 \
   --secret-id poolmaster-qa-balldontlie-api-key --query SecretString --output text)"
 
+# 3d. Only when the environment already has a BALLDONTLIE webhook secret: reuse it
+export TF_VAR_balldontlie_webhook_secret="$(aws secretsmanager get-secret-value --region us-east-2 \
+  --secret-id poolmaster-qa-balldontlie-webhook-secret --query SecretString --output text)"
+
 # 4. Plan into a file, and read it
 terraform plan -var-file=envs/qa.tfvars -out=qa.plan
 
@@ -91,6 +95,10 @@ Every secret keeps the value the environment already has (`rules/workflow-rules.
   provider. So once `poolmaster-<env>-balldontlie-api-key` exists, every hand-over includes
   step 3c. The first apply that adds the key exports the new key from the vendor's
   dashboard instead.
+- **`balldontlie_webhook_secret`** — optional, the same way: empty leaves the webhook route
+  refusing every delivery. Once `poolmaster-<env>-balldontlie-webhook-secret` exists, every
+  hand-over includes step 3d. The first apply that adds it exports the secret the vendor showed
+  when the webhook endpoint was created.
 
 The one exception is an environment's very first apply (prod, when it is first built): no
 secret exists yet, so that apply creates both. Generate `jwt_secret` with
@@ -111,7 +119,8 @@ plan's resource lines when:
   this checkout, or the state drifted (a console edit). Find which before going on;
 - anything is replaced (`-/+`) or destroyed that the change did not mean to;
 - `aws_db_instance` shows a password change, or `aws_secretsmanager_secret_version.jwt_secret`
-  changes, or a `balldontlie_api_key` secret is destroyed: a secret was not reused (step 3);
+  changes, or a `balldontlie_api_key` or `balldontlie_webhook_secret` secret is destroyed: a secret was
+  not reused (step 3);
 - an ECS service shows a task definition change: the services ignore task definition
   changes, so this means the configuration changed under them.
 

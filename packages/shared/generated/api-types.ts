@@ -3399,6 +3399,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/provider-webhooks/balldontlie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive a BALLDONTLIE webhook notification
+         * @description Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment's endpoint secret), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider's current scores, so the notification's own contents are never written. A notification about nothing linked, or of a type PoolMaster does not act on, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.
+         */
+        post: operations["receiveBalldontlieWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/email/ses-events": {
         parameters: {
             query?: never;
@@ -13761,6 +13781,27 @@ export interface components {
             /** @description On a subscription confirmation, the confirmation token. */
             Token?: string;
         };
+        /** @description A BALLDONTLIE webhook notification. Other fields the vendor sends (the play, the player, a best-effort score) are accepted and ignored. */
+        BalldontlieWebhookNotification: {
+            /** @description What happened, as `<league>.<subject>.<event>`, such as `nfl.game.ended` or `pga.tournament.round_started`. The vendor's dashboard test event carries none, and is acknowledged and dropped. */
+            event_type?: string;
+            /** @description The game it happened in, for a game's event. */
+            game?: {
+                /** @description The vendor's game id. */
+                id: number;
+            } & {
+                [key: string]: unknown;
+            };
+            /** @description The tournament it happened in, for a golf event. */
+            tournament?: {
+                /** @description The vendor's tournament id. */
+                id: number;
+            } & {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
         /**
          * @description A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
          * @enum {string}
@@ -22241,7 +22282,7 @@ export interface components {
             createdAt: string;
             /** @description Provider sync run summary with canonical stats and outcome. */
             payload: {
-                /** @description Sync run source: a manual or scheduled event sync. */
+                /** @description Sync run source: a manual, scheduled or webhook-triggered event sync. */
                 runType?: string;
                 /** @description Feeds represented by the originating manual or scheduled sync request. */
                 requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -22257,16 +22298,19 @@ export interface components {
                     /** @description Provider event identifier the sync was asked for. */
                     eventId: string;
                     /**
-                     * @description Whether the scheduler or a root admin asked for the sync.
+                     * @description Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                      * @enum {string}
                      */
-                    source: "SCHEDULED" | "MANUAL";
+                    source: "SCHEDULED" | "MANUAL" | "WEBHOOK";
                     /** @description Who asked for a sync. */
                     actor: {
                         /** @enum {string} */
                         type: "SYSTEM";
-                        /** @enum {string} */
-                        name: "scheduler";
+                        /**
+                         * @description `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                         * @enum {string}
+                         */
+                        name: "scheduler" | "webhook";
                     } | {
                         /** @enum {string} */
                         type: "ROOT_ADMIN";
@@ -22346,7 +22390,7 @@ export interface components {
             createdAt: string;
             /** @description Provider sync run summary with canonical stats and outcome. */
             payload: {
-                /** @description Sync run source: a manual or scheduled event sync. */
+                /** @description Sync run source: a manual, scheduled or webhook-triggered event sync. */
                 runType?: string;
                 /** @description Feeds represented by the originating manual or scheduled sync request. */
                 requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -22362,16 +22406,19 @@ export interface components {
                     /** @description Provider event identifier the sync was asked for. */
                     eventId: string;
                     /**
-                     * @description Whether the scheduler or a root admin asked for the sync.
+                     * @description Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                      * @enum {string}
                      */
-                    source: "SCHEDULED" | "MANUAL";
+                    source: "SCHEDULED" | "MANUAL" | "WEBHOOK";
                     /** @description Who asked for a sync. */
                     actor: {
                         /** @enum {string} */
                         type: "SYSTEM";
-                        /** @enum {string} */
-                        name: "scheduler";
+                        /**
+                         * @description `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                         * @enum {string}
+                         */
+                        name: "scheduler" | "webhook";
                     } | {
                         /** @enum {string} */
                         type: "ROOT_ADMIN";
@@ -22580,7 +22627,7 @@ export interface components {
                 createdAt: string;
                 /** @description Provider sync run summary with canonical stats and outcome. */
                 payload: {
-                    /** @description Sync run source: a manual or scheduled event sync. */
+                    /** @description Sync run source: a manual, scheduled or webhook-triggered event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -22596,16 +22643,19 @@ export interface components {
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
-                         * @description Whether the scheduler or a root admin asked for the sync.
+                         * @description Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                          * @enum {string}
                          */
-                        source: "SCHEDULED" | "MANUAL";
+                        source: "SCHEDULED" | "MANUAL" | "WEBHOOK";
                         /** @description Who asked for a sync. */
                         actor: {
                             /** @enum {string} */
                             type: "SYSTEM";
-                            /** @enum {string} */
-                            name: "scheduler";
+                            /**
+                             * @description `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                             * @enum {string}
+                             */
+                            name: "scheduler" | "webhook";
                         } | {
                             /** @enum {string} */
                             type: "ROOT_ADMIN";
@@ -22697,7 +22747,7 @@ export interface components {
                 createdAt: string;
                 /** @description Provider sync run summary with canonical stats and outcome. */
                 payload: {
-                    /** @description Sync run source: a manual or scheduled event sync. */
+                    /** @description Sync run source: a manual, scheduled or webhook-triggered event sync. */
                     runType?: string;
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
@@ -22713,16 +22763,19 @@ export interface components {
                         /** @description Provider event identifier the sync was asked for. */
                         eventId: string;
                         /**
-                         * @description Whether the scheduler or a root admin asked for the sync.
+                         * @description Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
                          * @enum {string}
                          */
-                        source: "SCHEDULED" | "MANUAL";
+                        source: "SCHEDULED" | "MANUAL" | "WEBHOOK";
                         /** @description Who asked for a sync. */
                         actor: {
                             /** @enum {string} */
                             type: "SYSTEM";
-                            /** @enum {string} */
-                            name: "scheduler";
+                            /**
+                             * @description `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
+                             * @enum {string}
+                             */
+                            name: "scheduler" | "webhook";
                         } | {
                             /** @enum {string} */
                             type: "ROOT_ADMIN";
@@ -33757,6 +33810,48 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    receiveBalldontlieWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BalldontlieWebhookNotification"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

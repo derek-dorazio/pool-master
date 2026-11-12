@@ -26,6 +26,8 @@ import type {
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
   SportEventProviderSummary,
+  ProviderNotifiedEvent,
+  ProviderNotifiedEventQuery,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -56,7 +58,7 @@ import type {
   SportEventTier,
   SportLeague,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -555,6 +557,32 @@ export class PrismaSportEventRepository implements SportEventRepository {
       activeEventCount: activeCounts.get(id) ?? 0,
       lastChangedAt: lastChanged.get(id) ?? null,
     }]));
+  }
+
+  async findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]> {
+    const { gameId } = query;
+    const rows = await this.prisma.sportEvent.findMany({
+      where: {
+        providerId: query.providerId,
+        sport: query.sport,
+        externalId: 'externalId' in query ? query.externalId : { startsWith: query.externalIdPrefix },
+        status: SportEventStatus.IN_PROGRESS,
+        syncScope: SportEventSyncScope.SCORES_ONLY,
+      },
+      select: {
+        sport: true,
+        providerId: true,
+        externalId: true,
+        // An event holds a game at most once (sportEventId, externalGameId is unique).
+        ...(gameId !== undefined && { matches: { where: { externalGameId: gameId }, select: { id: true } } }),
+      },
+    });
+    return rows.map((row) => ({
+      sport: row.sport,
+      providerId: row.providerId,
+      externalId: row.externalId,
+      holdsGame: 'matches' in row && row.matches.length > 0,
+    }));
   }
 
   async findAutoLifecycleCandidates(): Promise<SportEvent[]> {

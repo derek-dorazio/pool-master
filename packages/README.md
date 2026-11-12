@@ -137,6 +137,23 @@ Every bound provider is registered: the default as each of its sports' primary, 
 secondaries. An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
 both serve golf on QA, and a root admin picks the provider wherever more than one serves a sport.
 
+**Webhooks (#1498):** BALLDONTLIE posts a signed notification to
+`POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The
+route checks the HMAC signature with `BALLDONTLIE_WEBHOOK_SECRET` (from Secrets Manager; unset, it
+refuses every delivery) and, for a game or tournament linked to an in-progress event, queues one
+`PROVIDER_EVENT_SYNC` job, due a minute out under the event's dedupe key, so a burst shares one
+sync. The job runs the same live-score sync the scheduler runs, reading current state over REST,
+and the sync history shows it as a `WEBHOOK` run. A game no match is linked to yet syncs every
+in-progress event of its league. Notifications for anything else are acknowledged and dropped.
+
+The endpoint subscribes to `BALLDONTLIE_WEBHOOK_EVENT_TYPES` in `balldontlie-webhooks.ts`: each
+read league's game start, period end (a soccer match's halftime) and game end, and golf's
+tournament start, round start, player round completed and tournament end (never each hole). To set
+it up, in the vendor dashboard's Webhooks tab (or its webhook API, which needs All-Access), create
+one endpoint at `https://<environment host>/api/v1/provider-webhooks/balldontlie` with those event
+types, send its test event (it answers 200 and is dropped), and pass the signing secret it shows
+once to Terraform as `balldontlie_webhook_secret` (the `apply-terraform` skill).
+
 **Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---

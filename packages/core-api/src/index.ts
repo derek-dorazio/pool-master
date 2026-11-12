@@ -48,6 +48,8 @@ import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
+import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
+import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import { plansModule } from './modules/plans/routes';
 import { PlanEntitlementsService } from './modules/plans/plan-entitlements-service';
@@ -296,6 +298,7 @@ export function buildApp() {
     jobs: backgroundJobRepository,
     handlers: {
       MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
+      PROVIDER_EVENT_SYNC: async (payload) => { await ingestionScheduler.runNotifiedEventSync(payload); },
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
       CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
@@ -354,6 +357,15 @@ export function buildApp() {
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
+  app.register(providerWebhooksModule, {
+    prefix: '/api/v1/provider-webhooks',
+    notifications: new ProviderNotificationService({
+      sportEvents: new PrismaSportEventRepository(prisma),
+      jobs: backgroundJobs,
+      logger: app.log,
+    }),
+    balldontlieSigningSecret: readBalldontlieWebhookSecret(process.env),
+  });
   app.register(emailEventsModule, {
     prefix: '/api/v1/email',
     deliveryEvents,

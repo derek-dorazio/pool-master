@@ -126,6 +126,8 @@ export type {
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
   SportEventProviderSummary,
+  ProviderNotifiedEvent,
+  ProviderNotifiedEventQuery,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
