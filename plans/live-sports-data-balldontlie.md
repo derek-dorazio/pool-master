@@ -6,6 +6,9 @@ provider choice and its reasoning are in
 covers how the site takes live data from BALLDONTLIE, and in what order. Epic #1494. No implementation
 starts until Derek says so.
 
+How the built pieces fit together, league by league (the rows each needs, the triggers, the write
+path and the key files), is `docs/LIVE-SPORTS-DATA-SYNC.md`; it outlives this plan.
+
 ## What we are building
 
 Today every real score on the site is entered by an admin or loaded from a data file. The
