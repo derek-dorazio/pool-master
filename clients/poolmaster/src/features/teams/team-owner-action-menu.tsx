@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuItemText,
-  DropdownMenuTriggerSlot,
   ConfirmDialog,
   LinkButton,
   ReadOnlyDetailModal,
+  RowActionsMenu,
   showToast,
   Text,
 } from '@/features/shared/ui';
@@ -47,6 +42,7 @@ export function TeamOwnerActionMenu({
   const canDemote = canManageLeagueRole && ownerRole === 'COMMISSIONER';
   const removeRequiresInactivation = activeOwnerCount <= 1;
   const testPrefix = 'team-home-owner-actions';
+  const ownerKey = `${teamId}-${ownerUserId}`;
 
   // The league context carries the viewer's own role and the league's member count, and both
   // change here: a commissioner may demote themselves, and removing an owner ends their membership.
@@ -123,42 +119,19 @@ export function TeamOwnerActionMenu({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTriggerSlot>
-          <Button
-            className="rounded-2xl px-4 py-2"
-            data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
-            type="button"
-            variant="secondary"
-          >
-            Owner actions
-          </Button>
-        </DropdownMenuTriggerSlot>
-        <DropdownMenuContent align="end" testId={`${testPrefix}-menu-${teamId}-${ownerUserId}`} width="md">
-          {canPromote ? (
-            <DropdownMenuItem
-              data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
-              onSelect={() => setActiveAction('promote')}
-            >
-              <DropdownMenuItemText name="Promote to commissioner" />
-            </DropdownMenuItem>
-          ) : null}
-          {canDemote ? (
-            <DropdownMenuItem
-              data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
-              onSelect={() => setActiveAction('demote')}
-            >
-              <DropdownMenuItemText name="Demote to member" />
-            </DropdownMenuItem>
-          ) : null}
-          <DropdownMenuItem
-            data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
-            onSelect={() => setActiveAction('remove')}
-          >
-            <DropdownMenuItemText name="Remove owner" />
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <RowActionsMenu
+        actions={[
+          ...(canPromote
+            ? [{ label: 'Promote to commissioner', onSelect: () => setActiveAction('promote'), testId: `${testPrefix}-promote-${ownerKey}` }]
+            : []),
+          ...(canDemote
+            ? [{ label: 'Demote to member', onSelect: () => setActiveAction('demote'), testId: `${testPrefix}-demote-${ownerKey}` }]
+            : []),
+          { label: 'Remove owner', onSelect: () => setActiveAction('remove'), testId: `${testPrefix}-remove-${ownerKey}`, tone: 'danger' },
+        ]}
+        label={`Actions for ${ownerName}`}
+        testId={`${testPrefix}-${ownerKey}`}
+      />
 
       {activeAction === 'remove' && removeRequiresInactivation ? (
         <ReadOnlyDetailModal

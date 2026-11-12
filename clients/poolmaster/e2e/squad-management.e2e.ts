@@ -233,7 +233,7 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
 
     await test.step('the commissioner inactivates the squad from Commissioner tools', async () => {
       await commissioner.goto(`/league/${run.leagueCode}/admin/teams`);
-      await commissioner.getByTestId(`admin-team-manage-${squadId}`).click();
+      await commissioner.getByTestId(`admin-team-${squadId}`).click();
       await commissioner.getByTestId('manage-team-inactivate').click();
       await submitAndRead(
         commissioner,

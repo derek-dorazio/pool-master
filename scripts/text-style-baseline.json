@@ -97,6 +97,7 @@
   "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx": 8,
   "clients/poolmaster/src/features/root-admin/tier-board.tsx": 8,
   "clients/poolmaster/src/features/root-admin/withdrawals-card.tsx": 10,
-  "clients/poolmaster/src/features/teams/join-team-owner-page.tsx": 6,
-  "clients/poolmaster/src/features/teams/league-invitations.tsx": 8
+  "clients/poolmaster/src/features/teams/invites-page-invite-people-section.tsx": 1,
+  "clients/poolmaster/src/features/teams/invites-page-row-actions.tsx": 1,
+  "clients/poolmaster/src/features/teams/join-team-owner-page.tsx": 6
 }

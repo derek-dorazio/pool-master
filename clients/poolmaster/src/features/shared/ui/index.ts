@@ -4,6 +4,7 @@ export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
 export { Button, LinkButton, type LinkButtonProps } from "./button";
+export { copyToClipboard } from "./clipboard";
 export { CopyButton } from "./copy-button";
 export { Breadcrumbs, PageHeader, type PageHeaderProps } from "./page-header";
 export { PageTabs, type PageLinkTab, type PageStateTab } from "./page-tabs";
@@ -90,6 +91,7 @@ export {
   DropdownMenuTrigger,
   DropdownMenuTriggerSlot,
 } from "./dropdown-menu";
+export { RowActionsMenu, type RowAction } from "./row-actions-menu";
 export { Modal } from "./modal";
 export { Toaster } from "./toaster";
 export { dismissAllToasts, dismissToast, showToast, type ToastMessage } from "./toast-store";

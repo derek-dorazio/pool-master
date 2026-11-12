@@ -225,7 +225,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-delete'));
     fireEvent.click(await screen.findByTestId('contest-delete-dialog-confirm'));
 
-    expect(await screen.findByTestId('contest-delete-error')).toHaveTextContent('We could not delete that contest. Please try again.');
+    expect(await screen.findByTestId('contest-delete-dialog-error')).toHaveTextContent('We could not delete that contest. Please try again.');
     expect(screen.queryByTestId('contests-list-destination')).not.toBeInTheDocument();
   });
 
@@ -264,7 +264,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
 
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(/already started/);
+    expect(await screen.findByTestId('contest-open-dialog-error')).toHaveTextContent(/already started/);
   });
 
   it('says in the same words as Create contest when opening is refused because the budget roster cannot be filled', async () => {
@@ -279,7 +279,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     fireEvent.click(await screen.findByTestId('contest-open-to-league'));
     fireEvent.click(await screen.findByTestId('contest-open-confirm'));
 
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
+    expect(await screen.findByTestId('contest-open-dialog-error')).toHaveTextContent(
       'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
     );
   });

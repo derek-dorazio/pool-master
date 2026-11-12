@@ -103,7 +103,7 @@ function NotOpenCard({
         Once it&apos;s open, members can enter until {entriesCloseAt(event, secondChanceRoundName)}, and these settings can&apos;t change.
       </p>
       <div className="flex flex-wrap gap-3">
-        <OpenContestAction contestId={contest.id} leagueId={contest.leagueId} />
+        <OpenContestAction contestId={contest.id} contestName={contest.name} leagueId={contest.leagueId} />
         <LinkButton
           className={inverseLinkClassName}
           data-testid="contest-preview-as-member"

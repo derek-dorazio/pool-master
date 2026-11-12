@@ -67,6 +67,14 @@ describe("PageHeader", () => {
     expect(slot).not.toHaveClass("max-sm:basis-full");
   });
 
+  it("keeps the title at least 12rem wide, so a phone wraps the actions under it rather than clipping it", () => {
+    renderHeader(<PageHeader actions={<><Button>Contest types</Button><Button>Create contest</Button></>} testId="contests" title="Contests" />);
+
+    const title = screen.getByTestId("contests-title-block");
+    expect(title).toHaveClass("flex-[1_1_12rem]");
+    expect(title).not.toHaveClass("flex-1");
+  });
+
   it("puts the page's search in the right slot, taking a full-width line on a phone", () => {
     renderHeader(<PageHeader search={<input aria-label="Find a member" type="search" />} testId="members" title="Members" />);
 
