@@ -153,8 +153,11 @@ export function buildLeagueAdminInvitesPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/invites`;
 }
 
+/** League settings with General's Edit dialog open; the query keeps it open on reload and Back closes it. */
+export const LEAGUE_SETTINGS_EDIT_PARAM = 'edit';
+
 export function buildLeagueAdminEditPath(leagueCode: string) {
-  return `/league/${leagueCode}/admin/edit`;
+  return `/league/${leagueCode}/admin?${LEAGUE_SETTINGS_EDIT_PARAM}=general`;
 }
 
 /** The league's championship name and points table (#841, #863). */

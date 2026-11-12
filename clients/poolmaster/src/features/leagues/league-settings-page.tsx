@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
@@ -33,12 +33,14 @@ import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/p
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
+  LEAGUE_SETTINGS_EDIT_PARAM,
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
   buildLeagueAdminTeamsPath,
 } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
+import { EditLeagueDialog } from './edit-league-dialog';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
@@ -54,6 +56,7 @@ export function LeagueSettingsPage() {
   const { members } = useLeagueMembersQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
   const { isRootAdmin } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // A commissioner is a membership role, and the membership carries the member (#1202).
   const commissionerNames = useMemo(() => {
@@ -73,6 +76,14 @@ export function LeagueSettingsPage() {
   }
 
   const isInactive = !league.isActive;
+  // An inactive league is read-only, so its Edit never opens, even from an old link.
+  const isEditingGeneral = !isInactive && searchParams.get(LEAGUE_SETTINGS_EDIT_PARAM) === 'general';
+  const closeGeneralEdit = () => {
+    setSearchParams((params) => {
+      params.delete(LEAGUE_SETTINGS_EDIT_PARAM);
+      return params;
+    }, { replace: true });
+  };
 
   return (
     <div className="space-y-8" data-testid="league-settings-page">
@@ -283,6 +294,8 @@ export function LeagueSettingsPage() {
       <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />
 
       <LeagueDangerZone league={league} />
+
+      <EditLeagueDialog league={league} onClose={closeGeneralEdit} open={isEditingGeneral} />
     </div>
   );
 }

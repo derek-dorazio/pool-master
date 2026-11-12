@@ -264,12 +264,14 @@ administration area (root admin included), reusing the same shared components.
    A page's views are underlined `PageTabs` on the header's bottom line, with a
    filter that applies to every tab alone at the row's right end. Title, facts
    and tabs fit in about 100px on a desktop and 120px on a phone.
-4. **Full pages, not dialogs.** Editing and managing are full pages with their
-   own route, so Back and links work (`FormPage`). Dialogs are only for
-   confirming a destructive or irreversible action: inactivate, delete, leave,
+4. **Small edits in a dialog, bigger ones on a page.** An edit of up to three
+   simple fields with no sub-sections opens a dialog (`FormModal`) over the page
+   it edits, opened by a query parameter so Back and links still work; anything
+   bigger is a full page with its own route (`FormPage`). Other dialogs only
+   confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.
 5. **One edit for all properties.** An entity's editable properties are edited
-   together on one form page with one Save, never a dialog per property.
+   together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
    bottom of the settings page (`DangerZone`), each with a confirm step, never
    beside everyday actions. Settings themselves are shown as labelled rows

@@ -51,7 +51,7 @@
   "clients/poolmaster/src/features/event-pages/start-page.tsx": 10,
   "clients/poolmaster/src/features/leagues/create-league-modal.tsx": 11,
   "clients/poolmaster/src/features/leagues/edit-event-emails-page.tsx": 13,
-  "clients/poolmaster/src/features/leagues/edit-league-page.tsx": 5,
+  "clients/poolmaster/src/features/leagues/edit-league-dialog.tsx": 1,
   "clients/poolmaster/src/features/leagues/invitation-context-card.tsx": 5,
   "clients/poolmaster/src/features/leagues/join-league-page.tsx": 17,
   "clients/poolmaster/src/features/leagues/league-danger-zone.tsx": 2,
