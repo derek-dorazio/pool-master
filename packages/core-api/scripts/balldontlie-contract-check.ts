@@ -13,7 +13,7 @@
  *    League matchweeks and the World Cup's knockout bracket, every NFL, NBA and Division I basketball team, men's and women's, the Premier
  *    League's teams, the World Cup's nations, for `--tournament` (a finished stroke-play tournament is
  *    best) its field and its scores, and for `--game-event` (`nfl-2025-postseason`,
- *    `ncaab-2025-tournament`, `ncaaw-2025-tournament`, `nba-2025-postseason`, `nhl-2024-postseason`, `epl-2026-matchweek-11` or `fifa-wc-2026-knockout`, say) its teams and its game scores. Every response is parsed with
+ *    `ncaab-2025-tournament`, `ncaaw-2025-tournament`, `nba-2025-postseason`, `nhl-2024-postseason`, `wnba-2025-postseason`, `epl-2026-matchweek-11` or `fifa-wc-2026-knockout`, say) its teams and its game scores. Every response is parsed with
  *    the same schemas a sync uses, so a field that drifted fails here with the path that broke.
  *
  * Read-only against the vendor. It needs a network that reaches www.balldontlie.io and
@@ -31,7 +31,7 @@ import { countLiveScoreUpdates } from '../src/modules/ingestion/core/live-score-
 import { errorMessageWithCause } from '../src/core/error-message';
 
 /** Each league the adapter reads, by the name of its vendored document, with the name the vendor gives it. */
-const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', epl: 'EPL', fifa: 'FIFA' } as const;
+const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', wnba: 'WNBA', epl: 'EPL', fifa: 'FIFA' } as const;
 type League = keyof typeof LEAGUES;
 const HEADER_LINES = 3;
 
@@ -95,8 +95,8 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
     }],
     ['this season\'s NFL events', async () => `${String((await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL)).length)} weeks and postseasons`],
     ['NFL teams', async () => `${String((await adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).length)} teams`],
-    ['the last and next NCAA men\'s and women\'s tournaments and NBA playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.BASKETBALL)).length)} tournaments and playoffs`],
-    ['NBA and Division I basketball teams, men\'s and women\'s', async () => `${String((await adapter.getParticipants(Sport.BASKETBALL)).length)} teams`],
+    ['the last and next NCAA men\'s and women\'s tournaments and NBA and WNBA playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.BASKETBALL)).length)} tournaments and playoffs`],
+    ['NBA, WNBA and Division I basketball teams, men\'s and women\'s', async () => `${String((await adapter.getParticipants(Sport.BASKETBALL)).length)} teams`],
     ['Premier League matchweeks and the current World Cup bracket', async () => `${String((await adapter.getUpcomingEvents(Sport.SOCCER)).length)} events`],
     ['Premier League teams and World Cup nations', async () => `${String((await adapter.getParticipants(Sport.SOCCER)).length)} teams`],
     ['the last and next NHL playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.HOCKEY)).length)} postseasons`],

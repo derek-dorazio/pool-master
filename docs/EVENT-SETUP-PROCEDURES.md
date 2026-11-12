@@ -313,7 +313,7 @@ not offer one. Every other league takes squares on any round.
 
 **Series rounds.** A sport league whose playoff rounds are best-of series names each round's
 length, first to final (`roundSeriesLengths`, set by migration): the NBA and NHL 7, 7, 7, 7, MLB
-3, 5, 7, 7, the WNBA 3, 7, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
+3, 5, 7, 7, the WNBA 3, 5, 7, MLS 1, 3, 1, 1, 1. A series is still one bracket match whose score is games won; a
 synced event counts its games' winners against the length and records the series once a side has
 won more than half. An admin who enters a series' result by hand enters the games won (4-2).
 When a league changes its format, change its lengths by migration before the playoffs start.

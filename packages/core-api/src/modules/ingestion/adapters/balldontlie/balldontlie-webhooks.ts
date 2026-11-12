@@ -38,6 +38,7 @@ export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeagu
   ncaab: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameEvents: GAME_EVENTS },
   ncaaw: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameEvents: GAME_EVENTS },
   nhl: { sport: Sport.HOCKEY, eventIdPrefix: 'nhl-', gameEvents: GAME_EVENTS },
+  wnba: { sport: Sport.BASKETBALL, eventIdPrefix: 'wnba-', gameEvents: GAME_EVENTS },
   epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS },
   worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS },
 };

@@ -54,7 +54,10 @@ The target:
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
      mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
      (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series, read
-     without box scores, so no NHL round is listed as an event until a Clutch Card needs one;
+     without box scores, so no NHL round is listed as an event until a Clutch Card needs one. The WNBA's
+     (`wnba-2026-postseason`) shares basketball with the NBA, whose keyword its name holds, so
+     the event picker matches an event that names its tour by that tour alone, and a name
+     substring only for an event that names none;
    - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
      live-score category (#1497). The adapter numbers each game within the Clutch Card event
      (game N is round N, and each series' Game N shares it in a round of several series) and maps

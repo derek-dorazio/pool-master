@@ -5,8 +5,8 @@ adapter was built before any account existed, so everything here comes from the 
 published OpenAPI document, not from recorded traffic.
 
 - `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
-  NCAA men's and women's basketball, NBA, NHL, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
+  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/wnba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
+  NCAA men's and women's basketball, NBA, NHL, WNBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -40,6 +40,13 @@ published OpenAPI document, not from recorded traffic.
   sixteen teams whose Finals (Boston v Dallas) are two games in with the third live, the first
   three Finals games' stat rows (one player listed with `"00"` minutes in game 1, who sat it out)
   and both Finals teams' active players. Every one must fit the document (`nba-contract.test.ts`).
+- `wnba/*.json` are written to the WNBA document's schemas, which give no response examples:
+  the 2025 season's playoffs as all seven series of that year's bracket, eight teams to Finals
+  Las Vegas won four games to none, each series' games in a made-up order and score, with two
+  regular season games the reader must leave out; the 2026 playoffs just begun, with a final, a
+  live, a scheduled and an `unknown` game and a regular season game; and nine teams and a folded
+  franchise in no conference. Every one
+  must fit the document (`wnba-contract.test.ts`).
 
 - `epl/*.json` are written to the EPL document's schemas, which give no response examples: the
   2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
@@ -126,6 +133,15 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   though the document requires none of them; a game missing one fails the sync with the field
   named. A team's `full_name` is the name the site's NBA teams are loaded under ("Oklahoma City
   Thunder").
+- WNBA: `/wnba/v1/games` documents no `postseason` filter and no values for `season_type`, so a
+  season's games are all read (about three pages) and the playoffs picked out by `postseason`,
+  which every game is assumed to send; a game without it fails the sync. If `season_type`
+  turns out to take a playoffs value, read with it instead and save the pages.
+  `--game-event wnba-2025-postseason` prints the game count: a full playoffs has 7 series.
+- WNBA: a game's `id`, `season`, `date` and both teams' `id` and `full_name` are always sent,
+  as the NBA's are. A team's `full_name` is the name the site's WNBA teams are loaded under
+  ("Las Vegas Aces"). `/wnba/v1/teams` may keep folded franchises (the Houston Comets, say); the
+  adapter keeps only teams with a conference. Count the teams the contract check prints: 15.
 
 - EPL: a match's `round_number` is its matchweek (1 to 38). The document does not say so; the
   adapter groups a season's matches into matchweek events by it, and leaves out a match with

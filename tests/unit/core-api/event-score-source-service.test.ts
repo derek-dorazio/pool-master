@@ -134,6 +134,23 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result.map((event) => event.externalId)).toEqual(['pga-1']);
   });
 
+  it('leaves out an event that names another tour even when its name holds the keyword, so the NBA\'s picker lists no WNBA playoffs', async () => {
+    const provider = buildProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'nba-2025-postseason', name: 'NBA Playoffs', metadata: { tour: 'NBA' } }),
+        buildProviderEvent({ externalId: 'wnba-2026-postseason', name: 'WNBA Playoffs', metadata: { tour: 'WNBA' } }),
+      ]),
+    });
+    const prisma = {
+      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'NBA' }) },
+    };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    const result = await service.listCandidateEvents('mock-golf', Sport.BASKETBALL, { sportLeagueId: 'league-1' });
+
+    expect(result.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
+  });
+
   it('pool-master-753 applies no filter when the league has no matchKeyword set', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([

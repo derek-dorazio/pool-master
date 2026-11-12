@@ -13,14 +13,14 @@ import { nbaGames, nbaRoutes, nbaStatRows } from '../../../support/balldontlie-n
  * Finals (the 2024 season's), Oklahoma City over Indiana in seven, the 2025 season's first round
  * under way, and a whole 2023 bracket whose Finals are two games in, with the third live, for a
  * Clutch Card's box scores and stars (#1497). Fixtures holding only a round's games read as that
- * season's first round.
+ * season's first round. The basketball lists also read the NCAA tournaments and the WNBA, served empty.
  */
 
 const API_KEY = 'test-api-key';
 const NOW = Date.UTC(2026, 10, 12);
 
 function setup(routes: Record<string, FakeRoute> = nbaRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes });
+  const api = createFakeBalldontlie({ league: ['nba', 'ncaab', 'ncaaw', 'wnba'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let clock = now;
@@ -42,7 +42,7 @@ function setup(routes: Record<string, FakeRoute> = nbaRoutes, now = NOW): { adap
   };
 }
 
-/** The NBA requests sent, leaving out the NCAA reads the basketball lists also make. */
+/** The NBA requests sent, leaving out the NCAA and WNBA reads the basketball lists also make. */
 const requestLine = (api: FakeBalldontlie) => api.requests
   .filter((request) => request.path.startsWith('/nba/'))
   .map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
