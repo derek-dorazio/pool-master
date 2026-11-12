@@ -341,8 +341,8 @@ function constrainsLead(condition: string, column: string): boolean {
   return new RegExp(`\\(\\s*"?${column}"?\\b`).test(condition);
 }
 
-/** The tables Postgres would read whole for `sql` with sequential scans off, planned without its values. */
-export async function planWholeScans(prisma: PrismaClient, sql: string, indexes: Map<string, IndexLead>): Promise<WholeScan[]> {
+/** Postgres's plan for `sql` with sequential scans off, planned without its values. */
+export async function planOf(prisma: PrismaClient, sql: string): Promise<PlanNode> {
   const parameters = Math.max(0, ...[...sql.matchAll(/\$(\d+)/g)].map((match) => Number(match[1])));
   const values = parameters === 0 ? '' : `(${Array.from({ length: parameters }, () => 'NULL').join(', ')})`;
   // A prepared statement outlives its transaction, so each gets a name of its own.
@@ -353,8 +353,13 @@ export async function planWholeScans(prisma: PrismaClient, sql: string, indexes:
     await tx.$executeRawUnsafe(`PREPARE ${name} AS ${sql}`);
     const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}${values}`);
     await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
-    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes, { sql });
+    return row['QUERY PLAN'][0].Plan;
   });
+}
+
+/** The tables Postgres would read whole for `sql` with sequential scans off, planned without its values. */
+export async function planWholeScans(prisma: PrismaClient, sql: string, indexes: Map<string, IndexLead>): Promise<WholeScan[]> {
+  return findWholeScans(await planOf(prisma, sql), indexes, { sql });
 }
 
 /** The whole-table reads of growing tables, among `sent`, that no allowance covers. */

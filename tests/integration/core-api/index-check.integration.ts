@@ -15,6 +15,7 @@ import {
   findUnindexedScans,
   findWholeScans,
   indexCheck,
+  planOf,
   planWholeScans,
   readIndexLeads,
   REFERENCE_TABLES,
@@ -291,3 +292,21 @@ describe('missing-index check on fixed plans: whether another index could serve 
     expect(findWholeScans(indexScan('users_pkey', 'users', { Filter: '((email ~~* $1) AND ((timezone)::text = $2))' }), INDEXES)).toEqual([]);
   });
 });
+
+/** Every node of a plan, the plan's own first. */
+function nodesOf(plan: PlanNode): PlanNode[] {
+  return [plan, ...(plan.Plans ?? []).flatMap(nodesOf)];
+}
+
+// As Prisma sends the provider name match's `participant.findMany({ where: { OR: [{ sportId, name: { in } }] } })`.
+const PARTICIPANTS_BY_SPORT_AND_NAMES = 'SELECT "public"."participants"."id" FROM "public"."participants" WHERE (("public"."participants"."sport_id" = $1 AND "public"."participants"."name" IN ($2,$3,$4)))';
+
+describe('the provider name match\'s read of participants', () => {
+  it('looks a sport\'s participants up by sport and name together, through the (sport_id, name) index rather than the (sport_id, status) one', async () => {
+    const plan = await planOf(getPrisma(), PARTICIPANTS_BY_SPORT_AND_NAMES);
+
+    const reads = nodesOf(plan).filter((node) => node['Index Name'] !== undefined).map((node) => node['Index Name']);
+    expect(reads).toEqual(['participants_sport_id_name_idx']);
+  });
+});
+
