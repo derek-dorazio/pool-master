@@ -17,7 +17,7 @@
  * NBA (#1496, `nba-mapping.ts` through the shared `series-playoffs-reader.ts`): each season's
  * playoffs as an event (`nba-2025-postseason`), its teams, and every playoff game's score in the
  * GAME category, from which the GAME writer counts each best-of-seven series' wins (#1545).
- * Basketball's events and teams are the NCAA tournaments' and the NBA's together.
+ * Basketball's events and teams are the NCAA tournaments', the NBA's and the WNBA's together.
  * Each playoff round is an event too (#1497, `series-playoff-rounds.ts`): a Clutch Card's
  * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
  * scores in the STAT_LINE category.
@@ -29,6 +29,9 @@
  * MLB (#1496, `mlb-mapping.ts` through the same shared reader): each season's postseason as an
  * event (`mlb-2026-postseason`), its teams, and every postseason game's score in the GAME
  * category, from the best-of-three Wild Card Series to the World Series.
+ *
+ * WNBA (#1496, `wnba-mapping.ts` through the same shared reader): each season's playoffs as an
+ * event (`wnba-2026-postseason`), its teams, and every playoff game's score in the GAME category.
  *
  * Premier League (#1496, `epl-reader.ts`): each season's matchweeks as events
  * (`epl-2026-matchweek-11`), their teams, and their matches' scores in the GAME category.
@@ -60,6 +63,7 @@ import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeag
 import { NcaaTournamentReader } from './ncaa-tournament-reader';
 import { MLB_POSTSEASON, mlbPostseasonSource } from './mlb-mapping';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
+import { WNBA_PLAYOFFS, wnbaPlayoffsSource } from './wnba-mapping';
 import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
 import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
@@ -134,6 +138,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly nba: PlayoffRoundsReader;
   private readonly nhl: PlayoffsReader;
   private readonly mlb: PlayoffsReader;
+  private readonly wnba: PlayoffsReader;
   private readonly epl: EplReader;
   private readonly worldCup: WorldCupReader;
   /** Each NCAA tournament league's reads, by its key. */
@@ -147,6 +152,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now);
     this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now);
     this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now);
+    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
     this.worldCup = new WorldCupReader(this.client);
     this.ncaa = {
@@ -158,10 +164,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       [Sport.GOLF, { events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }],
       [Sport.AMERICAN_FOOTBALL, { events: (dateRange) => this.nfl.upcomingEvents(dateRange), participants: () => this.nfl.teams() }],
       // Read together, as soccer's are: the NCAA brackets need the GOAT tier, so a plan without
-      // it loses the NBA's playoffs from the list too.
+      // it loses the NBA's and the WNBA's playoffs from the list too.
       [Sport.BASKETBALL, {
-        events: async (dateRange) => (await Promise.all([...ncaaReaders.map((reader) => reader.upcomingEvents(dateRange)), this.nba.upcomingEvents(dateRange)])).flat(),
-        participants: async () => (await Promise.all([...ncaaReaders.map((reader) => reader.teams()), this.nba.teams()])).flat(),
+        events: async (dateRange) => (await Promise.all([...ncaaReaders.map((reader) => reader.upcomingEvents(dateRange)), this.nba.upcomingEvents(dateRange), this.wnba.upcomingEvents(dateRange)])).flat(),
+        participants: async () => (await Promise.all([...ncaaReaders.map((reader) => reader.teams()), this.nba.teams(), this.wnba.teams()])).flat(),
       }],
       // Read together, so a failed read fails the sport's whole list: the World Cup's matches
       // need the GOAT tier, which the NCAA brackets need too, so a plan without it loses
@@ -207,7 +213,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The tournament, NFL scope, NCAA tournament, NBA or NHL playoffs, MLB postseason, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
+  /** The tournament, NFL scope, NCAA tournament, NBA, WNBA or NHL playoffs, MLB postseason, Premier League matchweek or World Cup bracket with its field; null when the vendor has no such event. */
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const scope = parseNflScope(eventId);
     if (scope) {
@@ -224,6 +230,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.eventDetails(nbaSeason);
+    }
+    const wnbaSeason = parsePlayoffsScope(WNBA_PLAYOFFS, eventId);
+    if (wnbaSeason !== null) {
+      return this.wnba.eventDetails(wnbaSeason);
     }
     const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
     if (nhlSeason !== null) {
@@ -255,7 +265,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return { ...toSportEvent(tournament, participants.length), participants };
   }
 
-  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team and NBA team, every NHL team, every MLB team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
+  /** Every active PGA TOUR golfer, every NFL team, every Division I men's and women's basketball team, NBA team and WNBA team, every NHL team, every MLB team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return await this.leagues.get(sport)?.participants() ?? [];
   }
@@ -270,7 +280,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   }
 
   /**
-   * An NFL scope's, an NCAA tournament's, an NBA or NHL playoffs', an MLB postseason's, a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
+   * An NFL scope's, an NCAA tournament's, an NBA, WNBA or NHL playoffs', an MLB postseason's, a Premier League matchweek's or a World Cup bracket's games in the GAME category, or every started round of every golfer in a
    * stroke-play tournament. A tournament id the vendor does not know, or a tournament of another
    * format, fails the sync rather than returning nothing.
    */
@@ -290,6 +300,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.liveScores(nbaSeason);
+    }
+    const wnbaSeason = parsePlayoffsScope(WNBA_PLAYOFFS, eventId);
+    if (wnbaSeason !== null) {
+      return this.wnba.liveScores(wnbaSeason);
     }
     const nhlSeason = parsePlayoffsScope(NHL_PLAYOFFS, eventId);
     if (nhlSeason !== null) {

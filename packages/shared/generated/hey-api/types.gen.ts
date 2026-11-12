@@ -7916,7 +7916,7 @@ export type SportLeagueDto = {
      */
     name: string;
     /**
-     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
      */
     matchKeyword: string | null;
     /**
@@ -8020,7 +8020,7 @@ export type SportLeagueListResponse = {
          */
         name: string;
         /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
          */
         matchKeyword: string | null;
         /**
@@ -8111,7 +8111,7 @@ export type SportLeagueResponse = {
          */
         name: string;
         /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
          */
         matchKeyword: string | null;
         /**
