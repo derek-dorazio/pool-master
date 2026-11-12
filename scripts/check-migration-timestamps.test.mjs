@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { findAddedBeforeBase, findAddedCollisions, timestampPrefix } from './check-migration-timestamps.mjs';
+import { findAddedBeforeBase, findAddedCollisions, resolveBase, timestampPrefix } from './check-migration-timestamps.mjs';
 
 // #266: #259 and #264 both landed a migration stamped 20260930140000.
 const onMain = [
@@ -96,5 +96,25 @@ describe('check-migration-timestamps: an added migration dated before the base\'
   it('passes anything added against a base with no migrations, and ignores a name with no timestamp', () => {
     assert.deepEqual(findAddedBeforeBase({ added: ['20200101000000_first'], base: [] }), []);
     assert.deepEqual(findAddedBeforeBase({ added: ['migration_lock.toml'], base }), []);
+  });
+});
+
+describe('check-migration-timestamps: the base it measures against', () => {
+  const mergeBaseIs = (sha) => (ref) => (ref === 'origin/main' ? sha : null);
+
+  it('takes MIGRATION_BASE_REF over everything, with nothing else counted as the base', () => {
+    assert.deepEqual(resolveBase({ MIGRATION_BASE_REF: 'abc123', CI: 'true' }, mergeBaseIs('def456')), { ref: 'abc123', alsoKnown: null });
+  });
+
+  it('takes HEAD^1 in CI, the base tip a pull request build is merged onto', () => {
+    assert.deepEqual(resolveBase({ CI: 'true' }, mergeBaseIs('def456')), { ref: 'HEAD^1', alsoKnown: null });
+  });
+
+  it('takes the merge-base with origin/main locally, counting origin/main\'s migrations as the base\'s too', () => {
+    assert.deepEqual(resolveBase({}, mergeBaseIs('def456')), { ref: 'def456', alsoKnown: 'origin/main' });
+  });
+
+  it('resolves no base locally when no merge-base with origin/main resolves', () => {
+    assert.equal(resolveBase({}, () => null), null);
   });
 });

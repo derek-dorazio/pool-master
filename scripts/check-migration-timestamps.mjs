@@ -95,14 +95,19 @@ function migrationsInWorkingTree() {
   );
 }
 
-function resolveBase() {
-  if (process.env.MIGRATION_BASE_REF) {
-    return { ref: process.env.MIGRATION_BASE_REF, alsoKnown: null };
+/**
+ * The base the added migrations are measured against, and a ref whose migrations also count as
+ * the base's (see WHAT "ADDED" IS MEASURED AGAINST), or null when no merge-base with
+ * `origin/main` resolves. `mergeBaseWith` answers `git merge-base HEAD <ref>`, or null.
+ */
+export function resolveBase(env = process.env, mergeBaseWith = (ref) => git(['merge-base', 'HEAD', ref])) {
+  if (env.MIGRATION_BASE_REF) {
+    return { ref: env.MIGRATION_BASE_REF, alsoKnown: null };
   }
-  if (process.env.CI) {
+  if (env.CI) {
     return { ref: 'HEAD^1', alsoKnown: null };
   }
-  const mergeBase = git(['merge-base', 'HEAD', 'origin/main']);
+  const mergeBase = mergeBaseWith('origin/main');
   return mergeBase ? { ref: mergeBase, alsoKnown: 'origin/main' } : null;
 }
 
