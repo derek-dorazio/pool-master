@@ -1,5 +1,5 @@
 import type { SquaresBoardResponse, SquaresBoxDto } from '@/lib/api';
-import { Button, cn, SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell } from '@/features/shared/ui';
+import { Button, cn, SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell, Text } from '@/features/shared/ui';
 import {
   SQUARES_POSITIONS,
   boxesByPlace,
@@ -38,14 +38,16 @@ export function SquaresGrid({
 
   return (
     <div className="space-y-2" data-testid="squares-grid">
-      <div className="pl-16 text-center text-sm font-semibold" data-testid="squares-home-team">{homeTeam}</div>
+      <Text as="div" className="pl-16 text-center" data-testid="squares-home-team" weight="semibold">{homeTeam}</Text>
       <div className="flex">
-        <div
-          className="flex w-6 shrink-0 items-center justify-center text-sm font-semibold [writing-mode:vertical-rl] rotate-180"
+        <Text
+          as="div"
+          className="flex w-6 shrink-0 items-center justify-center [writing-mode:vertical-rl] rotate-180"
           data-testid="squares-away-team"
+          weight="semibold"
         >
           {awayTeam}
-        </div>
+        </Text>
         <div className="min-w-0 flex-1 overflow-x-auto" data-testid="squares-grid-scroll">
           <SimpleTable className="w-auto border-separate border-spacing-0.5 text-xs">
             <caption className="sr-only">{`${awayTeam} rows, ${homeTeam} columns`}</caption>

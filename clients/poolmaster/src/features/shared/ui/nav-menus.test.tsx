@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { resizeAll } from "@/test/resize-observer";
 import { installScrollRowLayout } from "@/test/scroll-row-layout";
-import { AdminAreaLayout, LeagueMenu, type NavMenuItem } from "./nav-menus";
+import { AdminAreaLayout, LeagueMenu, type NavMenuItem, ToolsArea } from "./nav-menus";
 
 const leagueItems: NavMenuItem[] = [
   { isActive: true, label: "Home", testId: "menu-home", to: "/leagues/l1" },
@@ -178,5 +178,50 @@ describe("AdminAreaLayout", () => {
     renderLayout();
 
     expect(screen.getByText("Members page body")).toBeInTheDocument();
+  });
+});
+
+describe("ToolsArea", () => {
+  function renderArea() {
+    render(
+      <MemoryRouter>
+        <ToolsArea
+          back={{ label: "Back to league", testId: "tools-back", to: "/leagues/l1" }}
+          eyebrow="Commissioner tools"
+          tabs={[
+            { isActive: false, label: "Settings", testId: "tools-settings", to: "/leagues/l1/admin" },
+            { isActive: true, label: "Members", testId: "tools-members", to: "/leagues/l1/admin/teams" },
+          ]}
+          tabsLabel="Commissioner tools"
+          testId="tools"
+          title="Saturday Golf League"
+        >
+          <p>Members page body</p>
+        </ToolsArea>
+      </MemoryRouter>,
+    );
+  }
+
+  it("names the area in gold and what it acts on in one slim band, with a plain link back", () => {
+    renderArea();
+
+    const band = screen.getByTestId("tools-band");
+    expect(within(band).getByText("Commissioner tools")).toHaveClass("text-primary");
+    expect(within(band).getByText("Saturday Golf League")).toBeVisible();
+    expect(within(band).getByRole("link", { name: "Back to league" })).toHaveAttribute("href", "/leagues/l1");
+  });
+
+  it("shows the tools as one row of tab links, marking only the open tool as the current page", () => {
+    renderArea();
+
+    const tabs = screen.getByRole("navigation", { name: "Commissioner tools" });
+    expect(within(tabs).getByRole("link", { name: "Settings" })).not.toHaveAttribute("aria-current");
+    expect(within(tabs).getByRole("link", { name: "Members" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the page below the band and tabs", () => {
+    renderArea();
+
+    expect(screen.getByText("Members page body")).toBeVisible();
   });
 });

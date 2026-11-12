@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
+import { Text } from '@/features/shared/ui';
 
 /** The columns every contest leaderboard shares (#1277), each test id under the board's prefix. */
 
@@ -29,9 +30,9 @@ export function placeColumn<Row extends BoardRow>(testIdPrefix: string): ColumnD
     header: 'Place',
     accessorFn: (row) => row.position ?? row.displayPosition,
     cell: ({ row }) => (
-      <span className="font-semibold" data-testid={`${testIdPrefix}-place-${row.original.entryId}`}>
+      <Text data-testid={`${testIdPrefix}-place-${row.original.entryId}`} size="inherit" weight="semibold">
         {row.original.displayPosition ?? '—'}
-      </span>
+      </Text>
     ),
   };
 }
@@ -55,13 +56,15 @@ export function entryColumn<Row extends BoardRow>(
     accessorFn: (row) => [row.entryName, row.squadName].filter(Boolean).join(' '),
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-2">
-        <Link
-          className="font-medium text-foreground hover:underline"
-          data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
-          to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-        >
-          {row.original.entryName}
-        </Link>
+        <Text asChild size="inherit" variant="strong">
+          <Link
+            className="hover:underline"
+            data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
+            to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
+          >
+            {row.original.entryName}
+          </Link>
+        </Text>
         {row.original.squadId ? (
           <EntryDetailsPeek
             className="-my-2"

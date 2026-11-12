@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -10,9 +10,9 @@ import { EditChampionshipSettingsPage } from '@/features/championships/edit-cham
 import { LeaguePlanEditRedirect, LeaguePlanPage } from '@/features/plans/league-plan-page';
 import { buildPlanEntitlements, buildPlanListResponse } from '@/features/plans/test/fixtures';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
+import { LegacyEditLeagueRedirect } from '@/routes/legacy-redirects';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
 import { EditEventEmailsPage } from './edit-event-emails-page';
-import { EditLeaguePage } from './edit-league-page';
 import { LeagueSettingsPage } from './league-settings-page';
 import {
   activateLeagueData,
@@ -68,18 +68,32 @@ bindApiMocks({
   updateLeaguePlan: updateLeaguePlanMock,
 });
 
-function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
+/** The browser's Back button and address bar, which a MemoryRouter has none of. */
+function HistoryProbe() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <>
+      <button data-testid="history-back" onClick={() => void navigate(-1)} type="button" />
+      <span data-testid="history-location">{`${location.pathname}${location.search}`}</span>
+    </>
+  );
+}
+
+function renderCommissionerTools(path: string | string[] = '/league/BIGDAWGS/admin') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const entries = Array.isArray(path) ? path : [path];
   const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MemoryRouter initialEntries={[path]}>
+        <MemoryRouter initialEntries={entries} initialIndex={entries.length - 1}>
+          <HistoryProbe />
           <Routes>
             <Route element={<MemberRouteGuard />}>
               <Route element={<CommissionerRouteGuard />} path="/league/:leagueCode/admin">
                 <Route element={<CommissionerToolsLayout />}>
                   <Route element={<LeagueSettingsPage />} index />
-                  <Route element={<EditLeaguePage />} path="edit" />
+                  <Route element={<LegacyEditLeagueRedirect />} path="edit" />
                   <Route element={<EditChampionshipSettingsPage />} path="championships/edit" />
                   <Route element={<EditEventEmailsPage />} path="event-emails/edit" />
                   <Route element={<LeaguePlanPage />} path="plan" />
@@ -183,6 +197,19 @@ describe('Commissioner tools guard', () => {
     expect(screen.getByRole('link', { name: 'Back to league' })).toHaveAttribute('href', '/league/BIGDAWGS');
   });
 
+  it('opens League settings with one page heading and a fact line of its plan, members and start date', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'League settings' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    const meta = screen.getByTestId('league-settings-header-meta');
+    expect(meta).toHaveTextContent(/plan/);
+    expect(await within(meta).findByText('2 members')).toBeInTheDocument();
+    expect(meta).toHaveTextContent(/^.*Created /);
+  });
+
   it('opens Contest types inside Commissioner tools with Contests lit, since it sits beside Create contest', async () => {
     primeMocks();
 
@@ -225,7 +252,7 @@ describe('League settings', () => {
     expect(general.getByText('BIGDAWGS')).toBeInTheDocument();
     expect(await general.findByText('Casey Commissioner')).toBeInTheDocument();
     expect(general.queryByText('Morgan Member')).not.toBeInTheDocument();
-    expect(general.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/edit');
+    expect(general.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin?edit=general');
   });
 
   it('names every active commissioner from the league memberships, team or no team, without reading the league\'s teams', async () => {
@@ -391,15 +418,15 @@ describe('League settings', () => {
   });
 });
 
-describe('Edit league', () => {
-  it('saves name, description and icon in one request and returns to League settings', async () => {
+describe('Edit league dialog', () => {
+  it('saves name, description and icon in one request, closes the dialog and shows them on League settings', async () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
       name: 'Bigger Dawgs',
       description: 'Updated description',
       iconKey: 'GOLF_FLAG',
     }))));
-    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
     queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([buildLeague()]));
 
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
@@ -413,7 +440,8 @@ describe('Edit league', () => {
     }))));
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
 
-    const general = within(await screen.findByTestId('league-settings-general'));
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+    const general = within(screen.getByTestId('league-settings-general'));
     expect(await general.findByText('Bigger Dawgs')).toBeInTheDocument();
     expect(updateLeagueDetailsMock).toHaveBeenCalledTimes(1);
     expect(updateLeagueDetailsMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -426,16 +454,92 @@ describe('Edit league', () => {
     });
   });
 
-  it('sends the current icon unchanged when only the name changes', async () => {
+  it('confirms a save with a League saved toast that stays after the dialog closes', async () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ name: 'Bigger Dawgs' }))));
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
 
-    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+    expect(await screen.findByText('League saved')).toBeInTheDocument();
+  });
+
+  it('steps Back over the entry the Edit link pushed when the dialog closes, so one Back then leaves League settings', async () => {
+    primeMocks();
+
+    renderCommissionerTools(['/league/BIGDAWGS', '/league/BIGDAWGS/admin']);
+
+    fireEvent.click(await screen.findByTestId('league-settings-edit'));
+    expect(await screen.findByRole('dialog', { name: 'Edit league' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('history-location')).toHaveTextContent(/^\/league\/BIGDAWGS\/admin$/);
+    fireEvent.click(screen.getByTestId('history-back'));
+    expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
+  });
+
+  it('drops the edit query in place when the dialog was opened by a link, leaving the page before it one Back away', async () => {
+    primeMocks();
+
+    renderCommissionerTools(['/league/BIGDAWGS', '/league/BIGDAWGS/admin?edit=general']);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('history-location')).toHaveTextContent(/^\/league\/BIGDAWGS\/admin$/);
+    fireEvent.click(screen.getByTestId('history-back'));
+    expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
+  });
+
+  it('opens clean after a failed save is cancelled, without the old failure reason', async () => {
+    primeMocks();
+    updateLeagueDetailsMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Save unavailable' } },
+    });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin');
+
+    fireEvent.click(await screen.findByTestId('league-settings-edit'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save league' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save unavailable');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('league-settings-edit'));
+
+    expect(await screen.findByRole('dialog', { name: 'Edit league' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('clears a failed save\'s reason as soon as the commissioner types again', async () => {
+    primeMocks();
+    updateLeagueDetailsMock.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Save unavailable' } },
+    });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save league' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save unavailable');
+    fireEvent.change(screen.getByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
+
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  it('sends the current icon unchanged when only the name changes', async () => {
+    primeMocks();
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ name: 'Bigger Dawgs' }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
+
+    fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
+
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
     expect(updateLeagueDetailsMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { name: 'Bigger Dawgs', description: 'A test league', iconKey: 'TROPHY' },
     }));
@@ -445,7 +549,7 @@ describe('Edit league', () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ description: null }))));
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.change(await screen.findByLabelText(/Description/), { target: { value: '   ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
@@ -458,7 +562,7 @@ describe('Edit league', () => {
   it('blocks saving a blank name and says why next to the field', async () => {
     primeMocks();
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: '  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
@@ -467,13 +571,13 @@ describe('Edit league', () => {
     expect(updateLeagueDetailsMock).not.toHaveBeenCalled();
   });
 
-  it('stays on the form with the reason when saving fails', async () => {
+  it('keeps the dialog open with the reason when saving fails', async () => {
     primeMocks();
     updateLeagueDetailsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Save unavailable' } },
     });
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
@@ -484,7 +588,7 @@ describe('Edit league', () => {
 
   it('keeps what the commissioner typed when the league is read again in the background', async () => {
     primeMocks();
-    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Unsaved name' } });
     getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeague({ name: 'Server name' }))));
@@ -499,33 +603,35 @@ describe('Edit league', () => {
     expect(screen.getByLabelText('League name')).toHaveValue('Unsaved name');
   });
 
-  it('shows the league code as read-only, because it is permanent', async () => {
+  it('opens the dialog on League settings from an old Edit league link', async () => {
     primeMocks();
 
     renderCommissionerTools('/league/BIGDAWGS/admin/edit');
 
-    expect(await screen.findByLabelText(/League code/)).toHaveAttribute('readonly');
-    expect(screen.getByLabelText(/League code/)).toHaveValue('BIGDAWGS');
+    expect(await screen.findByRole('dialog', { name: 'Edit league' })).toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-page')).toBeInTheDocument();
+    expect(screen.getByLabelText('League name')).toHaveValue('Big Dawgs');
   });
 
-  it('sends a commissioner who opens Edit league on an inactive league back to the read-only settings', async () => {
+  it('never opens Edit league on an inactive league, which stays read-only', async () => {
     primeMocks({ isActive: false });
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
     expect(screen.getByTestId('league-inactive-banner')).toBeInTheDocument();
-    expect(screen.queryByTestId('edit-league-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument();
   });
 
-  it('Cancel goes back to League settings without saving', async () => {
+  it('Cancel closes the dialog without saving', async () => {
     primeMocks();
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
-    fireEvent.click(await screen.findByRole('link', { name: 'Cancel' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
 
-    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('league-settings-page')).toBeInTheDocument();
     expect(updateLeagueDetailsMock).not.toHaveBeenCalled();
   });
 });

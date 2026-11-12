@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
   Notice,
   formatDateDisplay,
+  PageHeader,
   IconAvatar,
   LinkButton,
   LOADING_TEXT,
@@ -34,12 +35,16 @@ import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/p
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
+  isLeagueSettingsEditOpenedInApp,
+  LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE,
+  LEAGUE_SETTINGS_EDIT_PARAM,
   buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanPath,
   buildLeagueAdminTeamsPath,
 } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
+import { EditLeagueDialog } from './edit-league-dialog';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
@@ -55,6 +60,9 @@ export function LeagueSettingsPage() {
   const { members } = useLeagueMembersQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
   const { isRootAdmin } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // A commissioner is a membership role, and the membership carries the member (#1202).
   const commissionerNames = useMemo(() => {
@@ -64,15 +72,46 @@ export function LeagueSettingsPage() {
     return [...new Set(names)].sort((left, right) => left.localeCompare(right));
   }, [members]);
 
+  const activeMemberCount = members
+    ? members.filter((member) => member.status === LeagueMembershipStatus.ACTIVE).length
+    : null;
+
   // The guard above this page has already loaded the league context.
   if (!league) {
     return null;
   }
 
   const isInactive = !league.isActive;
+  // An inactive league is read-only, so its Edit never opens, even from an old link.
+  const isEditingGeneral = !isInactive && searchParams.get(LEAGUE_SETTINGS_EDIT_PARAM) === 'general';
+  const closeGeneralEdit = () => {
+    // Opened by the Edit link: step back over the entry it pushed. Opened by an old link or a
+    // reload: there is nothing behind it to return to, so drop the query in place.
+    if (isLeagueSettingsEditOpenedInApp(location.state)) {
+      void navigate(-1);
+      return;
+    }
+    setSearchParams((params) => {
+      params.delete(LEAGUE_SETTINGS_EDIT_PARAM);
+      return params;
+    }, { replace: true });
+  };
 
   return (
     <div className="space-y-8" data-testid="league-settings-page">
+      <PageHeader
+        meta={(
+          <>
+            <span>{`${LEAGUE_PLAN_LABEL[league.planEntitlements.plan]} plan`}</span>
+            {activeMemberCount === null ? null : (
+              <span>{`${activeMemberCount} ${activeMemberCount === 1 ? 'member' : 'members'}`}</span>
+            )}
+            <span>{`Created ${formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')}`}</span>
+          </>
+        )}
+        testId="league-settings-header"
+        title="League settings"
+      />
       {isInactive ? (
         <Notice data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
           Members can still see standings and history. Activate the league in the danger zone to
@@ -86,6 +125,7 @@ export function LeagueSettingsPage() {
             data-testid="league-settings-edit"
             isDisabled={isInactive}
             size="sm"
+            state={LEAGUE_SETTINGS_EDIT_OPENED_IN_APP_STATE}
             to={buildLeagueAdminEditPath(league.leagueCode)}
             variant="secondary"
           >
@@ -119,7 +159,6 @@ export function LeagueSettingsPage() {
             label="League code"
             value={<span className="font-mono">{league.leagueCode}</span>}
           />
-          <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')} />
           <SettingsRow
             action={(
               <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
@@ -268,6 +307,8 @@ export function LeagueSettingsPage() {
       <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />
 
       <LeagueDangerZone league={league} />
+
+      <EditLeagueDialog league={league} onClose={closeGeneralEdit} open={isEditingGeneral} />
     </div>
   );
 }

@@ -252,11 +252,15 @@ administration area (root admin included), reusing the same shared components.
    Contests, Championships, the viewer's own squad by its
    name — **Yours** until they have one — and Members; `LeagueMenu`). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
-   app bar. An administration area has its own header with a way back and a side
-   menu (`AdminAreaLayout`) instead of the league menu. Each of its pages has one
-   heading: the area titles the page, or an entity's landing page shows its
-   `PageHeader` with the entity's icon. A page never adds a second header or "Back to" link of its
-   own; the trail leads back up.
+   app bar. An administration area replaces the league menu with its own frame.
+   Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
+   league and the way back, then its tools as one row of `PageTabs` on every
+   width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
+   root admin area, still has its header and side menu (`AdminAreaLayout`) until
+   it moves to the same frame. Each page in an area opens with one `PageHeader`
+   (a `FormPage` brings its own); an entity's landing page shows the entity's
+   icon in it. A page never adds a second header or "Back to" link of its own;
+   the trail leads back up.
 3. **Compact identity, once.** An entity's icon, name and facts appear once, in
    its landing page's `PageHeader`. No page repeats them as an editable detail
    panel, and a code the viewer cannot use (a league code, which members never
@@ -270,12 +274,15 @@ administration area (root admin included), reusing the same shared components.
    A page's views are underlined `PageTabs` on the header's bottom line, with a
    filter that applies to every tab alone at the row's right end. Title, facts
    and tabs fit in about 100px on a desktop and 120px on a phone.
-4. **Full pages, not dialogs.** Editing and managing are full pages with their
-   own route, so Back and links work (`FormPage`). Dialogs are only for
-   confirming a destructive or irreversible action: inactivate, delete, leave,
+4. **Small edits in a dialog, bigger ones on a page.** An edit of up to three
+   simple fields with no sub-sections opens a dialog (`FormModal`) over the page
+   it edits, opened by a query parameter so Back and links still work; a save
+   closes it and confirms with a toast, never a success box. Anything
+   bigger is a full page with its own route (`FormPage`). Other dialogs only
+   confirm a destructive or irreversible action: inactivate, delete, leave,
    remove.
 5. **One edit for all properties.** An entity's editable properties are edited
-   together on one form page with one Save, never a dialog per property.
+   together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
    bottom of the settings page (a `SectionCard` with `tone="danger"` holding
    `DangerZoneAction`s), each with a confirm step, never beside everyday

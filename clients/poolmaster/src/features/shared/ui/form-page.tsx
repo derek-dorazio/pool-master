@@ -2,9 +2,8 @@ import type { ReactNode, SubmitEventHandler } from "react";
 import { Notice } from "./notice";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
-import { Heading } from "./heading";
 import { HelpTip } from "./help-tip";
-import { Text } from "./text";
+import { PageHeader } from "./page-header";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
@@ -22,12 +21,13 @@ type FormPageProps = {
   submitLabel: string;
   submitTestId?: string;
   testId?: string;
-  title: ReactNode;
+  title: string;
 };
 
 /**
- * A full-page edit: a heading, the fields, and one Cancel/Save footer. Every property the
- * entity lets you edit sits on the one form with one Save, rather than a dialog per property.
+ * A full-page edit: the page's `PageHeader`, the fields, and one Cancel/Save footer. Every
+ * property the entity lets you edit sits on the one form with one Save. A root admin page that
+ * uses it claims the heading, so the Manage header shows only its breadcrumbs.
  */
 export function FormPage({
   cancelTo,
@@ -46,17 +46,15 @@ export function FormPage({
 }: FormPageProps) {
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
-      <div>
-        <div className="flex items-center">
-          <Heading level={2} variant="subtitle">{title}</Heading>
-          {help ? (
-            <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
-              {help}
-            </HelpTip>
-          ) : null}
-        </div>
-        {meta ? <Text as="p" variant="meta">{meta}</Text> : null}
-      </div>
+      <PageHeader
+        meta={meta}
+        title={title}
+        titleAside={help ? (
+          <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
+            {help}
+          </HelpTip>
+        ) : null}
+      />
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
       {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap justify-end gap-3">

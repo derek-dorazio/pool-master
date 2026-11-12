@@ -354,11 +354,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
                 onSelect={setSelectedIconKey}
                 optionTestIdPrefix="join-league-team-icon"
                 options={TEAM_ICON_OPTIONS}
-                renderOptionIcon={(icon) => (
-                  <div className="flex justify-center">
-                    <TeamAvatar iconKey={icon.key} />
-                  </div>
-                )}
+                renderOptionIcon={(icon) => <TeamAvatar iconKey={icon.key} />}
                 testId="join-league-icon-palette"
                 value={selectedIconKey}
               />

@@ -32,10 +32,10 @@ function renderFormPage(overrides: Partial<FormPageProps> = {}) {
 }
 
 describe("FormPage", () => {
-  it("shows its title as a heading and renders its fields", () => {
+  it("opens with the page header, its title the page heading, and renders its fields", () => {
     renderFormPage();
 
-    expect(screen.getByRole("heading", { level: 2, name: "Edit league" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Edit league" })).toBeInTheDocument();
     expect(screen.getByLabelText("League name")).toHaveValue("Saturday Golf League");
   });
 

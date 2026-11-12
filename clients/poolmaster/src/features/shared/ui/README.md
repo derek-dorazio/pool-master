@@ -94,6 +94,11 @@ send the version the draft came from and offer the newer one on a conflict.
 A dialog that is neither a form nor a confirmation, such as a menu action
 with its own buttons, is a plain `Modal`.
 
+Commissioner tools frames its pages with `ToolsArea`: a slim navy band naming
+the area, the league and the way back, then the tools as one row of link
+`PageTabs`. Manage keeps `AdminAreaLayout` until it moves to the same frame. A
+`FormPage` opens with its own `PageHeader`.
+
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
 straight on the page (never in a card) with an optional `titleAside` such as a
 `HelpTip`, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
@@ -119,7 +124,10 @@ its `searchTerm`.
 Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
 `variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
 are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
-`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. An icon
+`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place.
+The header's brand type is a `Text` too: `wordmark`, `nav` (its links), `displayLabel`
+(the "League" caption) and `display` (the league name), with the dark band's tones
+`onInverse` and `onInverseLabel`; `hoverTone` sets a link's hover colour. An icon
 is an `Icon` (`icon={Award} tone="muted"`), hidden from screen readers. Pages never
 type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
 Styling Discipline*).

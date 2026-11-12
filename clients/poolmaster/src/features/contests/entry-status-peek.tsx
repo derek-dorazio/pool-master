@@ -1,7 +1,7 @@
 import { CircleCheck, CircleDashed, EyeOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { DetailsPeek, formatDateTimeDisplay, PeekCard, useDisplayPreferences, type PeekFact } from '@/features/shared/ui';
+import { DetailsPeek, formatDateTimeDisplay, Icon, PeekCard, useDisplayPreferences, type PeekFact } from '@/features/shared/ui';
 import { CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
 
 const HIDDEN_STATUS_LABEL = 'Hidden until the event starts';
@@ -48,7 +48,7 @@ export function EntryStatusPeek({
 
   return (
     <DetailsPeek
-      icon={status ? STATUS_ICONS[status] : <EyeOff aria-hidden className="size-6 text-muted-foreground" />}
+      icon={status ? STATUS_ICONS[status] : <Icon icon={EyeOff} size={24} tone="muted" />}
       label={`Entry status: ${statusLabel}`}
       testId={STATUS_TEST_ID}
     >
