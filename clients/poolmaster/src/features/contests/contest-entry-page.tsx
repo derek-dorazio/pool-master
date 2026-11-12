@@ -602,7 +602,7 @@ function RosterContestEntryPage() {
       phase={getContestPhaseLabel(contest, isEditable)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
       status={picksHidden ? null : entryStatus}
-      statusFacts={[{ id: 'entries-close', label: 'Entries close', value: isEditable ? 'When the event starts' : 'Closed' }]}
+      statusFacts={[{ id: 'entries-close', label: 'Entries', value: isEditable ? 'Close when the event starts' : 'Closed' }]}
       title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
     >
 
