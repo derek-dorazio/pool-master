@@ -61,7 +61,9 @@ export function LeagueSettingsPage() {
   const leagueId = league?.id ?? '';
   const { members } = useLeagueMembersQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
-  const plansQuery = useLeaguePlansQuery();
+  // Only a locked section names a plan, so the plan list is read only when one shows.
+  const hasLockedSection = league !== undefined && (!hasPlanFeature(league, PlanFeature.CUP_SETTINGS) || !hasEventEmails(league));
+  const plansQuery = useLeaguePlansQuery({ enabled: hasLockedSection });
   const { isRootAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
@@ -75,9 +77,13 @@ export function LeagueSettingsPage() {
     return [...new Set(names)].sort((left, right) => left.localeCompare(right));
   }, [members]);
 
-  // A locked section names the lowest plan that unlocks it. Until the plans arrive, or if they
-  // can't be read, it says only that this plan leaves it out, which is true either way.
+  // A locked section names the lowest plan that unlocks it, holding a loading line until the
+  // plans arrive so it never changes its mind. If they can't be read, or no plan has it, it says
+  // only that this plan leaves it out.
   const includedWith = (features: readonly PlanFeature[]) => {
+    if (plansQuery.isPending) {
+      return LOADING_TEXT;
+    }
     const plan = plansQuery.data ? lowestPlanIncluding(plansQuery.data.plans, features) : null;
     return plan ? `Included with ${LEAGUE_PLAN_LABEL[plan]}.` : 'Not included in your league\'s plan.';
   };
