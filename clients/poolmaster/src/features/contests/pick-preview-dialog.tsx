@@ -13,7 +13,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { Button, ErrorState, HelpTip, LoadingState, Notice, ReadOnlyDetailModal } from '@/features/shared/ui';
 import { BracketBoard } from './bracket-board';
-import { buildBracketRounds } from './bracket-layout';
+import { buildBracketRounds, parseBracketTiebreaker } from './bracket-layout';
 import { getCompletionStats, getNextIncompleteGroupId } from './contest-entry-helpers';
 import { contestTieLabel } from './contest-sport';
 import { PickEmGames } from './pick-em-games';
@@ -73,7 +73,7 @@ function RosterPickPreview({
   sportEventId: string;
 }) {
   const [trialIds, setTrialIds] = useState<string[]>([]);
-  const [chosenGroupId, setExpandedGroupId] = useState<string | null | undefined>(undefined);
+  const [chosenGroupId, setChosenGroupId] = useState<string | null | undefined>(undefined);
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const request: RosterPickPreviewRequest = { sportEventId, rules, sportEventParticipantIds: trialIds };
   const previewQuery = useQuery({
@@ -105,7 +105,7 @@ function RosterPickPreview({
       isPreview
       lineupSummary={preview.lineupSummary}
       noun={noun}
-      onExpandGroup={setExpandedGroupId}
+      onExpandGroup={setChosenGroupId}
       onPick={({ participantId }) => {
         const group = selectionGroups.find((candidate) => candidate.participants
           .some((participant) => participant.sportEventParticipantId === participantId));
@@ -184,7 +184,11 @@ function GamePickPreview({
         tie={{ label: contestTieLabel(event.sport), onPick: (game) => setPicks(previewTiePick(week, game)) }}
         tiebreaker={{
           isSaving: false,
-          onChange: setTiebreakerText,
+          isTrial: true,
+          onChange: (text) => {
+            setTiebreakerText(text);
+            setTiebreakerValue(parseBracketTiebreaker(text));
+          },
           onSave: setTiebreakerValue,
           saveError: null,
           text: tiebreakerText,

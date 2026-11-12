@@ -46,6 +46,8 @@ export interface PickEmTie {
 /** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
 export interface PickEmTiebreaker {
   isSaving: boolean;
+  /** A preview's trial tiebreaker: typing is the whole of it, so there is no Save and nothing reads "saved". */
+  isTrial?: boolean;
   onChange: (text: string) => void;
   onSave: (value: number) => void;
   /** Why the last tiebreaker save was refused, or null. */
@@ -172,16 +174,18 @@ function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; ga
             value={tiebreaker.text}
           />
         </FormField>
-        <Button
-          data-testid="pick-em-tiebreaker-save"
-          disabled={parsed === null || isUnchanged || tiebreaker.isSaving}
-          type="submit"
-          variant="secondary"
-        >
-          {tiebreaker.isSaving ? 'Saving...' : 'Save tiebreaker'}
-        </Button>
+        {tiebreaker.isTrial ? null : (
+          <Button
+            data-testid="pick-em-tiebreaker-save"
+            disabled={parsed === null || isUnchanged || tiebreaker.isSaving}
+            type="submit"
+            variant="secondary"
+          >
+            {tiebreaker.isSaving ? 'Saving...' : 'Save tiebreaker'}
+          </Button>
+        )}
       </div>
-      {gamePicks.tiebreakerValue !== null ? (
+      {gamePicks.tiebreakerValue !== null && !tiebreaker.isTrial ? (
         <Text as="p" data-testid="pick-em-tiebreaker-saved" variant="meta">
           {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total points.`}
         </Text>

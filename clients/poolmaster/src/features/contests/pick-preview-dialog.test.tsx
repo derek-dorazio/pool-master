@@ -208,6 +208,26 @@ describe('Preview picks page', () => {
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
 
+  it('takes a pick\'em preview\'s tiebreaker as typed, with no Save button and nothing reading "saved"', async () => {
+    previewGamePicksMock.mockResolvedValue({ data: gamesPreview() });
+    renderAction({
+      configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false },
+      event: nflEvent,
+      participant: team,
+      selectionType: 'PICK_EM',
+      tierCount: 0,
+    });
+    openPreview();
+
+    const input = await screen.findByTestId('pick-em-tiebreaker-input');
+    expect(screen.queryByTestId('pick-em-tiebreaker-save')).not.toBeInTheDocument();
+    fireEvent.change(input, { target: { value: '47' } });
+
+    expect(screen.getByTestId('pick-em-tiebreaker-input')).toHaveValue(47);
+    expect(screen.queryByTestId('pick-em-tiebreaker-saved')).not.toBeInTheDocument();
+    expect(saveGamePicksMock).not.toHaveBeenCalled();
+  });
+
   it('draws a bracket setup on the bracket board from its starting round', async () => {
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sl-nfl', name: 'NFL', roundNames: [] } } });
     previewGamePicksMock.mockResolvedValue({ data: gamesPreview({ selectionType: 'BRACKET', mode: null, againstTheSpread: false }) });
