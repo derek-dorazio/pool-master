@@ -51,6 +51,11 @@ export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeagu
   ncaaw: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
   // A period runs about 35 minutes plus an 18-minute intermission; playoff overtime runs longer.
   nhl: { sport: Sport.HOCKEY, eventIdPrefix: 'nhl-', gameEvents: GAME_EVENTS, quietAfterMinutes: 90 },
+  // Every inning ends a period if the vendor sends it per inning; if it does not, the only
+  // notifications are the start and the end, about three hours apart with extra innings.
+  mlb: { sport: Sport.BASEBALL, eventIdPrefix: 'mlb-', gameEvents: GAME_EVENTS, quietAfterMinutes: 210 },
+  // A quarter runs about 30 minutes, and the second plus halftime about 50.
+  wnba: { sport: Sport.BASKETBALL, eventIdPrefix: 'wnba-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
   // Halftime comes about 50 minutes in; the end about 65 after it, with the break.
   epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 90 },
   // As the EPL, and a knockout match adds extra time and penalties after the second half.

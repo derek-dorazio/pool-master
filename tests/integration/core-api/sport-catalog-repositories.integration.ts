@@ -133,6 +133,14 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'FIFAWC' });
   });
 
+  it('seeds golf\'s PGA TOUR sport league with the match keyword PGA TOUR, so its year import finds the provider\'s tournaments rather than refusing it', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.GOLF))?.id ?? '', 'PGA TOUR'))
+      .resolves.toMatchObject({ matchKeyword: 'PGA TOUR' });
+  });
+
   it('seeds basketball\'s NBA sport league with the match keyword NBA, so its year import finds the provider\'s NBA playoffs', async () => {
     const sports = new PrismaSportRepository(getAppPrisma());
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
@@ -158,13 +166,29 @@ describe('Sport and SportLeague repositories', () => {
     await expect(leagues.findBySportAndName(basketballId, 'NBA Conference Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Conference Finals' });
   });
 
+  it('seeds baseball\'s MLB sport league with the match keyword MLB', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.BASEBALL))?.id ?? '', 'MLB'))
+      .resolves.toMatchObject({ matchKeyword: 'MLB' });
+  });
+
+  it('seeds basketball\'s WNBA sport league with the match keyword WNBA', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+
+    await expect(leagues.findBySportAndName((await sports.findBySport(Sport.BASKETBALL))?.id ?? '', 'WNBA'))
+      .resolves.toMatchObject({ matchKeyword: 'WNBA' });
+  });
+
   it('seeds each series league\'s best-of lengths by round, first to final, and refuses an even length (#1545)', async () => {
     const lengthsOf = async (name: string) =>
       (await getPrisma().sportLeague.findFirstOrThrow({ where: { name }, select: { roundSeriesLengths: true } })).roundSeriesLengths;
 
     await expect(lengthsOf('NBA')).resolves.toEqual([7, 7, 7, 7]);
     await expect(lengthsOf('NHL')).resolves.toEqual([7, 7, 7, 7]);
-    await expect(lengthsOf('WNBA')).resolves.toEqual([3, 7, 7]);
+    await expect(lengthsOf('WNBA')).resolves.toEqual([3, 5, 7]);
     await expect(lengthsOf('MLB')).resolves.toEqual([3, 5, 7, 7]);
     await expect(lengthsOf('MLS')).resolves.toEqual([1, 3, 1, 1, 1]);
     await expect(lengthsOf('NFL')).resolves.toEqual([]);

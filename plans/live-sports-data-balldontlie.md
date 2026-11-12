@@ -54,7 +54,11 @@ The target:
      the first (`nba-2025-postseason`, one event a season); the four series leagues share one
      mapping and reader (`series-playoffs.ts`), each supplying only its own reads. The NHL's
      (`nhl-2025-postseason`, played in 2026) are four rounds of best-of-seven series, read
-     without box scores, so no NHL round is listed as an event until a Clutch Card needs one;
+     without box scores, so no NHL round is listed as an event until a Clutch Card needs one. MLB's
+     postseason (`mlb-2026-postseason`) runs from the best-of-three Wild Card Series to the World
+     Series, also without round events yet. The WNBA's
+     (`wnba-2026-postseason`) shares basketball with the NBA, whose keyword its name holds, so
+     the event picker matches a keyword in an event's name only as whole words;
    - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
      live-score category (#1497). The adapter numbers each game within the Clutch Card event
      (game N is round N, and each series' Game N shares it in a round of several series) and maps
@@ -157,7 +161,7 @@ Derek accepted every recommendation below on 2026-11-09.
   set, each BALLDONTLIE event polls every 15 minutes, golf every 2 minutes while a round is
   under way; a game or tournament ending queues a reconciling sync 10 minutes later; and an
   event in play with no notification for longer than its league's normal gap (a period or half
-  plus its break, 75 to 120 minutes; 6 hours for a golf round before its first finisher) logs a
+  plus its break, 75 to 120 minutes, MLB 210; 6 hours for a golf round before its first finisher) logs a
   warning that a CloudWatch alarm raises. A flat 20 minutes was dropped in review: a quarter
   alone runs longer. Start notifications also sync an event still `SCHEDULED` past its start, waiting six
   minutes for the lifecycle sweep, since a live score is only written to an event in progress.
