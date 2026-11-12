@@ -7,7 +7,20 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, Checkbox, ChoiceCard, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
+import {
+  Button,
+  Checkbox,
+  ChoiceCard,
+  ChoiceCardText,
+  FormPage,
+  FormSection,
+  QueryState,
+  SectionCard,
+  SectionRow,
+  SectionRows,
+  formatNumber,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import {
   EVENT_EMAIL_DELIVERIES,
   EVENT_EMAIL_DELIVERY_COPY,
@@ -44,28 +57,27 @@ export function EditEventEmailsPage() {
   if (!hasEventEmails(league)) {
     return <PlanLockedNotice feature={EVENT_EMAIL_FEATURES[0]} isCommissioner={viewer.isCommissioner} leagueCode={league.leagueCode} title="Event emails" />;
   }
-  if (sportLeaguesQuery.isLoading) {
-    return <LoadingState testId="edit-event-emails-loading" />;
-  }
-  if (sportLeaguesQuery.isError) {
-    return (
-      <ErrorState
-        body={extractErrorMessage(sportLeaguesQuery.error, { fallback: 'We could not load the sport leagues.' })}
-        onRetry={() => void sportLeaguesQuery.refetch()}
-        testId="edit-event-emails-error"
-        title="Sport leagues unavailable"
-      />
-    );
-  }
-
   // Keyed by the league so a background refetch never overwrites the draft
-  // (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
-  return <EventEmailsForm key={league.id} league={league} sports={sports} />;
+  // (rules/react-ui-rules.md §5 Server Data Form-State Hazard). Nothing to save until the sport
+  // leagues are in.
+  return (
+    <QueryState
+      empty="There are no sport leagues to hear about yet."
+      error={extractErrorMessage(sportLeaguesQuery.error, { fallback: 'We could not load the sport leagues.' })}
+      isEmpty={(sportLeagues) => sportLeagues.length === 0}
+      loading="Loading sport leagues..."
+      query={sportLeaguesQuery}
+      testId="edit-event-emails"
+    >
+      {() => <EventEmailsForm key={league.id} league={league} sports={sports} />}
+    </QueryState>
+  );
 }
 
 function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventEmailSport[] }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { locale } = useDisplayPreferences();
   const settingsPath = buildLeagueAdminPath(league.leagueCode);
   // Muted ids of sport leagues not listed (no longer active) stay muted: the save sends them back.
   const [muted, setMuted] = useState(() => new Set(league.mutedSportLeagueIds));
@@ -124,8 +136,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
       title="Edit event emails"
     >
       {offersDigest ? (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-foreground">How you get them</legend>
+        <FormSection testId="edit-event-emails-delivery" title="How you get them">
           <div aria-label="How you get them" className="grid gap-2" role="radiogroup">
             {EVENT_EMAIL_DELIVERIES.map((option) => (
               <ChoiceCard
@@ -135,62 +146,73 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
                 onSelect={() => setDelivery(option)}
                 testId={`edit-event-emails-delivery-${option}`}
               >
-                <span className="min-w-0 flex-1">
-                  <span className="font-semibold">{EVENT_EMAIL_DELIVERY_COPY[option].label}</span>
-                  <span className="block text-xs text-muted-foreground">{EVENT_EMAIL_DELIVERY_COPY[option].description}</span>
-                </span>
+                <ChoiceCardText description={EVENT_EMAIL_DELIVERY_COPY[option].description} label={EVENT_EMAIL_DELIVERY_COPY[option].label} />
               </ChoiceCard>
             ))}
           </div>
-        </fieldset>
+        </FormSection>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        <Button data-testid="edit-event-emails-all" disabled={isPending} onClick={() => setHeard(allIds, true)} size="sm" type="button" variant="secondary">
-          Select all
-        </Button>
-        <Button data-testid="edit-event-emails-none" disabled={isPending} onClick={() => setHeard(allIds, false)} size="sm" type="button" variant="secondary">
-          Clear all
-        </Button>
-      </div>
+      <FormSection
+        help="Sport leagues added later are included until you clear them. Each commissioner can also turn off Commissioner updates for themselves in their email settings."
+        testId="edit-event-emails-leagues"
+        title="Sport leagues"
+      >
+        <div className="flex flex-wrap gap-2">
+          <Button data-testid="edit-event-emails-all" disabled={isPending} onClick={() => setHeard(allIds, true)} size="sm" type="button" variant="secondary">
+            Select all
+          </Button>
+          <Button data-testid="edit-event-emails-none" disabled={isPending} onClick={() => setHeard(allIds, false)} size="sm" type="button" variant="secondary">
+            Clear all
+          </Button>
+        </div>
 
-      {sports.map((sport) => {
-        const ids = sport.sportLeagues.map((sportLeague) => sportLeague.id);
-        const heardCount = ids.filter((id) => !muted.has(id)).length;
-        return (
-          <fieldset className="space-y-2" data-testid={`edit-event-emails-sport-${sport.sport}`} key={sport.sport}>
-            <legend className="sr-only">{sport.name}</legend>
-            <label className="flex items-center gap-3">
-              <Checkbox
-                checked={heardCount === ids.length}
-                data-testid={`edit-event-emails-sport-${sport.sport}-all`}
-                disabled={isPending}
-                indeterminate={heardCount > 0 && heardCount < ids.length}
-                onChange={(event) => setHeard(ids, event.target.checked)}
-              />
-              <span className="text-sm font-semibold text-foreground">{sport.name}</span>
-            </label>
-            <div className="grid gap-2 pl-7 sm:grid-cols-2">
-              {sport.sportLeagues.map((sportLeague) => (
-                <label className="flex items-center gap-3 text-sm text-foreground" key={sportLeague.id}>
+        {sports.map((sport) => {
+          const ids = sport.sportLeagues.map((sportLeague) => sportLeague.id);
+          const heardCount = ids.filter((id) => !muted.has(id)).length;
+          return (
+            <SectionCard
+              headingLevel={4}
+              key={sport.sport}
+              testId={`edit-event-emails-sport-${sport.sport}`}
+              title={sport.name}
+              trailing={(
+                <>
+                  <span data-testid={`edit-event-emails-sport-${sport.sport}-count`}>{`${formatNumber(heardCount, locale)} chosen`}</span>
                   <Checkbox
-                    checked={!muted.has(sportLeague.id)}
-                    data-testid={`edit-event-emails-league-${sportLeague.id}`}
+                    aria-label={`All ${sport.name}`}
+                    checked={heardCount === ids.length}
+                    data-testid={`edit-event-emails-sport-${sport.sport}-all`}
                     disabled={isPending}
-                    onChange={(event) => setHeard([sportLeague.id], event.target.checked)}
+                    indeterminate={heardCount > 0 && heardCount < ids.length}
+                    onChange={(event) => setHeard(ids, event.target.checked)}
                   />
-                  {sportLeague.name}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        );
-      })}
-
-      <p className="text-xs text-muted-foreground">
-        Sport leagues added later are included until you clear them. Each commissioner can also turn off
-        Commissioner updates for themselves in their email settings.
-      </p>
+                </>
+              )}
+            >
+              <SectionRows>
+                {sport.sportLeagues.map((sportLeague) => (
+                  <SectionRow
+                    control={(
+                      <Checkbox
+                        aria-label={sportLeague.name}
+                        checked={!muted.has(sportLeague.id)}
+                        data-testid={`edit-event-emails-league-${sportLeague.id}`}
+                        disabled={isPending}
+                        onChange={(event) => setHeard([sportLeague.id], event.target.checked)}
+                      />
+                    )}
+                    isSelected={!muted.has(sportLeague.id)}
+                    key={sportLeague.id}
+                    name={sportLeague.name}
+                    testId={`edit-event-emails-row-${sportLeague.id}`}
+                  />
+                ))}
+              </SectionRows>
+            </SectionCard>
+          );
+        })}
+      </FormSection>
     </FormPage>
   );
 }

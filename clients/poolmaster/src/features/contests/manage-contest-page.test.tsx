@@ -703,7 +703,7 @@ describe('Commissioner tools › Contests › one contest › Cup weight', () =>
 });
 
 describe('Commissioner tools › Contests › one contest › Edit', () => {
-  it('saves the name and rules together, then returns to the contest page', async () => {
+  it('saves the name and rules together, previewing what members will see as they change, then returns to the contest page', async () => {
     primeMocks({
       managedContest: buildManagedContest({
         configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 2, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
@@ -716,10 +716,14 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
 
     expect(await screen.findByTestId('contest-name')).toHaveValue('Masters One-and-Done');
     expect(screen.getByTestId('contest-max-entries')).toHaveValue(2);
-    expect(screen.getByText('The Masters', { exact: false })).toBeInTheDocument();
+    expect(screen.getByTestId('edit-contest-event')).toHaveTextContent('The Masters');
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters One-and-Done · The Masters');
+    const rulesBefore = screen.getByTestId('contest-members-will-see-rules').textContent;
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: 'Masters Best Four' } });
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '3' } });
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
+    expect(screen.getByTestId('contest-members-will-see-name')).toHaveTextContent('Masters Best Four · The Masters');
+    expect(screen.getByTestId('contest-members-will-see-rules')).not.toHaveTextContent(rulesBefore);
     fireEvent.click(screen.getByTestId('edit-contest-save'));
 
     await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(

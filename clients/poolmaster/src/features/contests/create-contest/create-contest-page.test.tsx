@@ -648,7 +648,8 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-format-PICK_EM'));
 
     expect(await screen.findByTestId('contest-pick-em-mode-STRAIGHT_UP')).toBeChecked();
-    expect(screen.getByTestId('create-contest-event')).toHaveTextContent('you add the rest of the season from its Events page');
+    fireEvent.click(screen.getByTestId('create-contest-event-help'));
+    expect(screen.getByTestId('create-contest-event-help-callout')).toHaveTextContent('you add the rest of the season from its Events page');
     expect(screen.queryByTestId('contest-scoring-round-values')).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('contest-pick-em-mode-CONFIDENCE'));
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Week 1 Pick’em'));
@@ -1358,7 +1359,8 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
     await waitFor(() => expect(screen.getByTestId('contest-template-horse-racing-tiered-pick-3')).toBeChecked());
     expect(screen.getByTestId('contest-scoring-points-table')).toHaveValue('5, 3, 1');
     expect(screen.getByTestId('contest-scoring-did-not-finish-points')).toHaveValue(0);
-    expect(screen.getByTestId('create-contest-event')).toHaveTextContent('Entries close at the post time.');
+    fireEvent.click(screen.getByTestId('create-contest-event-help'));
+    expect(screen.getByTestId('create-contest-event-help-callout')).toHaveTextContent('Entries close at the post time.');
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
       'Pick 1 horse from each of 3 tiers. Every score counts. Points by finishing place: 5, 3, 1. 1 entry per member.',
     );
