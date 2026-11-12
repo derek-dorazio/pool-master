@@ -15,6 +15,7 @@ import noAdHocMoreInfo from './no-ad-hoc-more-info.mjs';
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
 import noButtonRowOverride from './no-button-row-override.mjs';
+import noRawModal from './no-raw-modal.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from './no-env-fallbacks.mjs';
@@ -41,6 +42,7 @@ export default {
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
     'no-button-row-override': noButtonRowOverride,
+    'no-raw-modal': noRawModal,
     'no-disabled-tests': noDisabledTests,
     'no-hand-written-query-states': noHandWrittenQueryStates,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
