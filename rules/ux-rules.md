@@ -87,6 +87,17 @@ Use those conventions as the starting point, but bias toward a consumer app:
     the dialog stays open.
   - No description line under a dialog's title unless it says what will happen
     ("Sam Lee will no longer be an owner of Incubus").
+- **Settings sections: see it, then Edit** (#1597). A page of someone's settings
+  (My account; league settings as they move over) shows every setting as it
+  stands, never behind a dialog: a `SettingsSection` per group, its rows
+  `SettingsRow`s with the label left and the value right, and one Edit in the
+  title that opens the group's `FormModal`. A setting that takes effect the
+  moment it is flipped, such as an email notification, is a `Switch` in its row,
+  with no Save; a refused flip goes back and says why in a `Notice`. How a group
+  or a row works sits behind a (?) `HelpTip`, never as a sentence. Destructive
+  rows go in a `SettingsSection` with `tone="danger"`, last, each confirming
+  first. It is a grouped list of label/value rows, so it maps one to one onto a
+  native settings screen.
 - Do not overload compact selector rows with extra icons or multiple competing
   status indicators when space is tight.
 - In constrained navigation components, use subtle visual treatment for status:
@@ -313,9 +324,10 @@ administration area (root admin included), reusing the same shared components.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
    bottom of the settings page (a `SectionCard` with `tone="danger"` holding
    `DangerZoneAction`s), each with a confirm step, never beside everyday
-   actions. Settings themselves are shown as labelled rows (a `SectionCard`
-   holding `SettingsRows` of `SettingsRow`) with one Edit for the group, in the
-   title bar's trailing slot.
+   actions. Settings themselves are shown as labelled rows with one Edit for the
+   group, in the title bar's trailing slot: a `SettingsSection` (§3 *Settings
+   sections*), or, until a page moves over, a `SectionCard` holding
+   `SettingsRows` of `SettingsRow`.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
    the same `Pager`. A long ranked list also offers a way to jump to the

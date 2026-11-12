@@ -1,9 +1,7 @@
-import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
 import { Notice, Button, Heading, Input, StatusBadge, Text, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { type TeamMember, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
@@ -100,14 +98,8 @@ export function MyTeamOwnersPanel({
             >
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Text asChild size="inherit" variant="strong">
-                    <Link
-                      className="hover:underline"
-                      data-testid={`my-team-member-link-${member.userId}`}
-                      to={buildUserPath(member.userId)}
-                    >
-                      {formatUserName(member.user.firstName, member.user.lastName)}
-                    </Link>
+                  <Text data-testid={`my-team-member-name-${member.userId}`} size="inherit" variant="strong">
+                    {formatUserName(member.user.firstName, member.user.lastName)}
                   </Text>
                   <StatusBadge>Active owner</StatusBadge>
                   {member.leagueRole ? (

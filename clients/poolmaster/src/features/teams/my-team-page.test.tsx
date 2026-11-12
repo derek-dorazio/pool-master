@@ -812,7 +812,9 @@ describe('Another team\'s page', () => {
 
     expect(await screen.findByTestId('team-page-identity')).toHaveTextContent('Rival Squad');
     const owners = within(screen.getByTestId('team-page-owners'));
-    expect(owners.getByRole('link', { name: /Riley Rival/ })).toHaveAttribute('href', '/users/user-3');
+    // A member never sees another member's account, so an owner's name is not a link.
+    expect(owners.getByText('Riley Rival')).toBeInTheDocument();
+    expect(owners.queryByRole('link', { name: /Riley Rival/ })).not.toBeInTheDocument();
     expect(await owners.findByText('Commissioner')).toBeInTheDocument();
     expect(screen.queryByTestId('team-page-manage')).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
