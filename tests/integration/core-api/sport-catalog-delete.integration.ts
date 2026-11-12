@@ -112,7 +112,7 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     expect(await prisma.participantLeagueAffiliation.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
   });
 
-  it('DELETE a sport league counts its own events and cups by their sport league, never by grouping every row of those tables', async () => {
+  it('DELETE a sport league counts its own events, contest setups, event page offers and cups by their sport league, never by grouping every row of those tables', async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const sportLeagueId = await tourWithRoster(SMALL);
 
@@ -120,8 +120,8 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 
     expect(run.result.statusCode).toBe(204);
     // Prisma's relation `_count` groups the whole child table and joins the groups back: a read of
-    // every sport event in the catalog, and a plan the index check judges differently from run to run.
-    const wholeTableGroups = run.statements.filter(({ sql }) => /FROM "public"\."(?:sport_events|cups)" WHERE 1=1 GROUP BY/.test(sql));
+    // every sport event, setup, offer or cup, and a plan the index check judges differently from run to run.
+    const wholeTableGroups = run.statements.filter(({ sql }) => /FROM "public"\."(?:sport_events|contest_config_templates|event_page_offers|cups)" WHERE 1=1 GROUP BY/.test(sql));
     expect(wholeTableGroups.map(({ sql }) => sql)).toEqual([]);
   });
 
