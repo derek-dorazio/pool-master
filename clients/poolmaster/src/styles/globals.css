@@ -324,6 +324,22 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* A championship podium's steps (#1590): each place's surface and the colour of its numeral. */
+  .podium-step-1 {
+    background-color: var(--podium-1-surface);
+    color: var(--podium-1-text);
+  }
+
+  .podium-step-2 {
+    background-color: var(--podium-2-surface);
+    color: var(--podium-2-text);
+  }
+
+  .podium-step-3 {
+    background-color: var(--podium-3-surface);
+    color: var(--podium-3-text);
+  }
+
   .team-icon-theme-sunset {
     background-color: var(--team-icon-sunset-surface);
     color: var(--team-icon-sunset-text);

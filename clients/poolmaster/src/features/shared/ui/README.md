@@ -47,7 +47,9 @@ The shared UI layer is split into three levels:
 A value written on screen goes through `format.ts`, exported from the index:
 `formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
 ("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
-plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+plus the date formatters from `date-time-format.ts`. `DateDisplay` draws a date in the
+body colour; `tone="inherit"` takes the colour of the line around it, such as a row's
+muted fact line, so pages never pass it a colour class. Numbers take the viewer's
 locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
 `en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
 itself; `poolmaster/no-inline-display-format` enforces it
@@ -122,7 +124,8 @@ switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
 Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
-`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
+`variant` is `body`, `meta`, `caption`, `label`, `value`, `strong` or `numeral` (a big
+place figure in the display face, in the colour of what it sits on, such as a podium step), `tone`, `weight` and `size`
 are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
 `as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place.
 The header's brand type is a `Text` too: `wordmark`, `nav` (its links), `displayLabel`
@@ -138,13 +141,18 @@ A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
 badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
-as `value`, one badge or action as `aside`; `to` makes the whole row a link) or
+as `value`, one badge or action as `aside`; `to` makes the whole row a link, and
+`control` puts a checkbox at its start with the whole row as its label) or
 a `SectionEmpty` italic line; `padded` gives forms, charts or metric grids the
 card's padding (`SectionBody` is that padded block on its own, beside rows, and
 `SectionNote` a muted line about the data inside it). `bare` keeps the title and rule without the box, and
 `tone="danger"` is a danger zone. The parts own their type and colours: pass
 content, never text classes, and add a variant here for a new look. Don't
-hand-build a heading inside a `Tile`.
+hand-build a heading inside a `Tile`. A section inside another section's padded
+body titles itself one level down (`headingLevel={4}` under a level 3). Data is
+never a raw `ul`/`li`: rows are `SectionRow`s, and a list that is not rows is a
+named composite in its feature folder, such as `FeatureList` in `features/plans`
+for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13).
 
 A team's icon and name come from `features/teams`, not this folder, because they
 are a product piece: `TeamAvatar` draws the icon in its coloured square, and

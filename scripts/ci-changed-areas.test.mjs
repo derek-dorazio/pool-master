@@ -163,6 +163,13 @@ describe('ci-changed-areas: UI batch pull requests', () => {
     ]), []);
   });
 
+  it('accepts a sweep that lowers the titled-tile baseline, like the other rule baselines', () => {
+    assert.deepEqual(uiBatchViolations([
+      'clients/poolmaster/src/features/contests/squares-winners.tsx',
+      'scripts/titled-tile-baseline.json',
+    ]), []);
+  });
+
   it('refuses shared, service, test, script and dependency changes (the web app\'s package.json too), which need the full suites', () => {
     const refused = [
       'packages/shared/domain/brand.ts',

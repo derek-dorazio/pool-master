@@ -37,6 +37,14 @@ describe('Text', () => {
     expect(screen.getByText('-12')).toHaveClass('tabular-nums', 'font-medium', 'text-foreground');
   });
 
+  it('sets a place numeral large and heaviest in the display face, in the colour of what it sits on', () => {
+    render(<Text variant="numeral">1</Text>);
+
+    const numeral = screen.getByText('1');
+    expect(numeral).toHaveClass('font-display', 'font-black', 'text-xl');
+    expect(numeral.className).not.toMatch(/text-(foreground|muted)/);
+  });
+
   it('sets a leading name medium weight in the foreground colour', () => {
     render(<Text variant="strong">Birdie Hunters 2</Text>);
 

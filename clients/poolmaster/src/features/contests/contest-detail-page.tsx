@@ -288,11 +288,11 @@ export function ContestDetailPage() {
           {schedule ? (
             <span data-testid="contest-detail-schedule">
               <span data-testid="contest-detail-starts">
-                Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
+                Starts <DateDisplay tone="inherit" value={schedule.startsAt} />
               </span>
               {schedule.endsAt ? (
                 <span data-testid="contest-detail-ends">
-                  {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
+                  {' · '}Ends <DateDisplay tone="inherit" value={schedule.endsAt} />
                 </span>
               ) : null}
             </span>

@@ -1023,8 +1023,17 @@ describe('League plan', () => {
     const confirm = within(screen.getByTestId('league-plan-confirm'));
     expect(confirm.getByText('Move to Free?')).toBeInTheDocument();
     expect(confirm.getByTestId('league-plan-confirm-entries')).toHaveTextContent(
-      'Masters Tiers Pool has 34 entries.Open Draft has 25 entries.Derby Draw has 22 entries.And 1 more.On Free each keeps them all, but takes no new entries past 20.',
+      'On Free these contests keep their entries, but each takes no new entries past 20.',
     );
+    const overLimit = within(confirm.getByRole('region', { name: 'Over 20 entries' }));
+    expect(overLimit.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Masters Tiers Pool34 entries', 'Open Draft25 entries', 'Derby Draw22 entries',
+    ]);
+    expect(confirm.getByTestId('league-plan-confirm-contests-more')).toHaveTextContent('And 1 more.');
+    expect(confirm.getByTestId('league-plan-confirm-hidden')).toHaveTextContent('Hidden on Free');
+    // Why they are hidden, not lost, sits behind the label's (?), not on the page.
+    expect(confirm.queryByText('They come back as they were when you move up again.')).not.toBeInTheDocument();
+    expect(confirm.getByTestId('league-plan-confirm-hidden-help')).toBeInTheDocument();
     expect(confirm.getByTestId('league-plan-confirm-sport-leagues')).toHaveTextContent('This year\'s contests use 2 sports leagues: PGA Tour, NBA. Free allows 1 a year');
     expect(within(confirm.getByTestId('league-plan-confirm-hidden')).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['League championship']);
     expect(updateLeaguePlanMock).not.toHaveBeenCalled();

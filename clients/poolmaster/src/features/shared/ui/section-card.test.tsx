@@ -68,6 +68,12 @@ describe("SectionCard", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Contests" })).toHaveAttribute("data-testid", "card-title");
   });
 
+  it("titles a section nested inside another section with an h4", () => {
+    render(<SectionCard headingLevel={4} title="Over 20 entries">{null}</SectionCard>);
+
+    expect(screen.getByRole("heading", { level: 4, name: "Over 20 entries" })).toBeInTheDocument();
+  });
+
   it("wraps the body in the card's padding only when padded is set", () => {
     const { rerender } = render(<SectionCard testId="card" title="Rows"><p>Body</p></SectionCard>);
     expect(screen.queryByTestId("card-body")).not.toBeInTheDocument();
@@ -190,6 +196,22 @@ describe("SectionRow", () => {
     expect(screen.getByTestId("row")).toHaveClass("bg-primary/10");
     expect(scroll).not.toHaveBeenCalled();
     scroll.mockRestore();
+  });
+
+  it("leads with its checkbox and makes the whole row the checkbox's label, so a tap on the name toggles it", () => {
+    const onChange = vi.fn();
+    render(
+      <SectionRows>
+        <SectionRow control={<input onChange={onChange} type="checkbox" />} facts="Weekly" name="League digest" testId="row" />
+      </SectionRows>,
+    );
+
+    const row = screen.getByTestId("row");
+    expect(row.tagName).toBe("LABEL");
+    expect(row).toContainElement(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByText("League digest"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("checkbox", { name: /League digest/ })).toBeChecked();
   });
 
   it("leaves an ordinary row untinted, unmarked and without a figure", () => {
