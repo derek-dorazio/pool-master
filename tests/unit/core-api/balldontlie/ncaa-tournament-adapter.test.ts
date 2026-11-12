@@ -37,10 +37,13 @@ const defaultRoutes: Record<string, FakeRoute> = {
   '/ncaab/v1/teams': () => ({ body: readBalldontlieFixture('ncaab', 'teams.json') }),
   '/ncaaw/v1/bracket': bracketRoute(womensBrackets),
   '/ncaaw/v1/teams': () => ({ body: readBalldontlieFixture('ncaaw', 'teams.json') }),
+  // The basketball lists read the NBA too; nba-adapter.test.ts covers what it gives.
+  '/nba/v1/games': () => ({ body: { data: [], meta: { per_page: 100 } } }),
+  '/nba/v1/teams': () => ({ body: { data: [] } }),
 };
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: ['ncaab', 'ncaaw'], apiKey: API_KEY, routes });
+  const api = createFakeBalldontlie({ league: ['ncaab', 'ncaaw', 'nba'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let clock = now;
@@ -62,7 +65,8 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
   };
 }
 
-const requestLine = (api: FakeBalldontlie) => api.requests.map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
+/** The NCAA requests sent, leaving out the NBA reads the basketball lists also make. */
+const requestLine = (api: FakeBalldontlie) => api.requests.filter((request) => !request.path.startsWith('/nba/')).map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
 const seasonsRead = (api: FakeBalldontlie, league: string) => requestLine(api).filter((line) => line.startsWith(`/${league}/`)).map((line) => /season=(\d+)/.exec(line)?.[1]);
 
 describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {

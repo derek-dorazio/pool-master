@@ -10,7 +10,7 @@ starts until Derek says so.
 
 Today every real score on the site is entered by an admin or loaded from a data file. The
 only adapter behind the `SportDataProvider` port is the mock contest feed. Live golf has a
-scheduled poll (`ingestion-scheduler`), and the only live-score category is `GOLF`.
+scheduled poll (`ingestion-scheduler`), and the only live-score category was `GOLF`.
 
 The target:
 
@@ -47,8 +47,16 @@ The target:
      each round's length (`roundSeriesLengths`, the NBA's 7, 7, 7, 7), and each sync counts
      the final games between the series' two teams as wins, writing the wins so far as its
      live score and its result once a side has won more than half (#1545). A series league's
-     reader therefore hands over every game of the event on each sync;
-   - per-player box scores for Clutch Cards, through `StatLineService`.
+     reader therefore hands over every game of the event on each sync. The NBA's playoffs are
+     the first (`nba-2025-postseason`, one event a season); the four series leagues share one
+     mapping and reader (`series-playoffs.ts`), each supplying only its own reads;
+   - per-player box scores for Clutch Cards, through `StatLineService`, as the `STAT_LINE`
+     live-score category (#1497). The adapter numbers each game within the Clutch Card event
+     (game N is round N, and each series' Game N shares it in a round of several series) and maps
+     the vendor's stat fields to the stats the composites count. A star's line is found through
+     the star's provider mapping, made when the stars are loaded from the provider; a player who
+     is not a mapped star is left out. A live game's lines are stored in progress, and the sync
+     is authoritative over an admin's line correction.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,
    ignores events for nothing we have linked, and queues a background job (#1439 framework).

@@ -1,4 +1,4 @@
-import { ScoringFamily, Sport, SportStat } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, ScoringFamily, Sport, SportStat } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import { StatLineService } from '../../../packages/core-api/src/modules/scoring-families/composite/stat-line-service';
 import { expectDefined } from '../../support/expect-defined';
@@ -100,8 +100,9 @@ describe('StatLineService.applyGameLines — stores the game', () => {
     expect(store.statLineRows.map((row) => [row.stat, row.value])).toEqual([
       [SportStat.RUNS, 2], [SportStat.TOTAL_BASES, 5], [SportStat.WALKS, 1],
     ]);
+    expect(store.participantRoundRows.map((row) => row.status)).toEqual([ParticipantRoundStatus.COMPLETED, ParticipantRoundStatus.COMPLETED]);
     expect(info).toHaveBeenCalledWith(
-      { action: 'statLines.gameApplied', data: { sportEventId: event.id, roundNumber: 2, players: 2 } },
+      { action: 'statLines.gamesApplied', data: { sportEventId: event.id, roundNumbers: [2], players: 2 } },
       expect.any(String),
     );
   });
@@ -132,6 +133,73 @@ describe('StatLineService.applyGameLines — stores the game', () => {
     await service.applyGameLines(event.id, 1, [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }]);
 
     expect(expectDefined(store.participantRoundRows[0].completedAt).getTime()).toBeGreaterThanOrEqual(before);
+  });
+});
+
+describe('StatLineService.applyGames — a provider\'s batch of games (#1497)', () => {
+  it('stores several games in one write, a live game\'s lines in progress with no completion time and a final game\'s completed now', async () => {
+    const { store, service, event, ace, bat } = await setup();
+
+    const outcomes = await service.applyGames(event.id, [
+      { roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows: [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }] },
+      { roundNumber: 2, status: ParticipantRoundStatus.IN_PROGRESS, rows: [{ participantId: bat.participantId, stats: [{ stat: SportStat.WALKS, value: 2 }] }] },
+    ]);
+
+    expect(store.participantRoundRows.map((row) => [row.sportEventParticipantId, store.roundNumberOf(row.sportEventRoundId), row.status, row.completedAt]))
+      .toEqual([[ace.id, 1, ParticipantRoundStatus.COMPLETED, NOW], [bat.id, 2, ParticipantRoundStatus.IN_PROGRESS, null]]);
+    expect(outcomes.map((outcome) => [outcome.participantId, outcome.sportEventParticipantId, outcome.roundNumber, outcome.disposition]))
+      .toEqual([[ace.participantId, ace.id, 1, 'CREATED'], [bat.participantId, bat.id, 2, 'CREATED']]);
+  });
+
+  it('takes two series\' Game N as one game when each names different players, as a conference finals round does', async () => {
+    const { store, service, event, ace, bat } = await setup();
+
+    await service.applyGames(event.id, [
+      { roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows: [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }] },
+      { roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, rows: [{ participantId: bat.participantId, stats: [{ stat: SportStat.RUNS, value: 2 }] }] },
+    ]);
+
+    expect(store.participantRoundRows.map((row) => [store.roundNumberOf(row.sportEventRoundId), row.status]))
+      .toEqual([[1, ParticipantRoundStatus.COMPLETED], [1, ParticipantRoundStatus.IN_PROGRESS]]);
+  });
+
+  it('refuses a player named in two inputs for the same game with 422 STAT_LINE_ROWS_INVALID, and writes nothing', async () => {
+    const { store, service, event, ace } = await setup();
+    const line = { participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] };
+
+    const failure = service.applyGames(event.id, [
+      { roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows: [line] },
+      { roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows: [line] },
+    ]);
+
+    await expect(failure).rejects.toMatchObject({ code: 'STAT_LINE_ROWS_INVALID' });
+    await expect(failure).rejects.toThrow(`participant ${ace.participantId} is named more than once in game 1`);
+    expect(store.statLineRows).toEqual([]);
+  });
+
+  it('refuses a batch naming any game the event does not schedule with 422 ROUND_BEYOND_SCHEDULE, naming each such game', async () => {
+    const { store, service, event, ace } = await setup();
+    const rows = [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }];
+
+    const failure = service.applyGames(event.id, [
+      { roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows },
+      { roundNumber: 3, status: ParticipantRoundStatus.COMPLETED, rows },
+      { roundNumber: 4, status: ParticipantRoundStatus.COMPLETED, rows },
+    ]);
+
+    await expect(failure).rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE' });
+    await expect(failure).rejects.toThrow('schedules no game 3 or 4');
+    expect(store.statLineRows).toEqual([]);
+  });
+
+  it('reports a line already stored exactly as sent as unchanged', async () => {
+    const { service, event, ace } = await setup();
+    const games = [{ roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, rows: [{ participantId: ace.participantId, stats: [{ stat: SportStat.RUNS, value: 1 }] }] }];
+    await service.applyGames(event.id, games);
+
+    const outcomes = await service.applyGames(event.id, games);
+
+    expect(outcomes.map((outcome) => outcome.disposition)).toEqual(['UNCHANGED']);
   });
 });
 

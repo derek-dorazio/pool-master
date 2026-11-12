@@ -31,6 +31,7 @@ import { GolfScoreService } from '../golf/golf-score-service';
 import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { StatLineService } from '../scoring-families/composite/stat-line-service';
+import type { StatLineWriterDeps } from '../scoring-families/composite/stat-line-writer';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
@@ -90,6 +91,22 @@ export function createStatLineService(
     leaderboards,
     logger,
   });
+}
+
+/** What the composite family's writer needs to store a provider's box scores (#1497). */
+export function createStatLineWriterDeps(
+  prisma: PrismaClient,
+  providerId: string,
+  logger?: FastifyBaseLogger,
+  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+): StatLineWriterDeps {
+  return {
+    providerId,
+    field: new PrismaSportEventParticipantRepository(prisma),
+    mappings: new PrismaParticipantProviderMappingRepository(prisma),
+    statLines: createStatLineService(prisma, logger, leaderboards),
+    logger,
+  };
 }
 
 /** The admin finishing order for a finish-position event (#622). */

@@ -1,0 +1,238 @@
+{
+  "data": [
+    {
+      "id": 18444001,
+      "date": "2025-06-05",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-06T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 110,
+      "visitor_team_score": 111,
+      "home_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "visitor_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444002,
+      "date": "2025-06-08",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-09T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 123,
+      "visitor_team_score": 107,
+      "home_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "visitor_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444003,
+      "date": "2025-06-11",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-12T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 116,
+      "visitor_team_score": 107,
+      "home_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444004,
+      "date": "2025-06-13",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-14T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 104,
+      "visitor_team_score": 111,
+      "home_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444005,
+      "date": "2025-06-16",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-17T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 120,
+      "visitor_team_score": 109,
+      "home_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "visitor_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444006,
+      "date": "2025-06-19",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-20T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 108,
+      "visitor_team_score": 91,
+      "home_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    },
+    {
+      "id": 18444007,
+      "date": "2025-06-22",
+      "season": 2024,
+      "status": "Final",
+      "period": 4,
+      "time": null,
+      "period_detail": "Final",
+      "datetime": "2025-06-23T00:30:00Z",
+      "postseason": true,
+      "home_team_score": 103,
+      "visitor_team_score": 91,
+      "home_team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "visitor_team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "ist_stage": null,
+      "status_state": "final"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
