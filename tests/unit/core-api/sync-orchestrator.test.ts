@@ -111,6 +111,23 @@ describe('SyncOrchestrator request model', () => {
     }), 'SCHEDULED_REQUIRES_SYSTEM_ACTOR');
   });
 
+  it('accepts a webhook sync only from the webhook receiver, refusing one claimed by the scheduler or a root admin', () => {
+    const webhookScope = {
+      type: 'EVENT' as const,
+      sport: Sport.GOLF,
+      providerId: 'balldontlie',
+      eventId: '1133',
+      feeds: ['EVENTLIVESCORES' as const],
+    };
+
+    expect(normalizeSyncRequest({ source: 'WEBHOOK', actor: { type: 'SYSTEM', name: 'webhook' }, scope: webhookScope }).source)
+      .toBe('WEBHOOK');
+    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({ source: 'WEBHOOK', actor: schedulerActor, scope: webhookScope }),
+      'WEBHOOK_REQUIRES_WEBHOOK_ACTOR');
+    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({ source: 'WEBHOOK', actor: rootAdminActor, scope: webhookScope }),
+      'WEBHOOK_REQUIRES_WEBHOOK_ACTOR');
+  });
+
   it('rejects an empty feed list and a feed the event scope does not run', () => {
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'MANUAL',
