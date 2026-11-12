@@ -414,6 +414,30 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('PosGolferTotThrR1R2');
   });
 
+  it('keeps a minimum width for the name column, so a name never squeezes to nothing on a phone', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-position-entry-1');
+    const tracks = screen.getByTestId('contest-leaderboard-column-headers').style.gridTemplateColumns.split(' ');
+    // Position, name, total, then the family's columns: the name track's minimum is a real width.
+    expect(tracks[1]).toMatch(/^minmax\((?!0[,)])[\d.]+(px|rem),/);
+  });
+
+  it('lets the board scroll sideways inside its own box, its columns kept at their minimum widths, rather than squeezing them', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-position-entry-1');
+    const board = screen.getByTestId('contest-leaderboard-board');
+    expect(board).toHaveClass('overflow-x-auto');
+    expect(within(board).getByTestId('contest-leaderboard-board-content')).toHaveClass('min-w-min');
+    expect(within(board).getByTestId('contest-leaderboard-column-headers')).toBeInTheDocument();
+    expect(within(board).getByTestId('contest-leaderboard-entries')).toBeInTheDocument();
+  });
+
   it('shows each golfer\'s own tournament position under POS, apart from the entry\'s position', async () => {
     primeMocks({
       leaderboard: leaderboardWithGolfers([
