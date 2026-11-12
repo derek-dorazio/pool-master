@@ -5,8 +5,16 @@
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import { PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
-import type { GamePickGameDto, GamePickWrite, GamePicksResponse, SaveGamePicksRequest } from '@poolmaster/shared/dto';
-import type { GamePickGame, GamePicksView } from '../modules/selections/prediction-service';
+import type {
+  GamePickGameDto,
+  GamePickPreviewGameDto,
+  GamePickPreviewRequest,
+  GamePickPreviewResponse,
+  GamePickWrite,
+  GamePicksResponse,
+  SaveGamePicksRequest,
+} from '@poolmaster/shared/dto';
+import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
 
 function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
@@ -79,11 +87,48 @@ function toChoice(pick: GamePickWrite): PredictedChoice {
   throw selectionErrors.pickInvalid(pick.sportEventMatchId);
 }
 
-/** The picks a save request names, with an omitted confidence as none. */
-export function toGamePickWrites(request: SaveGamePicksRequest): ContestEntryMatchPredictionWrite[] {
+/** The picks a save request, or a preview's trial picks (#1612), name, with an omitted confidence as none. */
+export function toGamePickWrites(request: SaveGamePicksRequest | GamePickPreviewRequest): ContestEntryMatchPredictionWrite[] {
   return request.picks.map((pick) => ({
     sportEventMatchId: pick.sportEventMatchId,
     ...toChoice(pick),
     confidence: pick.confidence ?? null,
   }));
+}
+
+function toGamePickPreviewGameDto(game: GamePreview): GamePickPreviewGameDto {
+  const { match, pick } = game;
+  return {
+    sportEventMatchId: match.id,
+    matchNumber: match.matchNumber,
+    roundNumber: match.roundNumber,
+    kickoff: game.kickoff.toISOString(),
+    status: match.status,
+    isNeutralSite: match.isNeutralSite,
+    regionLabel: match.regionLabel,
+    homeSpread: match.homeSpread,
+    home: game.home,
+    away: game.away,
+    predictedHome: game.predictedHome,
+    predictedAway: game.predictedAway,
+    locked: game.locked,
+    pick: pick === null
+      ? null
+      : { predictedResult: pick.predictedResult, sportEventParticipantId: pick.sportEventParticipantId, confidence: pick.confidence },
+  };
+}
+
+/** A game setup's pick preview (#1612): its games, with the trial picks that stand. */
+export function toGamePickPreviewResponse(preview: GamesPreview): GamePickPreviewResponse {
+  return {
+    sportEventId: preview.sportEventId,
+    selectionType: preview.selectionType,
+    mode: preview.mode,
+    againstTheSpread: preview.againstTheSpread,
+    tiePicksOffered: preview.tiePicksOffered,
+    pickedCount: preview.pickedCount,
+    gameCount: preview.gameCount,
+    tiebreakerMatchId: preview.tiebreakerMatchId,
+    games: preview.games.map(toGamePickPreviewGameDto),
+  };
 }

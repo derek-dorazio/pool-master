@@ -3671,6 +3671,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/pick-preview/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a roster setup's pick screen
+         * @description The pick screen a tiered or budget setup gives members, from the setup's rules as the form holds them, unsaved, and the event's real field, tiers and prices: the field grouped as the rules group it, with the trial picks marked, whether they make a lineup an entry could submit, and a budget setup's spend against the event's salary cap. It writes nothing: no contest, entry or pick is created, and the trial picks are only read back. Commissioners of the league only (root admins bypass). 404 SPORT_EVENT_NOT_FOUND for an unknown event; 400 PARTICIPANT_NOT_IN_EVENT for a trial pick outside its field; 409 CONTEST_EVENT_NOT_PRICED for a budget setup on an event whose field was never priced.
+         */
+        post: operations["previewRosterPicks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/pick-preview/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a game setup's pick screen
+         * @description The pick screen a pick'em, bracket or survivor setup gives members, from the setup's rules as the form holds them, unsaved, and the event's real games and lines: the games an entry would pick (a bracket's from its starting round), each locked as it would be once the contest opens, with the trial picks resolved as an entry's would be. A bracket's later games hold the teams the earlier trial picks put there, and a trial pick that no longer follows, or a tie pick the setup does not offer, is dropped, and so is a confidence value the setup's mode does not take (a saved entry is refused for one instead). It writes nothing: no contest, entry or pick is created, and the trial picks are only read back. Commissioners of the league only (root admins bypass). 404 SPORT_EVENT_NOT_FOUND for an unknown event; 404 PREDICTION_GAME_NOT_FOUND for a trial pick on a game the setup does not pick; 400 PREDICTION_PICK_INVALID for a TEAM pick without its team or a TIE pick with one.
+         */
+        post: operations["previewGamePicks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -13742,6 +13782,246 @@ export interface components {
                     outcome: "CORRECT" | "BUSTED" | "PUSH" | "PENDING" | null;
                     /** @description What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored. */
                     points: number | null;
+                } | null;
+            }[];
+        };
+        /** @description Request payload for previewing a roster setup's pick screen. */
+        RosterPickPreviewRequest: {
+            /**
+             * Format: uuid
+             * @description The event the setup is for: its field, tiers and prices are the ones shown.
+             */
+            sportEventId: string;
+            /** @description The setup's rules as the form holds them now, unsaved: a tiered or a budget setup. */
+            rules: {
+                /** @enum {string} */
+                selectionType: "TIERED";
+                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                picksPerTier: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                tiersUsed?: number;
+            } | {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description How many golfers an entry picks, from anywhere in the field. */
+                rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+            };
+            /** @description The field rows the commissioner has tapped so far, as an entry's picks would be. Empty for the screen as a member first sees it. */
+            sportEventParticipantIds: string[];
+        };
+        /** @description A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved. */
+        RosterPickPreviewResponse: {
+            /** Format: uuid */
+            sportEventId: string;
+            /** @enum {string} */
+            selectionType: "TIERED" | "BUDGET_PICK";
+            /** @description How many picks an entry makes under these rules: the tiers used times picks per tier, or the budget roster. */
+            rosterSize: number;
+            /** @description The field as members pick from it: one group per tier, or the whole field dearest first in a budget setup. The trial picks are marked selected. */
+            selectionGroups: {
+                groupId: string;
+                groupName: string;
+                groupNumber: number;
+                picksFromGroup: number;
+                /** @description Selections currently saved on the selected entry for this group. */
+                selectedParticipantIds: string[];
+                /** @description Selectable participants shown inside the group. */
+                participants: {
+                    sportEventParticipantId: string;
+                    participantId: string;
+                    participantName: string;
+                    role?: string | null;
+                    team?: string | null;
+                    status?: string | null;
+                    price?: number | null;
+                    ranking?: number | null;
+                    /** @description The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody. */
+                    seedNumber: number | null;
+                    orderIndex?: number | null;
+                    isAvailable: boolean;
+                    /** @description Whether the currently selected entry has this participant selected. */
+                    isSelected?: boolean;
+                }[];
+            }[];
+            /** @description The field rows that can be picked: every row not withdrawn. */
+            availableParticipantIds: string[];
+            /** @description How many of the trial picks are in the event's field. */
+            pickCount: number;
+            /** @description Whether the trial picks make a lineup an entry could submit: the full roster, each tier's picks, and in a budget setup within the salary cap. */
+            isComplete: boolean;
+            /** @description A budget setup's spend of the trial picks against the event's salary cap; null in a tiered setup. */
+            lineupSummary: {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description Whole dollars the entry's picks may cost at most: its event's cap. */
+                salaryCap: number;
+                /** @description What the entry's picks cost, in dollars, summed in cents. */
+                spent: number;
+                /** @description Cap minus spent; negative while the entry is over budget. */
+                remaining: number;
+                /** @description Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET. */
+                isOverBudget: boolean;
+                /** @description Roster places the entry has yet to fill. */
+                openSlots: number;
+                /** @description What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block. */
+                cheapestFill: number | null;
+            } | null;
+        };
+        /** @description Request payload for previewing a game setup's pick screen. */
+        GamePickPreviewRequest: {
+            /**
+             * Format: uuid
+             * @description The event the setup is for: its games and lines are the ones shown.
+             */
+            sportEventId: string;
+            /** @description The setup's rules as the form holds them now, unsaved: a pick'em, bracket or survivor setup. */
+            rules: {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
+            } | {
+                /** @enum {string} */
+                selectionType: "BRACKET";
+                /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
+                startsAtRound: number;
+            } | {
+                /** @enum {string} */
+                selectionType: "SURVIVOR";
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
+            };
+            /** @description The picks the commissioner has tapped so far, one per game, as an entry's would be. Empty for the screen as a member first sees it. */
+            picks: {
+                /**
+                 * Format: uuid
+                 * @description The game picked: one of the event's games.
+                 */
+                sportEventMatchId: string;
+                /**
+                 * @description What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
+                 * @enum {string}
+                 */
+                predictedResult: "TEAM" | "TIE";
+                /**
+                 * Format: uuid
+                 * @description With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.
+                 */
+                sportEventParticipantId: string | null;
+                /** @description A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted. */
+                confidence?: number | null;
+            }[];
+        };
+        /** @description A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved. */
+        GamePickPreviewResponse: {
+            /** Format: uuid */
+            sportEventId: string;
+            /** @enum {string} */
+            selectionType: "PICK_EM" | "BRACKET" | "SURVIVOR";
+            /**
+             * @description A pick'em setup's mode; null in a bracket or survivor setup.
+             * @enum {string|null}
+             */
+            mode: "STRAIGHT_UP" | "CONFIDENCE" | null;
+            /** @description Whether picks would be scored against each game's spread. Only a pick'em setup can be. */
+            againstTheSpread: boolean;
+            /** @description Whether a pick may say the game ends level (#792): a pick'em setup in a sport that offers tie picks. */
+            tiePicksOffered: boolean;
+            /** @description How many games hold a trial pick that stands. */
+            pickedCount: number;
+            gameCount: number;
+            /**
+             * Format: uuid
+             * @description The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
+             */
+            tiebreakerMatchId: string | null;
+            /** @description The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round. */
+            games: {
+                /** Format: uuid */
+                sportEventMatchId: string;
+                matchNumber: number;
+                roundNumber: number;
+                /**
+                 * Format: date-time
+                 * @description When the game starts: its scheduled time, else its event's start. Its pick locks then.
+                 */
+                kickoff: string;
+                /** @enum {string} */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                isNeutralSite: boolean;
+                /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
+                regionLabel: string | null;
+                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set. */
+                homeSpread: number | null;
+                /** @description The team really playing on this side; null until it is decided. */
+                home: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description The team really playing on this side; null until it is decided. */
+                away: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
+                predictedHome: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description As predictedHome, for the away side. */
+                predictedAway: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has. */
+                locked: boolean;
+                /** @description The trial pick on the game; null when there is none, or it no longer stands (in a bracket, a later pick whose team an earlier trial pick knocked out). */
+                pick: {
+                    /**
+                     * @description What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792).
+                     * @enum {string}
+                     */
+                    predictedResult: "TEAM" | "TIE";
+                    /**
+                     * Format: uuid
+                     * @description The team picked to win; null for a TIE pick.
+                     */
+                    sportEventParticipantId: string | null;
+                    /** @description The pick's confidence value; null in a straight-up pool, in a bracket, or until given. */
+                    confidence: number | null;
                 } | null;
             }[];
         };
@@ -34820,6 +35100,139 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    previewRosterPicks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RosterPickPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterPickPreviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    previewGamePicks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GamePickPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GamePickPreviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

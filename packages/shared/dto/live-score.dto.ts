@@ -9,11 +9,11 @@
  * persistence path.
  *
  * A category arrives with the scoring code that persists it (#605): GOLF for stroke play, GAME
- * for head-to-head games (#1496).
+ * for head-to-head games (#1496), STAT_LINE for the composite family's box scores (#1497).
  */
 
 import { z } from 'zod';
-import { ParticipantRoundStatus, ProviderGameState } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, ProviderGameState, SportStat } from '@poolmaster/shared/domain';
 
 // ============================================================================
 // Per-category update schemas
@@ -67,6 +67,26 @@ export const GameScoreUpdateSchema = z.object({
 }).describe('Head-to-head game update emitted by game adapters.');
 export type GameScoreUpdate = z.infer<typeof GameScoreUpdateSchema>;
 
+/**
+ * STAT_LINE — one provider game's box score for a Clutch Card event (#1497). The adapter maps the
+ * provider's stat fields to `SportStat`s and numbers the game within the event: game N is the
+ * event's round N, and in a round of several series (a conference finals) each series' Game N
+ * shares it. A player is the provider's player id, resolved through the player's provider mapping.
+ */
+export const StatLineGameUpdateSchema = z.object({
+  externalGameId: z.string().min(1).describe('Provider-side game identifier, for diagnostics.'),
+  gameNumber: z.number().int().min(1).describe('The event\'s game this is, its round number: each series\' Game N is game N.'),
+  state: z.enum(ProviderGameState),
+  lines: z.array(z.object({
+    participantExternalId: z.string().min(1).describe('Provider-side player identifier; resolved through the player\'s provider mapping.'),
+    stats: z.array(z.object({
+      stat: z.enum(SportStat),
+      value: z.number().int(),
+    })).describe('Each stat the provider reports that a composite counts, once.'),
+  })).describe('Each player\'s line for the game, as the provider reports it so far.'),
+}).describe('Box score update emitted by stat line adapters.');
+export type StatLineGameUpdate = z.infer<typeof StatLineGameUpdateSchema>;
+
 // ============================================================================
 // LiveScoreResult discriminated union
 // ============================================================================
@@ -96,6 +116,11 @@ export const LiveScoreResultSchema = z.discriminatedUnion('category', [
     category: z.literal('GAME'),
     ...sportEventScope,
     games: z.array(GameScoreUpdateSchema),
+  }),
+  z.object({
+    category: z.literal('STAT_LINE'),
+    ...sportEventScope,
+    games: z.array(StatLineGameUpdateSchema),
   }),
 ]);
 export type LiveScoreResult = z.infer<typeof LiveScoreResultSchema>;

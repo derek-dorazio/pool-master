@@ -13640,6 +13640,311 @@ export type GamePicksResponse = {
 };
 
 /**
+ * Request payload for previewing a roster setup's pick screen.
+ */
+export type RosterPickPreviewRequest = {
+    /**
+     * The event the setup is for: its field, tiers and prices are the ones shown.
+     */
+    sportEventId: string;
+    /**
+     * The setup's rules as the form holds them now, unsaved: a tiered or a budget setup.
+     */
+    rules: {
+        selectionType: 'TIERED';
+        /**
+         * How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this.
+         */
+        picksPerTier: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+        /**
+         * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+         */
+        tiersUsed?: number;
+    } | {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * How many golfers an entry picks, from anywhere in the field.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the entry total, best first. At most the roster size.
+         */
+        countedScores: number;
+    };
+    /**
+     * The field rows the commissioner has tapped so far, as an entry's picks would be. Empty for the screen as a member first sees it.
+     */
+    sportEventParticipantIds: Array<string>;
+};
+
+/**
+ * A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.
+ */
+export type RosterPickPreviewResponse = {
+    sportEventId: string;
+    selectionType: 'TIERED' | 'BUDGET_PICK';
+    /**
+     * How many picks an entry makes under these rules: the tiers used times picks per tier, or the budget roster.
+     */
+    rosterSize: number;
+    /**
+     * The field as members pick from it: one group per tier, or the whole field dearest first in a budget setup. The trial picks are marked selected.
+     */
+    selectionGroups: Array<{
+        groupId: string;
+        groupName: string;
+        groupNumber: number;
+        picksFromGroup: number;
+        /**
+         * Selections currently saved on the selected entry for this group.
+         */
+        selectedParticipantIds: Array<string>;
+        /**
+         * Selectable participants shown inside the group.
+         */
+        participants: Array<{
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            role?: string | null;
+            team?: string | null;
+            status?: string | null;
+            price?: number | null;
+            ranking?: number | null;
+            /**
+             * The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.
+             */
+            seedNumber: number | null;
+            orderIndex?: number | null;
+            isAvailable: boolean;
+            /**
+             * Whether the currently selected entry has this participant selected.
+             */
+            isSelected?: boolean;
+        }>;
+    }>;
+    /**
+     * The field rows that can be picked: every row not withdrawn.
+     */
+    availableParticipantIds: Array<string>;
+    /**
+     * How many of the trial picks are in the event's field.
+     */
+    pickCount: number;
+    /**
+     * Whether the trial picks make a lineup an entry could submit: the full roster, each tier's picks, and in a budget setup within the salary cap.
+     */
+    isComplete: boolean;
+    /**
+     * A budget setup's spend of the trial picks against the event's salary cap; null in a tiered setup.
+     */
+    lineupSummary: {
+        selectionType: 'BUDGET_PICK';
+        /**
+         * Whole dollars the entry's picks may cost at most: its event's cap.
+         */
+        salaryCap: number;
+        /**
+         * What the entry's picks cost, in dollars, summed in cents.
+         */
+        spent: number;
+        /**
+         * Cap minus spent; negative while the entry is over budget.
+         */
+        remaining: number;
+        /**
+         * Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET.
+         */
+        isOverBudget: boolean;
+        /**
+         * Roster places the entry has yet to fill.
+         */
+        openSlots: number;
+        /**
+         * What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.
+         */
+        cheapestFill: number | null;
+    } | null;
+};
+
+/**
+ * Request payload for previewing a game setup's pick screen.
+ */
+export type GamePickPreviewRequest = {
+    /**
+     * The event the setup is for: its games and lines are the ones shown.
+     */
+    sportEventId: string;
+    /**
+     * The setup's rules as the form holds them now, unsaved: a pick'em, bracket or survivor setup.
+     */
+    rules: {
+        selectionType: 'PICK_EM';
+        /**
+         * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+         */
+        mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+         */
+        againstTheSpread: boolean;
+    } | {
+        selectionType: 'BRACKET';
+        /**
+         * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+         */
+        startsAtRound: number;
+    } | {
+        selectionType: 'SURVIVOR';
+        /**
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         */
+        reuseTeamsOnceAllUsed?: boolean;
+    };
+    /**
+     * The picks the commissioner has tapped so far, one per game, as an entry's would be. Empty for the screen as a member first sees it.
+     */
+    picks: Array<{
+        /**
+         * The game picked: one of the event's games.
+         */
+        sportEventMatchId: string;
+        /**
+         * What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
+         */
+        predictedResult: 'TEAM' | 'TIE';
+        /**
+         * With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.
+         */
+        sportEventParticipantId: string | null;
+        /**
+         * A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.
+         */
+        confidence?: number | null;
+    }>;
+};
+
+/**
+ * A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.
+ */
+export type GamePickPreviewResponse = {
+    sportEventId: string;
+    selectionType: 'PICK_EM' | 'BRACKET' | 'SURVIVOR';
+    /**
+     * A pick'em setup's mode; null in a bracket or survivor setup.
+     */
+    mode: 'STRAIGHT_UP' | 'CONFIDENCE' | null;
+    /**
+     * Whether picks would be scored against each game's spread. Only a pick'em setup can be.
+     */
+    againstTheSpread: boolean;
+    /**
+     * Whether a pick may say the game ends level (#792): a pick'em setup in a sport that offers tie picks.
+     */
+    tiePicksOffered: boolean;
+    /**
+     * How many games hold a trial pick that stands.
+     */
+    pickedCount: number;
+    gameCount: number;
+    /**
+     * The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
+     */
+    tiebreakerMatchId: string | null;
+    /**
+     * The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round.
+     */
+    games: Array<{
+        sportEventMatchId: string;
+        matchNumber: number;
+        roundNumber: number;
+        /**
+         * When the game starts: its scheduled time, else its event's start. Its pick locks then.
+         */
+        kickoff: string;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        isNeutralSite: boolean;
+        /**
+         * The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.
+         */
+        regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         */
+        homeSpread: number | null;
+        /**
+         * The team really playing on this side; null until it is decided.
+         */
+        home: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * The team really playing on this side; null until it is decided.
+         */
+        away: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
+         */
+        predictedHome: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * As predictedHome, for the away side.
+         */
+        predictedAway: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has.
+         */
+        locked: boolean;
+        /**
+         * The trial pick on the game; null when there is none, or it no longer stands (in a bracket, a later pick whose team an earlier trial pick knocked out).
+         */
+        pick: {
+            /**
+             * What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792).
+             */
+            predictedResult: 'TEAM' | 'TIE';
+            /**
+             * The team picked to win; null for a TIE pick.
+             */
+            sportEventParticipantId: string | null;
+            /**
+             * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
+             */
+            confidence: number | null;
+        } | null;
+    }>;
+};
+
+/**
  * What the SNS message is: a delivery report, or one step of the subscription handshake.
  */
 export type SnsMessageType = 'Notification' | 'SubscriptionConfirmation' | 'UnsubscribeConfirmation';
@@ -34623,3 +34928,85 @@ export type DrawSquaresNumbersResponses = {
 };
 
 export type DrawSquaresNumbersResponse = DrawSquaresNumbersResponses[keyof DrawSquaresNumbersResponses];
+
+export type PreviewRosterPicksData = {
+    body: RosterPickPreviewRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/pick-preview/roster';
+};
+
+export type PreviewRosterPicksErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type PreviewRosterPicksError = PreviewRosterPicksErrors[keyof PreviewRosterPicksErrors];
+
+export type PreviewRosterPicksResponses = {
+    /**
+     * A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.
+     */
+    200: RosterPickPreviewResponse;
+};
+
+export type PreviewRosterPicksResponse = PreviewRosterPicksResponses[keyof PreviewRosterPicksResponses];
+
+export type PreviewGamePicksData = {
+    body: GamePickPreviewRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/pick-preview/games';
+};
+
+export type PreviewGamePicksErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type PreviewGamePicksError = PreviewGamePicksErrors[keyof PreviewGamePicksErrors];
+
+export type PreviewGamePicksResponses = {
+    /**
+     * A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.
+     */
+    200: GamePickPreviewResponse;
+};
+
+export type PreviewGamePicksResponse = PreviewGamePicksResponses[keyof PreviewGamePicksResponses];

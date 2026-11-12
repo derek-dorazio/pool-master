@@ -9,16 +9,17 @@
  */
 
 import { createHash } from 'node:crypto';
-import { SelectionType, type ContestConfiguration } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
   completenessIssues,
   SelectionOutcomeKind,
   SelectionRejectCode,
+  type EngineRules,
   type SelectionEngine,
 } from './selection-engine';
 
 /** How many members of the field the draw deals each entry; 0 without random-draw rules. */
-function picksPerEntryOf(configuration: ContestConfiguration | null): number {
+function picksPerEntryOf(configuration: EngineRules): number {
   return configuration?.configJson?.selectionType === SelectionType.RANDOM_DRAW
     ? configuration.configJson.picksPerEntry
     : 0;

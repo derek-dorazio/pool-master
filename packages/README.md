@@ -94,7 +94,12 @@ teams it is, so nobody links games by hand. Each match records who set its resul
 (`resultSource`, #1531): a provider's later final never overwrites an admin's result, and is
 logged instead, and the admin's bracket page names the feed a synced result came from. A live
 game's score goes on its match too, read-only (`IN_PROGRESS`, no winner), and comes off again if
-the provider postpones the game; scoring reads only completed matches. The golf round-score
+the provider postpones the game; scoring reads only completed matches. Composite accepts
+`STAT_LINE` (#1497): a provider's box scores, each game numbered within the event by the adapter
+(each series' Game N is game N), written through `StatLineService` in one write per sync. A star's
+provider mapping says whose line it is; a player who is not a mapped star is left out, never
+created. A live game's lines are stored `IN_PROGRESS` and a final game's `COMPLETED`, and the sync
+rewrites a line an admin corrected. The golf round-score
 admin routes refuse an event whose family does not keep golf rounds (422
 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard response carries the event's `sport`, so the
 web resolves the same family for its own presentation (`SCORING_FAMILY_UI`). Two families are

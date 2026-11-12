@@ -32215,6 +32215,761 @@
         "additionalProperties": false,
         "description": "A prediction contest entry's picks on one event's games."
       },
+      "RosterPickPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The event the setup is for: its field, tiers and prices are the ones shown."
+          },
+          "rules": {
+            "description": "The setup's rules as the form holds them now, unsaved: a tiered or a budget setup.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "TIERED"
+                    ]
+                  },
+                  "picksPerTier": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "tiersUsed": {
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "picksPerTier",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BUDGET_PICK"
+                    ]
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "description": "How many golfers an entry picks, from anywhere in the field."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "rosterSize",
+                  "countedScores"
+                ],
+                "additionalProperties": false,
+                "description": "Budget rules: pick a roster of golfers whose prices fit under the event's salary cap."
+              }
+            ]
+          },
+          "sportEventParticipantIds": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The field rows the commissioner has tapped so far, as an entry's picks would be. Empty for the screen as a member first sees it."
+          }
+        },
+        "required": [
+          "sportEventId",
+          "rules",
+          "sportEventParticipantIds"
+        ],
+        "additionalProperties": false,
+        "description": "Request payload for previewing a roster setup's pick screen."
+      },
+      "RosterPickPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selectionType": {
+            "type": "string",
+            "enum": [
+              "TIERED",
+              "BUDGET_PICK"
+            ]
+          },
+          "rosterSize": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many picks an entry makes under these rules: the tiers used times picks per tier, or the budget roster."
+          },
+          "selectionGroups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "string"
+                },
+                "groupName": {
+                  "type": "string"
+                },
+                "groupNumber": {
+                  "type": "number"
+                },
+                "picksFromGroup": {
+                  "type": "number"
+                },
+                "selectedParticipantIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Selections currently saved on the selected entry for this group."
+                },
+                "participants": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportEventParticipantId": {
+                        "type": "string"
+                      },
+                      "participantId": {
+                        "type": "string"
+                      },
+                      "participantName": {
+                        "type": "string"
+                      },
+                      "role": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "team": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "status": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "price": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "ranking": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "seedNumber": {
+                        "description": "The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "orderIndex": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "isAvailable": {
+                        "type": "boolean"
+                      },
+                      "isSelected": {
+                        "description": "Whether the currently selected entry has this participant selected.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "sportEventParticipantId",
+                      "participantId",
+                      "participantName",
+                      "seedNumber",
+                      "isAvailable"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Selectable participant row used by roster-based entry builders."
+                  },
+                  "description": "Selectable participants shown inside the group."
+                }
+              },
+              "required": [
+                "groupId",
+                "groupName",
+                "groupNumber",
+                "picksFromGroup",
+                "selectedParticipantIds",
+                "participants"
+              ],
+              "additionalProperties": false,
+              "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+            },
+            "description": "The field as members pick from it: one group per tier, or the whole field dearest first in a budget setup. The trial picks are marked selected."
+          },
+          "availableParticipantIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The field rows that can be picked: every row not withdrawn."
+          },
+          "pickCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many of the trial picks are in the event's field."
+          },
+          "isComplete": {
+            "type": "boolean",
+            "description": "Whether the trial picks make a lineup an entry could submit: the full roster, each tier's picks, and in a budget setup within the salary cap."
+          },
+          "lineupSummary": {
+            "description": "A budget setup's spend of the trial picks against the event's salary cap; null in a tiered setup.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "BUDGET_PICK"
+                ]
+              },
+              "salaryCap": {
+                "type": "number",
+                "description": "Whole dollars the entry's picks may cost at most: its event's cap."
+              },
+              "spent": {
+                "type": "number",
+                "description": "What the entry's picks cost, in dollars, summed in cents."
+              },
+              "remaining": {
+                "type": "number",
+                "description": "Cap minus spent; negative while the entry is over budget."
+              },
+              "isOverBudget": {
+                "type": "boolean",
+                "description": "Whether the picks cost more than the cap. Picks are still allowed; submitting is refused with 409 ENTRY_OVER_BUDGET."
+              },
+              "openSlots": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Roster places the entry has yet to fill."
+              },
+              "cheapestFill": {
+                "description": "What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "selectionType",
+              "salaryCap",
+              "spent",
+              "remaining",
+              "isOverBudget",
+              "openSlots",
+              "cheapestFill"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "sportEventId",
+          "selectionType",
+          "rosterSize",
+          "selectionGroups",
+          "availableParticipantIds",
+          "pickCount",
+          "isComplete",
+          "lineupSummary"
+        ],
+        "additionalProperties": false,
+        "description": "A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved."
+      },
+      "GamePickPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The event the setup is for: its games and lines are the ones shown."
+          },
+          "rules": {
+            "description": "The setup's rules as the form holds them now, unsaved: a pick'em, bracket or survivor setup.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "PICK_EM"
+                    ]
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "STRAIGHT_UP",
+                      "CONFIDENCE"
+                    ],
+                    "description": "STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once."
+                  },
+                  "againstTheSpread": {
+                    "type": "boolean",
+                    "description": "Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "mode",
+                  "againstTheSpread"
+                ],
+                "additionalProperties": false,
+                "description": "Pick'em rules: pick the winner of every game of each event, or the team that covers when scored against the spread."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BRACKET"
+                    ]
+                  },
+                  "startsAtRound": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "startsAtRound"
+                ],
+                "additionalProperties": false,
+                "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SURVIVOR"
+                    ]
+                  },
+                  "reuseTeamsOnceAllUsed": {
+                    "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "selectionType"
+                ],
+                "additionalProperties": false,
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+              }
+            ]
+          },
+          "picks": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportEventMatchId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The game picked: one of the event's games."
+                },
+                "predictedResult": {
+                  "type": "string",
+                  "enum": [
+                    "TEAM",
+                    "TIE"
+                  ],
+                  "description": "What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE."
+                },
+                "sportEventParticipantId": {
+                  "description": "With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "confidence": {
+                  "description": "A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "sportEventMatchId",
+                "predictedResult",
+                "sportEventParticipantId"
+              ],
+              "additionalProperties": false,
+              "description": "One game's pick as it is saved."
+            },
+            "description": "The picks the commissioner has tapped so far, one per game, as an entry's would be. Empty for the screen as a member first sees it."
+          }
+        },
+        "required": [
+          "sportEventId",
+          "rules",
+          "picks"
+        ],
+        "additionalProperties": false,
+        "description": "Request payload for previewing a game setup's pick screen."
+      },
+      "GamePickPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selectionType": {
+            "type": "string",
+            "enum": [
+              "PICK_EM",
+              "BRACKET",
+              "SURVIVOR"
+            ]
+          },
+          "mode": {
+            "description": "A pick'em setup's mode; null in a bracket or survivor setup.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STRAIGHT_UP",
+              "CONFIDENCE",
+              null
+            ]
+          },
+          "againstTheSpread": {
+            "type": "boolean",
+            "description": "Whether picks would be scored against each game's spread. Only a pick'em setup can be."
+          },
+          "tiePicksOffered": {
+            "type": "boolean",
+            "description": "Whether a pick may say the game ends level (#792): a pick'em setup in a sport that offers tie picks."
+          },
+          "pickedCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many games hold a trial pick that stands."
+          },
+          "gameCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "tiebreakerMatchId": {
+            "description": "The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportEventMatchId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "matchNumber": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "roundNumber": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "kickoff": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the game starts: its scheduled time, else its event's start. Its pick locks then."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED"
+                  ]
+                },
+                "isNeutralSite": {
+                  "type": "boolean"
+                },
+                "regionLabel": {
+                  "description": "The bracket region or conference the game is in (\"East\", \"AFC\"), for grouping on screen; null where the bracket has none.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "homeSpread": {
+                  "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "home": {
+                  "description": "The team really playing on this side; null until it is decided.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "away": {
+                  "description": "The team really playing on this side; null until it is decided.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "predictedHome": {
+                  "description": "The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "predictedAway": {
+                  "description": "As predictedHome, for the away side.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "locked": {
+                  "type": "boolean",
+                  "description": "Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has."
+                },
+                "pick": {
+                  "description": "The trial pick on the game; null when there is none, or it no longer stands (in a bracket, a later pick whose team an earlier trial pick knocked out).",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "predictedResult": {
+                      "type": "string",
+                      "enum": [
+                        "TEAM",
+                        "TIE"
+                      ],
+                      "description": "What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792)."
+                    },
+                    "sportEventParticipantId": {
+                      "description": "The team picked to win; null for a TIE pick.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "confidence": {
+                      "description": "The pick's confidence value; null in a straight-up pool, in a bracket, or until given.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "predictedResult",
+                    "sportEventParticipantId",
+                    "confidence"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "sportEventMatchId",
+                "matchNumber",
+                "roundNumber",
+                "kickoff",
+                "status",
+                "isNeutralSite",
+                "regionLabel",
+                "homeSpread",
+                "home",
+                "away",
+                "predictedHome",
+                "predictedAway",
+                "locked",
+                "pick"
+              ],
+              "additionalProperties": false,
+              "description": "One game of the event with the trial pick on it."
+            },
+            "description": "The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round."
+          }
+        },
+        "required": [
+          "sportEventId",
+          "selectionType",
+          "mode",
+          "againstTheSpread",
+          "tiePicksOffered",
+          "pickedCount",
+          "gameCount",
+          "tiebreakerMatchId",
+          "games"
+        ],
+        "additionalProperties": false,
+        "description": "A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved."
+      },
       "SnsMessageType": {
         "type": "string",
         "enum": [
@@ -81783,6 +82538,180 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/pick-preview/roster": {
+      "post": {
+        "operationId": "previewRosterPicks",
+        "summary": "Preview a roster setup's pick screen",
+        "tags": [
+          "Selections"
+        ],
+        "description": "The pick screen a tiered or budget setup gives members, from the setup's rules as the form holds them, unsaved, and the event's real field, tiers and prices: the field grouped as the rules group it, with the trial picks marked, whether they make a lineup an entry could submit, and a budget setup's spend against the event's salary cap. It writes nothing: no contest, entry or pick is created, and the trial picks are only read back. Commissioners of the league only (root admins bypass). 404 SPORT_EVENT_NOT_FOUND for an unknown event; 400 PARTICIPANT_NOT_IN_EVENT for a trial pick outside its field; 409 CONTEST_EVENT_NOT_PRICED for a budget setup on an event whose field was never priced.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RosterPickPreviewRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A roster setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterPickPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/pick-preview/games": {
+      "post": {
+        "operationId": "previewGamePicks",
+        "summary": "Preview a game setup's pick screen",
+        "tags": [
+          "Selections"
+        ],
+        "description": "The pick screen a pick'em, bracket or survivor setup gives members, from the setup's rules as the form holds them, unsaved, and the event's real games and lines: the games an entry would pick (a bracket's from its starting round), each locked as it would be once the contest opens, with the trial picks resolved as an entry's would be. A bracket's later games hold the teams the earlier trial picks put there, and a trial pick that no longer follows, or a tie pick the setup does not offer, is dropped, and so is a confidence value the setup's mode does not take (a saved entry is refused for one instead). It writes nothing: no contest, entry or pick is created, and the trial picks are only read back. Commissioners of the league only (root admins bypass). 404 SPORT_EVENT_NOT_FOUND for an unknown event; 404 PREDICTION_GAME_NOT_FOUND for a trial pick on a game the setup does not pick; 400 PREDICTION_PICK_INVALID for a TEAM pick without its team or a TIE pick with one.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GamePickPreviewRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A game setup's pick screen as members would see it, with the trial picks on it. Nothing is saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GamePickPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

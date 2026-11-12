@@ -49,6 +49,7 @@ import { contestConfigTemplatesModule } from '../../packages/core-api/src/module
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
 import { selectionsModule } from '../../packages/core-api/src/modules/selections/routes';
+import { pickPreviewModule } from '../../packages/core-api/src/modules/selections/preview-routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
@@ -338,6 +339,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
+  testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
   testApp.register(emailEventsModule, {
