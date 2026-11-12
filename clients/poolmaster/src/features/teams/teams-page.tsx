@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { DataGrid, ErrorState, formatDateDisplay, Input, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';
+import { DataGrid, ErrorState, formatDateDisplay, Input, LoadingState, PageHeader, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { plural } from '@/lib/plural';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
@@ -41,7 +41,7 @@ export function TeamsPage() {
         id: 'owners',
         header: 'Owners',
         accessorFn: (row) => row.ownerNames,
-        cell: ({ getValue }) => getValue() || <span className="text-muted-foreground">No owners</span>,
+        cell: ({ getValue }) => getValue() || <Text variant="meta">No owners</Text>,
       },
       {
         // A team joins the league with its first owner, so its creation date is the date it joined.
@@ -50,7 +50,7 @@ export function TeamsPage() {
         accessorFn: (row) => row.team.createdAt,
         enableGlobalFilter: false,
         cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{formatDateDisplay(getValue(), displayPreferences)}</span>
+          <Text variant="meta">{formatDateDisplay(getValue(), displayPreferences)}</Text>
         ),
       },
     ],

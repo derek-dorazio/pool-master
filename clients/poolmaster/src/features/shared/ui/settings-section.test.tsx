@@ -1,33 +1,20 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { DangerZone, DangerZoneAction, SettingsRow, SettingsSection } from "./settings-section";
+import { DangerZoneAction, SettingsRow, SettingsRows } from "./settings-section";
 
-describe("SettingsSection", () => {
-  it("shows its title as a heading with its description and optional action", () => {
+describe("SettingsRows", () => {
+  it("holds a section's settings rows in one divided list", () => {
     render(
-      <SettingsSection
-        action={<button type="button">Edit</button>}
-        description="How the league appears to members."
-        title="Profile"
-      >
-        <SettingsRow label="Name" value="Saturday Golf League" />
-      </SettingsSection>,
+      <SettingsRows testId="rows">
+        <SettingsRow label="Name" testId="row-name" value="Saturday Golf League" />
+        <SettingsRow label="Visibility" testId="row-visibility" value="Private" />
+      </SettingsRows>,
     );
 
-    expect(screen.getByRole("heading", { level: 2, name: "Profile" })).toBeInTheDocument();
-    expect(screen.getByText("How the league appears to members.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
-  });
-
-  it("renders no description paragraph when none is given", () => {
-    render(
-      <SettingsSection title="Profile">
-        <SettingsRow label="Name" value="Saturday Golf League" />
-      </SettingsSection>,
-    );
-
-    expect(screen.getByRole("heading", { level: 2, name: "Profile" })).toBeInTheDocument();
-    expect(screen.queryByRole("paragraph")).not.toBeInTheDocument();
+    const rows = screen.getByTestId("rows");
+    expect(rows).toHaveClass("divide-y");
+    expect(within(rows).getByTestId("row-name")).toHaveTextContent("Saturday Golf League");
+    expect(within(rows).getByTestId("row-visibility")).toHaveTextContent("Private");
   });
 });
 
@@ -52,35 +39,6 @@ describe("SettingsRow", () => {
     render(<SettingsRow label="Visibility" value="Private" />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-});
-
-describe("DangerZone", () => {
-  it("titles itself \"Danger zone\" with the default confirm description when none is given", () => {
-    render(
-      <DangerZone>
-        <DangerZoneAction
-          action={<button type="button">Delete league</button>}
-          description="Removes the league and every contest in it."
-          title="Delete this league"
-        />
-      </DangerZone>,
-    );
-
-    expect(screen.getByRole("heading", { level: 2, name: "Danger zone" })).toBeInTheDocument();
-    expect(screen.getByText("Each of these asks you to confirm.")).toBeInTheDocument();
-  });
-
-  it("uses a custom title and description when given", () => {
-    render(
-      <DangerZone description="Cannot be undone." title="Leave league">
-        <span>content</span>
-      </DangerZone>,
-    );
-
-    expect(screen.getByRole("heading", { level: 2, name: "Leave league" })).toBeInTheDocument();
-    expect(screen.getByText("Cannot be undone.")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Danger zone" })).not.toBeInTheDocument();
   });
 });
 

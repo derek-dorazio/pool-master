@@ -62,3 +62,6 @@ docker-compose.override.yml
 
 # SQLite / local database files
 *.db
+
+# The component gallery build (#1615): npm run gallery:build -w @poolmaster/poolmaster
+clients/poolmaster/storybook-static/

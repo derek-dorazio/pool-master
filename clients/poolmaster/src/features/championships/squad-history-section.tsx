@@ -6,7 +6,7 @@ import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/featu
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionEmpty, SectionRow, SectionRows, YearPicker } from '@/features/shared/ui';
+import { ErrorState, Icon, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionEmpty, SectionRow, SectionRows, YearPicker } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
 import { SquadRecords } from './record-book';
@@ -85,7 +85,7 @@ export function SquadHistorySection({
                     key={`${trophy.kind}-${trophy.cupId ?? 'championship'}-${trophy.year}`}
                     name={(
                       <>
-                        <Trophy aria-hidden className={`mr-2 inline ${isChampionshipTrophy(trophy) ? 'text-primary' : 'text-muted-foreground'}`} size={16} />
+                        <Icon icon={Trophy} inline size={16} tone={isChampionshipTrophy(trophy) ? 'primary' : 'muted'} />
                         {describeSquadTrophy(trophy)}
                       </>
                     )}

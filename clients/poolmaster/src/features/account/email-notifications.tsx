@@ -4,7 +4,7 @@ import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { Alert, Checkbox, ErrorState, Modal } from '@/features/shared/ui';
+import { Alert, Checkbox, ErrorState, Modal, Text } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
@@ -20,7 +20,7 @@ export function EmailSuppressionBanner({ reason }: { reason: EmailSuppressionRea
   }
   return (
     <Alert data-testid="email-suppression-banner" title="We can't email you" tone="warning">
-      <p className="mt-1 text-sm">{SUPPRESSION_MESSAGES[reason]}</p>
+      <Text as="p" className="mt-1">{SUPPRESSION_MESSAGES[reason]}</Text>
     </Alert>
   );
 }
@@ -79,7 +79,7 @@ export function EmailNotificationsDialog({
         <ul className="space-y-3">
           {preferences.map(({ category, enabled }) => (
             <li key={category}>
-              <label className="flex items-start gap-3 text-muted-foreground">
+              <label className="flex items-start gap-3">
                 <Checkbox
                   checked={enabled}
                   className="mt-1"
@@ -87,10 +87,10 @@ export function EmailNotificationsDialog({
                   disabled={updateMutation.isPending}
                   onChange={(event) => updateMutation.mutate({ category, enabled: event.target.checked })}
                 />
-                <span className="text-sm">
-                  <strong className="block font-medium text-foreground">{EMAIL_CATEGORY_LABELS[category].label}</strong>
+                <Text variant="meta">
+                  <Text className="block" variant="strong">{EMAIL_CATEGORY_LABELS[category].label}</Text>
                   {EMAIL_CATEGORY_LABELS[category].description}
-                </span>
+                </Text>
               </label>
             </li>
           ))}

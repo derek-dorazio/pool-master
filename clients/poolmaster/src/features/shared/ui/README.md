@@ -42,6 +42,17 @@ The shared UI layer is split into three levels:
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
 
+## Formatting Values
+
+A value written on screen goes through `format.ts`, exported from the index:
+`formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
+("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
+plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
+`en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
+itself; `poolmaster/no-inline-display-format` enforces it
+(`rules/react-ui-rules.md` §5 *Environment And Time Discipline*).
+
 ## Where a Reusable Piece Lives
 
 - A **generic** piece, one that knows nothing about the product (a heading, a
@@ -70,9 +81,10 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, `SettingsSection` / `SettingsRow`
-(`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
-`DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
+`AdminAreaLayout`, `PageHeader`, a `SectionCard` of `SettingsRows` /
+`SettingsRow` for settings (a `bare` `SectionCard` titles a section whose body
+is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
+for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
 mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on
@@ -105,8 +117,10 @@ switching a page's views. A search box in the header feeds a `DataGrid` through
 its `searchTerm`.
 
 Text that is not a title (`Heading`) or the line over one (`Eyebrow`) is a `Text`:
-`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone` and `weight` are optional,
-`truncate` cuts a long line, and `as` picks `span` (the default), `p` or `div`. Pages never
+`variant` is `body`, `meta`, `caption`, `label`, `value` or `strong`, `tone`, `weight` and `size`
+are optional (`size="inherit"` for a name inside a larger line), `truncate` cuts a long line,
+`as` picks `span` (the default), `p` or `div`, and `asChild` styles a `Link` in place. An icon
+is an `Icon` (`icon={Award} tone="muted"`), hidden from screen readers. Pages never
 type font size, weight, case or text colour classes (`rules/react-ui-rules.md` §5 *Theme And
 Styling Discipline*).
 

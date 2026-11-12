@@ -13,6 +13,11 @@ PR's own diff. This skill is the merge, done so that main stays green. The merge
 is `rules/workflow-rules.md` §6 *Branching, Review, and Merge Cadence*; read *Slice closeout
 protocol* and *Slices in a series* there.
 
+A ticket PR into a UI batch branch skips this skill: once approved it squash-merges into the
+batch straight away. A batch lands on main as the landing thread's own branch, cut from the
+batch and merged with main, and that PR is landed with this skill. Both are in
+`rules/workflow-rules.md` §6 *UI batch branches*.
+
 ## Step 0 — the go
 
 Merge only with the approval and the go to merge the project's process gives
@@ -57,7 +62,9 @@ while passing on both sides. If the merge changed anything, push it and wait for
 2. Watch main's run that the merge started. A red one is yours until shown otherwise (the
    `fix-broken-ci` skill).
 3. The remote branch is deleted on merge. The next piece of work on the same branch name
-   starts from main again; never add commits on top of a merged branch's history.
+   starts from main again; never add commits on top of a merged branch's history. A ticket
+   for an open UI batch starts from the batch instead: `git checkout -B <branch>
+   origin/ui-batch/<n>`.
 
 ## Where this goes wrong
 

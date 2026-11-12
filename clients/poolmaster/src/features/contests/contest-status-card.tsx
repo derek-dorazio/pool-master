@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType, getSportDefinition, pluralize  } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ContestDto, SportEventDto } from '@/lib/api';
@@ -13,6 +13,8 @@ import {
   Heading,
   LinkButton,
   Tile,
+  formatCount,
+  formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
@@ -142,12 +144,13 @@ function OpenCard({
   teamCount: number;
 }) {
   const contestId = contest.id;
+  const { locale } = useDisplayPreferences();
   const entered = enteredTeams(contest);
 
   return (
     <StatusCardFrame
       eyebrow="Open for entries"
-      title={entered ? `${entered.teamCount} of ${teamCount} members have entered` : 'Open for entries'}
+      title={entered ? `${formatNumber(entered.teamCount, locale)} of ${formatNumber(teamCount, locale)} members have entered` : 'Open for entries'}
     >
       {entered ? (
         <div className="flex flex-wrap gap-2.5">
@@ -223,7 +226,7 @@ function DrawOpenCard({
   return (
     <StatusCardFrame
       eyebrow="Open for entries · waiting for the draw"
-      title={entryCount === undefined ? 'Open for entries' : `${pluralize(entryCount, 'entry', 'entries')} waiting for the draw`}
+      title={entryCount === undefined ? 'Open for entries' : `${formatCount(entryCount, 'entry', displayPreferences.locale, 'entries')} waiting for the draw`}
     >
       {entryCount !== undefined ? (
         <div className="flex flex-wrap gap-2.5">

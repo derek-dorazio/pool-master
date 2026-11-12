@@ -11,7 +11,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { contestEventsForTemplate } from '@/features/contests/contest-template-events';
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { ErrorState, Heading, LoadingState, PageHeader, refetchFailed, SectionHeader } from '@/features/shared/ui';
+import { ErrorState, Heading, LoadingState, PageHeader, refetchFailed, SectionCard, SectionNote } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
@@ -89,8 +89,8 @@ export function LeagueContestTypesPage() {
       ) : (
         <div className="space-y-10">
           {catalog.map((sport) => (
-            <section className="space-y-5" data-testid={`contest-types-sport-${sport.sport}`} key={sport.sport}>
-              <SectionHeader description={SPORT_BLURBS[sport.sport]} title={sport.name} />
+            <SectionCard bare key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
+              <SectionNote>{SPORT_BLURBS[sport.sport]}</SectionNote>
               {sport.groups.map((group) => (
                 <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
                   <Heading level={4} variant="eyebrow">{group.name}</Heading>
@@ -104,7 +104,7 @@ export function LeagueContestTypesPage() {
                   </div>
                 </div>
               ))}
-            </section>
+            </SectionCard>
           ))}
         </div>
       )}

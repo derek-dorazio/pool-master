@@ -1,16 +1,10 @@
 import type { BillingConfig, ExpansionPrice } from '@/lib/api';
-
-const PRICE = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-/** A price in US cents as the app shows it: "$10", "$12.50". */
-export function formatPriceCents(cents: number): string {
-  return PRICE.format(cents / 100);
-}
+import { formatCount, formatMoneyCents } from '@/features/shared/ui';
 
 /** One plan's expansion price list in a line: "50 entries $10 · 1,000 entries $30", or "None". */
-export function describeExpansionPrices(prices: readonly ExpansionPrice[]): string {
+export function describeExpansionPrices(prices: readonly ExpansionPrice[], locale: string): string {
   return prices.length > 0
-    ? prices.map((band) => `${band.entriesPerContest.toLocaleString('en-US')} entries ${formatPriceCents(band.priceCents)}`).join(' · ')
+    ? prices.map((band) => `${formatCount(band.entriesPerContest, 'entry', locale, 'entries')} ${formatMoneyCents(band.priceCents, locale)}`).join(' · ')
     : 'None';
 }
 

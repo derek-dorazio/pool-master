@@ -25,9 +25,10 @@ import {
   InlineError,
   Input,
   LoadingState,
+  SectionCard,
   SegmentedControl,
-  SettingsSection,
-  SettingsSectionHeader,
+  SettingsRows,
+  Text,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -243,88 +244,90 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
   const inviteResult = sendInviteMutation.data ? describeInviteResult(sendInviteMutation.data) : null;
 
   return (
-    <SettingsSection testId="league-invite-people" title="Invite people">
-      <form className="space-y-3 px-5 py-4" onSubmit={(event) => void handleSendInvite(event)}>
-        <FormField helperText="They get their own link by email." label="Invite by email">
-          <div className="flex flex-wrap gap-3">
-            <Input
-              aria-label="Invite by email"
-              className="min-w-0 flex-[1_1_16rem]"
-              data-testid="league-invite-email"
-              disabled={isInactiveLeague}
-              onChange={(event) => setInviteEmail(event.target.value)}
-              placeholder="member@example.com"
-              type="email"
-              value={inviteEmail}
-            />
-            <Button
-              data-testid="league-send-invite"
-              disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
-              type="submit"
-            >
-              {sendInviteMutation.isPending ? 'Sending...' : 'Send invite'}
-            </Button>
-          </div>
-        </FormField>
-        {inviteResult ? <Alert tone="success">{inviteResult}</Alert> : null}
-        {sendInviteMutation.isError ? (
-          <Alert tone="danger">
-            {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.' })}
-          </Alert>
-        ) : null}
-      </form>
-
-      <div className="space-y-3 px-5 py-4">
-        <FormField
-          helperText={joinLink
-            ? `Anyone with the link can join. ${joinedCount(joinLink.currentUses)}.`
-            : 'Anyone with the link can join.'}
-          label="Join link"
-        >
-          <div className="flex flex-wrap gap-3">
-            <Input
-              aria-label="Join link"
-              className="min-w-0 flex-[1_1_16rem] font-mono"
-              data-testid="league-join-url"
-              placeholder="No join link yet"
-              readOnly
-              value={joinUrl}
-            />
-            <div className="flex gap-2">
-              <CopyButton
-                disabled={!joinLink}
-                failedMessage="Couldn't copy. Select the link and copy it by hand."
-                iconOnly
-                key={joinUrl}
-                label="Copy join link"
-                testId="league-copy-join-url"
-                text={joinUrl}
-                variant="icon"
+    <SectionCard testId="league-invite-people" title="Invite people">
+      <SettingsRows>
+        <form className="space-y-3 px-4 py-4" onSubmit={(event) => void handleSendInvite(event)}>
+          <FormField helperText="They get their own link by email." label="Invite by email">
+            <div className="flex flex-wrap gap-3">
+              <Input
+                aria-label="Invite by email"
+                className="min-w-0 flex-[1_1_16rem]"
+                data-testid="league-invite-email"
+                disabled={isInactiveLeague}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                placeholder="member@example.com"
+                type="email"
+                value={inviteEmail}
               />
               <Button
-                data-testid="league-create-join-url"
-                disabled={inviteLinkMutation.isPending || isInactiveLeague}
-                onClick={() => void inviteLinkMutation.mutateAsync().catch(() => undefined)}
-                type="button"
-                variant="secondary"
+                data-testid="league-send-invite"
+                disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
+                type="submit"
               >
-                {inviteLinkMutation.isPending ? 'Creating...' : joinLink ? 'New link' : 'Create join link'}
+                {sendInviteMutation.isPending ? 'Sending...' : 'Send invite'}
               </Button>
             </div>
-          </div>
-        </FormField>
-        {inviteLinkMutation.isError ? (
-          <Alert tone="danger">
-            {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join link.' })}
-          </Alert>
-        ) : null}
-        {isInactiveLeague ? (
-          <p className="text-sm text-muted-foreground" data-testid="league-invites-inactive">
-            This league is inactive, so nobody new can be invited.
-          </p>
-        ) : null}
-      </div>
-    </SettingsSection>
+          </FormField>
+          {inviteResult ? <Alert tone="success">{inviteResult}</Alert> : null}
+          {sendInviteMutation.isError ? (
+            <Alert tone="danger">
+              {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.' })}
+            </Alert>
+          ) : null}
+        </form>
+
+        <div className="space-y-3 px-4 py-4">
+          <FormField
+            helperText={joinLink
+              ? `Anyone with the link can join. ${joinedCount(joinLink.currentUses)}.`
+              : 'Anyone with the link can join.'}
+            label="Join link"
+          >
+            <div className="flex flex-wrap gap-3">
+              <Input
+                aria-label="Join link"
+                className="min-w-0 flex-[1_1_16rem] font-mono"
+                data-testid="league-join-url"
+                placeholder="No join link yet"
+                readOnly
+                value={joinUrl}
+              />
+              <div className="flex gap-2">
+                <CopyButton
+                  disabled={!joinLink}
+                  failedMessage="Couldn't copy. Select the link and copy it by hand."
+                  iconOnly
+                  key={joinUrl}
+                  label="Copy join link"
+                  testId="league-copy-join-url"
+                  text={joinUrl}
+                  variant="icon"
+                />
+                <Button
+                  data-testid="league-create-join-url"
+                  disabled={inviteLinkMutation.isPending || isInactiveLeague}
+                  onClick={() => void inviteLinkMutation.mutateAsync().catch(() => undefined)}
+                  type="button"
+                  variant="secondary"
+                >
+                  {inviteLinkMutation.isPending ? 'Creating...' : joinLink ? 'New link' : 'Create join link'}
+                </Button>
+              </div>
+            </div>
+          </FormField>
+          {inviteLinkMutation.isError ? (
+            <Alert tone="danger">
+              {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join link.' })}
+            </Alert>
+          ) : null}
+          {isInactiveLeague ? (
+            <Text as="p" data-testid="league-invites-inactive" variant="meta">
+              This league is inactive, so nobody new can be invited.
+            </Text>
+          ) : null}
+        </div>
+      </SettingsRows>
+    </SectionCard>
   );
 }
 
@@ -426,9 +429,9 @@ function WaitingInvites({
           const { invitation, isEmail, label } = row.original;
           return (
             <div className="min-w-0 space-y-1">
-              <div className="font-medium text-foreground">{label}</div>
+              <Text as="div" size="inherit" variant="strong">{label}</Text>
               {isEmail ? null : (
-                <div className="text-xs text-muted-foreground">{String(invitation.currentUses)} joined</div>
+                <Text as="div" variant="caption">{String(invitation.currentUses)} joined</Text>
               )}
               {invitation.emailStatus ? (
                 <div
@@ -463,7 +466,7 @@ function WaitingInvites({
           const { expiresAt } = row.original.invitation;
           return expiresAt
             ? <DateDisplay timeStyle={null} value={expiresAt} />
-            : <span className="text-muted-foreground">Never</span>;
+            : <Text size="inherit" tone="muted">Never</Text>;
         },
       },
       {
@@ -524,11 +527,12 @@ function WaitingInvites({
   }, [cancel, isBusy, isInactiveLeague, isResending, resend]);
 
   return (
-    <section className="space-y-3" data-testid="league-waiting-invites">
-      <SettingsSectionHeader
-        description="Accepted invites leave this list; the new member shows on Members."
-        title="Waiting on an answer"
-      />
+    <SectionCard
+      bare
+      info="Accepted invites leave this list; the new member shows on Members."
+      testId="league-waiting-invites"
+      title="Waiting on an answer"
+    >
       {isLoading ? (
         <LoadingState body="Loading invites..." rows={2} size="plain" testId="league-invitations-loading" />
       ) : isError ? (
@@ -564,9 +568,9 @@ function WaitingInvites({
         </div>
       )}
       {resendMutation.isSuccess ? (
-        <p className="text-sm text-muted-foreground" data-testid="league-invitation-resent">
+        <Text as="p" data-testid="league-invitation-resent" variant="meta">
           Invite resent with a new link. The old link no longer works.
-        </p>
+        </Text>
       ) : null}
       {resendMutation.isError ? (
         <InlineError testId="league-invitation-resend-error">
@@ -582,6 +586,6 @@ function WaitingInvites({
           })}
         </InlineError>
       ) : null}
-    </section>
+    </SectionCard>
   );
 }

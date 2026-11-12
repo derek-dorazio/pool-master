@@ -33,7 +33,6 @@ import {
   Button,
   Chip,
   ConfirmDialog,
-  DangerZone,
   DangerZoneAction,
   DateDisplay,
   EmptyState,
@@ -42,8 +41,10 @@ import {
   LoadingState,
   PageHeader,
   refetchFailed,
+  SectionCard,
+  SectionEmpty,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -78,26 +79,26 @@ function ContestTiersSection({
   const sortedTiers = [...tiers].sort((left, right) => left.tierNumber - right.tierNumber);
 
   return (
-    <SettingsSection
-      description={`From the event, top tier first. Every contest on ${eventName} uses the same tiers.`}
+    <SectionCard
+      info={`From the event, top tier first. Every contest on ${eventName} uses the same tiers. An admin sets them before the event is released.`}
       testId="contest-tiers"
       title={title}
     >
-      {sortedTiers.length ? (
-        sortedTiers.map((tier) => (
-          <SettingsRow
-            key={tier.tierKey}
-            label={<Chip tone="info">Tier {tier.tierNumber}</Chip>}
-            testId={`contest-tier-${tier.tierNumber}`}
-            value={countParticipants(tier.assignments.length, noun)}
-          />
-        ))
-      ) : (
-        <div className="px-5 py-3.5 text-sm text-muted-foreground" data-testid="contest-tiers-empty">
-          The event has no tiers yet. An admin sets them before the event is released.
-        </div>
-      )}
-    </SettingsSection>
+      <SettingsRows>
+        {sortedTiers.length ? (
+          sortedTiers.map((tier) => (
+            <SettingsRow
+              key={tier.tierKey}
+              label={<Chip tone="info">Tier {tier.tierNumber}</Chip>}
+              testId={`contest-tier-${tier.tierNumber}`}
+              value={countParticipants(tier.assignments.length, noun)}
+            />
+          ))
+        ) : (
+          <SectionEmpty testId="contest-tiers-empty">No tiers yet.</SectionEmpty>
+        )}
+      </SettingsRows>
+    </SectionCard>
   );
 }
 
@@ -232,8 +233,8 @@ export function ManageContestPage() {
         teamCount={activeTeamCount}
       />
 
-      <SettingsSection
-        action={isNotOpen ? (
+      <SectionCard
+        trailing={isNotOpen ? (
           <LinkButton
             data-testid="manage-contest-edit"
             isDisabled={!league.isActive}
@@ -249,63 +250,65 @@ export function ManageContestPage() {
             Locked
           </span>
         )}
-        description={isNotOpen
+        info={isNotOpen
           ? 'What members will see when they enter.'
           : 'Settings locked when you opened it to the league.'}
         testId="manage-contest-settings"
         title="Contest"
       >
-        <SettingsRow label="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
-        <SettingsRow
-          action={canChangeEvents ? (
-            <LinkButton
-              data-testid="manage-contest-events-edit"
-              size="sm"
-              to={buildLeagueAdminContestEventsPath(leagueCode, contest.id)}
-              variant="secondary"
-            >
-              {isMultiEvent ? 'Change events' : 'Add events'}
-            </LinkButton>
-          ) : isNotOpen ? <FixedNote /> : undefined}
-          label={isMultiEvent ? `Events (${contest.sportEvents.length})` : 'Event'}
-          testId="manage-contest-event-row"
-          value={(
-            <>
-              {isMultiEvent ? (
-                <ol className="space-y-0.5" data-testid="manage-contest-event-list">
-                  {contest.sportEvents.map((sportEvent) => (
-                    <li key={sportEvent.sportEventId}>
-                      {sportEvent.name}
-                      <span className="text-xs text-muted-foreground">
-                        {' · '}<DateDisplay className="text-muted-foreground" value={sportEvent.startDate} />
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              ) : eventLabel}
-              <div className="text-xs text-muted-foreground">
-                {isMultiEvent ? 'The first event starts ' : 'Starts '}
-                <DateDisplay className="text-muted-foreground" value={event.startDate} />.
-                {contest.selectionType === SelectionType.RANDOM_DRAW
-                  ? ' Entries close when you run the draw, which must be before then.'
-                  : ' Entries close then.'}
-              </div>
-            </>
-          )}
-        />
-        <SettingsRow
-          action={isNotOpen ? <FixedNote /> : undefined}
-          label="Format"
-          testId="manage-contest-format"
-          value={formatSelectionTypeName(contest.selectionType)}
-        />
-        <SettingsRow label="Rules" testId="manage-contest-rules" value={rules} />
-        <SettingsRow
-          label="Entries per member"
-          testId="manage-contest-entries-per-team"
-          value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
-        />
-      </SettingsSection>
+        <SettingsRows>
+          <SettingsRow label="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
+          <SettingsRow
+            action={canChangeEvents ? (
+              <LinkButton
+                data-testid="manage-contest-events-edit"
+                size="sm"
+                to={buildLeagueAdminContestEventsPath(leagueCode, contest.id)}
+                variant="secondary"
+              >
+                {isMultiEvent ? 'Change events' : 'Add events'}
+              </LinkButton>
+            ) : isNotOpen ? <FixedNote /> : undefined}
+            label={isMultiEvent ? `Events (${contest.sportEvents.length})` : 'Event'}
+            testId="manage-contest-event-row"
+            value={(
+              <>
+                {isMultiEvent ? (
+                  <ol className="space-y-0.5" data-testid="manage-contest-event-list">
+                    {contest.sportEvents.map((sportEvent) => (
+                      <li key={sportEvent.sportEventId}>
+                        {sportEvent.name}
+                        <span className="text-xs text-muted-foreground">
+                          {' · '}<DateDisplay className="text-muted-foreground" value={sportEvent.startDate} />
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : eventLabel}
+                <div className="text-xs text-muted-foreground">
+                  {isMultiEvent ? 'The first event starts ' : 'Starts '}
+                  <DateDisplay className="text-muted-foreground" value={event.startDate} />.
+                  {contest.selectionType === SelectionType.RANDOM_DRAW
+                    ? ' Entries close when you run the draw, which must be before then.'
+                    : ' Entries close then.'}
+                </div>
+              </>
+            )}
+          />
+          <SettingsRow
+            action={isNotOpen ? <FixedNote /> : undefined}
+            label="Format"
+            testId="manage-contest-format"
+            value={formatSelectionTypeName(contest.selectionType)}
+          />
+          <SettingsRow label="Rules" testId="manage-contest-rules" value={rules} />
+          <SettingsRow
+            label="Entries per member"
+            testId="manage-contest-entries-per-team"
+            value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
+          />
+        </SettingsRows>
+      </SectionCard>
 
       <ContestExpansionSection
         canGrant={viewer.isRootAdmin}
@@ -315,33 +318,35 @@ export function ManageContestPage() {
       />
 
       {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
-        <SettingsSection
-          description="How much this contest counts toward its sports league cup and the league championship."
+        <SectionCard
+          info="How much this contest counts toward its sports league cup and the league championship."
           testId="manage-contest-championships"
           title="Championships"
         >
-          <SettingsRow
-            action={contest.status === ContestStatus.COMPLETED ? (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
-                <Lock aria-hidden size={13} />
-                Final
-              </span>
-            ) : (
-              <LinkButton
-                data-testid="manage-contest-cup-weight-edit"
-                isDisabled={!league.isActive}
-                size="sm"
-                to={buildLeagueAdminContestCupWeightPath(leagueCode, contest.id)}
-                variant="secondary"
-              >
-                Edit
-              </LinkButton>
-            )}
-            label="Cup weight"
-            testId="manage-contest-cup-weight"
-            value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
-          />
-        </SettingsSection>
+          <SettingsRows>
+            <SettingsRow
+              action={contest.status === ContestStatus.COMPLETED ? (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
+                  <Lock aria-hidden size={13} />
+                  Final
+                </span>
+              ) : (
+                <LinkButton
+                  data-testid="manage-contest-cup-weight-edit"
+                  isDisabled={!league.isActive}
+                  size="sm"
+                  to={buildLeagueAdminContestCupWeightPath(leagueCode, contest.id)}
+                  variant="secondary"
+                >
+                  Edit
+                </LinkButton>
+              )}
+              label="Cup weight"
+              testId="manage-contest-cup-weight"
+              value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
+            />
+          </SettingsRows>
+        </SectionCard>
       ) : null}
 
       {isTiered ? managedContest.sportEvents.map((managedEvent) => (
@@ -355,22 +360,24 @@ export function ManageContestPage() {
       )) : null}
 
       {isNotOpen ? (
-        <DangerZone testId="manage-contest-danger-zone">
-          <DangerZoneAction
-            action={(
-              <Button
-                data-testid="contest-delete"
-                disabled={!league.isActive}
-                onClick={() => setIsDeleteOpen(true)}
-                variant="danger"
-              >
-                Delete contest
-              </Button>
-            )}
-            description="Removes this contest for good. Possible only until you open it to the league."
-            title="Delete contest"
-          />
-        </DangerZone>
+        <SectionCard testId="manage-contest-danger-zone" tone="danger">
+          <SettingsRows>
+            <DangerZoneAction
+              action={(
+                <Button
+                  data-testid="contest-delete"
+                  disabled={!league.isActive}
+                  onClick={() => setIsDeleteOpen(true)}
+                  variant="danger"
+                >
+                  Delete contest
+                </Button>
+              )}
+              description="Removes this contest for good. Possible only until you open it to the league."
+              title="Delete contest"
+            />
+          </SettingsRows>
+        </SectionCard>
       ) : null}
 
       <ConfirmDialog

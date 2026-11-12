@@ -1,5 +1,5 @@
 import { Award } from 'lucide-react';
-import { ErrorState, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
+import { ErrorState, Icon, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
 import { describePlateWinners, describeWonPlate, perpetualTrophyName, type WonPlate } from './perpetual-trophy-view';
 import { usePerpetualTrophiesQuery } from './use-championship-query';
 
@@ -27,7 +27,7 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
           testId={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`}
           title={(
             <>
-              <Award aria-hidden className="text-primary" size={18} />
+              <Icon icon={Award} size={18} tone="primary" />
               {perpetualTrophyName(trophy)}
             </>
           )}
@@ -56,7 +56,7 @@ export function SquadPerpetualPlates({ plates }: { plates: WonPlate[] }) {
       key={won.plate.contestId}
       name={(
         <>
-          <Award aria-hidden className="mr-2 inline text-muted-foreground" size={16} />
+          <Icon icon={Award} inline size={16} tone="muted" />
           {describeWonPlate(won)}
         </>
       )}
