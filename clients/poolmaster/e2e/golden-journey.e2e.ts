@@ -184,7 +184,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('account-menu-trigger')).toBeVisible();
       await page.goto('/manage');
       await expect(page).toHaveURL(/\/manage\/leagues$/);
-      await expect(page.getByTestId('root-admin-manage-menu-golf')).toBeVisible();
+      await expect(page.getByTestId('root-admin-manage-menu-sports')).toBeVisible();
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
@@ -760,8 +760,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('open the league All years page', async () => {
       await page.goto(`/league/${run.leagueCode}/history`);
       await expect(page.getByTestId('all-years-page')).toBeVisible();
-      await expect(page.getByTestId('shared-error-state')).toHaveCount(0);
-      await expect(page.getByTestId('shared-forbidden-state')).toHaveCount(0);
+      // A failed read draws its error line as an alert.
+      await expect(page.getByRole('alert')).toHaveCount(0);
     });
 
     await test.step('the member logs out', async () => {
@@ -1522,8 +1522,7 @@ async function expectListPageLoaded(page: Page, path: string, landmark: string, 
   // The table renders only once the page's query has settled without an error, so the
   // absence check below cannot pass merely because the page is still loading.
   await expect(page.getByTestId(table)).toBeVisible();
-  await expect(page.getByTestId('shared-error-state')).toHaveCount(0);
-  await expect(page.getByTestId('shared-forbidden-state')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
 }
 
 function addDays(date: Date, days: number): Date {

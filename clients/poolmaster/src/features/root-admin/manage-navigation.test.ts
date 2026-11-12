@@ -2,7 +2,8 @@ import { SUPPORTED_SPORTS, Sport, sportPathSegment } from '@poolmaster/shared/do
 import { describe, expect, it } from 'vitest';
 import {
   SPORTS_LANDING_PATH,
-  buildManageMenuItems,
+  buildManageSportTabs,
+  buildManageTabs,
   buildSportEventPath,
   getManageBreadcrumbLabel,
   parseSportPathSegment,
@@ -39,11 +40,25 @@ describe('Manage sport paths (plans/racing-sports.md Q9.6)', () => {
 });
 
 describe('Manage menu and breadcrumbs per sport', () => {
-  it('lists each supported sport by name under Sports and marks the one being managed', () => {
-    const sports = buildManageMenuItems('/manage/sports/horse-racing/events/evt-1')
-      .filter((item) => item.group === 'Sports');
+  it('shows the tools as top tabs, Leagues to Content, keeping Sports lit on any page under a sport', () => {
+    const tabs = buildManageTabs('/manage/sports/horse-racing/events/evt-1');
 
-    expect(sports.map((item) => [item.label, item.isActive])).toEqual([
+    expect(tabs.map((tab) => [tab.label, tab.isActive])).toEqual([
+      ['Leagues', false],
+      ['Users', false],
+      ['Plans', false],
+      ['Sports', true],
+      ['Events', false],
+      ['Sync', false],
+      ['Settings', false],
+      ['Content', false],
+    ]);
+  });
+
+  it('under Sports, lists each supported sport by name as a second row and marks the one being managed', () => {
+    const sports = buildManageSportTabs('/manage/sports/horse-racing/events/evt-1');
+
+    expect(sports?.map((tab) => [tab.label, tab.isActive])).toEqual([
       ['Golf', false],
       ['Horse racing', true],
       ['Auto racing', false],
@@ -56,6 +71,10 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Soccer', false],
       ['Tennis', false],
     ]);
+  });
+
+  it('has no second row of sports outside Sports', () => {
+    expect(buildManageSportTabs('/manage/sync')).toBeNull();
   });
 
   it('names a cycling trail in cycling words: Cycling, Races, Riders, Tours', () => {

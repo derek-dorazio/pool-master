@@ -1,22 +1,12 @@
 import { SUPPORTED_SPORTS, getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
-import type { NavMenuItem } from '@/features/shared/ui';
+import type { PageLinkTab } from '@/features/shared/ui';
 import { upperFirst } from '@/lib/upper-first';
 
-export type ManageSectionGroup = 'platform' | 'sports' | 'operations';
-
-
 type ManageSectionDefinition = {
-  /** The menu entry's selector suffix; a sport's is its URL segment (`golf`, `horse-racing`). */
+  /** The tab's selector suffix and its path segment under `/manage`. */
   key: string;
-  group: ManageSectionGroup;
   title: string;
   to: string;
-};
-
-const MANAGE_SECTION_GROUP_TITLES: Record<ManageSectionGroup, string> = {
-  platform: 'Platform',
-  sports: 'Sports',
-  operations: 'Operations',
 };
 
 /** The supported sport a URL segment names, or null when it names none. */
@@ -62,28 +52,16 @@ export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
 /** Where `/manage/sports` itself lands: the first supported sport's events. */
 export const SPORTS_LANDING_PATH = buildSportEventListPath(SUPPORTED_SPORTS[0]);
 
-/** "tournaments" as a heading or breadcrumb reads it: "Tournaments". */
-/** The Manage side menu, in order; items of one group sit together under its heading. */
+/** Manage's tools, one top tab each, in order (#1620). */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
-  { key: 'leagues', group: 'platform', title: 'Leagues', to: '/manage/leagues' },
-  { key: 'users', group: 'platform', title: 'Users', to: '/manage/users' },
-  { key: 'plans', group: 'platform', title: 'Plans', to: '/manage/plans' },
-  // One entry per supported sport, in enum order, named by its definition.
-  ...SUPPORTED_SPORTS.map((sport): ManageSectionDefinition => ({
-    key: sportPathSegment(sport),
-    group: 'sports',
-    title: getSportDefinition(sport).name,
-    to: buildSportPath(sport),
-  })),
-  {
-    key: 'content-configuration',
-    group: 'operations',
-    title: 'Content Configuration',
-    to: '/manage/content-configuration',
-  },
-  { key: 'events', group: 'operations', title: 'Events', to: '/manage/events' },
-  { key: 'sync', group: 'operations', title: 'Sync', to: '/manage/sync' },
-  { key: 'settings', group: 'operations', title: 'Settings', to: '/manage/settings' },
+  { key: 'leagues', title: 'Leagues', to: '/manage/leagues' },
+  { key: 'users', title: 'Users', to: '/manage/users' },
+  { key: 'plans', title: 'Plans', to: '/manage/plans' },
+  { key: 'sports', title: 'Sports', to: SPORTS_PATH },
+  { key: 'events', title: 'Events', to: '/manage/events' },
+  { key: 'sync', title: 'Sync', to: '/manage/sync' },
+  { key: 'settings', title: 'Settings', to: '/manage/settings' },
+  { key: 'content-configuration', title: 'Content', to: '/manage/content-configuration' },
 ];
 
 /** Where `/manage` itself lands: the first section of the menu. */
@@ -117,13 +95,29 @@ function isAtOrUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-export function buildManageMenuItems(pathname: string): NavMenuItem[] {
+/** Manage's top tabs; a tool's sub-pages keep its tab lit. */
+export function buildManageTabs(pathname: string): PageLinkTab[] {
   return MANAGE_SECTION_DEFINITIONS.map((section) => ({
-    group: MANAGE_SECTION_GROUP_TITLES[section.group],
     isActive: isAtOrUnder(pathname, section.to),
     label: section.title,
     testId: `root-admin-manage-menu-${section.key}`,
     to: section.to,
+  }));
+}
+
+/**
+ * Under Sports, the second row: one tab per supported sport, in enum order, named by its
+ * definition. Null anywhere else.
+ */
+export function buildManageSportTabs(pathname: string): PageLinkTab[] | null {
+  if (!isAtOrUnder(pathname, SPORTS_PATH)) {
+    return null;
+  }
+  return SUPPORTED_SPORTS.map((sport) => ({
+    isActive: isAtOrUnder(pathname, buildSportPath(sport)),
+    label: getSportDefinition(sport).name,
+    testId: `root-admin-manage-menu-${sportPathSegment(sport)}`,
+    to: buildSportPath(sport),
   }));
 }
 

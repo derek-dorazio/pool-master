@@ -103,6 +103,8 @@ export type PickerModalItem = {
 
 export type PickerModalProps<TItem extends PickerModalItem> =
   BaseModalTemplateProps & {
+    /** The apply button's words; defaults to "Apply". A multi-pick says how many, as "Add selected (3)". */
+    applyLabel?: ReactNode;
     canApply?: boolean;
     emptyMessage?: ReactNode;
     errorMessage?: ReactNode;
@@ -119,12 +121,17 @@ export type PickerModalProps<TItem extends PickerModalItem> =
       label: string;
       onChange: (value: string) => void;
       placeholder?: string;
+      testId?: string;
       value: string;
     };
+    /** One pick: the chosen item's id. */
     selectedId?: string | null;
+    /** Several picks: every chosen item's id. Takes the place of `selectedId`. */
+    selectedIds?: ReadonlySet<string>;
   };
 
 export function PickerModal<TItem extends PickerModalItem>({
+  applyLabel = "Apply",
   canApply = true,
   description,
   emptyMessage = "No options are available.",
@@ -142,6 +149,7 @@ export function PickerModal<TItem extends PickerModalItem>({
   renderItem,
   search,
   selectedId,
+  selectedIds,
   testId,
   title,
 }: PickerModalProps<TItem>) {
@@ -165,7 +173,7 @@ export function PickerModal<TItem extends PickerModalItem>({
             onClick={onApply}
             type="button"
           >
-            Apply
+            {applyLabel}
           </Button>
         </>
       }
@@ -181,6 +189,7 @@ export function PickerModal<TItem extends PickerModalItem>({
       {search ? (
         <FormField label={search.label}>
           <Input
+            data-testid={search.testId}
             onChange={(event) => search.onChange(event.target.value)}
             placeholder={search.placeholder}
             type="search"
@@ -197,10 +206,11 @@ export function PickerModal<TItem extends PickerModalItem>({
       >
         {items.length > 0 ? (
           items.map((item) => {
-            const selected = item.id === selectedId;
+            const selected = selectedIds ? selectedIds.has(item.id) : item.id === selectedId;
 
             return (
               <button
+                aria-pressed={selected}
                 className={cn(
                   "flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left transition",
                   selected

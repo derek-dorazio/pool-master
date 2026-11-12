@@ -2,7 +2,7 @@ export { Notice } from "./notice";
 export { StatusPage } from "./status-page";
 export { WebAddressBox } from "./web-address-box";
 export type { StatusPageKind } from "./status-page";
-export { AdminAreaLayout, LeagueMenu, ToolsArea } from "./nav-menus";
+export { LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
@@ -61,7 +61,6 @@ export { MetricGrid, MetricTile } from "./metric-grid";
 export { FactList, type Fact, type FactListDensity, type FactListLayout } from "./fact-list";
 export { CheckList, type CheckItem } from "./check-list";
 export { StageTrack, type StageTrackSurface } from "./stage-track";
-export { SelectableDataGrid } from "./selectable-data-grid";
 export {
   SimpleTable,
   TableBody,
@@ -106,14 +105,7 @@ export {
   PickerModal,
   ReadOnlyDetailModal,
 } from "./modal-templates";
-export {
-  AsyncPage,
-  DataGridPage,
-  EntityDetailPage,
-  FormEditorSection,
-  ManagementListPage,
-  PublicInviteJoinPage,
-} from "./page-templates";
+export { PublicInviteJoinPage } from "./page-templates";
 export { Tile } from "./tile";
 export { Countdown } from "./countdown";
 export { ExpandableRow } from "./expandable-row";

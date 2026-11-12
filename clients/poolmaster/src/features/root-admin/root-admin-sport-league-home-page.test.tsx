@@ -300,7 +300,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
     renderPage('missing');
 
-    expect(await screen.findByText('Tour not found')).toBeInTheDocument();
+    expect(await screen.findByText('Tour not found.')).toBeInTheDocument();
   });
 
   it('pool-master-qqs surfaces the tour load error', async () => {

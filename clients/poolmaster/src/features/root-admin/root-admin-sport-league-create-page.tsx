@@ -12,7 +12,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { buildSportLeagueListPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
-import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
@@ -23,7 +22,6 @@ type NewTourValues = z.infer<typeof newTourSchema>;
 
 /** Create one of a sport's leagues (a golf tour, a racing circuit), then return to the list. */
 export function RootAdminSportLeagueCreatePage() {
-  useManagePageOwnsHeading();
   const { sport, definition } = useManagedSport();
   const { sportLeague } = definition.vocabulary;
   const listPath = buildSportLeagueListPath(sport);

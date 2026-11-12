@@ -1,14 +1,11 @@
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Eyebrow } from "./eyebrow";
 import { type PageLinkTab, PageTabs } from "./page-tabs";
 import { useScrollRow } from "./scroll-row";
-import { Tile } from "./tile";
 
 export type NavMenuItem = {
-  /** A side-menu heading this item sits under; consecutive items share one heading. */
-  group?: string;
   isActive: boolean;
   label: ReactNode;
   testId: string;
@@ -57,80 +54,6 @@ export function LeagueMenu({ action, "aria-label": ariaLabel, items }: LeagueMen
   );
 }
 
-type AdminAreaLayoutProps = {
-  back: { label: string; testId: string; to: string };
-  children: ReactNode;
-  /** The area's name, shown above the title, e.g. "Commissioner tools". */
-  eyebrow: string;
-  icon?: ReactNode;
-  menuLabel: string;
-  menuItems: NavMenuItem[];
-  testId?: string;
-  title: ReactNode;
-};
-
-/**
- * An administration area: a dark area header with a way back, a side menu, and the page.
- * Kept apart from the member pages so routine use never sits beside administration.
- */
-export function AdminAreaLayout({
-  back,
-  children,
-  eyebrow,
-  icon,
-  menuItems,
-  menuLabel,
-  testId,
-  title,
-}: AdminAreaLayoutProps) {
-  return (
-    <div className="space-y-6" data-testid={testId}>
-      <Tile className="flex flex-wrap items-center gap-3 px-5 py-3" padding="none" radius="md" variant="inverseDeep">
-        {icon ? <span className="text-primary">{icon}</span> : null}
-        <div className="min-w-0">
-          <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
-          <div className="truncate font-semibold">{title}</div>
-        </div>
-        <Link
-          className="ml-auto whitespace-nowrap rounded-pill border border-inverse-border px-3 py-1.5 text-sm transition hover:bg-on-inverse-hover"
-          data-testid={back.testId}
-          to={back.to}
-        >
-          {back.label}
-        </Link>
-      </Tile>
-
-      <div className="grid items-start gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
-        <nav aria-label={menuLabel} className="flex gap-1 overflow-x-auto md:sticky md:top-4 md:flex-col">
-          {menuItems.map((item, index) => (
-            <Fragment key={item.testId}>
-              {item.group && item.group !== menuItems[index - 1]?.group ? (
-                <Eyebrow className="hidden px-3 pb-1 pt-3 first:pt-0 md:block" tone="muted">
-                  {item.group}
-                </Eyebrow>
-              ) : null}
-              <Link
-                aria-current={item.isActive ? "page" : undefined}
-                className={cn(
-                  "whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition",
-                  item.isActive
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                data-testid={item.testId}
-                to={item.to}
-              >
-                {item.label}
-              </Link>
-            </Fragment>
-          ))}
-        </nav>
-        <div className="min-w-0">{children}</div>
-      </div>
-    </div>
-  );
-}
-
 type ToolsAreaProps = {
   back: { label: string; testId: string; to: string };
   children: ReactNode;
@@ -139,6 +62,11 @@ type ToolsAreaProps = {
   /** The area's tools, one tab each; a tool's sub-pages keep its tab lit. */
   tabs: PageLinkTab[];
   tabsLabel: string;
+  /**
+   * A second row under the tabs for the open tool's own choices, such as one tab per sport
+   * under Sports. It scrolls on a phone and keeps the selected one in view.
+   */
+  subTabs?: { items: PageLinkTab[]; label: string };
   testId?: string;
   /** What the tools act on, e.g. the league's name. */
   title: ReactNode;
@@ -146,10 +74,11 @@ type ToolsAreaProps = {
 
 /**
  * A tools area (#1562): a slim navy band saying which area you are in and the way back, the
- * area's tools as one row of `PageTabs` on every width, then the page, which opens with its
- * own `PageHeader`. No side menu, so tables get the full width.
+ * area's tools as one row of `PageTabs` on every width, an optional second row for the open
+ * tool's own choices, then the page, which opens with its own `PageHeader`. No side menu, so
+ * tables get the full width.
  */
-export function ToolsArea({ back, children, eyebrow, tabs, tabsLabel, testId, title }: ToolsAreaProps) {
+export function ToolsArea({ back, children, eyebrow, subTabs, tabs, tabsLabel, testId, title }: ToolsAreaProps) {
   return (
     <div className="space-y-6" data-testid={testId}>
       <div className="space-y-3">
@@ -170,6 +99,11 @@ export function ToolsArea({ back, children, eyebrow, tabs, tabsLabel, testId, ti
         <div className="border-b border-border">
           <PageTabs aria-label={tabsLabel} items={tabs} variant="link" />
         </div>
+        {subTabs ? (
+          <div className="border-b border-border">
+            <PageTabs aria-label={subTabs.label} items={subTabs.items} variant="link" />
+          </div>
+        ) : null}
       </div>
       {children}
     </div>

@@ -1,5 +1,5 @@
+import type { ReactNode } from 'react';
 import { PageHeader, PageTabs } from '@/features/shared/ui';
-import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import {
   buildSportEventListPath,
   buildSportLeagueListPath,
@@ -15,10 +15,19 @@ type SportList = (typeof SPORT_LISTS)[number];
 /**
  * The header of a sport's three lists: the sport's name as the title and tabs between the lists,
  * named in its own words (golf: Tournaments, Golfers, Tours), so no list's name shows twice. The
- * side menu has one entry per sport; the area keeps only its trail above it.
+ * sport's own tab sits in the area's second row, under Sports.
  */
-export function SportSectionMenu({ current }: { current: SportList }) {
-  useManagePageOwnsHeading();
+export function SportSectionMenu({
+  actions,
+  current,
+  tabsEnd,
+}: {
+  /** The list's one page action, such as New tournament. */
+  actions?: ReactNode;
+  current: SportList;
+  /** A filter for the whole list, such as its year, at the tab row's right end. */
+  tabsEnd?: ReactNode;
+}) {
   const { sport, definition } = useManagedSport();
   const { event, participant, sportLeague } = definition.vocabulary;
   const lists: Record<SportList, { label: string; path: string }> = {
@@ -29,6 +38,7 @@ export function SportSectionMenu({ current }: { current: SportList }) {
 
   return (
     <PageHeader
+      actions={actions}
       tabs={(
         <PageTabs
           aria-label={`${definition.name} lists`}
@@ -41,6 +51,7 @@ export function SportSectionMenu({ current }: { current: SportList }) {
           variant="link"
         />
       )}
+      tabsEnd={tabsEnd}
       testId="root-admin-sport-menu"
       title={definition.name}
     />

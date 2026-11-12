@@ -5,13 +5,14 @@ import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
 import { SelectionType, getSportDefinition, describeBracketRules, describePickEmRules  } from '@poolmaster/shared/domain';
 import {
-  AsyncPage,
   Button,
   Checkbox,
-  FormEditorSection,
+  InlineError,
   FormField,
   PageHeader,
+  QueryState,
   Input,
+  SectionCard,
   StatusBadge,
   Textarea,
 } from '@/features/shared/ui';
@@ -28,7 +29,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 
 type ContestConfigTemplateUpdateResult = ContestConfigTemplateDto;
 
@@ -103,16 +104,7 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
     });
   }
 
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(templateKey || undefined, template?.name);
-
-  const pageState = templatesQuery.isError
-    ? 'error'
-    : templatesQuery.isLoading
-      ? 'loading'
-      : draft
-        ? 'ready'
-        : 'empty';
 
   // The size field and the tiers note name the template's sport's participants and events.
   const vocabulary = draft ? getSportDefinition(draft.sport).vocabulary : null;
@@ -121,18 +113,20 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
   const sizeField = rosterConfiguration && vocabulary ? templateSizeFields(vocabulary)[rosterConfiguration.selectionType] : null;
 
   return (
-    <AsyncPage
-      emptyBody={`No contest template matched ${templateKey}.`}
-      emptyTitle="Template not found"
-      errorBody={extractErrorMessage(
-        templatesQuery.error,
-        { fallback: 'We could not load this contest template right now.' },
-      )}
-      loadingBody="Loading contest template..."
-      state={pageState}
-      testId="root-admin-content-configuration-detail-page"
-    >
-      {draft && vocabulary ? (
+    <section className="space-y-6" data-testid="root-admin-content-configuration-detail-page">
+      <QueryState
+        empty={`Template not found: no contest template matched ${templateKey}.`}
+        error={extractErrorMessage(
+          templatesQuery.error,
+          { fallback: 'We could not load this contest template right now.' },
+        )}
+        isEmpty={() => !draft}
+        loading="Loading contest template..."
+        query={templatesQuery}
+        size="tile"
+        testId="root-admin-content-configuration-detail"
+      >
+        {() => (draft && vocabulary ? (
         <>
           <PageHeader
             icon={<LayoutTemplate aria-hidden size={22} />}
@@ -152,30 +146,8 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
             testId="root-admin-content-configuration-identity"
           />
 
-          <FormEditorSection
-            errorMessage={
-              contestTemplateMutation.isError
-                ? extractErrorMessage(
-                    contestTemplateMutation.error,
-                    { fallback: 'We could not save this contest template right now.' },
-                  )
-                : null
-            }
-            footer={(
-              <Button
-                data-testid="root-admin-content-config-save"
-                disabled={contestTemplateMutation.isPending}
-                onClick={() => contestTemplateMutation.mutate({
-                  templateId: draft.id,
-                  nextDraft: draft,
-                })}
-                type="button"
-              >
-                {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
-              </Button>
-            )}
-            title="Template configuration"
-          >
+          <SectionCard padded title="Template configuration">
+            <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <FormField label="Name">
                   <Input
@@ -272,9 +244,31 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
                   {describeBracketRules()}
                 </p>
               ) : null}
-          </FormEditorSection>
+              {contestTemplateMutation.isError ? (
+                <InlineError>
+                  {extractErrorMessage(contestTemplateMutation.error, {
+                    fallback: 'We could not save this contest template right now.',
+                  })}
+                </InlineError>
+              ) : null}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  data-testid="root-admin-content-config-save"
+                  disabled={contestTemplateMutation.isPending}
+                  onClick={() => contestTemplateMutation.mutate({
+                    templateId: draft.id,
+                    nextDraft: draft,
+                  })}
+                  type="button"
+                >
+                  {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
         </>
-      ) : null}
-    </AsyncPage>
+        ) : null)}
+      </QueryState>
+    </section>
   );
 }

@@ -149,7 +149,7 @@ describe('RootAdminSettingsPage', () => {
 
     renderPage();
 
-    expect(await screen.findByTestId('shared-error-state')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-settings-error')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-settings-group-INGESTION_SCHEDULE_CONFIG')).not.toBeInTheDocument();
   });
 });

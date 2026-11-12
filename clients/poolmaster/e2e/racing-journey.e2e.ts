@@ -148,6 +148,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   await test.step('root admin signs in, and Manage lists horse racing beside golf', async () => {
     await adminSignIn(page, credentials);
     await page.goto('/manage');
+    await page.getByTestId('root-admin-manage-menu-sports').click();
     await expect(page.getByTestId('root-admin-manage-menu-horse-racing')).toBeVisible();
     await page.getByTestId('root-admin-manage-menu-horse-racing').click();
     await expect(page).toHaveURL(/\/manage\/sports\/horse-racing\/events$/);

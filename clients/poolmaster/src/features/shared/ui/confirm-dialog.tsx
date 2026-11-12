@@ -17,8 +17,6 @@ export type ConfirmationInput = {
 export type ConfirmDialogProps = {
   cancelLabel?: string;
   children?: ReactNode;
-  /** The close button's accessible name; "Close <title>" when left out and the title is text. */
-  closeLabel?: string;
   confirmLabel: string;
   confirmTestId?: string;
   /** Type-to-confirm: the action stays disabled until `value` matches `expectedValue`. */
@@ -48,7 +46,6 @@ export type ConfirmDialogProps = {
 export function ConfirmDialog({
   cancelLabel = "Cancel",
   children,
-  closeLabel,
   confirmLabel,
   confirmTestId,
   confirmationInput,
@@ -71,7 +68,7 @@ export function ConfirmDialog({
 
   return (
     <Modal
-      closeLabel={closeLabel ?? (typeof title === "string" ? `Close ${title}` : undefined)}
+      closeLabel={typeof title === "string" ? `Close ${title}` : undefined}
       description={description}
       footer={(
         <DialogActions

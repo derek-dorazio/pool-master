@@ -11,12 +11,14 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SettingsGroup } from '@/lib/api';
 import {
-  AsyncPage,
   Button,
   Checkbox,
   DateDisplay,
+  HelpTip,
   InlineError,
   Input,
+  PageHeader,
+  QueryState,
   SectionCard,
   SectionRow,
   SectionRows,
@@ -36,7 +38,6 @@ import {
   UNLIMITED_LABEL,
 } from '@/features/plans/plan-labels';
 import { extractErrorMessage } from '@/lib/errors';
-import { ManagePageIntro } from './manage-page-intro';
 import { SettingsSaveError } from './settings-save-error';
 import { useSettingsGroupForm } from './use-settings-group-form';
 import { useSettingsGroupQuery } from './use-settings-groups';
@@ -70,24 +71,31 @@ const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
  */
 export function RootAdminPlansPage() {
   const settingsQuery = useSettingsGroupQuery('PLAN_CONFIG');
-  const group = settingsQuery.data;
-  const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load the plans right now.' })}
-      loadingBody="Loading plans..."
-      state={pageState}
-      testId="root-admin-plans-page"
-    >
-      <ManagePageIntro>
-        What each league plan allows, from Free up to Platinum. A higher plan always allows at least
-        as much as the one below it, and Platinum has every feature. Commissioners can&apos;t pick
-        Platinum yet: they see it as coming soon. A saved change reaches every server within 30
-        seconds.
-      </ManagePageIntro>
-      {group ? <PlanSettingsForm group={group} /> : null}
-    </AsyncPage>
+    <section className="space-y-6" data-testid="root-admin-plans-page">
+      <PageHeader
+        testId="root-admin-plans-header"
+        title="Plans"
+        titleAside={(
+          <HelpTip label="About plans" testId="root-admin-plans-help">
+            What each league plan allows, from Free up to Platinum. A higher plan always allows at
+            least as much as the one below it, and Platinum has every feature. Commissioners
+            can&apos;t pick Platinum yet: they see it as coming soon. A saved change reaches every
+            server within 30 seconds.
+          </HelpTip>
+        )}
+      />
+      <QueryState
+        error={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load the plans right now.' })}
+        loading="Loading plans..."
+        query={settingsQuery}
+        size="tile"
+        testId="root-admin-plans"
+      >
+        {(group) => <PlanSettingsForm group={group} />}
+      </QueryState>
+    </section>
   );
 }
 
