@@ -1015,7 +1015,7 @@ release, and the mock contest feed provider has its own suite.
 - **Local commands:**
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
-- **CI job:** three shards, `service-functional-api-tests (1/3)`–`(3/3)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/3` with no coverage (#302, #778). Jest splits files by a hash of their path, not by run time; with two shards both of the slowest files landed in shard 1, so the suite went to three. As with integration, every file must pass in either shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
+- **CI job:** three shards, `service-functional-api-tests (1/3)`–`(3/3)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/3` with no coverage (#302, #778). Jest splits files by a hash of their path, not by run time; with two shards both of the slowest files landed in shard 1, so the suite went to three. As with integration, every file must pass in any shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** No threshold and no coverage collected. The functional suite proves wiring and contracts; per-file floors belong to the unit and integration suites.
 
