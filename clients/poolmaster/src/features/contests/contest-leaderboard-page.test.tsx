@@ -384,6 +384,8 @@ describe('ContestLeaderboardPage', () => {
     fireEvent.click(within(row).getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-toggle'));
 
     expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1')).toHaveTextContent('Game 15 (4 TB, 1 R)');
+    // A board scrolled sideways on a phone keeps the breakdown, stat lines and all, in view.
+    expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-frame')).toHaveClass('sticky', 'left-0', 'w-[calc(100cqw-2px)]');
   });
 
   it('renders each entry\'s standing with a row per golfer, a total and one cell per round', async () => {
@@ -436,6 +438,34 @@ describe('ContestLeaderboardPage', () => {
     expect(within(board).getByTestId('contest-leaderboard-board-content')).toHaveClass('min-w-min');
     expect(within(board).getByTestId('contest-leaderboard-column-headers')).toBeInTheDocument();
     expect(within(board).getByTestId('contest-leaderboard-entries')).toBeInTheDocument();
+  });
+
+  it('keeps each entry\'s bar, with its total and chevron, at the board\'s visible width while the columns scroll', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    const toggle = await screen.findByTestId('contest-leaderboard-entry-toggle-entry-1');
+    // The board measures its visible width for the parts pinned inside it.
+    expect(screen.getByTestId('contest-leaderboard-board')).toHaveClass('[container-type:inline-size]');
+    const bar = screen.getByTestId('contest-leaderboard-entry-bar-entry-1');
+    expect(within(bar).getByTestId('contest-leaderboard-entry-toggle-entry-1')).toBe(toggle);
+    expect(bar).toHaveClass('sticky', 'left-0', 'w-[calc(100cqw-2px)]');
+    expect(bar).toHaveTextContent('-5');
+  });
+
+  it('pins Pos and the golfer\'s name to the left, in the heads and on every pick row, while the score columns scroll', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-position')).toHaveClass('sticky', 'left-0');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('sticky', 'left-[60px]');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveTextContent('Rory McIlroy');
+    const heads = within(screen.getByTestId('contest-leaderboard-column-headers'));
+    expect(heads.getByText('Pos')).toHaveClass('sticky', 'left-0');
+    expect(heads.getByText('Golfer')).toHaveClass('sticky', 'left-[60px]');
   });
 
   it('shows each golfer\'s own tournament position under POS, apart from the entry\'s position', async () => {

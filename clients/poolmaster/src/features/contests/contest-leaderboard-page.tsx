@@ -108,6 +108,18 @@ function leaderboardGridColumns(view: LeaderboardView) {
   ].join(' ');
 }
 
+/*
+ * On a phone the board scrolls sideways (#1627), so a few parts stay put while the columns move.
+ * The board is a size container, so `100cqw` is its visible width; an entry's tile has a 1px
+ * border on each side.
+ */
+/** An entry's bar and a pick's breakdown: pinned to the left, as wide as the visible board. */
+const VISIBLE_WIDTH = 'sticky left-0 w-[calc(100cqw-2px)]';
+/** The Pos column: pinned to the left, its background reaching back over the row's padding. */
+const PINNED_POSITION = 'sticky left-0 z-[1] -ml-4 pl-4';
+/** The name column: pinned just right of Pos (16px padding, Pos's 36px minimum, an 8px gap). */
+const PINNED_NAME = 'sticky left-[60px] z-[1] -mr-2 pr-2';
+
 /**
  * One participant under an entry. Where the family breaks a score into parts (a stat pool
  * player's games), the row is an `ExpandableRow` that opens them beneath it.
@@ -115,11 +127,12 @@ function leaderboardGridColumns(view: LeaderboardView) {
 function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; gridTemplateColumns: string; pick: LeaderboardPickRow }) {
   const { breakdown } = pick;
   const isDroppedClass = pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground';
+  const testId = `contest-leaderboard-pick-${entryId}-${pick.pickId}`;
   const cells = (
     <div className="grid gap-2 text-sm" style={{ gridTemplateColumns }}>
-      <span className="text-muted-foreground">{pick.position ?? NO_SCORE}</span>
+      <span className={cn(PINNED_POSITION, 'bg-background text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
       {/* The worst M - N picks: visibly present, visibly excluded from the total. */}
-      <span className={cn('min-w-0 truncate', isDroppedClass)}>{pick.participantName}</span>
+      <span className={cn(PINNED_NAME, 'min-w-0 truncate bg-background', isDroppedClass)} data-testid={`${testId}-name`}>{pick.participantName}</span>
       <span className={cn('text-right font-medium', isDroppedClass)}>
         {pick.total ?? NO_SCORE}
       </span>
@@ -138,19 +151,20 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
       ))}
     </div>
   );
-  const testId = `contest-leaderboard-pick-${entryId}-${pick.pickId}`;
   if (!breakdown) {
     return <div className="px-4 py-2" data-testid={testId}>{cells}</div>;
   }
   return (
     <div data-testid={testId}>
       <ExpandableRow label={`Game by game for ${pick.participantName}`} summary={cells} toggleTestId={`${breakdown.testId}-toggle`}>
-        <FactList
-          density="compact"
-          facts={breakdown.lines.map((line) => ({ id: line.key, label: line.label, value: line.text }))}
-          layout="inset"
-          testId={breakdown.testId}
-        />
+        <div className={VISIBLE_WIDTH} data-testid={`${breakdown.testId}-frame`}>
+          <FactList
+            density="compact"
+            facts={breakdown.lines.map((line) => ({ id: line.key, label: line.label, value: line.text }))}
+            layout="inset"
+            testId={breakdown.testId}
+          />
+        </div>
       </ExpandableRow>
     </div>
   );
@@ -188,7 +202,8 @@ function EntryBlock({
   );
   return (
     <Tile
-      className={cn('overflow-hidden', isMine ? 'border-primary/40' : undefined)}
+      // `clip`, not `hidden`: a hidden overflow would make the tile the scroll box its pinned parts stick to.
+      className={cn('overflow-clip', isMine ? 'border-primary/40' : undefined)}
       data-mine={isMine || undefined}
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
       id={entryBlockId(entry.entryId)}
@@ -201,6 +216,8 @@ function EntryBlock({
         isOpen={!isCollapsed}
         label={`Picks for ${entry.entryName}`}
         look="bar"
+        rowClassName={VISIBLE_WIDTH}
+        rowTestId={`contest-leaderboard-entry-bar-${entry.entryId}`}
         onToggle={onToggle}
         summary={
           <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -452,7 +469,7 @@ export function ContestLeaderboardPage() {
           The column heads and the entries scroll sideways together, inside the board, when the
           columns' minimum widths are wider than the screen; the page itself never widens.
         */}
-        <div className="overflow-x-auto" data-testid="contest-leaderboard-board">
+        <div className="overflow-x-auto [container-type:inline-size]" data-testid="contest-leaderboard-board">
           <div className="min-w-min" data-testid="contest-leaderboard-board-content">
             <div
               // A board whose pick rows open (a stat pool's games) keeps room for their chevron.
@@ -460,8 +477,8 @@ export function ContestLeaderboardPage() {
               data-testid="contest-leaderboard-column-headers"
               style={{ gridTemplateColumns }}
             >
-              <span>Pos</span>
-              <span>{upperFirst(participantNoun.one)}</span>
+              <span className={cn(PINNED_POSITION, 'rounded-l-lg bg-surface-inverse')}>Pos</span>
+              <span className={cn(PINNED_NAME, 'bg-surface-inverse')}>{upperFirst(participantNoun.one)}</span>
               <span className="text-right">Tot</span>
               {view.detailColumns.map((column) => (
                 <span className="text-right" data-testid={column.testId} key={column.key}>
