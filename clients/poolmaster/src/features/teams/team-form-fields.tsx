@@ -41,11 +41,7 @@ export function TeamFormFields({
           onSelect={(key) => form.setValue('iconKey', key, { shouldDirty: true })}
           optionTestIdPrefix="team-icon"
           options={TEAM_ICON_OPTIONS}
-          renderOptionIcon={(icon) => (
-            <div className="flex justify-center">
-              <TeamAvatar iconKey={icon.key} />
-            </div>
-          )}
+          renderOptionIcon={(icon) => <TeamAvatar iconKey={icon.key} />}
           testId="team-icon-palette"
           value={iconKey}
         />
