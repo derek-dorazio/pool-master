@@ -27,7 +27,7 @@ export function PublicInviteJoinPage({
       className={cn("mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10", className)}
       data-testid={testId}
     >
-      <Tile className="w-full" padding="lg">
+      <Tile className="w-full" padding="lg" radius="panel">
         <Heading level={1} variant="page">
           {title}
         </Heading>

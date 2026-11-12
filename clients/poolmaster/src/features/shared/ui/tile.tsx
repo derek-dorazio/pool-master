@@ -32,7 +32,8 @@ const tileVariants = cva("border", {
       sm: "rounded-lg",
       /**
        * The larger corner a page may use only on a panel that stands apart from the content:
-       * a navy hero, the signed-out home's sign-in card, and the event pages' own look.
+       * a navy hero, the signed-out home's sign-in card, the invite join card, and the event
+       * pages' own look.
        */
       panel: "rounded-2xl",
     },
