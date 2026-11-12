@@ -4,12 +4,14 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Button, cn, ExpandableTile, LinkButton, NumberedSteps, PageHeader, QueryState, refetchFailed, SectionCard, Text } from '@/features/shared/ui';
+import { cn, ExpandableTile, LinkButton, NumberedSteps, PageHeader, QueryState, refetchFailed, SectionCard, SectionRow, SectionRows, Text } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
 import { ClutchCardIllustration, FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
 import { SPORT_BLURBS } from './sport-blurbs';
+import { sportSlug, useSportLeagueChoice } from './sport-league-choice';
+import { SportLeagueFilter } from './sport-league-filter';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_GUIDE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { buildLeagueAdminContestCreateFromTemplatePath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
@@ -37,13 +39,14 @@ function wayToPlayFrom(format: string | null): SelectionType | null {
   return FORMAT_ORDER.find((selectionType) => selectionType === format) ?? null;
 }
 
-/** A sport as the page's link names it: `?sport=horse-racing`. */
-function sportSlug(sport: Sport) {
-  return sport.toLowerCase().replaceAll('_', '-');
-}
-
 function SportThumb({ sport, className }: { sport: Sport; className?: string }) {
   return <SportIllustration className={cn('shrink-0 rounded-full', className)} decorative sport={sport} />;
+}
+
+/** A sport's leagues on one short line: the first three by name, then how many more. */
+function leagueSummary(leagues: readonly PublicCatalogLeague[]) {
+  const names = leagues.slice(0, 3).map((league) => league.name).join(' · ');
+  return leagues.length > 3 ? `${names} + ${leagues.length - 3} more` : names;
 }
 
 /** A way to play's steps, numbered, in the words around them. */
@@ -98,13 +101,12 @@ interface FormatCardProps {
   chosen: ContestTypeTile[] | null;
   isOpen: boolean;
   onToggle: () => void;
-  onChooseSport: (sport: Sport) => void;
   /** The active leagues the viewer runs, for Create contest. */
   createLeagues: readonly LeagueDto[];
 }
 
 /** One way to play: its diagram and summary, opening to its steps, where to play it and Create contest. */
-function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseSport, createLeagues }: FormatCardProps) {
+function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, createLeagues }: FormatCardProps) {
   const guide = FORMAT_GUIDES[selectionType];
   const featured = chosen?.find((tile) => tile.selectionType === selectionType)?.featured;
   // With every sport shown, Create contest starts on the most popular sport's first league to offer it: the NFL's.
@@ -136,22 +138,19 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
           <Text size="inherit" variant="strong" weight="semibold">{`${featured.name}.`}</Text> {featured.description}
         </Text>
       ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <Text size="inherit" tone="muted">Play it on</Text>
-          {sports.map((sport) => (
-            <Button
-              className="gap-1.5 rounded-full pl-1"
-              data-testid={`how-to-play-format-${selectionType}-sport-${sport.sport}`}
-              key={sport.sport}
-              onClick={() => onChooseSport(sport.sport)}
-              size="sm"
-              variant="secondary"
-            >
-              <SportThumb className="h-6 w-6" sport={sport.sport} />
-              {sport.name}
-            </Button>
-          ))}
-        </div>
+        <SectionCard headingLevel={3} testId={`how-to-play-format-${selectionType}-sports`} title="Play it on">
+          <SectionRows>
+            {sports.map((sport) => (
+              <SectionRow
+                facts={leagueSummary(sport.leagues)}
+                key={sport.sport}
+                name={sport.name}
+                testId={`how-to-play-format-${selectionType}-sport-${sport.sport}`}
+                to={`?sport=${sportSlug(sport.sport)}`}
+              />
+            ))}
+          </SectionRows>
+        </SectionCard>
       )}
       <CreateContestAction leagues={createLeagues} template={createTemplate} testId={`how-to-play-format-${selectionType}`} />
     </ExpandableTile>
@@ -195,17 +194,13 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
       testId="how-to-play-clutch-card"
     >
       <StepList steps={STAT_POOL_GUIDE.steps} />
-      <ul aria-label="Stat lines" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {statLines.map(({ sport, name }) => (
-          <li className="flex items-center gap-2 rounded-lg border border-border bg-background p-2" data-testid={`how-to-play-clutch-card-stat-${sport}`} key={sport}>
-            <SportThumb className="h-7 w-7" sport={sport} />
-            <span className="min-w-0">
-              <Text as="div" size="inherit" variant="strong" weight="semibold">{name}</Text>
-              <Text as="div" variant="caption">{getSportDefinition(sport).name}</Text>
-            </span>
-          </li>
-        ))}
-      </ul>
+      <SectionCard headingLevel={3} testId="how-to-play-clutch-card-stats" title="Stat lines">
+        <SectionRows>
+          {statLines.map(({ sport, name }) => (
+            <SectionRow facts={getSportDefinition(sport).name} key={sport} name={name} testId={`how-to-play-clutch-card-stat-${sport}`} />
+          ))}
+        </SectionRows>
+      </SectionCard>
       <LinkButton data-testid="how-to-play-clutch-card-more" size="sm" to={CLUTCH_CARD_PAGE_PATH} variant="secondary">
         {`More about the ${STAT_POOL_CONTEST_TYPE}`}
       </LinkButton>
@@ -214,75 +209,11 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
   );
 }
 
-interface SportLeagueChipsProps {
-  catalog: PublicCatalogSport[];
-  chosenSport: PublicCatalogSport | null;
-  chosenLeague: PublicCatalogLeague | null;
-  onChoose: (sport: Sport | null, league?: PublicCatalogLeague) => void;
-}
-
-/**
- * The sport leagues people know, the NFL and the PGA TOUR, as chips in rows by sport, the most
- * popular sport first. Each row opens with its sport in a fixed left column, which chooses every
- * league of it, and its leagues wrap to the right of it, so a sport never lands mid-row.
- */
-function SportLeagueChips({ catalog, chosenSport, chosenLeague, onChoose }: SportLeagueChipsProps) {
-  return (
-    <div aria-label="Sport league" className="space-y-3" role="group">
-      <Button
-        aria-pressed={chosenSport === null}
-        className="rounded-full"
-        data-testid="how-to-play-sport-all"
-        onClick={() => onChoose(null)}
-        size="sm"
-        variant={chosenSport === null ? 'primary' : 'secondary'}
-      >
-        All sports
-      </Button>
-      <div className="divide-y divide-border">
-        {catalog.map((sport) => {
-          const isSportChosen = chosenSport?.sport === sport.sport;
-          return (
-            <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-start gap-3 py-2 sm:grid-cols-[11rem_minmax(0,1fr)]" data-testid={`how-to-play-sport-group-${sport.sport}`} key={sport.sport}>
-              <Button
-                aria-pressed={isSportChosen && chosenLeague === null}
-                className={cn('h-auto flex-col items-start justify-start gap-1 whitespace-normal rounded-lg p-1 text-left text-xs font-semibold uppercase sm:flex-row sm:items-center sm:gap-1.5 sm:rounded-full sm:pr-2', isSportChosen && chosenLeague === null ? 'text-foreground underline decoration-primary decoration-2 underline-offset-4' : 'text-muted-foreground')}
-                data-testid={`how-to-play-sport-${sport.sport}`}
-                onClick={() => onChoose(sport.sport)}
-                size="auto"
-                variant="ghost"
-              >
-                <SportThumb className="h-7 w-7" sport={sport.sport} />
-                {sport.name}
-              </Button>
-              <div className="flex flex-wrap gap-2" data-testid={`how-to-play-sport-leagues-${sport.sport}`}>
-                {sport.leagues.map((league) => (
-                  <Button
-                    aria-pressed={chosenLeague?.sportLeagueId === league.sportLeagueId}
-                    className="rounded-full"
-                    data-testid={`how-to-play-league-${sport.sport}-${league.slug}`}
-                    key={league.sportLeagueId}
-                    onClick={() => onChoose(sport.sport, league)}
-                    size="sm"
-                    variant={chosenLeague?.sportLeagueId === league.sportLeagueId ? 'primary' : 'secondary'}
-                  >
-                    {league.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /**
  * How to Play (#803, #878): open to every visitor. What a pool is, then the ways to play, each
- * offered by some sport's contest templates. A sport league chip, grouped by sport, narrows them
- * to what that league offers, and a sport to what any of its leagues does; either shows the
- * sport's picture and line, and the choice is kept in the link.
+ * offered by some sport's contest templates. The sport switch in the header narrows them to what
+ * a sport league offers, or a sport to what any of its leagues does; either shows the sport's
+ * picture and line, and the choice is kept in the link.
  */
 export function HowToPlayPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'how-to-play-page' }), []);
@@ -293,9 +224,10 @@ export function HowToPlayPage() {
     () => buildPublicContestCatalog(templatesQuery.data ?? [], sportLeaguesQuery.data ?? []),
     [sportLeaguesQuery.data, templatesQuery.data],
   );
-  const [searchParams, setSearchParams] = useSearchParams();
-  const chosenSport = catalog.find((sport) => sportSlug(sport.sport) === searchParams.get('sport')) ?? null;
-  const chosenLeague = chosenSport?.leagues.find((league) => league.slug === searchParams.get('league')) ?? null;
+  const [searchParams] = useSearchParams();
+  const choice = useSportLeagueChoice(catalog);
+  const chosenSport = choice.sport;
+  const chosenLeague = chosenSport?.leagues.find((league) => league.slug === choice.leagueSlug) ?? null;
   const chosen = chosenLeague?.groups ?? chosenSport?.groups ?? null;
   // A contest page's "How to play this contest" names its format (#1392): that tile opens, in view.
   const [requestedFormat] = useState(() => wayToPlayFrom(searchParams.get('format')));
@@ -324,9 +256,9 @@ export function HowToPlayPage() {
     }
   }, [isError, logger, sportLeaguesQuery.error, templatesQuery.error]);
 
-  const choose = (sport: Sport | null, league?: PublicCatalogLeague) => {
+  const choose = (sport: Sport | null, league?: string) => {
     setOpenFormat(null);
-    setSearchParams(sport ? { sport: sportSlug(sport), ...(league ? { league: league.slug } : {}) } : {}, { replace: true });
+    choice.choose(sport, league);
   };
 
   const sportsOffering = (selectionType: SelectionType) => catalog.filter((sport) => sport.groups.some((tile) => tile.selectionType === selectionType));
@@ -343,7 +275,14 @@ export function HowToPlayPage() {
 
   return (
     <section className="space-y-8" data-testid="how-to-play-page">
-      <PageHeader actions={callToAction} title="How to Play" />
+      <PageHeader
+        actions={callToAction}
+        tabsEnd={catalogLoaded ? (
+          <SportLeagueFilter leagueSlug={chosenLeague?.slug ?? null} onChoose={choose} sport={chosenSport?.sport ?? null} sports={catalog} testId="how-to-play-sport-filter" />
+        ) : null}
+        testId="how-to-play-header"
+        title="How to Play"
+      />
 
       <NumberedSteps
         className="-mx-1 auto-cols-[78%] grid-flow-col gap-3 overflow-x-auto px-1 pb-1 sm:auto-cols-[45%] md:grid-flow-row md:overflow-visible"
@@ -368,12 +307,10 @@ export function HowToPlayPage() {
           bare
           help={chosenLeague
             ? `Every way to play ${chosenLeague.name}. Tap one to see how it works.`
-            : chosenSport ? `Every way to play ${chosenSport.name.toLowerCase()}. Tap one to see how it works.` : 'Tap one to see how it works, or pick a league.'}
+            : chosenSport ? `Every way to play ${chosenSport.name.toLowerCase()}. Tap one to see how it works.` : 'Tap one to see how it works, or pick a sport.'}
           testId="how-to-play-formats"
           title="Ways to play"
         >
-          <SportLeagueChips catalog={catalog} chosenLeague={chosenLeague} chosenSport={chosenSport} onChoose={choose} />
-
           {chosenSport ? (
             <SectionCard headingLevel={3} help={SPORT_BLURBS[chosenSport.sport]} testId="how-to-play-sport-banner" title={chosenName}>
               <SportIllustration className="aspect-[16/10] w-full md:mx-auto md:max-w-md" sport={chosenSport.sport} />
@@ -387,7 +324,6 @@ export function HowToPlayPage() {
                 createLeagues={createLeagues}
                 isOpen={openFormat === selectionType}
                 key={selectionType}
-                onChooseSport={choose}
                 onToggle={() => toggle(selectionType)}
                 selectionType={selectionType}
                 sports={chosenSport ? [chosenSport] : sportsOffering(selectionType)}

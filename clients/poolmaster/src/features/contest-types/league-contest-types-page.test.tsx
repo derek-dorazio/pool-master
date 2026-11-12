@@ -96,11 +96,11 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isAc
   }));
 }
 
-function renderPage() {
+function renderPage(path = '/league/BIGDAWGS/admin/contest-types') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contest-types']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route element={<LeagueContestTypesPage />} path="/league/:leagueCode/admin/contest-types" />
         </Routes>
@@ -128,6 +128,25 @@ describe('League › Contest types', () => {
     expect(tiered).toHaveTextContent('nfl-tiered-doubling description.');
     expect(within(tiered).getByTestId('contest-type-nfl-tiered-doubling-variations')).toHaveTextContent('nfl-tiered-doubling-upset-bonus name');
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
+  });
+
+  it('narrows the page with the same sport switch as How to Play, in the header: a sport shows only its section, a league only its group, and All sports every one', async () => {
+    primeMocks('MEMBER');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=basketball');
+
+    expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
+    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    const filter = within(screen.getByTestId('contest-types-header-tab-row')).getByRole('combobox', { name: 'Sport' });
+    expect(filter).toHaveValue('basketball');
+    expect(within(filter).getAllByRole('option').map((option) => option.textContent)).toEqual(['All sports', 'All basketball', 'NBA', 'All american football', 'NFL']);
+
+    fireEvent.change(filter, { target: { value: 'american-football/nfl' } });
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(screen.queryByTestId('contest-types-sport-BASKETBALL')).not.toBeInTheDocument();
+
+    fireEvent.change(filter, { target: { value: '' } });
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
   });
 
   it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {

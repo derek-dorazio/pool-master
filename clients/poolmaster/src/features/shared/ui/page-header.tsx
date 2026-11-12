@@ -31,8 +31,9 @@ export type PageHeaderProps = {
   /** The page's views, as `PageTabs`, on the header's bottom line. */
   tabs?: ReactNode;
   /**
-   * A filter that changes every tab, such as a season picker, alone at the tab row's right end
-   * (on a phone, its own line under the tabs). Shown only with `tabs`.
+   * A filter that changes every tab, or the whole page, such as a season or sport picker
+   * (`FilterPicker`), alone at the tab row's right end (on a phone, its own line under the tabs).
+   * Without `tabs` it gets the bottom line to itself, still at the right end.
    */
   tabsEnd?: ReactNode;
   testId?: string;
@@ -104,7 +105,7 @@ export function PageHeader({
         </div>
       ) : null}
       <div
-        className={cn("flex flex-wrap items-center gap-x-4 gap-y-3", tabs ? "pb-2" : "border-b border-border pb-3.5")}
+        className={cn("flex flex-wrap items-center gap-x-4 gap-y-3", tabs || tabsEnd ? "pb-2" : "border-b border-border pb-3.5")}
         data-testid={testId ? `${testId}-title-row` : undefined}
       >
         {picture}
@@ -151,6 +152,11 @@ export function PageHeader({
         >
           <div className="min-w-0 max-sm:basis-full max-sm:border-b max-sm:border-border">{tabs}</div>
           {tabsEnd ? <div className="flex items-center gap-2 text-sm text-muted-foreground sm:pb-2">{tabsEnd}</div> : null}
+        </div>
+      ) : tabsEnd ? (
+        // With no tabs the filter has the bottom line to itself, over the rule.
+        <div className="flex justify-end border-b border-border pb-2" data-testid={testId ? `${testId}-tab-row` : undefined}>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">{tabsEnd}</div>
         </div>
       ) : null}
     </header>

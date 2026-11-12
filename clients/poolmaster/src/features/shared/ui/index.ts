@@ -8,6 +8,7 @@ export { Button, LinkButton, type LinkButtonProps } from "./button";
 export { CopyButton } from "./copy-button";
 export { Breadcrumbs, PageHeader, type PageHeaderProps } from "./page-header";
 export { PageTabs, type PageLinkTab, type PageStateTab } from "./page-tabs";
+export { FilterPicker, type FilterPickerGroup, type FilterPickerOption } from "./filter-picker";
 export { YearPicker } from "./year-picker";
 export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";
