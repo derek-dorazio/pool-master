@@ -88,8 +88,7 @@ Use those conventions as the starting point, but bias toward a consumer app:
   - No description line under a dialog's title unless it says what will happen
     ("Sam Lee will no longer be an owner of Incubus").
   - The `poolmaster/no-raw-modal` ESLint rule fails feature code that renders
-    the raw `Modal` or Radix's dialog root; root admin's two remaining files are
-    listed in `eslint.config.js` until #1620 rebuilds them.
+    the raw `Modal` or Radix's dialog root; only `shared/ui` draws them.
 - **Settings sections: see it, then Edit** (#1597). A page of someone's settings
   (My account; league settings as they move over) shows every setting as it
   stands, never behind a dialog: a `SettingsSection` per group, its rows
