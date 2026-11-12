@@ -134,3 +134,39 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
     DBInstanceIdentifier = aws_db_instance.postgres.id
   }
 }
+
+# --- Provider webhook notifications (#1499) ---
+#
+# Core API warns with action `ingestion.providerNotifications.quiet` when an event is in play and
+# its provider has sent no webhook notification about it for 20 minutes: the webhook may have
+# stopped, and that event's scores then move only at the 15-minute safety-net poll. Created only
+# once the BALLDONTLIE webhook secret is set, since before then no notification is expected.
+
+resource "aws_cloudwatch_log_metric_filter" "provider_notifications_quiet" {
+  count          = local.balldontlie_webhook_enabled ? 1 : 0
+  name           = "${local.name_prefix}-provider-notifications-quiet"
+  log_group_name = aws_cloudwatch_log_group.services["core-api"].name
+  pattern        = "{ $.action = \"ingestion.providerNotifications.quiet\" }"
+
+  metric_transformation {
+    name          = "ProviderNotificationsQuiet"
+    namespace     = "PoolMaster/${var.environment}"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "provider_notifications_quiet" {
+  count               = local.balldontlie_webhook_enabled ? 1 : 0
+  alarm_name          = "${local.name_prefix}-provider-notifications-quiet"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = aws_cloudwatch_log_metric_filter.provider_notifications_quiet[0].metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.provider_notifications_quiet[0].metric_transformation[0].namespace
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 1
+  treat_missing_data  = "notBreaching"
+  alarm_description   = "An event in play has had no provider webhook notification for 20 minutes; check the BALLDONTLIE webhook endpoint"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+}

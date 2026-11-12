@@ -98,7 +98,8 @@ Every secret keeps the value the environment already has (`rules/workflow-rules.
 - **`balldontlie_webhook_secret`** — optional, the same way: empty leaves the webhook route
   refusing every delivery. Once `poolmaster-<env>-balldontlie-webhook-secret` exists, every
   hand-over includes step 3d. The first apply that adds it exports the secret the vendor showed
-  when the webhook endpoint was created.
+  when the webhook endpoint was created, and its plan also adds the quiet-notification log
+  metric filter and alarm.
 
 The one exception is an environment's very first apply (prod, when it is first built): no
 secret exists yet, so that apply creates both. Generate `jwt_secret` with

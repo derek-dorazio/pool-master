@@ -1109,11 +1109,8 @@ describe('mock contest feed provider event-first verification', () => {
     });
     const settledOnce = await readSettlement();
 
-    const completedLiveCandidates = await eventReader.listEventsForFeed({
+    const completedLiveCandidates = await eventReader.listLiveScoreEvents({
       sport: Sport.GOLF,
-      feed: 'EVENTLIVESCORES',
-      from: new Date('2026-04-01T00:00:00.000Z'),
-      to: new Date('2026-06-30T23:59:59.999Z'),
       now: new Date('2026-05-31T23:00:00.000Z'),
     });
     expect(completedLiveCandidates.map((event) => event.externalId)).not.toContain(eventExternalId);

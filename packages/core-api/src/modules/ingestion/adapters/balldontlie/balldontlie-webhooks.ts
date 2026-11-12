@@ -14,7 +14,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import type { BalldontlieWebhookNotification } from '@poolmaster/shared/dto';
-import type { ProviderNotification } from '../../provider-notifications';
+import type { ProviderNotification, ProviderNotificationPhase } from '../../provider-notifications';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 
 /** A league whose games PoolMaster reads, by the vendor's webhook league key. */
@@ -35,19 +35,33 @@ const SOCCER_GAME_EVENTS = ['game.started', 'game.halftime', 'game.ended'] as co
  */
 export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeague>> = {
   nfl: { sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'nfl-', gameEvents: GAME_EVENTS },
+  // The playoffs and each playoff round's Clutch Card event (`nba-2025-postseason[-round-1]`).
+  nba: { sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameEvents: GAME_EVENTS },
   ncaab: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameEvents: GAME_EVENTS },
   ncaaw: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameEvents: GAME_EVENTS },
   epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS },
   worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS },
 };
 
-/** Golf's subscribed events, each about a PGA TOUR tournament, whose id is the event's id. */
-const GOLF_EVENT_TYPES = [
-  'pga.tournament.started',
-  'pga.tournament.round_started',
-  'pga.player.round_completed',
-  'pga.tournament.ended',
-] as const;
+/** Where in play each subscribed game event falls (#1499). */
+const GAME_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
+  'game.started': 'START',
+  'game.period_ended': 'PROGRESS',
+  'game.halftime': 'PROGRESS',
+  'game.ended': 'END',
+};
+
+/**
+ * Golf's subscribed events, each about a PGA TOUR tournament, whose id is the event's id, with
+ * where in play each falls.
+ */
+const GOLF_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
+  'pga.tournament.started': 'START',
+  'pga.tournament.round_started': 'START',
+  'pga.player.round_completed': 'PROGRESS',
+  'pga.tournament.ended': 'END',
+};
+const GOLF_EVENT_TYPES = Object.keys(GOLF_EVENT_PHASES);
 
 /** Every event type the endpoint subscribes to, for its setup (packages/README.md). */
 export const BALLDONTLIE_WEBHOOK_EVENT_TYPES: readonly string[] = [
@@ -63,22 +77,33 @@ export const BALLDONTLIE_WEBHOOK_EVENT_TYPES: readonly string[] = [
 export function readBalldontlieNotification(body: BalldontlieWebhookNotification): ProviderNotification | null {
   const notificationType = body.event_type;
   if (notificationType === undefined) return null;
-  if ((GOLF_EVENT_TYPES as readonly string[]).includes(notificationType)) {
+  const golfPhase = Object.hasOwn(GOLF_EVENT_PHASES, notificationType) ? GOLF_EVENT_PHASES[notificationType] : undefined;
+  if (golfPhase !== undefined) {
     return body.tournament
-      ? { providerId: BALLDONTLIE_PROVIDER_ID, sport: Sport.GOLF, notificationType, subject: 'EVENT', eventId: String(body.tournament.id) }
+      ? {
+          providerId: BALLDONTLIE_PROVIDER_ID,
+          sport: Sport.GOLF,
+          notificationType,
+          phase: golfPhase,
+          subject: 'EVENT',
+          eventId: String(body.tournament.id),
+        }
       : null;
   }
   const separator = notificationType.indexOf('.');
   const league = Object.hasOwn(BALLDONTLIE_WEBHOOK_GAME_LEAGUES, notificationType.slice(0, separator))
     ? BALLDONTLIE_WEBHOOK_GAME_LEAGUES[notificationType.slice(0, separator)]
     : undefined;
-  if (!league?.gameEvents.includes(notificationType.slice(separator + 1)) || !body.game) {
+  const gameEvent = notificationType.slice(separator + 1);
+  if (league === undefined || !league.gameEvents.includes(gameEvent) || !body.game) {
     return null;
   }
   return {
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: league.sport,
     notificationType,
+    // Every league's game events have a phase in GAME_EVENT_PHASES.
+    phase: GAME_EVENT_PHASES[gameEvent],
     subject: 'GAME',
     gameId: String(body.game.id),
     eventIdPrefix: league.eventIdPrefix,

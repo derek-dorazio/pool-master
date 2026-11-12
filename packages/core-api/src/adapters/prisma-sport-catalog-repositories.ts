@@ -28,6 +28,7 @@ import type {
   SportEventProviderSummary,
   ProviderNotifiedEvent,
   ProviderNotifiedEventQuery,
+  ProviderNotificationReceipt,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -560,19 +561,27 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]> {
-    const { gameId } = query;
+    const { gameId, startedBy } = query;
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         providerId: query.providerId,
         sport: query.sport,
         externalId: 'externalId' in query ? query.externalId : { startsWith: query.externalIdPrefix },
-        status: SportEventStatus.IN_PROGRESS,
         syncScope: SportEventSyncScope.SCORES_ONLY,
+        ...(startedBy === undefined
+          ? { status: SportEventStatus.IN_PROGRESS }
+          : {
+              OR: [
+                { status: SportEventStatus.IN_PROGRESS },
+                { status: SportEventStatus.SCHEDULED, autoLifecycleEnabled: true, startDate: { lte: startedBy } },
+              ],
+            }),
       },
       select: {
         sport: true,
         providerId: true,
         externalId: true,
+        status: true,
         // An event holds a game at most once (sportEventId, externalGameId is unique).
         ...(gameId !== undefined && { matches: { where: { externalGameId: gameId }, select: { id: true } } }),
       },
@@ -582,7 +591,16 @@ export class PrismaSportEventRepository implements SportEventRepository {
       providerId: row.providerId,
       externalId: row.externalId,
       holdsGame: 'matches' in row && row.matches.length > 0,
+      inProgress: row.status === SportEventStatus.IN_PROGRESS,
     }));
+  }
+
+  async recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void> {
+    if (receipt.externalIds.length === 0) return;
+    await this.prisma.sportEvent.updateMany({
+      where: { providerId: receipt.providerId, externalId: { in: [...receipt.externalIds] } },
+      data: { lastProviderNotificationAt: receipt.receivedAt },
+    });
   }
 
   async findAutoLifecycleCandidates(): Promise<SportEvent[]> {

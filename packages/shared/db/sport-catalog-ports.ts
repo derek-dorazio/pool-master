@@ -155,11 +155,14 @@ export interface SportEventProviderSummary {
  * Which of a provider's events a notification from it is about (#1498): the one it knows by
  * `externalId`, or every one whose id starts with `externalIdPrefix` (a league's scopes, such
  * as `nfl-`). `gameId` names the provider game the notification is about, when it is a game's.
+ * `startedBy` is set for a notification that play has started (#1499): it also finds the events
+ * still `SCHEDULED` that started by then, which the lifecycle sweep has yet to move.
  */
 export type ProviderNotifiedEventQuery = {
   providerId: string;
   sport: Sport;
   gameId?: string;
+  startedBy?: Date;
 } & ({ externalId: string } | { externalIdPrefix: string });
 
 /** A provider-linked event a notification may sync, and whether it holds the notified game. */
@@ -169,6 +172,15 @@ export interface ProviderNotifiedEvent {
   externalId: string;
   /** Whether one of its matches is linked to the query's `gameId`; false with no `gameId`. */
   holdsGame: boolean;
+  /** Whether the event is `IN_PROGRESS`; false for one still `SCHEDULED` past its start. */
+  inProgress: boolean;
+}
+
+/** A provider's notification about some of its events, recorded when it arrived (#1499). */
+export interface ProviderNotificationReceipt {
+  providerId: string;
+  externalIds: readonly string[];
+  receivedAt: Date;
 }
 
 export interface SportEventRepository {
@@ -241,9 +253,12 @@ export interface SportEventRepository {
   summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>>;
   /**
    * The provider's events a notification from it may sync (#1498): linked for scores
-   * (`SCORES_ONLY`) and `IN_PROGRESS`, as the scheduled live-score sweep reads them. Unordered.
+   * (`SCORES_ONLY`) and `IN_PROGRESS`, as the scheduled live-score sweep reads them, and with
+   * `startedBy`, also `SCHEDULED` with auto lifecycle on and a start by then. Unordered.
    */
   findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]>;
+  /** Sets when the provider last sent a notification about each of these events (#1499). */
+  recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void>;
   /**
    * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED` or
    * `IN_PROGRESS`. Unordered.
