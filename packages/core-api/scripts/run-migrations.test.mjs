@@ -7,7 +7,7 @@ import { historyMismatch, isMissingMigrationsTable } from './run-migrations.mjs'
 // records names the new image does not carry, and `migrate deploy` would fail on it with a raw
 // SQL error; the migrate task has to name the way out instead.
 describe('run-migrations history check', () => {
-  const inImage = ['20271114000000_baseline_schema', '20271114000100_baseline_reference_data'];
+  const inImage = ['20271119000000_baseline_schema', '20271119000100_baseline_reference_data'];
   const applied = (name) => ({ migration_name: name, finished_at: new Date(), rolled_back_at: null });
 
   it('lets a never-migrated database deploy', () => {

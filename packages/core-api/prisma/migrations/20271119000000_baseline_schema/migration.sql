@@ -1,6 +1,6 @@
--- Baseline: the whole migration history squashed on 2026-11-04 (#1429) and again on 2026-11-11,
--- before the last QA reset. The history before each squash is in git (at 7bff210, and at the
--- parent of the commit that added this file) under packages/core-api/prisma/migrations. Generated
+-- Baseline: the whole migration history squashed on 2026-11-04 (#1429), again on 2026-11-11 and
+-- again on 2026-11-12, each just before a QA reset. The history before each squash is in git (at
+-- 7bff210, and at the parent of each later squash commit) under packages/core-api/prisma/migrations. Generated
 -- from schema.prisma with `prisma migrate diff --from-empty --to-schema-datamodel`, enum labels
 -- kept in the order the history added them, plus the section at the end that the schema cannot
 -- declare. Reference rows are in the next migration.
@@ -47,7 +47,7 @@ CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JO
 CREATE TYPE "PrismaEmailMessageStatus" AS ENUM ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'SKIPPED', 'DELIVERED', 'BOUNCED', 'COMPLAINED');
 
 -- CreateEnum
-CREATE TYPE "PrismaBackgroundJobType" AS ENUM ('MANUAL_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_EVENT_CHANGED_EMAILS', 'ADD_RELEASED_EDITION_TO_CONTEST');
+CREATE TYPE "PrismaBackgroundJobType" AS ENUM ('MANUAL_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_EVENT_CHANGED_EMAILS', 'ADD_RELEASED_EDITION_TO_CONTEST', 'PROVIDER_EVENT_SYNC');
 
 -- CreateEnum
 CREATE TYPE "PrismaBackgroundJobStatus" AS ENUM ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED');
@@ -462,6 +462,7 @@ CREATE TABLE "sport_leagues" (
     "tier_count" INTEGER,
     "match_period_layout" "PrismaMatchPeriodLayout",
     "squares_from_round" INTEGER,
+    "round_series_lengths" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     "noun" "PrismaSportLeagueNoun",
     "display_name" VARCHAR(255),
     "display_order" INTEGER,
@@ -931,6 +932,7 @@ CREATE TABLE "sport_events" (
     "sync_scope" "PrismaSportEventSyncScope" NOT NULL DEFAULT 'NONE',
     "auto_lifecycle_enabled" BOOLEAN NOT NULL DEFAULT true,
     "pricing_config" JSONB,
+    "last_provider_notification_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -1380,6 +1382,9 @@ CREATE UNIQUE INDEX "participant_league_affiliations_participant_id_sport_league
 
 -- CreateIndex
 CREATE INDEX "participants_sport_id_status_idx" ON "participants"("sport_id", "status");
+
+-- CreateIndex
+CREATE INDEX "participants_sport_id_name_idx" ON "participants"("sport_id", "name");
 
 -- CreateIndex
 CREATE INDEX "participants_name_trgm_idx" ON "participants" USING GIN ("name" gin_trgm_ops);
@@ -2014,6 +2019,7 @@ ALTER TABLE "cups" ALTER COLUMN "crowned_custom_points" SET NOT NULL;
 ALTER TABLE "leagues" ALTER COLUMN "cup_custom_points" SET NOT NULL;
 ALTER TABLE "leagues" ALTER COLUMN "muted_sport_league_ids" SET NOT NULL;
 ALTER TABLE "sport_leagues" ALTER COLUMN "round_names" SET NOT NULL;
+ALTER TABLE "sport_leagues" ALTER COLUMN "round_series_lengths" SET NOT NULL;
 
 -- Partial unique indexes.
 CREATE UNIQUE INDEX uq_pick_roster_participant ON contest_entry_picks USING btree (entry_id, sport_event_participant_id) WHERE (contest_format = 'ROSTER'::"PrismaContestFormat");
@@ -2052,5 +2058,6 @@ ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_f
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_official_finisher_has_place CHECK (((NOT is_official) OR (result_status <> 'FINISHED'::"RaceResultStatus") OR (finish_position IS NOT NULL)));
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_place_only_when_finished CHECK (((finish_position IS NULL) OR (result_status = 'FINISHED'::"RaceResultStatus")));
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_start_position_positive CHECK (((start_position IS NULL) OR (start_position >= 1)));
+ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_round_series_lengths_check CHECK ((round_series_lengths <@ ARRAY[1, 3, 5, 7, 9]));
 ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_squares_from_round_check CHECK (((squares_from_round IS NULL) OR (squares_from_round >= 1)));
 ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_tier_count_positive CHECK (((tier_count IS NULL) OR (tier_count >= 1)));

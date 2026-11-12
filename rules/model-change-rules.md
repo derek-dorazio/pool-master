@@ -194,13 +194,14 @@ columns the history had built as `varchar(255)`.
 
 ## Squashing The Migration History
 
-The history was squashed on 2026-11-04 (#1429), 217 migrations into two baselines, and again on
-2026-11-11, just before the last QA reset, folding the 12 migrations added since into
-`20271114000000_baseline_schema` and `20271114000100_baseline_reference_data`. A squash is only
-free while no environment holds data worth keeping. That stopped being true after the 2026-11-11
-QA reset, when early users began running real leagues on QA. From then on a squash means marking
-the baseline applied there (`prisma migrate resolve --applied`) after proving its schema
-matches, and the QA reset must never be pointed at it.
+The history was squashed on 2026-11-04 (#1429), 217 migrations into two baselines; again on
+2026-11-11, folding the 12 migrations added since; and again on 2026-11-12, folding the 17 added
+since into `20271119000000_baseline_schema` and `20271119000100_baseline_reference_data`, with the
+backend and live-sync work in and before a QA reset the owner asked for. A squash is only free
+while no environment holds data worth keeping, so each one has gone with a QA reset the owner
+approved. Once QA holds data the owner wants kept, a squash instead means marking the baseline
+applied there (`prisma migrate resolve --applied`) after proving its schema matches, and the QA
+reset must never be pointed at it.
 
 - **Do it when nothing else is adding a migration.** Any branch with its own migration deletes
   it after the squash merges and regenerates it against the baseline, because an older timestamp
