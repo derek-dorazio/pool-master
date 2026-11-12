@@ -220,7 +220,6 @@ function EntryBlock({
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
       id={entryBlockId(entry.entryId)}
       padding="none"
-      radius="lg"
       variant="subtle"
     >
       {/* #389: the grey entry bar opens and closes its own participant rows; the entry's (i) (#1564) sits above it. */}

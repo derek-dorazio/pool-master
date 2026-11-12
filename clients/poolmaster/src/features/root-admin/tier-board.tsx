@@ -217,7 +217,6 @@ export function TierBoard({
       <Tile
         className="p-3"
         padding="none"
-        radius="md"
         data-testid={`root-admin-tier-card-${card.sportEventParticipantId}`}
       >
         <p className="truncate font-medium text-foreground">{card.name}</p>

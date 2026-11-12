@@ -8,7 +8,7 @@ export function NextUpCard({ actionLabel, name, testId, to }: {
   to: string;
 }) {
   return (
-    <Tile className="flex flex-wrap items-center justify-between gap-4" data-testid={testId} padding="md" radius="md">
+    <Tile className="flex flex-wrap items-center justify-between gap-4" data-testid={testId} padding="md" radius="panel">
       <div>
         <Eyebrow>Next up</Eyebrow>
         <Heading level={2} variant="card" size="xl">{name}</Heading>

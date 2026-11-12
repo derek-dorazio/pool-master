@@ -33,7 +33,7 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
               key={page.id}
               to={buildEventPagePath(page.sport, page.slug)}
             >
-              <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" radius="md" variant="interactive">
+              <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" radius="panel" variant="interactive">
                 <Eyebrow tone="muted">{formatStartsIn(primary.edition.startDate, now)}</Eyebrow>
                 <Heading level={3} variant="card" size="xl">{copy.name}</Heading>
                 <Text as="p" variant="meta">{page.offers.map((offer) => eventPageOfferCopy(copy, offer).contestType).join(' · ')}</Text>

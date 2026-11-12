@@ -72,7 +72,7 @@ export function UpNextCard({
       className="grid gap-4 p-6"
       data-testid="league-home-up-next"
       padding="none"
-      radius="md"
+      radius="panel"
       variant="inverse"
     >
       <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>

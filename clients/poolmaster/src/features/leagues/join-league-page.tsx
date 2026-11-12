@@ -349,7 +349,7 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
 
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
-              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm" radius="sm">
+              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm">
                 <TeamAvatar iconKey={selectedIconKey} size="lg" />
                 <div className="min-w-0">
                   <Text as="div" variant="caption">Selected icon</Text>

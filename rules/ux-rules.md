@@ -515,8 +515,11 @@ administration area (root admin included), reusing the same shared components.
     tools file may be added.
 
     Pages never draw their own rounded box (#1591). A box that holds content
-    is a `SectionCard` (titled) or a `Tile` (untitled, `radius="sm"` for the
-    shared 8px corner inside a section), a box telling the user something
+    is a `SectionCard` (titled) or a `Tile` (untitled), both with the one 8px
+    content corner. `Tile`'s only other corner is `radius="panel"`, for a
+    panel that stands apart from the content: a navy hero, the signed-out
+    home's sign-in card, the invite join card (`PublicInviteJoinPage`)
+    and the event pages (#1638). A box telling the user something
     they must know is a `Notice`, and a clickable box is a `Button` or a link
     row; a choice in a dialog is a `ConfirmDialog` with Cancel and its one
     action. `npm run rules:check:card-corners` counts `rounded-2xl`,

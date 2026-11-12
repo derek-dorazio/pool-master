@@ -43,7 +43,6 @@ export function StatusPage({ action, body, bodyTestId, children, kind, testId, t
       className="mx-auto flex max-w-md flex-col items-center gap-4 text-center"
       data-kind={kind}
       data-testid={testId}
-      radius="sm"
     >
       <Icon aria-hidden className={`size-10 ${tone}`} data-testid={testId ? `${testId}-symbol` : undefined} />
       <Heading id={testId ? `${testId}-title` : undefined} level={1} variant="section">{title}</Heading>

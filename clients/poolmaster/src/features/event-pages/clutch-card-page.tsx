@@ -87,7 +87,7 @@ function ExampleCard() {
   const counted = new Set([...stars].sort((a, b) => b.total - a.total).slice(0, example.counted).map((star) => star.tier));
   const cardTotal = stars.filter((star) => counted.has(star.tier)).reduce((sum, star) => sum + star.total, 0);
   return (
-    <Tile data-testid="clutch-card-example" padding="sm" radius="md" variant="inverseDeep">
+    <Tile data-testid="clutch-card-example" padding="sm" radius="panel" variant="inverseDeep">
       <div className="flex items-center justify-between gap-2">
         <p className="font-display font-bold">{example.name}</p>
         <Chip tone="brand">{example.status}</Chip>
@@ -131,7 +131,7 @@ function ExampleCard() {
 function Hero({ startRequest }: { startRequest: StartRequest | null }) {
   const hero = CLUTCH_CARD_PAGE.hero;
   return (
-    <Tile as="section" className="grid gap-x-12 gap-y-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero" padding="none" radius="md" variant="inverse">
+    <Tile as="section" className="grid gap-x-12 gap-y-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center" data-testid="clutch-card-hero" padding="none" radius="panel" variant="inverse">
       <div className="space-y-3 lg:col-span-2">
         <div className="flex items-center gap-2">
           <Chip tone="brand">{hero.badge}</Chip>
@@ -162,7 +162,7 @@ function CardTypes() {
     <LandingSection eyebrow={copy.eyebrow} id="card-types" intro={copy.intro} testId="clutch-card-types" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
-          <Tile data-testid={`clutch-card-type-${sport}`} key={sport} padding="none" radius="md" className="p-5" variant="inverse">
+          <Tile data-testid={`clutch-card-type-${sport}`} key={sport} padding="none" radius="panel" className="p-5" variant="inverse">
             <Eyebrow tone="inverse">{getSportDefinition(sport).name}</Eyebrow>
             <Heading level={3} variant="card" size="xl" tone="primary">{statLineName(sport)}</Heading>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
@@ -232,7 +232,7 @@ function Why() {
     <LandingSection eyebrow={copy.eyebrow} testId="clutch-card-why" title={copy.title}>
       <div className="grid gap-4 md:grid-cols-2">
         {copy.points.map((point) => (
-          <Tile key={point.title} padding="md" radius="md">
+          <Tile key={point.title} padding="md" radius="panel">
             <Heading level={3} variant="card">{point.title}</Heading>
             <p className="mt-1 text-sm text-muted-foreground">{point.body}</p>
           </Tile>
@@ -326,7 +326,7 @@ export function ClutchCardPage() {
       <Why />
       <HowItPlays />
       <Faq />
-      <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="lg">
+      <Tile className="flex flex-col items-start gap-4" data-testid="clutch-card-closing" padding="lg" radius="panel">
         <Heading level={2} variant="display">{CLUTCH_CARD_PAGE.closing.title}</Heading>
         {startRequest ? (
           <StartButton request={startRequest} size="lg" testId="clutch-card-closing-start">{CLUTCH_CARD_PAGE.hero.start}</StartButton>

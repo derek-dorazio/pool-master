@@ -89,7 +89,7 @@ function ParticipantsTable({
   }
 
   return (
-    <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
+    <Tile className="mt-4 overflow-x-auto" padding="none">
       <SimpleTable data-testid={`contest-entry-picks-${entryId}`}>
         <TableHead>
           <tr>
@@ -419,7 +419,6 @@ export function ContestDetailPage() {
                   data-testid={`contest-board-entry-${entry.id}`}
                   key={entry.id}
                   padding="sm"
-                  radius="lg"
                   variant="subtle"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -493,7 +492,7 @@ export function ContestDetailPage() {
 
                   {canRename ? (
                     isRenaming ? (
-                      <Tile className="mt-4" padding="sm" radius="lg" variant="default">
+                      <Tile className="mt-4" padding="sm" variant="default">
                         <EntryNameField
                           error={renameEntryMutation.isError ? extractErrorMessage(renameEntryMutation.error) : null}
                           onChange={setRenameDraft}

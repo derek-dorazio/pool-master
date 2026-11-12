@@ -27,7 +27,7 @@ export function NumberedSteps({
     <ol className={cn("grid gap-4 md:grid-cols-3", className)} data-testid={testId}>
       {steps.map((step, index) => (
         <li className="list-none" key={step.title}>
-          <Tile className="h-full" padding="none" radius="md">
+          <Tile className="h-full" padding="none">
             {step.picture}
             <div className="p-4">
               <p className="font-display text-2xl font-bold text-primary">{index + 1}</p>

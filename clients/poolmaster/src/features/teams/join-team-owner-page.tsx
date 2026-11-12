@@ -283,7 +283,7 @@ export function JoinTeamOwnerPage() {
               message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
               title="Ready to join"
             />
-            <Tile className="flex items-center gap-4" data-testid="team-invite-co-own" padding="sm" radius="sm">
+            <Tile className="flex items-center gap-4" data-testid="team-invite-co-own" padding="sm">
               <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
               <div className="min-w-0">
                 <Text as="div" variant="caption">You&apos;ll co-own</Text>

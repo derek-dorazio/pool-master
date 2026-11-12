@@ -166,7 +166,6 @@ export function RootAdminIngestionSchedulePage() {
                     <div className="space-y-2">
                       <Tile
                         padding="sm"
-                        radius="md"
                         variant="default"
                       >
                         <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">

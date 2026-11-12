@@ -54,7 +54,7 @@ export function MyTeamOwnersPanel({
 
   return (
     <div className="space-y-5" data-testid="my-team-owners-panel">
-      <Tile radius="lg">
+      <Tile>
         <Heading level={4} variant="label">Add co-owner</Heading>
         <Text as="p" className="mt-2" variant="meta">
           Invite another person to co-own {selectedTeam.name}. People already in this league can&apos;t be invited.
@@ -94,7 +94,6 @@ export function MyTeamOwnersPanel({
               className="flex items-center justify-between gap-4"
               data-testid={`my-team-member-${member.userId}`}
               key={member.id}
-              radius="lg"
             >
               <div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -141,7 +140,7 @@ export function MyTeamOwnersPanel({
       </div>
 
       {teamOwnerInvitations.length ? (
-        <Tile radius="lg">
+        <Tile>
           <Heading level={4} variant="label">Pending owner invites</Heading>
           <div className="mt-4 space-y-3">
             {teamOwnerInvitations.map((invitation) => (
@@ -149,7 +148,6 @@ export function MyTeamOwnersPanel({
                 className="flex flex-wrap items-center justify-between gap-3"
                 data-testid={`my-team-owner-invitation-${invitation.id}`}
                 key={invitation.id}
-                radius="lg"
               >
                 <div>
                   <Text as="div" size="inherit" variant="strong">{invitation.email}</Text>
@@ -177,7 +175,7 @@ export function MyTeamOwnersPanel({
       ) : null}
 
       {replaceTargetUserId ? (
-        <Tile radius="lg">
+        <Tile>
           <Heading level={4} variant="label">Replace owner</Heading>
           <Text as="p" className="mt-2" variant="meta">
             Replacing an owner removes them from {selectedTeam.name} and the league, and invites the replacement email to take their place.
