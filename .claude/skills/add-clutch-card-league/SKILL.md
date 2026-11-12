@@ -49,7 +49,9 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
 2. Insert the sport league as the most recent stat pool league migration does (copy the
    latest `*_stat_pool_leagues` migration under `packages/core-api/prisma/migrations/`): `FIXED`
    advancement, `INDIVIDUAL` participants, `COMPOSITE` scoring, idempotent on
-   `("sport_id", "name")`.
+   `("sport_id", "name")`. Where the data provider lists the round as an event, set
+   `match_keyword` to the tour the provider gives it (a series league's round carries its round
+   name, "NBA Finals"), or the league's year import finds nothing and its stars load twice.
 3. Insert its three default setups, one per format, in this order: Tiered (six tiers, one pick
    each, best four count), Budget (six stars under the cap, best four) and Quick pick (three stars,
    all count), each `is_default`, scored by `COMPOSITE_TOTAL`. Template keys are

@@ -18,6 +18,9 @@
  * playoffs as an event (`nba-2025-postseason`), its teams, and every playoff game's score in the
  * GAME category, from which the GAME writer counts each best-of-seven series' wins (#1545).
  * Basketball's events and teams are the NCAA tournaments' and the NBA's together.
+ * Each playoff round is an event too (#1497, `series-playoff-rounds.ts`): a Clutch Card's
+ * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
+ * scores in the STAT_LINE category.
  *
  * Premier League (#1496, `epl-reader.ts`): each season's matchweeks as events
  * (`epl-2026-matchweek-11`), their teams, and their matches' scores in the GAME category.
@@ -48,6 +51,7 @@ import { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeague } from './ncaa-tournament-mapping';
 import { NcaaTournamentReader } from './ncaa-tournament-reader';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
+import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
 import { PlayoffsReader } from './series-playoffs-reader';
 import { parseEplScope } from './epl-mapping';
@@ -197,6 +201,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].eventDetails(ncaaScope.season);
     }
+    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
+    if (nbaRound !== null) {
+      return this.nba.roundEventDetails(nbaRound.season, nbaRound.round);
+    }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.eventDetails(nbaSeason);
@@ -250,6 +258,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const ncaaScope = parseNcaaTournamentScope(eventId);
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].liveScores(ncaaScope.season);
+    }
+    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
+    if (nbaRound !== null) {
+      return this.nba.roundLiveScores(nbaRound.season, nbaRound.round);
     }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {

@@ -9,6 +9,7 @@
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import { GameProgress, PROGRESS_BY_STATE } from './competition-status';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import {
   playoffsScopeId,
@@ -21,6 +22,16 @@ import {
   type PlayoffsLeague,
   type PlayoffTeam,
 } from './series-playoffs';
+import {
+  playoffRoundScopeId,
+  playoffSeries,
+  toPlayoffPlayerParticipant,
+  toPlayoffRoundBoxScores,
+  toPlayoffRoundEvent,
+  toPlayoffRoundEvents,
+  type PlayoffPlayer,
+  type PlayoffStatLine,
+} from './series-playoff-rounds';
 
 /** A league's own reads, normalized. */
 export interface PlayoffsSource {
@@ -29,6 +40,10 @@ export interface PlayoffsSource {
   games(season: number): Promise<PlayoffGame[]>;
   /** Every team of the league. */
   teams(): Promise<PlayoffTeam[]>;
+  /** The lines of the players who played these games (#1497). */
+  statLines(gameIds: readonly number[]): Promise<PlayoffStatLine[]>;
+  /** These teams' active players, of at least one team (#1497). */
+  players(teamIds: readonly number[]): Promise<PlayoffPlayer[]>;
 }
 
 /** A range spanning more seasons than this reads the current and next season instead of every one. */
@@ -50,7 +65,10 @@ export class PlayoffsReader {
     for (const season of this.seasonsFor(dateRange)) {
       games.push(...await this.source.games(season));
     }
-    return toPlayoffsEvents(this.source.league, games)
+    // Each season's playoffs, then each round it has reached, a round being a Clutch Card's event (#1497).
+    const seasons = [...new Set(games.map((game) => game.season))];
+    const rounds = seasons.flatMap((season) => toPlayoffRoundEvents(this.source.league, season, games.filter((game) => game.season === season)));
+    return [...toPlayoffsEvents(this.source.league, games), ...rounds]
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
@@ -71,6 +89,37 @@ export class PlayoffsReader {
   async liveScores(season: number): Promise<LiveScoreResult> {
     const games = await this.source.games(season);
     return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(this.source.league, games) };
+  }
+
+  /**
+   * A round of a season's playoffs with its teams' active players, the stars a Clutch Card picks
+   * from (#1497); null when no series of the round has a game yet.
+   */
+  async roundEventDetails(season: number, round: number): Promise<SportEventDetail | null> {
+    const series = await this.roundSeries(season, round);
+    if (series.length === 0) return null;
+    const teamIds = [...new Set(series.flatMap((each) => [each.games[0].home.id, each.games[0].away.id]))];
+    const participants = (await this.source.players(teamIds)).map((player) => toPlayoffPlayerParticipant(this.source.league, round, player));
+    return { ...toPlayoffRoundEvent(this.source.league, season, round, series, participants.length), participants };
+  }
+
+  /**
+   * A round's box scores in the STAT_LINE category (#1497): every game of its series, numbered
+   * within its series, with the lines of the players who played it. One stats read for the round.
+   */
+  async roundLiveScores(season: number, round: number): Promise<LiveScoreResult> {
+    const series = await this.roundSeries(season, round);
+    const underWay = series.flatMap((each) => each.games).filter((game) => PROGRESS_BY_STATE[game.state] === GameProgress.LIVE || PROGRESS_BY_STATE[game.state] === GameProgress.FINAL);
+    const lines = await this.source.statLines(underWay.map((game) => game.id));
+    return {
+      category: 'STAT_LINE',
+      externalEventId: playoffRoundScopeId(this.source.league, season, round),
+      games: toPlayoffRoundBoxScores(this.source.league, series, lines),
+    };
+  }
+
+  private async roundSeries(season: number, round: number) {
+    return playoffSeries(await this.source.games(season)).filter((each) => each.round === round);
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
