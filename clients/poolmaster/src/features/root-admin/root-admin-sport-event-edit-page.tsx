@@ -21,7 +21,7 @@ import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
@@ -179,7 +179,6 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
  */
 export function RootAdminSportEventEditPage() {
   // Claimed at once, so Manage never shows its own title while the page loads.
-  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const tournamentQuery = useSportEventQuery(eventId);
   const tournament = tournamentQuery.data;

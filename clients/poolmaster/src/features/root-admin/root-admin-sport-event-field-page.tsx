@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { AsyncPage, Button } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { eventTiersLocked, sportEventHasScoreSync } from './sport-admin-utils';
 import { EventFieldGridCard } from './event-field-grid-card';
 import { EventFieldSeedAction } from './event-field-seed-action';
@@ -31,7 +31,6 @@ export function RootAdminSportEventFieldPage() {
 
   const tournament = tournamentQuery.data;
   const sportLeagueNoun = useSportLeagueNoun(sport, tournament?.sportLeagueId);
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const entries = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);

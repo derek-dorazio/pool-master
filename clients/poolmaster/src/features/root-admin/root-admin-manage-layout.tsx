@@ -1,9 +1,9 @@
-import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
-import { AdminAreaLayout, Breadcrumbs, PageHeader } from "@/features/shared/ui";
+import { Breadcrumbs, ToolsArea } from "@/features/shared/ui";
 import {
-  buildManageMenuItems,
+  buildManageSportTabs,
+  buildManageTabs,
   getManageBreadcrumbLabel,
   MANAGE_LANDING_PATH,
 } from "./manage-navigation";
@@ -15,8 +15,9 @@ import {
 type BreadcrumbOverrides = Record<string, string>;
 
 /**
- * The trail from the menu section down to the page. The area header and side menu already say
- * "Manage", so the trail starts at the section.
+ * The trail from the open tab down to the page. The tabs already say the tool, and under Sports
+ * the second row says the sport, so the trail starts at the tool (or the sport's list) and shows
+ * only on a page deeper than that.
  */
 function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   const segments = pathname.split("/").filter(Boolean);
@@ -27,32 +28,31 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   }
 
   const relevantSegments = segments.slice(manageIndex + 1);
+  // Under `sports/<sport>/`, the sport tab already names the sport.
+  const firstShown = relevantSegments[0] === "sports" ? 2 : 0;
   return relevantSegments
     .map((segment, index) => ({
       segment,
       label: overrides[segment] ?? getManageBreadcrumbLabel(relevantSegments, index),
       href: `/manage/${relevantSegments.slice(0, index + 1).join("/")}`,
     }))
-    // `sports` only groups the sports' pages, as the menu's Sports heading does: the trail
-    // starts at the sport.
-    .filter((crumb, index) => !(index === 0 && crumb.segment === "sports"))
+    .slice(firstShown)
     .map(({ label, href }) => ({ label, href }));
 }
 
-/** `/manage` itself, and the old Manage links, open the first section of the menu. */
+/** `/manage` itself, and the old Manage links, open the first tab. */
 export function ManageLandingRedirect() {
   return <Navigate replace to={MANAGE_LANDING_PATH} />;
 }
 
 /**
- * The root-admin area: its own header with the way out, a side menu of sections grouped as
- * Platform, Sports and Operations, and the page. A section page is titled by its menu entry; a
- * deeper page also shows the trail back up to its section.
+ * The root-admin area on the commissioner tools frame (#1620): the slim band with the way out,
+ * Manage's tools as top tabs, one tab per sport under Sports, then the page, which opens with
+ * its own `PageHeader`. A page deeper than its tab also shows the trail back up to it.
  */
 export function RootAdminManageLayout() {
   const location = useLocation();
   const [overrides, setOverrides] = useState<BreadcrumbOverrides>({});
-  const [pageOwnsHeading, setPageOwnsHeading] = useState(false);
 
   const contextValue = useMemo<ManageBreadcrumbContextValue>(
     () => ({
@@ -74,40 +74,29 @@ export function RootAdminManageLayout() {
           return { ...current, [segment]: label };
         });
       },
-      setPageOwnsHeading,
     }),
     [],
   );
 
   const breadcrumbs = buildBreadcrumbs(location.pathname, overrides);
-  const trail = breadcrumbs.length > 1 ? breadcrumbs : undefined;
-  const pageTitle = breadcrumbs.at(-1)?.label ?? "Manage";
+  const sportTabs = buildManageSportTabs(location.pathname);
 
   return (
     <ManageBreadcrumbContext.Provider value={contextValue}>
-      <AdminAreaLayout
+      <ToolsArea
         back={{ label: "Exit Manage", testId: "root-admin-manage-exit", to: "/" }}
         eyebrow="Root admin"
-        icon={<ShieldCheck aria-hidden size={18} />}
-        menuItems={buildManageMenuItems(location.pathname)}
-        menuLabel="Manage"
+        subTabs={sportTabs ? { items: sportTabs, label: "Sports" } : undefined}
+        tabs={buildManageTabs(location.pathname)}
+        tabsLabel="Manage"
         testId="root-admin-manage-layout"
         title="Manage"
       >
-        <div className="space-y-6">
-          {pageOwnsHeading ? (
-            trail ? <Breadcrumbs items={trail} label="Manage breadcrumbs" /> : null
-          ) : (
-            <PageHeader
-              breadcrumbLabel="Manage breadcrumbs"
-              breadcrumbs={trail}
-              title={pageTitle}
-            />
-          )}
-
+        <div className="space-y-4">
+          {breadcrumbs.length > 1 ? <Breadcrumbs items={breadcrumbs} label="Manage breadcrumbs" /> : null}
           <Outlet />
         </div>
-      </AdminAreaLayout>
+      </ToolsArea>
     </ManageBreadcrumbContext.Provider>
   );
 }

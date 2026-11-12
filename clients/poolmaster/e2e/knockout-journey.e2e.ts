@@ -179,6 +179,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   await test.step('root admin signs in, and Manage lists basketball', async () => {
     await adminSignIn(page, credentials);
     await page.goto('/manage');
+    await page.getByTestId('root-admin-manage-menu-sports').click();
     await page.getByTestId('root-admin-manage-menu-basketball').click();
     await expect(page).toHaveURL(/\/manage\/sports\/basketball\/events$/);
     await expect(page.getByTestId('root-admin-sport-event-list-page')).toBeVisible();

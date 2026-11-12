@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { resizeAll } from "@/test/resize-observer";
 import { installScrollRowLayout } from "@/test/scroll-row-layout";
-import { AdminAreaLayout, LeagueMenu, type NavMenuItem, ToolsArea } from "./nav-menus";
+import { LeagueMenu, type NavMenuItem, ToolsArea } from "./nav-menus";
 
 const leagueItems: NavMenuItem[] = [
   { isActive: true, label: "Home", testId: "menu-home", to: "/leagues/l1" },
@@ -124,63 +124,6 @@ describe("LeagueMenu on a phone too narrow for its links", () => {
   });
 });
 
-describe("AdminAreaLayout", () => {
-  const adminItems: NavMenuItem[] = [
-    { isActive: false, label: "Settings", testId: "admin-settings", to: "/leagues/l1/admin/settings" },
-    { isActive: true, label: "Members", testId: "admin-members", to: "/leagues/l1/admin/members" },
-  ];
-
-  function renderLayout() {
-    render(
-      <MemoryRouter>
-        <AdminAreaLayout
-          back={{ label: "Back to league", testId: "admin-back", to: "/leagues/l1" }}
-          eyebrow="Commissioner tools"
-          menuItems={adminItems}
-          menuLabel="Commissioner tools menu"
-          title="Saturday Golf League"
-        >
-          <p>Members page body</p>
-        </AdminAreaLayout>
-      </MemoryRouter>,
-    );
-  }
-
-  it("shows the area eyebrow and the title in the area header", () => {
-    renderLayout();
-
-    expect(screen.getByText("Commissioner tools")).toBeInTheDocument();
-    expect(screen.getByText("Saturday Golf League")).toBeInTheDocument();
-  });
-
-  it("renders a back link to the given destination", () => {
-    renderLayout();
-
-    expect(screen.getByRole("link", { name: "Back to league" })).toHaveAttribute(
-      "href",
-      "/leagues/l1",
-    );
-  });
-
-  it("renders the side menu with links and marks only the active item as the current page", () => {
-    renderLayout();
-
-    const nav = screen.getByRole("navigation", { name: "Commissioner tools menu" });
-    const settings = within(nav).getByRole("link", { name: "Settings" });
-    const members = within(nav).getByRole("link", { name: "Members" });
-    expect(settings).toHaveAttribute("href", "/leagues/l1/admin/settings");
-    expect(settings).not.toHaveAttribute("aria-current");
-    expect(members).toHaveAttribute("href", "/leagues/l1/admin/members");
-    expect(members).toHaveAttribute("aria-current", "page");
-  });
-
-  it("renders its children as the page content", () => {
-    renderLayout();
-
-    expect(screen.getByText("Members page body")).toBeInTheDocument();
-  });
-});
-
 describe("ToolsArea", () => {
   function renderArea() {
     render(
@@ -223,5 +166,39 @@ describe("ToolsArea", () => {
     renderArea();
 
     expect(screen.getByText("Members page body")).toBeVisible();
+  });
+
+  it("adds no second row of tabs unless the open tool has its own choices", () => {
+    renderArea();
+
+    expect(screen.getAllByRole("navigation")).toHaveLength(1);
+  });
+
+  it("shows the open tool's own choices as a second row of tab links under the tools, marking the open one", () => {
+    render(
+      <MemoryRouter>
+        <ToolsArea
+          back={{ label: "Exit Manage", testId: "tools-back", to: "/" }}
+          eyebrow="Root admin"
+          subTabs={{
+            items: [
+              { isActive: true, label: "Golf", testId: "tools-golf", to: "/manage/sports/golf" },
+              { isActive: false, label: "Tennis", testId: "tools-tennis", to: "/manage/sports/tennis" },
+            ],
+            label: "Sports",
+          }}
+          tabs={[{ isActive: true, label: "Sports", testId: "tools-sports", to: "/manage/sports" }]}
+          tabsLabel="Manage"
+          title="Manage"
+        >
+          <p>Golf page body</p>
+        </ToolsArea>
+      </MemoryRouter>,
+    );
+
+    const sports = screen.getByRole("navigation", { name: "Sports" });
+    expect(within(sports).getByRole("link", { name: "Golf" })).toHaveAttribute("aria-current", "page");
+    expect(within(sports).getByRole("link", { name: "Tennis" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("navigation", { name: "Manage" })).toBeInTheDocument();
   });
 });

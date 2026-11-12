@@ -17,7 +17,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto } from '@/lib/api';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { participantStatusLabel, participantStatusTone } from './sport-admin-utils';
 import { buildSportParticipantPath } from './manage-navigation';
 import { useParticipantQuery } from './use-sport-catalog';
@@ -135,7 +135,6 @@ export function RootAdminParticipantHomePage() {
   const playerQuery = useParticipantQuery(participantId);
   const player = playerQuery.data;
 
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(participantId || undefined, player?.name);
 
   const pageState = playerQuery.isLoading

@@ -1,4 +1,4 @@
-import { FormField, Select } from '@/features/shared/ui';
+import { FilterPicker, FormField, Select } from '@/features/shared/ui';
 
 /** The years the pickers offer: a few back for results, one ahead for schedules loaded early. */
 const EVENT_YEARS_BACK = 3;
@@ -35,5 +35,22 @@ export function EventYearSelect({ value, onChange, testId }: {
         ))}
       </Select>
     </FormField>
+  );
+}
+
+/** The same year as a list page's filter, in its header's `tabsEnd`. */
+export function EventYearFilter({ value, onChange, testId }: {
+  value: number;
+  onChange: (eventYear: number) => void;
+  testId: string;
+}) {
+  return (
+    <FilterPicker
+      label="Year"
+      onChange={(year) => onChange(Number(year))}
+      options={eventYearOptions(new Date().getFullYear()).map((year) => ({ label: String(year), value: String(year) }))}
+      testId={testId}
+      value={String(value)}
+    />
   );
 }

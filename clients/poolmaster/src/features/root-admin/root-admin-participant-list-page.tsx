@@ -2,10 +2,10 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
-  DataGridPage,
-  FormField,
+  DataGrid,
+  ErrorState,
   LinkButton,
-  Select,
+  FilterPicker,
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -83,45 +83,48 @@ export function RootAdminParticipantListPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <SportSectionMenu current="participants" />
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <FormField className="min-w-[12rem]" label="Status">
-          <Select
-            data-testid="root-admin-participant-list-status"
-            onChange={(event) => {
-              const next = PARTICIPANT_STATUSES.find((value) => value === event.target.value);
+    <section className="space-y-6" data-testid="root-admin-participant-list-page">
+      <SportSectionMenu
+        actions={(
+          <LinkButton
+            data-testid="root-admin-participant-list-new"
+            to={`${buildSportParticipantListPath(sport)}/new`}
+          >
+            {`Add ${participant.one}`}
+          </LinkButton>
+        )}
+        current="participants"
+        tabsEnd={(
+          <FilterPicker
+            label="Status"
+            onChange={(value) => {
+              const next = PARTICIPANT_STATUSES.find((candidate) => candidate === value);
               if (next) {
                 setStatus(next);
               }
             }}
+            options={PARTICIPANT_STATUSES.map((value) => ({ label: participantStatusLabel(value), value }))}
+            testId="root-admin-participant-list-status"
             value={status}
-          >
-            {PARTICIPANT_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {participantStatusLabel(value)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <LinkButton
-          data-testid="root-admin-participant-list-new"
-          to={`${buildSportParticipantListPath(sport)}/new`}
-        >
-          {`Add ${participant.one}`}
-        </LinkButton>
-      </div>
+          />
+        )}
+      />
 
-      <DataGridPage
+      {playersQuery.isError ? (
+        <ErrorState
+          body={extractErrorMessage(playersQuery.error, { fallback: `We could not load ${participant.many} right now.` })}
+          onRetry={() => void playersQuery.refetch()}
+          testId="root-admin-participant-list-error"
+        />
+      ) : null}
+      <DataGrid
         columns={columns}
-        // An error shows in the grid rather than in place of it, so the search box stays to retry.
+        // The server searched already. On an error the grid stays, empty, so its box can retry.
         data={canSearch && !playersQuery.isError ? (playersQuery.data ?? []) : []}
         emptyMessage={
           !canSearch
             ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participant.one}.`
-            : playersQuery.isError
-              ? extractErrorMessage(playersQuery.error, { fallback: `We could not load ${participant.many} right now.` })
-              : playersQuery.isFetching
+            : playersQuery.isFetching
                 ? `Searching ${participant.many}...`
                 : `No ${participantStatusLabel(status).toLowerCase()} ${participant.many} matched the search.`
         }
@@ -132,8 +135,7 @@ export function RootAdminParticipantListPage() {
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
         search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search', onChange: setSearch }}
         tableTestId="root-admin-participant-list-table"
-        testId="root-admin-participant-list-page"
       />
-    </div>
+    </section>
   );
 }

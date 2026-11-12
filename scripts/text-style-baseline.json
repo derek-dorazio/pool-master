@@ -53,7 +53,6 @@
   "clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx": 4,
   "clients/poolmaster/src/features/root-admin/golf-round-score-upload-card.tsx": 2,
   "clients/poolmaster/src/features/root-admin/golf-tournament-live-simulation.tsx": 4,
-  "clients/poolmaster/src/features/root-admin/manage-page-intro.tsx": 2,
   "clients/poolmaster/src/features/root-admin/match-scores-row.tsx": 13,
   "clients/poolmaster/src/features/root-admin/play-in-places-card.tsx": 8,
   "clients/poolmaster/src/features/root-admin/price-assign-action.tsx": 2,

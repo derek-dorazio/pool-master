@@ -7,6 +7,7 @@ import {
   Checkbox,
   FormEditorSection,
   FormField,
+  HelpTip,
   Input,
   SectionCard,
   Tile,
@@ -21,7 +22,6 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { ManagePageIntro } from './manage-page-intro';
 import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 
 type IngestionEditableField =
@@ -109,29 +109,34 @@ export function RootAdminIngestionSchedulePage() {
     <AsyncPage
       errorBody={extractErrorMessage(ingestionConfigQuery.error, { fallback: 'We could not load ingestion schedule configuration right now.' })}
       loadingBody="Loading ingestion schedule configuration..."
+      header={{
+        actions: (
+        <Button
+          disabled={resetIngestionConfigMutation.isPending}
+          onClick={() => {
+            ingestionConfigMutation.reset();
+            resetIngestionConfigMutation.mutate();
+          }}
+          type="button"
+          variant="secondary"
+        >
+          {resetIngestionConfigMutation.isPending
+            ? 'Resetting...'
+            : 'Reset ingestion schedule'}
+        </Button>
+        ),
+        testId: 'root-admin-ingestion-schedule-header',
+        title: 'Global Ingestion Schedule',
+        titleAside: (
+          <HelpTip label="About the ingestion schedule" testId="root-admin-ingestion-schedule-help">
+        Control the default cadence and lifecycle windows that scheduled ingestion uses across
+        sports before per-sport overrides apply.
+          </HelpTip>
+        ),
+      }}
       state={pageState}
       testId="root-admin-ingestion-schedule-page"
     >
-      <ManagePageIntro
-        actions={(
-          <Button
-            disabled={resetIngestionConfigMutation.isPending}
-            onClick={() => {
-              ingestionConfigMutation.reset();
-              resetIngestionConfigMutation.mutate();
-            }}
-            type="button"
-            variant="secondary"
-          >
-            {resetIngestionConfigMutation.isPending
-              ? 'Resetting...'
-              : 'Reset ingestion schedule'}
-          </Button>
-        )}
-      >
-        Control the default cadence and lifecycle windows that scheduled ingestion uses across
-        sports before per-sport overrides apply.
-      </ManagePageIntro>
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
         <Notice
           className="mb-4"

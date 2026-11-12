@@ -1,5 +1,5 @@
 export { Notice } from "./notice";
-export { AdminAreaLayout, LeagueMenu, ToolsArea } from "./nav-menus";
+export { LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
@@ -105,10 +105,8 @@ export {
 } from "./modal-templates";
 export {
   AsyncPage,
-  DataGridPage,
   EntityDetailPage,
   FormEditorSection,
-  ManagementListPage,
   PublicInviteJoinPage,
 } from "./page-templates";
 export { Tile } from "./tile";

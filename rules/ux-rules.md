@@ -298,8 +298,8 @@ administration area (root admin included), reusing the same shared components.
    Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
    league and the way back, then its tools as one row of `PageTabs` on every
    width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
-   root admin area, still has its header and side menu (`AdminAreaLayout`) until
-   it moves to the same frame. Each page in an area opens with one `PageHeader`
+   root admin area, uses the same frame, with a second row of one tab per sport
+   under Sports. Each page in an area opens with one `PageHeader`
    (a `FormPage` brings its own); an entity's landing page shows the entity's
    icon in it. A page never adds a second header or "Back to" link of its own;
    the trail leads back up.

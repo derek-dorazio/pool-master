@@ -5,6 +5,7 @@ import {
   AsyncPage,
   Button,
   DateDisplay,
+  HelpTip,
   LinkButton,
   SectionCard,
   SettingsRow,
@@ -19,7 +20,6 @@ import { BudgetPricingSettingsForm } from './root-admin-budget-pricing-settings-
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
-import { ManagePageIntro } from './manage-page-intro';
 import { PLANS_PATH, SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
@@ -46,13 +46,19 @@ export function RootAdminSettingsPage() {
     <AsyncPage
       errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load settings right now.' })}
       loadingBody="Loading settings..."
+      header={{
+        testId: 'root-admin-settings-header',
+        title: 'Settings',
+        titleAside: (
+          <HelpTip label="About settings" testId="root-admin-settings-help">
+            How the app behaves, changeable without a deploy. A saved change reaches every server
+            within 30 seconds.
+          </HelpTip>
+        ),
+      }}
       state={pageState}
       testId="root-admin-settings-page"
     >
-      <ManagePageIntro>
-        How the app behaves, changeable without a deploy. A saved change reaches every server
-        within 30 seconds.
-      </ManagePageIntro>
       {settingsQuery.data?.map((group) => (
         <SettingsGroupSection group={group} key={group.key} />
       ))}

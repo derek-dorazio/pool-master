@@ -15,7 +15,6 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { useUnmappedCompetitorQuery } from './use-unmapped-competitors';
-import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 
 function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderParticipantDto }) {
   const logger = getLogger().child({ feature: 'root-admin-map-competitor-page' });
@@ -144,7 +143,6 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
  */
 export function RootAdminMapCompetitorPage() {
   // Claimed at once, so Manage never shows its own title while the page loads.
-  useManagePageOwnsHeading();
   const [searchParams] = useSearchParams();
   const providerId = searchParams.get('provider') ?? '';
   const externalId = searchParams.get('competitor') ?? '';

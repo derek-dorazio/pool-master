@@ -13,9 +13,11 @@ import {
 import {
   Button,
   DataGrid,
-  DataGridPage,
+  Input,
   formatDateTimeDisplay,
   Modal,
+  PageHeader,
+  QueryState,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -25,7 +27,7 @@ import {
   formatSportEventStatus,
   sportEventStatusTone,
 } from './sport-admin-utils';
-import { EventYearSelect } from './event-year-select';
+import { EventYearFilter } from './event-year-select';
 import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
@@ -70,6 +72,7 @@ export function RootAdminEventsPage() {
   const displayPreferences = useDisplayPreferences();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
+  const [searchTerm, setSearchTerm] = useState('');
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventsByYear(eventYear),
@@ -288,33 +291,43 @@ export function RootAdminEventsPage() {
     : 'Participants in this event.';
 
   return (
-    <div className="space-y-4">
-      <EventYearSelect onChange={setEventYear} testId="root-admin-events-year" value={eventYear} />
-
-      <DataGridPage
-        columns={eventColumns}
-        data={eventsQuery.data ?? []}
-        emptyMessage={`No events in ${eventYear}.`}
-        errorBody={extractErrorMessage(
-          eventsQuery.error,
-          { fallback: 'We could not load events right now.' },
+    <section className="space-y-6" data-testid="root-admin-events-page">
+      <PageHeader
+        search={(
+          <Input
+            aria-label="Find an event"
+            data-testid="root-admin-events-search"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Find an event"
+            type="search"
+            value={searchTerm}
+          />
         )}
-        filterTestIdPrefix="root-admin-events-filter"
-        getRowId={(event) => event.id}
-        loadingBody="Loading events..."
-        pageSize={MANAGE_LIST_PAGE_SIZE}
-        rowTestId={(event) => `root-admin-event-row-${event.id}`}
-        search={{ label: 'Find an event', testId: 'root-admin-events-search' }}
-        state={
-          eventsQuery.isLoading
-            ? 'loading'
-            : eventsQuery.isError
-              ? 'error'
-              : 'ready'
-        }
-        tableTestId="root-admin-events-table"
-        testId="root-admin-events-page"
+        tabsEnd={<EventYearFilter onChange={setEventYear} testId="root-admin-events-year" value={eventYear} />}
+        testId="root-admin-events-header"
+        title="Events"
       />
+
+      <QueryState
+        error={extractErrorMessage(eventsQuery.error, { fallback: 'We could not load events right now.' })}
+        loading="Loading events..."
+        query={eventsQuery}
+        testId="root-admin-events"
+      >
+        {(events) => (
+          <DataGrid
+            columns={eventColumns}
+            data={events}
+            emptyMessage={`No events in ${eventYear}.`}
+            filterTestIdPrefix="root-admin-events-filter"
+            getRowId={(event) => event.id}
+            pageSize={MANAGE_LIST_PAGE_SIZE}
+            rowTestId={(event) => `root-admin-event-row-${event.id}`}
+            searchTerm={searchTerm}
+            tableTestId="root-admin-events-table"
+          />
+        )}
+      </QueryState>
 
       <Modal
         description={participantModalDescription}
@@ -356,6 +369,6 @@ export function RootAdminEventsPage() {
           />
         )}
       </Modal>
-    </div>
+    </section>
   );
 }

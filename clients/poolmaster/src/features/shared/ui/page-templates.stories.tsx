@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "./button";
 import { FormField, Input } from "./form-field";
-import { AsyncPage, DataGridPage, EntityDetailPage, FormEditorSection, PublicInviteJoinPage } from "./page-templates";
+import { AsyncPage, EntityDetailPage, FormEditorSection, PublicInviteJoinPage } from "./page-templates";
 import { Text } from "./text";
 
 const meta = {
@@ -19,20 +18,6 @@ export const Loading: Story = { args: { state: "loading" } };
 export const Failed: Story = { args: { state: "error", error: new Error("The server did not answer.") } };
 export const Empty: Story = { args: { state: "empty", emptyTitle: "No members yet" } };
 
-type Row = { id: string; name: string };
-const COLUMNS: ColumnDef<Row>[] = [{ accessorKey: "name", header: "Name" }];
-
-/** Being retired with ManagementListPage: a SectionCard with rows instead (#1611). */
-export const RetiringDataGridPage: StoryObj = {
-  render: () => (
-    <DataGridPage<Row>
-      columns={COLUMNS}
-      data={[{ id: "1", name: "Sam Rivera" }, { id: "2", name: "Alex Chen" }]}
-      emptyMessage="No members."
-      header={{ title: "Members" }}
-    />
-  ),
-};
 
 /** Being retired (#1562). */
 export const RetiringEntityDetailPage: StoryObj = {

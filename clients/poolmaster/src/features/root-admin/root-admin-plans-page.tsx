@@ -15,6 +15,7 @@ import {
   Button,
   Checkbox,
   DateDisplay,
+  HelpTip,
   InlineError,
   Input,
   SectionCard,
@@ -36,7 +37,6 @@ import {
   UNLIMITED_LABEL,
 } from '@/features/plans/plan-labels';
 import { extractErrorMessage } from '@/lib/errors';
-import { ManagePageIntro } from './manage-page-intro';
 import { SettingsSaveError } from './settings-save-error';
 import { useSettingsGroupForm } from './use-settings-group-form';
 import { useSettingsGroupQuery } from './use-settings-groups';
@@ -77,15 +77,21 @@ export function RootAdminPlansPage() {
     <AsyncPage
       errorBody={extractErrorMessage(settingsQuery.error, { fallback: 'We could not load the plans right now.' })}
       loadingBody="Loading plans..."
+      header={{
+        testId: 'root-admin-plans-header',
+        title: 'Plans',
+        titleAside: (
+          <HelpTip label="About plans" testId="root-admin-plans-help">
+            What each league plan allows, from Free up to Platinum. A higher plan always allows at
+            least as much as the one below it, and Platinum has every feature. Commissioners
+            can&apos;t pick Platinum yet: they see it as coming soon. A saved change reaches every
+            server within 30 seconds.
+          </HelpTip>
+        ),
+      }}
       state={pageState}
       testId="root-admin-plans-page"
     >
-      <ManagePageIntro>
-        What each league plan allows, from Free up to Platinum. A higher plan always allows at least
-        as much as the one below it, and Platinum has every feature. Commissioners can&apos;t pick
-        Platinum yet: they see it as coming soon. A saved change reaches every server within 30
-        seconds.
-      </ManagePageIntro>
       {group ? <PlanSettingsForm group={group} /> : null}
     </AsyncPage>
   );

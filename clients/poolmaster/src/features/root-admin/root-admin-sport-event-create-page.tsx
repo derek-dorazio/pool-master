@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import {
   Notice,
   LinkButton,
+  PageHeader,
   SegmentedControl,
 } from '@/features/shared/ui';
 import { SportEventManualCreateForm } from './sport-event-manual-create-form';
@@ -84,6 +85,7 @@ export function RootAdminSportEventCreatePage() {
       className="space-y-6"
       data-testid="root-admin-sport-event-create-page"
     >
+      <PageHeader testId="root-admin-sport-event-create-header" title={`New ${event.one}`} />
       <SegmentedControl
         aria-label={`${upperFirst(event.one)} creation mode`}
         onChange={(value) => setMode(value as CreateMode)}
