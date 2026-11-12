@@ -24,8 +24,7 @@ what each resource is for.
   reverts that change.
 - **Say what needs a deploy.** An IAM, DNS, SES, security-group or S3 change is live when the
   apply finishes. A core-api environment change only registers a new task definition
-  revision; the running service picks it up on the next deploy, which is the next merge to
-  `main` (or a re-run of the latest deploy). A change that needs a second apply after a
+  revision; the running service picks it up on the next deploy, a manual run of CI on `main`. A change that needs a second apply after a
   deploy, like `ses_events_subscribed`, says so and gives both rounds.
 
 ## Step 2 — the hand-over message

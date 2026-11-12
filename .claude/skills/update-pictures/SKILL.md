@@ -69,7 +69,8 @@ that function and so a Terraform apply (the `apply-terraform` skill), not just a
 
 ## Seeing it on QA
 
-Each merge to main deploys QA in about 20 minutes. Then:
+A merge does not deploy QA. After it, deploy `main` (Actions -> CI -> Run workflow on `main`,
+or the GitHub tools' workflow trigger with `ci.yml`); the run takes about 30 minutes. Then:
 
 ```bash
 curl -sI https://qa.ultimateofficepoolmanager.com/email/sports/<sport>.jpg | head -1
