@@ -96,6 +96,34 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(handleApply).toHaveBeenCalledTimes(1);
   });
 
+  it("marks every item in selectedIds as picked and shows the multi-pick's apply label", () => {
+    render(
+      <PickerModal
+        applyLabel="Add selected (2)"
+        getItemLabel={(item) => item.label}
+        items={[
+          { id: "ocean", label: "Ocean" },
+          { id: "forest", label: "Forest" },
+          { id: "desert", label: "Desert" },
+        ]}
+        onApply={vi.fn()}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        onSelect={vi.fn()}
+        open
+        search={{ label: "Find", onChange: vi.fn(), testId: "picker-search", value: "" }}
+        selectedIds={new Set(["ocean", "desert"])}
+        title="Choose places"
+      />,
+    );
+
+    expect(screen.getByTestId("picker-modal-item-ocean")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("picker-modal-item-desert")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("picker-modal-item-forest")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Add selected (2)" })).toBeEnabled();
+    expect(screen.getByTestId("picker-search")).toBeInTheDocument();
+  });
+
   it("shows read-only detail metadata and copies the text it was given", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
@@ -116,6 +144,36 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByText("Completed")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy details" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
+  });
+
+  it("shows a whole page unboxed in an xl read-only modal that fills a phone's screen, and boxes a payload otherwise", () => {
+    const { rerender } = render(
+      <ReadOnlyDetailModal
+        detailContent={<p>Payload</p>}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        testId="detail"
+        title="Sync payload"
+      />,
+    );
+    expect(screen.getByTestId("detail-content")).toHaveClass("max-h-96");
+    expect(screen.getByTestId("detail")).not.toHaveClass("max-sm:h-dvh");
+
+    rerender(
+      <ReadOnlyDetailModal
+        detailContent={<p>Pick screen</p>}
+        isFullScreenOnPhone
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        size="xl"
+        testId="detail"
+        title="Preview"
+      />,
+    );
+    expect(screen.getByTestId("detail-content")).not.toHaveClass("max-h-96");
+    expect(screen.getByTestId("detail")).toHaveClass("max-sm:h-dvh", "max-w-5xl");
   });
 
   it("pool-master-rop.62: keeps read-only detail values keyed by item identity after reorder", () => {

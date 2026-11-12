@@ -121,7 +121,7 @@ describe('RootAdminManageUsersPage', () => {
     expect(adminListUsersMock).toHaveBeenLastCalledWith({ query: { search: 'example' } });
   });
 
-  it('keeps the search box and shows the error in the grid when the search fails', async () => {
+  it('keeps the search box and shows the error in red with Retry when the search fails', async () => {
     adminListUsersMock.mockResolvedValue({
       data: null,
       error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } },
@@ -130,7 +130,8 @@ describe('RootAdminManageUsersPage', () => {
 
     searchFor('example');
 
-    expect(await screen.findByText('Boom')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-manage-users-error')).toHaveTextContent('Boom');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Find a user' })).toHaveValue('example');
   });
 

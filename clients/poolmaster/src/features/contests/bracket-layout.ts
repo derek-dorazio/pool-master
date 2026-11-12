@@ -7,10 +7,10 @@
  */
 import { PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import type { GamePicksResponse } from '@/lib/api';
 import type { StatusBadgeProps } from '@/features/shared/ui';
+import type { PickEmGame } from './pick-em-week';
 
-export type BracketGame = GamePicksResponse['games'][number];
+export type BracketGame = PickEmGame;
 export type BracketTeam = NonNullable<BracketGame['predictedHome']>;
 
 export interface BracketRegionGroup {

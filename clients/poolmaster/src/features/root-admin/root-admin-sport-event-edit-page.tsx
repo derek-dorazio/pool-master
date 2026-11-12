@@ -7,26 +7,26 @@ import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { updateEvent } from '@/lib/api';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 import {
-  AsyncPage,
   DateTimeField,
   dateTimeLocalValueToIso,
   FormField,
   FormPage,
   Input,
+  QueryState,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { upperFirst } from '@/lib/upper-first';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
-import { upperFirst } from '@/lib/upper-first';
 
 const editFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -179,7 +179,6 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
  */
 export function RootAdminSportEventEditPage() {
   // Claimed at once, so Manage never shows its own title while the page loads.
-  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const tournamentQuery = useSportEventQuery(eventId);
   const tournament = tournamentQuery.data;
@@ -187,14 +186,16 @@ export function RootAdminSportEventEditPage() {
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(tournamentQuery.error, {
+    <QueryState
+      error={extractErrorMessage(tournamentQuery.error, {
         fallback: 'We could not load this event right now.',
       })}
-      loadingBody="Loading event..."
-      state={tournamentQuery.isLoading ? 'loading' : tournamentQuery.isError ? 'error' : 'ready'}
+      loading="Loading event..."
+      query={tournamentQuery}
+      size="tile"
+      testId="root-admin-sport-event-edit"
     >
-      {tournament ? <SportEventEditForm tournament={tournament} /> : null}
-    </AsyncPage>
+      {(loaded) => <SportEventEditForm tournament={loaded} />}
+    </QueryState>
   );
 }

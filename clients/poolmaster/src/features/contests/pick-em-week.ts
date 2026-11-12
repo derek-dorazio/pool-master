@@ -8,8 +8,23 @@ import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
  * rule; these only shape its answer for the screen.
  */
 
-export type PickEmGame = GamePicksResponse['games'][number];
+type EntryGame = GamePicksResponse['games'][number];
+
+/**
+ * A game as the pick screens read it: an entry's, or a setup's before it is saved (#1612), whose
+ * trial pick has no pick time and is not scored yet.
+ */
+export type PickEmGame = Omit<EntryGame, 'pick'> & { pick: Omit<NonNullable<EntryGame['pick']>, 'pickedAt'> | null };
 export type PickEmTeam = NonNullable<PickEmGame['home']>;
+
+/**
+ * A week as its pick screen draws it: an entry's (`GamePicksResponse`), or a setup's before it is
+ * saved (#1612), which is the commissioner's own trial, with no tiebreaker or earlier weeks yet.
+ */
+export type PickEmWeek = Pick<
+  GamePicksResponse,
+  'againstTheSpread' | 'gameCount' | 'mode' | 'ownEntry' | 'selectionType' | 'survivor' | 'tiePicksOffered' | 'tiebreakerMatchId' | 'tiebreakerValue'
+> & { games: PickEmGame[] };
 type GamePickWrite = SaveGamePicksRequest['picks'][number];
 
 /** The game's two teams, away first, as a schedule lists them: "Bills at Chiefs". */
@@ -49,7 +64,7 @@ export function firstKickoff(games: readonly PickEmGame[]): string | null {
 }
 
 /** The game whose total points the week's tiebreaker guesses, or null while the week has none. */
-export function tiebreakerGame(gamePicks: Pick<GamePicksResponse, 'games' | 'tiebreakerMatchId'>): PickEmGame | null {
+export function tiebreakerGame(gamePicks: Pick<PickEmWeek, 'games' | 'tiebreakerMatchId'>): PickEmGame | null {
   return gamePicks.games.find((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId) ?? null;
 }
 
@@ -161,7 +176,7 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
  * The confidence values a game's pick may take: 1 to the week's game count, largest first, leaving out the values held
  * by games that have kicked off, since those picks can no longer give their value up.
  */
-export function confidenceOptions(gamePicks: Pick<GamePicksResponse, 'gameCount' | 'games'>, game: PickEmGame): number[] {
+export function confidenceOptions(gamePicks: Pick<PickEmWeek, 'gameCount' | 'games'>, game: PickEmGame): number[] {
   const { gameCount, games } = gamePicks;
   const held = new Set(games.flatMap((other) => (
     other.sportEventMatchId !== game.sportEventMatchId && other.locked && other.pick?.confidence != null

@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { DataGridPage, LinkButton, StatusBadge } from '@/features/shared/ui';
+import { DataGrid, LinkButton, QueryState, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { useSportLeaguesQuery } from './use-sport-catalog';
@@ -58,41 +58,42 @@ export function RootAdminSportLeagueListPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <SportSectionMenu current="leagues" />
-      <div className="flex justify-end">
-        <LinkButton
-          data-testid="root-admin-sport-league-list-new"
-          to={`${buildSportLeagueListPath(sport)}/new`}
-        >
-          {`New ${sportLeague.one}`}
-        </LinkButton>
-      </div>
+    <section className="space-y-6" data-testid="root-admin-sport-league-list-page">
+      <SportSectionMenu
+        actions={(
+          <LinkButton
+            data-testid="root-admin-sport-league-list-new"
+            to={`${buildSportLeagueListPath(sport)}/new`}
+          >
+            {`New ${sportLeague.one}`}
+          </LinkButton>
+        )}
+        current="leagues"
+      />
 
-      <DataGridPage
-        columns={columns}
-        data={leaguesQuery.data ?? []}
-        emptyMessage={`No ${definition.name.toLowerCase()} ${sportLeague.many} have been created yet.`}
-        errorBody={extractErrorMessage(leaguesQuery.error, {
+      <QueryState
+        error={extractErrorMessage(leaguesQuery.error, {
           fallback: `We could not load ${sportLeague.many} right now.`,
         })}
-        filterTestIdPrefix="root-admin-sport-league-list-filter"
-        getRowId={(league) => league.id}
-        getRowLink={(league) => buildSportLeaguePath(sport, league.id)}
-        loadingBody={`Loading ${sportLeague.many}...`}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
-        rowTestId={(league) => `root-admin-sport-league-row-${league.id}`}
-        search={{ label: `Find a ${sportLeague.one}`, testId: 'root-admin-sport-league-list-search' }}
-        state={
-          leaguesQuery.isLoading
-            ? 'loading'
-            : leaguesQuery.isError
-              ? 'error'
-              : 'ready'
-        }
-        tableTestId="root-admin-sport-league-list-table"
-        testId="root-admin-sport-league-list-page"
-      />
-    </div>
+        loading={`Loading ${sportLeague.many}...`}
+        query={leaguesQuery}
+        testId="root-admin-sport-league-list"
+      >
+        {(leagues) => (
+          <DataGrid
+            columns={columns}
+            data={leagues}
+            emptyMessage={`No ${definition.name.toLowerCase()} ${sportLeague.many} have been created yet.`}
+            filterTestIdPrefix="root-admin-sport-league-list-filter"
+            getRowId={(league) => league.id}
+            getRowLink={(league) => buildSportLeaguePath(sport, league.id)}
+            pageSize={MANAGE_LIST_PAGE_SIZE}
+            rowTestId={(league) => `root-admin-sport-league-row-${league.id}`}
+            search={{ label: `Find a ${sportLeague.one}`, testId: 'root-admin-sport-league-list-search' }}
+            tableTestId="root-admin-sport-league-list-table"
+          />
+        )}
+      </QueryState>
+    </section>
   );
 }

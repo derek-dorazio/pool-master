@@ -8,6 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { ErrorState, LoadingState, Notice, refetchFailed } from '@/features/shared/ui';
 import { DrawEntryMetrics } from './contest-entry-draw';
 import {
+  buildPickedAtById,
   CONTEST_ENTRY_CODE_MESSAGES,
   lineupRulesFor,
   mergePickChange,
@@ -527,23 +528,22 @@ export function RosterContestEntryPage() {
       {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : null}
 
       <RosterContestEntryLineupSection
-        entryId={entryId}
+        drawState={isRandomDraw ? selectionState : null}
         expandedGroupId={expandedGroupId}
         groupToggleRefs={groupToggleRefs}
         isBudget={isBudget}
         isBusy={pickChangeMutation.isPending}
         isEditable={isEditable}
         isMyEntry={isMyEntry}
-        isRandomDraw={isRandomDraw}
         lineupSummary={lineupSummary}
         noun={participantNoun}
         onExpandGroup={setExpandedGroupId}
         onPick={(change) => pickChangeMutation.mutateAsync(change)}
         pickError={pickChangeMutation.isError ? errorText(pickChangeMutation.error, 'We could not save this entry right now.') : null}
+        pickedAtById={buildPickedAtById(selectionState, entryId)}
         picksHidden={picksHidden}
         progressNote={progressNote}
         selectionGroups={selectionGroups}
-        selectionState={selectionState}
         sport={contest.sport ?? null}
       />
 

@@ -3,7 +3,6 @@ import { listParticipantLeagueAffiliations } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantLeagueAffiliationDto, SportLeagueDto } from '@/lib/api';
-import { useManagePageOwnsHeading } from './manage-breadcrumb-context';
 import { SportLeagueDangerZone, SportLeagueDetailsSection, SportLeagueHeading } from './sport-league-details-section';
 import { SportLeagueRosterGridCard } from './sport-league-roster-grid-card';
 import { SportLeagueRosterUploadCard } from './sport-league-roster-upload-card';
@@ -19,7 +18,6 @@ import { SportLeaguePage } from './sport-league-page';
  * last.
  */
 export function RootAdminSportLeagueHomePage() {
-  useManagePageOwnsHeading();
 
   return (
     <SportLeaguePage testId="root-admin-sport-league-home-page">

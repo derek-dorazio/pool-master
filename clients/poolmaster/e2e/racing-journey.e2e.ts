@@ -148,6 +148,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   await test.step('root admin signs in, and Manage lists horse racing beside golf', async () => {
     await adminSignIn(page, credentials);
     await page.goto('/manage');
+    await page.getByTestId('root-admin-manage-menu-sports').click();
     await expect(page.getByTestId('root-admin-manage-menu-horse-racing')).toBeVisible();
     await page.getByTestId('root-admin-manage-menu-horse-racing').click();
     await expect(page).toHaveURL(/\/manage\/sports\/horse-racing\/events$/);
@@ -219,11 +220,12 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await page.getByTestId('root-admin-event-field-add').click();
     await page.getByTestId('root-admin-event-field-add-search').fill(runId);
     for (const id of horseIds) {
-      await page.getByTestId(`root-admin-event-field-add-search-select-${id}`).check();
+      const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
+      await candidate.click();
+      await expect(candidate).toHaveAttribute('aria-pressed', 'true');
     }
-    await submitAndRead(page, 'root-admin-event-field-add-submit', 'POST', `/api/v1/events/${raceId}/participants`);
-    await expect(page.getByTestId('root-admin-event-field-add-result')).toBeVisible();
-    await page.getByTestId('root-admin-event-field-add-done').click();
+    await submitAndRead(page, 'root-admin-event-field-add-modal-apply', 'POST', `/api/v1/events/${raceId}/participants`);
+    await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
   const fieldEntryIds = await test.step('set each horse\'s odds to win in the field grid', async () => {

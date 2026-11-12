@@ -245,7 +245,26 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByTestId('manage-contests-row-contest-newer')).not.toBeInTheDocument();
   });
 
-  it('says a year\'s finished contests could not be loaded rather than showing none', async () => {
+  it('puts History\'s season beside History in the list\'s header, before the search, and offers none on Active', async () => {
+    primeCommonMocks();
+    primeContests(
+      [buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'contest-final', status: 'COMPLETED', ...onEvent(players) })] },
+    );
+
+    renderManageContestsPage();
+    await screen.findByTestId('manage-contests-row-contest-open');
+    expect(screen.queryByRole('combobox', { name: 'Season' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
+    const season = await screen.findByRole('combobox', { name: 'Season' });
+
+    expect(screen.getByTestId('manage-contests-table-views-end')).toContainElement(season);
+    expect(screen.getByRole('radio', { name: 'History' }).compareDocumentPosition(season) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(season.compareDocumentPosition(screen.getByTestId('manage-contests-search')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('says a year\'s finished contests could not be loaded rather than showing none, keeping the views and search above it', async () => {
     primeCommonMocks();
     primeContests([buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })], { 2099: [] });
     listContestsMock.mockImplementation(({ query }: { query?: { finishedYear?: number } }) => Promise.resolve(query?.finishedYear === undefined
@@ -257,6 +276,26 @@ describe('ManageContestsPage', () => {
     await userEvent.click(await screen.findByTestId('manage-contests-filter-history'));
 
     expect(await screen.findByTestId('manage-contests-history-error')).toHaveTextContent('We couldn\'t load the contests finished in 2099.');
+    expect(screen.getByRole('radio', { name: 'Active 1' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'History' })).toBeChecked();
+    expect(screen.getByTestId('manage-contests-search')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-table')).not.toBeInTheDocument();
+  });
+
+  it('keeps what was typed in the search when the list moves from Active to History', async () => {
+    primeCommonMocks();
+    primeContests(
+      [buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', ...onEvent(players) })] },
+    );
+
+    renderManageContestsPage();
+
+    await userEvent.type(await screen.findByTestId('manage-contests-search'), 'Players');
+    await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
+
+    expect(await screen.findByTestId('manage-contests-row-contest-final')).toBeInTheDocument();
+    expect(screen.getByTestId('manage-contests-search')).toHaveValue('Players');
   });
 
   it('finds a contest by its event\'s name as well as its own', async () => {
@@ -303,8 +342,9 @@ describe('ManageContestsPage', () => {
     expect(await screen.findByTestId('manage-contest-destination')).toBeInTheDocument();
   });
 
-  it('opens a contest in setup to the league from its "⋯" once the commissioner confirms, and says so', async () => {
+  it('opens a contest in setup to the league from its "⋯" once the commissioner confirms, showing its readiness checks first, and says so', async () => {
     primeCommonMocks();
+    getEventMock.mockResolvedValue(apiSuccess({ event: masters }));
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: [buildContest({ id: 'contest-1', name: 'Masters One-and-Done', status: 'DRAFT', ...onEvent(masters) })],
     }));
@@ -314,6 +354,7 @@ describe('ManageContestsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Actions for Masters One-and-Done' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Open to league' }));
     expect(await screen.findByRole('dialog', { name: 'Open this contest to the league?' })).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-open-readiness-checks')).toHaveTextContent('Event released');
     expect(openContestMock).not.toHaveBeenCalled();
     await userEvent.click(screen.getByTestId('contest-open-confirm'));
 

@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
-  AsyncPage,
   Notice,
   LinkButton,
+  QueryState,
+  refetchFailed,
   SplitContentLayout,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { describeBudgetPricing } from './budget-pricing-format';
 import { PriceAssignAction } from './price-assign-action';
 import { TierAutoAssignActions } from './tier-auto-assign-actions';
@@ -36,7 +37,6 @@ export function RootAdminSportEventTiersPage() {
   const fieldQuery = useSportEventFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
-  useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
   const tiers = useMemo(() => tiersQuery.data ?? [], [tiersQuery.data]);
@@ -55,22 +55,26 @@ export function RootAdminSportEventTiersPage() {
     return counts;
   }, [field, tiers]);
 
-  const pageState = tournamentQuery.isLoading || tiersQuery.isLoading || fieldQuery.isLoading
-    ? 'loading'
-    : tournamentQuery.isError
-      ? 'error'
-      : 'ready';
+  // The page needs all three reads; the first one that failed says why.
+  const failedQuery = [tournamentQuery, tiersQuery, fieldQuery].find((query) => query.isError);
+  const pageQuery = {
+    data: tiersQuery.data && fieldQuery.data ? tournament : undefined,
+    isError: failedQuery !== undefined,
+    refetch: refetchFailed(tournamentQuery, tiersQuery, fieldQuery),
+  };
 
   return (
-    <AsyncPage
-      errorBody={extractErrorMessage(tournamentQuery.error, {
-        fallback: `We could not load this ${event.one} right now.`,
-      })}
-      loadingBody="Loading tiers..."
-      state={pageState}
-      testId="root-admin-sport-event-tiers-page"
-    >
-      {tournament ? (
+    <section data-testid="root-admin-sport-event-tiers-page">
+      <QueryState
+        error={extractErrorMessage(failedQuery?.error, {
+          fallback: `We could not load this ${event.one} right now.`,
+        })}
+        loading="Loading tiers..."
+        query={pageQuery}
+        size="tile"
+        testId="root-admin-sport-event-tiers"
+      >
+        {(tournament) => (
         <div className="space-y-6">
           <SportEventHeader current="tiers" tournament={tournament} />
 
@@ -160,7 +164,8 @@ export function RootAdminSportEventTiersPage() {
             </>
           )}
         </div>
-      ) : null}
-    </AsyncPage>
+        )}
+      </QueryState>
+    </section>
   );
 }

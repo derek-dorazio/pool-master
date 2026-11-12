@@ -91,7 +91,7 @@ describe('RootAdminPlansPage', () => {
     getSettingsGroupMock.mockResolvedValue({ status: 404, error: { error: { code: 'NOT_FOUND', message: 'Settings group PLAN_CONFIG was not found.' } } });
     renderPage();
 
-    expect(await screen.findByTestId('shared-error-state')).toHaveTextContent('Settings group PLAN_CONFIG was not found.');
+    expect(await screen.findByTestId('root-admin-plans-error')).toHaveTextContent('Settings group PLAN_CONFIG was not found.');
     expect(screen.queryByText('Loading plans...')).not.toBeInTheDocument();
   });
 

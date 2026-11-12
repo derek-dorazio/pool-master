@@ -13,12 +13,11 @@ import {
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
 import { EmptyPickSlot } from './empty-pick-slot';
 import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
-import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
+import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
 const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
@@ -30,7 +29,7 @@ const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
 };
 
 /** How a pick stands against its game: a survivor pick reads as surviving or going out. */
-function pickOutcome(gamePicks: GamePicksResponse, pick: NonNullable<PickEmGame['pick']>) {
+function pickOutcome(gamePicks: PickEmWeek, pick: NonNullable<PickEmGame['pick']>) {
   const outcome = describePickOutcome(pick);
   return outcome && isSurvivorWeek(gamePicks) && pick.outcome !== null
     ? { ...outcome, label: SURVIVOR_OUTCOME_LABELS[pick.outcome] }
@@ -47,6 +46,8 @@ export interface PickEmTie {
 /** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
 export interface PickEmTiebreaker {
   isSaving: boolean;
+  /** A preview's trial tiebreaker: typing is the whole of it, so there is no Save and nothing reads "saved". */
+  isTrial?: boolean;
   onChange: (text: string) => void;
   onSave: (value: number) => void;
   /** Why the last tiebreaker save was refused, or null. */
@@ -110,7 +111,7 @@ function ConfidenceValue({
   canChange: boolean;
   game: PickEmGame;
   /** The week, for its game count and the values its games already kicked off hold. */
-  gamePicks: GamePicksResponse;
+  gamePicks: PickEmWeek;
   isBusy: boolean;
   onChange: (game: PickEmGame, value: number | null) => void;
 }) {
@@ -140,7 +141,7 @@ function ConfidenceValue({
 }
 
 /** The week's tiebreaker, on its game's card: typed and saved until that game kicks off. */
-function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; gamePicks: GamePicksResponse; tiebreaker: PickEmTiebreaker }) {
+function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; gamePicks: PickEmWeek; tiebreaker: PickEmTiebreaker }) {
   const parsed = parseBracketTiebreaker(tiebreaker.text);
   const isTyped = tiebreaker.text.trim() !== '';
   const isUnchanged = parsed !== null && parsed === gamePicks.tiebreakerValue;
@@ -173,16 +174,18 @@ function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; ga
             value={tiebreaker.text}
           />
         </FormField>
-        <Button
-          data-testid="pick-em-tiebreaker-save"
-          disabled={parsed === null || isUnchanged || tiebreaker.isSaving}
-          type="submit"
-          variant="secondary"
-        >
-          {tiebreaker.isSaving ? 'Saving...' : 'Save tiebreaker'}
-        </Button>
+        {tiebreaker.isTrial ? null : (
+          <Button
+            data-testid="pick-em-tiebreaker-save"
+            disabled={parsed === null || isUnchanged || tiebreaker.isSaving}
+            type="submit"
+            variant="secondary"
+          >
+            {tiebreaker.isSaving ? 'Saving...' : 'Save tiebreaker'}
+          </Button>
+        )}
       </div>
-      {gamePicks.tiebreakerValue !== null ? (
+      {gamePicks.tiebreakerValue !== null && !tiebreaker.isTrial ? (
         <Text as="p" data-testid="pick-em-tiebreaker-saved" variant="meta">
           {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total points.`}
         </Text>
@@ -206,7 +209,7 @@ function PickEmGameCard({
 }: {
   canChange: boolean;
   game: PickEmGame;
-  gamePicks: GamePicksResponse;
+  gamePicks: PickEmWeek;
   isBusy: boolean;
   onConfidence: (game: PickEmGame, value: number | null) => void;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
@@ -316,7 +319,7 @@ export function PickEmGames({
 }: {
   /** Whether the viewer may change this week now: their own entry, before its games lock. */
   canChange: boolean;
-  gamePicks: GamePicksResponse;
+  gamePicks: PickEmWeek;
   /** A save is under way: the choices wait for the server's answer. */
   isBusy: boolean;
   onConfidence: (game: PickEmGame, value: number | null) => void;

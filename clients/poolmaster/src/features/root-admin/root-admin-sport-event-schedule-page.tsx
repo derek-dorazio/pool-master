@@ -5,20 +5,21 @@ import { z } from 'zod';
 import { updateEventRounds } from '@/lib/api';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import {
-  AsyncPage,
   DateTimeField,
   dateTimeLocalValueToIso,
   FormField,
   FormPage,
+  QueryState,
+  refetchFailed,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { throwApiError } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useManageBreadcrumbOverride, useManagePageOwnsHeading } from './manage-breadcrumb-context';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
@@ -146,7 +147,6 @@ function SportEventScheduleForm({
 /** Reschedule an event's rounds, on a page of its own. */
 export function RootAdminSportEventSchedulePage() {
   // Claimed at once, so Manage never shows its own title while the page loads.
-  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const { event, round } = useManagedSport().definition.vocabulary;
   const tournamentQuery = useSportEventQuery(eventId);
@@ -154,27 +154,29 @@ export function RootAdminSportEventSchedulePage() {
 
   useManageBreadcrumbOverride(eventId || undefined, tournamentQuery.data?.name);
 
-  const query = roundsQuery.isError ? roundsQuery : tournamentQuery;
+  // The form needs both reads; the first one that failed says why.
+  const failedQuery = roundsQuery.isError ? roundsQuery : tournamentQuery;
+  const pageQuery = {
+    data: roundsQuery.data && tournamentQuery.data
+      ? { rounds: roundsQuery.data, sportEvent: tournamentQuery.data }
+      : undefined,
+    isError: tournamentQuery.isError || roundsQuery.isError,
+    refetch: refetchFailed(tournamentQuery, roundsQuery),
+  };
 
   return (
-    <AsyncPage
-      error={query.error}
-      errorBody={`We could not load this ${event.one}'s ${round.one} schedule right now.`}
-      loadingBody={`Loading ${round.one} schedule...`}
-      state={
-        tournamentQuery.isLoading || roundsQuery.isLoading
-          ? 'loading'
-          : tournamentQuery.isError || roundsQuery.isError
-            ? 'error'
-            : roundsQuery.data?.length === 0
-              ? 'empty'
-              : 'ready'
-      }
-      emptyBody={`This ${event.one} has no ${round.many} to schedule yet.`}
+    <QueryState
+      empty={`This ${event.one} has no ${round.many} to schedule yet.`}
+      error={extractErrorMessage(failedQuery.error, {
+        fallback: `We could not load this ${event.one}'s ${round.one} schedule right now.`,
+      })}
+      isEmpty={({ rounds }) => rounds.length === 0}
+      loading={`Loading ${round.one} schedule...`}
+      query={pageQuery}
+      size="tile"
+      testId="root-admin-sport-event-schedule"
     >
-      {roundsQuery.data && tournamentQuery.data ? (
-        <SportEventScheduleForm rounds={roundsQuery.data} sportEvent={tournamentQuery.data} />
-      ) : null}
-    </AsyncPage>
+      {({ rounds, sportEvent }) => <SportEventScheduleForm rounds={rounds} sportEvent={sportEvent} />}
+    </QueryState>
   );
 }

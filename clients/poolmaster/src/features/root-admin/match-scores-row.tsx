@@ -9,7 +9,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { tieWord } from '@/features/contests/contest-sport';
 import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
-import type { BracketContext } from './bracket-match-row';
+import type { BracketContext } from './bracket-match-write';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
 
