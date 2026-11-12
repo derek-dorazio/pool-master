@@ -146,6 +146,39 @@ describe('NCAA men\'s tournament game scores', () => {
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, unknown2026])).toEqual([]);
   });
 
+  it('names the First Four winner in its round of 64 game, the team that fills that side\'s play-in place', () => {
+    const texasInRoundOf64: NcaaBracketGame = { ...duke2025, status_state: CompetitionStatusState.SCHEDULED, away_team: { ...firstFour2025.home_team, score: null } };
+    expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, texasInRoundOf64])).toEqual([{
+      externalGameId: '401856490',
+      homeTeamExternalId: 'ncaab-team-150',
+      awayTeamExternalId: 'ncaab-team-251',
+      state: ProviderGameState.SCHEDULED,
+      homeScore: null,
+      awayScore: null,
+      playInWinnerTeamExternalId: 'ncaab-team-251',
+    }]);
+  });
+
+  it('names an away First Four winner too, and none in a later round or while its First Four game is not final, has no score or is level', () => {
+    const ncStateWon: NcaaBracketGame = { ...firstFour2025, home_team: { ...firstFour2025.home_team, score: 59 }, away_team: { ...firstFour2025.away_team, score: 68 } };
+    const ncStateInRoundOf64: NcaaBracketGame = { ...duke2025, home_team: firstFour2025.away_team };
+    expect(toNcaaGameScoreUpdates(NCAA_MEN, [ncStateWon, ncStateInRoundOf64])[0]).toMatchObject({ playInWinnerTeamExternalId: 'ncaab-team-152' });
+
+    const texasInRoundOf64: NcaaBracketGame = { ...duke2025, away_team: firstFour2025.home_team };
+    const notWon: NcaaBracketGame[] = [
+      withState(firstFour2025, CompetitionStatusState.IN_PROGRESS),
+      { ...firstFour2025, away_team: { ...firstFour2025.away_team, score: null } },
+      { ...firstFour2025, home_team: { ...firstFour2025.home_team, score: undefined } },
+      { ...firstFour2025, away_team: { ...firstFour2025.away_team, score: 68 } },
+      { ...firstFour2025, away_team: null },
+    ];
+    const texasInRoundOf32: NcaaBracketGame = { ...texasInRoundOf64, game_id: 401856520, round: 3 };
+    expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour2025, texasInRoundOf32])[0]).not.toHaveProperty('playInWinnerTeamExternalId');
+    for (const firstFour of notWon) {
+      expect(toNcaaGameScoreUpdates(NCAA_MEN, [firstFour, texasInRoundOf64])[0]).not.toHaveProperty('playInWinnerTeamExternalId');
+    }
+  });
+
   it('reads no score before tip-off, whatever the vendor sends', () => {
     const early = withState(live2026, CompetitionStatusState.POSTPONED);
     expect(toNcaaGameScoreUpdates(NCAA_MEN, [early])[0]).toMatchObject({ state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null });
@@ -205,5 +238,11 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
       ['401856711', 'ncaaw-team-150', 'ncaaw-team-2655', 74, 61],
       ['401856772', 'ncaaw-team-41', 'ncaaw-team-2579', 72, 66],
     ]);
+  });
+
+  it('names a round 0 First Four winner in its round 1 game', () => {
+    const [firstFour, uconn] = womens2025;
+    const winnerInRoundOf64: NcaaBracketGame = { ...uconn, away_team: firstFour.home_team };
+    expect(toNcaaGameScoreUpdates(NCAA_WOMEN, [firstFour, winnerInRoundOf64])[0]).toMatchObject({ playInWinnerTeamExternalId: 'ncaaw-team-2390' });
   });
 });
