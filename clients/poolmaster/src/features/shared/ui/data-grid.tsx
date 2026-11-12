@@ -328,7 +328,7 @@ export function DataGrid<TData>({
           <div className="flex flex-wrap items-end justify-between gap-x-4 border-b border-border px-4">
             <div className="flex min-w-0 flex-wrap items-end gap-x-4">
               <ViewFilter aria-label={views.label} onChange={views.onChange} options={views.options} value={views.value} />
-              {views.end ? <div className="flex items-center pb-1.5" data-testid="data-grid-views-end">{views.end}</div> : null}
+              {views.end ? <div className="flex items-center pb-1.5" data-testid={tableTestId ? `${tableTestId}-views-end` : undefined}>{views.end}</div> : null}
             </div>
             {searchBox || jumpButton ? (
               <div className="flex w-full items-center gap-2 pb-2 sm:w-auto sm:pt-2 max-sm:pt-1">

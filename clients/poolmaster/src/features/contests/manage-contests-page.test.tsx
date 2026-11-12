@@ -259,7 +259,7 @@ describe('ManageContestsPage', () => {
     await userEvent.click(screen.getByTestId('manage-contests-filter-history'));
     const season = await screen.findByRole('combobox', { name: 'Season' });
 
-    expect(screen.getByTestId('data-grid-views-end')).toContainElement(season);
+    expect(screen.getByTestId('manage-contests-table-views-end')).toContainElement(season);
     expect(screen.getByRole('radio', { name: 'History' }).compareDocumentPosition(season) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(season.compareDocumentPosition(screen.getByTestId('manage-contests-search')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

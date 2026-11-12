@@ -558,6 +558,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
         emptyMessage="No rows matched."
         search={{ label: "Find a row", testId: "grid-search" }}
         showColumnFilters={false}
+        tableTestId="grid-table"
         views={{
           end: <label>Season <select aria-label="Season"><option>2099</option></select></label>,
           label: "Rows to show",
@@ -572,6 +573,6 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     const season = screen.getByRole("combobox", { name: "Season" });
     expect(history.compareDocumentPosition(season) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(season.compareDocumentPosition(screen.getByTestId("grid-search")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByTestId("data-grid-views-end")).toContainElement(season);
+    expect(screen.getByTestId("grid-table-views-end")).toContainElement(season);
   });
 });
