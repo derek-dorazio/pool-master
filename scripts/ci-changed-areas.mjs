@@ -48,6 +48,7 @@ const DOC_ONLY_FILES = [
   // build or lint reads them. A web-app sweep that shrinks a baseline must not run the service
   // suites because of it. Scripts that are code stay in EVERYTHING_PREFIXES below.
   'scripts/text-style-baseline.json',
+  'scripts/titled-tile-baseline.json',
   'scripts/duplicate-baseline.json',
   'AGENTS.md',
   'CLAUDE.md',
