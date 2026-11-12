@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { ChoiceCard } from "./choice-card";
-import { Text } from "./text";
+import { ChoiceCard, ChoiceCardText } from "./choice-card";
 
 const meta = {
   title: "Forms/ChoiceCard",
@@ -25,10 +24,7 @@ function GroupDemo() {
     <div className="grid gap-2" role="radiogroup">
       {options.map((option) => (
         <ChoiceCard isSelected={choice === option.key} key={option.key} onSelect={() => setChoice(option.key)} testId={option.key}>
-          <span className="grid">
-            <Text variant="strong">{option.name}</Text>
-            <Text variant="meta">{option.meta}</Text>
-          </span>
+          <ChoiceCardText description={option.meta} label={option.name} />
         </ChoiceCard>
       ))}
     </div>

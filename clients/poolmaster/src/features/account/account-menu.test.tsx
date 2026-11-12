@@ -12,7 +12,7 @@ function renderMenu(props: Partial<Parameters<typeof AccountMenu>[0]> = {}) {
       <AccountMenu
         initials="DD"
         onLogout={onLogout}
-        profilePath="/users/user-1"
+        profilePath="/my-account"
         userName="Derek Dorazio"
         {...props}
       />
@@ -75,7 +75,7 @@ describe('AccountMenu', () => {
   it('links Profile to the canonical user route', async () => {
     const { openMenu } = renderMenu();
     await openMenu();
-    expect(screen.getByTestId('account-menu-profile')).toHaveAttribute('href', '/users/user-1');
+    expect(screen.getByTestId('account-menu-profile')).toHaveAttribute('href', '/my-account');
   });
 
   it('closes the menu when the Profile link is clicked', async () => {

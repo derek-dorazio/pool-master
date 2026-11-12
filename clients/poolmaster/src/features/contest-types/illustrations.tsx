@@ -444,12 +444,13 @@ const STEP_SCENES: Record<StepPicture, Scene> = {
 };
 
 /** A scene's svg: announced by `label` when given, otherwise hidden beside its name. */
-function Illustration({ scene, className, label }: { scene: Scene; className?: string; label?: string }) {
+function Illustration({ scene, className, label, testId }: { scene: Scene; className?: string; label?: string; testId?: string }) {
   return (
     <svg
       aria-hidden={label === undefined || undefined}
       aria-label={label}
       className={cn('block', className)}
+      data-testid={testId}
       preserveAspectRatio="xMidYMid slice"
       role={label === undefined ? undefined : 'img'}
       viewBox="0 0 160 100"
@@ -466,8 +467,8 @@ export function SportIllustration({ sport, className, decorative = false }: { sp
 }
 
 /** A way to play's picture, always beside its name. */
-export function FormatIllustration({ selectionType, className }: { selectionType: SelectionType; className?: string }) {
-  return <Illustration className={className} scene={FORMAT_SCENES[selectionType]} />;
+export function FormatIllustration({ selectionType, className, testId }: { selectionType: SelectionType; className?: string; testId?: string }) {
+  return <Illustration className={className} scene={FORMAT_SCENES[selectionType]} testId={testId} />;
 }
 
 /** A how-it-works step's picture, always beside the step's title. */

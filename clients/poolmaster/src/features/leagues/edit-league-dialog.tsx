@@ -9,7 +9,6 @@ import {
   FormModal,
   IconPalette,
   Input,
-  MutationActionToast,
   type MutationActionWorkflowResult,
   Text,
   Textarea,
@@ -35,7 +34,7 @@ type EditLeagueFormValues = z.infer<typeof editLeagueFormSchema>;
  */
 export function EditLeagueDialog({ league, onClose, open }: { league: LeagueDto; onClose: () => void; open: boolean }) {
   const queryClient = useQueryClient();
-  // The save lives here, not in the form, so its toast outlives the dialog it closes.
+  // The save lives here, not in the form, so a failed attempt's reason survives a re-render of the form.
   const save = useMutationActionWorkflow({
     action: async (values: EditLeagueFormValues) => {
       // One request carries all three fields, so a save never lands half-applied. An empty
@@ -65,15 +64,10 @@ export function EditLeagueDialog({ league, onClose, open }: { league: LeagueDto;
     onClose();
   };
 
-  return (
-    <>
-      {/* Mounted only while open, so each opening starts from the league as it is, and a
-          background refetch never overwrites what the commissioner has typed
-          (rules/react-ui-rules.md §5 Server Data Form-State Hazard). */}
-      {open ? <EditLeagueForm league={league} onCancel={cancel} save={save} /> : null}
-      <MutationActionToast onDismiss={save.dismissToast} toast={save.toast} />
-    </>
-  );
+  // Mounted only while open, so each opening starts from the league as it is, and a background
+  // refetch never overwrites what the commissioner has typed (rules/react-ui-rules.md §5 Server
+  // Data Form-State Hazard).
+  return open ? <EditLeagueForm league={league} onCancel={cancel} save={save} /> : null;
 }
 
 type LeagueSave = MutationActionWorkflowResult<LeagueDto, EditLeagueFormValues>;

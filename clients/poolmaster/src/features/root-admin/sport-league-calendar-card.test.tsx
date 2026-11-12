@@ -303,7 +303,7 @@ describe('SportLeagueCalendarCard year actions: plural import, a tour without a 
 
     await openImport();
     const modal = screen.getByTestId('root-admin-sport-league-calendar-import-modal');
-    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-league-calendar-import-modal')).not.toBeInTheDocument(),
@@ -319,7 +319,7 @@ describe('SportLeagueCalendarCard year actions: plural import, a tour without a 
     await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-set-current'));
     const modal = screen.getByTestId('root-admin-sport-league-calendar-set-current-modal');
     expect(modal).toHaveTextContent('2025 becomes PGA Tour’s current year, replacing 2026.');
-    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-league-calendar-set-current-modal')).not.toBeInTheDocument(),
@@ -335,7 +335,7 @@ describe('SportLeagueCalendarCard year actions: plural import, a tour without a 
     await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-clone'));
     const modal = screen.getByTestId('root-admin-sport-league-calendar-clone-modal');
     expect(within(modal).getByText(/^1 tournament will be copied to 2026/)).toBeInTheDocument();
-    await userEvent.click(within(modal).getByRole('button', { name: 'Close modal' }));
+    await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
 
     await waitFor(() =>
       expect(screen.queryByTestId('root-admin-sport-league-calendar-clone-modal')).not.toBeInTheDocument(),

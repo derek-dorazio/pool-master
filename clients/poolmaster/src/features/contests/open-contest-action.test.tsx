@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Toaster } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 
 const { mockLogger, openContestMock } = vi.hoisted(() => {
@@ -29,7 +30,8 @@ function renderAction() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <OpenContestAction contestId="contest-1" leagueId="league-1" />
+      <OpenContestAction contestId="contest-1" contestName="Masters Pool" leagueId="league-1" />
+      <Toaster />
     </QueryClientProvider>,
   );
 }
@@ -47,7 +49,7 @@ describe('OpenContestAction', () => {
     mockLogger.error.mockReset();
   });
 
-  it('asks first, then opens the contest for its league and closes the dialog', async () => {
+  it('asks first, then opens the contest for its league, closes the dialog and says so in a toast', async () => {
     openContestMock.mockResolvedValue({ data: { contest: { id: 'contest-1', status: 'OPEN' } } });
 
     renderAction();
@@ -59,6 +61,7 @@ describe('OpenContestAction', () => {
       );
     });
     await waitFor(() => expect(screen.queryByTestId('contest-open-dialog')).not.toBeInTheDocument());
+    expect(await screen.findByTestId('app-toast')).toHaveTextContent('Masters Pool is open to the league');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'contest.open.succeeded' }),
       expect.any(String),
@@ -74,7 +77,7 @@ describe('OpenContestAction', () => {
     renderAction();
     await confirmOpen();
 
-    expect(await screen.findByTestId('contest-open-error')).toHaveTextContent(
+    expect(await screen.findByTestId('contest-open-dialog-error')).toHaveTextContent(
       /event has already started, so it can no longer be opened/i,
     );
     expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -87,7 +90,7 @@ describe('OpenContestAction', () => {
 
     fireEvent.click(screen.getByTestId('contest-open-to-league'));
     await screen.findByTestId('contest-open-confirm');
-    expect(screen.queryByTestId('contest-open-error')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-open-dialog-error')).not.toBeInTheDocument();
   });
 
   it('keeps the dialog open with an error and logs it as unexpected when the response carries no contest', async () => {
@@ -96,7 +99,7 @@ describe('OpenContestAction', () => {
     renderAction();
     await confirmOpen();
 
-    expect(await screen.findByTestId('contest-open-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-open-dialog-error')).toBeInTheDocument();
     expect(screen.getByTestId('contest-open-dialog')).toBeInTheDocument();
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'contest.open.failed' }),

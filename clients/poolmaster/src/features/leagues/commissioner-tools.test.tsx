@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-rou
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { Toaster } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
@@ -106,6 +107,7 @@ function renderCommissionerTools(path: string | string[] = '/league/BIGDAWGS/adm
             <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>
+          <Toaster />
         </MemoryRouter>
       </AuthProvider>
     </QueryClientProvider>,
@@ -1298,7 +1300,7 @@ describe('Event emails', () => {
     expect(await screen.findByText('3 of 4 sport leagues')).toBeInTheDocument();
   });
 
-  it('lists the active sport leagues ticked in groups by sport, golf before basketball, each by name', async () => {
+  it('lists the active sport leagues ticked in groups by sport, golf before basketball, each by name with its sport\'s count chosen and the chosen rows highlighted', async () => {
     primeMocks({ league: { mutedSportLeagueIds: [WNBA.id] } });
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
@@ -1307,7 +1309,10 @@ describe('Event emails', () => {
     const basketball = within(screen.getByTestId('edit-event-emails-sport-BASKETBALL'));
     expect(screen.getByTestId('edit-event-emails-sport-GOLF').compareDocumentPosition(screen.getByTestId('edit-event-emails-sport-BASKETBALL')))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(screen.getByTestId('edit-event-emails-sport-GOLF')).toHaveTextContent(/^Golf\s*Golf\s*LPGA Tour\s*PGA Tour$/);
+    expect(screen.getByTestId('edit-event-emails-sport-GOLF')).toHaveTextContent(/^Golf\s*2 chosen\s*LPGA Tour\s*PGA Tour$/);
+    expect(basketball.getByTestId('edit-event-emails-sport-BASKETBALL-count')).toHaveTextContent('1 chosen');
+    expect(basketball.getByTestId(`edit-event-emails-row-${NBA.id}`)).toHaveAttribute('aria-current', 'true');
+    expect(basketball.getByTestId(`edit-event-emails-row-${WNBA.id}`)).not.toHaveAttribute('aria-current');
     expect(golf.getByTestId('edit-event-emails-sport-GOLF-all')).toBeChecked();
     expect(basketball.getByTestId(`edit-event-emails-league-${NBA.id}`)).toBeChecked();
     expect(basketball.getByTestId(`edit-event-emails-league-${WNBA.id}`)).not.toBeChecked();

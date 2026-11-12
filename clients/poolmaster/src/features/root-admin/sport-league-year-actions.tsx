@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cloneEventYear } from '@/lib/api';
-import { Button, ConfirmationModal, StatusBadge } from '@/features/shared/ui';
+import { Button, ConfirmDialog, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -91,11 +91,11 @@ export function SportLeagueYearActions({
         Clone to {targetYear}
       </Button>
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel="Set as current"
         confirmTestId="root-admin-sport-league-calendar-set-current-confirm"
         description={`${eventYear} becomes ${sportLeague.name}’s current year, replacing ${sportLeague.currentEventYear ?? 'none'}.`}
-        errorMessage={
+        error={
           setCurrentMutation.isError
             ? extractErrorMessage(setCurrentMutation.error, {
                 codeMessages: {
@@ -114,11 +114,11 @@ export function SportLeagueYearActions({
         title="Set current year"
       />
 
-      <ConfirmationModal
+      <ConfirmDialog
         confirmLabel={`Clone to ${targetYear}`}
         confirmTestId="root-admin-sport-league-calendar-clone-confirm"
         description={`${eventCount} ${eventCount === 1 ? event.one : event.many} will be copied to ${targetYear}, dates shifted one year forward, each as next year’s edition. The field, tiers, prices, results, and provider link of each ${event.one} are not copied, and the current year does not change.`}
-        errorMessage={
+        error={
           cloneMutation.isError
             ? extractErrorMessage(cloneMutation.error, {
                 codeMessages: {

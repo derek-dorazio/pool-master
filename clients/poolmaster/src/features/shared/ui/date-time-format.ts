@@ -154,6 +154,27 @@ export function formatDateDisplay(
     : emptyLabel;
 }
 
+/** The month and year `value` falls in, in the member's zone, e.g. "Apr 2026". */
+export function formatMonthYearDisplay(
+  value: Date | string | null | undefined,
+  preferences: DisplayPreferences,
+  emptyLabel = "Unavailable",
+) {
+  const date = normalizeDate(value);
+  return date
+    ? date.toLocaleDateString(preferences.locale, { month: "short", year: "numeric", timeZone: preferences.timeZone })
+    : emptyLabel;
+}
+
+/** A locale's name in the member's own language, e.g. "American English" for "en-US"; the code when it has none. */
+export function localeDisplayName(locale: string, preferences: DisplayPreferences) {
+  try {
+    return new Intl.DisplayNames(preferences.locale, { type: "language" }).of(locale) ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
 /** `value` in the member's zone with the zone named, e.g. "10/26/2026, 3:04 PM EDT". */
 export function formatDateTimeDisplay(
   value: Date | string | null | undefined,

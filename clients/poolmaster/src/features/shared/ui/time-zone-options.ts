@@ -26,8 +26,13 @@ export function timeZoneOptions(current?: string | null): { us: TimeZoneOption[]
   }
   return {
     us: [...US_TIME_ZONES],
-    other: others.map((zone) => ({ value: zone, label: zone.replaceAll("_", " ") })),
+    other: others.map((zone) => ({ value: zone, label: timeZoneLabel(zone) })),
   };
+}
+
+/** A zone's name on screen: a US zone's everyday name, such as "Eastern (New York)", else its id spaced out. */
+export function timeZoneLabel(zone: string): string {
+  return US_TIME_ZONES.find((option) => option.value === zone)?.label ?? zone.replaceAll("_", " ");
 }
 
 /** The zone this browser is set to, for a signup form to start from; US Eastern if it reports none. */
