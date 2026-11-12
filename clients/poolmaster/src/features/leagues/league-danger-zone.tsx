@@ -4,13 +4,14 @@ import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
-  DangerZone,
   DangerZoneAction,
   FormField,
   Input,
+  SectionCard,
+  SettingsRows,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -94,71 +95,74 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
 
   return (
     <>
-      <DangerZone
-        description="Actions that stop or remove the league. Each asks you to confirm."
+      <SectionCard
+        help="Actions that stop or remove the league. Each asks you to confirm."
         testId="league-danger-zone"
+        tone="danger"
       >
-        {isInactive ? (
+        <SettingsRows>
+          {isInactive ? (
+            <DangerZoneAction
+              action={(
+                <Button
+                  data-testid="league-activate"
+                  isLoading={activateMutation.isPending}
+                  onClick={() => activateMutation.mutate()}
+                  size="sm"
+                >
+                  {activateMutation.isPending ? 'Activating...' : 'Activate league'}
+                </Button>
+              )}
+              description={(
+                <>
+                  The league is inactive. Activate it to reopen entries and changes.
+                  {activateMutation.isError ? (
+                    <Notice className="mt-2" tone="danger">
+                      {extractErrorMessage(activateMutation.error, { fallback: 'We could not activate this league.' })}
+                    </Notice>
+                  ) : null}
+                </>
+              )}
+              title="Activate league"
+            />
+          ) : (
+            <DangerZoneAction
+              action={(
+                <Button
+                  data-testid="league-inactivate-open"
+                  onClick={() => {
+                    inactivateMutation.reset();
+                    setActiveDialog('inactivate');
+                  }}
+                  size="sm"
+                  variant="danger"
+                >
+                  Inactivate league
+                </Button>
+              )}
+              description="Stops new entries and changes. Members can still see standings and history. You can activate it again later."
+              title="Inactivate league"
+            />
+          )}
           <DangerZoneAction
             action={(
               <Button
-                data-testid="league-activate"
-                isLoading={activateMutation.isPending}
-                onClick={() => activateMutation.mutate()}
-                size="sm"
-              >
-                {activateMutation.isPending ? 'Activating...' : 'Activate league'}
-              </Button>
-            )}
-            description={(
-              <>
-                The league is inactive. Activate it to reopen entries and changes.
-                {activateMutation.isError ? (
-                  <Alert className="mt-2" tone="danger">
-                    {extractErrorMessage(activateMutation.error, { fallback: 'We could not activate this league.' })}
-                  </Alert>
-                ) : null}
-              </>
-            )}
-            title="Activate league"
-          />
-        ) : (
-          <DangerZoneAction
-            action={(
-              <Button
-                data-testid="league-inactivate-open"
-                onClick={() => {
-                  inactivateMutation.reset();
-                  setActiveDialog('inactivate');
-                }}
+                data-testid="league-delete-open"
+                disabled={!isInactive}
+                onClick={() => setActiveDialog('delete')}
                 size="sm"
                 variant="danger"
               >
-                Inactivate league
+                Delete league
               </Button>
             )}
-            description="Stops new entries and changes. Members can still see standings and history. You can activate it again later."
-            title="Inactivate league"
+            description={isInactive
+              ? 'Permanently removes the league and all its history.'
+              : 'Permanently removes the league and all its history. Inactivate the league first.'}
+            title="Delete league"
           />
-        )}
-        <DangerZoneAction
-          action={(
-            <Button
-              data-testid="league-delete-open"
-              disabled={!isInactive}
-              onClick={() => setActiveDialog('delete')}
-              size="sm"
-              variant="danger"
-            >
-              Delete league
-            </Button>
-          )}
-          description={isInactive
-            ? 'Permanently removes the league and all its history.'
-            : 'Permanently removes the league and all its history. Inactivate the league first.'}
-          title="Delete league"
-        />
-      </DangerZone>
+        </SettingsRows>
+      </SectionCard>
 
       <ConfirmDialog
         confirmLabel="Inactivate"
@@ -179,9 +183,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         tone="danger"
       >
         {inactivateMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractErrorMessage(inactivateMutation.error, { fallback: 'We could not inactivate this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -218,9 +222,9 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         </FormField>
 
         {deleteMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
+          <Notice className="mt-4" tone="danger">
             {extractErrorMessage(deleteMutation.error, { fallback: 'We could not delete this league.' })}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
     </>

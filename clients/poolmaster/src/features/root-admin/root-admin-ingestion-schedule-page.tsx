@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   AsyncPage,
   Button,
   Checkbox,
-  FormField,
   FormEditorSection,
+  FormField,
   Input,
+  SectionCard,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -132,7 +133,7 @@ export function RootAdminIngestionSchedulePage() {
         sports before per-sport overrides apply.
       </ManagePageIntro>
       {ingestionConfigMutation.isError || resetIngestionConfigMutation.isError ? (
-        <Alert
+        <Notice
           className="mb-4"
           data-testid="root-admin-ingestion-page-error"
           tone="danger"
@@ -144,7 +145,7 @@ export function RootAdminIngestionSchedulePage() {
             : extractErrorMessage(resetIngestionConfigMutation.error, {
                 fallback: 'We could not reset the ingestion schedule.',
               })}
-        </Alert>
+        </Notice>
       ) : null}
       {draft ? (
         <FormEditorSection
@@ -172,10 +173,9 @@ export function RootAdminIngestionSchedulePage() {
                 'extraLabel' in field ? field.extraLabel : undefined;
 
               return (
-                <Tile key={field.key} padding="sm" radius="lg" variant="subtle">
+                <SectionCard headingLevel={3} key={field.key} padded title={field.label}>
                   <div className="grid gap-3 md:grid-cols-4">
                     <div className="space-y-2">
-                      <div className="text-sm font-medium">{field.label}</div>
                       <Tile
                         padding="sm"
                         radius="md"
@@ -227,7 +227,7 @@ export function RootAdminIngestionSchedulePage() {
                       <div />
                     )}
                   </div>
-                </Tile>
+                </SectionCard>
               );
             })}
           </div>

@@ -17,10 +17,15 @@ The shared UI layer is split into three levels:
    `layout="row"`, and a menu that opens from a button is a `DropdownMenu` built
    from its parts (`DropdownMenuItem` rows, `isSelected` for the current one); never hand-type
    `normal-case tracking-normal` onto a button. A loading, empty or error state
-   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
-   inside a card), a one-line failure beside what failed is an `InlineError`, and
-   a query's loading, error, empty and data branches are one `QueryState`; never
-   hand-type a `text-destructive` or "Loading..." paragraph. A small table is a
+   is `LoadingState`, `EmptyState` or `ErrorState`: a card of its own by default,
+   `size="inline"` for one line inside a card, `size="plain"` inside a body that is
+   already padded; a list's `LoadingState` (or `QueryState`) takes `rows` for faint
+   placeholder rows. A query's loading, error, empty and data branches are one
+   `QueryState`, whose error offers Retry from the query's own `refetch`; a
+   hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
+   several reads, `null` for a failure reading again cannot fix, such as no access). A one-line failure beside what failed, such as a refused save, is
+   an `InlineError`. Never hand-type a `text-destructive` or "Loading..." paragraph;
+   `poolmaster/no-hand-written-query-states` fails one in feature code. A small table is a
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
    `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
@@ -36,6 +41,17 @@ The shared UI layer is split into three levels:
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
+
+## Formatting Values
+
+A value written on screen goes through `format.ts`, exported from the index:
+`formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
+("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
+plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
+`en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
+itself; `poolmaster/no-inline-display-format` enforces it
+(`rules/react-ui-rules.md` §5 *Environment And Time Discipline*).
 
 ## Where a Reusable Piece Lives
 
@@ -65,9 +81,10 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`AdminAreaLayout`, `PageHeader`, `SettingsSection` / `SettingsRow`
-(`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
-`DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
+`AdminAreaLayout`, `PageHeader`, a `SectionCard` of `SettingsRows` /
+`SettingsRow` for settings (a `bare` `SectionCard` titles a section whose body
+is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
+for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
 mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on
@@ -83,8 +100,8 @@ the area, the league and the way back, then the tools as one row of link
 `FormPage` opens with its own `PageHeader`.
 
 Every page starts with one `PageHeader`: an optional `breadcrumbs` line, its title
-straight on the page (never in a card) with an optional `titleAside` such as an
-info icon, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
+straight on the page (never in a card) with an optional `titleAside` such as a
+`HelpTip`, an optional `icon` or `avatar`, an optional `meta` fact line ("12 members
 · 2 active contests"), and a right slot: `actions` for at most two small
 buttons, or `search` for the page's search box, which takes a full-width line on a
 phone. The `status` slot holds one compact chip, a status, count or summary
@@ -116,8 +133,8 @@ type font size, weight, case or text colour classes (`rules/react-ui-rules.md` �
 Styling Discipline*).
 
 A section of a page is a `SectionCard` (`rules/ux-rules.md` §12 item 13): its
-`SectionTitle` in a ruled bar (house uppercase italic, an optional `info` icon
-that holds the section's explanation, and an optional `trailing` slot for one
+`SectionTitle` in a ruled bar (house uppercase italic, an optional `help` (?)
+`HelpTip` that holds how the section works, and an optional `trailing` slot for one
 badge, count or filter), then its body, then an optional footer link
 (`SectionFooterLink`, blue small caps with an arrow). The body is unpadded for
 `SectionRows` of `SectionRow`s (a name, a muted fact line and note, one figure
@@ -141,13 +158,14 @@ days, hours and minutes as one timer. The event page kit (`StartButton`, `Landin
 `PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
 lives in `features/event-pages/components`.
 
-`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
-callout opens on mouse hover or on a tap, for a phone. It is the base the "show
-more" parts build on, never used on a page by itself. `DetailsPeek` is the (i) after
-the name of one thing (an entry, an event, a golfer): it opens a `PeekCard` after a
-short hover delay, so scanning a list does not flash every row, and mounts the card
-only when it opens, so a peek that reads data reads it then (`EntryDetailsPeek` in
-`features/contests` reads an entry's team and owners this way).
+Extra information is one of the four more-info pieces, chosen by the question it
+answers (`rules/ux-rules.md` §15 *Showing More*): `HelpTip` (?) says how something
+works, `DetailsPeek` (i) with its `PeekCard` says who or what one thing is,
+`ExpandableRow` opens a row's breakdown on a click, and `Notice` holds what the reader
+must know now. `InfoPopover` is their internal base and is not exported.
+`DetailsPeek` opens after a short hover delay, so scanning a list does not flash every
+row, and mounts its card only when it opens, so a peek that reads data reads it then
+(`EntryDetailsPeek` in `features/contests` reads an entry's team and owners this way).
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
@@ -175,7 +193,7 @@ success and error feedback, query invalidation, modal close behavior, optional
 navigation, and lifecycle logging so pages do not each re-create the same
 mutation ceremony.
 
-Use inline `Alert`, `ServerErrorBar`, or `FormModal` errors for blocking form
+Use inline `Notice`, `ServerErrorBar`, or `FormModal` errors for blocking form
 validation that the user must fix before submitting. Use mutation action toasts
 for completed create, update, lifecycle, copy, invite, and delete outcomes where
 the page can keep the user oriented after the mutation finishes. Avoid raw

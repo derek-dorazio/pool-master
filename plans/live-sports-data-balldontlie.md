@@ -37,11 +37,17 @@ The target:
      men's and women's teams share a name, so a provider team that names its league (its
      match keyword) links only to the site's team affiliated with that league. Premier League
      matchweeks are events too (`epl-2026-matchweek-11`), a season's matches grouped by round
-     number; a matchweek forms no bracket, so a draw is a result. The College Football Playoff
+     number; a matchweek forms no bracket, so a draw is a result. The World Cup's
+     knockout bracket is an event per edition (`fifa-wc-2026-knockout`); a knockout game level
+     after extra time carries its shoot-out's scores, and the writer names the winner by them
+     (#1532). The College Football Playoff
      is not read yet: the vendor's college football games carry nothing that marks the
-     postseason or the playoff. Only leagues whose bracket games are single games sync
-     game scores: a best-of series (the NBA, WNBA, MLB and NHL playoffs) is one match of
-     several games, which the link from a game's two teams does not fit (#1545);
+     postseason or the playoff. A best-of series (the NBA, WNBA, MLB and NHL
+     playoffs) is one match of several games, so it links no game: its sport league names
+     each round's length (`roundSeriesLengths`, the NBA's 7, 7, 7, 7), and each sync counts
+     the final games between the series' two teams as wins, writing the wins so far as its
+     live score and its result once a side has won more than half (#1545). A series league's
+     reader therefore hands over every game of the event on each sync;
    - per-player box scores for Clutch Cards, through `StatLineService`.
 3. **Webhooks as the trigger, not the record.** BALLDONTLIE posts a signed event (period
    ended, game ended, hole completed) to a receiver. The receiver checks the signature,

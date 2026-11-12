@@ -1,51 +1,127 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
+import { refetchFailed } from "./refetch-failed";
 import { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
 
-describe("pool-master-3lo.7: shared page state primitives", () => {
-  it("rule: renders loading copy in a shared state tile", () => {
-    render(<LoadingState body="Loading contests..." />);
+describe("LoadingState", () => {
+  it("announces what is loading beside a spinner, with the shared default words when given none", () => {
+    render(<LoadingState />);
 
-    expect(screen.getByText("Loading contests...")).toBeInTheDocument();
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Loading...");
+    expect(within(status).getByTestId("loading-spinner")).toHaveClass("motion-safe:animate-spin");
+    expect(screen.queryByTestId("loading-placeholder-rows")).not.toBeInTheDocument();
   });
 
-  it("rule: renders error and empty states with optional actions", () => {
+  it("draws faint placeholder rows under the spinner for a list, hidden from screen readers", () => {
+    render(<LoadingState body="Loading members..." rows={3} />);
+
+    const placeholders = screen.getByTestId("loading-placeholder-rows");
+    expect(placeholders).toHaveAttribute("aria-hidden", "true");
+    expect(within(placeholders).getAllByTestId("loading-placeholder-row")).toHaveLength(3);
+  });
+
+  it("is a card of its own as a tile, and draws no card when inline inside one", () => {
+    const { rerender } = render(<LoadingState testId="members-loading" />);
+    expect(screen.getByTestId("members-loading")).toHaveClass("rounded-lg", "border", "bg-card");
+
+    rerender(<LoadingState size="inline" testId="members-loading" />);
+    expect(screen.getByTestId("members-loading")).not.toHaveClass("border");
+    expect(screen.getByText("Loading...")).toHaveClass("px-4", "py-3");
+  });
+});
+
+describe("plain states", () => {
+  it("take no padding of their own, for a body that is already padded", () => {
     render(
       <>
-        <ErrorState body="Could not load users." title="Failed" />
-        <EmptyState action={<Button>Refresh</Button>} body="No rows found." />
+        <LoadingState size="plain" testId="usage-loading" />
+        <ErrorState body="We couldn't load the usage." size="plain" />
+        <EmptyState body="Nothing yet." size="plain" />
       </>,
     );
 
-    expect(screen.getByRole("heading", { name: "Failed" })).toBeInTheDocument();
-    expect(screen.getByText("No rows found.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Refresh" })).toBeInTheDocument();
+    expect(screen.getByText("Loading...")).not.toHaveClass("px-4");
+    expect(screen.getByRole("alert")).not.toHaveClass("px-4");
+    expect(screen.getByText("Nothing yet.")).not.toHaveClass("px-4");
+  });
+});
+
+describe("refetchFailed", () => {
+  it("runs again only the reads that failed", () => {
+    const failed = { isError: true, refetch: vi.fn() };
+    const loaded = { isError: false, refetch: vi.fn() };
+
+    refetchFailed(failed, loaded)();
+
+    expect(failed.refetch).toHaveBeenCalledTimes(1);
+    expect(loaded.refetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("ErrorState", () => {
+  it("says what failed in the error colour and announces it", () => {
+    render(<ErrorState body="We couldn't load the payments." />);
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("We couldn't load the payments.");
+    expect(alert).toHaveClass("text-destructive");
   });
 
-  it("draws an inline state as one padded line inside a card, with no tile or title", () => {
-    render(<LoadingState size="inline" testId="standings-loading" title="Ignored" />);
+  it("offers Retry, which runs the failed read again", () => {
+    const onRetry = vi.fn();
+    render(<ErrorState body="We couldn't load the payments." onRetry={onRetry} />);
 
-    const line = screen.getByTestId("standings-loading");
-    expect(line.tagName).toBe("P");
-    expect(line).toHaveTextContent("Loading...");
-    expect(line).toHaveAttribute("role", "status");
-    expect(line).toHaveClass("px-4", "py-4", "text-sm", "text-muted-foreground");
-    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("draws an inline error in the error colour and announces it", () => {
-    render(<ErrorState body="We couldn't load the standings." size="inline" />);
+  it("leads with a bold title and keeps another way out beside Retry", () => {
+    render(
+      <ErrorState
+        action={<Button>Back to welcome</Button>}
+        body="It may have been deleted."
+        onRetry={() => undefined}
+        title="League not found."
+      />,
+    );
 
-    expect(screen.getByRole("alert")).toHaveClass("text-destructive");
+    expect(screen.getByText("League not found.").tagName).toBe("STRONG");
+    expect(screen.getByRole("alert")).toHaveTextContent("League not found. It may have been deleted.");
+    expect(screen.getByRole("button", { name: "Back to welcome" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  it("draws an inline empty state as a quiet line that is not announced", () => {
+  it("says the shared failure words when it is given nothing to say, and offers no Retry without a read to run", () => {
+    render(<ErrorState />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load this right now.");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+});
+
+describe("EmptyState", () => {
+  it("draws an inline empty state as a quiet italic line that is not announced", () => {
     render(<EmptyState body="No submitted entries yet." size="inline" />);
 
     const line = screen.getByText("No submitted entries yet.");
-    expect(line).toHaveClass("text-muted-foreground");
+    expect(line).toHaveClass("italic", "text-muted-foreground");
     expect(line).not.toHaveAttribute("role");
+  });
+
+  it("draws a tile with its heading, its italic line and an action", () => {
+    render(<EmptyState action={<Button>Create a league</Button>} body="Make one to get started." title="No leagues yet" />);
+
+    expect(screen.getByRole("heading", { name: "No leagues yet" })).toBeInTheDocument();
+    expect(screen.getByText("Make one to get started.")).toHaveClass("italic");
+    expect(screen.getByRole("button", { name: "Create a league" })).toBeInTheDocument();
+  });
+
+  it("falls back to its title as the line when an inline state has no body", () => {
+    render(<EmptyState size="inline" title="Nothing here" />);
+
+    expect(screen.getByText("Nothing here").tagName).toBe("P");
   });
 });
 
@@ -63,50 +139,70 @@ describe("InlineError", () => {
 
 describe("QueryState", () => {
   const renderRows = (rows: string[]) => <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul>;
+  const refetch = () => undefined;
 
-  it("shows the loading line while the query has no data", () => {
-    render(<QueryState loading="Loading standings..." query={{ data: undefined, isError: false }}>{renderRows}</QueryState>);
-
-    expect(screen.getByRole("status")).toHaveTextContent("Loading standings...");
-  });
-
-  it("shows the error line when the query failed, even if older data is still cached", () => {
-    render(<QueryState error="We couldn't load the standings." query={{ data: ["Avery"], isError: true }}>{renderRows}</QueryState>);
-
-    expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load the standings.");
-    expect(screen.queryByText("Avery")).not.toBeInTheDocument();
-  });
-
-  it("shows the empty line when the data holds nothing to show", () => {
+  it("shows the loading line, with placeholder rows when asked, while the query has no data", () => {
     render(
-      <QueryState empty="No submitted entries yet." isEmpty={(rows) => rows.length === 0} query={{ data: [] as string[], isError: false }}>
+      <QueryState loading="Loading standings..." query={{ data: undefined, isError: false, refetch }} rows={2} testId="standings">
         {renderRows}
       </QueryState>,
     );
 
-    expect(screen.getByText("No submitted entries yet.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading standings...");
+    expect(screen.getByTestId("standings-loading")).toBeInTheDocument();
+    expect(screen.getAllByTestId("loading-placeholder-row")).toHaveLength(2);
+  });
+
+  it("shows the error line with Retry when the query failed, even if older data is still cached, and Retry refetches", () => {
+    const failedRefetch = vi.fn();
+    render(
+      <QueryState error="We couldn't load the standings." query={{ data: ["Avery"], isError: true, refetch: failedRefetch }} testId="standings">
+        {renderRows}
+      </QueryState>,
+    );
+
+    expect(screen.getByTestId("standings-error")).toHaveTextContent("We couldn't load the standings.");
+    expect(screen.queryByText("Avery")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(failedRefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the shared failure words when the page gives none", () => {
+    render(<QueryState query={{ data: undefined, isError: true, refetch }}>{renderRows}</QueryState>);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load this right now.");
+  });
+
+  it("shows the italic empty line when the data holds nothing to show", () => {
+    render(
+      <QueryState empty="No submitted entries yet." isEmpty={(rows) => rows.length === 0} query={{ data: [] as string[], isError: false, refetch }} testId="standings">
+        {renderRows}
+      </QueryState>,
+    );
+
+    expect(screen.getByTestId("standings-empty")).toHaveClass("italic");
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("renders its children with the data once it is there", () => {
-    render(<QueryState empty="Nobody yet." isEmpty={(rows) => rows.length === 0} query={{ data: ["Avery", "Blake"], isError: false }}>{renderRows}</QueryState>);
+    render(<QueryState empty="Nobody yet." isEmpty={(rows) => rows.length === 0} query={{ data: ["Avery", "Blake"], isError: false, refetch }}>{renderRows}</QueryState>);
 
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["Avery", "Blake"]);
   });
 
-  it("draws its states as tiles when asked, for a page-level query", () => {
-    render(<QueryState query={{ data: undefined, isError: false }} size="tile">{renderRows}</QueryState>);
+  it("draws its states in a card of their own when asked, for a page-level query", () => {
+    render(<QueryState query={{ data: undefined, isError: false, refetch }} size="tile">{renderRows}</QueryState>);
 
-    expect(screen.getByRole("status").tagName).toBe("DIV");
+    expect(screen.getByRole("status")).toHaveClass("rounded-lg", "border");
   });
 
   it("takes the empty words and the empty test only together, so an empty state never draws blank", () => {
     render(
       <>
         {/* @ts-expect-error -- empty words without a test of emptiness */}
-        <QueryState empty="Nobody yet." query={{ data: ["Avery"], isError: false }}>{renderRows}</QueryState>
+        <QueryState empty="Nobody yet." query={{ data: ["Avery"], isError: false, refetch }}>{renderRows}</QueryState>
         {/* @ts-expect-error -- a test of emptiness with nothing to say */}
-        <QueryState isEmpty={(rows: string[]) => rows.length === 0} query={{ data: ["Blake"], isError: false }}>{renderRows}</QueryState>
+        <QueryState isEmpty={(rows: string[]) => rows.length === 0} query={{ data: ["Blake"], isError: false, refetch }}>{renderRows}</QueryState>
       </>,
     );
 

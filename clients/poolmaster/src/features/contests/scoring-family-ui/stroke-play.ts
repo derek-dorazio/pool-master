@@ -107,7 +107,6 @@ export const strokePlayUi: ScoringFamilyUi = {
               text: UNPLAYED_ROUND_CELL,
               unplayed: {
                 ariaLabel: `${sport.roundLabel(roundNumber, fieldRoundNumbers.length)} not played, counts as 80 strokes`,
-                title: 'Not played: counts as 80 strokes',
               },
             };
           }

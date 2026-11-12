@@ -2,7 +2,7 @@ import { PlanFeature } from '@poolmaster/shared/domain';
 import { buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { ErrorState, LoadingState, SectionCard, SectionEmpty, SectionRow, SectionRows } from '@/features/shared/ui';
+import { ErrorState, LoadingState, SectionCard, SectionEmpty, SectionRow, SectionRows, formatNumber, useDisplayPreferences } from '@/features/shared/ui';
 import { CrownCupBanner } from './crown-cup-banner';
 import { PerpetualTrophies } from './perpetual-trophies';
 import { useChampionshipsRoute } from './use-championships-route';
@@ -31,19 +31,20 @@ export function TrophyCasePage() {
 
 function SeasonCups() {
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
+  const { locale } = useDisplayPreferences();
   const cupsQuery = useSeasonCupsQuery(leagueId, year);
 
   if (cupsQuery.isLoading) {
     return <LoadingState body="Loading cups..." />;
   }
   if (cupsQuery.isError) {
-    return <ErrorState body="We couldn't load this year's cups." testId="trophy-case-error" />;
+    return <ErrorState body="We couldn't load this year's cups." onRetry={() => void cupsQuery.refetch()} testId="trophy-case-error" />;
   }
   const cups = cupsOnShow(cupsQuery.data ?? []);
   const title = `${year} cups`;
   if (!cups.length) {
     return (
-      <SectionCard info="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
+      <SectionCard help="Every sports league the league runs contests in gets its own cup, shown here once two of its contests have counted." title={title}>
         <SectionEmpty testId="trophy-case-empty">No cups yet.</SectionEmpty>
       </SectionCard>
     );
@@ -64,7 +65,7 @@ function SeasonCups() {
                 facts={describeCupStanding(cup, { squadId: viewer.mySquadId, isViewer: true })}
                 key={cup.id}
                 name={cup.name}
-                note={isCupSeasonOver(cup, now) ? undefined : `${progress.final} of ${progress.total} contests final`}
+                note={isCupSeasonOver(cup, now) ? undefined : `${formatNumber(progress.final, locale)} of ${formatNumber(progress.total, locale)} contests final`}
                 testId={`cup-card-${cup.id}`}
                 to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
               />

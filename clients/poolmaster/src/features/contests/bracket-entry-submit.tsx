@@ -1,6 +1,6 @@
 import { ContestEntryStatus, type Sport } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import { Alert, Button, FormField, Heading, Input, Tile } from '@/features/shared/ui';
+import { Notice, Button, FormField, Heading, Input, Tile } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { formatPickProgress, parseBracketTiebreaker } from './bracket-layout';
 import { contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
@@ -103,12 +103,12 @@ export function BracketSubmitPanel({
           {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total ${scoreUnit}.`}
         </p>
       ) : null}
-      {saveError ? <Alert data-testid="bracket-save-error" tone="danger">{saveError}</Alert> : null}
+      {saveError ? <Notice data-testid="bracket-save-error" tone="danger">{saveError}</Notice> : null}
 
       {isSubmitted ? (
-        <Alert data-testid="bracket-submitted" title="Submitted" tone="success">
+        <Notice data-testid="bracket-submitted" title="Submitted" tone="success">
           {`Your bracket counts. You can still change picks until the ${contestMatchNoun(sport).many} lock; a change that leaves a ${contestMatchNoun(sport).one} unpicked needs submitting again.`}
-        </Alert>
+        </Notice>
       ) : (
         <div className="space-y-3">
           {hint ? <p className="text-sm text-muted-foreground" data-testid="bracket-submit-hint">{hint}</p> : null}
@@ -121,7 +121,7 @@ export function BracketSubmitPanel({
           </Button>
         </div>
       )}
-      {submitError ? <Alert data-testid="bracket-submit-error" tone="danger">{submitError}</Alert> : null}
+      {submitError ? <Notice data-testid="bracket-submit-error" tone="danger">{submitError}</Notice> : null}
     </Tile>
   );
 }

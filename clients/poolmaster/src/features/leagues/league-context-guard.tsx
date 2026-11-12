@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ErrorState, LinkButton, LoadingState } from "@/features/shared/ui";
-import { getLeagueLoadErrorCopy } from "./league-load-error";
+import { getLeagueLoadErrorCopy, isLeagueAccessError } from "./league-load-error";
 
 /**
  * #202 — generic over the query's DATA rather than over a league.
@@ -15,6 +15,7 @@ type LeagueContextQuery<TData> = {
   error: Error | null;
   isError: boolean;
   isLoading: boolean;
+  refetch: () => unknown;
 };
 
 type LeagueContextGuardOptions = {
@@ -57,6 +58,7 @@ export function useLeagueContextGuard<TData>(
             </LinkButton>
           )}
           body={copy.body}
+          onRetry={isLeagueAccessError(query.error) ? null : () => void query.refetch()}
           title={copy.title}
         />
       ),

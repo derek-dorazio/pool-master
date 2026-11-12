@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatUserName } from '@/features/account/user-name';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
-import { DetailsPeek, PeekCard, PeekMessage } from '@/features/shared/ui';
+import { DetailsPeek, PeekCard, QueryState } from '@/features/shared/ui';
 import { formatOwnerCount, getActiveOwners } from '@/features/teams/team-directory';
 import { leagueSquadQueryOptions } from '@/features/teams/use-league-squad-query';
 
@@ -53,21 +53,20 @@ export function EntryDetailsPeek({
 
 function EntryTeamCard({ leagueCode, leagueId, squadId, testId }: { leagueCode: string; leagueId: string; squadId: string; testId: string }) {
   const teamQuery = useQuery(teamPeekQuery(leagueId, squadId));
-  if (teamQuery.isError) {
-    return <PeekMessage testId={`${testId}-error`}>We couldn&apos;t load this team.</PeekMessage>;
-  }
-  if (!teamQuery.data) {
-    return <PeekMessage testId={`${testId}-loading`}>Loading team...</PeekMessage>;
-  }
-  const team = teamQuery.data;
-  const owners = getActiveOwners(team).map((member) => formatUserName(member.user.firstName, member.user.lastName));
   return (
-    <PeekCard
-      facts={[{ label: owners.length === 1 ? 'Owner' : 'Owners', value: owners.length ? owners.join(', ') : 'None' }]}
-      link={{ label: 'Team page', testId: `${testId}-team-link`, to: buildLeagueTeamHomePath(leagueCode, team.id) }}
-      subtitle={`Team · ${formatOwnerCount(team)}`}
-      testId={`${testId}-card`}
-      title={team.name}
-    />
+    <QueryState error="We couldn't load this team." loading="Loading team..." query={teamQuery} testId={testId}>
+      {(team) => {
+        const owners = getActiveOwners(team).map((member) => formatUserName(member.user.firstName, member.user.lastName));
+        return (
+          <PeekCard
+            facts={[{ label: owners.length === 1 ? 'Owner' : 'Owners', value: owners.length ? owners.join(', ') : 'None' }]}
+            link={{ label: 'Team page', testId: `${testId}-team-link`, to: buildLeagueTeamHomePath(leagueCode, team.id) }}
+            subtitle={`Team · ${formatOwnerCount(team)}`}
+            testId={`${testId}-card`}
+            title={team.name}
+          />
+        );
+      }}
+    </QueryState>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
-import { PlanCap, PlanFeatureGroup, pluralize, type LeaguePlan } from '@poolmaster/shared/domain';
+import { PlanCap, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
 import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, Heading, LoadingState, PageHeader, SectionCard, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, Button, Chip, ErrorState, formatCount, formatDateDisplay, formatNumber, LoadingState, PageHeader, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -99,6 +99,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       <YourLeagueNow
         current={current}
         isError={usageQuery.isError}
+        onRetry={() => void usageQuery.refetch()}
         sportLeagueNames={sportLeagueNames}
         usage={usageQuery.data}
       />
@@ -106,50 +107,49 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
       ) : plansQuery.isError || !plans ? (
-        <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
+        <ErrorState body="We couldn't load the plans." onRetry={() => void plansQuery.refetch()} />
       ) : (
         <>
           {chosen ? (
-            <Tile className="space-y-4" data-testid="league-plan-confirm" padding="md" radius="md">
-              <div className="space-y-1">
-                <Heading level={3} variant="card">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</Heading>
-                <p className="text-sm text-muted-foreground">Plan changes are free for now, so this takes effect at once and costs nothing.</p>
+            <SectionCard headingLevel={3} padded testId="league-plan-confirm" title={`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}>
+              <div className="space-y-4">
+                <SectionNote tone="default">Plan changes are free for now, so this takes effect at once and costs nothing.</SectionNote>
+                {usageQuery.data ? (
+                  <PlanChangeWarnings
+                    current={current}
+                    sportLeagueNames={sportLeagueNames}
+                    target={chosen}
+                    usage={usageQuery.data}
+                  />
+                ) : usageQuery.isError ? (
+                  <SectionNote testId="league-plan-confirm-unchecked">
+                    We couldn&apos;t check what this plan would stop. A lower plan never removes anything.
+                  </SectionNote>
+                ) : null}
+                {saveMutation.isError ? (
+                  <Notice data-testid="league-plan-confirm-error" tone="danger">
+                    {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
+                  </Notice>
+                ) : null}
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    data-testid="league-plan-confirm-save"
+                    disabled={saveMutation.isPending}
+                    onClick={() => saveMutation.mutate(chosen.plan)}
+                  >
+                    {saveMutation.isPending ? 'Saving...' : `Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}`}
+                  </Button>
+                  <Button
+                    data-testid="league-plan-confirm-cancel"
+                    disabled={saveMutation.isPending}
+                    onClick={() => setChoice(null)}
+                    variant="secondary"
+                  >
+                    {`Keep ${LEAGUE_PLAN_LABEL[current.plan]}`}
+                  </Button>
+                </div>
               </div>
-              {usageQuery.data ? (
-                <PlanChangeWarnings
-                  current={current}
-                  sportLeagueNames={sportLeagueNames}
-                  target={chosen}
-                  usage={usageQuery.data}
-                />
-              ) : usageQuery.isError ? (
-                <p className="text-sm text-muted-foreground" data-testid="league-plan-confirm-unchecked">
-                  We couldn&apos;t check what this plan would stop. A lower plan never removes anything.
-                </p>
-              ) : null}
-              {saveMutation.isError ? (
-                <Alert data-testid="league-plan-confirm-error" tone="danger">
-                  {extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })}
-                </Alert>
-              ) : null}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  data-testid="league-plan-confirm-save"
-                  disabled={saveMutation.isPending}
-                  onClick={() => saveMutation.mutate(chosen.plan)}
-                >
-                  {saveMutation.isPending ? 'Saving...' : `Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}`}
-                </Button>
-                <Button
-                  data-testid="league-plan-confirm-cancel"
-                  disabled={saveMutation.isPending}
-                  onClick={() => setChoice(null)}
-                  variant="secondary"
-                >
-                  {`Keep ${LEAGUE_PLAN_LABEL[current.plan]}`}
-                </Button>
-              </div>
-            </Tile>
+            </SectionCard>
           ) : null}
 
           <PlanCards
@@ -176,15 +176,14 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
             }}
           />
 
-          <section className="space-y-4" data-testid="league-plan-compare">
-            <SectionHeader description="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." title="Compare plans" />
+          <SectionCard bare help="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
               currentPlan={current.plan}
               initiallyFolded={[PlanFeatureGroup.EMAILS]}
               plans={plans}
             />
-          </section>
+          </SectionCard>
         </>
       )}
 
@@ -198,21 +197,24 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
 }
 
 /** A cap's use against its limit: "2 of 3", or the count alone when the plan has no limit. */
-function formatUse(used: number, limit: number | null): string {
-  return limit === null ? used.toLocaleString('en-US') : `${used.toLocaleString('en-US')} of ${limit.toLocaleString('en-US')}`;
+function formatUse(used: number, limit: number | null, locale: string): string {
+  return limit === null ? formatNumber(used, locale) : `${formatNumber(used, locale)} of ${formatNumber(limit, locale)}`;
 }
 
 function YourLeagueNow({
   current,
   isError,
+  onRetry,
   sportLeagueNames,
   usage,
 }: {
   current: PlanEntitlementsDto;
   isError: boolean;
+  onRetry: () => void;
   sportLeagueNames: ReadonlyMap<string, string>;
   usage: LeaguePlanUsageResponse | undefined;
 }) {
+  const { locale } = useDisplayPreferences();
   const fullest = usage?.openContests.reduce<LeaguePlanUsageResponse['openContests'][number] | null>(
     (most, contest) => (most === null || contest.entryCount > most.entryCount ? contest : most),
     null,
@@ -229,7 +231,7 @@ function YourLeagueNow({
             <div>
               <dt className="text-muted-foreground">{`Sports leagues in ${usage.seasonYear}`}</dt>
               <dd className="text-foreground" data-testid="league-plan-now-sport-leagues">
-                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR])}</span>
+                <span className="font-semibold">{formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale)}</span>
                 {usage.sportLeagueIds.length ? (
                   <span className="block text-muted-foreground">
                     {usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')}
@@ -242,7 +244,7 @@ function YourLeagueNow({
               <dd className="text-foreground" data-testid="league-plan-now-entries">
                 {fullest ? (
                   <>
-                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST])} entries`}</span>
+                    <span className="font-semibold">{`${formatUse(fullest.entryCount, current.caps[PlanCap.ENTRIES_PER_CONTEST], locale)} entries`}</span>
                     <span className="block text-muted-foreground">{fullest.name}</span>
                   </>
                 ) : 'No contest is taking entries'}
@@ -250,9 +252,13 @@ function YourLeagueNow({
             </div>
           </>
         ) : isError ? (
-          <p className="text-sm text-muted-foreground sm:col-span-2" data-testid="league-plan-now-error">We couldn&apos;t load what the league uses now.</p>
+          <div className="sm:col-span-2">
+            <ErrorState body="We couldn't load what the league uses now." onRetry={onRetry} size="plain" testId="league-plan-now-error" />
+          </div>
         ) : (
-          <p className="text-sm text-muted-foreground sm:col-span-2">Loading what the league uses...</p>
+          <div className="sm:col-span-2">
+            <LoadingState body="Loading what the league uses..." size="plain" testId="league-plan-now-loading" />
+          </div>
         )}
       </dl>
     </SectionCard>
@@ -271,6 +277,7 @@ function PlanChangeWarnings({
   target: PlanEntitlementsDto;
   usage: LeaguePlanUsageResponse;
 }) {
+  const { locale } = useDisplayPreferences();
   const effects = buildPlanChangeEffects(current, target, usage);
   const label = LEAGUE_PLAN_LABEL[target.plan];
   const named = effects.contestsOverEntries.slice(0, NAMED_CONTEST_LIMIT);
@@ -281,22 +288,22 @@ function PlanChangeWarnings({
   return (
     <div className="space-y-3">
       {effects.entriesLimit !== null ? (
-        <Alert data-testid="league-plan-confirm-entries" tone="warning">
+        <Notice data-testid="league-plan-confirm-entries" tone="warning">
           <ul className="space-y-1">
             {named.map((contest) => (
-              <li key={contest.contestId}>{`${contest.name} has ${pluralize(contest.entryCount, 'entry', 'entries')}.`}</li>
+              <li key={contest.contestId}>{`${contest.name} has ${formatCount(contest.entryCount, 'entry', locale, 'entries')}.`}</li>
             ))}
             {more > 0 ? <li>{`And ${more} more.`}</li> : null}
           </ul>
           <p className="mt-2">
-            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${effects.entriesLimit.toLocaleString('en-US')}.`}
+            {`On ${label} ${effects.contestsOverEntries.length === 1 ? 'it keeps them' : 'each keeps them'} all, but takes no new entries past ${formatNumber(effects.entriesLimit, locale)}.`}
           </p>
-        </Alert>
+        </Notice>
       ) : null}
       {effects.sportLeaguesOver ? (
-        <Alert data-testid="league-plan-confirm-sport-leagues" tone="warning">
-          {`This year's contests use ${pluralize(effects.sportLeaguesOver.used, 'sports league')}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${effects.sportLeaguesOver.limit.toLocaleString('en-US')} a year, so new contests this year can use only these.`}
-        </Alert>
+        <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
+          {`This year's contests use ${formatCount(effects.sportLeaguesOver.used, 'sports league', locale)}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests this year can use only these.`}
+        </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (
         <div className="text-sm" data-testid="league-plan-confirm-hidden">

@@ -7,18 +7,18 @@ import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Alert,
+  Notice,
   Button,
   ConfirmDialog,
-  DangerZone,
   DangerZoneAction,
   ErrorState,
   formatDateDisplay,
-  PageHeader,
   Input,
   LoadingState,
+  PageHeader,
+  SectionCard,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -243,121 +243,128 @@ export function RootAdminUserPage() {
       />
 
       {isInactive ? (
-        <Alert data-testid="root-admin-user-inactive-banner" tone="warning">
+        <Notice data-testid="root-admin-user-inactive-banner" tone="warning">
           This account is inactive. You can reactivate it or delete it permanently.
-        </Alert>
+        </Notice>
       ) : null}
 
-      <SettingsSection
-        description="The user changes these on their own account page."
+      <SectionCard
+        help="The user changes these on their own account page."
         testId="root-admin-user-account"
         title="Account"
       >
-        <SettingsRow label="Email" testId="root-admin-user-email" value={viewedUser.email} />
-        <SettingsRow label="Username" value={`@${viewedUser.username}`} />
-        <SettingsRow
-          label="Status"
-          testId="root-admin-user-status"
-          value={(
-            <StatusBadge tone={isInactive ? 'inactive' : 'active'}>
-              {isInactive ? 'Inactive' : 'Active'}
-            </StatusBadge>
-          )}
-        />
-        <SettingsRow label="Member since" value={formatDateDisplay(viewedUser.createdAt, displayPreferences, 'Unknown')} />
-        <SettingsRow label="Sign-in method" value={viewedUser.authProvider ?? 'EMAIL'} />
-      </SettingsSection>
+        <SettingsRows>
+          <SettingsRow label="Email" testId="root-admin-user-email" value={viewedUser.email} />
+          <SettingsRow label="Username" value={`@${viewedUser.username}`} />
+          <SettingsRow
+            label="Status"
+            testId="root-admin-user-status"
+            value={(
+              <StatusBadge tone={isInactive ? 'inactive' : 'active'}>
+                {isInactive ? 'Inactive' : 'Active'}
+              </StatusBadge>
+            )}
+          />
+          <SettingsRow label="Member since" value={formatDateDisplay(viewedUser.createdAt, displayPreferences, 'Unknown')} />
+          <SettingsRow label="Sign-in method" value={viewedUser.authProvider ?? 'EMAIL'} />
+        </SettingsRows>
+      </SectionCard>
 
-      <SettingsSection
-        description="Root admins can manage every league, user, and sport."
+      <SectionCard
+        help="Root admins can manage every league, user, and sport."
         testId="root-admin-user-access"
         title="Access"
       >
-        <SettingsRow
-          action={(
-            <Button
-              data-testid="root-admin-user-open-role"
-              onClick={() => openDialog('role')}
-              size="sm"
-              variant="secondary"
-            >
-              {roleActionLabel}
-            </Button>
-          )}
-          label="Role"
-          testId="root-admin-user-role"
-          value={viewedUser.isRootAdmin ? 'Root admin' : 'Member'}
-        />
-        <SettingsRow
-          action={(
-            <Button
-              data-testid="root-admin-user-open-reset-password"
-              onClick={() => {
-                setTemporaryPassword(null);
-                openDialog('reset-password');
-              }}
-              size="sm"
-              variant="secondary"
-            >
-              Reset password
-            </Button>
-          )}
-          label="Password"
-          value={temporaryPassword ? (
-            <Alert tone="success">
-              <div className="font-semibold">Temporary password</div>
-              <div
-                className="mt-2 rounded-xl border border-[color:var(--status-active-border)] bg-card px-3 py-2 font-mono text-foreground"
-                data-testid="root-admin-user-temp-password"
+        <SettingsRows>
+          <SettingsRow
+            action={(
+              <Button
+                data-testid="root-admin-user-open-role"
+                onClick={() => openDialog('role')}
+                size="sm"
+                variant="secondary"
               >
-                {temporaryPassword}
-              </div>
-              <p className="mt-2 text-xs">
-                Relay this to the user and have them change it after signing in.
-              </p>
-            </Alert>
-          ) : 'Set by the user'}
-        />
-      </SettingsSection>
+                {roleActionLabel}
+              </Button>
+            )}
+            label="Role"
+            testId="root-admin-user-role"
+            value={viewedUser.isRootAdmin ? 'Root admin' : 'Member'}
+          />
+          <SettingsRow
+            action={(
+              <Button
+                data-testid="root-admin-user-open-reset-password"
+                onClick={() => {
+                  setTemporaryPassword(null);
+                  openDialog('reset-password');
+                }}
+                size="sm"
+                variant="secondary"
+              >
+                Reset password
+              </Button>
+            )}
+            label="Password"
+            value={temporaryPassword ? (
+              <Notice tone="success">
+                <div className="font-semibold">Temporary password</div>
+                <div
+                  className="mt-2 rounded-xl border border-[color:var(--status-active-border)] bg-card px-3 py-2 font-mono text-foreground"
+                  data-testid="root-admin-user-temp-password"
+                >
+                  {temporaryPassword}
+                </div>
+                <p className="mt-2 text-xs">
+                  Relay this to the user and have them change it after signing in.
+                </p>
+              </Notice>
+            ) : 'Set by the user'}
+          />
+        </SettingsRows>
+      </SectionCard>
 
-      <DangerZone
-        description="Actions that stop or remove this account. Each asks you to confirm."
+      <SectionCard
+        help="Actions that stop or remove this account. Each asks you to confirm."
         testId="root-admin-user-danger-zone"
+        tone="danger"
       >
-        <DangerZoneAction
-          action={(
-            <Button
-              data-testid="root-admin-user-open-lifecycle"
-              onClick={() => openDialog('lifecycle')}
-              size="sm"
-              variant={isInactive ? 'primary' : 'danger'}
-            >
-              {lifecycleLabel}
-            </Button>
-          )}
-          description={isInactive
-            ? 'Restores sign-in and the account\'s place in its leagues.'
-            : 'Signs the user out everywhere and hides the account from its leagues until it is reactivated.'}
-          title={lifecycleLabel}
-        />
-        <DangerZoneAction
-          action={(
-            <Button
-              data-testid="root-admin-user-open-delete"
-              disabled={!isInactive || deleteMutation.isPending}
-              onClick={() => openDialog('delete')}
-              size="sm"
-              variant="danger"
-            >
-              Delete account
-            </Button>
-          )}
-          description={isInactive
-            ? 'Removes the account permanently.'
-            : 'Inactivate the account first; only an inactive account can be deleted.'}
-          title="Delete account"
-        />
-      </DangerZone>
+        <SettingsRows>
+          <DangerZoneAction
+            action={(
+              <Button
+                data-testid="root-admin-user-open-lifecycle"
+                onClick={() => openDialog('lifecycle')}
+                size="sm"
+                variant={isInactive ? 'primary' : 'danger'}
+              >
+                {lifecycleLabel}
+              </Button>
+            )}
+            description={isInactive
+              ? 'Restores sign-in and the account\'s place in its leagues.'
+              : 'Signs the user out everywhere and hides the account from its leagues until it is reactivated.'}
+            title={lifecycleLabel}
+          />
+          <DangerZoneAction
+            action={(
+              <Button
+                data-testid="root-admin-user-open-delete"
+                disabled={!isInactive || deleteMutation.isPending}
+                onClick={() => openDialog('delete')}
+                size="sm"
+                variant="danger"
+              >
+                Delete account
+              </Button>
+            )}
+            description={isInactive
+              ? 'Removes the account permanently.'
+              : 'Inactivate the account first; only an inactive account can be deleted.'}
+            title="Delete account"
+          />
+        </SettingsRows>
+      </SectionCard>
 
       <ConfirmDialog
         confirmLabel={roleActionLabel}
@@ -376,9 +383,9 @@ export function RootAdminUserPage() {
         tone={viewedUser.isRootAdmin ? 'danger' : 'default'}
       >
         {roleMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(roleMutation.error, 'We could not update the root-admin role.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -397,9 +404,9 @@ export function RootAdminUserPage() {
         tone="danger"
       >
         {resetPasswordMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(resetPasswordMutation.error, 'We could not reset this password.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -420,9 +427,9 @@ export function RootAdminUserPage() {
         tone={isInactive ? 'default' : 'danger'}
       >
         {lifecycleMutation.isError ? (
-          <Alert tone="danger">
+          <Notice tone="danger">
             {extractAdminError(lifecycleMutation.error, 'We could not update account lifecycle.')}
-          </Alert>
+          </Notice>
         ) : null}
       </ConfirmDialog>
 
@@ -455,9 +462,9 @@ export function RootAdminUserPage() {
             value={deleteEmailConfirmation}
           />
           {deleteMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractAdminError(deleteMutation.error, 'We could not delete this account.')}
-            </Alert>
+            </Notice>
           ) : null}
         </div>
       </ConfirmDialog>

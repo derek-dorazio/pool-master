@@ -57,7 +57,7 @@ export function EditTeamForm({
   return (
     <FormPage
       cancelTo={returnTo}
-      description="The name and icon every member of the league sees."
+      help="The name and icon every member of the league sees."
       {...formPageSave(form, saveMutation, 'We could not save the name and icon.')}
       pendingLabel="Saving..."
       submitLabel="Save"

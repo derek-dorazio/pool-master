@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { refetchFailed } from '@/features/shared/ui';
 import { getEventBracket, listEventParticipants, type SportEventDto, type SportEventMatchDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -43,5 +44,7 @@ export function useSquaresGameChoices(event: SportEventDto | null, now: Date) {
     namesById: fieldQuery.data ?? new Map<string, string>(),
     isLoading: gamesQuery.isLoading || fieldQuery.isLoading || sportLeagueQuery.isLoading,
     isError: gamesQuery.isError || fieldQuery.isError || sportLeagueQuery.isError,
+    /** Reads again whichever of the three failed. */
+    retry: refetchFailed(gamesQuery, fieldQuery, sportLeagueQuery),
   };
 }

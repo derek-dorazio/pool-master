@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DetailsPeek, PeekCard, PeekMessage } from "./details-peek";
+import { DetailsPeek, PeekCard } from "./details-peek";
 import { DETAILS_PEEK_HOVER_DELAY_MS, HOVER_CLOSE_GRACE_MS } from "./popover-timing";
 
 function drawPeek(onHoverStart = vi.fn()) {
@@ -132,13 +132,5 @@ describe("PeekCard", () => {
 
     expect(screen.getByTestId("card")).toHaveTextContent("Scottie SchefflerTier1");
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
-  });
-});
-
-describe("PeekMessage", () => {
-  it("says the card is loading or unavailable in one italic muted line", () => {
-    render(<PeekMessage testId="message">Loading…</PeekMessage>);
-
-    expect(screen.getByTestId("message")).toHaveClass("italic", "text-muted-foreground");
   });
 });

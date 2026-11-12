@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Heading, Input, SectionCard, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Notice, Button, Input, SectionCard, SectionEmpty, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -172,7 +172,7 @@ export function TierBoard({
       try {
         await assignmentsMutation.mutateAsync();
       } catch {
-        // Assignments failed — its own error Alert covers it; do not attempt
+        // Assignments failed — its own error Notice covers it; do not attempt
         // the price PATCH so the two steps can't half-land.
         return;
       }
@@ -338,9 +338,9 @@ export function TierBoard({
       ) : null}
     >
       {saveError ? (
-        <Alert data-testid="root-admin-tier-board-error" tone="danger">
+        <Notice data-testid="root-admin-tier-board-error" tone="danger">
           {saveError}
-        </Alert>
+        </Notice>
       ) : null}
 
       <div className="flex gap-4 overflow-x-auto pb-2">
@@ -381,20 +381,19 @@ function TierBoardColumn({
   );
 
   return (
-    <section
-      className="w-64 shrink-0 rounded-2xl border border-border bg-muted/20 p-3"
-      data-testid={`root-admin-tier-column-${column.key}`}
+    <SectionCard
+      className="w-64 shrink-0"
+      headingLevel={3}
+      testId={`root-admin-tier-column-${column.key}`}
+      title={column.label}
+      trailing={column.cards.length}
     >
-      <Heading level={4} variant="label">
-        {column.label}{' '}
-        <span className="text-muted-foreground">({column.cards.length})</span>
-      </Heading>
       {column.cards.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">No {participant.many}.</p>
+        <SectionEmpty>{`No ${participant.many}.`}</SectionEmpty>
       ) : (
         <SortableList
           aria-label={`${column.label} ${participant.many}`}
-          className="mt-3"
+          className="p-3"
           items={items}
           onReorder={onReorder}
           renderItem={(card, { dragHandleProps, index }) => (
@@ -415,6 +414,6 @@ function TierBoardColumn({
           )}
         />
       )}
-    </section>
+    </SectionCard>
   );
 }

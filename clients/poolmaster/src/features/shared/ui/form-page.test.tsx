@@ -33,11 +33,24 @@ function renderFormPage(overrides: Partial<FormPageProps> = {}) {
 
 describe("FormPage", () => {
   it("opens with the page header, its title the page heading, and renders its fields", () => {
-    renderFormPage({ description: "Change how the league appears." });
+    renderFormPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Edit league" })).toBeInTheDocument();
-    expect(screen.getByText("Change how the league appears.")).toBeInTheDocument();
     expect(screen.getByLabelText("League name")).toHaveValue("Saturday Golf League");
+  });
+
+  it("shows the facts the form acts on as a line under the title", () => {
+    renderFormPage({ meta: "ESPN reports Tiger Woods (1234) · GOLF" });
+
+    expect(screen.getByText("ESPN reports Tiger Woods (1234) · GOLF")).toBeInTheDocument();
+  });
+
+  it("keeps how the form works behind a (?) after the title, not on the page", () => {
+    renderFormPage({ help: "Change how the league appears." });
+
+    expect(screen.queryByText("Change how the league appears.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "How this form works" }));
+    expect(screen.getByText("Change how the league appears.")).toBeInTheDocument();
   });
 
   it("submits the form through onSubmit when Save is clicked", () => {

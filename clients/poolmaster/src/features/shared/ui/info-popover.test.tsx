@@ -19,20 +19,31 @@ describe("InfoPopover", () => {
   });
 
   it("shifts the callout left so it ends inside the screen when its icon sits near the right edge", () => {
-    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ left: window.innerWidth - 100 } as DOMRect);
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ bottom: 120, left: window.innerWidth - 100 } as DOMRect);
     const button = drawPopover();
 
     fireEvent.click(button);
 
-    // 288 wide from 100 short of the edge, inside a 16 gutter: 204 to the left.
-    expect(screen.getByTestId("status-callout")).toHaveStyle({ left: "-204px" });
+    // 288 wide from 100 short of the edge, inside a 16 gutter: 204 left of the icon.
+    expect(screen.getByTestId("status-callout")).toHaveStyle({ left: `${window.innerWidth - 304}px`, top: "120px" });
   });
 
   it("leaves the callout under its icon when there is room", () => {
-    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ left: 16 } as DOMRect);
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ bottom: 40, left: 16 } as DOMRect);
     fireEvent.click(drawPopover());
 
-    expect(screen.getByTestId("status-callout")).toHaveStyle({ left: "0px" });
+    expect(screen.getByTestId("status-callout")).toHaveStyle({ left: "16px", top: "40px" });
+  });
+
+  it("is fixed to the screen, so a card that clips its overflow cannot cut it off, and follows its icon on scroll", () => {
+    const rect = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ bottom: 300, left: 16 } as DOMRect);
+    fireEvent.click(drawPopover());
+    const callout = screen.getByTestId("status-callout");
+    expect(callout).toHaveClass("fixed");
+
+    rect.mockReturnValue({ bottom: 180, left: 16 } as DOMRect);
+    fireEvent.scroll(window);
+    expect(callout).toHaveStyle({ top: "180px" });
   });
 
   it("names the button for what the callout is about and keeps the callout closed until asked", () => {

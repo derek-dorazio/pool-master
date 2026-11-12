@@ -41,11 +41,21 @@ describe("SectionCard", () => {
     expect(screen.getByRole("heading", { name: "Owners" })).toBeVisible();
   });
 
-  it("marks a danger zone with a red border and red title", () => {
-    render(<SectionCard testId="card" title="Danger zone" tone="danger"><p>Body</p></SectionCard>);
+  it("marks a danger zone with a red border and a red title that defaults to Danger zone", () => {
+    render(<SectionCard testId="card" tone="danger"><p>Body</p></SectionCard>);
 
     expect(screen.getByTestId("card")).toHaveClass("border-destructive/40");
     expect(screen.getByRole("heading", { name: "Danger zone" })).toHaveClass("text-destructive");
+  });
+
+  it("tells a danger zone's reader that its actions confirm first, unless the zone says otherwise", () => {
+    const { rerender } = render(<SectionCard testId="card" tone="danger"><p>Body</p></SectionCard>);
+    fireEvent.click(screen.getByTestId("card-help"));
+    expect(screen.getByTestId("card-help-callout")).toHaveTextContent("Each of these asks you to confirm.");
+
+    rerender(<SectionCard help="Leaving asks you to confirm." testId="card" title="Leave" tone="danger"><p>Body</p></SectionCard>);
+    expect(screen.getByRole("heading", { name: "Leave" })).toBeVisible();
+    expect(screen.getByTestId("card-help-callout")).toHaveTextContent("Leaving asks you to confirm.");
   });
 
   it("renders an h3 heading with its test id when asked for heading level 3", () => {
@@ -77,19 +87,34 @@ describe("SectionCard", () => {
   });
 });
 
+describe("SectionCard help", () => {
+  it("names the (?) after the section's test id, so two sections on a page keep apart", () => {
+    render(
+      <>
+        <SectionCard help="What members see." testId="general" title="General"><p>a</p></SectionCard>
+        <SectionCard help="What each place earns." testId="cups" title="Championships"><p>b</p></SectionCard>
+      </>,
+    );
+
+    fireEvent.click(screen.getByTestId("cups-help"));
+    expect(screen.getByTestId("cups-help-callout")).toHaveTextContent("What each place earns.");
+    expect(screen.queryByTestId("general-help-callout")).not.toBeInTheDocument();
+  });
+});
+
 describe("SectionTitle", () => {
-  it("shows its explanation behind the info icon, not on the page", () => {
-    render(<SectionTitle info="Finished ones are under Past." testId="title" title="Current contests" />);
+  it("shows how the section works behind a (?) help tip, not on the page", () => {
+    render(<SectionTitle help="Finished ones are under Past." testId="title" title="Current contests" />);
 
     expect(screen.queryByText("Finished ones are under Past.")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "About this section" }));
-    expect(screen.getByTestId("title-info-callout")).toHaveTextContent("Finished ones are under Past.");
+    fireEvent.click(screen.getByRole("button", { name: "How this section works" }));
+    expect(screen.getByTestId("title-help-callout")).toHaveTextContent("Finished ones are under Past.");
   });
 
-  it("shows no info icon without an explanation", () => {
+  it("shows no (?) without help text", () => {
     render(<SectionTitle title="Yours" />);
 
-    expect(screen.queryByRole("button", { name: "About this section" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "How this section works" })).not.toBeInTheDocument();
   });
 
   it("puts the trailing badge or count in the title bar beside the title", () => {

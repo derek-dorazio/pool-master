@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
-  Alert,
   AsyncPage,
-  Callout,
+  Notice,
   LinkButton,
   SplitContentLayout,
 } from '@/features/shared/ui';
@@ -99,31 +98,31 @@ export function RootAdminSportEventTiersPage() {
           </div>
 
           {locked ? (
-            <Callout data-testid="root-admin-tiers-locked" tone="info">
+            <Notice data-testid="root-admin-tiers-locked" tone="info">
               This {event.one} has been released for contests, so its tiers and prices are
               locked for good. A {participant.one} added to the field from now on stays without
               a tier and can&apos;t be picked.
-            </Callout>
+            </Notice>
           ) : null}
 
           {tiersQuery.isError ? (
-            <Alert data-testid="root-admin-tiers-load-error" tone="danger">
+            <Notice data-testid="root-admin-tiers-load-error" tone="danger">
               {extractErrorMessage(tiersQuery.error, {
                 fallback: 'We could not load the tier definitions.',
               })}
-            </Alert>
+            </Notice>
           ) : (
             <>
               {fieldQuery.isError ? (
-                <Alert data-testid="root-admin-tiers-field-error" tone="danger">
+                <Notice data-testid="root-admin-tiers-field-error" tone="danger">
                   {extractErrorMessage(fieldQuery.error, {
                     fallback:
                       `We could not load the ${event.one} field, so ${participant.one} names and the Unassigned column may be incomplete.`,
                   })}
-                </Alert>
+                </Notice>
               ) : null}
               {!fieldQuery.isError && field.length === 0 ? (
-                <Callout tone="info">
+                <Notice tone="info">
                   This {event.one} has no field yet. Load or seed the field before
                   assigning {participant.many} to tiers.
                   <span className="ml-2">
@@ -136,7 +135,7 @@ export function RootAdminSportEventTiersPage() {
                       Open Field
                     </LinkButton>
                   </span>
-                </Callout>
+                </Notice>
               ) : null}
               <SplitContentLayout
                 aside={

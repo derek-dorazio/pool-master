@@ -6,7 +6,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
 import { SquadHistorySection } from '@/features/championships/squad-history-section';
 import {
-  Alert,
+  Notice,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -65,6 +65,7 @@ export function MyTeamPage() {
     return (
       <ErrorState
         body={extractErrorMessage(myTeamQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+        onRetry={() => void myTeamQuery.refetch()}
         testId="my-team-error"
         title="This page is unavailable"
       />
@@ -77,9 +78,9 @@ export function MyTeamPage() {
     return (
       <section className="space-y-6" data-testid="my-team-page">
         {viewer.isMember && isInactiveLeague ? (
-          <Alert data-testid="my-team-league-inactive" tone="warning">
+          <Notice data-testid="my-team-league-inactive" tone="warning">
             This league is inactive, so you can&apos;t create a team in it.
-          </Alert>
+          </Notice>
         ) : null}
         {viewer.isMember ? (
           <CreateTeamForm isInactiveLeague={isInactiveLeague} leagueCode={leagueCode} leagueId={leagueId} />
@@ -116,9 +117,9 @@ export function MyTeamPage() {
       />
 
       {isInactiveLeague ? (
-        <Alert data-testid="my-team-league-inactive" tone="warning">
+        <Notice data-testid="my-team-league-inactive" tone="warning">
           This league is inactive, so this page is read-only.
-        </Alert>
+        </Notice>
       ) : null}
 
       <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />

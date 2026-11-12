@@ -1,8 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TeamIconKey } from '@poolmaster/shared/domain';
+import { formatCupPoints, Text } from '@/features/shared/ui';
 import { TeamName } from '@/features/teams/team-name';
-import { formatCupPoints } from './cup-view';
-import { Text } from '@/features/shared/ui';
 
 /** A standings row: one squad, placed, with its points. */
 export type SquadStandingRow = {
@@ -25,11 +24,14 @@ export type SquadStandingColumn<Row> = ColumnDef<Row, string | number>;
 export function squadStandingColumns<Row extends SquadStandingRow>({
   afterPlace = [],
   focusSquadId,
+  locale,
   squadPath,
   testIdPrefix,
 }: {
   afterPlace?: SquadStandingColumn<Row>[];
   focusSquadId: string | null;
+  /** The viewer's locale, for the points. */
+  locale: string;
   squadPath?: (squadId: string) => string;
   /** As the grid's: the squad's link is `<prefix>-standing-squad-<squadId>`. */
   testIdPrefix: string;
@@ -63,7 +65,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
       header: 'Points',
       accessorFn: (row) => row.points,
       enableGlobalFilter: false,
-      cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
+      cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points, locale)}</span>,
     },
   ];
 }

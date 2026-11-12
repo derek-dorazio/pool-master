@@ -122,7 +122,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      description={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
+      help={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
       {...formPageSave(form, updateMutation, 'We could not save these details.')}
       isSubmitDisabled={!form.formState.isValid}
       pendingLabel="Saving..."

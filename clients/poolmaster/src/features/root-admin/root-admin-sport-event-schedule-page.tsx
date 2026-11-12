@@ -111,7 +111,7 @@ function SportEventScheduleForm({
   return (
     <FormPage
       cancelTo={homePath}
-      description={`When each ${round.one} starts and ends. The background scheduler moves the ${event.one} along this schedule.`}
+      help={`When each ${round.one} starts and ends. The background scheduler moves the ${event.one} along this schedule.`}
       {...formPageSave(form, roundsMutation, `We could not save the ${round.one} schedule.`)}
       isSubmitDisabled={!form.formState.isValid}
       pendingLabel="Saving..."

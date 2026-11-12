@@ -1,9 +1,8 @@
-import { Info } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
-import { InfoPopover } from "./info-popover";
+import { HelpTip } from "./help-tip";
 
 /**
  * The one section look (#1561): a title bar with a rule, a body of rows, padded content or one
@@ -16,22 +15,25 @@ type SectionTone = "danger" | "default";
 type SectionFooter = { label: string; testId: string; to: string };
 
 /**
- * A section's title in the house uppercase italic, with an optional info icon that holds the
- * section's explanation (sentences never sit in the body) and an optional trailing slot for one
+ * A section's title in the house uppercase italic, with an optional (?) `HelpTip` that holds how
+ * the section works (sentences never sit in the body) and an optional trailing slot for one
  * badge, count or filter.
  */
 export function SectionTitle({
+  help,
+  helpTestId,
   id,
-  info,
   level = 2,
   testId,
   title,
   tone = "default",
   trailing,
 }: {
+  /** How the section works, in one to three sentences, shown by the title's (?). */
+  help?: ReactNode;
+  /** The (?)'s test id, when the title has none to derive it from. */
+  helpTestId?: string;
   id?: string;
-  /** The explanation, shown when the info icon is hovered or tapped. */
-  info?: ReactNode;
   level?: 2 | 3;
   testId?: string;
   title: ReactNode;
@@ -40,66 +42,87 @@ export function SectionTitle({
 }) {
   return (
     <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-2">
-      <Heading
-        className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
-        data-testid={testId}
-        id={id}
-        level={level}
-        size="sm"
-        tone={tone === "danger" ? "inherit" : "default"}
-        variant="card"
-      >
-        {title}
-      </Heading>
-      {info ? (
-        <InfoPopover
-          className="-my-2 -ml-2"
-          icon={<Info aria-hidden className="text-muted-foreground" size={16} />}
-          label="About this section"
-          testId={testId ? `${testId}-info` : "section-info"}
+      {/* The title and its (?) never part: on a phone a long title wraps with the (?) beside it. */}
+      <span className="flex min-w-0 items-center">
+        <Heading
+          className={cn("flex items-center gap-2", tone === "danger" ? "text-destructive" : undefined)}
+          data-testid={testId}
+          id={id}
+          level={level}
+          size="sm"
+          tone={tone === "danger" ? "inherit" : "default"}
+          variant="card"
         >
-          <p className="text-sm text-muted-foreground">{info}</p>
-        </InfoPopover>
-      ) : null}
+          {title}
+        </Heading>
+        {help ? (
+          <HelpTip
+            className="-my-2 shrink-0"
+            label="How this section works"
+            testId={helpTestId ?? (testId ? `${testId}-help` : "section-help")}
+          >
+            {help}
+          </HelpTip>
+        ) : null}
+      </span>
       {trailing ? <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{trailing}</div> : null}
     </div>
   );
 }
 
-/**
- * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
- * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
- * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
- * `tone="danger"` is a danger zone.
- */
-export function SectionCard({
-  bare = false,
-  children,
-  className,
-  footer,
-  headingLevel = 2,
-  info,
-  padded = false,
-  testId,
-  title,
-  titleTestId,
-  tone = "default",
-  trailing,
-}: {
+const DANGER_ZONE_TITLE = "Danger zone";
+const DANGER_ZONE_HELP = "Each of these asks you to confirm.";
+
+type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
   footer?: SectionFooter;
   headingLevel?: 2 | 3;
-  info?: ReactNode;
+  /** How the section works, behind the title's (?). */
+  help?: ReactNode;
   padded?: boolean;
   testId?: string;
-  /** The section's name, which also names it for screen readers. */
-  title: ReactNode;
   titleTestId?: string;
-  tone?: SectionTone;
   trailing?: ReactNode;
-}) {
+};
+
+type SectionCardProps = SectionCardBaseProps &
+  (
+    | {
+        /** The section's name, which also names it for screen readers. */
+        title: ReactNode;
+        tone?: "default";
+      }
+    | {
+        /** A danger zone's title and help default to "Danger zone" and that its actions confirm first. */
+        title?: ReactNode;
+        tone: "danger";
+      }
+  );
+
+/**
+ * A titled section: its title bar, its body and an optional footer link. The body is unpadded,
+ * for `SectionRows` or a `SectionEmpty` line; `padded` gives other content the card's padding.
+ * `bare` keeps the title and rule but drops the box, for long page content such as Owners;
+ * `tone="danger"` is a danger zone, titled "Danger zone" unless it says otherwise.
+ */
+export function SectionCard(props: SectionCardProps) {
+  const {
+    bare = false,
+    children,
+    className,
+    footer,
+    headingLevel = 2,
+    padded = false,
+    testId,
+    titleTestId,
+    tone = "default",
+    trailing,
+  } = props;
+  // A danger zone is always called that, and always says its actions confirm first.
+  const title = props.title ?? DANGER_ZONE_TITLE;
+  const help = props.help ?? (tone === "danger" ? DANGER_ZONE_HELP : undefined);
   const titleId = useId();
   return (
     <section
@@ -112,7 +135,7 @@ export function SectionCard({
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle id={titleId} info={info} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle help={help} helpTestId={!titleTestId && testId ? `${testId}-help` : undefined} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

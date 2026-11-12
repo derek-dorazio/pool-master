@@ -4,14 +4,15 @@ import { getSportDefinition, SportEventSyncScope } from '@poolmaster/shared/doma
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
-  Alert,
+  Notice,
   Button,
-  FormField,
-  Select,
-  Tile,
   formatDateTimeDisplay,
-  useDisplayPreferences,
+  FormField,
+  SectionCard,
+  SectionNote,
+  Select,
   type DisplayPreferences,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   EVENT_SYNC_PRESETS,
@@ -253,7 +254,7 @@ export function RootAdminRunEventSyncPage() {
         Use this action when a linked event needs a targeted refresh of its field or live scores.
       </ManagePageIntro>
 
-      <Tile>
+      <SectionCard padded title="Event to sync">
         <div className="space-y-3">
           <FormField label="Preset">
             <Select
@@ -325,39 +326,34 @@ export function RootAdminRunEventSyncPage() {
             </FormField>
           ) : null}
 
-          <Tile radius="lg">
-            <p className="font-medium text-foreground">Requested feeds</p>
-            <p className="mt-2">{selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}</p>
-            {mockEventState ? (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Mock event state: {mockEventState}
-              </p>
-            ) : null}
-          </Tile>
+          <SectionNote>
+            {`Requested feeds: ${selectedPreset.feeds.map((feed) => FEED_LABELS[feed]).join(' · ')}`}
+          </SectionNote>
+          {mockEventState ? <SectionNote>{`Mock event state: ${mockEventState}`}</SectionNote> : null}
 
           {providersQuery.isError ? (
-            <Alert>
+            <Notice>
               {extractErrorMessage(
                 providersQuery.error,
                 { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
               )}
-            </Alert>
+            </Notice>
           ) : null}
 
           {eventsQuery.isError ? (
-            <Alert>
+            <Notice>
               {extractErrorMessage(
                 eventsQuery.error,
                 { fallback: 'Loaded events are unavailable right now.' },
               )}
-            </Alert>
+            </Notice>
           ) : null}
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
-            <Alert>
+            <Notice>
               No linked {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. Link an event to a score
               source on its page first; an unlinked event has nothing to sync.
-            </Alert>
+            </Notice>
           ) : null}
 
           <Button
@@ -378,24 +374,23 @@ export function RootAdminRunEventSyncPage() {
           </Button>
 
           {eventSyncMutation.isError ? (
-            <Alert tone="danger">
+            <Notice tone="danger">
               {extractErrorMessage(
                 eventSyncMutation.error,
                 { fallback: 'We could not submit the event sync right now.' },
               )}
-            </Alert>
-          ) : null}
-
-          {eventSyncMutation.isSuccess ? (
-            <Tile data-testid="root-admin-event-sync-response" radius="lg">
-              <p className="font-medium text-foreground">Latest API payload</p>
-              <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">
-                {formatJsonPayload(eventSyncMutation.data)}
-              </pre>
-            </Tile>
+            </Notice>
           ) : null}
         </div>
-      </Tile>
+      </SectionCard>
+
+      {eventSyncMutation.isSuccess ? (
+        <SectionCard padded testId="root-admin-event-sync-response" title="Latest API payload">
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs">
+            {formatJsonPayload(eventSyncMutation.data)}
+          </pre>
+        </SectionCard>
+      ) : null}
     </section>
   );
 }

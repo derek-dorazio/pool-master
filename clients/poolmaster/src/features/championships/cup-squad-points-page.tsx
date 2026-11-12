@@ -8,12 +8,14 @@ import {
   SectionCard,
   SectionEmpty,
   SectionRows,
+  formatCupPoints,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { hasErrorCode } from '@/lib/errors';
 import { ContestRow } from '@/features/contests/contest-row';
-import { CUP_WEIGHT_LABELS, formatCupPoints } from './cup-view';
+import { CUP_WEIGHT_LABELS } from './cup-view';
 import { useChampionshipsRoute } from './use-championships-route';
 import { useCupSquadPointsQuery } from './use-cups-query';
 
@@ -24,6 +26,7 @@ import { useCupSquadPointsQuery } from './use-cups-query';
 export function CupSquadPointsPage() {
   const { sportLeagueId = '', squadId = '' } = useParams<{ sportLeagueId: string; squadId: string }>();
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
+  const { locale } = useDisplayPreferences();
   const isInPlan = hasPlanFeature(league, PlanFeature.CUP_STANDINGS);
   const pointsQuery = useCupSquadPointsQuery(isInPlan ? leagueId : '', year, sportLeagueId, squadId);
 
@@ -34,7 +37,7 @@ export function CupSquadPointsPage() {
     return <LoadingState body="Loading cup points..." />;
   }
   if (pointsQuery.isError && !hasErrorCode(pointsQuery.error, 'CUP_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this team's cup points." testId="cup-squad-points-error" />;
+    return <ErrorState body="We couldn't load this team's cup points." onRetry={() => void pointsQuery.refetch()} testId="cup-squad-points-error" />;
   }
   if (!pointsQuery.data) {
     return (
@@ -55,7 +58,7 @@ export function CupSquadPointsPage() {
       />
       <SectionCard
         title={squadPoints.squadName}
-        trailing={<span data-testid="cup-squad-points-total">{formatCupPoints(squadPoints.points)} pts</span>}
+        trailing={<span data-testid="cup-squad-points-total">{formatCupPoints(squadPoints.points, locale)} pts</span>}
       >
         {squadPoints.contests.length ? (
           <SectionRows>
@@ -72,7 +75,7 @@ export function CupSquadPointsPage() {
                   startsAt={null}
                   testId={`cup-squad-contest-${contest.contestId}`}
                   to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
-                  trailing={`${formatCupPoints(contest.points)} pts`}
+                  trailing={`${formatCupPoints(contest.points, locale)} pts`}
                 />
               );
             })}

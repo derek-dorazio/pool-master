@@ -1,7 +1,8 @@
 import type { ReactNode, SubmitEventHandler } from "react";
-import { Alert } from "./alert";
+import { Notice } from "./notice";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
+import { HelpTip } from "./help-tip";
 import { PageHeader } from "./page-header";
 
 type FormPageProps = {
@@ -9,8 +10,11 @@ type FormPageProps = {
   errorMessage?: string | null;
   cancelTo: string;
   children: ReactNode;
-  description?: ReactNode;
+  /** How the form works, behind a (?) after the title, never a sentence on the page. */
+  help?: ReactNode;
   isPending: boolean;
+  /** One fact line under the title: the facts the form acts on, never how it works. */
+  meta?: ReactNode;
   isSubmitDisabled?: boolean;
   onSubmit: SubmitEventHandler<HTMLFormElement>;
   pendingLabel: string;
@@ -28,10 +32,11 @@ type FormPageProps = {
 export function FormPage({
   cancelTo,
   children,
-  description,
   errorMessage,
+  help,
   isPending,
   isSubmitDisabled = false,
+  meta,
   onSubmit,
   pendingLabel,
   submitLabel,
@@ -41,9 +46,17 @@ export function FormPage({
 }: FormPageProps) {
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
-      <PageHeader description={description} title={title} />
+      <PageHeader
+        meta={meta}
+        title={title}
+        titleAside={help ? (
+          <HelpTip className="-my-2" label="How this form works" testId={testId ? `${testId}-help` : "form-page-help"}>
+            {help}
+          </HelpTip>
+        ) : null}
+      />
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
-      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+      {errorMessage ? <Notice tone="danger">{errorMessage}</Notice> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">
           Cancel

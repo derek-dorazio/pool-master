@@ -11,6 +11,7 @@
  * `files`/`ignores` exactly as its scanner's exclusion list reads. You also get a real
  * rule name in the output, per-rule `eslint-disable`, and RuleTester unit tests.
  */
+import noAdHocMoreInfo from './no-ad-hoc-more-info.mjs';
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
 import noButtonRowOverride from './no-button-row-override.mjs';
@@ -19,6 +20,8 @@ import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message
 import noEnvFallbacks from './no-env-fallbacks.mjs';
 import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
+import noHandWrittenQueryStates from './no-hand-written-query-states.mjs';
+import noInlineDisplayFormat from './no-inline-display-format.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
 import noListLookup from './no-list-lookup.mjs';
@@ -34,12 +37,15 @@ import noUnawaitedSendError from './no-unawaited-send-error.mjs';
 export default {
   meta: { name: 'poolmaster-local', version: '1.0.0' },
   rules: {
+    'no-ad-hoc-more-info': noAdHocMoreInfo,
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
     'no-button-row-override': noButtonRowOverride,
     'no-disabled-tests': noDisabledTests,
+    'no-hand-written-query-states': noHandWrittenQueryStates,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
     'no-env-fallbacks': noEnvFallbacks,
+    'no-inline-display-format': noInlineDisplayFormat,
     'no-inline-query-keys': noInlineQueryKeys,
     'no-parallel-api-types': noParallelApiTypes,
     'no-widened-enum-fields': noWidenedEnumFields,

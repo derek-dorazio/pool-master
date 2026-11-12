@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createEventFromProviderEvent } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   DateTimeField,
   dateTimeLocalValueToIso,
@@ -12,8 +12,11 @@ import {
   InlineError,
   Input,
   QueryState,
+  SectionCard,
+  SectionNote,
+  SectionRow,
+  SectionRows,
   StatusBadge,
-  Tile,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -118,14 +121,14 @@ export function SportEventProviderBrowse({
   return (
     <div className="space-y-4">
       {catalog.providersError || (catalog.providersLoaded && providerId === null) ? (
-        <Alert tone="warning">
+        <Notice tone="warning">
           No provider is registered for {definition.name.toLowerCase()}, so there is no catalog
           to browse. Build the {eventNoun.one} manually instead.
-        </Alert>
+        </Notice>
       ) : null}
 
       {!selectedEvent ? (
-        <Tile>
+        <SectionCard padded title="Provider events">
           <SportProviderChoice
             onChange={catalog.setProviderId}
             providerId={providerId}
@@ -156,13 +159,11 @@ export function SportEventProviderBrowse({
           </div>
 
           {scopedSportLeague ? (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Filtered to {scopedSportLeague.name}.
-            </p>
+            <SectionNote>{`Filtered to ${scopedSportLeague.name}.`}</SectionNote>
           ) : null}
 
           <div
-            className="mt-4 space-y-2"
+            className="mt-4"
             data-testid="root-admin-sport-event-create-catalog"
           >
             <QueryState
@@ -172,62 +173,50 @@ export function SportEventProviderBrowse({
               })}
               isEmpty={(events) => events.length === 0}
               loading="Loading provider events..."
-              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError }}
+              query={{ data: catalog.isLoading ? undefined : catalog.events, isError: catalog.isError, refetch: catalog.refetch }}
             >
               {(events) => (
-                events.map((event) => (
-                  <Tile
-                    className="flex items-center justify-between gap-3 px-4 py-3"
-                    padding="none"
-                    radius="md"
-                    key={event.externalId}
-                  >
-                    <div className="min-w-0">
-                      <div className="font-medium text-foreground">{event.name}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {formatDateTimeDisplay(event.startDate, displayPreferences)} &ndash;{' '}
-                        {formatDateTimeDisplay(event.endDate, displayPreferences)} · {event.status}
-                      </div>
-                    </div>
-                    <Button
-                      data-testid={`root-admin-sport-event-create-select-${event.externalId}`}
-                      onClick={() => setSelectedEvent(event)}
-                      size="sm"
-                      type="button"
-                      variant="secondary"
-                    >
-                      Select
-                    </Button>
-                  </Tile>
-                ))
+                <SectionRows>
+                  {events.map((event) => (
+                  <SectionRow
+                      aside={(
+                        <Button
+                          data-testid={`root-admin-sport-event-create-select-${event.externalId}`}
+                          onClick={() => setSelectedEvent(event)}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Select
+                        </Button>
+                      )}
+                      facts={`${formatDateTimeDisplay(event.startDate, displayPreferences)} – ${formatDateTimeDisplay(event.endDate, displayPreferences)} · ${event.status}`}
+                      key={event.externalId}
+                      name={event.name}
+                    />
+                  ))}
+                </SectionRows>
               )}
             </QueryState>
           </div>
-        </Tile>
+        </SectionCard>
       ) : (
-        <Tile>
-          <div className="space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <StatusBadge tone="info">Provider event</StatusBadge>
-                <div className="mt-2 font-medium text-foreground">
-                  {selectedEvent.name}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {formatDateTimeDisplay(selectedEvent.startDate, displayPreferences)} &ndash;{' '}
-                  {formatDateTimeDisplay(selectedEvent.endDate, displayPreferences)}
-                </div>
-              </div>
-              <Button
-                onClick={() => setSelectedEvent(null)}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
+        <SectionCard
+          padded
+          title={selectedEvent.name}
+          trailing={(
+            <>
+              <StatusBadge tone="info">Provider event</StatusBadge>
+              <Button onClick={() => setSelectedEvent(null)} size="sm" type="button" variant="ghost">
                 Change
               </Button>
-            </div>
-
+            </>
+          )}
+        >
+          <div className="space-y-4">
+            <SectionNote>
+              {`${formatDateTimeDisplay(selectedEvent.startDate, displayPreferences)} – ${formatDateTimeDisplay(selectedEvent.endDate, displayPreferences)}`}
+            </SectionNote>
             <div className="grid gap-4 sm:grid-cols-2">
               <SportEventEditionFields edition={edition} onChange={onEditionChange} sportLeagues={sportLeagues} />
               <FormField
@@ -244,10 +233,10 @@ export function SportEventProviderBrowse({
               </FormField>
             </div>
 
-            <Alert tone="info">
+            <Notice tone="info">
               The field is not imported now. After creating, open the {eventNoun.one} and use
               Load Participant Field.
-            </Alert>
+            </Notice>
 
             <div className="flex justify-end">
               <Button
@@ -272,7 +261,7 @@ export function SportEventProviderBrowse({
               </InlineError>
             ) : null}
           </div>
-        </Tile>
+        </SectionCard>
       )}
     </div>
   );

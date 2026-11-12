@@ -77,7 +77,8 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
   return (
     <FormPage
       cancelTo={UNMAPPED_COMPETITORS_PATH}
-      description={`${competitor.providerName} reports ${competitor.externalName} (${competitor.externalId}). Choose the ${competitor.sport} participant they are.`}
+      help={`Choose the ${competitor.sport} participant this ${competitor.providerName} competitor is.`}
+      meta={`${competitor.providerName} reports ${competitor.externalName} (${competitor.externalId}) · ${competitor.sport}`}
       errorMessage={bindMutation.isError
         ? extractErrorMessage(bindMutation.error, { fallback: 'We could not map this competitor.' })
         : undefined}

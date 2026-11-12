@@ -9,7 +9,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ContestDto, SaveGamePicksRequest } from '@/lib/api';
 import {
-  Alert,
+  Notice,
   Button,
   ErrorState,
   formatDateTimeDisplay,
@@ -136,9 +136,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   if (gamePicksQuery.isError || !gamePicksQuery.data) {
     return (
       <ErrorState
-        body="Try refreshing or return to the contest board."
+        body="We couldn't load these picks."
+        onRetry={() => void gamePicksQuery.refetch()}
         testId="pick-em-entry-error"
-        title="We couldn't load these picks."
       />
     );
   }
@@ -224,28 +224,28 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       ) : null}
 
       {eliminatedInWeek !== null ? (
-        <Alert data-testid="survivor-eliminated" title="Out">
+        <Notice data-testid="survivor-eliminated" title="Out">
           {`This entry went out in ${eliminatedIn}, so it picks no more ${period}s.`}
-        </Alert>
+        </Notice>
       ) : null}
       {canChange && !isSubmitted && kickoff ? (
-        <Alert data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
+        <Notice data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
           {isSurvivor
             ? `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. An entry that hasn't submitted by then is out.`
             : `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. A week that isn't submitted by then scores nothing.`}
-        </Alert>
+        </Notice>
       ) : null}
       {roundNeedsPick ? (
-        <Alert data-testid="survivor-round-needs-pick" title="No pick yet" tone="warning">
+        <Notice data-testid="survivor-round-needs-pick" title="No pick yet" tone="warning">
           {`Pick a ${participant.one} before this round's first ${match.one}, or the entry is out.`}
-        </Alert>
+        </Notice>
       ) : null}
       {missedWeek(gamePicks) && eliminatedInWeek === null ? (
-        <Alert data-testid="pick-em-missed-week">
+        <Notice data-testid="pick-em-missed-week">
           {isSurvivor
             ? `This week wasn't submitted before its ${eventStart}, so this entry is out.`
             : `This week wasn't submitted before its ${eventStart}, so it scores nothing.`}
-        </Alert>
+        </Notice>
       ) : null}
 
       <Tile>
@@ -278,7 +278,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         )}
       </Tile>
 
-      {pickError ? <Alert data-testid="pick-em-pick-error" tone="danger">{pickError}</Alert> : null}
+      {pickError ? <Notice data-testid="pick-em-pick-error" tone="danger">{pickError}</Notice> : null}
 
       <Tile>
         <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-2" data-testid="contest-entry-builder-heading">
@@ -319,11 +319,11 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             </span>
           </div>
           {isSubmitted ? (
-            <Alert data-testid="pick-em-submitted" title="Submitted" tone="success">
+            <Notice data-testid="pick-em-submitted" title="Submitted" tone="success">
               {isSurvivor
                 ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its ${match.one} starts.`
                 : 'This week counts. You can still change a pick until its game kicks off.'}
-            </Alert>
+            </Notice>
           ) : (
             <>
               {hint ? <p className="text-sm text-muted-foreground" data-testid="pick-em-submit-hint">{hint}</p> : null}
@@ -340,9 +340,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             </>
           )}
           {submitMutation.error ? (
-            <Alert data-testid="pick-em-submit-error" tone="danger">
+            <Notice data-testid="pick-em-submit-error" tone="danger">
               {errorMessage(submitMutation.error, 'We could not submit this week. Please try again.')}
-            </Alert>
+            </Notice>
           ) : null}
         </Tile>
       ) : null}

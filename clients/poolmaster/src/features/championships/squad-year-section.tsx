@@ -2,7 +2,7 @@ import { championshipYear } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
-import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
+import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, SectionBody, SectionCard, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import { describeContestResultFilter, historyCupsOnShow, type ContestResultFilter } from './championship-view';
@@ -30,6 +30,7 @@ export function SquadYearSection({
   squad: Pick<SquadDto, 'id' | 'name'>;
   year: number;
 }) {
+  const { locale } = useDisplayPreferences();
   const squadYearQuery = useSquadYearQuery(leagueId, squad.id, year);
   const [place, setPlace] = useState<number | null>(null);
   const filter = useMemo<ContestResultFilter>(() => ({ squadId: squad.id, place }), [squad.id, place]);
@@ -41,7 +42,7 @@ export function SquadYearSection({
   return (
     <div className="space-y-4" data-testid="squad-year">
       {squadYearQuery.isError ? (
-        <ErrorState body="We couldn't load this team's year." testId="squad-year-error" />
+        <ErrorState body="We couldn't load this team's year." onRetry={() => void squadYearQuery.refetch()} testId="squad-year-error" />
       ) : !squadYearQuery.data ? (
         <LoadingState body="Loading this team's year..." />
       ) : (
@@ -50,11 +51,11 @@ export function SquadYearSection({
             <SectionCard headingLevel={3} title="Championship">
               <SectionRows>
                 <SectionRow
-                  facts={<span data-testid="squad-year-championship-standing">{describeSquadChampionship(championship)}</span>}
+                  facts={<span data-testid="squad-year-championship-standing">{describeSquadChampionship(championship, locale)}</span>}
                   name={championship.name}
                   testId="squad-year-championship"
                   to={buildLeagueChampionshipsPath(leagueCode, year)}
-                  value={<span title={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
+                  value={<span aria-label={describeMovement(championship.standing.movement).description}>{describeMovement(championship.standing.movement).label}</span>}
                 />
               </SectionRows>
               <SectionBody>
@@ -82,7 +83,7 @@ export function SquadYearSection({
               <SectionRows testId="squad-year-cups">
                 {cups.map((cup) => (
                   <SectionRow
-                    facts={cup.standing.movement === null ? describeSquadCup(cup) : `${describeSquadCup(cup)} · ${describeMovement(cup.standing.movement).label}`}
+                    facts={cup.standing.movement === null ? describeSquadCup(cup, locale) : `${describeSquadCup(cup, locale)} · ${describeMovement(cup.standing.movement).label}`}
                     key={cup.cupId}
                     name={cup.name}
                     testId={`squad-year-cup-${cup.cupId}`}
@@ -106,9 +107,9 @@ export function SquadYearSection({
         )}
       >
         {contestsQuery.isError ? (
-          <ErrorState body="We couldn't load this team's contests." size="inline" testId="squad-year-contests-error" />
+          <ErrorState body="We couldn't load this team's contests." onRetry={() => void contestsQuery.refetch()} size="inline" testId="squad-year-contests-error" />
         ) : !contestsQuery.data ? (
-          <LoadingState body="Loading this team's contests..." size="inline" />
+          <LoadingState rows={3} body="Loading this team's contests..." size="inline" />
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}

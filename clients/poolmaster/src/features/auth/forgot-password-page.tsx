@@ -59,7 +59,7 @@ export function ForgotPasswordPage() {
     <div className="mx-auto max-w-md">
       <FormPage
         cancelTo="/"
-        description="Enter the email or username you sign in with. We'll email you a link to choose a new password."
+        help="Enter the email or username you sign in with. We'll email you a link to choose a new password."
         errorMessage={
           requestMutation.isError
             ? extractErrorMessage(requestMutation.error, {

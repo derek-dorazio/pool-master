@@ -28,17 +28,22 @@ beforeEach(() => cleanupTestData());
 
 const PROVIDER = 'balldontlie';
 
-/** An in-progress four-team bracket on the provider, its two semifinals linked to games g1 and g2. */
-async function linkedBracket() {
+/**
+ * An in-progress four-team bracket on the provider, its two semifinals linked to games g1 and
+ * g2: basketball's, or soccer's, whose level knockout games a shoot-out settles. Its sport league
+ * is the NCAA men's, which plays single games, unless another is named (the NBA plays series).
+ */
+async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOCCER = Sport.BASKETBALL, league?: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    where: { sport: sportOf },
+    create: { sport: sportOf, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
+  const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
   const sportLeague = await prisma.sportLeague.upsert({
-    where: { sportId_name: { sportId: sport.id, name: 'NCAA Division I Men' } },
-    create: { sportId: sport.id, name: 'NCAA Division I Men' },
+    where: { sportId_name: { sportId: sport.id, name: leagueName } },
+    create: { sportId: sport.id, name: leagueName },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });
@@ -49,7 +54,7 @@ async function linkedBracket() {
     eventYear: 2027,
     externalId,
     providerId: PROVIDER,
-    sport: Sport.BASKETBALL,
+    sport: sportOf,
     name: 'Final Four',
     startDate: new Date('2027-04-03T22:00:00.000Z'),
     status: 'IN_PROGRESS',
@@ -125,6 +130,23 @@ describe('game scores from a provider', () => {
     expect(final.homeSportEventParticipantId).toBe(entryOf('Houston').id);
   });
 
+  it('completes a soccer knockout match level after extra time as its shoot-out\'s winner, keeping the shoot-out apart, and writes nothing when it arrives again (#1532)', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.SOCCER);
+    // Listed Houston at home, though the match has Duke at home: Houston won the shoot-out 4-2.
+    const final = { externalGameId: 'g1', homeTeamExternalId: teamId('Houston'), awayTeamExternalId: teamId('Duke'), state: ProviderGameState.FINAL, homeScore: 1, awayScore: 1, homeShootoutScore: 4, awayShootoutScore: 2 };
+
+    const first = await publish(externalId, [final]);
+    const again = await publish(externalId, [final]);
+
+    expect(first).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
+    expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
+    const [semifinal, , theFinal] = await matches.findBySportEvent(event.id);
+    expect(semifinal).toMatchObject({
+      status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4, resultSource: MatchResultSource.PROVIDER,
+    });
+    expect(theFinal.homeSportEventParticipantId).toBe(entryOf('Houston').id);
+  });
+
   it('writes nothing when the same final arrives again', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const final = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 };
@@ -168,6 +190,33 @@ describe('game scores from a provider', () => {
     expect(second).toMatchObject({ externalGameId: 'p-2', status: MatchStatus.SCHEDULED });
     // The final's away side is still to be decided, so nothing links to it yet.
     expect(final).toMatchObject({ externalGameId: null, homeSportEventParticipantId: entryOf('Duke').id });
+  });
+
+  it('counts each NBA series\' games as wins, completing a series at four and sending its winner on, and shows a series still on as its wins so far (#1545)', async () => {
+    // The NBA's rounds are best of seven, as its reference data says.
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.BASKETBALL, 'NBA');
+    await getPrisma().sportEventMatch.updateMany({ where: { sportEventId: event.id }, data: { externalGameId: null } });
+    const final = (id: string, home: string, away: string, homeScore: number, awayScore: number): GameScoreUpdate =>
+      ({ externalGameId: id, homeTeamExternalId: teamId(home), awayTeamExternalId: teamId(away), state: ProviderGameState.FINAL, homeScore, awayScore });
+    const games = [
+      final('a1', 'Duke', 'Houston', 100, 90),
+      final('a2', 'Duke', 'Houston', 95, 99),
+      final('a3', 'Houston', 'Duke', 97, 101),
+      final('a4', 'Houston', 'Duke', 99, 104),
+      final('a5', 'Duke', 'Houston', 110, 102),
+      final('b1', 'Auburn', 'Florida', 88, 80),
+      { externalGameId: 'b2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 44 },
+    ];
+
+    const result = await publish(externalId, games);
+
+    expect(result).toMatchObject({ updatesPersisted: 2 });
+    const [first, second, nbaFinal] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ externalGameId: null, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 1, resultSource: MatchResultSource.PROVIDER });
+    expect(second).toMatchObject({ externalGameId: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 1, awayScore: 0 });
+    expect(nbaFinal).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: null });
+
+    expect(await publish(externalId, games)).toMatchObject({ updatesPersisted: 0 });
   });
 
   it('refuses a second match of the event linked to a game another of its matches already takes', async () => {

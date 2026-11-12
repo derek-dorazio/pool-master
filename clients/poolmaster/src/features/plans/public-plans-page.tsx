@@ -3,7 +3,7 @@ import { PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
-import { Chip, ErrorState, FaqList, Heading, LinkButton, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
+import { Chip, ErrorState, FaqList, Heading, LinkButton, LoadingState, PageHeader, SectionCard, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PlanCards } from './plan-cards';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -77,7 +77,7 @@ export function PublicPlansPage() {
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
       ) : plansQuery.isError || !plansQuery.data ? (
-        <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
+        <ErrorState body="We couldn't load the plans." onRetry={() => void plansQuery.refetch()} />
       ) : (
         <>
           <PlanCards
@@ -87,17 +87,15 @@ export function PublicPlansPage() {
               <Chip className="self-start" data-testid={`public-plans-card-${plan}-coming-soon`}>Coming soon</Chip>
             ) : action(`public-plans-card-${plan}-start`)}
           />
-          <section className="space-y-4" data-testid="public-plans-compare">
-            <SectionHeader description="Each row lines up across the plans. Open a group to see every item in it." title="Compare every plan" />
+          <SectionCard bare help="Each row lines up across the plans. Open a group to see every item in it." testId="public-plans-compare" title="Compare every plan">
             <PlanComparisonTable initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
-          </section>
+          </SectionCard>
         </>
       )}
 
-      <section className="space-y-3" data-testid="public-plans-questions">
-        <SectionHeader title="Questions" />
+      <SectionCard bare testId="public-plans-questions" title="Questions">
         <FaqList items={QUESTIONS} />
-      </section>
+      </SectionCard>
 
       {auth.isAuthenticated ? null : (
         <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">

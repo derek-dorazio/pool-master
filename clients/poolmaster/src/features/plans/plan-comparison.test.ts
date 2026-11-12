@@ -5,7 +5,7 @@ import { buildPlanEntitlements } from './test/fixtures';
 
 describe('buildPlanComparison', () => {
   it('lists the limits first, then what every plan includes, then emails, championships and history, each feature once with its description', () => {
-    const sections = buildPlanComparison([buildPlanEntitlements()]);
+    const sections = buildPlanComparison([buildPlanEntitlements()], 'en-US');
 
     expect(sections.map((section) => section.title)).toEqual(['Limits', 'In every plan', 'Emails', 'Championships', 'History']);
     expect(sections[0]?.rows.map((row) => row.label)).toEqual(['Entries per contest', 'Sports leagues a year']);
@@ -15,7 +15,7 @@ describe('buildPlanComparison', () => {
   });
 
   it('shows what every plan includes the same on every plan, whatever the plan settings say', () => {
-    const sections = buildPlanComparison([buildPlanEntitlements({ plan: 'FREE', features: [] }), buildPlanEntitlements()]);
+    const sections = buildPlanComparison([buildPlanEntitlements({ plan: 'FREE', features: [] }), buildPlanEntitlements()], 'en-US');
     const included = sections.find((section) => section.key === 'included');
 
     expect(included?.group).toBeNull();
@@ -23,14 +23,16 @@ describe('buildPlanComparison', () => {
     expect(included?.rows.find((row) => row.key === 'contest-types')?.cells).toEqual([true, true]);
   });
 
-  it('marks a feature only under the plans that include it, and shows a limit as a number or Unlimited', () => {
-    const sections = buildPlanComparison([
+  it('marks a feature only under the plans that include it, and shows a limit as a number in the viewer\'s locale or Unlimited', () => {
+    const plans = [
       buildPlanEntitlements({ plan: 'FREE', caps: { ENTRIES_PER_CONTEST: 1500, SPORTS_LEAGUES_PER_YEAR: 1 }, features: [] }),
       buildPlanEntitlements(),
-    ]);
-    const rows = sections.flatMap((section) => section.rows);
+    ];
+    const rows = buildPlanComparison(plans, 'en-US').flatMap((section) => section.rows);
+    const germanRows = buildPlanComparison(plans, 'en-DE').flatMap((section) => section.rows);
 
     expect(rows.find((row) => row.key === 'ENTRIES_PER_CONTEST')?.cells).toEqual(['1,500', 'Unlimited']);
+    expect(germanRows.find((row) => row.key === 'ENTRIES_PER_CONTEST')?.cells).toEqual(['1.500', 'Unlimited']);
     expect(rows.find((row) => row.key === PlanFeature.RECORD_BOOK)?.cells).toEqual([false, true]);
   });
 });

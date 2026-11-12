@@ -19,9 +19,12 @@ import {
   LoadingState,
   PageHeader,
   PageTabs,
+  refetchFailed,
   Tabs,
   TabsContent,
   YearPicker,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -82,14 +85,15 @@ function EventCell({ contest, event }: { contest: ContestDto; event: ContestSpor
 }
 
 function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: number }) {
+  const { locale } = useDisplayPreferences();
   if (contest.status === ContestStatus.DRAFT) {
     return <span className="text-muted-foreground">Not open</span>;
   }
   const entryCount = contest.entryCount ?? 0;
   return (
     <span className="tabular-nums">
-      {entryCount}
-      {contest.status === ContestStatus.OPEN ? <span className="text-muted-foreground"> of {teamCount} members</span> : null}
+      {formatNumber(entryCount, locale)}
+      {contest.status === ContestStatus.OPEN ? <span className="text-muted-foreground"> of {formatNumber(teamCount, locale)} members</span> : null}
     </span>
   );
 }
@@ -255,9 +259,9 @@ export function ManageContestsPage() {
         />
 
         {isLoading ? (
-          <LoadingState body="Loading contests..." />
+          <LoadingState rows={3} body="Loading contests..." />
         ) : isError ? (
-          <ErrorState body="We couldn't load contests for this league." />
+          <ErrorState body="We couldn't load contests for this league." onRetry={refetchFailed(contestsQuery, yearsQuery)} />
         ) : !hasContests ? (
           <EmptyState
             action={
@@ -274,9 +278,9 @@ export function ManageContestsPage() {
         ) : (
           <TabsContent className="grid gap-3" value={filter}>
             {filter === 'history' && historyQuery.isError ? (
-              <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+              <ErrorState body={`We couldn't load the contests finished in ${year}.`} onRetry={() => void historyQuery.refetch()} testId="manage-contests-history-error" />
             ) : filter === 'history' && historyQuery.isLoading ? (
-              <LoadingState body="Loading finished contests..." />
+              <LoadingState rows={3} body="Loading finished contests..." />
             ) : (
             <DataGrid
               columns={columns}

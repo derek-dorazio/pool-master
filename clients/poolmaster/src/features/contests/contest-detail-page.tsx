@@ -18,7 +18,7 @@ import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-path
 import { formatPlanLimit } from '@/features/plans/plan-labels';
 import { getLogger } from '@/lib/logger';
 import {
-  Alert,
+  Notice,
   Button,
   Checkbox,
   Chip,
@@ -28,10 +28,13 @@ import {
   ErrorState,
   FormField,
   Heading,
+  HelpTip,
   Input,
   LinkButton,
   LoadingState,
   Tile,
+  formatNumber,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
@@ -73,9 +76,9 @@ function ParticipantsTable({
 
   if (sorted.length === 0) {
     return (
-      <Alert className="mt-4">
+      <Notice className="mt-4">
         This entry does not have any picked participants yet.
-      </Alert>
+      </Notice>
     );
   }
 
@@ -124,6 +127,7 @@ export function ContestDetailPage() {
     feature: 'contest-board',
   });
   const { contestId = '' } = useParams<{ contestId: string }>();
+  const { locale } = useDisplayPreferences();
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
   // My entries (#1392) opens this page with `?mine=1`; the checkbox keeps the link in step.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -234,8 +238,8 @@ export function ContestDetailPage() {
   if (contestQuery.isError || !contestQuery.data) {
     return (
       <ErrorState
-        body="Try refreshing or return to League Home."
-        title="We couldn't load this contest."
+        body="We couldn't load this contest."
+        onRetry={() => void contestQuery.refetch()}
       />
     );
   }
@@ -294,7 +298,7 @@ export function ContestDetailPage() {
             </span>
           ) : null}
           <span data-testid="contest-board-total-count">
-            Entries: {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
+            Entries: {entryCap === null ? formatNumber(totalCount, locale) : `${formatNumber(totalCount, locale)} of ${formatPlanLimit(entryCap, locale)}`}
           </span>
           <span data-testid="contest-board-my-count">My entries: {myCount}</span>
         </>
@@ -303,21 +307,21 @@ export function ContestDetailPage() {
     >
 
       {isDraft ? (
-        <Alert data-testid="contest-draft-note">
+        <Notice data-testid="contest-draft-note">
           This contest is a draft. Only commissioners can see it, and nobody can enter until it is
           opened to the league.
-        </Alert>
+        </Notice>
       ) : null}
 
       <Tile>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="flex items-center">
             <Heading level={3} variant="card" size="xl" tone="inherit">Entries</Heading>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <HelpTip className="-my-2" label="How entries show" testId="contest-board-entries-help">
               {picksRevealed
                 ? 'Picks are visible. Expand a row to see each entry’s lineup. Scores live on the leaderboard.'
                 : 'Picks are hidden until the event starts. Your own entry expands to its picks; other entries show only how many picks they have.'}
-            </p>
+            </HelpTip>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -349,7 +353,7 @@ export function ContestDetailPage() {
         </div>
 
         {entriesOpen && isFull ? (
-          <Alert className="mt-3" data-testid="contest-board-full">
+          <Notice className="mt-3" data-testid="contest-board-full">
             This contest is full.
             {/* Members never see expansions or prices; its commissioners can expand it. */}
             {viewer.isCommissioner ? (
@@ -364,15 +368,15 @@ export function ContestDetailPage() {
                 </Link>
               </>
             ) : null}
-          </Alert>
+          </Notice>
         ) : null}
 
         {enterContestMutation.isError ? (
-          <Alert className="mt-3" data-testid="contest-board-create-error" tone="danger">
+          <Notice className="mt-3" data-testid="contest-board-create-error" tone="danger">
             {extractErrorMessage(enterContestMutation.error, {
               fallback: 'We could not create that contest entry right now.',
             })}
-          </Alert>
+          </Notice>
         ) : null}
 
         <div
@@ -380,9 +384,9 @@ export function ContestDetailPage() {
           data-testid="contest-board-entries"
         >
           {contestEntriesQuery.isLoading ? (
-            <LoadingState body="Loading contest entries..." />
+            <LoadingState rows={3} body="Loading contest entries..." />
           ) : contestEntriesQuery.isError ? (
-            <ErrorState body="We couldn't load the current contest entries." />
+            <ErrorState body="We couldn't load the current contest entries." onRetry={() => void contestEntriesQuery.refetch()} />
           ) : visibleEntries.length === 0 ? (
             <EmptyState
               body={
@@ -514,9 +518,9 @@ export function ContestDetailPage() {
                           </Button>
                         </div>
                         {renameEntryMutation.isError ? (
-                          <Alert tone="danger">
+                          <Notice tone="danger">
                             {extractErrorMessage(renameEntryMutation.error)}
-                          </Alert>
+                          </Notice>
                         ) : null}
                       </Tile>
                     ) : (
@@ -538,12 +542,12 @@ export function ContestDetailPage() {
                   ) : null}
 
                   {showHiddenPlaceholder ? (
-                    <Alert
+                    <Notice
                       className="mt-4"
                       data-testid={`contest-board-picks-hidden-${entry.id}`}
                     >
                       Picks hidden until the event starts. {entry.picksCount} picks made so far.
-                    </Alert>
+                    </Notice>
                   ) : null}
                 </Tile>
               );

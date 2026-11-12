@@ -1,6 +1,7 @@
 import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount, CupStatus, SummaryTile } from '@poolmaster/shared/domain';
 import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, HistoryCupDto, HistoryYearDto } from '@/lib/api';
-import { CUP_SHOWN_FROM_COUNTED, formatCupPoints, formatOrdinalPlace, joinNames } from './cup-view';
+import { formatCupPointsCount, formatOrdinal } from '@/features/shared/ui';
+import { CUP_SHOWN_FROM_COUNTED, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
 export const FINISH_MATRIX_PLACES = CHAMPIONSHIP_MATRIX_PLACES;
@@ -45,7 +46,7 @@ export function buildPodium(rows: { squadId: string; squadName: string; position
  * The line under the championship's name. Once the year is over it names the champion; while it
  * runs, who leads and by how much, and how many contests are still to count.
  */
-export function describeChampionshipStanding(championship: ChampionshipDto): string {
+export function describeChampionshipStanding(championship: ChampionshipDto, locale: string): string {
   const leaders = championshipLeaders(championship);
   if (!leaders.length) {
     return championship.isOver
@@ -54,13 +55,13 @@ export function describeChampionshipStanding(championship: ChampionshipDto): str
   }
   const names = joinNames(leaders.map((row) => row.squadName));
   if (championship.isOver) {
-    return leaders.length === 1 ? `${names} won with ${formatCupPoints(leaders[0]?.points ?? 0)} points.` : `${names} share the championship.`;
+    return leaders.length === 1 ? `${names} won with ${formatCupPointsCount(leaders[0]?.points ?? 0, locale)}.` : `${names} share the championship.`;
   }
   const chaser = championship.standings.find((row) => row.position > 1);
   const lead = leaders.length > 1
     ? `${names} share the lead`
     : chaser
-      ? `${names} leads by ${formatCupPoints((leaders[0]?.points ?? 0) - chaser.points)} points`
+      ? `${names} leads by ${formatCupPointsCount((leaders[0]?.points ?? 0) - chaser.points, locale)}`
       : `${names} leads`;
   const toGo = championship.contestsToGo;
   return toGo ? `${lead} with ${toGo} ${toGo === 1 ? 'contest' : 'contests'} to go.` : `${lead}.`;
@@ -98,7 +99,7 @@ export function describeContestResultFilter(filter: ContestResultFilter | null, 
   }
   return filter.place === null
     ? `Contests ${squadName} played in ${year}`
-    : `Contests ${squadName} finished ${formatOrdinalPlace(filter.place)} in ${year}`;
+    : `Contests ${squadName} finished ${formatOrdinal(filter.place)} in ${year}`;
 }
 
 export type ContestResultState = { badge: string | null; note: string };

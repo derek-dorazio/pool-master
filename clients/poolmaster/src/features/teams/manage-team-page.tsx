@@ -6,17 +6,17 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
-  Alert,
+  Notice,
   Button,
-  DangerZone,
   DangerZoneAction,
   EmptyState,
   ErrorState,
-  PageHeader,
   LinkButton,
   LoadingState,
+  PageHeader,
+  SectionCard,
   SettingsRow,
-  SettingsSection,
+  SettingsRows,
 } from '@/features/shared/ui';
 import { hasErrorCode } from '@/lib/errors';
 import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
@@ -57,7 +57,7 @@ export function ManageTeamPage() {
     return <LoadingState body="Loading this member..." testId="manage-team-loading" />;
   }
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this member." title="Member unavailable" />;
+    return <ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" />;
   }
   if (!team) {
     return (
@@ -85,17 +85,17 @@ export function ManageTeamPage() {
       />
 
       {isInactiveLeague ? (
-        <Alert data-testid="manage-team-league-inactive" tone="warning">
+        <Notice data-testid="manage-team-league-inactive" tone="warning">
           This league is inactive, so this page is read-only.
-        </Alert>
+        </Notice>
       ) : isInactiveTeam ? (
-        <Alert data-testid="manage-team-inactive" tone="warning">
+        <Notice data-testid="manage-team-inactive" tone="warning">
           {team.name} is inactive. Inviting a former owner back restores it.
-        </Alert>
+        </Notice>
       ) : null}
 
-      <SettingsSection
-        action={(
+      <SectionCard
+        trailing={(
           <LinkButton
             data-testid="manage-team-edit"
             isDisabled={isInactiveLeague || isInactiveTeam}
@@ -109,9 +109,11 @@ export function ManageTeamPage() {
         testId="manage-team-general"
         title="Name and icon"
       >
-        <SettingsRow label="Name" value={team.name} />
-        <SettingsRow label="Icon" value={iconLabel} />
-      </SettingsSection>
+        <SettingsRows>
+          <SettingsRow label="Name" value={team.name} />
+          <SettingsRow label="Icon" value={iconLabel} />
+        </SettingsRows>
+      </SectionCard>
 
       <TeamOwnersSection
         canManageAnyTeam
@@ -126,41 +128,43 @@ export function ManageTeamPage() {
 
       <MyTeamLifecycleNotices lifecycle={lifecycle} />
 
-      <DangerZone testId="manage-team-danger-zone">
-        {isInactiveTeam ? (
-          <DangerZoneAction
-            action={(
-              <Button
-                data-testid="manage-team-delete"
-                disabled={!viewer.isRootAdmin || isInactiveLeague || isBusy}
-                onClick={() => setActiveDialog('delete')}
-                variant="danger"
-              >
-                Delete {team.name}
-              </Button>
-            )}
-            description={viewer.isRootAdmin
-              ? `Removes ${team.name} for good.`
-              : `Only a root admin can delete ${team.name}.`}
-            title={`Delete ${team.name}`}
-          />
-        ) : (
-          <DangerZoneAction
-            action={(
-              <Button
-                data-testid="manage-team-inactivate"
-                disabled={isInactiveLeague || isBusy}
-                onClick={() => setActiveDialog('inactivate')}
-                variant="danger"
-              >
-                Inactivate {team.name}
-              </Button>
-            )}
-            description="Its owners leave the league. Their accounts and other leagues are untouched."
-            title={`Inactivate ${team.name}`}
-          />
-        )}
-      </DangerZone>
+      <SectionCard testId="manage-team-danger-zone" tone="danger">
+        <SettingsRows>
+          {isInactiveTeam ? (
+            <DangerZoneAction
+              action={(
+                <Button
+                  data-testid="manage-team-delete"
+                  disabled={!viewer.isRootAdmin || isInactiveLeague || isBusy}
+                  onClick={() => setActiveDialog('delete')}
+                  variant="danger"
+                >
+                  Delete {team.name}
+                </Button>
+              )}
+              description={viewer.isRootAdmin
+                ? `Removes ${team.name} for good.`
+                : `Only a root admin can delete ${team.name}.`}
+              title={`Delete ${team.name}`}
+            />
+          ) : (
+            <DangerZoneAction
+              action={(
+                <Button
+                  data-testid="manage-team-inactivate"
+                  disabled={isInactiveLeague || isBusy}
+                  onClick={() => setActiveDialog('inactivate')}
+                  variant="danger"
+                >
+                  Inactivate {team.name}
+                </Button>
+              )}
+              description="Its owners leave the league. Their accounts and other leagues are untouched."
+              title={`Inactivate ${team.name}`}
+            />
+          )}
+        </SettingsRows>
+      </SectionCard>
 
       <MyTeamLifecycleDialogs
         activeDialog={activeDialog}

@@ -10,7 +10,7 @@ import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
 import { QueryKeys } from "@/lib/query-keys";
 import {
-  Alert,
+  Notice,
   Button,
   FormField,
   Input,
@@ -168,12 +168,12 @@ export function SignUpForm({
       }}
     >
       {mutation.isError ? (
-        <Alert data-testid="sign-up-error" tone="danger">
+        <Notice data-testid="sign-up-error" tone="danger">
           {extractErrorMessage(mutation.error, {
             fallback: "We could not create your account. Please try again.",
             codeMessages: errorMessages,
           })}
-        </Alert>
+        </Notice>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">

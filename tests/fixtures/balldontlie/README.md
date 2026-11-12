@@ -4,9 +4,9 @@ What the BALLDONTLIE adapter's tests read, and the vendor document they are held
 adapter was built before any account existed, so everything here comes from the vendor's
 published OpenAPI document, not from recorded traffic.
 
-- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml` and
-  `openapi/epl.yml` are the vendor's PGA TOUR, NFL, NCAA men's and women's basketball and
-  Premier League documents, each vendored unchanged below a three-line header that
+- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
+  `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL, NCAA men's and
+  women's basketball, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -37,6 +37,12 @@ published OpenAPI document, not from recorded traffic.
   2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
   match, matchweek 12 with a scheduled and an `unknown` match, a match with no round number, and
   the ten teams playing them. Every one must fit the document (`epl-contract.test.ts`).
+- `fifa/*.json` are written to the FIFA document's schemas, which give no response examples: the
+  2022 edition as a group match, two round of 16 matches (Japan and Croatia level, settled by a
+  shoot-out), the third place play-off and the final (3-3, Argentina on penalties); the 2026
+  edition part way through its round of 16, with a shoot-out final, a live, a scheduled and an
+  `unknown` match and a quarter-final with one side to be decided; and four nations. Every one
+  must fit the document (`fifa-world-cup-contract.test.ts`).
 
 ## Assumptions to confirm against the real API
 
@@ -88,6 +94,15 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   ("Manchester City", "Brighton & Hove Albion"), so the first import links them rather than
   adding new ones. A team the vendor names otherwise is added beside the site's: rename one of
   them once seen.
+- FIFA: a group stage match has a `group` and a knockout match has none; the event is the
+  matches with none. The matches list holds every knockout match from the start, a side null
+  until decided, so the bracket is called complete once every listed match is done.
+  `--game-event fifa-wc-2026-knockout` prints the match count: 2026's knockout has 32 with the
+  third place play-off.
+- FIFA: `home_score` is the score after extra time, and `home_score_penalties` the shoot-out's,
+  set only when a shoot-out was taken.
+- FIFA: a nation's `name` is the name the site's World Cup teams are loaded under ("United
+  States", "Netherlands"); one the vendor names otherwise is added beside the site's.
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.

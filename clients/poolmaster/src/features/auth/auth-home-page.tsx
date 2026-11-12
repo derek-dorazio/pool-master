@@ -8,12 +8,14 @@ import { LoginRequestSchema } from "@poolmaster/shared/dto";
 import { loginUser } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
-  Alert,
+  Notice,
   Button,
+  ErrorState,
   FormField,
   Heading,
   Input,
   PasswordInput,
+  refetchFailed,
   SegmentedControl,
   StatusBadge,
   Tile,
@@ -279,16 +281,17 @@ export function AuthHomePage() {
               title="Co-owner invite"
             />
           ) : startRequest ? (
-            <Alert data-testid="auth-start-banner" tone="info">
+            <Notice data-testid="auth-start-banner" tone="info">
               {`You're starting a ${eventPageCopy(startRequest).name} pool`}
-            </Alert>
+            </Notice>
           ) : null}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
-            <Alert data-testid="auth-invite-preview-error" tone="danger">
-              We couldn&apos;t load the invitation preview. You can still sign
-              in or create an account, then return to the invitation link.
-            </Alert>
+            <ErrorState
+              body="We couldn't load the invitation preview. You can still sign in or create an account, then return to the invitation link."
+              onRetry={refetchFailed(invitePreviewQuery, teamInvitePreviewQuery)}
+              testId="auth-invite-preview-error"
+            />
           ) : null}
         </div>
 
@@ -310,9 +313,9 @@ export function AuthHomePage() {
           />
 
           {mode === "login" && serverError ? (
-            <Alert className="mt-4" data-testid="auth-server-error" tone="danger">
+            <Notice className="mt-4" data-testid="auth-server-error" tone="danger">
               {serverError}
-            </Alert>
+            </Notice>
           ) : null}
 
           {mode === "login" ? (

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DETAILS_PEEK_HOVER_DELAY_MS } from '@/features/shared/ui';
@@ -102,11 +102,13 @@ describe('EntryDetailsPeek', () => {
     expect(getLeagueSquadMock).toHaveBeenCalledTimes(1);
   });
 
-  it('says so in the peek when the team cannot be read', async () => {
+  it('says so in the peek, in the shared red line with Retry, when the team cannot be read', async () => {
     drawEntries([{ entryId: 'entry-1', entryName: 'Ghost 1', squadId: 'team-gone' }]);
 
     fireEvent.click(screen.getByRole('button', { name: 'About Ghost 1' }));
 
-    expect(await screen.findByTestId('peek-entry-1-error')).toHaveTextContent("We couldn't load this team.");
+    const error = await screen.findByTestId('peek-entry-1-error');
+    expect(error).toHaveTextContent("We couldn't load this team.");
+    expect(within(error).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { eventSportDefinition, type SportComposite } from '@poolmaster/shared/domain';
 import { applyEventGameStatLines, type GameStatLineUploadRequest, type SportEventDto } from '@/lib/api';
-import { Alert, Button, DataGrid, Input, SectionCard, SegmentedControl } from '@/features/shared/ui';
+import { Notice, Button, DataGrid, Input, SectionCard, SegmentedControl } from '@/features/shared/ui';
 import { SPORT_STAT_LABELS } from '@/features/contests/scoring-family-ui/stat-labels';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -172,9 +172,9 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
       {gameOptions.length > 0 ? (
         <SegmentedControl aria-label="Game" onChange={(value) => setGame(Number(value))} options={gameOptions} value={String(game)} />
       ) : (
-        <Alert data-testid="root-admin-stat-lines-no-games" tone="info">
+        <Notice data-testid="root-admin-stat-lines-no-games" tone="info">
           This event has no games scheduled yet.
-        </Alert>
+        </Notice>
       )}
 
       {gameOptions.length > 0 ? (
@@ -184,14 +184,14 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
           </p>
 
           {fieldQuery.isError ? (
-            <Alert className="mt-3" data-testid="root-admin-stat-lines-field-error" tone="danger">
+            <Notice className="mt-3" data-testid="root-admin-stat-lines-field-error" tone="danger">
               {extractErrorMessage(fieldQuery.error, { fallback: 'We could not load the players and their stats.' })}
-            </Alert>
+            </Notice>
           ) : null}
           {saveError ? (
-            <Alert className="mt-3" data-testid="root-admin-stat-lines-save-error" tone="danger">
+            <Notice className="mt-3" data-testid="root-admin-stat-lines-save-error" tone="danger">
               {extractErrorMessage(saveError, { fallback: 'We could not save that line.' })}
-            </Alert>
+            </Notice>
           ) : null}
 
           <div className="mt-4">

@@ -13,7 +13,7 @@ import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { PageHeader, PageTabs } from '@/features/shared/ui';
 import { buildMyContestEntriesPath, entryPageView, type ContestView } from './contest-page-view';
 import { ContestStatusBadge } from './contest-status-badge';
-import { EntryStatusCallout, type EntryStatusFact } from './entry-status-callout';
+import { EntryStatusPeek, type EntryStatusFact } from './entry-status-peek';
 
 /** What a contest page's frame reads of its contest. */
 type FramedContest = Pick<ContestDto, 'endsAt' | 'id' | 'leagueId' | 'myEntryIds' | 'name' | 'status'>;
@@ -206,7 +206,7 @@ export function ContestEntryFrame({
   rules?: string[];
   /** The entry's status, or null while another team's entry is hidden. */
   status: ContestEntryStatus | null;
-  /** The page's own lines in the status callout, after the contest's phase. */
+  /** The page's own lines in the status peek, after the contest's phase. */
   statusFacts?: EntryStatusFact[];
   testId?: string;
   title: string;
@@ -225,7 +225,7 @@ export function ContestEntryFrame({
       )}
       testId={testId}
       title={title}
-      titleAside={<EntryStatusCallout entry={entry} facts={statusFacts} phase={phase} status={status} />}
+      titleAside={<EntryStatusPeek entry={entry} facts={statusFacts} phase={phase} status={status} />}
     >
       {children}
     </ContestPageFrame>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MemoryRouter } from 'react-router';
@@ -156,9 +156,10 @@ describe('LeaderboardFrame', () => {
 });
 
 describe('useLeaderboardFallback', () => {
-  const settled = { data: undefined, error: null, isError: false, isLoading: false };
+  const refetch = vi.fn();
+  const settled = { data: undefined, error: null, isError: false, isLoading: false, refetch };
 
-  function fallbackFor(query: typeof settled | { data: unknown; error: Error | null; isError: boolean; isLoading: boolean }) {
+  function fallbackFor(query: typeof settled | { data: unknown; error: Error | null; isError: boolean; isLoading: boolean; refetch: typeof refetch }) {
     const { result } = renderHook(() => useLeaderboardFallback(query, { action: 'board.load.failed', contestId: 'contest-1' }));
     if (result.current) {
       render(result.current);
@@ -172,16 +173,27 @@ describe('useLeaderboardFallback', () => {
     expect(screen.getByText('Loading contest leaderboard...')).toBeInTheDocument();
   });
 
-  it('names a refusal by its code, so picks-hidden reads apart from a server failure', () => {
+  it('names a refusal by its code and explains it, with no Retry, since reading again cannot lift it', () => {
     fallbackFor({ ...settled, error: new ApiError({ error: { code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' } }), isError: true });
 
-    expect(screen.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toHaveTextContent("We couldn't load this leaderboard.");
+    const error = screen.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN');
+    expect(error).toHaveTextContent("We couldn't load this leaderboard. Scores appear once picks are revealed.");
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 
-  it('shows the plain error state for a failure without a code', () => {
+  it('offers Retry for a coded failure that is not a refusal, such as a server error', () => {
+    fallbackFor({ ...settled, error: new ApiError({ error: { code: 'INTERNAL_ERROR', message: 'Down.' } }), isError: true });
+
+    expect(screen.getByTestId('contest-leaderboard-error-INTERNAL_ERROR')).toHaveTextContent("We couldn't load this leaderboard.");
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('shows the plain error state for a failure without a code, whose Retry reads the board again', () => {
     fallbackFor({ ...settled, error: new Error('boom'), isError: true });
 
     expect(screen.getByTestId('contest-leaderboard-error')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it('steps aside once the board is there', () => {

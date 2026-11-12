@@ -342,6 +342,20 @@ describe('Commissioner tools › Contests › one contest', () => {
 });
 
 describe('Commissioner tools › Contests › one contest › Entries', () => {
+  it('says the entries could not load, in red with Retry, and reads them again on Retry', async () => {
+    primeMocks();
+    const loaded = await (getContestExpansionMock() as Promise<unknown>);
+    getContestExpansionMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const error = await screen.findByTestId('contest-expansion-error');
+    getContestExpansionMock.mockResolvedValue(loaded);
+    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByTestId('contest-expansion-entries')).toHaveTextContent('12 of 20');
+  });
+
   it('shows the entries against the cap and each larger size with its price, free while payments are off', async () => {
     primeMocks();
 

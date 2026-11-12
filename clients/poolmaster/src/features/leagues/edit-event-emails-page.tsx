@@ -51,6 +51,7 @@ export function EditEventEmailsPage() {
     return (
       <ErrorState
         body={extractErrorMessage(sportLeaguesQuery.error, { fallback: 'We could not load the sport leagues.' })}
+        onRetry={() => void sportLeaguesQuery.refetch()}
         testId="edit-event-emails-error"
         title="Sport leagues unavailable"
       />
@@ -107,7 +108,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
   return (
     <FormPage
       cancelTo={settingsPath}
-      description={describeEventEmailsPage(league)}
+      help={describeEventEmailsPage(league)}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the event email settings.' })
         : null}
