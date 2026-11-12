@@ -67,8 +67,8 @@ endpoint is created or its secret rotated. Set, it is stored as the
 `BALLDONTLIE_WEBHOOK_SECRET`; left empty, the webhook route refuses every delivery with 403. It is
 reused on every apply the same way as the API key.
 Set, it also creates the `provider-notifications-quiet` log metric filter and alarm (#1499,
-`monitoring.tf`): core-api warns when an event in play has heard nothing from the webhook for 20
-minutes, and the alarm sends that to the alerts topic.
+`monitoring.tf`): core-api warns when an event in play has heard nothing from the webhook for longer
+than its league's normal gap between notifications, and the alarm sends that to the alerts topic.
 
 ## The ALB Admits CloudFront Only
 

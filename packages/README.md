@@ -167,11 +167,14 @@ the secret nothing changes. A game or tournament starting also syncs a linked ev
 `SCHEDULED` past its start, six minutes out so the lifecycle sweep has moved it in progress first.
 A game or tournament ending queues a second, reconciling sync ten minutes later for the provider's
 late corrections. Each notification sets `last_provider_notification_at` on the events it is
-about, and while one is in play (a golf round under way, or a match in progress) with no
-notification for 20 minutes the sweep warns with action `ingestion.providerNotifications.quiet`,
-which a CloudWatch alarm sends to the alerts topic. `PROVIDER_WEBHOOK_POLL_SECONDS`,
-`PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` and `PROVIDER_WEBHOOK_QUIET_AFTER_SECONDS` override the
-three paces (`notified-provider-cadence.ts`).
+about. While one is in play (a golf round under way, or a match in progress) with no
+notification for longer than its league's normal gap between notifications, the sweep warns with
+action `ingestion.providerNotifications.quiet`, which a CloudWatch alarm sends to the alerts
+topic. Each league's gap is in the webhook table (`balldontlie-webhooks.ts`): a period or half plus
+its break with room for overtime, from 75 minutes (NBA) to 120 (World Cup), and 6 hours for a golf
+round, whose first notification after the start is the first group finishing.
+`PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
+paces (`notified-provider-cadence.ts`).
 
 **Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 

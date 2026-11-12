@@ -3,6 +3,7 @@ import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
   BALLDONTLIE_WEBHOOK_EVENT_TYPES,
   BALLDONTLIE_WEBHOOK_GAME_LEAGUES,
+  balldontlieQuietAfterMs,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
@@ -108,6 +109,31 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     expect(parsePlayoffsScope(NHL_PLAYOFFS, `${nhl.eventIdPrefix}2025-postseason`)).toBe(2025);
     expect(parseEplScope(`${epl.eventIdPrefix}2026-matchweek-11`)).not.toBeNull();
     expect(parseWorldCupScope(`${worldcup.eventIdPrefix}2026-knockout`)).not.toBeNull();
+  });
+});
+
+describe('how long a BALLDONTLIE event may stay in play with no notification (#1499)', () => {
+  const quietMinutes = (sport: Sport, externalId: string) => balldontlieQuietAfterMs(sport, externalId) / 60_000;
+
+  it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
+    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
+    expect(quietMinutes(Sport.BASKETBALL, 'nba-2025-postseason')).toBe(75);
+    expect(quietMinutes(Sport.BASKETBALL, 'ncaab-2026-tournament')).toBe(90);
+    expect(quietMinutes(Sport.BASKETBALL, 'ncaaw-2026-tournament')).toBe(75);
+    expect(quietMinutes(Sport.HOCKEY, 'nhl-2025-postseason')).toBe(90);
+    expect(quietMinutes(Sport.SOCCER, 'epl-2026-matchweek-12')).toBe(90);
+    expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(120);
+    for (const league of Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES)) {
+      expect(league.quietAfterMinutes).toBeGreaterThanOrEqual(75);
+    }
+  });
+
+  it('allows a golf round six hours, since its first notification after the start is the first group finishing', () => {
+    expect(quietMinutes(Sport.GOLF, '1133')).toBe(360);
+  });
+
+  it('allows an event no league claims the longest gap of any, so it is never warned about early', () => {
+    expect(quietMinutes(Sport.BASKETBALL, 'wnba-2026-postseason')).toBe(360);
   });
 });
 

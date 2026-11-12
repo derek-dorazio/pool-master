@@ -24,6 +24,12 @@ interface GameLeague {
   eventIdPrefix: string;
   /** The game events subscribed to, without the league key. */
   gameEvents: readonly string[];
+  /**
+   * How long a game of the league may go between two of its notifications in normal play,
+   * with room for overtime, stoppages and a long break (#1499): past it, the webhook may have
+   * stopped. The longest gap is a period or half plus its break, measured in real time.
+   */
+  quietAfterMinutes: number;
 }
 
 const GAME_EVENTS = ['game.started', 'game.period_ended', 'game.ended'] as const;
@@ -34,14 +40,21 @@ const SOCCER_GAME_EVENTS = ['game.started', 'game.halftime', 'game.ended'] as co
  * another league adds it here, or its notifications are acknowledged and dropped.
  */
 export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeague>> = {
-  nfl: { sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'nfl-', gameEvents: GAME_EVENTS },
+  // A quarter runs 45 to 55 minutes, and the second plus halftime about 75.
+  nfl: { sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'nfl-', gameEvents: GAME_EVENTS, quietAfterMinutes: 90 },
   // The playoffs and each playoff round's Clutch Card event (`nba-2025-postseason[-round-1]`).
-  nba: { sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameEvents: GAME_EVENTS },
-  ncaab: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameEvents: GAME_EVENTS },
-  ncaaw: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameEvents: GAME_EVENTS },
-  nhl: { sport: Sport.HOCKEY, eventIdPrefix: 'nhl-', gameEvents: GAME_EVENTS },
-  epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS },
-  worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS },
+  // A quarter runs 30 to 40 minutes, and the second plus halftime about 55.
+  nba: { sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
+  // A men's half runs 45 to 60 minutes, with timeouts and fouls late in the game.
+  ncaab: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameEvents: GAME_EVENTS, quietAfterMinutes: 90 },
+  // A quarter runs 30 to 40 minutes, and the second plus halftime about 55.
+  ncaaw: { sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
+  // A period runs about 35 minutes plus an 18-minute intermission; playoff overtime runs longer.
+  nhl: { sport: Sport.HOCKEY, eventIdPrefix: 'nhl-', gameEvents: GAME_EVENTS, quietAfterMinutes: 90 },
+  // Halftime comes about 50 minutes in; the end about 65 after it, with the break.
+  epl: { sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 90 },
+  // As the EPL, and a knockout match adds extra time and penalties after the second half.
+  worldcup: { sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameEvents: SOCCER_GAME_EVENTS, quietAfterMinutes: 120 },
 };
 
 /** Where in play each subscribed game event falls (#1499). */
@@ -63,6 +76,30 @@ const GOLF_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
   'pga.tournament.ended': 'END',
 };
 const GOLF_EVENT_TYPES = Object.keys(GOLF_EVENT_PHASES);
+
+/**
+ * How long a golf round may go between notifications: the round starts, then nothing comes until
+ * the first group finishes, four and a half to five hours after the first tee time. Keyed by the
+ * sport, since golf's notifications name a tournament rather than a league's game.
+ */
+const GOLF_QUIET_AFTER_MINUTES = 360;
+const TOURNAMENT_QUIET_AFTER_MINUTES: Readonly<Partial<Record<Sport, number>>> = { [Sport.GOLF]: GOLF_QUIET_AFTER_MINUTES };
+/** The longest quiet any of the provider's events may have in normal play. */
+const BALLDONTLIE_LONGEST_QUIET_MINUTES = Math.max(
+  GOLF_QUIET_AFTER_MINUTES,
+  ...Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES).map((league) => league.quietAfterMinutes),
+);
+
+/**
+ * How long an event of the provider may stay in play with no notification before its webhook is
+ * taken to have stopped (#1499): its league's longest normal gap between notifications, golf's
+ * wait for its first finished round, or the longest of them all for an event no league claims.
+ */
+export function balldontlieQuietAfterMs(sport: Sport, externalId: string): number {
+  const league = Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES)
+    .find((candidate) => candidate.sport === sport && externalId.startsWith(candidate.eventIdPrefix));
+  return (league?.quietAfterMinutes ?? TOURNAMENT_QUIET_AFTER_MINUTES[sport] ?? BALLDONTLIE_LONGEST_QUIET_MINUTES) * 60_000;
+}
 
 /** Every event type the endpoint subscribes to, for its setup (packages/README.md). */
 export const BALLDONTLIE_WEBHOOK_EVENT_TYPES: readonly string[] = [

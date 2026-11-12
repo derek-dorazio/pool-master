@@ -1507,7 +1507,8 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     providerIds: ['balldontlie'],
     pollIntervalMs: 15 * MINUTE,
     roundPollIntervalMs: 2 * MINUTE,
-    quietAfterMs: 20 * MINUTE,
+    // A 20-minute window for every event but `six-hour-round`, whose league's gap is longer.
+    quietAfterMs: (_sport: Sport, quietEvent: { externalId: string }) => (quietEvent.externalId === 'six-hour-round' ? 360 : 20) * MINUTE,
   };
   const adminConfig = {
     ...createEnabledScheduleConfig(),
@@ -1618,7 +1619,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     expect(pollsOf(notified, 'nfl-week-11')).toBe(2);
   });
 
-  it('warns once per 20 quiet minutes about a notified event in play with no notification for 20 minutes', async () => {
+  it('warns once per quiet window about a notified event in play with no notification for its window (here 20 minutes)', async () => {
     const { sweepAt, quietWarnings } = paced();
     const quiet = event('balldontlie', 'nfl-week-11', {
       playUnderwaySince: new Date(T0.getTime() - 60 * MINUTE),
@@ -1653,6 +1654,17 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
     expect(quietWarnings()).toHaveLength(0);
     await sweepAt(Sport.GOLF, 1, [starting]);
     expect(quietWarnings()).toEqual([[expect.objectContaining({ data: expect.objectContaining({ lastProviderNotificationAt: null, quietMinutes: 20 }) }), expect.any(String)]]);
+  });
+
+  it('takes each event\'s own quiet window, so an event whose league is quiet for hours in normal play is not warned about early', async () => {
+    const { sweepAt, quietWarnings } = paced();
+    const round = event('balldontlie', 'six-hour-round', { playUnderwaySince: new Date(T0.getTime() - 300 * MINUTE) });
+
+    await sweepAt(Sport.GOLF, 0, [round]);
+    await sweepAt(Sport.GOLF, 59, [round]);
+    expect(quietWarnings()).toHaveLength(0);
+    await sweepAt(Sport.GOLF, 60, [round]);
+    expect(quietWarnings()).toEqual([[expect.objectContaining({ data: expect.objectContaining({ eventId: 'six-hour-round', quietMinutes: 360 }) }), expect.any(String)]]);
   });
 
   it('does not warn about an event out of play, one notified recently, or one whose provider sends no notifications', async () => {

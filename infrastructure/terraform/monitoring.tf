@@ -138,7 +138,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 # --- Provider webhook notifications (#1499) ---
 #
 # Core API warns with action `ingestion.providerNotifications.quiet` when an event is in play and
-# its provider has sent no webhook notification about it for 20 minutes: the webhook may have
+# its provider has sent no webhook notification about it for longer than its league's normal gap
+# between notifications (90 minutes for the NFL, 6 hours for a golf round): the webhook may have
 # stopped, and that event's scores then move only at the 15-minute safety-net poll. Created only
 # once the BALLDONTLIE webhook secret is set, since before then no notification is expected.
 
@@ -167,6 +168,6 @@ resource "aws_cloudwatch_metric_alarm" "provider_notifications_quiet" {
   statistic           = "Sum"
   threshold           = 1
   treat_missing_data  = "notBreaching"
-  alarm_description   = "An event in play has had no provider webhook notification for 20 minutes; check the BALLDONTLIE webhook endpoint"
+  alarm_description   = "An event in play has had no provider webhook notification for longer than its league's normal gap; check the BALLDONTLIE webhook endpoint"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 }

@@ -111,7 +111,7 @@ export function createScheduledEventReader({
                 where: { status: MatchStatus.IN_PROGRESS },
                 orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } },
                 take: 1,
-                select: { scheduledDate: true, updatedAt: true },
+                select: { scheduledDate: true },
               },
             },
           })).map(({ matches, ...event }) => ({ ...event, playedInRounds, playUnderwaySince: matchUnderwaySince(matches) }));
@@ -141,10 +141,10 @@ function roundUnderwaySince(rounds: { scheduledDate: Date; scheduledEndAt: Date 
 }
 
 /**
- * When the match in progress longest began (#1499), or null when none is: its scheduled start,
- * or with none recorded, when it last changed (its move into progress, at the latest).
+ * When the match in progress longest began (#1499): its scheduled start. Null when no match is in
+ * progress, or none has a scheduled start, since a row's last change is not when play began.
  */
-function matchUnderwaySince(matches: { scheduledDate: Date | null; updatedAt: Date }[]): Date | null {
+function matchUnderwaySince(matches: { scheduledDate: Date | null }[]): Date | null {
   const match = matches.at(0);
-  return match === undefined ? null : match.scheduledDate ?? match.updatedAt;
+  return match?.scheduledDate ?? null;
 }

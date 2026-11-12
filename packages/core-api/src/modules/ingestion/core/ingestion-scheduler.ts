@@ -140,14 +140,18 @@ export interface IngestionScheduledEventReader {
  * How the live-score sweep paces the events of providers that send webhook notifications
  * (#1499). Each notification syncs its event within a minute, so the sweep is only their safety
  * net: it polls each such event every `pollIntervalMs`, one played in rounds (golf) every
- * `roundPollIntervalMs` while a round is under way, and warns when play has gone on for
- * `quietAfterMs` with no notification. Other providers' events keep the admin's interval.
+ * `roundPollIntervalMs` while a round is under way, and warns when play has gone on for the
+ * event's `quietAfterMs` with no notification. Other providers' events keep the admin's interval.
  */
 export interface NotifiedProviderCadence {
   providerIds: readonly string[];
   pollIntervalMs: number;
   roundPollIntervalMs: number;
-  quietAfterMs: number;
+  /**
+   * How long an event may stay in play with no notification before the sweep warns: the longest
+   * gap its league's notifications have in normal play, such as a quarter and halftime.
+   */
+  quietAfterMs: (sport: Sport, event: ScheduledEventRef) => number;
 }
 
 /** How often the live-score sweep looks for due events while a provider's cadence is set. */
@@ -557,7 +561,7 @@ export class IngestionScheduler {
   }
 
   /**
-   * Warns, at most once per quiet stretch of `quietAfterMs`, when a notified provider's event has
+   * Warns, at most once per quiet stretch of the event's `quietAfterMs`, when a notified provider's event has
    * been in play that long with no notification about it: its webhook may have stopped, and
    * until it is fixed the event's scores move only at the safety-net pace. The warning's action
    * is what the log alarm counts (infrastructure/terraform).
@@ -571,10 +575,11 @@ export class IngestionScheduler {
     pacing: LiveScorePacing,
   ): void {
     if (event.playUnderwaySince === null) return;
+    const quietAfterMs = cadence.quietAfterMs(sport, event);
     const heardFromAt = Math.max(event.playUnderwaySince.getTime(), event.lastProviderNotificationAt?.getTime() ?? 0);
-    if (nowMs - heardFromAt < cadence.quietAfterMs) return;
+    if (nowMs - heardFromAt < quietAfterMs) return;
     const warnedAt = pacing.quietWarnedAt.get(key);
-    if (warnedAt !== undefined && nowMs - warnedAt < cadence.quietAfterMs) return;
+    if (warnedAt !== undefined && nowMs - warnedAt < quietAfterMs) return;
     pacing.quietWarnedAt.set(key, nowMs);
     this.logger?.warn({
       action: 'ingestion.providerNotifications.quiet',

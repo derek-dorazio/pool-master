@@ -104,11 +104,10 @@ describe('createScheduledEventReader', () => {
       await expect(since({ roundSchedule: [] })).resolves.toBeNull();
     });
 
-    it('reads a sport played in matches from its match in progress longest: its scheduled start, else when it last changed', async () => {
+    it('reads a sport played in matches from its match in progress longest, by its scheduled start, and takes one with no start as not in play', async () => {
       const kickoff = new Date('2026-11-09T11:30:00.000Z');
-      const changed = new Date('2026-11-09T11:40:00.000Z');
-      await expect(since({ matches: [{ scheduledDate: kickoff, updatedAt: changed }] }, Sport.AMERICAN_FOOTBALL)).resolves.toEqual(kickoff);
-      await expect(since({ matches: [{ scheduledDate: null, updatedAt: changed }] }, Sport.AMERICAN_FOOTBALL)).resolves.toEqual(changed);
+      await expect(since({ matches: [{ scheduledDate: kickoff }] }, Sport.AMERICAN_FOOTBALL)).resolves.toEqual(kickoff);
+      await expect(since({ matches: [{ scheduledDate: null }] }, Sport.AMERICAN_FOOTBALL)).resolves.toBeNull();
       await expect(since({ matches: [] }, Sport.AMERICAN_FOOTBALL)).resolves.toBeNull();
     });
 
@@ -122,7 +121,7 @@ describe('createScheduledEventReader', () => {
       const football = reader(['bdl']);
       await football.read.listLiveScoreEvents({ sport: Sport.AMERICAN_FOOTBALL, now: NOW });
       expect(football.findMany.mock.calls[0]?.[0].select).toEqual(expect.objectContaining({
-        matches: { where: { status: MatchStatus.IN_PROGRESS }, orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } }, take: 1, select: { scheduledDate: true, updatedAt: true } },
+        matches: { where: { status: MatchStatus.IN_PROGRESS }, orderBy: { scheduledDate: { sort: 'asc', nulls: 'last' } }, take: 1, select: { scheduledDate: true } },
       }));
     });
   });
