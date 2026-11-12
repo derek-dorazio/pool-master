@@ -96,6 +96,34 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(handleApply).toHaveBeenCalledTimes(1);
   });
 
+  it("marks every item in selectedIds as picked and shows the multi-pick's apply label", () => {
+    render(
+      <PickerModal
+        applyLabel="Add selected (2)"
+        getItemLabel={(item) => item.label}
+        items={[
+          { id: "ocean", label: "Ocean" },
+          { id: "forest", label: "Forest" },
+          { id: "desert", label: "Desert" },
+        ]}
+        onApply={vi.fn()}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        onSelect={vi.fn()}
+        open
+        search={{ label: "Find", onChange: vi.fn(), testId: "picker-search", value: "" }}
+        selectedIds={new Set(["ocean", "desert"])}
+        title="Choose places"
+      />,
+    );
+
+    expect(screen.getByTestId("picker-modal-item-ocean")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("picker-modal-item-desert")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("picker-modal-item-forest")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Add selected (2)" })).toBeEnabled();
+    expect(screen.getByTestId("picker-search")).toBeInTheDocument();
+  });
+
   it("shows read-only detail metadata and copies the text it was given", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
