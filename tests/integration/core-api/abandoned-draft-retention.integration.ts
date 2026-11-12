@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { AbandonedDraftRetention } from '../../../packages/core-api/src/modules/contests/abandoned-draft-retention';
+import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
@@ -21,6 +22,12 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
+/**
+ * Every contest this suite seeds carries this name prefix, so its reads count only its own rows:
+ * suites share one database, and a contest another suite left behind must not change a count here.
+ */
+const CONTEST_NAME_PREFIX = 'Retention ';
+
 /** A contest of `status` in the league on the events, set up as the commissioner's form leaves one. */
 async function seedContest(leagueId: string, status: ContestStatus, sportEventIds: readonly string[]) {
   const prisma = getPrisma();
@@ -28,7 +35,7 @@ async function seedContest(leagueId: string, status: ContestStatus, sportEventId
     data: {
       leagueId,
       seasonYear: 2026,
-      name: `Retention ${status} ${randomUUID().slice(0, 8)}`,
+      name: `${CONTEST_NAME_PREFIX}${status} ${randomUUID().slice(0, 8)}`,
       status,
       selectionType: 'TIERED',
       sportEvents: { create: sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })) },
@@ -40,6 +47,7 @@ async function seedContest(leagueId: string, status: ContestStatus, sportEventId
         },
       },
     },
+    include: { configuration: { select: { id: true } } },
   });
 }
 
@@ -52,7 +60,12 @@ function retention() {
 }
 
 async function remainingContestIds(): Promise<string[]> {
-  return (await getPrisma().contest.findMany({ select: { id: true }, orderBy: { id: 'asc' } })).map((contest) => contest.id);
+  const contests = await getPrisma().contest.findMany({
+    where: { name: { startsWith: CONTEST_NAME_PREFIX } },
+    select: { id: true },
+    orderBy: { id: 'asc' },
+  });
+  return contests.map((contest) => contest.id);
 }
 
 describe('abandoned draft contest retention (#1195)', () => {
@@ -67,8 +80,9 @@ describe('abandoned draft contest retention (#1195)', () => {
     expect(await remainingContestIds()).toEqual([]);
     await expect(prisma.contestSportEvent.count({ where: { contestId: draft.id } })).resolves.toBe(0);
     await expect(prisma.contestConfiguration.count({ where: { contestId: draft.id } })).resolves.toBe(0);
-    await expect(prisma.participantContestScoringRule.count()).resolves.toBe(0);
-    await expect(prisma.contestPrizeDefinition.count()).resolves.toBe(0);
+    const contestConfigurationId = expectDefined(draft.configuration, 'the draft configuration').id;
+    await expect(prisma.participantContestScoringRule.count({ where: { contestConfigurationId } })).resolves.toBe(0);
+    await expect(prisma.contestPrizeDefinition.count({ where: { contestConfigurationId } })).resolves.toBe(0);
     await expect(prisma.sportEvent.count({ where: { id: event.id } })).resolves.toBe(1);
   });
 
@@ -112,7 +126,7 @@ describe('abandoned draft contest retention (#1195)', () => {
     expect(await retention().purge(new Date())).toBe(0);
 
     expect(await remainingContestIds()).toEqual(kept.map((contest) => contest.id).sort());
-    await expect(getPrisma().contestConfiguration.count()).resolves.toBe(3);
+    await expect(getPrisma().contestConfiguration.count({ where: { contestId: { in: kept.map((contest) => contest.id) } } })).resolves.toBe(3);
   });
 
   it('deletes abandoned drafts across leagues in bounded batches until a batch comes back short', async () => {
