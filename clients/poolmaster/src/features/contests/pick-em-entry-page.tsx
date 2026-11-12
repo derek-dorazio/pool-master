@@ -10,16 +10,15 @@ import {
 import type { ContestDto, SaveGamePicksRequest } from '@/lib/api';
 import {
   Notice,
-  Button,
   ErrorState,
   formatDateTimeDisplay,
   FormField,
-  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
+  SectionCard,
   Select,
-  Tile,
+  Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
@@ -28,6 +27,7 @@ import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
+import { EntrySubmitBar } from './entry-submit-bar';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
@@ -248,7 +248,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         </Notice>
       ) : null}
 
-      <Tile>
+      <SectionCard headingLevel={3} padded testId="pick-em-scorecard" title={`This ${period}`}>
         {isSurvivor ? (
           <MetricGrid>
             <MetricTile
@@ -276,22 +276,25 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           />
         </MetricGrid>
         )}
-      </Tile>
+      </SectionCard>
 
       {pickError ? <Notice data-testid="pick-em-pick-error" tone="danger">{pickError}</Notice> : null}
 
-      <Tile>
-        <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-2" data-testid="contest-entry-builder-heading">
-          {canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
-        </Heading>
+      <SectionCard
+        headingLevel={3}
+        padded
+        testId="pick-em-picks"
+        title={canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
+        titleTestId="contest-entry-builder-heading"
+      >
         {canChange ? (
-          <p className="mb-5 text-sm text-muted-foreground">
+          <Text as="p" size="sm" variant="meta">
             {isSurvivor
               ? `Tap the one ${participant.one} you think wins this ${period}. If that pick loses, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again.`
               : gamePicks.mode === PickEmMode.CONFIDENCE
               ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
               : `${pickInstruction}. Each correct pick scores 1 point.`}
-          </p>
+          </Text>
         ) : null}
         <PickEmGames
           canChange={canChange}
@@ -308,43 +311,36 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             text: tiebreakerDraft ?? (gamePicks.tiebreakerValue === null ? '' : String(gamePicks.tiebreakerValue)),
           }}
         />
-      </Tile>
+      </SectionCard>
 
       {gamePicks.ownEntry && (canChange || isSubmitted) ? (
-        <Tile className="space-y-3" data-testid="pick-em-submit-panel">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <Heading level={3} variant="card" size="xl" tone="inherit">Submit</Heading>
-            <span className="text-sm text-muted-foreground" data-testid="pick-em-progress">
-              {isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
-            </span>
-          </div>
+        <EntrySubmitBar
+          error={submitMutation.error ? errorMessage(submitMutation.error, 'We could not submit this week. Please try again.') : null}
+          errorTestId="pick-em-submit-error"
+          hint={isSubmitted ? null : hint}
+          hintTestId="pick-em-submit-hint"
+          progress={isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
+          progressTestId="pick-em-progress"
+          submit={isSubmitted ? null : {
+            disabled: !gamePicks.canSubmit || submitMutation.isPending || saveMutation.isPending,
+            isSubmitting: submitMutation.isPending,
+            label: isPlayoff ? 'Submit entry' : 'Submit week',
+            onSubmit: () => {
+              submitMutation.reset();
+              submitMutation.mutate();
+            },
+            testId: 'pick-em-submit',
+          }}
+          testId="pick-em-submit-panel"
+        >
           {isSubmitted ? (
             <Notice data-testid="pick-em-submitted" title="Submitted" tone="success">
               {isSurvivor
                 ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its ${match.one} starts.`
                 : 'This week counts. You can still change a pick until its game kicks off.'}
             </Notice>
-          ) : (
-            <>
-              {hint ? <p className="text-sm text-muted-foreground" data-testid="pick-em-submit-hint">{hint}</p> : null}
-              <Button
-                data-testid="pick-em-submit"
-                disabled={!gamePicks.canSubmit || submitMutation.isPending || saveMutation.isPending}
-                onClick={() => {
-                  submitMutation.reset();
-                  submitMutation.mutate();
-                }}
-              >
-                {submitMutation.isPending ? 'Submitting...' : isPlayoff ? 'Submit entry' : 'Submit week'}
-              </Button>
-            </>
-          )}
-          {submitMutation.error ? (
-            <Notice data-testid="pick-em-submit-error" tone="danger">
-              {errorMessage(submitMutation.error, 'We could not submit this week. Please try again.')}
-            </Notice>
           ) : null}
-        </Tile>
+        </EntrySubmitBar>
       ) : null}
     </ContestEntryFrame>
   );

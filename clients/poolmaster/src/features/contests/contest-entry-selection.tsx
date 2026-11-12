@@ -1,18 +1,26 @@
 import { formatParticipantStatusLabel, type Sport, type SportNoun } from "@poolmaster/shared/domain";
 import { participantAffiliation, selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
+import { ParticipantLine } from "./participant-line";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
-  Notice,
   Button,
   Checkbox,
   Chip,
   cn,
   FormField,
-  Heading,
+  ExpandableRow,
+  SectionCard,
+  SectionEmpty,
   Select,
+  SimpleTable,
   StatusBadge,
-  Tile,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Text,
 } from "@/features/shared/ui";
 
 type SelectionState = SelectionStateResponse;
@@ -125,22 +133,20 @@ export function SelectionParticipantCard({
         {/* Wraps so that on a phone the badge drops under the name instead of squeezing it. */}
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0">
-            <div className="font-medium text-foreground">
-              {selectionParticipantLabel(participant)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {participantAffiliation(participant) ?? participant.role ?? "In the field"}
-            </div>
+            <ParticipantLine
+              affiliation={participantAffiliation(participant) ?? participant.role ?? "In the field"}
+              name={selectionParticipantLabel(participant)}
+            />
           </div>
           <StatusBadge tone={isSelected ? "success" : "neutral"}>
             {actionLabel}
           </StatusBadge>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap gap-2">
           {getParticipantMetaSummary(participant, sport).map((part) => (
-            <span key={`${participant.sportEventParticipantId}-${part}`}>
+            <Text key={`${participant.sportEventParticipantId}-${part}`} variant="caption">
               {part}
-            </span>
+            </Text>
           ))}
         </div>
       </div>
@@ -156,7 +162,7 @@ function SelectedParticipantChips({ group }: { group: SelectionGroup }) {
   }
 
   return (
-    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+    <div className="mt-2 flex flex-wrap gap-2">
       {selectedParticipants.map((participant) => (
         <Chip
           data-testid={`contest-entry-selected-${participant.sportEventParticipantId}`}
@@ -194,45 +200,36 @@ export function EditableSelectionGroup({
   const statusLabel = getGroupStatusLabel(group);
 
   return (
-    <Tile
-      className={cn(!isComplete ? "bg-muted/30" : null)}
-      data-testid={`contest-entry-group-${group.groupId}`}
-      padding="sm"
-      radius="lg"
-      variant="subtle"
-    >
-      <Button
-        className="h-auto min-h-0 flex-wrap items-start justify-between gap-3 p-0 hover:bg-transparent"
-        data-testid={`contest-entry-group-toggle-${group.groupId}`}
-        layout="row"
-        onClick={onToggle}
-        ref={setToggleRef}
-        variant="ghost"
-      >
-        <div>
-          <Heading level={4} variant="subtitle">
-            {group.groupName}
-          </Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
-          </p>
-          <SelectedParticipantChips group={group} />
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <StatusBadge tone={isComplete ? "neutral" : "warning"}>
-            {statusLabel}
-          </StatusBadge>
-          <span className="text-sm text-muted-foreground">
+    <SectionCard
+      headingLevel={4}
+      testId={`contest-entry-group-${group.groupId}`}
+      title={group.groupName}
+      trailing={(
+        <>
+          <Text data-testid={`contest-entry-group-count-${group.groupId}`} variant="meta">
             {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
-          </span>
-          <span className="text-xs uppercase text-muted-foreground">
-            {isExpanded ? "Hide tier" : isComplete ? "Review tier" : "Open tier"}
-          </span>
-        </div>
-      </Button>
-
-      {isExpanded ? (
-        <div className="mt-4 space-y-3">
+          </Text>
+          <StatusBadge tone={isComplete ? "neutral" : "warning"}>{statusLabel}</StatusBadge>
+        </>
+      )}
+    >
+      <ExpandableRow
+        isOpen={isExpanded}
+        label={`${group.groupName}: ${isExpanded ? "hide tier" : isComplete ? "review tier" : "open tier"}`}
+        look="card"
+        onToggle={onToggle}
+        summary={(
+          <div className="space-y-2" data-testid={`contest-entry-group-summary-${group.groupId}`}>
+            <Text as="p" variant="meta">
+              Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
+            </Text>
+            <SelectedParticipantChips group={group} />
+          </div>
+        )}
+        toggleRef={setToggleRef}
+        toggleTestId={`contest-entry-group-toggle-${group.groupId}`}
+      >
+        <div className="space-y-3 p-4">
           {group.participants.map((participant) => (
             <SelectionParticipantCard
               canSelect={canSelect}
@@ -246,10 +243,18 @@ export function EditableSelectionGroup({
             />
           ))}
         </div>
-      ) : null}
-    </Tile>
+      </ExpandableRow>
+    </SectionCard>
   );
 }
+
+/** The locked tier's columns, each width written once. */
+const LOCKED_TIER_COLUMNS = [
+  { id: "participant", label: "", align: "left", width: "" },
+  { id: "contest-rank", label: "Contest rank", align: "right", width: "w-[120px]" },
+  { id: "ranking", label: "Ranking", align: "right", width: "w-[110px]" },
+  { id: "status", label: "Status", align: "right", width: "w-[90px]" },
+] as const;
 
 export function LockedSelectionGroup({
   group,
@@ -263,68 +268,65 @@ export function LockedSelectionGroup({
   const selectedParticipants = getSelectedParticipants(group);
 
   return (
-    <Tile
-      data-testid={`contest-entry-group-${group.groupId}`}
-      padding="sm"
-      radius="lg"
-      variant="subtle"
+    <SectionCard
+      headingLevel={4}
+      testId={`contest-entry-group-${group.groupId}`}
+      title={group.groupName}
+      trailing={<StatusBadge tone="locked">Locked</StatusBadge>}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Heading level={4} variant="subtitle">
-            {group.groupName}
-          </Heading>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Frozen lineup from Tier {group.groupNumber}.
-          </p>
-        </div>
-        <StatusBadge tone="locked">Locked</StatusBadge>
+      <div className="overflow-x-auto">
+        <SimpleTable className="min-w-[32rem] table-fixed">
+            <colgroup>
+              {LOCKED_TIER_COLUMNS.map((column) => <col className={column.width} key={column.id} />)}
+            </colgroup>
+            <TableHead tone="plain">
+              <tr className="border-b border-border">
+                {LOCKED_TIER_COLUMNS.map((column) => (
+                  <TableHeaderCell align={column.align} className="py-3" key={column.id}>
+                    <Text className={cn("whitespace-nowrap", column.id === "participant" ? "capitalize" : undefined)} variant="label">
+                      {column.id === "participant" ? noun.one : column.label}
+                    </Text>
+                  </TableHeaderCell>
+                ))}
+              </tr>
+            </TableHead>
+            <TableBody>
+              {selectedParticipants.map((participant, index) => (
+                <TableRow
+                  className={index === 0 ? "border-t-0" : undefined}
+                  data-testid={`contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`}
+                  key={participant.sportEventParticipantId}
+                >
+                  <TableCell className="py-3">
+                    <ParticipantLine
+                      affiliation={participantAffiliation(participant) ?? participant.role ?? "In the field"}
+                      density="compact"
+                      name={selectionParticipantLabel(participant)}
+                      truncate
+                    />
+                  </TableCell>
+                  <TableCell align="right" className="py-3">
+                    <Text tone="default">{participant.orderIndex ? `#${participant.orderIndex}` : "-"}</Text>
+                  </TableCell>
+                  <TableCell align="right" className="py-3">
+                    <Text variant="meta">
+                      {participant.ranking !== undefined && participant.ranking !== null
+                        ? `#${participant.ranking}`
+                        : "-"}
+                    </Text>
+                  </TableCell>
+                  <TableCell align="right" className="py-3">
+                    <Text variant="meta">{formatParticipantStatusLabel(participant.status ?? "ACTIVE", sport)}</Text>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+        </SimpleTable>
       </div>
-
-      <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
-        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
-          <span className="capitalize">{noun.one}</span>
-          <span className="text-right">Contest rank</span>
-          <span className="text-right">Ranking</span>
-          <span className="text-right">Status</span>
-        </div>
-        <div className="divide-y divide-border">
-          {selectedParticipants.length ? (
-            selectedParticipants.map((participant) => (
-              <div
-                className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 px-4 py-3 text-sm"
-                data-testid={`contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`}
-                key={participant.sportEventParticipantId}
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-foreground">
-                    {selectionParticipantLabel(participant)}
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {participantAffiliation(participant) ?? participant.role ?? "In the field"}
-                  </div>
-                </div>
-                <span className="text-right text-foreground">
-                  {participant.orderIndex ? `#${participant.orderIndex}` : "-"}
-                </span>
-                <span className="text-right text-muted-foreground">
-                  {participant.ranking !== undefined && participant.ranking !== null
-                    ? `#${participant.ranking}`
-                    : "-"}
-                </span>
-                <span className="text-right text-muted-foreground">
-                  {formatParticipantStatusLabel(participant.status ?? "ACTIVE", sport)}
-                </span>
-              </div>
-            ))
-          ) : (
-            <Notice className="m-4">
-              No {noun.one} was saved from this tier.
-            </Notice>
-          )}
-        </div>
-      </Tile>
-    </Tile>
+      {selectedParticipants.length ? null : (
+        <SectionEmpty>{`No ${noun.one} was saved from this tier.`}</SectionEmpty>
+      )}
+    </SectionCard>
   );
 }
 

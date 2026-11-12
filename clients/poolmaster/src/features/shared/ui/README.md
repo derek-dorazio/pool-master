@@ -176,9 +176,11 @@ markers and an optional line underneath.
 Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
 gold numeral style, with an optional picture. `FaqList` shows questions that open to their
 answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
-days, hours and minutes as one timer. The event page kit (`StartButton`, `LandingSection`,
-`PhotoHero`, `StickyActionBar`, `NextUpCard`, `LandingDisclaimer`) is a product piece, so it
-lives in `features/event-pages/components`.
+days, hours and minutes as one timer. `StickyActionBar` is the slim bar a phone keeps at the
+bottom while the block it stands in for is out of view: an event page's hero button, or a pick
+page's submit section. The event page kit (`StartButton`, `LandingSection`, `PhotoHero`,
+`NextUpCard`, `LandingDisclaimer`) is a product piece, so it lives in
+`features/event-pages/components`.
 
 Extra information is one of the four more-info pieces, chosen by the question it
 answers (`rules/ux-rules.md` §15 *Showing More*): `HelpTip` (?) says how something
