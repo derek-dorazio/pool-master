@@ -1035,7 +1035,10 @@ When an agent finishes a slice:
    the failing test was observed to fail before the fix landed.
 6. **Report and stop.** Summarize the change and what the triggers flag. Do not merge.
 
-Merge happens when the owner asks. At that point the agent runs
+Merge happens when the owner asks. Before squashing, merge `main` into the branch and run the
+migration order check locally (`npm run rules:check:migration-timestamps`): a green run from
+before `main` gained a later migration would otherwise merge one that sorts too early, wherever
+`main` does not require a branch to be up to date. At that point the agent runs
 `gh pr merge --squash --delete-branch`. The `Closes #NN` keyword closes the issue on merge;
 the agent still adds the closing comment per §1, since the keyword records *that* it closed,
 not *what happened*.
