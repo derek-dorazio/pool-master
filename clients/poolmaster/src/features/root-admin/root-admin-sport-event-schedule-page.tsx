@@ -61,7 +61,6 @@ function SportEventScheduleForm({
   sportEvent: SportEventDto;
   rounds: readonly SportEventRoundDto[];
 }) {
-  useManagePageOwnsHeading();
   const eventId = sportEvent.id;
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-schedule-page',
@@ -146,6 +145,8 @@ function SportEventScheduleForm({
 
 /** Reschedule an event's rounds, on a page of its own. */
 export function RootAdminSportEventSchedulePage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const { event, round } = useManagedSport().definition.vocabulary;
   const tournamentQuery = useSportEventQuery(eventId);

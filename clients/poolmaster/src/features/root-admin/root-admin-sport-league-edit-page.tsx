@@ -21,7 +21,6 @@ const editSchema = z.object({
 type EditValues = z.infer<typeof editSchema>;
 
 function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  useManagePageOwnsHeading();
   const navigate = useNavigate();
   const { sport } = useManagedSport();
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
@@ -67,5 +66,7 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
 
 /** Edit a sport league's name and match keyword, with one Save. */
 export function RootAdminSportLeagueEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   return <SportLeaguePage>{(sportLeague) => <SportLeagueEditForm sportLeague={sportLeague} />}</SportLeaguePage>;
 }

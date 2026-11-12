@@ -183,6 +183,19 @@ describe('Commissioner tools guard', () => {
     expect(screen.getByRole('link', { name: 'Back to league' })).toHaveAttribute('href', '/league/BIGDAWGS');
   });
 
+  it('opens League settings with one page heading and a fact line of its plan, members and start date', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'League settings' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    const meta = screen.getByTestId('league-settings-header-meta');
+    expect(meta).toHaveTextContent(/plan/);
+    expect(await within(meta).findByText('2 members')).toBeInTheDocument();
+    expect(meta).toHaveTextContent(/^.*Created /);
+  });
+
   it('opens Contest types inside Commissioner tools with Contests lit, since it sits beside Create contest', async () => {
     primeMocks();
 

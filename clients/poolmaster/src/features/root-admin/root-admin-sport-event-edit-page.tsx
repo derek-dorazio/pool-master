@@ -78,7 +78,6 @@ function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean, timeZone
 }
 
 function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
-  useManagePageOwnsHeading();
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-edit-page',
   });
@@ -179,6 +178,8 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
  * unplayed rounds against it, par per round, with one Save.
  */
 export function RootAdminSportEventEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { eventId = '' } = useParams<{ eventId: string }>();
   const tournamentQuery = useSportEventQuery(eventId);
   const tournament = tournamentQuery.data;

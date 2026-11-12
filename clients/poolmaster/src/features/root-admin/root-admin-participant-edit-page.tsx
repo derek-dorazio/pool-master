@@ -59,7 +59,6 @@ function toBody(values: EditValues): UpdateParticipantData['body'] {
 }
 
 function ParticipantEditForm({ player }: { player: ParticipantDto }) {
-  useManagePageOwnsHeading();
   const logger = getLogger().child({
     feature: 'root-admin-participant-edit-page',
   });
@@ -162,6 +161,8 @@ function ParticipantEditForm({ player }: { player: ParticipantDto }) {
 
 /** Edit a participant's details and status, with one Save. */
 export function RootAdminParticipantEditPage() {
+  // Claimed at once, so Manage never shows its own title while the page loads.
+  useManagePageOwnsHeading();
   const { participant } = useManagedSport().definition.vocabulary;
   const { participantId = '' } = useParams<{ participantId: string }>();
   const playerQuery = useParticipantQuery(participantId);

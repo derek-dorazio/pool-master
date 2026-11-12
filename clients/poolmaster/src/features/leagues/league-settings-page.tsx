@@ -63,6 +63,10 @@ export function LeagueSettingsPage() {
     return [...new Set(names)].sort((left, right) => left.localeCompare(right));
   }, [members]);
 
+  const activeMemberCount = members
+    ? members.filter((member) => member.status === LeagueMembershipStatus.ACTIVE).length
+    : null;
+
   // The guard above this page has already loaded the league context.
   if (!league) {
     return null;
@@ -72,7 +76,19 @@ export function LeagueSettingsPage() {
 
   return (
     <div className="space-y-8" data-testid="league-settings-page">
-      <PageHeader testId="league-settings-header" title="League settings" />
+      <PageHeader
+        meta={(
+          <>
+            <span>{`${LEAGUE_PLAN_LABEL[league.planEntitlements.plan]} plan`}</span>
+            {activeMemberCount === null ? null : (
+              <span>{`${activeMemberCount} ${activeMemberCount === 1 ? 'member' : 'members'}`}</span>
+            )}
+            <span>{`Created ${formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')}`}</span>
+          </>
+        )}
+        testId="league-settings-header"
+        title="League settings"
+      />
       {isInactive ? (
         <Alert data-testid="league-inactive-banner" title="This league is inactive." tone="warning">
           Members can still see standings and history. Activate the league in the danger zone to
