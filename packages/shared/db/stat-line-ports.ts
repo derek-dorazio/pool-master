@@ -34,7 +34,8 @@ export interface GameStatLineWriteOutcome {
 export interface SportEventParticipantStatLineRepository {
   /**
    * Replaces each player's line for the game, all or none. A line that already holds exactly
-   * these stats, at this status, is left as it is, its round's completedAt included. `jobs` (the
+   * these stats, at this status, is left as it is, its round's completedAt included. A COMPLETED
+   * line stays COMPLETED, with its completedAt, when an IN_PROGRESS write corrects its stats. `jobs` (the
    * event's leaderboard rebuild, #1466) are written in the same transaction. Returns each write's
    * outcome, in the order given.
    */

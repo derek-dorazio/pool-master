@@ -157,4 +157,39 @@ describe('box scores from a provider', () => {
       ['SELECT sport_leagues', 2],
     ]);
   });
+
+  it('rewrites a live sync\'s changed lines, completing a game that went final, in a fixed handful of statements', async () => {
+    const { externalId } = await linkedFinals();
+    const line = (points: number) => ({ POINTS: points, REBOUNDS: 5, ASSISTS: 4 });
+    await publish(externalId, [
+      boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': line(30), 'bdl-blaze': line(20) }),
+      boxScore(2, ProviderGameState.IN_PROGRESS, { 'bdl-ace': line(10), 'bdl-blaze': line(8) }),
+      boxScore(3, ProviderGameState.IN_PROGRESS, { 'bdl-ace': line(2), 'bdl-blaze': line(1) }),
+    ]);
+
+    // Game 1 unchanged, game 2 goes final, game 3 moves on live.
+    const { result, statements } = await recordStatements(() => publish(externalId, [
+      boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': line(30), 'bdl-blaze': line(20) }),
+      boxScore(2, ProviderGameState.FINAL, { 'bdl-ace': line(25), 'bdl-blaze': line(18) }),
+      boxScore(3, ProviderGameState.IN_PROGRESS, { 'bdl-ace': line(6), 'bdl-blaze': line(3) }),
+    ]));
+
+    expect(result.writeDiagnostics.summary).toMatchObject({ total: 6, unchanged: 2, updated: 4 });
+    // Pinned: the same reads as a first sync and the stored lines with their rounds, then one
+    // delete of the changed lines, one update per status the rewritten rounds take (completed,
+    // still live) and one insert of their lines. A live Clutch Card runs this every few minutes.
+    expect(statementCounts(statements)).toEqual([
+      ['DELETE sport_event_participant_stat_lines', 1],
+      ['INSERT sport_event_participant_stat_lines', 1],
+      ['SELECT event_series', 2],
+      ['SELECT participant_provider_mappings', 1],
+      ['SELECT sport_event_participant_rounds', 1],
+      ['SELECT sport_event_participant_stat_lines', 1],
+      ['SELECT sport_event_participants', 2],
+      ['SELECT sport_event_rounds', 1],
+      ['SELECT sport_events', 2],
+      ['SELECT sport_leagues', 2],
+      ['UPDATE sport_event_participant_rounds', 2],
+    ]);
+  });
 });

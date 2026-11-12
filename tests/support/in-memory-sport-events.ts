@@ -791,9 +791,11 @@ export class InMemorySportEvents {
       replaceGameLines: async (writes, jobs) => {
         if (writes.length === 0) return [];
         this.backgroundJobs.push(...(jobs ?? []));
-        return writes.map(({ sportEventParticipantId, sportEventRoundId, stats, status, completedAt }) => {
+        return writes.map(({ sportEventParticipantId, sportEventRoundId, stats, ...asWritten }) => {
           const key = { sportEventParticipantId, sportEventRoundId };
           let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
+          // As the Prisma adapter does: a completed line is never reopened.
+          const { status, completedAt } = core?.status === 'COMPLETED' && asWritten.status === 'IN_PROGRESS' ? { status: 'COMPLETED' as const, completedAt: core.completedAt ?? asWritten.completedAt } : asWritten;
           const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
           if (core && core.status === status && stats.length > 0 && storedLines.length === stats.length
             && stats.every(({ stat, value }) => storedLines.some((row) => row.stat === stat && row.value === value))) {

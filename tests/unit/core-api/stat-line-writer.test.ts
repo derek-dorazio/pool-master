@@ -80,6 +80,25 @@ describe('writeStatLineGames — what it stores', () => {
     expect(result.writeDiagnostics.summary).toMatchObject({ updated: 1 });
   });
 
+  it('keeps a final game\'s lines completed when the provider flaps the game back to live, taking its corrected stats', async () => {
+    const { store, deps, target } = await setup();
+    await writeStatLineGames(deps, target, [boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': 31 })]);
+
+    await writeStatLineGames(deps, target, [boxScore(1, ProviderGameState.IN_PROGRESS, { 'bdl-ace': 32 })]);
+
+    expect(storedLines(store)).toEqual([['Ace', 1, ParticipantRoundStatus.COMPLETED, 32]]);
+    expect(store.participantRoundRows[0].completedAt).toEqual(NOW);
+  });
+
+  it('leaves a star the provider drops from a later box score of the game with the line they had', async () => {
+    const { store, deps, target } = await setup();
+    await writeStatLineGames(deps, target, [boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': 31, 'bdl-bat': 12 })]);
+
+    await writeStatLineGames(deps, target, [boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': 31 })]);
+
+    expect(storedLines(store)).toEqual([['Ace', 1, ParticipantRoundStatus.COMPLETED, 31], ['Bat', 1, ParticipantRoundStatus.COMPLETED, 12]]);
+  });
+
   it('puts two series\' Game N on the event\'s game N, naming both provider games on its lines', async () => {
     const { store, deps, target } = await setup();
 

@@ -11,7 +11,10 @@
  *
  * A final game's lines are stored COMPLETED; a live game's are stored IN_PROGRESS and rewritten
  * each sync, so standings move while it is played. A game not under way writes nothing: a player
- * keeps whatever line they have. The sync is authoritative: a later sync rewrites a line an admin
+ * keeps whatever line they have. A completed line is never reopened (the repository keeps it
+ * COMPLETED if the provider flaps a final game back to live). A star the provider drops from a
+ * later box score of a game keeps the line they had in it: only the players named are written, so
+ * a vendor that fixes a line it gave the wrong player leaves that line for an admin to clear. The sync is authoritative: a later sync rewrites a line an admin
  * corrected, as admin entry is the stop gap for leagues with no feed (plan Q1, #1531).
  */
 import { ParticipantRoundStatus, ProviderGameState } from '@poolmaster/shared/domain';

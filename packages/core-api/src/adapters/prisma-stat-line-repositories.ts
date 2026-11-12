@@ -5,7 +5,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { GameStatLineStatus, GameStatLineWrite, GameStatLineWriteOutcome, SportEventParticipantStatLineRepository } from '@poolmaster/shared/db';
-import { type BackgroundJobRequest, type SportEventParticipantStatLine, type SportStat } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, type BackgroundJobRequest, type SportEventParticipantStatLine, type SportStat } from '@poolmaster/shared/domain';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 export class PrismaSportEventParticipantStatLineRepository implements SportEventParticipantStatLineRepository {
@@ -14,7 +14,7 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
   /**
    * A fixed handful of statements whatever the box score's size (#1183): the stored rounds
    * and lines are read at once, an unchanged line is left alone, and the rest are deleted,
-   * updated and created in bulk.
+   * updated and created in bulk. A COMPLETED line is never written back to IN_PROGRESS (#1497).
    */
   async replaceGameLines(writes: readonly GameStatLineWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<GameStatLineWriteOutcome[]> {
     if (writes.length === 0) return [];
@@ -24,7 +24,7 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
           sportEventParticipantId: { in: [...new Set(writes.map((write) => write.sportEventParticipantId))] },
           sportEventRoundId: { in: [...new Set(writes.map((write) => write.sportEventRoundId))] },
         },
-        select: { id: true, sportEventParticipantId: true, sportEventRoundId: true, status: true, statLines: { select: { stat: true, value: true } } },
+        select: { id: true, sportEventParticipantId: true, sportEventRoundId: true, status: true, completedAt: true, statLines: { select: { stat: true, value: true } } },
       });
       const storedByKey = new Map(stored.map((round) => [roundKey(round), round]));
 
@@ -44,8 +44,13 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
           added.push(write);
           return { sportEventParticipantId, sportEventRoundId, disposition: 'CREATED' };
         }
-        if (existing.status !== write.status || !sameLine(existing.statLines, write.stats)) {
-          rewritten.push({ roundId: existing.id, write });
+        // A completed line stays completed, its completion time kept: a provider that flaps a
+        // final game back to live still corrects its stats, but never reopens it.
+        const kept: GameStatLineWrite = existing.status === ParticipantRoundStatus.COMPLETED && write.status === ParticipantRoundStatus.IN_PROGRESS
+          ? { ...write, status: ParticipantRoundStatus.COMPLETED, completedAt: existing.completedAt ?? write.completedAt }
+          : write;
+        if (existing.status !== kept.status || !sameLine(existing.statLines, kept.stats)) {
+          rewritten.push({ roundId: existing.id, write: kept });
           return { sportEventParticipantId, sportEventRoundId, disposition: 'UPDATED' };
         }
         return { sportEventParticipantId, sportEventRoundId, disposition: 'UNCHANGED' };

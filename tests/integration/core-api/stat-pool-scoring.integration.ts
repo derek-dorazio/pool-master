@@ -233,6 +233,21 @@ describe('SportEventParticipantStatLineRepository — replacing a game\'s lines'
     expect([after.status, after.completedAt, after.statLines.map((statLine) => statLine.value)]).toEqual([ParticipantRoundStatus.COMPLETED, endedAt, [1]]);
   });
 
+  it('keeps a completed line completed, with its completion time, when an in-progress write corrects its stats', async () => {
+    const { prisma, games, ace } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
+    const endedAt = new Date('2025-10-25T23:00:00.000Z');
+    const write = (value: number) => ({ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value }] });
+    await statLines.replaceGameLines([{ ...write(1), status: ParticipantRoundStatus.COMPLETED, completedAt: endedAt }]);
+
+    const outcomes = await statLines.replaceGameLines([{ ...write(2), status: ParticipantRoundStatus.IN_PROGRESS, completedAt: null }]);
+    const unchanged = await statLines.replaceGameLines([{ ...write(2), status: ParticipantRoundStatus.IN_PROGRESS, completedAt: null }]);
+
+    const after = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: ace.id }, include: { statLines: true } });
+    expect([after.status, after.completedAt, after.statLines.map((statLine) => statLine.value)]).toEqual([ParticipantRoundStatus.COMPLETED, endedAt, [2]]);
+    expect([...outcomes, ...unchanged].map((outcome) => outcome.disposition)).toEqual(['UPDATED', 'UNCHANGED']);
+  });
+
   it('writes nothing and reports nothing for an empty batch', async () => {
     const statLines = new PrismaSportEventParticipantStatLineRepository(getAppPrisma());
 
