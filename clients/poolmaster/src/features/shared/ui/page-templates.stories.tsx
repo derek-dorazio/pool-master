@@ -1,23 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
-import { FormField, Input } from "./form-field";
-import { FormEditorSection, PublicInviteJoinPage } from "./page-templates";
+import { PublicInviteJoinPage } from "./page-templates";
 import { Text } from "./text";
 
 const meta = {
-  title: "Page/Templates",
-  component: FormEditorSection,
-} satisfies Meta<typeof FormEditorSection>;
+  title: "Page/PublicInviteJoinPage",
+  component: PublicInviteJoinPage,
+} satisfies Meta<typeof PublicInviteJoinPage>;
 
 export default meta;
-
-export const EditorSection: StoryObj = {
-  render: () => (
-    <FormEditorSection footer={<Button>Save</Button>} title="Scoring">
-      <FormField label="Scores that count"><Input defaultValue="4" /></FormField>
-    </FormEditorSection>
-  ),
-};
 
 export const InviteJoin: StoryObj = {
   render: () => (

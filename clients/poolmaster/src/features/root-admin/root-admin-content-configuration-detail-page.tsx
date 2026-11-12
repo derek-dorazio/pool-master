@@ -7,11 +7,12 @@ import { SelectionType, getSportDefinition, describeBracketRules, describePickEm
 import {
   Button,
   Checkbox,
-  FormEditorSection,
+  InlineError,
   FormField,
   PageHeader,
   QueryState,
   Input,
+  SectionCard,
   StatusBadge,
   Textarea,
 } from '@/features/shared/ui';
@@ -145,30 +146,8 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
             testId="root-admin-content-configuration-identity"
           />
 
-          <FormEditorSection
-            errorMessage={
-              contestTemplateMutation.isError
-                ? extractErrorMessage(
-                    contestTemplateMutation.error,
-                    { fallback: 'We could not save this contest template right now.' },
-                  )
-                : null
-            }
-            footer={(
-              <Button
-                data-testid="root-admin-content-config-save"
-                disabled={contestTemplateMutation.isPending}
-                onClick={() => contestTemplateMutation.mutate({
-                  templateId: draft.id,
-                  nextDraft: draft,
-                })}
-                type="button"
-              >
-                {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
-              </Button>
-            )}
-            title="Template configuration"
-          >
+          <SectionCard padded title="Template configuration">
+            <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <FormField label="Name">
                   <Input
@@ -265,7 +244,28 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
                   {describeBracketRules()}
                 </p>
               ) : null}
-          </FormEditorSection>
+              {contestTemplateMutation.isError ? (
+                <InlineError>
+                  {extractErrorMessage(contestTemplateMutation.error, {
+                    fallback: 'We could not save this contest template right now.',
+                  })}
+                </InlineError>
+              ) : null}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  data-testid="root-admin-content-config-save"
+                  disabled={contestTemplateMutation.isPending}
+                  onClick={() => contestTemplateMutation.mutate({
+                    templateId: draft.id,
+                    nextDraft: draft,
+                  })}
+                  type="button"
+                >
+                  {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
         </>
         ) : null)}
       </QueryState>

@@ -105,7 +105,7 @@ export {
   PickerModal,
   ReadOnlyDetailModal,
 } from "./modal-templates";
-export { FormEditorSection, PublicInviteJoinPage } from "./page-templates";
+export { PublicInviteJoinPage } from "./page-templates";
 export { Tile } from "./tile";
 export { Countdown } from "./countdown";
 export { ExpandableRow } from "./expandable-row";

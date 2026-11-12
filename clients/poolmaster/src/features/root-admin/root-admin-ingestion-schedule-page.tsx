@@ -4,7 +4,6 @@ import {
   Notice,
   Button,
   Checkbox,
-  FormEditorSection,
   FormField,
   HelpTip,
   Input,
@@ -153,24 +152,8 @@ export function RootAdminIngestionSchedulePage() {
         testId="root-admin-ingestion-schedule"
       >
         {(loadedDraft) => (
-        <FormEditorSection
-          footer={(
-            <Button
-              data-testid="root-admin-ingestion-page-save"
-              disabled={ingestionConfigMutation.isPending}
-              onClick={() => {
-                resetIngestionConfigMutation.reset();
-                ingestionConfigMutation.mutate(loadedDraft);
-              }}
-              type="button"
-            >
-              {ingestionConfigMutation.isPending
-                ? 'Saving...'
-                : 'Save ingestion schedule'}
-            </Button>
-          )}
-          title="Schedule policies"
-        >
+        <SectionCard padded title="Schedule policies">
+          <div className="space-y-4">
           <div className="space-y-3">
             {INGESTION_POLICY_FIELDS.map((field) => {
               const extraKey = 'extraKey' in field ? field.extraKey : undefined;
@@ -236,7 +219,23 @@ export function RootAdminIngestionSchedulePage() {
               );
             })}
           </div>
-        </FormEditorSection>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                data-testid="root-admin-ingestion-page-save"
+                disabled={ingestionConfigMutation.isPending}
+                onClick={() => {
+                  resetIngestionConfigMutation.reset();
+                  ingestionConfigMutation.mutate(loadedDraft);
+                }}
+                type="button"
+              >
+                {ingestionConfigMutation.isPending
+                  ? 'Saving...'
+                  : 'Save ingestion schedule'}
+              </Button>
+            </div>
+          </div>
+        </SectionCard>
         )}
       </QueryState>
     </section>
