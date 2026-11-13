@@ -9,6 +9,11 @@ import type { ContestConfigTemplateDto, SportLeagueDto } from '@/lib/api';
 export interface ContestTypeTile {
   key: string;
   selectionType: SelectionType;
+  /**
+   * Whether another tile of its section has the same format on another kind of event (the NFL's
+   * weekly and playoff Survivor), so the tile names its kind of event beside its format.
+   */
+  sharesFormat?: boolean;
   featured: ContestConfigTemplateDto;
   variations: ContestConfigTemplateDto[];
 }
@@ -69,7 +74,8 @@ function toTiles(
       };
     })
     .sort((left, right) => selectionTypes.indexOf(left.selectionType) - selectionTypes.indexOf(right.selectionType)
-      || byFeaturedOrder(left.featured, right.featured));
+      || byFeaturedOrder(left.featured, right.featured))
+    .map((tile, _index, tiles) => ({ ...tile, sharesFormat: tiles.some((other) => other !== tile && other.selectionType === tile.selectionType) }));
 }
 
 /** How many contest types sport league sections list together: the number beside a sport on Contest types. */

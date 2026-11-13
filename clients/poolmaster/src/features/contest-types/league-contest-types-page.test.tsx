@@ -263,6 +263,21 @@ describe('League › Contest types', () => {
     expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toHaveTextContent('nfl-tiered-doubling name');
   });
 
+  it('names the kind of event beside the format where a league offers one format on both, so the weekly and playoff Survivor read apart', async () => {
+    primeMocks('MEMBER');
+    const survivor = { contestFormat: 'PREDICTION', selectionType: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } };
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
+      ...TEMPLATES,
+      template('nfl-survivor', { id: 'tpl-nfl-survivor', eventType: 'WEEK', ...survivor }),
+      template('nfl-playoff-survivor', { id: 'tpl-nfl-playoff-survivor', eventType: 'KNOCKOUT', ...survivor }),
+    ] } });
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football');
+
+    expect(await screen.findByTestId('contest-type-nfl-nfl-survivor')).toHaveTextContent('Survivor · Weekly');
+    expect(screen.getByTestId('contest-type-nfl-nfl-playoff-survivor')).toHaveTextContent('Survivor · Playoffs');
+    expect(screen.getByTestId('contest-type-nfl-nfl-tiered-doubling')).not.toHaveTextContent('·');
+  });
+
   it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {
     primeMocks('COMMISSIONER');
     renderPage();
