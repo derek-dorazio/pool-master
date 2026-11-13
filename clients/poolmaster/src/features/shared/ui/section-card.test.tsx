@@ -302,6 +302,16 @@ describe("SectionCard edit", () => {
     expect(screen.getByTestId("profile-edit")).toHaveTextContent("Edit");
   });
 
+  it("names the Edit button for a section whose title is not plain text \"Edit section\"", () => {
+    render(
+      <SectionCard edit={{ onClick: vi.fn() }} title={<span>Profile</span>}>
+        <SectionRows><SectionRow layout="setting" name="Name" value="Sam Lee" /></SectionRows>
+      </SectionCard>,
+    );
+
+    expect(screen.getByRole("button", { name: "Edit section" })).toBeInTheDocument();
+  });
+
   it("shows no Edit button for a section without edit", () => {
     render(
       <SectionCard title="Profile">
@@ -336,6 +346,39 @@ describe("SectionRow setting layout", () => {
     );
 
     expect(within(screen.getByTestId("results")).getByRole("button", { name: "Turn off" })).toBeInTheDocument();
+  });
+});
+
+describe("SectionRow action layout", () => {
+  it("shows a danger action's whole name and what it does in its own block, with its button under them on a phone and beside them from sm", () => {
+    render(
+      <SectionRows>
+        <SectionRow
+          aside={<button type="button">Inactivate league</button>}
+          facts={<><span>Stops new entries.</span><span>Could not do it.</span></>}
+          layout="action"
+          name="Inactivate a league with a long name"
+          testId="inactivate"
+        />
+      </SectionRows>,
+    );
+
+    const row = screen.getByTestId("inactivate");
+    expect(row).toHaveClass("flex-col", "sm:flex-row");
+    expect(screen.getByText("Inactivate a league with a long name")).not.toHaveClass("truncate");
+    expect(row).toHaveTextContent("Inactivate a league with a long nameStops new entries.Could not do it.");
+    expect(within(row).getByRole("button", { name: "Inactivate league" })).toBeInTheDocument();
+  });
+
+  it("does not tint on hover, since the row itself does nothing when clicked", () => {
+    render(
+      <SectionRows>
+        <SectionRow aside={<button type="button">Delete</button>} layout="action" name="Delete contest" testId="delete" />
+      </SectionRows>,
+    );
+
+    expect(screen.getByTestId("delete").className).not.toMatch(/hover:/);
+    expect(screen.getByRole("listitem").className).not.toMatch(/hover:/);
   });
 });
 

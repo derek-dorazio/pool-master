@@ -332,6 +332,7 @@ export function RootAdminUserPage() {
       >
         <SectionRows>
           <SectionRow
+            layout="action"
             aside={(
               <Button
                 data-testid="root-admin-user-open-lifecycle"
@@ -348,6 +349,7 @@ export function RootAdminUserPage() {
             name={lifecycleLabel}
           />
           <SectionRow
+            layout="action"
             aside={(
               <Button
                 data-testid="root-admin-user-open-delete"

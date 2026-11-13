@@ -95,6 +95,7 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
       <SectionCard testId="root-admin-sport-league-danger-zone" tone="danger">
         <SectionRows>
           <SectionRow
+            layout="action"
             aside={(
               <Button
                 data-testid="root-admin-sport-league-home-toggle-active"

@@ -342,6 +342,7 @@ export function ManageContestPage() {
         <SectionCard testId="manage-contest-danger-zone" tone="danger">
           <SectionRows>
             <SectionRow
+              layout="action"
               aside={(
                 <Button
                   data-testid="contest-delete"

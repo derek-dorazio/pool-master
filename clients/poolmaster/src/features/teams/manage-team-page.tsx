@@ -132,6 +132,7 @@ export function ManageTeamPage() {
         <SectionRows>
           {isInactiveTeam ? (
             <SectionRow
+              layout="action"
               aside={(
                 <Button
                   data-testid="manage-team-delete"
@@ -149,6 +150,7 @@ export function ManageTeamPage() {
             />
           ) : (
             <SectionRow
+              layout="action"
               aside={(
                 <Button
                   data-testid="manage-team-inactivate"

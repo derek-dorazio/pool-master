@@ -205,8 +205,10 @@ export function SectionRow({
   /**
    * `setting` is one setting in a "see it, then Edit" section: the name as a muted label at the
    * left, the current value and any action at the right, on one line even on a phone.
+   * `action` is one action of a danger zone: its name and what it does, never truncated, with
+   * its button beside them, or under them on a phone. Not clickable itself, so it has no hover.
    */
-  layout?: "row" | "setting";
+  layout?: "action" | "row" | "setting";
   name: ReactNode;
   /** A marker beside the name, such as You or Inactive. */
   nameAddon?: ReactNode;
@@ -233,14 +235,28 @@ export function SectionRow({
     isHighlighted || isSelected ? "bg-primary/10" : undefined,
   );
   const ariaCurrent = isSelected ? "true" : undefined;
+  if (layout === "action") {
+    return (
+      <li className="even:bg-row-alt">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4" data-testid={testId}>
+          <div className="min-w-0 max-w-xl">
+            <Text as="div" size="base" variant="strong" weight="semibold">{name}</Text>
+            {facts ? <Text as="div" className="mt-0.5" variant="meta">{facts}</Text> : null}
+          </div>
+          {aside ? <div className="flex-none self-start sm:self-center">{aside}</div> : null}
+        </div>
+      </li>
+    );
+  }
   if (layout === "setting") {
     return (
       <li className="even:bg-row-alt">
-        <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2" data-testid={testId}>
+        {/* Wraps: a value too long to share the line drops under its name, still at the right. */}
+        <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2" data-testid={testId}>
           <Text as="div" className="flex min-w-0 items-center gap-1" variant="meta">{name}</Text>
-          <div className="flex min-w-0 items-center justify-end gap-3 text-right">
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-3 text-right">
             {value !== undefined && value !== null ? <Text as="div" className="min-w-0 break-words" data-testid={valueTestId} variant="strong" weight="semibold">{value}</Text> : null}
-            {aside}
+            {aside ? <span className="flex flex-none items-center">{aside}</span> : null}
           </div>
         </div>
       </li>

@@ -103,6 +103,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         <SectionRows>
           {isInactive ? (
             <SectionRow
+              layout="action"
               aside={(
                 <Button
                   data-testid="league-activate"
@@ -127,6 +128,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
             />
           ) : (
             <SectionRow
+              layout="action"
               aside={(
                 <Button
                   data-testid="league-inactivate-open"
@@ -145,6 +147,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
             />
           )}
           <SectionRow
+            layout="action"
             aside={(
               <Button
                 data-testid="league-delete-open"
