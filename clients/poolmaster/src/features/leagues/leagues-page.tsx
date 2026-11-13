@@ -2,8 +2,7 @@ import { Navigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/features/auth/auth-context';
 import { formatUserName } from '@/features/account/user-name';
 import { MANAGE_LANDING_PATH } from '@/features/root-admin/manage-navigation';
-import { Button } from '@/features/shared/ui/button';
-import { EmptyState, ErrorState, LoadingState } from '@/features/shared/ui/state';
+import { Button, ErrorState, LoadingState, PageHeader, SectionCard, SectionEmpty } from '@/features/shared/ui';
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -49,39 +48,28 @@ export function WelcomePage() {
 
   if (!leagues?.length) {
     return (
-      <div className="space-y-8" data-testid="authenticated-landing">
-        <EmptyState
-          action={
-            <>
-              <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
-                Create your first league
-              </p>
-              <p className="mb-5 max-w-2xl text-sm text-muted-foreground">
-                Start by creating a private league with its own league code, then
-                invite your members.
-              </p>
-              <Button
-                data-testid="welcome-create-league"
-                onClick={() => {
-                  const nextParams = new URLSearchParams(searchParams);
-                  nextParams.set('createLeague', '1');
-                  setSearchParams(nextParams, { replace: true });
-                }}
-                type="button"
-              >
-                Create league
-              </Button>
-            </>
-          }
-          body="Once you create leagues, they'll appear here."
-          testId="authenticated-landing-empty"
-          title={`Welcome to ${PRODUCT_NAME}, ${formatUserName(
-            auth.user?.firstName,
-            auth.user?.lastName,
-          )}.`}
+      <section className="space-y-8" data-testid="authenticated-landing">
+        <PageHeader
+          actions={(
+            <Button
+              data-testid="welcome-create-league"
+              onClick={() => {
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.set('createLeague', '1');
+                setSearchParams(nextParams, { replace: true });
+              }}
+              type="button"
+            >
+              Create league
+            </Button>
+          )}
+          title={`Welcome to ${PRODUCT_NAME}, ${formatUserName(auth.user?.firstName, auth.user?.lastName)}`}
         />
+        <SectionCard testId="authenticated-landing-empty" title="Your leagues">
+          <SectionEmpty testId="authenticated-landing-empty-line">No leagues yet.</SectionEmpty>
+        </SectionCard>
         <ComingUpRow testId="welcome-coming-up" />
-      </div>
+      </section>
     );
   }
 

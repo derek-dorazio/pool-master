@@ -324,9 +324,13 @@ describe('Joining a league from an invite link', () => {
     renderJoinLeaguePage();
 
     expect(await screen.findByRole('heading', { name: 'Join Big Dawgs' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Sign in to continue' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Create account' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();
+    // The invitation card says it all: no sentence asks them to come back, and no way back sits beside the two actions.
+    expect(screen.getByTestId('invitation-card-league')).toHaveTextContent('Big Dawgs');
+    expect(screen.queryByText(/come back|Sign in or create an account first/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to home' })).not.toBeInTheDocument();
   });
 
   it('says the invitation could not be loaded and offers no join button when the preview fails', async () => {
@@ -335,6 +339,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
+    await screen.findByTestId('join-league-page');
     expect(await screen.findByText('We could not load this invitation.')).toBeInTheDocument();
     expect(screen.getByTestId('join-league-invitation-error')).toContainElement(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.queryByRole('button', { name: 'Join league' })).not.toBeInTheDocument();

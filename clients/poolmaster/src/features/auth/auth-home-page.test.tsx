@@ -624,7 +624,7 @@ describe('AuthHomePage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Join Big Dawgs' })).toBeVisible();
     const card = screen.getByTestId('invitation-context-card');
     expect(card).toHaveTextContent('League invite');
-    expect(card).toHaveTextContent('Invite code LEAGUE123');
+    expect(within(card).getByTestId('invitation-card-code')).toHaveTextContent('LEAGUE123');
     expect(within(card).queryByRole('paragraph')).not.toBeInTheDocument();
     expect(screen.queryByText(/almost inside|come back to this invitation|After you/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Back to invitation' })).not.toBeInTheDocument();

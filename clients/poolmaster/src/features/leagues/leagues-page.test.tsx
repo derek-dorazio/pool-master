@@ -128,23 +128,16 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     sharedStateCalls.loading.mockClear();
   });
 
-  it('pool-master-rop.63: shows the shared zero-league state and create action when the member has no leagues', async () => {
+  it('heads a member with no leagues with the welcome and Create league, over a Your leagues section saying there are none yet', async () => {
     mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([])));
 
     renderWelcomePage();
 
-    expect(await screen.findByTestId('authenticated-landing-empty')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /^Welcome to Primetime Commissioner, .*[^.]$/ })).toBeInTheDocument();
     expect(screen.getByTestId('authenticated-landing')).toBeInTheDocument();
-    expect(screen.getByTestId('shared-empty-state')).toBeInTheDocument();
-    expect(sharedStateCalls.empty).toHaveBeenCalledWith(
-      expect.objectContaining({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-        body: expect.stringContaining("Once you create leagues"),
-        testId: 'authenticated-landing-empty',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-        title: expect.stringContaining('Welcome to Primetime Commissioner'),
-      }),
-    );
+    expect(screen.getByRole('region', { name: 'Your leagues' })).toHaveAttribute('data-testid', 'authenticated-landing-empty');
+    expect(screen.getByTestId('authenticated-landing-empty-line')).toHaveTextContent('No leagues yet.');
+    expect(screen.queryByText(/Once you create leagues|Start by creating/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('welcome-create-league'));
     expect(screen.getByRole('button', { name: 'Create league' })).toBeInTheDocument();
   });
