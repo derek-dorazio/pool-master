@@ -125,6 +125,14 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return row ? toSportLeague(row) : null;
   }
 
+  async findEventSynced(): Promise<SportLeague[]> {
+    const rows = await this.prisma.sportLeague.findMany({
+      where: { isActive: true, eventSyncProviderId: { not: null } },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map(toSportLeague);
+  }
+
   async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
       data: { sportId: input.sportId, name: input.name, matchKeyword: input.matchKeyword, bracketAdvancement: input.bracketAdvancement },
@@ -140,6 +148,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
+        ...(updates.eventSyncProviderId !== undefined && { eventSyncProviderId: updates.eventSyncProviderId }),
       },
     });
     // A sport event's read carries its sport league's settings, so those are forgotten too.
@@ -1115,6 +1124,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     matchKeyword: row.matchKeyword,
     currentEventYear: row.currentEventYear,
     isActive: row.isActive,
+    eventSyncProviderId: row.eventSyncProviderId,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
     tierCount: row.tierCount,

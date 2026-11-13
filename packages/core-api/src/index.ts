@@ -68,6 +68,7 @@ import {
   PrismaSportEventRoundRepository,
   PrismaSportEventParticipantStatLineRepository,
   PrismaBackgroundJobRepository,
+  PrismaSportLeagueRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
@@ -82,8 +83,10 @@ import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './
 import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
-import { createEventLifecycleService, eventFieldCache } from './modules/events/wiring';
+import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
+import { EventScoreSourceService } from './modules/events/event-score-source-service';
+import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -279,6 +282,16 @@ export function buildApp() {
   };
 
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
+  // One set of event services for the admin routes and the synced event creation sweep.
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
+  // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
+  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    scoreSource: new EventScoreSourceService(prisma, registry, app.log),
+    sportEvents: sportEventServices.sportEvents,
+    jobLock,
+    logger: app.log,
+  });
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
@@ -353,9 +366,10 @@ export function buildApp() {
     providerRegistry: registry,
     cdn,
     leaderboards,
+    services: sportEventServices,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
-  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
+  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry: registry });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
@@ -408,6 +422,7 @@ export function buildApp() {
     if (process.env.AUTO_START_SCHEDULER !== 'false') {
       ingestionScheduler.start();
       app.log.info('Ingestion scheduler started');
+      syncedEventCreationScheduler.start();
     }
 
     // Admin-managed event lifecycle (plans/124 §3.6) — always runs; it is
@@ -432,6 +447,7 @@ export function buildApp() {
   app.addHook('onClose', async () => {
     appSettings.stop();
     ingestionScheduler.stop();
+    syncedEventCreationScheduler.stop();
     eventLifecycleScheduler.stop();
     for (const scheduler of dueNotificationsSchedulers) scheduler.stop();
     emailSender.stop();

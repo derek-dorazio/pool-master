@@ -6,8 +6,9 @@
  * - Live score polling (every 5 min during active events)
  * - Provider health checks (every 5 min)
  *
- * Every feed is event-scoped. There is no scheduled event discovery: an admin creates each
- * event and moves its lifecycle by hand (#126).
+ * Every feed is event-scoped. A synced sport league's events are created by
+ * `SyncedEventCreationScheduler` (ADR 0011, #1725), not here; status follows each event's dates
+ * through the lifecycle scheduler.
  *
  * Every server task runs this scheduler, and each provider loop runs on one of them (#1159): the
  * task holding that loop's job lock.

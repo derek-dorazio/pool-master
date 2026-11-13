@@ -31,6 +31,7 @@ const {
   applyParticipantLeagueAffiliationUploadMock,
   listEventsMock,
   listEventYearsMock,
+  listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -55,6 +56,7 @@ const {
     applyParticipantLeagueAffiliationUploadMock: vi.fn(),
     listEventsMock: vi.fn(),
     listEventYearsMock: vi.fn(),
+    listProvidersMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -72,7 +74,23 @@ bindApiMocks({
   applyParticipantLeagueAffiliationUpload: applyParticipantLeagueAffiliationUploadMock,
   listEvents: listEventsMock,
   listEventYears: listEventYearsMock,
+  listProviders: listProvidersMock,
 });
+
+function provider(providerId: string, providerName: string, sportsCovered: Array<'GOLF' | 'SOCCER'>) {
+  return {
+    providerId,
+    providerName,
+    status: 'HEALTHY' as const,
+    errorRate: 0,
+    latencyMs: 100,
+    lastEventAt: null,
+    sportsCovered,
+    primaryForSports: sportsCovered,
+    activeEventCount: 0,
+    supportsLiveSimulation: false,
+  };
+}
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -111,6 +129,9 @@ function seed() {
     data: { events: [sportEventFixture({ id: 'masters-2026', eventYear: 2026, sportLeagueId: 'pga' })] },
   });
   listEventYearsMock.mockResolvedValue({ data: { years: [2026] } });
+  listProvidersMock.mockResolvedValue({
+    data: { providers: [provider('balldontlie', 'BALLDONTLIE', ['GOLF']), provider('soccer-feed', 'Soccer feed', ['SOCCER'])] },
+  });
   listParticipantLeagueAffiliationsMock.mockResolvedValue({
     data: {
       affiliations: [
@@ -182,6 +203,8 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     );
     const details = screen.getByTestId('root-admin-sport-league-details');
     expect(within(details).getByText('PGA')).toBeInTheDocument();
+    expect(within(details).getByText('Event sync')).toBeInTheDocument();
+    expect(within(details).getByText('Off')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-league-home-edit')).toHaveAttribute(
       'href',
       '/manage/sports/golf/leagues/pga/edit',
@@ -207,6 +230,75 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
       ),
     );
     expect(await screen.findByTestId('root-admin-sport-league-home-page')).toBeInTheDocument();
+  });
+
+  it('turns the tour\'s event sync on with a provider that covers golf, offering none that does not', async () => {
+    seed();
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ eventSyncProviderId: 'balldontlie' }) } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    await screen.findByRole('option', { name: 'BALLDONTLIE' });
+    expect(screen.queryByRole('option', { name: 'Soccer feed' })).not.toBeInTheDocument();
+    await userEvent.selectOptions(sync, 'balldontlie');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-edit-save'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { name: 'PGA Tour', matchKeyword: 'PGA', eventSyncProviderId: 'balldontlie' } }),
+      ),
+    );
+  });
+
+  it('shows and keeps a synced tour\'s provider when the provider list arrives after the form, sending no sync change on a rename', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ eventSyncProviderId: 'balldontlie' })] } });
+    let resolveProviders: (value: unknown) => void = () => undefined;
+    listProvidersMock.mockReturnValue(new Promise((resolve) => { resolveProviders = resolve; }));
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ eventSyncProviderId: 'balldontlie' }) } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    expect(sync).toHaveValue('balldontlie');
+    resolveProviders({ data: { providers: [provider('balldontlie', 'BALLDONTLIE', ['GOLF'])] } });
+    await screen.findByRole('option', { name: 'BALLDONTLIE' });
+    expect(sync).toHaveValue('balldontlie');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-edit-save'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { name: 'PGA Tour', matchKeyword: 'PGA' } }),
+      ),
+    );
+  });
+
+  it('keeps showing a synced tour\'s provider by its id when the provider list fails to load', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ eventSyncProviderId: 'balldontlie' })] } });
+    listProvidersMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } }, response: { status: 500 } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    expect(sync).toHaveValue('balldontlie');
+    expect(screen.getByRole('option', { name: 'balldontlie' })).toBeInTheDocument();
+  });
+
+  it('turns the tour\'s event sync off by choosing Off, sending null', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ eventSyncProviderId: 'balldontlie' })] } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league() } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    await screen.findByRole('option', { name: 'BALLDONTLIE' });
+    await userEvent.selectOptions(sync, '');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-edit-save'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { name: 'PGA Tour', matchKeyword: 'PGA', eventSyncProviderId: null } }),
+      ),
+    );
   });
 
   it('keeps Edit details open with the server\'s reason when saving the tour is refused', async () => {

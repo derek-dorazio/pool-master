@@ -20,6 +20,7 @@ import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cach
 import { ReadCache } from '../../core/read-cache';
 import { createSportEventServices, eventFieldCache } from '../events/wiring';
 import { createSportLeagueHandlers } from './handler';
+import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
 const TAGS = ['Sport leagues'];
 
@@ -36,11 +37,13 @@ const SPORT_LEAGUE_PARAMS = {
 
 export interface SportLeaguesModuleOptions {
   cdn: CdnInvalidator;
+  /** The providers a sport league's event sync may name (ADR 0011). */
+  providerRegistry: ProviderRegistry;
 }
 
 export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
-  const services = createSportEventServices(getAppPrisma(fastify), fastify.log);
+  const services = createSportEventServices(getAppPrisma(fastify), fastify.log, undefined, undefined, opts.providerRegistry);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
   const handler = createSportLeagueHandlers(services.sportLeagues, lists);
   const write = { onRequest: requireRootAdmin };
@@ -104,7 +107,9 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
         + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). '
         + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. '
         + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
-        + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. Root admin only.',
+        + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. '
+        + 'eventSyncProviderId turns the league\'s event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, '
+        + '422 PROVIDER_SPORT_MISMATCH for one not covering the league\'s sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),

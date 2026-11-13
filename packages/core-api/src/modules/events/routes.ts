@@ -28,7 +28,7 @@ import type { IngestionService } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
-import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './wiring';
+import { createEventLifecycleService, createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath } from '../../core/public-cache';
@@ -43,6 +43,11 @@ export interface EventsModuleOptions {
    * in its own transaction (#1466).
    */
   leaderboards: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /**
+   * The app's one set of event services, shared with the synced event creation sweep so both
+   * write through the same instances; omitted, the module builds its own.
+   */
+  services?: SportEventServices;
 }
 
 const TAGS = ['Events'];
@@ -67,7 +72,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   const prisma = getAppPrisma(fastify);
   const eventLifecycle = opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log });
   const handler = createEventHandlers({
-    services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.leaderboards),
+    services: opts.services ?? createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.leaderboards),
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,

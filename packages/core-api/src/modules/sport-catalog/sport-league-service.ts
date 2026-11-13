@@ -55,12 +55,22 @@ export interface AffiliationUploadPreviewRow {
   participantName: string | null;
 }
 
+/**
+ * The registered sport data providers, as far as a sport league's event sync needs them: which
+ * one an id names and the sports it covers. The app's `ProviderRegistry` is one.
+ */
+export interface SportDataProviderLookup {
+  getProviderById(providerId: string): { sportsCovered: readonly Sport[] } | null;
+}
+
 export interface SportLeagueServiceDeps {
   sports: SportRepository;
   sportLeagues: SportLeagueRepository;
   sportEvents: SportEventRepository;
   affiliations: ParticipantLeagueAffiliationRepository;
   participants: ParticipantRepository;
+  /** Which providers can sync a sport league's events (ADR 0011). */
+  providers: SportDataProviderLookup;
   logger?: FastifyBaseLogger;
 }
 
@@ -113,12 +123,18 @@ export class SportLeagueService {
    * the sport league has a bracket loaded (#730): a loaded bracket's links were drawn for the rule
    * it had, so switching a reseeded bracket to fixed would strand the winners of its unlinked
    * games. Sending the rule the league already has changes nothing and is allowed.
+   *
+   * `eventSyncProviderId` turns the league's event sync on or off (ADR 0011, #1725): 404
+   * PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one that
+   * does not cover the league's sport, and 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced
+   * league would be left without the keyword its events are found by.
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement'> & { currentEventYear?: number },
+    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId'> & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
+    await this.assertEventSyncFits(sportLeague, updates);
     if (updates.bracketAdvancement !== undefined) {
       const sportRow = await this.deps.sports.findById(sportLeague.sportId);
       if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
@@ -141,11 +157,49 @@ export class SportLeagueService {
       isActive: updates.isActive,
       currentEventYear: updates.currentEventYear,
       bracketAdvancement: updates.bracketAdvancement,
+      eventSyncProviderId: updates.eventSyncProviderId,
     });
+    if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== sportLeague.eventSyncProviderId) {
+      this.deps.logger?.info({ sportLeagueId, eventSyncProviderId: updates.eventSyncProviderId }, 'Set sport league event sync');
+    }
     if (updates.currentEventYear !== undefined) {
       this.deps.logger?.info({ sportLeagueId, currentEventYear: updates.currentEventYear }, 'Set current event year');
     }
     return (await this.summarize([updated]))[0];
+  }
+
+  /**
+   * A synced league needs a provider that is registered and covers its sport, and a match keyword
+   * to find its events by: checked when either the provider or the keyword changes.
+   */
+  private async assertEventSyncFits(
+    sportLeague: SportLeague,
+    updates: Pick<SportLeagueUpdate, 'matchKeyword' | 'eventSyncProviderId'>,
+  ): Promise<void> {
+    const providerId = updates.eventSyncProviderId === undefined ? sportLeague.eventSyncProviderId : updates.eventSyncProviderId;
+    if (providerId === null) return;
+    if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== null) {
+      const provider = this.deps.providers.getProviderById(providerId);
+      if (!provider) {
+        throw new SportCatalogError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+      }
+      const sportRow = await this.deps.sports.findById(sportLeague.sportId);
+      if (!sportRow || !provider.sportsCovered.includes(sportRow.sport)) {
+        throw new SportCatalogError(
+          `Provider ${providerId} does not cover ${sportRow?.sport ?? 'this sport league\'s sport'}, so it cannot sync ${sportLeague.name}'s events.`,
+          'PROVIDER_SPORT_MISMATCH',
+          422,
+        );
+      }
+    }
+    const matchKeyword = updates.matchKeyword === undefined ? sportLeague.matchKeyword : updates.matchKeyword;
+    if (!matchKeyword?.trim()) {
+      throw new SportCatalogError(
+        `${sportLeague.name} has no match keyword, so a sync cannot find its events.`,
+        'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD',
+        422,
+      );
+    }
   }
 
   /**

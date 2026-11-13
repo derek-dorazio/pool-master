@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
-import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
   fakeParticipantLeagueAffiliationRepo,
   fakeParticipantRepo,
@@ -36,10 +36,20 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     parentSportLeagueId: null,
     currentEventYear: null,
     isActive: true,
+    eventSyncProviderId: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
   };
+}
+
+/** The providers registered for the test, by id, each with the sports it covers. */
+function registeredProviders(sportsById: Record<string, Sport[]>): SportDataProviderLookup {
+  const covered = new Map(Object.entries(sportsById));
+  return { getProviderById: (providerId) => {
+    const sportsCovered = covered.get(providerId);
+    return sportsCovered ? { sportsCovered } : null;
+  } };
 }
 
 function participant(id: string, name: string): Participant {
@@ -52,6 +62,7 @@ function buildService(overrides: {
   sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
   affiliations?: Parameters<typeof fakeParticipantLeagueAffiliationRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
+  providers?: SportDataProviderLookup;
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
@@ -64,6 +75,7 @@ function buildService(overrides: {
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
     participants: fakeParticipantRepo(overrides.participants),
+    providers: overrides.providers ?? registeredProviders({}),
   };
   return { service: new SportLeagueService(deps), deps };
 }
@@ -162,6 +174,80 @@ describe('SportLeagueService — bracket advancement', () => {
 
 // plans/147 decision 6 — "set as current" used to be a foreign key to a season, so the database
 // guaranteed the target existed. currentEventYear is a plain integer; this check is that guarantee.
+describe('SportLeagueService — event sync (ADR 0011)', () => {
+  const golfProviders = registeredProviders({ balldontlie: [Sport.GOLF, Sport.BASKETBALL], 'soccer-only': [Sport.SOCCER] });
+  const golfSport = { findById: jest.fn().mockResolvedValue(GOLF) };
+
+  it('turns a league\'s event sync on with a registered provider that covers its sport and has a keyword to match', async () => {
+    const { service, deps } = buildService({ providers: golfProviders, sports: golfSport });
+    const updated = await service.updateSportLeague('sl-pga', { eventSyncProviderId: 'balldontlie' });
+    expect(deps.sportLeagues.update).toHaveBeenCalledWith('sl-pga', expect.objectContaining({ eventSyncProviderId: 'balldontlie' }));
+    expect(updated.eventSyncProviderId).toBe('balldontlie');
+  });
+
+  it('refuses a provider that is not registered with 404 PROVIDER_NOT_FOUND and saves nothing', async () => {
+    const { service, deps } = buildService({ providers: golfProviders, sports: golfSport });
+    await expect(service.updateSportLeague('sl-pga', { eventSyncProviderId: 'nobody' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses a provider that does not cover the league\'s sport with 422 PROVIDER_SPORT_MISMATCH', async () => {
+    const { service, deps } = buildService({ providers: golfProviders, sports: golfSport });
+    await expect(service.updateSportLeague('sl-pga', { eventSyncProviderId: 'soccer-only' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_SPORT_MISMATCH', statusCode: 422 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses turning sync on for a league with no match keyword, since the sync finds its events by it', async () => {
+    const { service } = buildService({
+      providers: golfProviders,
+      sports: golfSport,
+      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ matchKeyword: null })) },
+    });
+    await expect(service.updateSportLeague('sl-pga', { eventSyncProviderId: 'balldontlie' }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', statusCode: 422 });
+  });
+
+  it('accepts a keyword set in the same update that turns sync on', async () => {
+    const { service, deps } = buildService({
+      providers: golfProviders,
+      sports: golfSport,
+      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ matchKeyword: null })) },
+    });
+    await service.updateSportLeague('sl-pga', { matchKeyword: 'PGA TOUR', eventSyncProviderId: 'balldontlie' });
+    expect(deps.sportLeagues.update).toHaveBeenCalledWith('sl-pga', expect.objectContaining({ matchKeyword: 'PGA TOUR', eventSyncProviderId: 'balldontlie' }));
+  });
+
+  it('refuses clearing the keyword of a synced league, which would leave its sync matching nothing', async () => {
+    const { service } = buildService({
+      providers: golfProviders,
+      sports: golfSport,
+      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ eventSyncProviderId: 'balldontlie' })) },
+    });
+    await expect(service.updateSportLeague('sl-pga', { matchKeyword: '  ' }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', statusCode: 422 });
+  });
+
+  it('turns sync off with null even once the provider is no longer registered and the keyword is gone', async () => {
+    const { service, deps } = buildService({
+      providers: registeredProviders({}),
+      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ eventSyncProviderId: 'balldontlie' })) },
+    });
+    await service.updateSportLeague('sl-pga', { matchKeyword: null, eventSyncProviderId: null });
+    expect(deps.sportLeagues.update).toHaveBeenCalledWith('sl-pga', expect.objectContaining({ matchKeyword: null, eventSyncProviderId: null }));
+  });
+
+  it('leaves a synced league\'s provider unchecked by an edit that changes only its name', async () => {
+    const { service, deps } = buildService({
+      providers: registeredProviders({}),
+      sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ eventSyncProviderId: 'balldontlie' })) },
+    });
+    await service.updateSportLeague('sl-pga', { name: 'PGA TOUR' });
+    expect(deps.sportLeagues.update).toHaveBeenCalled();
+  });
+});
+
 describe('SportLeagueService — set as current (plans/147 decision 6)', () => {
   it('refuses a year the sport league has no events in with 422 EVENT_YEAR_HAS_NO_EVENTS, writing nothing', async () => {
     const countBySportLeagues = jest.fn().mockResolvedValue(new Map([['sl-pga', 0]]));

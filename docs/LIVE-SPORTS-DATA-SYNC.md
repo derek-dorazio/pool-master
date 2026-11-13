@@ -14,9 +14,10 @@ The plan behind the work, and the decisions Derek made on it, are in
 - **Where this is going: the sync creates a live league's events** (ADR 0011, superseding
   ADR 0009). Once a league's sync is live, it creates the league's events, loads their fields
   and keeps their dates current, and the lifecycle scheduler moves their status from those
-  dates; the admin reviews, releases and browses. **Today** that is not built: an admin makes or
-  imports every `sport_events` row, and a sync writes scores, fields and links onto it and never
-  moves its status. *Toward ADR 0011* below lists what is missing.
+  dates; the admin reviews, releases and browses. **Today** the daily sweep creates a synced
+  league's events (*2b*); for every other league an admin makes or imports each `sport_events`
+  row. A sync writes scores, fields and links and never moves status. *Toward ADR 0011* below
+  lists what is still missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
   games but no events, a *scope id* the adapter invents and parses back (`nfl-2026-week-12`,
@@ -119,10 +120,17 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 | MLB | `MLB` | baseline | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
 | WNBA | `WNBA` | baseline | `WNBA_PLAYOFFS.tour` (`wnba-mapping.ts`) |
 
-### 2b. Event rows, by an admin action
+### 2b. Event rows, by the synced league sweep or an admin action
 
-Today an admin action is the only way an event is made; ADR 0011 moves this to the sync for a
-live league (see *Toward ADR 0011*). An event is created and linked in one of three ways, all root admin routes under
+A sport league whose `event_sync_provider_id` a root admin has set (the sport league's Edit
+details, "Event sync"; #1725) is **synced**: once a day `SyncedEventCreationScheduler`
+(`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
+ingestion scheduler) runs the year import below for this calendar year and the next, for each
+active synced league. New events are born `DRAFT` and wait for an admin's release, for now. Setting
+the provider is refused unless it is registered and covers the league's sport, and the league has
+a match keyword. One league's failed read is logged and the sweep goes on.
+
+Every other league's events come from an admin, in one of three ways, all root admin routes under
 `/api/v1/events` (`events/routes.ts`):
 
 | Action | Route | What it writes |
@@ -536,14 +544,12 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### Toward ADR 0011
 
-ADR 0011 makes a live league's sync the source of its events. None of this is built. Two
-choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
+ADR 0011 makes a live league's sync the source of its events. Scheduled creation is built
+(*2b*); the rest is not. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
 its league's events*): on a synced event the provider wins over an admin's edit, and a new
 event waits for an admin's release for now, with automatic release the aim once sync is stable.
 
-- **Scheduled event creation per league** (#1725). A loop per synced league that runs the year import's
-  path (`importProviderEventYear`) on a schedule, for the current and next season, so events
-  appear without an admin pressing Import. New events are born `DRAFT`.
+- **Scheduled event creation per league** (#1725). Built: see *2b*.
 - **Field load on by default** (#1726) for synced leagues, so a new event's participants load without
   "Load Participant Field" (today the field loop is off by default).
 - **The sync keeps an event's details current** (#1727): dates, name and venue from the provider, so the

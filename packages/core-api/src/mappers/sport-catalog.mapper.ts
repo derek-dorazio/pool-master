@@ -33,6 +33,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     matchKeyword: sportLeague.matchKeyword,
     currentEventYear: sportLeague.currentEventYear,
     isActive: sportLeague.isActive,
+    eventSyncProviderId: sportLeague.eventSyncProviderId,
     bracketAdvancement: sportLeague.bracketAdvancement,
     roundNames: [...sportLeague.roundNames],
     matchPeriodLayout: sportLeague.matchPeriodLayout,

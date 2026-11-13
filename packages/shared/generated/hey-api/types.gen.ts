@@ -7932,6 +7932,10 @@ export type SportLeagueDto = {
      */
     isActive: boolean;
     /**
+     * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+     */
+    eventSyncProviderId: string | null;
+    /**
      * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
      */
     bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8040,6 +8044,10 @@ export type SportLeagueListResponse = {
          */
         isActive: boolean;
         /**
+         * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+         */
+        eventSyncProviderId: string | null;
+        /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8135,6 +8143,10 @@ export type SportLeagueResponse = {
          */
         isActive: boolean;
         /**
+         * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+         */
+        eventSyncProviderId: string | null;
+        /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8225,6 +8237,10 @@ export type UpdateSportLeagueRequest = {
      */
     matchKeyword?: string | null;
     isActive?: boolean;
+    /**
+     * Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way.
+     */
+    eventSyncProviderId?: string | null;
     /**
      * Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.
      */
