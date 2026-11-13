@@ -181,7 +181,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
           <SectionCard bare help="Your plan is shaded. Where a plan's limit is below what your league uses now, it says so." testId="league-plan-compare" title="Compare plans">
             <PlanComparisonTable
               capUsage={usageQuery.data ? buildCapUsage(usageQuery.data) : undefined}
-              currentPlan={current.plan}
+              highlightedPlan={current.plan}
               initiallyFolded={[PlanFeatureGroup.EMAILS]}
               plans={plans}
             />

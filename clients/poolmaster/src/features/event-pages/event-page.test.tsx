@@ -58,7 +58,7 @@ describe('Event page', () => {
   it('shows Championship Weekend\'s hook, its date, and a card per way to play, the Clutch Card saying when it opens', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage();
 
     expect(await screen.findByTestId('event-page-name')).toHaveTextContent('Championship Weekend');
@@ -72,14 +72,27 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone-opens')).toHaveTextContent('Opens when the four teams are set');
     expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-start')).toHaveTextContent('Start with Bracket');
     expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveTextContent('Start with Squares');
-    expect(await screen.findByTestId('event-page-gift')).toHaveTextContent('6-month preview period');
+    expect(await screen.findByTestId('event-page-gift')).toHaveTextContent('Premium free for 6 months');
     expect(screen.getByTestId('event-page-disclaimer')).toHaveTextContent('Not affiliated with the NFL or any sports league.');
+  });
+
+  it('shows no gift chip while the plan list offers no preview', async () => {
+    getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: null, paymentsEnabled: false, expansionPrices: {} } });
+    renderPage();
+
+    expect(await screen.findByTestId('event-page-name')).toHaveTextContent('Championship Weekend');
+    await vi.waitFor(() => expect(listLeaguePlansMock).toHaveBeenCalled());
+    // Let the resolved plan list render before checking that it adds nothing.
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+    expect(screen.queryByTestId('event-page-gift')).not.toBeInTheDocument();
   });
 
   it('heads the page with its sport\'s photo, the same file as the email header, as decoration the screen reader skips', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage();
 
     const photo = await screen.findByTestId('event-page-photo');
@@ -90,7 +103,7 @@ describe('Event page', () => {
   it('sends every button to the start flow with its page and contest setup, the top one with the headline offer\'s', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage();
 
     const start = '/start?sport=american-football&page=championship-weekend&template=';
@@ -107,7 +120,7 @@ describe('Event page', () => {
     });
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage();
 
     const nextUp = await screen.findByTestId('event-page-next-up');
@@ -119,7 +132,7 @@ describe('Event page', () => {
   it('says when the next edition is not on the schedule yet for a page between seasons', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture({ offers: [] }) } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage();
 
     expect(await screen.findByTestId('event-page-between-seasons')).toBeInTheDocument();
@@ -132,7 +145,7 @@ describe('Event page', () => {
       data: { eventPage: options.path?.pageSlug === 'conference-weekend' ? retired : championshipWeekendFixture() },
     }));
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
-    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
     renderPage('/play/american-football/conference-weekend');
 
     expect(await screen.findByTestId('event-page-name')).toHaveTextContent('Championship Weekend');

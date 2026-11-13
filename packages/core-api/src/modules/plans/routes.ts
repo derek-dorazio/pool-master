@@ -11,7 +11,7 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { toPlanEntitlementsDto } from '../../mappers/plans.mapper';
-import { PREMIUM_PREVIEW_PERIOD_MONTHS } from './league-plan-service';
+import { PREMIUM_PREVIEW_PERIOD_MONTHS, PREVIEW_PLAN } from './league-plan-service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
 /** What a route module that reports or checks a league's plan is registered with. */
@@ -32,7 +32,7 @@ export function plansModule(fastify: FastifyInstance, opts: PlansModuleOptions):
       tags: ['Plans'],
       summary: 'List what each league plan allows',
       description:
-        'Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also how long the Premium gift every new league starts with runs, and each plan\'s contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.',
+        'Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also which plan every new league is gifted and for how long, and each plan\'s contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.',
       operationId: 'listLeaguePlans',
       response: {
         200: schemaRef('LeaguePlanListResponse'),
@@ -45,6 +45,7 @@ export function plansModule(fastify: FastifyInstance, opts: PlansModuleOptions):
       return {
         plans: LEAGUE_PLANS.map((plan) => toPlanEntitlementsDto(opts.planEntitlements.forPlan(plan))),
         previewPeriodMonths: PREMIUM_PREVIEW_PERIOD_MONTHS,
+        previewPlan: PREVIEW_PLAN,
         paymentsEnabled: billing.paymentsEnabled,
         expansionPrices: billing.expansionPrices,
       };

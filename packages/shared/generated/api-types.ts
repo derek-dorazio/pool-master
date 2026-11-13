@@ -920,7 +920,7 @@ export interface paths {
         };
         /**
          * List what each league plan allows
-         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also how long the Premium gift every new league starts with runs, and each plan's contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.
+         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also which plan every new league is gifted and for how long, and each plan's contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listLeaguePlans"];
         put?: never;
@@ -4520,7 +4520,7 @@ export interface components {
             /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
             commissionerSelectable: boolean;
         };
-        /** @description What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan. */
+        /** @description What each league plan allows, which plan new leagues are gifted and for how long, and what expanding a contest costs on each plan. */
         LeaguePlanListResponse: {
             /** @description Every plan, lowest first, for comparing them. */
             plans: {
@@ -4543,6 +4543,11 @@ export interface components {
             }[];
             /** @description How many months of Premium every new league is gifted from signup (#986), before it moves to Free. */
             previewPeriodMonths: number;
+            /**
+             * @description The plan every new league is gifted from signup for `previewPeriodMonths` (#1614), or null while no preview is offered. The Plans page highlights its column and names the offer only while it is set.
+             * @enum {string|null}
+             */
+            previewPlan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM" | null;
             /** @description Whether expanding a contest is charged. While false, expanding is free. */
             paymentsEnabled: boolean;
             /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
@@ -25720,7 +25725,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan. */
+            /** @description What each league plan allows, which plan new leagues are gifted and for how long, and what expanding a contest costs on each plan. */
             200: {
                 headers: {
                     [name: string]: unknown;

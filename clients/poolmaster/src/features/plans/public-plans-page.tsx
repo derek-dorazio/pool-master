@@ -3,10 +3,12 @@ import { PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
-import { Chip, ErrorState, FaqList, Heading, LinkButton, LoadingState, PageHeader, SectionCard, Tile } from '@/features/shared/ui';
+import { LandingSection } from '@/features/event-pages/components/landing-section';
+import { Chip, ErrorState, FaqList, LinkButton, LoadingState, PageHeader, SectionCard, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PlanCards } from './plan-cards';
 import { PlanComparisonTable } from './plan-comparison-table';
+import { previewOffer } from './preview-offer';
 import { useLeaguePlansQuery } from './use-league-plans-query';
 
 /** The questions under the comparison: who picks a plan, and what a plan does and doesn't limit. */
@@ -29,6 +31,9 @@ const QUESTIONS: readonly { question: string; answer: string }[] = [
   },
 ];
 
+/** What every plan has, as the header's fact line. */
+const EVERY_PLAN = 'Every plan: every contest type, live leaderboards, unlimited members';
+
 /** Where a signed-in visitor chooses a plan: the plan page of the one league they run, else their leagues. */
 function useChoosePlanPath(isAuthenticated: boolean): string {
   const { leagues, commissionerLeagueIds } = useLeaguesQuery({ enabled: isAuthenticated });
@@ -41,11 +46,14 @@ function useChoosePlanPath(isAuthenticated: boolean): string {
  * plan settings through the public plan list, so a change on the root admin Plans page shows
  * here at once. There are no plan prices yet, so every plan is free and every button starts free;
  * each card lists its contest expansion prices, and a plan not offered yet says Coming soon.
+ * Start free leads the header (#1614). While the plan list offers a preview, the gifted plan's
+ * offer leads the fact line and its column is tinted in the comparison; without one, neither shows.
  */
 export function PublicPlansPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'public-plans-page' }), []);
   const auth = useAuth();
   const plansQuery = useLeaguePlansQuery();
+  const { locale } = useDisplayPreferences();
   const choosePlanPath = useChoosePlanPath(auth.isAuthenticated);
 
   useEffect(() => {
@@ -60,19 +68,16 @@ export function PublicPlansPage() {
     <LinkButton data-testid={testId} state={{ authMode: 'register' }} to="/">Start free</LinkButton>
   );
 
+  const offer = plansQuery.data ? previewOffer(plansQuery.data, locale) : null;
+
   return (
     <section className="space-y-8" data-testid="public-plans-page">
       <PageHeader
         actions={action('public-plans-start')}
-        description="Every plan runs every contest type, with live leaderboards and as many members as you can invite. Higher plans give you bigger contests, more sports and the history that brings your league back each year."
+        meta={offer ? `${offer} · ${EVERY_PLAN}` : EVERY_PLAN}
+        testId="public-plans-header"
         title="Plans"
       />
-
-      {plansQuery.data ? (
-        <Chip data-testid="public-plans-free-note" tone="active">
-          {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
-        </Chip>
-      ) : null}
 
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
@@ -87,24 +92,20 @@ export function PublicPlansPage() {
               <Chip className="self-start" data-testid={`public-plans-card-${plan}-coming-soon`}>Coming soon</Chip>
             ) : action(`public-plans-card-${plan}-start`)}
           />
-          <SectionCard bare help="Each row lines up across the plans. Open a group to see every item in it." testId="public-plans-compare" title="Compare every plan">
-            <PlanComparisonTable initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
+          <SectionCard testId="public-plans-compare" title="Compare plans">
+            <PlanComparisonTable highlightedPlan={plansQuery.data.previewPlan} initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
           </SectionCard>
         </>
       )}
 
-      <SectionCard bare testId="public-plans-questions" title="Questions">
-        <FaqList items={QUESTIONS} />
+      <SectionCard testId="public-plans-questions" title="Questions">
+        <FaqList items={QUESTIONS} testId="public-plans-question" />
       </SectionCard>
 
       {auth.isAuthenticated ? null : (
-        <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md">
-          <div>
-            <Heading level={3} variant="card">Start your league today</Heading>
-            <p className="text-sm text-muted-foreground">Set up a league, invite your office, and open your first contest in minutes.</p>
-          </div>
+        <LandingSection testId="public-plans-cta" title="Start your league today">
           {action('public-plans-start-footer')}
-        </Tile>
+        </LandingSection>
       )}
     </section>
   );

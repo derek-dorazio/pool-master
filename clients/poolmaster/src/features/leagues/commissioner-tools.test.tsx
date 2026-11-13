@@ -1022,8 +1022,7 @@ describe('League plan', () => {
     const entries = within(table.getByTestId('plan-comparison-row-ENTRIES_PER_CONTEST'));
     expect(entries.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['20', '50', '100', 'Unlimited']);
     const championship = within(table.getByTestId('plan-comparison-row-CHAMPIONSHIP'));
-    expect(championship.getAllByLabelText(/included/i).map((icon) => icon.getAttribute('aria-label')))
-      .toEqual(['Not included', 'Included', 'Included', 'Included']);
+    expect(championship.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['Not included', 'Included', 'Included', 'Included']);
   });
 
   it('says what the league uses now could not load, in red with Retry, and reads it again on Retry', async () => {
