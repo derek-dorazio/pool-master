@@ -245,6 +245,9 @@ export type StoredLeaderboard = { [Kind in LeaderboardKind]: { kind: Kind; board
 /** A stored leaderboard as the snapshot table holds it. */
 export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<StoredLeaderboard>;
 
+/** One entry's row on any kind of board: whose it is and its place, null while it has none. */
+type LiveBoardRow = { entryId: string; squadId: string; position: number | null; displayPosition: string | null };
+
 /** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
 export interface LeaderboardRead<Board> {
   version: number;
@@ -555,19 +558,14 @@ export class ContestService {
   }
 
   /**
-   * Every ranked entry's place on the contest's leaderboard: its stored board when current, else
-   * the board computed now. None for squares, whose grid has no places until it settles, nor while
-   * no picks are revealed. A board that cannot be shown for another reason is logged and places
-   * nobody, so one broken contest leaves the rest listed.
+   * Every ranked entry's place on the contest's leaderboard, as `liveBoardRowsOf` reads it. None
+   * while no picks are revealed. A board that cannot be shown for another reason is logged and
+   * places nobody, so one broken contest leaves the rest listed.
    */
   private async boardPlacesOf(contest: Contest): Promise<ContestEntryPlaceDto[]> {
-    const kind = leaderboardKindOf(contest);
-    if (!kind) return [];
-    let rows: readonly { entryId: string; position: number | null; displayPosition: string | null }[];
+    let rows: readonly LiveBoardRow[];
     try {
-      const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
-      const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, kind) : null;
-      rows = board ? board.entries : (await this.computeStoredLeaderboard(contest, kind, DEFAULT_SHOWN_EVENT)).board.board.entries;
+      rows = await this.liveBoardRowsOf(contest);
     } catch (error) {
       if (!(error instanceof ContestOperationError)) throw error;
       if (error.code === 'CONTEST_LEADERBOARD_PICKS_HIDDEN') {
@@ -580,6 +578,20 @@ export class ContestService {
     return rows.flatMap(({ entryId, position, displayPosition }) => (
       position === null || displayPosition === null ? [] : [{ entryId, position, displayPosition }]
     ));
+  }
+
+  /**
+   * The one read of a contest's live places (#1575), behind both an entry's place in my entries
+   * and a cup's "if it ended now" projection: each entry's row on its stored board when current
+   * (#1435), else on the board computed now and not stored. None for squares, whose grid has no
+   * places until it settles. A board that cannot be shown throws as the leaderboard read would.
+   */
+  private async liveBoardRowsOf(contest: Contest): Promise<readonly LiveBoardRow[]> {
+    const kind = leaderboardKindOf(contest);
+    if (!kind) return [];
+    const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
+    const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, kind) : null;
+    return board ? board.entries : (await this.computeStoredLeaderboard(contest, kind, DEFAULT_SHOWN_EVENT)).board.board.entries;
   }
 
   /**
@@ -1063,15 +1075,15 @@ export class ContestService {
     if (!contest) {
       throw new ContestNotFoundError(contestId);
     }
-    let entries: readonly { squadId: string; position: number | null }[];
+    let rows: readonly LiveBoardRow[];
     try {
-      entries = await this.liveBoardOf(contest);
+      rows = await this.liveBoardRowsOf(contest);
     } catch (error) {
       if (!(error instanceof ContestOperationError) || error.code !== 'CONTEST_LEADERBOARD_PICKS_HIDDEN') throw error;
       this.logger.debug({ contestId }, 'live positions: picks are not revealed yet, so nothing is ranked');
       return [];
     }
-    return entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
+    return rows.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
   }
 
   /**
@@ -1082,35 +1094,6 @@ export class ContestService {
   async livePositionsOfMany(contestIds: readonly string[]): Promise<Map<string, RankedContestEntry[]>> {
     const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
     return new Map(await Promise.all(contestIds.map(async (contestId) => [contestId, await batched.livePositionsOf(contestId)] as const)));
-  }
-
-  /**
-   * A lineup contest's places as its board stands: its stored board when current (#1435), else one
-   * computed now and not stored, so a cup's projection reads the same statements however many of
-   * its contests no one has viewed lately.
-   */
-  private async rosterPositionsOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
-    const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
-    const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, LeaderboardKind.ROSTER) : null;
-    if (board) return board.entries;
-    return (await this.boardOf(contest, undefined, (sportEventId) => loadEventField(this.deps, sportEventId))).leaderboard.entries;
-  }
-
-  private async liveBoardOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
-    switch (contest.selectionType) {
-      case SelectionType.TIERED:
-      case SelectionType.BUDGET_PICK:
-      case SelectionType.RANDOM_DRAW:
-        return this.rosterPositionsOf(contest);
-      case SelectionType.PICK_EM:
-        return (await this.pickEmLeaderboardOf(contest)).entries;
-      case SelectionType.SURVIVOR:
-        return (await this.survivorLeaderboardOf(contest)).entries;
-      case SelectionType.BRACKET:
-        return (await this.bracketStandingsOf(contest)).leaderboard.entries;
-      case SelectionType.SQUARES:
-        return [];
-    }
   }
 
   /**

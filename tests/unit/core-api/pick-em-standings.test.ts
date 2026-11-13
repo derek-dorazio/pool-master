@@ -26,6 +26,7 @@ import { loadPickEmWeekStandings } from '../../../packages/core-api/src/modules/
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestOperationError, ContestService } from '../../../packages/core-api/src/modules/contests/service';
 import { expectDefined } from '../../support/expect-defined';
+import { placeOnStoredBoard } from '../../support/in-memory-leaderboard-snapshots';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
@@ -386,6 +387,17 @@ describe('ContestService.livePositionsOf — pick\'em', () => {
     context.setNow(BEFORE_KICKOFF);
 
     expect(await context.contestService.livePositionsOf(context.contest.id)).toEqual([]);
+  });
+
+  it('gives a cup the stored pick\'em board\'s places while it is current, rather than computing the board again (#1575)', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    await context.leaderboard();
+    // Cara's place on the stored board only: a computed board would rank her third.
+    placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 2);
+    const cara = expectDefined(context.world.entries.get('entry-cara')).squadId;
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: cara, position: 2 });
   });
 
   it('places each entry by its squad once a week is under way, from its played games', async () => {
