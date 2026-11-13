@@ -118,7 +118,7 @@ describe('JoinTeamOwnerPage', () => {
     renderJoinTeamOwnerPage();
 
     expect(await screen.findByTestId('sign-up-form')).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Join Beer Bellies as a co-owner' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Join Beer Bellies in Big Dawgs' })).toBeInTheDocument();
     expect(screen.getByTestId('sign-up-submit')).toBeVisible();
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
@@ -128,7 +128,9 @@ describe('JoinTeamOwnerPage', () => {
     expect(screen.getByRole('region', { name: 'Create your account' })).toHaveAttribute('data-testid', 'team-invite-register');
     expect(screen.getByTestId('team-invite-register-help')).toBeInTheDocument();
     expect(screen.queryByText(/uses the email this invitation was sent to/)).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: "What you're joining" })).toHaveClass('rounded-lg');
+    expect(screen.getByTestId('invitation-card-team')).toHaveTextContent('Beer Bellies');
+    expect(screen.getByTestId('invitation-card-role')).toHaveTextContent('A co-owner');
+    expect(screen.queryByText(/Create your account to join as a co-owner|This invitation adds you/)).not.toBeInTheDocument();
     expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
     // No email field: the account uses the invited address, which the server reads off the
     // invitation. That is the security property, so its absence is asserted.

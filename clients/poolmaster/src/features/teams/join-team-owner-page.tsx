@@ -4,19 +4,17 @@ import { useNavigate, useParams } from 'react-router';
 import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { SignUpForm } from '@/features/auth/sign-up-form';
-import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
+import { InvitationCard } from '@/features/leagues/invitation-card';
 import { describeUnusableInvitation, UNKNOWN_INVITATION } from '@/features/leagues/unusable-invitation';
 import { InvitationStatusPage } from '@/features/leagues/invitation-status-page';
 import {
   Button,
-  Chip,
   ErrorState,
   LinkButton,
   LoadingState,
+  Notice,
   PublicInviteJoinPage,
   SectionCard,
-  Text,
-  Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -25,7 +23,6 @@ import {
   buildTeamInvitePath,
   rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
-import { TeamAvatar } from './team-avatar';
 import {
   fetchTeamOwnerInvitationPreview,
   getTeamOwnerInvitationPreviewQueryKey,
@@ -162,21 +159,9 @@ export function JoinTeamOwnerPage() {
     },
   });
 
-  const redirectMessage = useMemo(() => {
-    if (!inviteCode) {
-      return 'This co-owner invitation link is missing a code.';
-    }
 
-    if (!isAuthenticated) {
-      // #217 — no longer a dead end. The registration form below completes the join in one step;
-      // this line only sets the heading's tone.
-      return 'Create your account to join as a co-owner, or sign in if you already have one.';
-    }
-
-    return null;
-  }, [inviteCode, isAuthenticated]);
-
-  const unusableInvitation = hasErrorCode(invitationQuery.error, 'SQUAD_OWNER_INVITATION_NOT_FOUND')
+  // A link with no code is as unusable as one the server doesn't know.
+  const unusableInvitation = !inviteCode || hasErrorCode(invitationQuery.error, 'SQUAD_OWNER_INVITATION_NOT_FOUND')
     ? UNKNOWN_INVITATION
     : describeUnusableInvitation(invitationQuery.data?.status);
 
@@ -184,57 +169,34 @@ export function JoinTeamOwnerPage() {
     return <InvitationStatusPage invitation={unusableInvitation} />;
   }
 
-  if (redirectMessage) {
+  const invitation = invitationQuery.data;
+  const title = invitation ? `Join ${invitation.team.name} in ${invitation.league.name}` : 'Join as a co-owner';
+  const invitationCard = invitation ? (
+    <InvitationCard
+      inviteCode={invitation.inviteCode}
+      leagueName={invitation.league.name}
+      team={invitation.team}
+    />
+  ) : null;
+  const invitationState = (
+    <>
+      {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="team-owner-invite-loading" /> : null}
+      {invitationQuery.isError ? (
+        <ErrorState
+          body="We could not load this co-owner invitation."
+          onRetry={() => void invitationQuery.refetch()}
+          size="plain"
+          testId="team-owner-invite-error"
+        />
+      ) : null}
+    </>
+  );
+
+  if (!isAuthenticated) {
+    // #217: not a dead end. The registration form completes the join in one step.
     return (
       <PublicInviteJoinPage
-        title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Join as a co-owner'}
-      >
-        <Text as="p" className="mt-3" variant="meta">{redirectMessage}</Text>
-        {invitationQuery.data ? (
-          <div className="mt-5 space-y-5">
-            <InvitationContextCard
-              inviteCode={invitationQuery.data.inviteCode}
-              leagueName={invitationQuery.data.league.name}
-              message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
-              title="Co-owner invite"
-            />
-            <SectionCard headingLevel={3} padded testId="team-invite-joining" title="What you're joining">
-              <div className="flex items-center gap-4">
-                <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
-                <Text as="p" variant="meta">
-                  You&apos;ll join <Text size="inherit" variant="strong">{invitationQuery.data.team.name}</Text> as a co-owner inside{' '}
-                  <Text size="inherit" variant="strong">{invitationQuery.data.league.name}</Text>.
-                </Text>
-              </div>
-            </SectionCard>
-          </div>
-        ) : null}
-        {inviteCode && invitationQuery.data ? (
-          <SectionCard
-            className="mt-5"
-            headingLevel={3}
-            help="Your account uses the email this invitation was sent to, so there is nothing to confirm. You'll land straight in the league."
-            padded
-            testId="team-invite-register"
-            title="Create your account"
-          >
-            <SignUpForm
-              errorMessages={{
-                // The one case worth its own words: the invited address already has an
-                // account, so the answer is to sign in rather than register again.
-                SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
-                  'An account already exists for the email this invitation was sent to. Sign in to accept it.',
-                SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
-                  'This invitation has already been accepted. Sign in to reach the league.',
-              }}
-              onRegistered={handleRegistered}
-              pendingLabel="Creating your account..."
-              submitLabel="Create account and join"
-              mode={{ kind: 'teamInvite', inviteCode }}
-            />
-          </SectionCard>
-        ) : null}
-        <div className="mt-5 flex flex-wrap gap-3">
+        secondaryAction={(
           <LinkButton
             data-testid="team-invite-sign-in"
             state={{ from: buildTeamInvitePath(inviteCode) }}
@@ -243,9 +205,37 @@ export function JoinTeamOwnerPage() {
           >
             I already have an account
           </LinkButton>
-          <LinkButton to="/" variant="secondary">
-            Back to home
-          </LinkButton>
+        )}
+        testId="team-owner-invite-signed-out"
+        title={title}
+      >
+        <div className="space-y-5">
+          {invitationState}
+          {invitationCard}
+          {invitation ? (
+            <SectionCard
+              headingLevel={3}
+              help="Your account uses the email this invitation was sent to, so there is nothing to confirm. You'll land straight in the league."
+              padded
+              testId="team-invite-register"
+              title="Create your account"
+            >
+              <SignUpForm
+                errorMessages={{
+                  // The one case worth its own words: the invited address already has an
+                  // account, so the answer is to sign in rather than register again.
+                  SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
+                    'An account already exists for the email this invitation was sent to. Sign in to accept it.',
+                  SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
+                    'This invitation has already been accepted. Sign in to reach the league.',
+                }}
+                onRegistered={handleRegistered}
+                pendingLabel="Creating your account..."
+                submitLabel="Create account and join"
+                mode={{ kind: 'teamInvite', inviteCode }}
+              />
+            </SectionCard>
+          ) : null}
         </div>
       </PublicInviteJoinPage>
     );
@@ -253,73 +243,37 @@ export function JoinTeamOwnerPage() {
 
   return (
     <PublicInviteJoinPage
-      context={(
-        <Chip>
-          Co-owner invitation
-        </Chip>
-      )}
-      testId="team-owner-invite-page"
-      title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Accept your co-owner invite'}
-    >
-      <p className="mt-2 text-sm text-muted-foreground">
-        This invitation makes you a co-owner alongside the people already playing under this name.
-      </p>
-
-      <div className="mt-6 space-y-4 text-sm text-muted-foreground">
-        {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="team-owner-invite-loading" /> : null}
-        {invitationQuery.isError ? (
-          <ErrorState
-            body="We could not load this co-owner invitation."
-            onRetry={() => void invitationQuery.refetch()}
-            size="plain"
-            testId="team-owner-invite-error"
-          />
-        ) : null}
-        {invitationQuery.data ? (
-          <div className="space-y-5">
-            <InvitationContextCard
-              inviteCode={invitationQuery.data.inviteCode}
-              leagueName={invitationQuery.data.league.name}
-              message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
-              title="Ready to join"
-            />
-            <Tile className="flex items-center gap-4" data-testid="team-invite-co-own" padding="sm">
-              <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
-              <div className="min-w-0">
-                <Text as="div" variant="caption">You&apos;ll co-own</Text>
-                <Text as="div" size="base" truncate variant="strong" weight="semibold">
-                  {invitationQuery.data.team.name}
-                </Text>
-                <Text as="div" variant="meta">
-                  League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
-                </Text>
-              </div>
-            </Tile>
-          </div>
-        ) : null}
-        {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
-        {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this co-owner invitation. Please try again.' })}</p> : null}
-        {acceptMutation.isSuccess ? <p>Invitation accepted. Taking you to the league...</p> : null}
-      </div>
-
-      {invitationQuery.data ? (
-        <div className="mt-5 flex gap-3">
-          <Button
-            data-testid="team-invite-accept"
-            disabled={acceptMutation.isPending}
-            onClick={() => acceptMutation.mutate()}
-            type="button"
-          >
-            {acceptMutation.isPending ? 'Joining...' : 'Join as co-owner'}
-          </Button>
-          <LinkButton
-            to={buildLeaguePath(invitationQuery.data.league.leagueCode)}
-            variant="secondary"
-          >
-            Back
-          </LinkButton>
-        </div>
+      primaryAction={invitation ? (
+        <Button
+          data-testid="team-invite-accept"
+          disabled={acceptMutation.isPending}
+          onClick={() => acceptMutation.mutate()}
+          type="button"
+        >
+          {acceptMutation.isPending ? 'Joining...' : 'Join as co-owner'}
+        </Button>
       ) : null}
+      secondaryAction={invitation ? (
+        <LinkButton
+          data-testid="team-invite-not-now"
+          to={buildLeaguePath(invitation.league.leagueCode)}
+          variant="secondary"
+        >
+          Not now
+        </LinkButton>
+      ) : null}
+      testId="team-owner-invite-page"
+      title={title}
+    >
+      <div className="space-y-5">
+        {invitationState}
+        {invitationCard}
+        {acceptMutation.isError ? (
+          <Notice data-testid="team-owner-invite-accept-error" tone="danger">
+            {extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this co-owner invitation. Please try again.' })}
+          </Notice>
+        ) : null}
+      </div>
     </PublicInviteJoinPage>
   );
 }

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { LoginRequestSchema } from "@poolmaster/shared/dto";
 import { loginUser } from "@/lib/api";
-import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
+import { InvitationCard } from "@/features/leagues/invitation-card";
 import {
   Notice,
   Button,
@@ -252,15 +252,16 @@ export function AuthHomePage() {
       : SIGN_IN_HEADLINE;
   // A league or co-owner invite shows the league it leads to where the steps would be.
   const besideTheForm = inviteContext ? (
-    <InvitationContextCard
+    <InvitationCard
       inviteCode={inviteContext.inviteCode}
       leagueName={inviteContext.league.name}
       title="League invite"
     />
   ) : teamInviteContext ? (
-    <InvitationContextCard
+    <InvitationCard
       inviteCode={teamInviteContext.inviteCode}
       leagueName={teamInviteContext.league.name}
+      team={teamInviteContext.team}
       title="Co-owner invite"
     />
   ) : (

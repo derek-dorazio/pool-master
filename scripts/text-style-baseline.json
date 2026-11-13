@@ -21,12 +21,10 @@
   "clients/poolmaster/src/features/event-pages/event-page.tsx": 11,
   "clients/poolmaster/src/features/event-pages/start-page.tsx": 10,
   "clients/poolmaster/src/features/leagues/create-league-modal.tsx": 2,
-  "clients/poolmaster/src/features/leagues/invitation-context-card.tsx": 5,
-  "clients/poolmaster/src/features/leagues/join-league-page.tsx": 9,
+  "clients/poolmaster/src/features/leagues/join-league-page.tsx": 3,
   "clients/poolmaster/src/features/leagues/league-danger-zone.tsx": 2,
   "clients/poolmaster/src/features/leagues/league-home-cards.tsx": 7,
   "clients/poolmaster/src/features/leagues/league-settings-page.tsx": 6,
-  "clients/poolmaster/src/features/leagues/leagues-page.tsx": 4,
   "clients/poolmaster/src/features/plans/extend-gift-form.tsx": 4,
   "clients/poolmaster/src/features/plans/league-plan-page.tsx": 4,
   "clients/poolmaster/src/features/plans/plan-cards.tsx": 10,
@@ -74,6 +72,5 @@
   "clients/poolmaster/src/features/root-admin/tier-board.tsx": 8,
   "clients/poolmaster/src/features/root-admin/withdrawals-card.tsx": 10,
   "clients/poolmaster/src/features/teams/invites-page-invite-people-section.tsx": 1,
-  "clients/poolmaster/src/features/teams/invites-page-row-actions.tsx": 1,
-  "clients/poolmaster/src/features/teams/join-team-owner-page.tsx": 4
+  "clients/poolmaster/src/features/teams/invites-page-row-actions.tsx": 1
 }
