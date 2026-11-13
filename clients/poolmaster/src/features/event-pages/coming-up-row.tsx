@@ -28,12 +28,12 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
           const copy = eventPageCopy(page);
           return (
             <Link
-              className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               data-testid={`${testId}-${page.slug}`}
               key={page.id}
               to={buildEventPagePath(page.sport, page.slug)}
             >
-              <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" radius="panel" variant="interactive">
+              <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" variant="interactive">
                 <Eyebrow tone="muted">{formatStartsIn(primary.edition.startDate, now)}</Eyebrow>
                 <Heading level={3} variant="card" size="xl">{copy.name}</Heading>
                 <Text as="p" variant="meta">{page.offers.map((offer) => eventPageOfferCopy(copy, offer).contestType).join(' · ')}</Text>

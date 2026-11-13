@@ -321,6 +321,27 @@ export default tseslint.config(
     },
   },
   {
+    // #1697: Tile's panel corner only on the panels rules/ux-rules.md §12 item 13 names. The
+    // ignores below are that list; a new panel adds its file here and there in the same PR.
+    files: ['clients/poolmaster/src/**/*.tsx'],
+    ignores: [
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      '**/*.stories.tsx',
+      'clients/poolmaster/src/features/event-pages/components/photo-hero.tsx',
+      'clients/poolmaster/src/features/event-pages/clutch-card-page.tsx',
+      'clients/poolmaster/src/features/event-pages/start-page.tsx',
+      'clients/poolmaster/src/features/event-pages/event-page.tsx',
+      'clients/poolmaster/src/features/event-pages/components/next-up-card.tsx',
+      'clients/poolmaster/src/features/auth/auth-home-page.tsx',
+      'clients/poolmaster/src/features/leagues/league-home-cards.tsx',
+      'clients/poolmaster/src/features/contests/lifecycle-panel.tsx',
+      'clients/poolmaster/src/features/shared/ui/page-templates.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-panel-corner': 'error' },
+  },
+  {
     // #1599: feature dialogs are one of the four shared types (rules/ux-rules.md §3 *Dialogs and
     // save feedback*). Only the shared layer draws the raw Modal.
     files: ['clients/poolmaster/src/features/**/*.tsx'],

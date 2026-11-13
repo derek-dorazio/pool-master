@@ -13,6 +13,7 @@ import tseslintParser from '@typescript-eslint/parser';
 import noAdHocMoreInfo from '../no-ad-hoc-more-info.mjs';
 import noBareUiControls from '../no-bare-ui-controls.mjs';
 import noButtonRowOverride from '../no-button-row-override.mjs';
+import noPanelCorner from '../no-panel-corner.mjs';
 import noRawModal from '../no-raw-modal.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
@@ -215,6 +216,49 @@ ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
     { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
     { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
     { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
+  ],
+});
+
+ruleTester.run('no-panel-corner', noPanelCorner, {
+  valid: [
+    // The default content corner, said or left out.
+    "import { Tile } from '@/features/shared/ui';\nconst a = <Tile padding=\"md\">x</Tile>;",
+    "import { Tile } from '@/features/shared/ui';\nconst b = <Tile radius=\"sm\">x</Tile>;",
+    // A radius passed on from a prop is checked where its caller writes it.
+    'function Card({ radius }) { return <Tile radius={radius}>x</Tile>; }',
+    // Another prop that happens to say panel is not the corner.
+    'const c = <Tabs variant="panel" />;',
+    // A choice between content corners only.
+    "const c2 = <Tile radius={dense ? 'sm' : undefined}>x</Tile>;",
+  ],
+  invalid: [
+    {
+      code: "import { Tile } from '@/features/shared/ui';\nconst d = <Tile radius=\"panel\">x</Tile>;",
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      // The same value written as an expression.
+      code: "const e = <Tile radius={'panel'}>x</Tile>;",
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      code: 'const f = <Tile radius={`panel`}>x</Tile>;',
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      // A shared part that passes the radius on to its Tile is held to the same list.
+      code: 'const g = <TabbedCard radius="panel" tabs={[]} />;',
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      // A branch that can be the panel corner counts, whichever branch it is.
+      code: "const h = <Tile radius={isHero ? 'panel' : 'sm'}>x</Tile>;",
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      code: "const i = <Tile radius={isHero && 'panel'}>x</Tile>;",
+      errors: [{ messageId: 'panelCorner' }],
+    },
   ],
 });
 
