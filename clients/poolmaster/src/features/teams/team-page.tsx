@@ -16,6 +16,7 @@ import {
   PageHeader,
   LinkButton,
   LoadingState,
+  PendingPage,
   SectionCard,
   SectionEmpty,
   SectionRow,
@@ -45,11 +46,11 @@ export function TeamPage() {
     return <Navigate replace to={buildLeagueTeamPath(leagueCode)} />;
   }
   if (teamQuery.isLoading) {
-    return <LoadingState body="Loading this member..." testId="team-page-loading" />;
+    return <PendingPage><LoadingState body="Loading this member..." testId="team-page-loading" /></PendingPage>;
   }
   const team = teamQuery.data;
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} testId="team-page-error" title="Member unavailable" />;
+    return <PendingPage testId="team-page-pending"><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} testId="team-page-error" title="Member unavailable" /></PendingPage>;
   }
   if (!team) {
     return (

@@ -10,6 +10,7 @@ export { Button, LinkButton, type LinkButtonProps } from "./button";
 export { copyToClipboard } from "./clipboard";
 export { CopyButton } from "./copy-button";
 export { Breadcrumbs, PageHeader, type PageHeaderProps } from "./page-header";
+export { PendingPage } from "./pending-page";
 export { PageTabs, type PageLinkTab, type PageStateTab } from "./page-tabs";
 export { TabbedCard, type TabbedCardTab } from "./tabbed-card";
 export { FilterPicker, type FilterPickerGroup, type FilterPickerOption } from "./filter-picker";

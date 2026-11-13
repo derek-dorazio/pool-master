@@ -30,6 +30,7 @@ import {
   HelpTip,
   LinkButton,
   LoadingState,
+  PendingPage,
   SimpleTable,
   TableBody,
   TableCell,
@@ -241,15 +242,17 @@ export function ContestDetailPage() {
   ]);
 
   if (contestQuery.isLoading) {
-    return <LoadingState body="Loading contest detail..." />;
+    return <PendingPage hasTabs><LoadingState body="Loading contest detail..." /></PendingPage>;
   }
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <ErrorState
-        body="We couldn't load this contest."
-        onRetry={() => void contestQuery.refetch()}
-      />
+      <PendingPage hasTabs>
+        <ErrorState
+          body="We couldn't load this contest."
+          onRetry={() => void contestQuery.refetch()}
+        />
+      </PendingPage>
     );
   }
 

@@ -35,6 +35,7 @@ import {
   HelpTip,
   LinkButton,
   LoadingState,
+  PendingPage,
   PageHeader,
   refetchFailed,
   SectionCard,
@@ -130,18 +131,20 @@ export function ManageContestPage() {
     return null;
   }
   if (contestQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
-    return <LoadingState body="Loading contest..." testId="manage-contest-loading" />;
+    return <PendingPage><LoadingState body="Loading contest..." testId="manage-contest-loading" /></PendingPage>;
   }
   // A contest that is gone answers CONTEST_NOT_FOUND; one of another league is not this league's either.
   const isContestMissing = hasErrorCode(contestQuery.error, 'CONTEST_NOT_FOUND')
     || (contest !== null && contest.leagueId !== league.id);
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
-      <ErrorState
-        body="We couldn't load this contest."
-        onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
-        testId="manage-contest-error"
-      />
+      <PendingPage>
+        <ErrorState
+          body="We couldn't load this contest."
+          onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}
+          testId="manage-contest-error"
+        />
+      </PendingPage>
     );
   }
   const managedContest = managedContestQuery.data;

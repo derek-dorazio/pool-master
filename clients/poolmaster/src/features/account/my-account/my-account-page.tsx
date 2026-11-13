@@ -6,6 +6,7 @@ import { MyPaymentsSection } from '@/features/billing/payment-history-sections';
 import {
   formatMonthYearDisplay,
   LoadingState,
+  PendingPage,
   Notice,
   PageHeader,
   StatusBadge,
@@ -52,7 +53,7 @@ export function MyAccountPage() {
   }, [user]);
 
   if (!user) {
-    return <LoadingState body="Loading your account..." testId="my-account-loading" />;
+    return <PendingPage><LoadingState body="Loading your account..." testId="my-account-loading" /></PendingPage>;
   }
 
   const isInactive = !user.isActive;
