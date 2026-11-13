@@ -25,7 +25,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** A count per web app file: the text-style, titled-tile and card-corner scanners. */
+/** A count per web app file: the text-style, titled-tile, card-corner, page-sections and button-style baselines. */
 function countsPerFile(text) {
   return new Map(Object.entries(JSON.parse(text)).filter(([key]) => !key.startsWith('$')));
 }
@@ -48,6 +48,8 @@ export const BASELINES = [
   { file: 'scripts/card-corner-baseline.json', read: countsPerFile },
   { file: 'scripts/duplicate-baseline.json', read: countsPerPair },
   { file: 'eslint-rules/query-states-baseline.mjs', read: listedFiles },
+  { file: 'eslint-rules/button-style-baseline.json', read: countsPerFile },
+  { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
 ];
 
 /**

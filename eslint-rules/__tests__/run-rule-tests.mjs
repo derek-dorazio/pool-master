@@ -14,6 +14,7 @@ import noAdHocMoreInfo from '../no-ad-hoc-more-info.mjs';
 import noBareUiControls from '../no-bare-ui-controls.mjs';
 import noButtonRowOverride from '../no-button-row-override.mjs';
 import noPanelCorner from '../no-panel-corner.mjs';
+import noButtonStyleOverride from '../no-button-style-override.mjs';
 import noRawModal from '../no-raw-modal.mjs';
 import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
@@ -258,6 +259,67 @@ ruleTester.run('no-panel-corner', noPanelCorner, {
     {
       code: "const i = <Tile radius={isHero && 'panel'}>x</Tile>;",
       errors: [{ messageId: 'panelCorner' }],
+    },
+  ],
+});
+
+ruleTester.run('no-button-style-override', noButtonStyleOverride, {
+  valid: [
+    // Placement only: margin, width, flex and grid placement, visibility.
+    'const a = <Button className="mt-2 w-full sm:w-auto self-start shrink-0 max-sm:hidden" variant="secondary">Save</Button>;',
+    "const b = <LinkButton className={cn('ml-auto', wide && 'flex-1')} to=\"/\">Go</LinkButton>;",
+    // The look through props.
+    'const c = <Button layout="row" size="sm" variant="ghost">Row</Button>;',
+    // The same classes on something that is not a button.
+    'const d = <span className="px-4 text-primary font-semibold rounded-md">x</span>;',
+    // Row casing is no-button-row-override's.
+    'const e = <Button className="normal-case tracking-normal">x</Button>;',
+    // Filling or shrinking with the container is placement.
+    'const e2 = <Button className="h-full min-h-0 md:h-full">x</Button>;',
+    // A condition's or comparison's strings are not classes.
+    "const e3 = <Button className={cn(tone === 'border' && 'mt-2', size !== 'text-lg' ? 'ml-2' : 'mr-2')}>x</Button>;",
+    // A grandfathered file at its count passes.
+    {
+      code: 'const e4 = <Button className="px-4">x</Button>;',
+      filename: 'clients/poolmaster/src/features/old.tsx',
+      options: [{ baseline: { 'clients/poolmaster/src/features/old.tsx': 1 } }],
+    },
+  ],
+  invalid: [
+    {
+      code: 'const f = <Button className="px-4 py-3">Pick</Button>;',
+      errors: [{ messageId: 'styleOverride', data: { component: 'Button', matches: 'px-4 py-3' } }],
+    },
+    {
+      // Colour and type, behind a state prefix too, through cn().
+      code: "const g = <Button className={cn('font-semibold', active && 'text-primary hover:underline')}>x</Button>;",
+      errors: [{ messageId: 'styleOverride' }, { messageId: 'styleOverride' }],
+    },
+    {
+      // A responsive size or corner on a LinkButton.
+      code: 'const h = <LinkButton className="max-sm:h-10 rounded-full" to="/">x</LinkButton>;',
+      errors: [{ messageId: 'styleOverride', data: { component: 'LinkButton', matches: 'max-sm:h-10 rounded-full' } }],
+    },
+    {
+      code: 'const i = <MenuItem className="bg-muted border-b">x</MenuItem>;',
+      errors: [{ messageId: 'styleOverride' }],
+    },
+    {
+      // Ring, outline, opacity, letter spacing and casing are look too.
+      code: 'const j = <Button className="ring-2 outline-none opacity-50 tracking-wide lowercase capitalize">x</Button>;',
+      errors: [{ messageId: 'styleOverride', data: { component: 'Button', matches: 'ring-2 outline-none opacity-50 tracking-wide lowercase capitalize' } }],
+    },
+    {
+      // A class key of cn's object form.
+      code: "const k = <Button className={cn({ 'rounded-full': isRound, 'ml-2': true })}>x</Button>;",
+      errors: [{ messageId: 'styleOverride', data: { component: 'Button', matches: 'rounded-full' } }],
+    },
+    {
+      // A grandfathered file over its count reports every override it has, not just the new one.
+      code: 'const l = <><Button className="px-4">a</Button><Button className="text-sm">b</Button></>;',
+      filename: 'clients/poolmaster/src/features/old.tsx',
+      options: [{ baseline: { 'clients/poolmaster/src/features/old.tsx': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
     },
   ],
 });

@@ -11,6 +11,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import testingLibrary from 'eslint-plugin-testing-library';
 import vitest from '@vitest/eslint-plugin';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import poolmaster from './eslint-rules/index.mjs';
 import { QUERY_STATES_BASELINE } from './eslint-rules/query-states-baseline.mjs';
@@ -18,6 +19,12 @@ import { QUERY_STATES_BASELINE } from './eslint-rules/query-states-baseline.mjs'
 // eslint-plugin-react's `version: 'detect'` calls `context.getFilename()`, which
 // ESLint 10 removed (#1384). Read the installed React version here instead.
 const REACT_VERSION = createRequire(import.meta.url)('react/package.json').version;
+
+// #1615: the Button className overrides each grandfathered file may still have, by repo path.
+const BUTTON_STYLE_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/button-style-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
 
 /**
  * Selector sets are hoisted to module scope on purpose.
@@ -319,6 +326,19 @@ export default tseslint.config(
       'poolmaster/no-bare-ui-controls': 'error',
       'poolmaster/no-button-row-override': 'error',
     },
+  },
+  {
+    // #1615: a Button's className only places it; its look comes from variant, size and layout.
+    // Files still restyling one sit on a shrink-only baseline.
+    files: ['clients/poolmaster/src/**/*.tsx'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/**',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-button-style-override': ['error', { baseline: BUTTON_STYLE_BASELINE }] },
   },
   {
     // #1697: Tile's panel corner only on the panels rules/ux-rules.md §12 item 13 names. The
