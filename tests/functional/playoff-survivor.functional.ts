@@ -23,7 +23,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalErro
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
-import { enterSeedRound, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
+import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
 
 // Playoff survivor end to end over HTTP (#785), on the 2026 NFL playoffs as played: four rounds,
 // the 1 seeds on a bye, the Divisional round and the conference championships placed by reseeding.
@@ -79,7 +79,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
 
     // --- The NFL playoffs, released and unplayed ---------------------------------------------------
     const seed = oneEventOf(FILE, 'NFL', 'NFL Playoffs', { withoutResults: true })(RUN, SEASON);
-    await loadSportData(seed, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+    await loadSportData(seed, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     const played = playedSeedEvent(FILE, 'NFL', 'NFL Playoffs');
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((row) => row.name === 'NFL'), 'the NFL');

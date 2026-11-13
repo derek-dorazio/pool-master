@@ -85,13 +85,25 @@ import {
   removeEventParticipant,
   setEventPlayInWinner,
   setEventRoundMatchups,
+  transitionEvent,
   updateEvent,
   updateEventBracketMatch,
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, selectTestSeedEvents, shiftedEventDates, shiftedMatchTimes, type StoredTestEvent, type TestSeedSelection } from './seed-golf-data';
+import {
+  dueResultMatchNumbers,
+  golferRoundScore,
+  seedDateOffsetDays,
+  selectTestSeedEvents,
+  shiftedEventDates,
+  shiftedMatchTimes,
+  type StoredTestEvent,
+  testEventTransitions,
+  testSeedEventNameOf,
+  type TestSeedSelection,
+} from './seed-golf-data';
 import {
   isTestEventName,
   isTestSlate,
@@ -122,6 +134,11 @@ export interface LoadSportDataOptions {
    * this is true: each draft event whose field the file carries and that has not started.
    */
   release?: boolean;
+  /**
+   * A test seed only (#1720): a game's result goes in once its kickoff is at or before this time,
+   * so games still to come stay open for picks and squares. Defaults to `now`.
+   */
+  resultsThrough?: Date;
 }
 
 type StoredEvent = SportEventListResponse['events'][number];
@@ -1008,7 +1025,7 @@ class Loader {
       await release();
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await cancelPostponedGamesFor(client, eventId, event);
-      await enterBracketResultsFor(client, eventId, event);
+      await enterBracketResultsFor(client, eventId, event, this.options.resultsThrough ?? this.options.now, new Date(shiftedEventDates(event, this.offsetDays).startDate));
       return;
     }
     if (this.resultsEnteredByHand) {
@@ -1071,23 +1088,30 @@ async function cancelPostponedGamesFor(client: Client, eventId: string, event: S
 }
 
 /**
- * A bracket test seed's results, entered on the released event round by round. A round placed by
- * reseeding (its sides wait on no link) takes the server's proposed pairing first, the rule a
- * real reseed follows; each match's result then names the side as the match stands. Which rounds
- * reseed is the server's rule (reseededRounds in bracket-reseed.ts), read here from the file's
- * links; keep the two alike.
+ * A bracket test seed's results for the games already played (#1720): each match with a result in
+ * the file whose kickoff (or, without one, the event's start) is at or before `through` and that
+ * the site still has open. A round placed by reseeding (its sides wait on no link) takes the
+ * server's proposed pairing first, the rule a real reseed follows, unless the site has placed it
+ * already; each match's result then names the side as the match stands. Which rounds reseed is the
+ * server's rule (reseededRounds in bracket-reseed.ts), read here from the file's links; keep the
+ * two alike. Returns how many results went in.
  */
-async function enterBracketResultsFor(client: Client, eventId: string, event: SportDataEvent): Promise<void> {
+async function enterBracketResultsFor(client: Client, eventId: string, event: SportDataEvent, through: Date, eventStart: Date): Promise<number> {
   const matches = event.matches ?? [];
+  if (!matches.some((match) => match.result !== undefined)) return 0;
+  const stored = await must(getEventBracket({ client, path: { eventId } }), `Read the bracket of ${event.name}`);
+  const due = new Set(dueResultMatchNumbers(matches, stored.matches, through, eventStart));
   const rounds = [...new Set(matches.map((match) => match.roundNumber))].sort((left, right) => left - right);
   const linked = new Set(matches.flatMap((match) => (match.advancesTo ? [`${match.advancesTo.matchNumber}/${match.advancesTo.side}`] : [])));
   for (const roundNumber of rounds) {
     const round = matches.filter((match) => match.roundNumber === roundNumber);
     const waitsOnReseed = round.some((match) => (match.home === null && !linked.has(`${match.matchNumber}/${MatchSide.HOME}`))
       || (match.away === null && !linked.has(`${match.matchNumber}/${MatchSide.AWAY}`)));
-    const results = round.flatMap((match) => (match.result ? [{ matchNumber: match.matchNumber, result: match.result, periodScores: match.periodScores ?? [] }] : []));
+    const results = round.flatMap((match) => (match.result && due.has(match.matchNumber) ? [{ matchNumber: match.matchNumber, result: match.result, periodScores: match.periodScores ?? [] }] : []));
     if (results.length === 0) continue;
-    if (waitsOnReseed) {
+    const unplaced = stored.matches.some((match) => match.roundNumber === roundNumber
+      && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null));
+    if (waitsOnReseed && unplaced) {
       const proposal = await must(proposeEventRoundMatchups({ client, path: { eventId, roundNumber } }), `Propose round ${roundNumber} of ${event.name}`);
       await must(setEventRoundMatchups({ client, path: { eventId, roundNumber }, body: { matches: proposal.matches } }), `Place round ${roundNumber} of ${event.name}`);
     }
@@ -1106,6 +1130,69 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }
   }
+  return due.size;
+}
+
+/**
+ * Brings the test events a test seed loaded on an earlier run up to date (#1720): enters the
+ * results of the games played since, and moves each event on as a real one goes, to In Progress
+ * once it starts and to Completed (which settles its contests) once every result is in. Only for
+ * a test seed whose file carries results; the event's dates are the site's, not the file's.
+ */
+export async function catchUpTestEvents(
+  file: SportDataFile,
+  options: Pick<LoadSportDataOptions, 'getClient' | 'now' | 'mode' | 'log' | 'resultsThrough'>,
+): Promise<LoadRow[]> {
+  if (!file.testData || !file.scope.contents.includes(SportDataContent.RESULTS)) return [];
+  const apply = options.mode === LoadMode.APPLY;
+  const through = options.resultsThrough ?? options.now;
+  const client = await options.getClient();
+  const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: file.scope.sport } }), 'List sport leagues');
+  const rows: LoadRow[] = [];
+  for (const league of file.sportLeagues) {
+    const siteLeague = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
+    if (!siteLeague) continue;
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: siteLeague.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    for (const stored of events) {
+      if (stored.status !== SportEventStatus.SCHEDULED && stored.status !== SportEventStatus.IN_PROGRESS) continue;
+      const fileName = testSeedEventNameOf(stored.name);
+      const fileEvent = fileName === null ? undefined : league.events.find((event) => event.name === fileName);
+      if (!fileEvent) continue;
+      const eventStart = new Date(stored.startDate);
+      const playsMatches = eventPlaysMatches(stored);
+      const details: string[] = [];
+      let everyResultIn = true;
+      if (playsMatches) {
+        const bracket = await must(getEventBracket({ client, path: { eventId: stored.id } }), `Read the bracket of ${stored.name}`);
+        const due = dueResultMatchNumbers(fileEvent.matches ?? [], bracket.matches, through, eventStart);
+        const decided = new Set([...due, ...bracket.matches.filter((match) => match.status !== 'SCHEDULED').map((match) => match.matchNumber)]);
+        everyResultIn = (fileEvent.matches ?? []).every((match) => match.result === undefined || decided.has(match.matchNumber));
+        if (due.length > 0) {
+          if (apply) await enterBracketResultsFor(client, stored.id, { ...fileEvent, name: stored.name }, through, eventStart);
+          details.push(`${due.length} ${due.length === 1 ? 'result' : 'results'} entered`);
+        }
+      }
+      let action: LoadAction = LoadAction.UPDATE;
+      for (const toStatus of testEventTransitions(stored, { now: options.now, playsMatches, everyResultIn })) {
+        const label = toStatus === SportEventStatus.COMPLETED ? 'Completed' : 'In Progress';
+        if (apply) {
+          // A refused move (a result the server still waits on) is reported, not fatal: the rest of the run goes on.
+          const { error } = await transitionEvent({ client, path: { eventId: stored.id }, body: { toStatus } });
+          if (error !== undefined) {
+            action = LoadAction.CONFLICT;
+            details.push(`not moved to ${label}: ${JSON.stringify(error)}`);
+            break;
+          }
+        }
+        details.push(toStatus === SportEventStatus.COMPLETED ? 'moved to Completed, settling its contests' : 'moved to In Progress');
+      }
+      if (details.length === 0) continue;
+      const row: LoadRow = { sportLeague: league.name, subject: LoadSubject.EVENT, action, name: stored.name, detail: details.join('; ') };
+      rows.push(row);
+      options.log?.(`${league.name} ${stored.name}: ${row.detail}`);
+    }
+  }
+  return rows;
 }
 
 /** selectTestSeedEvents against the site: reads each sport league's events of the seed's season. */

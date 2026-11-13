@@ -34,7 +34,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
-import { enterSeedRound, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
+import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
 
 // One bracket pool and one playoff survivor pool on every playoff league's last-season test seed
 // (#785, #786), through the SDK: the College Football Playoff with its four byes, the NFL reseeded
@@ -141,7 +141,7 @@ afterAll(async () => {
 /** Loads one copy of the row's event, tagged `tag`, and answers its id and its field by participant name. */
 async function loadCopy(row: PlayoffLeague, tag: string, season: number, withoutResults: boolean) {
   const file = oneEventOf(row.file, row.league, row.event, { withoutResults })(tag, season);
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: row.sport } })).data).sportLeagues
     .find((each) => each.name === row.league), row.league);
   const eventId = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events

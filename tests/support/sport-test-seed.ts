@@ -28,6 +28,12 @@ type Client = Parameters<typeof recordEventMatchResult>[0]['client'];
 
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
 
+/**
+ * A load's `resultsThrough` for a suite that runs on a played event: every game's kickoff is before
+ * it, so the loader enters every result the file has (#1720), as on a re-run after the event.
+ */
+export const EVERY_GAME_PLAYED = new Date('2100-01-01T00:00:00Z');
+
 /** A seed file's one event, as `oneEventOf` loads it. */
 export type OneEventSeed = (tag: string, season: number) => SportDataFile;
 

@@ -24,6 +24,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // The 2026 US Open men's and women's singles end to end over HTTP (#704): the test seed loads each
 // 128-player draw into the ATP and the WTA, its qualifier places taking their qualifiers after
@@ -83,7 +84,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
 
 /** Loads a seed dated from today (release refuses an event that has started). */
 async function loadSeed(admin: RegisteredUserContext, file: SportDataFile): Promise<void> {
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 }
 
 /** One of a loaded seed's sport leagues and its event. */

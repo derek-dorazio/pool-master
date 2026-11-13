@@ -221,3 +221,48 @@ export function selectTestSeedEvents(
   });
   return { leagues, waiting };
 }
+
+/** The file event a stored test event was loaded from: "Test- Super Bowl LX (2)" is "Super Bowl LX". Null for any other event. */
+export function testSeedEventNameOf(storedName: string): string | null {
+  if (!isTestEventName(storedName)) return null;
+  return storedName.slice(TEST_EVENT_NAME_PREFIX.length).replace(/ \(\d+\)$/, '');
+}
+
+/**
+ * The games of a test seed's event whose results go in now (#1720): each the file has a result
+ * for, still undecided on the site, whose kickoff (the event's start for a game with none) is at
+ * or before `through`. A game still to come keeps its result for a later run, so a squares pool
+ * or a pick can still be made on it.
+ */
+export function dueResultMatchNumbers(
+  fileMatches: ReadonlyArray<{ matchNumber: number; result?: unknown }>,
+  storedMatches: ReadonlyArray<{ matchNumber: number; scheduledDate: string | null; status: string }>,
+  through: Date,
+  eventStart: Date,
+): number[] {
+  const withResult = new Set(fileMatches.filter((match) => match.result !== undefined).map((match) => match.matchNumber));
+  return storedMatches
+    .filter((match) => withResult.has(match.matchNumber)
+      && match.status === 'SCHEDULED'
+      && (match.scheduledDate === null ? eventStart.getTime() : Date.parse(match.scheduledDate)) <= through.getTime())
+    .map((match) => match.matchNumber)
+    .sort((left, right) => left - right);
+}
+
+/**
+ * The lifecycle steps a run takes a released test event through, as an admin would on its
+ * Workflow card (#1720): In Progress once it has started, then Completed, which settles its
+ * contests, once every result is in. A bracket or week has every result once its last game's
+ * has gone in; a tournament, race or stat pool loads its results with the event, so it waits
+ * for its end. Test events run with automatic lifecycle off, so nothing else moves them.
+ */
+export function testEventTransitions(
+  event: { status: SportEventStatus; startDate: string; endDate: string | null },
+  { now, playsMatches, everyResultIn }: { now: Date; playsMatches: boolean; everyResultIn: boolean },
+): Array<typeof SportEventStatus.IN_PROGRESS | typeof SportEventStatus.COMPLETED> {
+  if (event.status !== SportEventStatus.SCHEDULED && event.status !== SportEventStatus.IN_PROGRESS) return [];
+  if (Date.parse(event.startDate) > now.getTime()) return [];
+  const ended = playsMatches ? everyResultIn : everyResultIn && event.endDate !== null && Date.parse(event.endDate) <= now.getTime();
+  const steps: Array<typeof SportEventStatus.IN_PROGRESS | typeof SportEventStatus.COMPLETED> = event.status === SportEventStatus.SCHEDULED ? [SportEventStatus.IN_PROGRESS] : [];
+  return ended ? [...steps, SportEventStatus.COMPLETED] : steps;
+}

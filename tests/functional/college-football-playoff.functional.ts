@@ -24,6 +24,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // The College Football Playoff end to end over HTTP (#707): the 2025-26 test seed loads into the
 // seeded sport league, its event starting with the league's six tiers, and is played out game by
@@ -79,7 +80,7 @@ function taggedSeed(fileName: string, eventName: string): SportDataFile {
 
 /** Loads a seed dated from today (release refuses an event that has started), and finds its event. */
 async function loadPlayoffs(admin: RegisteredUserContext, file: SportDataFile) {
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const leagueName = file.sportLeagues[0].name;
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
     .find((league) => league.name === leagueName), leagueName);

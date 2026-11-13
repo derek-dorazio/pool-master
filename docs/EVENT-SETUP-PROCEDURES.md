@@ -11,7 +11,8 @@ week. Release, contests, the lifecycle moves and cancelling work the same way fo
 - **Knockouts** (basketball, American football) are resulted game by game on the event's Bracket
   tab: *Knockout brackets* below.
 - **Loading instead of typing.** Events, fields and brackets can come from a data file, and
-  ready-made test seeds hold played events to try contests on without any of this setup: see
+  ready-made test seeds hold real past events to try contests on without any of this setup,
+  their results entered and the events completed by a later run once their game times pass: see
   [`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md).
 
 Every step is a root-admin screen under `/manage` unless it says otherwise.

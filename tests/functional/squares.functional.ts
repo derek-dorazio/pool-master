@@ -28,7 +28,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } 
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { oneEventOf } from '../support/sport-test-seed';
+import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
 
 // Super Bowl squares end to end over HTTP (#711): the NFL playoffs test seed loads with its Super
 // Bowl still to play. A commissioner runs a squares contest on it from the NFL's squares preset,
@@ -92,7 +92,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     const superBowlRow = expectDefined((playoffs.matches ?? []).find((match) => match.matchNumber === SUPER_BOWL));
     delete superBowlRow.result;
     delete superBowlRow.periodScores;
-    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
@@ -245,7 +245,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       const finalRow = expectDefined(matches.find((match) => match.matchNumber === finalNumber));
       delete finalRow.result;
       delete finalRow.periodScores;
-      await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+      await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
       const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: row.sport } })).data).sportLeagues
         .find((league) => league.name === row.league));
