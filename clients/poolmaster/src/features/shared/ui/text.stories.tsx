@@ -36,3 +36,12 @@ export const Tones: Story = {
     </div>
   ),
 };
+
+/** A tile's line that must fit two lines two-across on a phone: small there, `sm` from the small breakpoint. */
+export const PhoneTileLine: Story = {
+  render: () => (
+    <div className="w-44">
+      <Text as="p" size="xsToSm" variant="meta">One pick per tier, from favorites to long shots.</Text>
+    </div>
+  ),
+};

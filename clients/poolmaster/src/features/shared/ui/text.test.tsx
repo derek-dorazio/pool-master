@@ -95,6 +95,12 @@ describe('Text', () => {
     expect(screen.getByText('42')).not.toHaveClass('text-sm');
   });
 
+  it('sets a line small on a phone and sm from the small breakpoint up, for a phone tile\'s two-line limit', () => {
+    render(<Text size="xsToSm" variant="meta">One pick per tier</Text>);
+
+    expect(screen.getByText('One pick per tier')).toHaveClass('text-xs', 'sm:text-sm');
+  });
+
   it('cuts a long line short with an ellipsis when asked', () => {
     render(<Text truncate>A very long entry name</Text>);
 

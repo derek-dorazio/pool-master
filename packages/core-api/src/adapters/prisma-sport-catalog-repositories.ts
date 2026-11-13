@@ -162,6 +162,8 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
         eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
+        // A round inserted meanwhile takes FOR KEY SHARE on this row too, so it is counted or fails.
+        roundCount: await tx.sportLeague.count({ where: { parentSportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
       await tx.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } });
@@ -1123,6 +1125,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     displayOrder: row.displayOrder,
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,
+    parentSportLeagueId: row.parentSportLeagueId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

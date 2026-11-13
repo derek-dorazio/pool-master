@@ -309,6 +309,15 @@ describe('sport catalog mappers', () => {
     expect(dto).toEqual(expect.objectContaining({ affiliationCount: 32, sportEventCount: 18, createdAt: ISO }));
   });
 
+  it('sends a playoff round\'s sport league with the id of the season league it belongs to, and a season league with none', () => {
+    const base = { sportId: 's1', sport: 'HOCKEY', roundNames: [], affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const round = { ...base, id: 'stanley-cup-final', name: 'Stanley Cup Final', parentSportLeagueId: 'nhl' } as unknown as SportLeagueSummary;
+    const season = { ...base, id: 'nhl', name: 'NHL', parentSportLeagueId: null } as unknown as SportLeagueSummary;
+
+    expect(mapSportLeagueToDto(round).parentSportLeagueId).toBe('nhl');
+    expect(mapSportLeagueToDto(season).parentSportLeagueId).toBeNull();
+  });
+
   it('sends an affiliation with its participant embedded', () => {
     const affiliation = {
       id: 'a1',

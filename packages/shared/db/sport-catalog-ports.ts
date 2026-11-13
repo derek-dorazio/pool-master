@@ -58,6 +58,8 @@ export interface SportLeagueUses {
   eventPageOfferCount: number;
   /** Leagues' season cups for it. */
   cupCount: number;
+  /** Playoff round sport leagues that name it as their season league (#1701). */
+  roundCount: number;
 }
 
 export interface SportLeagueRepository {

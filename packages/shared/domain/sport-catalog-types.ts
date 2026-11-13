@@ -72,6 +72,12 @@ export interface SportLeague extends DomainEntity {
    */
   participantType: ParticipantType | null;
   scoringFamily: ScoringFamily | null;
+  /**
+   * The season league a playoff round's sport league belongs to (#1701: the Stanley Cup Final
+   * is the NHL's), so pages list each round under its league; null for a league that is no
+   * other's round. Reference data, set where the round league is seeded.
+   */
+  parentSportLeagueId: string | null;
 }
 
 /**
