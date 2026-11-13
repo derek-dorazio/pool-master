@@ -329,7 +329,9 @@ no feed). The lifecycle sweep will not complete an event holding a line still in
 ### What moves an event's status
 
 Not the sync, and ADR 0011 keeps it that way: status follows the event's dates. What ADR 0011
-adds is the sync keeping a synced event's dates current, which it does not do yet. `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
+adds is the sync keeping a synced event's dates current, which it does not do yet.
+
+Today, `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
 COMPLETED` from the event's round schedule, unless `auto_lifecycle_enabled` is off, and settlement
 and emails follow from that as background jobs (see `docs/BACKGROUND-JOBS.md`). Until an event is
 `IN_PROGRESS`, every live score for it is skipped with the warning

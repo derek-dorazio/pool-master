@@ -38,7 +38,7 @@ fallback for leagues with no feed and for corrections.**
 - **Status.** An event moves `SCHEDULED → IN_PROGRESS → COMPLETED` from its dates by the
   lifecycle scheduler, as today. For a synced event those dates come from the provider and the
   sync keeps them current, so a rescheduled game or tournament moves with it.
-- **Release stays deliberate.** A new event is born `DRAFT`, as every event is, and is released
+- **Release: not decided here.** A new event is born `DRAFT`, as every event is, and is released
   to commissioners by an explicit step (the draft-and-release decision of 2026-10-07). Whether
   that step stays an admin's press or becomes automatic for a synced league is decided with the
   follow-up work, not here.
@@ -56,10 +56,9 @@ how the league gets its events.
 
 - A new season, week or tournament appears on the site without anyone keying it in, and the
   admin's job shifts from data entry to review.
-- The provider becomes the owner of the facts it feeds for a synced event: name, dates,
-  participants, games and results. An admin edit to one of those can be overwritten by the next
-  sync; the follow-up work decides which fields an admin may still change on a synced event and
-  how a deliberate correction survives a sync, the way `resultSource` already does for results.
+- For a synced event the provider feeds name, dates, participants, games and results. Whether
+  an admin's edit to one of those survives the next sync, and which fields an admin may still
+  change, is an open question for Derek, decided with the follow-up work.
 - ADR 0009's rule that a sync never creates an event, never writes an event's details and never
   creates a round is lifted for synced leagues. The code still enforces it until the follow-up
   tickets change it; the docs say which parts exist today.
