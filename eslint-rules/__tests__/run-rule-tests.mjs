@@ -228,6 +228,8 @@ ruleTester.run('no-panel-corner', noPanelCorner, {
     'function Card({ radius }) { return <Tile radius={radius}>x</Tile>; }',
     // Another prop that happens to say panel is not the corner.
     'const c = <Tabs variant="panel" />;',
+    // A choice between content corners only.
+    "const c2 = <Tile radius={dense ? 'sm' : undefined}>x</Tile>;",
   ],
   invalid: [
     {
@@ -246,6 +248,15 @@ ruleTester.run('no-panel-corner', noPanelCorner, {
     {
       // A shared part that passes the radius on to its Tile is held to the same list.
       code: 'const g = <TabbedCard radius="panel" tabs={[]} />;',
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      // A branch that can be the panel corner counts, whichever branch it is.
+      code: "const h = <Tile radius={isHero ? 'panel' : 'sm'}>x</Tile>;",
+      errors: [{ messageId: 'panelCorner' }],
+    },
+    {
+      code: "const i = <Tile radius={isHero && 'panel'}>x</Tile>;",
       errors: [{ messageId: 'panelCorner' }],
     },
   ],

@@ -532,8 +532,10 @@ administration area (root admin included), reusing the same shared components.
     content corner. `Tile`'s only other corner is `radius="panel"`, for a
     panel that stands apart from the content: a navy hero (the league home's
     and the contest lifecycle panel's), the signed-out home's sign-in card,
-    the invite join card (`PublicInviteJoinPage`) and the event pages
-    (#1638). The ESLint rule `poolmaster/no-panel-corner` fails
+    the invite join card (`PublicInviteJoinPage`) and the event pages' own
+    panels: the photo hero, an event page's offer cards and next-up card,
+    the Clutch Card page's points and the Start page's card (#1638). The Coming up cards are content, on member pages
+    too, and keep the content corner. The ESLint rule `poolmaster/no-panel-corner` fails
     `radius="panel"` anywhere else (#1697); its ignores in `eslint.config.js`
     are this list, so a new panel adds its file to both in the same PR. A box telling the user something
     they must know is a `Notice`, and a clickable box is a `Button` or a link

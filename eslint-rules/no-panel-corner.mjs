@@ -4,20 +4,32 @@
  * item 13 *One section look* may ask for `panel`, and eslint.config.js lists their files as this
  * rule's ignores. A new panel adds its file there and to that item in the same PR.
  *
- * Reports a `radius` prop set to the string "panel" on any element, written as `radius="panel"`
- * or `radius={'panel'}`, so `Tile` and the shared parts that pass a radius on (`TabbedCard`) are
- * both covered. A radius passed through from a prop (`radius={radius}`) is the caller's choice
- * and is checked where the caller writes it.
+ * Reports a `radius` prop that is or can be the string "panel" on any element: `radius="panel"`,
+ * `radius={'panel'}`, or a ternary or `&&`/`||` with a "panel" branch. `Tile` and the shared
+ * parts that pass a radius on (`TabbedCard`) are both covered. A radius passed through from a
+ * prop (`radius={radius}`) is the caller's choice and is checked where the caller writes it. It
+ * cannot see "panel" held in a variable first (`const corner = 'panel'`); review catches that.
  */
+/** Whether an expression is, or can be, the string "panel": a literal, or either branch of a ternary or `&&`/`||`. */
+function mayBePanel(expression) {
+  switch (expression.type) {
+    case 'Literal':
+      return expression.value === 'panel';
+    case 'TemplateLiteral':
+      return expression.expressions.length === 0 && expression.quasis[0]?.value.cooked === 'panel';
+    case 'ConditionalExpression':
+      return mayBePanel(expression.consequent) || mayBePanel(expression.alternate);
+    case 'LogicalExpression':
+      return mayBePanel(expression.left) || mayBePanel(expression.right);
+    default:
+      return false;
+  }
+}
+
 function isPanel(value) {
   if (!value) return false;
   if (value.type === 'Literal') return value.value === 'panel';
-  if (value.type === 'JSXExpressionContainer') {
-    const { expression } = value;
-    return (expression.type === 'Literal' && expression.value === 'panel')
-      || (expression.type === 'TemplateLiteral' && expression.expressions.length === 0 && expression.quasis[0]?.value.cooked === 'panel');
-  }
-  return false;
+  return value.type === 'JSXExpressionContainer' && mayBePanel(value.expression);
 }
 
 export default {
