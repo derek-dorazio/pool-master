@@ -42,6 +42,7 @@ import {
   type GameResult,
 } from '../../support/bracket-fixtures';
 import { expectDefined } from '../../support/expect-defined';
+import { placeOnStoredBoard } from '../../support/in-memory-leaderboard-snapshots';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo, fakeSquaresRepo } from '../../support/repo-fakes';
@@ -546,6 +547,16 @@ describe('ContestService.livePositionsOf', () => {
       { squadId: squadOf(context, 'entry-bob'), position: 1 },
       { squadId: squadOf(context, 'entry-cara'), position: 3 },
     ]);
+  });
+
+  it('gives a cup the stored bracket board\'s places while it is current, rather than computing the board again (#1575)', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+    await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+    // Cara's place on the stored board only: a computed board would rank her third.
+    placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 2);
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: squadOf(context, 'entry-cara'), position: 2 });
   });
 
   it('ranks nobody while picks are hidden, rather than refusing, since a contest not under way has no places yet', async () => {

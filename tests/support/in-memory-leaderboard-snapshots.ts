@@ -8,6 +8,7 @@ import type {
   ContestLeaderboardSnapshotRepository,
   ContestLeaderboardSnapshotWrite,
 } from '@poolmaster/shared/db';
+import { DEFAULT_SHOWN_EVENT } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 
 export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSnapshotRepository<Board> {
   readonly rows = new Map<string, ContestLeaderboardSnapshot<Board>>();
@@ -45,4 +46,24 @@ export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSn
   async delete({ contestId, shownEvent }: ContestLeaderboardSnapshotKey): Promise<void> {
     this.rows.delete(`${contestId}:${shownEvent}`);
   }
+}
+
+/** Any stored board: each kind's board lists its entries with their places. */
+type PlacedBoard = { kind: string; board: { entries: readonly { entryId: string; position: number | null; displayPosition: string | null }[] } };
+
+/**
+ * Moves one entry to `position` on the contest's stored default board only (#1575), so a test can
+ * tell a read answered from the stored board from one that computed the board again.
+ */
+export function placeOnStoredBoard<Board extends PlacedBoard>(
+  snapshots: InMemoryLeaderboardSnapshots<Board>,
+  contestId: string,
+  entryId: string,
+  position: number,
+): void {
+  const key = `${contestId}:${DEFAULT_SHOWN_EVENT}`;
+  const row = snapshots.rows.get(key);
+  if (!row) throw new Error(`No stored default board for contest ${contestId}`);
+  const entries = row.board.board.entries.map((entry) => (entry.entryId === entryId ? { ...entry, position, displayPosition: String(position) } : entry));
+  snapshots.rows.set(key, { ...row, board: { ...row.board, board: { ...row.board.board, entries } } });
 }

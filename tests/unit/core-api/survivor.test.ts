@@ -36,6 +36,7 @@ import { survivorPredictionEngine } from '../../../packages/core-api/src/modules
 import { PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import { expectDefined } from '../../support/expect-defined';
+import { placeOnStoredBoard } from '../../support/in-memory-leaderboard-snapshots';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
@@ -507,6 +508,18 @@ describe('PredictionService — a survivor week', () => {
 });
 
 describe('ContestService.getSurvivorLeaderboard', () => {
+  it('gives a cup the stored survivor board\'s places while it is current, rather than computing the board again (#1575)', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    await context.leaderboard();
+    // Cara's place on the stored board only: a computed board would rank her last.
+    placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 1);
+    const cara = expectDefined(context.world.entries.get('entry-cara')).squadId;
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: cara, position: 1 });
+  });
+
   it('ranks entries still in first, then by weeks survived, with entries out in the same week sharing a place', async () => {
     const context = setup();
     context.playWeek1();
