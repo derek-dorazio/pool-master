@@ -561,7 +561,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 ### Toward ADR 0011
 
 ADR 0011 makes a live league's sync the source of its events. Scheduled creation, field loading
-and keeping details current are built (*2b*, *2c*); the rest is not. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
+and keeping details current are built (*2b*, *2c*), and so are read-only admin pages; games and bracket rows are not yet. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
 its league's events*): on a synced event the provider wins over an admin's edit, and a new
 event waits for an admin's release for now, with automatic release the aim once sync is stable.
 
@@ -571,9 +571,12 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Games and bracket rows from the feed** (#1728). Today an admin builds a bracket's rounds and
   matches, and the sync only links a provider game to an open match (*GAME: how a provider game
   finds its match*).
-- **Admin event pages become read and browse** (#1729) for synced leagues, with create, edit and result
-  entry kept for leagues no provider covers and for corrections; code comments that cite
-  ADR-0009 are updated with the code they describe.
+- **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its
+  sport league's `event_sync_provider_id` names the provider it is linked to for scores
+  (`isProviderSyncedEvent`, `SportEventDto.providerSynced`). Manage shows such an event's source
+  as that provider's sync, and its name, venue and dates read-only on Edit details, never sent;
+  location, rounds, par, field, tiers, prices, release and result entry stay the admin's. Create
+  stays for leagues no provider covers and for an event the feed lacks.
 
 ## 7. Reviewing a provider PR: what a new league should touch
 

@@ -48,7 +48,8 @@
  * with a shoot-out's scores (#1532). Soccer's events and teams are both leagues', one after the
  * other. Any other event id is a PGA TOUR tournament id.
  *
- * Admins author every event; this adapter only reads (ADR 0009).
+ * This adapter only reads. A synced sport league's events are created from its event list by the
+ * daily synced event creation sweep (ADR 0011); every other league's, by an admin.
  */
 
 import { Sport } from '@poolmaster/shared/domain';

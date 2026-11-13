@@ -18,3 +18,13 @@ export function useProvidersQuery({ enabled = true }: { enabled?: boolean } = {}
     retry: false,
   });
 }
+
+/**
+ * A provider's display name ("BALLDONTLIE"), read only while `enabled`; its id until the provider
+ * list has loaded, or when the list does not hold it.
+ */
+export function useProviderName(providerId: string, { enabled = true }: { enabled?: boolean } = {}): string {
+  const providersQuery = useProvidersQuery({ enabled });
+  // poolmaster-allow-list-lookup: the handful of registered providers, read once
+  return providersQuery.data?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
+}

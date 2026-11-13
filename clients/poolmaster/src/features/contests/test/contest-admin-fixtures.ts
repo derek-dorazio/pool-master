@@ -38,6 +38,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     participantType: null,
     scoringFamily: null,
     syncScope: 'SCORES_ONLY',
+    providerSynced: false,
     autoLifecycleEnabled: true,
     tierCount: 6,
     // A commissioner's read: only a root admin's carries the admin counts (#1198).

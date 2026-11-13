@@ -5,6 +5,7 @@
  */
 
 import {
+  isProviderSyncedEvent,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SportEventStatus,
   type SportEventRound,
@@ -69,6 +70,7 @@ export function mapSportEventToDto({
     participantType: event.participantType ?? null,
     scoringFamily: event.scoringFamily ?? null,
     syncScope: event.syncScope,
+    providerSynced: isProviderSyncedEvent(event),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
     adminCounts,
