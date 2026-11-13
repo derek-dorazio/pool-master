@@ -638,7 +638,7 @@ describe('AuthHomePage', () => {
     const steps = within(screen.getByTestId('auth-steps')).getAllByRole('listitem');
     expect(steps.map((step) => within(step).getByRole('heading').textContent)).toEqual([
       'Start a league',
-      'Run contests on real events',
+      'Pick a contest',
       'Follow it live',
     ]);
     // Titles only: How to Play's step sentences stay on How to Play.

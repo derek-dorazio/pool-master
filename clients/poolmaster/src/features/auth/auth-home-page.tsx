@@ -244,7 +244,7 @@ export function AuthHomePage() {
     );
   }
 
-  const inviteLeagueName = inviteContext?.league.name ?? teamInviteContext?.league.name ?? null;
+  const isInvite = Boolean(inviteContext ?? teamInviteContext);
   const headline = inviteContext
     ? joinLeagueHeadline(inviteContext.league.name)
     : teamInviteContext
@@ -332,10 +332,10 @@ export function AuthHomePage() {
         {headline}
       </Heading>
 
-      {inviteLeagueName ? <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div> : null}
+      {isInvite ? <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div> : null}
 
       <div className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-        {startRequest && !inviteLeagueName ? (
+        {startRequest && !isInvite ? (
           <Notice data-testid="auth-start-banner" tone="info">
             {`You're starting a ${eventPageCopy(startRequest).name} pool`}
           </Notice>
@@ -366,7 +366,7 @@ export function AuthHomePage() {
         />
       </div>
 
-      {inviteLeagueName ? null : <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div>}
+      {isInvite ? null : <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div>}
     </div>
   );
 }
