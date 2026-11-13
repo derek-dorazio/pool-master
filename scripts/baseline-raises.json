@@ -1,0 +1,4 @@
+{
+  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md §5 Shared-Component and Helper Adoption Gate.",
+  "raises": []
+}
