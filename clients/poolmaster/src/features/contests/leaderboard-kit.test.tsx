@@ -99,6 +99,15 @@ describe('totalColumn', () => {
 });
 
 describe('ScoreboardGrid', () => {
+  it('sits in the shared section titled Standings, not repeating the Leaderboard tab, so pick\'em, bracket, survivor and squares boards share one frame', () => {
+    renderBoard([placeColumn('board')]);
+
+    const section = screen.getByRole('region', { name: 'Standings' });
+    expect(within(section).getByTestId('board')).toBeInTheDocument();
+    // Bare: a title and rule with no box, so the board keeps the page's full width on a phone.
+    expect(section).not.toHaveClass('border');
+  });
+
   it('says the board\'s own empty message when no entry is on it', () => {
     renderBoard([placeColumn('board')], []);
 

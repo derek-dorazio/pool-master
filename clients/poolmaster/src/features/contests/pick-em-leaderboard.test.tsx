@@ -115,6 +115,8 @@ describe('Pick\'em contest leaderboard', () => {
 
     expect(await screen.findByTestId('pick-em-leaderboard-week-week-1-entry-1')).toHaveTextContent('—');
     expect(screen.getByTestId('pick-em-leaderboard-my-best')).toHaveTextContent('Your best: 2 · Morgan’s Picks, 1 pt');
+    // In the Standings title bar, beside the title, not above the board among the page's notes.
+    expect(within(screen.getByRole('region', { name: 'Standings' })).getByTestId('pick-em-leaderboard-my-best')).toBeInTheDocument();
   });
 
   it('lists entries unranked before the first kickoff and says points show from then', async () => {
