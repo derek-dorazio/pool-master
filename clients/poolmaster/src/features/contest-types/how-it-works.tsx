@@ -21,7 +21,7 @@ export function HowItWorksSteps({ testId, titlesOnly = false }: { testId: string
       density={titlesOnly ? 'compact' : 'comfortable'}
       steps={HOW_IT_WORKS.map(({ body, picture, title }) => ({
         body: titlesOnly ? undefined : body,
-        picture: <StepIllustration className="aspect-[16/10] w-full rounded-t-2xl" step={picture} />,
+        picture: <StepIllustration className="aspect-[16/10] w-full" step={picture} />,
         title,
       }))}
       testId={testId}

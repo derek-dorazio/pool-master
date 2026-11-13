@@ -34,7 +34,8 @@ export function NumberedSteps({
     <ol className={cn("grid gap-4 md:grid-cols-3", className)} data-testid={testId}>
       {steps.map((step, index) => (
         <li className="list-none" key={step.title}>
-          <Tile className="h-full" padding="none">
+          <Tile className="h-full overflow-hidden" padding="none">
+            {/* The tile clips its picture to its own corner. */}
             {step.picture}
             <div className={compact ? "p-2 sm:p-3" : "p-4"}>
               <p className={cn("font-display font-bold text-primary", compact ? "text-lg" : "text-2xl")}>{index + 1}</p>
