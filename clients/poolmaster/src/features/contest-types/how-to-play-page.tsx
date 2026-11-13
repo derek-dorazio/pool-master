@@ -4,11 +4,13 @@ import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport 
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { cn, ExpandableTile, LinkButton, NumberedSteps, PageHeader, QueryState, refetchFailed, SectionCard, SectionRow, SectionRows, Text } from '@/features/shared/ui';
+import { cn, ExpandableTile, LinkButton, PageHeader, QueryState, refetchFailed, SectionCard, SectionRow, SectionRows, Text } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
-import { ClutchCardIllustration, FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
+import { HowItWorksSteps } from './how-it-works';
+import { ClutchCardIllustration, FormatIllustration, SportIllustration } from './illustrations';
+import { HOW_TO_PLAY_CLOSING_TITLE } from './public-headlines';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { sportSlug, useSportLeagueChoice } from './sport-league-choice';
 import { SportLeagueFilter } from './sport-league-filter';
@@ -19,13 +21,6 @@ import { useSportLeaguesQuery } from './use-sport-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
 import { LandingSection } from '@/features/event-pages/components/landing-section';
 import { CLUTCH_CARD_PAGE_PATH, howToPlayFormatAnchor } from '@/features/event-pages/event-page-paths';
-
-/** How a pool runs, in three steps, each with its picture. */
-const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string }[] = [
-  { picture: 'league', title: 'Start a league', body: 'A commissioner sets up a league for the office, the family or the group chat, and invites everyone with one link.' },
-  { picture: 'contest', title: 'Run contests on real events', body: 'Pick a contest type for a tournament, a race or a week of games. Members make their picks before it starts.' },
-  { picture: 'live', title: 'Follow it live', body: 'The leaderboard updates as the event plays out, and the standings settle the moment it ends.' },
-];
 
 /** The ways to play in the order the page lists them. */
 const FORMAT_ORDER = Object.values(SelectionType);
@@ -284,14 +279,7 @@ export function HowToPlayPage() {
         title="How to Play"
       />
 
-      <NumberedSteps
-        className="-mx-1 auto-cols-[78%] grid-flow-col gap-3 overflow-x-auto px-1 pb-1 sm:auto-cols-[45%] md:grid-flow-row md:overflow-visible"
-        steps={HOW_IT_WORKS.map((step) => ({
-          ...step,
-          picture: <StepIllustration className="aspect-[16/10] w-full rounded-t-2xl" step={step.picture} />,
-        }))}
-        testId="how-to-play-steps"
-      />
+      <HowItWorksSteps testId="how-to-play-steps" />
 
       <ComingUpRow key={chosenSport?.sport ?? 'all'} sport={chosenSport?.sport} testId="how-to-play-coming-up" />
 
@@ -341,7 +329,7 @@ export function HowToPlayPage() {
       </QueryState>
 
       {auth.isAuthenticated ? null : (
-        <LandingSection intro="Create an account, start a league, and set up your first contest." testId="how-to-play-cta" title="Ready to run your pool?">
+        <LandingSection testId="how-to-play-cta" title={HOW_TO_PLAY_CLOSING_TITLE}>
           {callToAction}
         </LandingSection>
       )}

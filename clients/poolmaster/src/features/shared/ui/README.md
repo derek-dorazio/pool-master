@@ -132,7 +132,8 @@ line: beside the breadcrumb, or at the end of the title row after any actions. I
 stays on the first line on a phone. A `description` is only for a rule the reader needs or
 the entity's own words, never a sentence saying what the page is. A page's views
 are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
-their own address, `variant="state"` inside the page's own `Tabs` root — and a
+their own address, `variant="state"` inside the page's own `Tabs` root; views of
+one card rather than the page, such as Sign in / Create account, are a `TabbedCard` — and a
 filter that changes every tab or the whole page, such as a season or a sport, is a
 `FilterPicker` in `tabsEnd` (with no tabs it has the bottom line to itself). On a phone
 `PageTabs` and `LeagueMenu` scroll sideways through `useScrollRow`: the selected

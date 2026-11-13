@@ -4,7 +4,8 @@ import { SectionCard, Text } from '@/features/shared/ui';
 type InvitationContextCardProps = {
   leagueName: string;
   inviteCode?: string;
-  message: string;
+  /** A line under the league; left out where the page says enough, such as the sign-in page. */
+  message?: string;
   title?: string;
 };
 
@@ -30,7 +31,7 @@ export function InvitationContextCard({
           ) : null}
         </div>
       </div>
-      <Text as="p" className="mt-4" variant="meta">{message}</Text>
+      {message ? <Text as="p" className="mt-4" variant="meta">{message}</Text> : null}
     </SectionCard>
   );
 }

@@ -593,7 +593,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
     fireEvent.change(await screen.findByRole('textbox', { name: 'First name' }), { target: { value: ' Jordan ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Last name' }), { target: { value: ' Rivers ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: '  JRivers ' } });
-    fireEvent.change(screen.getByLabelText('Create password'), { target: { value: 'correct-horse-battery-1' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-1' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'correct-horse-battery-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
 

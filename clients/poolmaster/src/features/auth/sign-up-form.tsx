@@ -82,7 +82,7 @@ export function SignUpForm({
   mode = { kind: "account" },
   onRegistered,
   pendingLabel = "Creating account...",
-  submitLabel = "Register and continue",
+  submitLabel = "Create account",
 }: SignUpFormProps) {
   const logger = useMemo(() => getLogger().child({ feature: "sign-up-form" }), []);
   const queryClient = useQueryClient();
@@ -178,10 +178,10 @@ export function SignUpForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField error={form.formState.errors.firstName?.message} label="First name">
-          <Input {...form.register("firstName")} autoComplete="given-name" data-testid="sign-up-first-name" placeholder="Taylor" type="text" />
+          <Input {...form.register("firstName")} autoComplete="given-name" data-testid="sign-up-first-name" type="text" />
         </FormField>
         <FormField error={form.formState.errors.lastName?.message} label="Last name">
-          <Input {...form.register("lastName")} autoComplete="family-name" data-testid="sign-up-last-name" placeholder="Commissioner" type="text" />
+          <Input {...form.register("lastName")} autoComplete="family-name" data-testid="sign-up-last-name" type="text" />
         </FormField>
       </div>
 
@@ -196,12 +196,11 @@ export function SignUpForm({
           {...form.register("username", { onChange: () => setHasEditedUsername(true) })}
           autoComplete="username"
           data-testid="sign-up-username"
-          placeholder="yourname"
           type="text"
         />
       </FormField>
 
-      <FormField error={form.formState.errors.password?.message} label="Create password">
+      <FormField error={form.formState.errors.password?.message} label="Password">
         <PasswordInput {...form.register("password")} autoComplete="new-password" data-testid="sign-up-password" />
       </FormField>
 

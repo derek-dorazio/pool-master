@@ -28,4 +28,12 @@ describe('InvitationContextCard', () => {
     expect(screen.getByRole('region', { name: 'League invitation' })).toBeInTheDocument();
     expect(screen.queryByText(/Invite code/)).not.toBeInTheDocument();
   });
+
+  it('draws no line under the league when given no message, as on the sign-in page', () => {
+    render(<InvitationContextCard inviteCode="ABC123" leagueName="Big Dawgs" title="League invite" />);
+
+    const card = screen.getByRole('region', { name: 'League invite' });
+    expect(within(card).getByText('Big Dawgs')).toBeInTheDocument();
+    expect(within(card).queryByRole('paragraph')).not.toBeInTheDocument();
+  });
 });
