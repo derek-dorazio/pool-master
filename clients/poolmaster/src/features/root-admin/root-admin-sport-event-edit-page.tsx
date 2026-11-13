@@ -27,6 +27,7 @@ import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
+import { useProviderName } from './use-providers-query';
 
 const editFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -91,6 +92,8 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
   const { timeZone } = useDisplayPreferences();
   const { providerSynced } = tournament;
+  const syncName = useProviderName(tournament.providerId, { enabled: providerSynced });
+  const syncedHelp = providerSynced ? `Set by the ${syncName} sync.` : undefined;
 
   const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
@@ -137,13 +140,13 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
     >
       <FormField
         error={form.formState.errors.name?.message}
-        helperText={providerSynced ? `Name, venue and dates come from the ${tournament.providerId} sync.` : undefined}
+        helperText={syncedHelp}
         label="Name"
       >
         <Input data-testid="root-admin-sport-event-edit-name" readOnly={providerSynced} {...form.register('name')} />
       </FormField>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="Venue">
+        <FormField helperText={syncedHelp} label="Venue">
           <Input data-testid="root-admin-sport-event-edit-venue" readOnly={providerSynced} {...form.register('venue')} />
         </FormField>
         <FormField label="Location">
@@ -151,10 +154,10 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
         </FormField>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField error={form.formState.errors.startDate?.message} label="Starts">
+        <FormField error={form.formState.errors.startDate?.message} helperText={syncedHelp} label="Starts">
           <DateTimeField data-testid="root-admin-sport-event-edit-start" readOnly={providerSynced} {...form.register('startDate')} />
         </FormField>
-        <FormField label="Ends">
+        <FormField helperText={syncedHelp} label="Ends">
           <DateTimeField data-testid="root-admin-sport-event-edit-end" readOnly={providerSynced} {...form.register('endDate')} />
         </FormField>
       </div>

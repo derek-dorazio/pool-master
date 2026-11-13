@@ -357,20 +357,23 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     });
   });
 
-  it('shows a provider-synced event\'s name, venue and dates read-only and saves only what an admin still owns', async () => {
+  it('shows a provider-synced event\'s name, venue and dates read-only under the sync\'s display name and saves only what an admin still owns', async () => {
     seedDefaults();
+    listProvidersMock.mockResolvedValue({
+      data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['GOLF'], primaryForSports: [] }] },
+    });
     getEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' }) } });
     updateEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, location: 'Augusta, GA' }) } });
     renderPage();
 
     const details = await screen.findByTestId('root-admin-sport-event-details');
-    expect(within(details).getByText('balldontlie sync')).toBeInTheDocument();
+    expect(await within(details).findByText('BALLDONTLIE sync')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('root-admin-sport-event-home-edit'));
     const modal = await screen.findByTestId('root-admin-sport-event-edit-page');
     for (const testId of ['name', 'venue', 'start', 'end']) {
       expect(within(modal).getByTestId(`root-admin-sport-event-edit-${testId}`)).toHaveAttribute('readonly');
     }
-    expect(within(modal).getByText('Name, venue and dates come from the balldontlie sync.')).toBeInTheDocument();
+    expect(within(modal).getAllByText('Set by the BALLDONTLIE sync.')).toHaveLength(4);
     fireEvent.change(within(modal).getByTestId('root-admin-sport-event-edit-location'), { target: { value: 'Augusta, GA' } });
     fireEvent.click(within(modal).getByTestId('root-admin-sport-event-edit-save'));
 
@@ -389,6 +392,18 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     fireEvent.click(screen.getByTestId('root-admin-sport-event-home-edit'));
     const modal = await screen.findByTestId('root-admin-sport-event-edit-page');
     expect(within(modal).getByTestId('root-admin-sport-event-edit-name')).not.toHaveAttribute('readonly');
+    expect(within(modal).queryByText(/sync\.$/)).not.toBeInTheDocument();
+  });
+
+  it('names a synced event\'s source by its provider id when the provider list does not hold it', async () => {
+    seedDefaults();
+    listProvidersMock.mockResolvedValue({ data: { providers: [] } });
+    getEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, providerId: 'other-feed', syncScope: 'SCORES_ONLY' }) } });
+    renderPage();
+
+    const details = await screen.findByTestId('root-admin-sport-event-details');
+    await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
+    expect(within(details).getByText('other-feed sync')).toBeInTheDocument();
   });
 
   it('saves the par per round an admin enters, and sends null when it is left blank', async () => {

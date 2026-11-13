@@ -11,6 +11,7 @@ import {
 import { buildSportEventPath, buildSportLeaguePath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
+import { useProviderName } from './use-providers-query';
 import { upperFirst } from '@/lib/upper-first';
 
 /**
@@ -30,6 +31,7 @@ export function SportEventDetailsSection({
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
+  const syncName = useProviderName(tournament.providerId, { enabled: tournament.providerSynced });
   return (
     <SectionCard
       trailing={(
@@ -46,7 +48,7 @@ export function SportEventDetailsSection({
       title="Details"
     >
       <SectionRows>
-        <SectionRow layout="setting" name="Source" value={tournament.providerSynced ? `${tournament.providerId} sync` : 'Admin'} />
+        <SectionRow layout="setting" name="Source" value={tournament.providerSynced ? `${syncName} sync` : 'Admin'} />
         <SectionRow layout="setting" name="Venue" value={tournament.venue || 'Not set'} />
         <SectionRow layout="setting" name="Location" value={tournament.location || 'Not set'} />
         <SectionRow layout="setting" name="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
