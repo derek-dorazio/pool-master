@@ -1140,6 +1140,7 @@ model SportLeague {
   eventPageOffers        EventPageOffer[]
 
   @@unique([sportId, name])
+  @@index([parentSportLeagueId])
   @@map("sport_leagues")
 }
 

@@ -6,6 +6,9 @@ ALTER TABLE "sport_leagues" ADD COLUMN "parent_sport_league_id" UUID;
 
 ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_parent_sport_league_id_fkey" FOREIGN KEY ("parent_sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- Finding a season league's rounds, and the check before deleting one, read by this column.
+CREATE INDEX "sport_leagues_parent_sport_league_id_idx" ON "sport_leagues"("parent_sport_league_id");
+
 -- Each seeded round under its season league, both named within their sport.
 UPDATE "sport_leagues" AS round
 SET "parent_sport_league_id" = parent."id"
