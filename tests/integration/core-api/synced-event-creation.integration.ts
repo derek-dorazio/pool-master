@@ -4,6 +4,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import { PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
 import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { heldHere } from '../../support/job-locks';
 
@@ -83,5 +84,31 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
 
     expect(await getPrisma().sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id } } })).toBe(2);
+  });
+
+  it('reads each created event as provider-synced, and an admin-authored event of the same league as not (#1729)', async () => {
+    const synced = await golfLeague({ matchKeyword: `SYNC${randomUUID().slice(0, 4)}`, eventSyncProviderId: PROVIDER_ID });
+    const { scheduler } = buildScheduler();
+    await scheduler.runSweep();
+    const { sportEvents } = createSportEventServices(getAppPrisma());
+    const manual = await sportEvents.createEvent({
+      sportLeagueId: synced.id,
+      eventYear: 2027,
+      name: 'Members Cup',
+      startDate: new Date('2027-08-01T12:00:00Z'),
+    });
+
+    const events = await getPrisma().sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, select: { id: true } });
+    const flags = await Promise.all(events.map(async ({ id }) => {
+      const read = mapSportEventToDto(await sportEvents.requireAdminSummary(id));
+      return [read.name, read.providerSynced] as const;
+    }));
+    const byName = (a: readonly [string, boolean], b: readonly [string, boolean]) => a[0].localeCompare(b[0]);
+    expect([...flags].sort(byName)).toEqual(([
+      ['Members Cup', false],
+      [`${synced.matchKeyword} Open`, true],
+      [`${synced.matchKeyword} Open`, true],
+    ] as const).slice().sort(byName));
+    expect(manual.event.providerId).not.toBe(PROVIDER_ID);
   });
 });

@@ -10212,6 +10212,8 @@ export interface components {
              * @enum {string}
              */
             syncScope: "NONE" | "SCORES_ONLY";
+            /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+            providerSynced: boolean;
             /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -10357,6 +10359,8 @@ export interface components {
                  * @enum {string}
                  */
                 syncScope: "NONE" | "SCORES_ONLY";
+                /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+                providerSynced: boolean;
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -10497,6 +10501,8 @@ export interface components {
                  * @enum {string}
                  */
                 syncScope: "NONE" | "SCORES_ONLY";
+                /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+                providerSynced: boolean;
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -10693,6 +10699,8 @@ export interface components {
                  * @enum {string}
                  */
                 syncScope: "NONE" | "SCORES_ONLY";
+                /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+                providerSynced: boolean;
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */

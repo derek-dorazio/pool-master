@@ -11,12 +11,14 @@ import {
 import { buildSportEventPath, buildSportLeaguePath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
+import { useProviderName } from './use-providers-query';
 import { upperFirst } from '@/lib/upper-first';
 
 /**
  * The event's properties as labelled rows, with one Edit for all of them
  * (rules/ux-rules.md §12 rules 5 and 6). The sport league and event year are fixed at creation.
- * Par per round shows only for a family that scores unplayed rounds against it.
+ * Par per round shows only for a family that scores unplayed rounds against it. Source says
+ * whether the provider's sync keeps the event's name, venue and dates (ADR 0011) or an admin does.
  */
 export function SportEventDetailsSection({
   sportLeagueName,
@@ -29,6 +31,7 @@ export function SportEventDetailsSection({
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
+  const syncName = useProviderName(tournament.providerId, { enabled: tournament.providerSynced });
   return (
     <SectionCard
       trailing={(
@@ -45,6 +48,7 @@ export function SportEventDetailsSection({
       title="Details"
     >
       <SectionRows>
+        <SectionRow layout="setting" name="Source" value={tournament.providerSynced ? `${syncName} sync` : 'Admin'} />
         <SectionRow layout="setting" name="Venue" value={tournament.venue || 'Not set'} />
         <SectionRow layout="setting" name="Location" value={tournament.location || 'Not set'} />
         <SectionRow layout="setting" name="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />

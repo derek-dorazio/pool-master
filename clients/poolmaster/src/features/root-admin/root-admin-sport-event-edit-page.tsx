@@ -27,6 +27,7 @@ import { buildSportEventPath } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
+import { useProviderName } from './use-providers-query';
 
 const editFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -60,16 +61,19 @@ function toDefaults(tournament: SportEventDto, timeZone: string): EditFormValues
 
 /**
  * The details as an update. Par per round is sent only when the event's scoring family reads it;
- * otherwise the field is not shown, and the stored value is left as it is.
+ * otherwise the field is not shown, and the stored value is left as it is. A provider-synced
+ * event's name, venue and dates are its provider's (ADR 0011): shown read-only and never sent.
  */
-function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean, timeZone: string): UpdateSportEventRequest {
+function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean, providerSynced: boolean, timeZone: string): UpdateSportEventRequest {
   return {
-    name: values.name,
-    // A blank field clears the value (null), rather than storing an empty string.
-    venue: values.venue?.trim() || null,
+    ...(providerSynced ? {} : {
+      name: values.name,
+      // A blank field clears the value (null), rather than storing an empty string.
+      venue: values.venue?.trim() || null,
+      startDate: dateTimeLocalValueToIso(values.startDate, timeZone) ?? values.startDate,
+      endDate: dateTimeLocalValueToIso(values.endDate, timeZone) ?? null,
+    }),
     location: values.location?.trim() || null,
-    startDate: dateTimeLocalValueToIso(values.startDate, timeZone) ?? values.startDate,
-    endDate: dateTimeLocalValueToIso(values.endDate, timeZone) ?? null,
     rounds: values.rounds,
     ...(sendsRoundsPar
       ? { roundsPar: values.roundsPar === '' ? null : Number(values.roundsPar) }
@@ -87,6 +91,9 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
   const { timeZone } = useDisplayPreferences();
+  const { providerSynced } = tournament;
+  const syncName = useProviderName(tournament.providerId, { enabled: providerSynced });
+  const syncedHelp = providerSynced ? `Set by the ${syncName} sync.` : undefined;
 
   const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
@@ -98,7 +105,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
     mutationFn: async (values: EditFormValues) => {
       const response = await updateEvent({
         path: { eventId: tournament.id },
-        body: toRequestBody(values, scoresUnplayedRoundsAgainstPar, timeZone),
+        body: toRequestBody(values, scoresUnplayedRoundsAgainstPar, providerSynced, timeZone),
       });
       if (!response.data?.event) {
         throwApiError(response.error, `The ${vocabulary.event.one} update response is missing data.`);
@@ -131,23 +138,27 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
       testId="root-admin-sport-event-edit-page"
       title="Edit details"
     >
-      <FormField error={form.formState.errors.name?.message} label="Name">
-        <Input data-testid="root-admin-sport-event-edit-name" {...form.register('name')} />
+      <FormField
+        error={form.formState.errors.name?.message}
+        helperText={syncedHelp}
+        label="Name"
+      >
+        <Input data-testid="root-admin-sport-event-edit-name" readOnly={providerSynced} {...form.register('name')} />
       </FormField>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="Venue">
-          <Input data-testid="root-admin-sport-event-edit-venue" {...form.register('venue')} />
+        <FormField helperText={syncedHelp} label="Venue">
+          <Input data-testid="root-admin-sport-event-edit-venue" readOnly={providerSynced} {...form.register('venue')} />
         </FormField>
         <FormField label="Location">
           <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
         </FormField>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField error={form.formState.errors.startDate?.message} label="Starts">
-          <DateTimeField {...form.register('startDate')} />
+        <FormField error={form.formState.errors.startDate?.message} helperText={syncedHelp} label="Starts">
+          <DateTimeField data-testid="root-admin-sport-event-edit-start" readOnly={providerSynced} {...form.register('startDate')} />
         </FormField>
-        <FormField label="Ends">
-          <DateTimeField data-testid="root-admin-sport-event-edit-end" {...form.register('endDate')} />
+        <FormField helperText={syncedHelp} label="Ends">
+          <DateTimeField data-testid="root-admin-sport-event-edit-end" readOnly={providerSynced} {...form.register('endDate')} />
         </FormField>
       </div>
       <FormField error={form.formState.errors.rounds?.message} label={upperFirst(vocabulary.round.many)}>

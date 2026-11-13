@@ -8859,6 +8859,10 @@ export type SportEventDto = {
      */
     syncScope: 'NONE' | 'SCORES_ONLY';
     /**
+     * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+     */
+    providerSynced: boolean;
+    /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
      */
     autoLifecycleEnabled: boolean;
@@ -9057,6 +9061,10 @@ export type SportEventListResponse = {
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
         /**
+         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         */
+        providerSynced: boolean;
+        /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
         autoLifecycleEnabled: boolean;
@@ -9249,6 +9257,10 @@ export type SportEventResponse = {
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
+        /**
+         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         */
+        providerSynced: boolean;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -9513,6 +9525,10 @@ export type ImportSportEventYearFromProviderResponse = {
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
+        /**
+         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         */
+        providerSynced: boolean;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
