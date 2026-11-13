@@ -34,9 +34,9 @@ function scrollToTypes() {
 /**
  * Contest types (#803): every contest the league could run, grouped by sport and sport league,
  * read from the contest templates: each sport league lists its own and its sport's every-event
- * types (#1716), since a contest is always created in one. A commissioner of an active league gets a "Create this
- * contest" link on each, opening Create contest on that template; every other member sees the
- * same menu without them. The sport switch, a column of every sport and league on a computer and
+ * types (#1716), since a contest is always created in one. A commissioner of an active league
+ * gets a "Create this contest" link on each, opening Create contest on that template in that
+ * sport league; every other member sees the same menu without them. The sport switch, a column of every sport and league on a computer and
  * chips on a phone as on How to Play (#1701), narrows it to one sport, league or playoff round,
  * and the choice is kept in the link.
  */
@@ -130,7 +130,7 @@ export function LeagueContestTypesPage() {
               {shownSports.map((sport) => (
                 <SectionCard bare help={SPORT_BLURBS[sport.sport]} key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
                   {sport.groups.map((group) => (
-                    <div className="space-y-3" data-testid={`contest-types-league-${group.slug}`} key={group.sportLeagueId}>
+                    <div className="space-y-3" key={group.sportLeagueId}>
                       <Heading level={4} variant="eyebrow">{group.name}</Heading>
                       {statPoolLines.has(group.sportLeagueId) ? (
                         <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
