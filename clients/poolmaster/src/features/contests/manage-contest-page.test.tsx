@@ -201,6 +201,29 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(updateContestConfigurationMock).not.toHaveBeenCalled();
   });
 
+  it('keeps Preview contest entry off, with why behind a (?), for a set-up random draw, which has no picks page', async () => {
+    primeMocks({
+      contest: buildContest({ selectionType: SelectionType.RANDOM_DRAW }),
+      managedContest: buildManagedContest({
+        configuration: {
+          id: 'config-contest-1',
+          contestId: 'contest-1',
+          maxEntriesPerSquad: 1,
+          selectionType: SelectionType.RANDOM_DRAW,
+          picksPerEntry: 3,
+          countedScores: 2,
+        },
+      }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const card = within(await screen.findByTestId('contest-status-card'));
+    expect(card.getByRole('button', { name: 'Preview contest entry' })).toBeDisabled();
+    expect(card.getByTestId('pick-preview-unavailable')).toBeInTheDocument();
+    expect(previewRosterPicksMock).not.toHaveBeenCalled();
+  });
+
   it('lists the event\'s tiers as Tier 1, Tier 2… with Tier 1 on top, each with its golfer count', async () => {
     primeMocks({
       managedContest: buildManagedContest({ sportEvents: [{ sportEventId: 'event-1', effectiveTiers: [buildTier(3, 14), buildTier(1, 8), buildTier(2, 1)] }] }),
