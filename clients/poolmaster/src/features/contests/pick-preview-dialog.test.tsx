@@ -122,9 +122,9 @@ function renderAction(overrides: Partial<ActionProps> = {}) {
   );
 }
 
-const openPreview = () => fireEvent.click(screen.getByRole('button', { name: 'Preview picks page' }));
+const openPreview = () => fireEvent.click(screen.getByRole('button', { name: 'Preview contest entry' }));
 
-describe('Preview picks page', () => {
+describe('Preview contest entry', () => {
   afterEach(() => {
     for (const mock of [createContestMock, getSportLeagueMock, previewGamePicksMock, previewRosterPicksMock, saveGamePicksMock, selectContestPickMock]) {
       mock.mockReset();
@@ -156,7 +156,7 @@ describe('Preview picks page', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
 
     await waitFor(() => expect(screen.queryByTestId('pick-preview-dialog')).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Preview picks page' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Preview contest entry' })).toBeEnabled();
     expect(createContestMock).not.toHaveBeenCalled();
   });
 
@@ -250,7 +250,7 @@ describe('Preview picks page', () => {
   it('keeps the button off, with why behind a (?), while the event\'s field is not loaded', () => {
     renderAction({ event: { ...golfEvent, loadedParticipantCount: 0 } });
 
-    expect(screen.getByRole('button', { name: 'Preview picks page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Preview contest entry' })).toBeDisabled();
     expect(screen.getByTestId('pick-preview-unavailable')).toBeInTheDocument();
     expect(previewRosterPicksMock).not.toHaveBeenCalled();
   });
@@ -258,6 +258,6 @@ describe('Preview picks page', () => {
   it('keeps the button off for a random draw, which has no picks page', () => {
     renderAction({ configuration: { selectionType: 'RANDOM_DRAW', picksPerEntry: 4, countedScores: 4 }, selectionType: 'RANDOM_DRAW' });
 
-    expect(screen.getByRole('button', { name: 'Preview picks page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Preview contest entry' })).toBeDisabled();
   });
 });
