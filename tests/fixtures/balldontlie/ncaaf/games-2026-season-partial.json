@@ -1,0 +1,111 @@
+{
+  "data": [
+    {
+      "id": 6002,
+      "date": "2026-12-06T01:00:00.000Z",
+      "season": 2026,
+      "week": 15,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 101,
+        "conference": "Big Ten",
+        "city": "Columbus",
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU"
+      },
+      "visitor_team": {
+        "id": 64,
+        "conference": "Big Ten",
+        "city": "Bloomington",
+        "name": "Hoosiers",
+        "full_name": "Indiana Hoosiers",
+        "abbreviation": "IND"
+      },
+      "home_score": 24,
+      "away_score": 20
+    },
+    {
+      "id": 6011,
+      "date": "2026-12-19T01:00:00.000Z",
+      "season": 2026,
+      "week": 17,
+      "status": "2nd Quarter",
+      "status_state": "in_progress",
+      "period": 2,
+      "home_team": {
+        "id": 106,
+        "conference": "Big Ten",
+        "city": "Eugene",
+        "name": "Ducks",
+        "full_name": "Oregon Ducks",
+        "abbreviation": "ORE"
+      },
+      "visitor_team": {
+        "id": 76,
+        "conference": "ACC",
+        "city": "Coral Gables",
+        "name": "Hurricanes",
+        "full_name": "Miami Hurricanes",
+        "abbreviation": "MIA"
+      },
+      "home_score": 14,
+      "away_score": 10
+    },
+    {
+      "id": 6012,
+      "date": "2026-12-19T17:00:00.000Z",
+      "season": 2026,
+      "week": 17,
+      "status": "Scheduled",
+      "status_state": "scheduled",
+      "period": 0,
+      "home_team": {
+        "id": 52,
+        "conference": "SEC",
+        "city": "Athens",
+        "name": "Bulldogs",
+        "full_name": "Georgia Bulldogs",
+        "abbreviation": "UGA"
+      },
+      "visitor_team": {
+        "id": 140,
+        "conference": "Big 12",
+        "city": "Lubbock",
+        "name": "Red Raiders",
+        "full_name": "Texas Tech Red Raiders",
+        "abbreviation": "TTU"
+      }
+    },
+    {
+      "id": 6013,
+      "date": "2026-12-19T21:00:00.000Z",
+      "season": 2026,
+      "week": 17,
+      "status": null,
+      "status_state": "unknown",
+      "period": 4,
+      "home_team": {
+        "id": 2,
+        "conference": "SEC",
+        "city": "Tuscaloosa",
+        "name": "Crimson Tide",
+        "full_name": "Alabama Crimson Tide",
+        "abbreviation": "ALA"
+      },
+      "visitor_team": {
+        "id": 63,
+        "conference": "Sun Belt",
+        "city": "Harrisonburg",
+        "name": "Dukes",
+        "full_name": "James Madison Dukes",
+        "abbreviation": "JMU"
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

@@ -104,6 +104,7 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 | Sport league | `match_keyword` | Migration | Adapter tour constant |
 |---|---|---|---|
 | NFL | `NFL` | baseline | `NFL_LEAGUE_NAME` (`nfl-mapping.ts`) |
+| College Football Playoff | `CFP` | `20271119000300_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
 | NCAA Division I Men (basketball) | `NCAAM` | baseline | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
 | NCAA Division I Women (basketball) | `NCAAW` | baseline | `NCAA_WOMEN.tour` |
 | Premier League | `EPL` | baseline | `EPL_TOUR` (`epl-mapping.ts`) |
@@ -251,7 +252,7 @@ scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
   events it is about. When an event is in play (golf's latest round under way, or a match in
   progress since its scheduled start) with no notification for longer than its league's
   `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
-  plus its break; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
+  plus its break; college football 110, for a long playoff halftime; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
   notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
   at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
   A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
@@ -296,7 +297,7 @@ finish position (racing) accepts none, and its batches are skipped with
 A `GameScoreUpdate` carries the vendor game id, both teams' prefixed external ids, a state and the
 score. The writer maps the two teams through `participant_provider_mappings` to field rows, then:
 
-1. **Single-game rounds** (NFL, NCAA, World Cup, Premier League). A game no match holds yet is
+1. **Single-game rounds** (NFL, College Football Playoff, NCAA, World Cup, Premier League). A game no match holds yet is
    linked to the one open match whose two sides are those teams (`gamesToLink`). Two candidates
    either way link nothing; a later sync tries again. Once linked, `@@unique([sport_event_id,
    external_game_id])` holds it. A game naming a First Four winner first fills that side's
@@ -341,6 +342,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 |---|---|---|---|---|---|---|
 | PGA TOUR | the vendor's tournament id (`18`) | golfer, bare vendor id | `/pga/v2/tournaments`, `/pga/v2/tournament_competitors` (GOAT), `/pga/v1/players` (OWGR), `/pga/v2/tournament_results` (ALL-STAR) | `GOLF` | `pga-contract.ts`, `pga-mapping.ts`, the PGA half of `balldontlie-adapter.ts` | 4 tournament events |
 | NFL | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `/nfl/v1/games`, `/nfl/v1/teams` | `GAME` | `nfl-contract.ts`, `nfl-mapping.ts`, `nfl-reader.ts` | `nfl.game.*` |
+| College Football Playoff | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `/ncaaf/v1/games` (`start_date`, `end_date`: the season's window), `/ncaaf/v1/teams` | `GAME` | `ncaaf-contract.ts`, `ncaaf-mapping.ts`, `ncaaf-reader.ts` | `ncaaf.game.*` (names assumed) |
 | NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
 | NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nba.game.*` (#1667) |
 | NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | `nba.game.*` (the `nba-` prefix covers both) |
@@ -371,6 +373,37 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   `GameScoreUpdate`; the writer links each to its match by the two teams.
 - **Key code.** `nfl-mapping.ts` `parseNflScope`, `nflScopeId`, `nflTeamExternalId`;
   `nfl-reader.ts`.
+
+### College Football Playoff (#1496)
+
+- **Registration.** College Football Playoff sport league, keyword `CFP` (migration
+  `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
+  (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
+  own four. Teams carry the tour `CFP`, so a provider team links by name only to the site's
+  teams affiliated with the playoff league.
+- **The date rule.** The vendor's college games carry no postseason flag, bowl name or venue. So
+  a season's playoff games are every game from noon UTC on the day after the first Saturday of
+  December (conference championship day) through January 31 of the next year:
+  `CFP_LEAGUE.window` (`cfpGameWindow`) in `ncaaf-mapping.ts`, a rule in code, not stored
+  data. Derek chose it on 2026-11-13, to be backed out for the vendor's own marker if a key
+  shows the feed has one. The reader asks by `start_date`/`end_date` and keeps only the games
+  inside the window whatever the filter let through, since a Saturday night title game kicks
+  off on the Sunday in UTC (the 2025 Big Ten title game, 01:00 UTC on December 7).
+- **Why the window starts there.** A conference title game can pair two playoff teams (2025:
+  Indiana v Ohio State). Handed to the GAME writer with the bracket's games, it would link to
+  the open match between those two teams, a first round or later match, and score it.
+- **Sync.** `NcaafReader.liveScores(scope)` hands over every game in the window, bowls between
+  other schools included; the writer's team-pair link keeps only the bracket's games. The event
+  is complete only once the window has closed and every game in it is done, since the window
+  names no game as the last.
+- **The field.** The event's field is every team playing in the window, so it holds every bowl
+  team as well as the twelve in the bracket; the admin still places the twelve seeds.
+- **The sport's team list is long by design.** `getParticipants(AMERICAN_FOOTBALL)` returns the
+  NFL's 32 teams and every college team `/ncaaf/v1/teams` lists, as basketball's returns every
+  Division I team. The admin's unmapped teams for football are therefore mostly college teams;
+  a college team links by name only to the playoff league's teams, so none takes an NFL row.
+- **Key code.** `ncaaf-mapping.ts` `CFP_LEAGUE`, `cfpGameWindow`, `cfpGamesOf`,
+  `parseCfpScope`; `ncaaf-reader.ts`.
 
 ### NCAA men's and women's tournaments (#1496 parts 4a, 4b)
 
@@ -491,7 +524,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| Not read yet | | College Football Playoff (the vendor marks no postseason), UCL two-leg ties, MLS best-of-three. |
+| Not read yet | | UCL two-leg ties, MLS best-of-three. |
+| Waiting for the GOAT key | #1500 | College Football Playoff: confirm the vendor carries bowl and playoff games, how it numbers their season and week, and whether a game marks the playoff. If one does, swap `CFP_LEAGUE.window` for it. Confirm the `ncaaf.game.*` webhook names. |
 
 ## 7. Reviewing a provider PR: what a new league should touch
 
@@ -526,6 +560,10 @@ None is fixed here; each is for the owning thread to confirm.
 
 - **NBA had no webhook entry.** Fixed by #1667: `nba` is in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`
   with the prefix `nba-`, which covers both the bracket and the round events.
+- **College football's webhook event names are assumed** (`ncaaf.game.started`,
+  `game.period_ended`, `game.ended`, the NFL's names). The subscription covers every college
+  game, but a notification queues a sync only for a CFP event in play, so a regular
+  season Saturday triggers nothing.
 - **NHL, MLB and WNBA webhook event names are assumed.** Their entries subscribe to `game.started`,
   `game.period_ended` and `game.ended`, the NFL and NCAA names. The vendor's webhook document
   has not been checked for hockey, baseball or the WNBA (an inning may not be a "period"); confirm the

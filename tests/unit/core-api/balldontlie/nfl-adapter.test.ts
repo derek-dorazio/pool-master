@@ -8,6 +8,8 @@ import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec
  * The adapter's NFL reads against a fake BALLDONTLIE that checks every request it sends, and
  * every reply it is given, against the vendor's published NFL document (see
  * balldontlie-fake-api.ts). The replies are the fixtures in tests/fixtures/balldontlie/nfl.
+ * Football's lists read college football too (ncaaf-adapter.test.ts), which answers here with
+ * no games and no teams, and these tests look only at the NFL's requests.
  */
 
 const API_KEY = 'test-api-key';
@@ -34,10 +36,12 @@ const gamesRoute: FakeRoute = pagedRoute(games, (row, query) => {
 const defaultRoutes: Record<string, FakeRoute> = {
   '/nfl/v1/games': gamesRoute,
   '/nfl/v1/teams': () => ({ body: readBalldontlieFixture('nfl', 'teams.json') }),
+  '/ncaaf/v1/games': pagedRoute([]),
+  '/ncaaf/v1/teams': () => ({ body: { data: [] } }),
 };
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: 'nfl', apiKey: API_KEY, routes });
+  const api = createFakeBalldontlie({ league: ['nfl', 'ncaaf'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let now = NOW;
@@ -59,7 +63,7 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes): { adapter: Ba
   };
 }
 
-const requestLine = (api: FakeBalldontlie) => api.requests.map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
+const requestLine = (api: FakeBalldontlie) => api.requests.filter((request) => request.path.startsWith('/nfl/')).map((request) => `${request.path}?${decodeURIComponent(request.query.toString())}`);
 
 describe('BalldontlieAdapter (NFL)', () => {
   let restore: (() => void) | undefined;

@@ -125,6 +125,15 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'EPL' });
   });
 
+  it('sets american football\'s College Football Playoff sport league\'s match keyword to CFP, and leaves the CFP Clutch Card leagues without one', async () => {
+    const sports = new PrismaSportRepository(getAppPrisma());
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const leagueOf = async (name: string) => leagues.findBySportAndName((await sports.findBySport(Sport.AMERICAN_FOOTBALL))?.id ?? '', name);
+
+    await expect(leagueOf('College Football Playoff')).resolves.toMatchObject({ matchKeyword: 'CFP' });
+    await expect(leagueOf('CFP Semifinals')).resolves.toMatchObject({ matchKeyword: null });
+  });
+
   it('seeds soccer\'s FIFA World Cup sport league with the match keyword FIFAWC', async () => {
     const sports = new PrismaSportRepository(getAppPrisma());
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());

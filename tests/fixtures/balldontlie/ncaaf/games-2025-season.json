@@ -1,0 +1,385 @@
+{
+  "data": [
+    {
+      "id": 5001,
+      "date": "2025-11-29T17:00:00.000Z",
+      "season": 2025,
+      "week": 14,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 78,
+        "conference": "Big Ten",
+        "city": "Ann Arbor",
+        "name": "Wolverines",
+        "full_name": "Michigan Wolverines",
+        "abbreviation": "MICH"
+      },
+      "visitor_team": {
+        "id": 101,
+        "conference": "Big Ten",
+        "city": "Columbus",
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU"
+      },
+      "home_score": 9,
+      "away_score": 27
+    },
+    {
+      "id": 5002,
+      "date": "2025-12-07T01:00:00.000Z",
+      "season": 2025,
+      "week": 15,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 64,
+        "conference": "Big Ten",
+        "city": "Bloomington",
+        "name": "Hoosiers",
+        "full_name": "Indiana Hoosiers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 101,
+        "conference": "Big Ten",
+        "city": "Columbus",
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU"
+      },
+      "home_score": 13,
+      "away_score": 10
+    },
+    {
+      "id": 5003,
+      "date": "2025-12-13T20:00:00.000Z",
+      "season": 2025,
+      "week": 16,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 93,
+        "conference": "American",
+        "city": "Annapolis",
+        "name": "Midshipmen",
+        "full_name": "Navy Midshipmen",
+        "abbreviation": "NAVY"
+      },
+      "visitor_team": {
+        "id": 7,
+        "conference": "American",
+        "city": "West Point",
+        "name": "Black Knights",
+        "full_name": "Army Black Knights",
+        "abbreviation": "ARMY"
+      },
+      "home_score": 17,
+      "away_score": 16
+    },
+    {
+      "id": 5011,
+      "date": "2025-12-20T01:00:00.000Z",
+      "season": 2025,
+      "week": 17,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 103,
+        "conference": "SEC",
+        "city": "Norman",
+        "name": "Sooners",
+        "full_name": "Oklahoma Sooners",
+        "abbreviation": "OU"
+      },
+      "visitor_team": {
+        "id": 2,
+        "conference": "SEC",
+        "city": "Tuscaloosa",
+        "name": "Crimson Tide",
+        "full_name": "Alabama Crimson Tide",
+        "abbreviation": "ALA"
+      },
+      "home_score": 24,
+      "away_score": 34
+    },
+    {
+      "id": 5012,
+      "date": "2025-12-20T17:00:00.000Z",
+      "season": 2025,
+      "week": 17,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 139,
+        "conference": "SEC",
+        "city": "College Station",
+        "name": "Aggies",
+        "full_name": "Texas A&M Aggies",
+        "abbreviation": "TA&M"
+      },
+      "visitor_team": {
+        "id": 76,
+        "conference": "ACC",
+        "city": "Coral Gables",
+        "name": "Hurricanes",
+        "full_name": "Miami Hurricanes",
+        "abbreviation": "MIA"
+      },
+      "home_score": 3,
+      "away_score": 10
+    },
+    {
+      "id": 5013,
+      "date": "2025-12-20T20:30:00.000Z",
+      "season": 2025,
+      "week": 17,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 85,
+        "conference": "SEC",
+        "city": "Oxford",
+        "name": "Rebels",
+        "full_name": "Ole Miss Rebels",
+        "abbreviation": "MISS"
+      },
+      "visitor_team": {
+        "id": 146,
+        "conference": "American",
+        "city": "New Orleans",
+        "name": "Green Wave",
+        "full_name": "Tulane Green Wave",
+        "abbreviation": "TULN"
+      },
+      "home_score": 41,
+      "away_score": 10
+    },
+    {
+      "id": 5014,
+      "date": "2025-12-21T00:30:00.000Z",
+      "season": 2025,
+      "week": 17,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 106,
+        "conference": "Big Ten",
+        "city": "Eugene",
+        "name": "Ducks",
+        "full_name": "Oregon Ducks",
+        "abbreviation": "ORE"
+      },
+      "visitor_team": {
+        "id": 63,
+        "conference": "Sun Belt",
+        "city": "Harrisonburg",
+        "name": "Dukes",
+        "full_name": "James Madison Dukes",
+        "abbreviation": "JMU"
+      },
+      "home_score": 51,
+      "away_score": 34
+    },
+    {
+      "id": 5021,
+      "date": "2026-01-01T00:30:00.000Z",
+      "season": 2025,
+      "week": 18,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 101,
+        "conference": "Big Ten",
+        "city": "Columbus",
+        "name": "Buckeyes",
+        "full_name": "Ohio State Buckeyes",
+        "abbreviation": "OSU"
+      },
+      "visitor_team": {
+        "id": 76,
+        "conference": "ACC",
+        "city": "Coral Gables",
+        "name": "Hurricanes",
+        "full_name": "Miami Hurricanes",
+        "abbreviation": "MIA"
+      },
+      "home_score": 14,
+      "away_score": 24
+    },
+    {
+      "id": 5022,
+      "date": "2026-01-01T17:00:00.000Z",
+      "season": 2025,
+      "week": 18,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 140,
+        "conference": "Big 12",
+        "city": "Lubbock",
+        "name": "Red Raiders",
+        "full_name": "Texas Tech Red Raiders",
+        "abbreviation": "TTU"
+      },
+      "visitor_team": {
+        "id": 106,
+        "conference": "Big Ten",
+        "city": "Eugene",
+        "name": "Ducks",
+        "full_name": "Oregon Ducks",
+        "abbreviation": "ORE"
+      },
+      "home_score": 0,
+      "away_score": 23
+    },
+    {
+      "id": 5023,
+      "date": "2026-01-01T21:00:00.000Z",
+      "season": 2025,
+      "week": 18,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 64,
+        "conference": "Big Ten",
+        "city": "Bloomington",
+        "name": "Hoosiers",
+        "full_name": "Indiana Hoosiers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 2,
+        "conference": "SEC",
+        "city": "Tuscaloosa",
+        "name": "Crimson Tide",
+        "full_name": "Alabama Crimson Tide",
+        "abbreviation": "ALA"
+      },
+      "home_score": 38,
+      "away_score": 3
+    },
+    {
+      "id": 5024,
+      "date": "2026-01-02T01:00:00.000Z",
+      "season": 2025,
+      "week": 18,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 52,
+        "conference": "SEC",
+        "city": "Athens",
+        "name": "Bulldogs",
+        "full_name": "Georgia Bulldogs",
+        "abbreviation": "UGA"
+      },
+      "visitor_team": {
+        "id": 85,
+        "conference": "SEC",
+        "city": "Oxford",
+        "name": "Rebels",
+        "full_name": "Ole Miss Rebels",
+        "abbreviation": "MISS"
+      },
+      "home_score": 34,
+      "away_score": 39
+    },
+    {
+      "id": 5031,
+      "date": "2026-01-09T00:30:00.000Z",
+      "season": 2025,
+      "week": 19,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 85,
+        "conference": "SEC",
+        "city": "Oxford",
+        "name": "Rebels",
+        "full_name": "Ole Miss Rebels",
+        "abbreviation": "MISS"
+      },
+      "visitor_team": {
+        "id": 76,
+        "conference": "ACC",
+        "city": "Coral Gables",
+        "name": "Hurricanes",
+        "full_name": "Miami Hurricanes",
+        "abbreviation": "MIA"
+      },
+      "home_score": 27,
+      "away_score": 31
+    },
+    {
+      "id": 5032,
+      "date": "2026-01-10T00:30:00.000Z",
+      "season": 2025,
+      "week": 19,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 64,
+        "conference": "Big Ten",
+        "city": "Bloomington",
+        "name": "Hoosiers",
+        "full_name": "Indiana Hoosiers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 106,
+        "conference": "Big Ten",
+        "city": "Eugene",
+        "name": "Ducks",
+        "full_name": "Oregon Ducks",
+        "abbreviation": "ORE"
+      },
+      "home_score": 56,
+      "away_score": 22
+    },
+    {
+      "id": 5041,
+      "date": "2026-01-20T00:30:00.000Z",
+      "season": 2025,
+      "week": 20,
+      "status": "Final",
+      "status_state": "final",
+      "period": 4,
+      "home_team": {
+        "id": 64,
+        "conference": "Big Ten",
+        "city": "Bloomington",
+        "name": "Hoosiers",
+        "full_name": "Indiana Hoosiers",
+        "abbreviation": "IND"
+      },
+      "visitor_team": {
+        "id": 76,
+        "conference": "ACC",
+        "city": "Coral Gables",
+        "name": "Hurricanes",
+        "full_name": "Miami Hurricanes",
+        "abbreviation": "MIA"
+      },
+      "home_score": 27,
+      "away_score": 21
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

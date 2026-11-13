@@ -43,9 +43,14 @@ The target:
      number; a matchweek forms no bracket, so a draw is a result. The World Cup's
      knockout bracket is an event per edition (`fifa-wc-2026-knockout`); a knockout game level
      after extra time carries its shoot-out's scores, and the writer names the winner by them
-     (#1532). The College Football Playoff
-     is not read yet: the vendor's college football games carry nothing that marks the
-     postseason or the playoff. A best-of series (the NBA, WNBA, MLB and NHL
+     (#1532). The College Football Playoff is an
+     event per season (`ncaaf-2025-cfp`). The vendor's college football games carry nothing
+     that marks the playoff, so on Derek's call (2026-11-13) its games are read by a date rule
+     in code: from the day after conference championship Saturday through January 31. The
+     team-pair link keeps only the bracket's games out of the bowls, and the window keeps out
+     a conference title game between two playoff teams (2025: Indiana v Ohio State), which
+     would otherwise link to their later playoff match. The rule is backed out if a key shows
+     the feed marks playoff games. A best-of series (the NBA, WNBA, MLB and NHL
      playoffs) is one match of several games, so it links no game: its sport league names
      each round's length (`roundSeriesLengths`, the NBA's 7, 7, 7, 7), and each sync counts
      the final games between the series' two teams as wins, writing the wins so far as its
