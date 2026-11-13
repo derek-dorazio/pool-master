@@ -232,6 +232,71 @@ describe('SportEventService.importProviderEventYear', () => {
   });
 });
 
+describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const listed = { externalId: 'pga-2026-a', name: 'Alpha Open', venue: 'A Links', startDate: new Date('2026-03-05T12:00:00.000Z'), endDate: new Date('2026-03-08T23:00:00.000Z') };
+
+  async function linkedEvent(status?: SportEventStatus, sportName?: Sport, notice?: SportEventChangedNotice) {
+    const built = setup(sportName, notice);
+    const { created } = await built.service.importProviderEventYear({ sportLeagueId: built.sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [listed] });
+    const { event } = created[0];
+    if (status) await built.store.sportEventRepo().update(event.id, { status });
+    return { ...built, eventId: event.id };
+  }
+
+  it('writes a released event\'s new provider name, venue and dates over the admin\'s, moving its rounds and telling its leagues of the moved start', async () => {
+    const notice = recordingSportEventChangedNotice();
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED, Sport.GOLF, notice);
+    await service.updateEvent(eventId, { name: 'Admin Renamed Open' }, TELL);
+    const moved = { ...listed, name: 'Alpha Invitational', venue: 'B Links', startDate: new Date(listed.startDate.getTime() + 7 * DAY), endDate: new Date(listed.endDate.getTime() + 7 * DAY) };
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [moved] });
+
+    expect(changes).toEqual([{ sportEventId: eventId, externalId: 'pga-2026-a', changed: ['name', 'venue', 'startDate', 'endDate'] }]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Invitational', venue: 'B Links', startDate: moved.startDate, endDate: moved.endDate }));
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith({ id: eventId, startDate: moved.startDate }, { kind: 'RESCHEDULED', previousStart: listed.startDate });
+  });
+
+  it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.IN_PROGRESS);
+    const delayed = { ...listed, venue: 'Rain Links', startDate: new Date(listed.startDate.getTime() + DAY), endDate: new Date(listed.endDate.getTime() + DAY) };
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [delayed] });
+
+    expect(changes.map((change) => change.changed)).toEqual([['venue', 'endDate']]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'Rain Links', startDate: listed.startDate, endDate: delayed.endDate }));
+  });
+
+  it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])('leaves a %s event exactly as it is, whatever the provider now says', async (status) => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(status);
+    const before = await sportEvents.findById(eventId);
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed', startDate: new Date(listed.startDate.getTime() + DAY) }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(before);
+  });
+
+  it('keeps the venue and end when the provider stops sending them, and changes nothing when the details still match', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent();
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, venue: null, endDate: null }, { ...listed, externalId: 'not-linked' }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'A Links', endDate: listed.endDate }));
+  });
+
+  it('never touches an event of another sport league linked to the same provider event', async () => {
+    const { service, store, sportEvents, eventId } = await linkedEvent();
+    const otherLeague = store.addSportLeague(store.sportLeagues[0].sportId, 'Other Tour');
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: otherLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed' }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Open' }));
+  });
+});
+
 // plans/124 §4.2a, reshaped by plans/147: cloning a season became cloning a sport league's
 // event year — the same calendar copy, keyed by (sport league, year) instead of a season row.
 describe('SportEventService.cloneEventYear', () => {

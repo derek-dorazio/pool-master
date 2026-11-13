@@ -32,17 +32,19 @@ async function golfLeague(data: { matchKeyword: string; eventSyncProviderId: str
   return prisma.sportLeague.create({ data: { sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, ...data } });
 }
 
-/** The provider's events for a tour and year: one tournament a year, named by its tour. */
-function tourEvent(tour: string, eventYear: number) {
-  const startDate = new Date(Date.UTC(eventYear, 5, 10, 12));
-  return { externalId: `${tour}-${eventYear}`, name: `${tour} Open`, venue: 'Course', startDate, endDate: new Date(Date.UTC(eventYear, 5, 13, 12)) };
+const DAY = 24 * 60 * 60 * 1000;
+
+/** The provider's events for a tour and year: one tournament a year, named by its tour, moved by `shiftDays`. */
+function tourEvent(tour: string, eventYear: number, shiftDays = 0, name = `${tour} Open`) {
+  const startDate = new Date(Date.UTC(eventYear, 5, 10, 12) + shiftDays * DAY);
+  return { externalId: `${tour}-${eventYear}`, name, venue: 'Course', startDate, endDate: new Date(Date.UTC(eventYear, 5, 13, 12) + shiftDays * DAY) };
 }
 
-function buildScheduler() {
+function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays: 0 }) {
   const prisma = getAppPrisma();
   const listTourEventsForYear = jest.fn(async (_providerId: string, sportLeagueId: string, eventYear: number) => {
     const league = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } });
-    return [tourEvent(league.matchKeyword ?? '', eventYear)];
+    return [tourEvent(league.matchKeyword ?? '', eventYear, feed.shiftDays, feed.name)];
   });
   const scheduler = new SyncedEventCreationScheduler({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -83,5 +85,30 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
 
     expect(await getPrisma().sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id } } })).toBe(2);
+  });
+
+  it('moves a released event and its rounds when the provider moves it, renames it, and leaves a completed one as it was (#1727)', async () => {
+    const synced = await golfLeague({ matchKeyword: `SYNC${randomUUID().slice(0, 4)}`, eventSyncProviderId: PROVIDER_ID });
+    const feed = { shiftDays: 0, name: undefined as string | undefined };
+    const { scheduler } = buildScheduler(feed);
+    await scheduler.runSweep();
+    const prisma = getPrisma();
+    const [released, completed] = await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, orderBy: { eventYear: 'asc' } });
+    await prisma.sportEvent.update({ where: { id: released.id }, data: { status: 'SCHEDULED' } });
+    await prisma.sportEvent.update({ where: { id: completed.id }, data: { status: 'COMPLETED' } });
+
+    feed.shiftDays = 7;
+    feed.name = 'Renamed Open';
+    await scheduler.runSweep();
+
+    const after = await prisma.sportEvent.findMany({
+      where: { id: { in: [released.id, completed.id] } },
+      include: { roundSchedule: { orderBy: { roundNumber: 'asc' } } },
+      orderBy: { eventYear: 'asc' },
+    });
+    expect(after.map((event) => [event.name, event.startDate.toISOString(), event.roundSchedule[0]?.scheduledDate.toISOString()])).toEqual([
+      ['Renamed Open', '2027-06-17T12:00:00.000Z', '2027-06-17T12:00:00.000Z'],
+      [completed.name, completed.startDate.toISOString(), completed.startDate.toISOString()],
+    ]);
   });
 });

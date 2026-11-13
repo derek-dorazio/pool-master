@@ -14,10 +14,10 @@ The plan behind the work, and the decisions Derek made on it, are in
 - **Where this is going: the sync creates a live league's events** (ADR 0011, superseding
   ADR 0009). Once a league's sync is live, it creates the league's events, loads their fields
   and keeps their dates current, and the lifecycle scheduler moves their status from those
-  dates; the admin reviews, releases and browses. **Today** the daily sweep creates a synced
-  league's events (*2b*); for every other league an admin makes or imports each `sport_events`
-  row. A sync writes scores, fields and links and never moves status. *Toward ADR 0011* below
-  lists what is still missing.
+  dates; the admin reviews, releases and browses. **Today** a sweep every six hours creates a
+  synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
+  loads their fields (*2c*); for every other league an admin makes or imports each `sport_events`
+  row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
   games but no events, a *scope id* the adapter invents and parses back (`nfl-2026-week-12`,
@@ -123,12 +123,27 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 ### 2b. Event rows, by the synced league sweep or an admin action
 
 A sport league whose `event_sync_provider_id` a root admin has set (the sport league's Edit
-details, "Event sync"; #1725) is **synced**: once a day `SyncedEventCreationScheduler`
+details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreationScheduler`
 (`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
 ingestion scheduler) runs the year import below for this calendar year and the next, for each
 active synced league. New events are born `DRAFT` and wait for an admin's release, for now. Setting
 the provider is refused unless it is registered and covers the league's sport, and the league has
 a match keyword. One league's failed read is logged and the sweep goes on.
+
+The same sweep then keeps the league's already-linked events current with what the provider just
+listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's
+edit. Which details it may change depends on the status:
+
+| Status | Provider may change |
+|---|---|
+| `DRAFT`, `SCHEDULED`, `POSTPONED` | name, venue, start, end |
+| `IN_PROGRESS` | name, venue, end (never the start that already happened) |
+| `COMPLETED`, `CANCELLED` | nothing |
+
+Each change goes through `updateEvent`, the admin's own edit, so a moved start shifts every round
+and tells the leagues on a released event, exactly as an admin's move does. A venue or end the
+provider stops sending is kept, not cleared. The sweep never sets a status: the lifecycle scheduler
+moves it on the new dates.
 
 Every other league's events come from an admin, in one of three ways, all root admin routes under
 `/api/v1/events` (`events/routes.ts`):
@@ -148,7 +163,8 @@ the usual way. For a Clutch Card, the event's rounds are its games (game N is ro
 ### 2c. Participant rows, by the field load
 
 "Load Participant Field" (`POST /api/v1/events/:eventId/participants/refresh`, or the scheduled
-field loop when it is on). The route queues a `MANUAL_EVENT_SYNC` job for the participants feed, and that job runs `runEventFieldSync` → `provider.getEventDetails(externalId)` →
+field loop). The field loop always runs for synced leagues' events (#1726); the *Event
+participants* switch widens it to every linked event. The route queues a `MANUAL_EVENT_SYNC` job for the participants feed, and that job runs `runEventFieldSync` → `provider.getEventDetails(externalId)` →
 `IngestionPersistence.persistEventDetailWithDiagnostics`
 (`ingestion/persistence/ingestion-persistence.ts`):
 
@@ -203,7 +219,7 @@ checks the source and actor agree.
 | Scheduled sweep | `SCHEDULED` / `SYSTEM:scheduler` | `SCHEDULED_EVENT_SYNC` | `IngestionScheduler.runConfiguredLiveScoreSweep`, one loop per scheduled sport, under the job lock `ingestion:<sport>:live-scores` | Lists events with `createScheduledEventReader` (`core/scheduled-event-reader.ts`): linked to a provider serving the sport, `status = IN_PROGRESS`, `sync_scope = SCORES_ONLY`, at least one field row. Every interval (default 300 s). |
 | Manual sync | `MANUAL` / `ROOT_ADMIN` | `MANUAL_EVENT_SYNC` | `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` → `IngestionService.syncEventData` → `MANUAL_EVENT_SYNC` job → `runManualEventSync` | Either feed. The field refresh button uses the same path. |
 | Webhook | `WEBHOOK` / `SYSTEM:webhook` | `WEBHOOK_EVENT_SYNC` | `POST /api/v1/provider-webhooks/balldontlie` → `ProviderNotificationService.receive` → `PROVIDER_EVENT_SYNC` job → `IngestionScheduler.runNotifiedEventSync` | See below. |
-| Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, off by default | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). |
+| Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
 
 ### The webhook path (#1498)
 
@@ -336,8 +352,8 @@ no feed). The lifecycle sweep will not complete an event holding a line still in
 
 ### What moves an event's status
 
-Not the sync, and ADR 0011 keeps it that way: status follows the event's dates. What ADR 0011
-adds is the sync keeping a synced event's dates current, which it does not do yet.
+Not the sync, and ADR 0011 keeps it that way: status follows the event's dates. The sync keeps
+a synced event's dates current (*2b*), so a rescheduled event moves on its new dates.
 
 Today, `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
 COMPLETED` from the event's round schedule, unless `auto_lifecycle_enabled` is off, and settlement
@@ -544,16 +560,14 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### Toward ADR 0011
 
-ADR 0011 makes a live league's sync the source of its events. Scheduled creation is built
-(*2b*); the rest is not. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
+ADR 0011 makes a live league's sync the source of its events. Scheduled creation, field loading
+and keeping details current are built (*2b*, *2c*); the rest is not. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
 its league's events*): on a synced event the provider wins over an admin's edit, and a new
 event waits for an admin's release for now, with automatic release the aim once sync is stable.
 
 - **Scheduled event creation per league** (#1725). Built: see *2b*.
-- **Field load on by default** (#1726) for synced leagues, so a new event's participants load without
-  "Load Participant Field" (today the field loop is off by default).
-- **The sync keeps an event's details current** (#1727): dates, name and venue from the provider, so the
-  lifecycle scheduler moves a rescheduled event on its new dates. Today a sync never writes them.
+- **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
+- **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Today an admin builds a bracket's rounds and
   matches, and the sync only links a provider game to an open match (*GAME: how a provider game
   finds its match*).

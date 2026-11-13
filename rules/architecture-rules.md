@@ -256,15 +256,19 @@ correcting a feed. The decision and its alternatives are
 What the code does **today**, while the follow-up tickets of #1723 land:
 
 - A sport league is synced once a root admin names its provider (`SportLeague.eventSyncProviderId`,
-  #1725). Once a day `SyncedEventCreationScheduler` runs the admin's year import for each synced
-  league, this calendar year and the next, so its events appear as linked drafts. Every other
+  #1725). Every six hours `SyncedEventCreationScheduler` runs the admin's year import for each
+  synced league, this calendar year and the next, so its events appear as linked drafts, then
+  writes the provider's name, venue and dates over the league's linked events through
+  `updateEvent` (#1727): every one before play, name, venue and end while in progress, nothing once
+  over. Every other
   league's events are created by an admin: by hand, from one browsed provider event, or with the
   year import.
-- The feed that runs on a schedule by default is live scores, for linked events
-  (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field sync loop exists but is
-  off by default; an admin loads or refreshes one event's field.
-- A sync writes scores, the field and the field size. It does not yet write an event's name,
-  venue, dates, rounds or timing.
+- The feeds that run on a schedule by default are live scores, for linked events
+  (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field loop loads synced
+  leagues' next events' fields always (#1726), and every linked event's when its switch is on; an
+  admin loads or refreshes one event's field.
+- A sync writes scores, the field and the field size, and on a synced league the event's name,
+  venue and dates. It does not yet write rounds or games (#1728).
 - Status moves by the date-driven lifecycle scheduler or by an admin, never by a provider feed.
 
 Building toward ADR-0011:

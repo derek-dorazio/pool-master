@@ -57,6 +57,17 @@ describe('createScheduledEventReader', () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
   });
 
+  it('narrows each provider\'s field query to active sport leagues whose sync names that provider when asked for synced leagues only', async () => {
+    const { read, findMany } = reader(['mock', 'bdl']);
+
+    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW, syncedLeaguesOnly: true });
+
+    expect(findMany.mock.calls.map(([query]) => (query.where as { eventSeries?: unknown }).eventSeries)).toEqual([
+      { sportLeague: { eventSyncProviderId: 'mock', isActive: true } },
+      { sportLeague: { eventSyncProviderId: 'bdl', isActive: true } },
+    ]);
+  });
+
   it('issues exactly one query per provider for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
     const { read, findMany } = reader(['mock', 'bdl']);
 

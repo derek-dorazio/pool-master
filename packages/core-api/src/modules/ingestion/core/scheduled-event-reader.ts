@@ -30,7 +30,7 @@ export function createScheduledEventReader({
   logger,
 }: ScheduledEventReaderDependencies): IngestionScheduledEventReader {
   return {
-    async listEventsForFeed({ sport, feed, from, now, to }) {
+    async listEventsForFeed({ sport, feed, from, now, to, syncedLeaguesOnly = false }) {
       logger?.debug({
         sport,
         feed,
@@ -57,6 +57,8 @@ export function createScheduledEventReader({
               ...(to ? { lte: to } : {}),
             },
             syncScope: SportEventSyncScope.SCORES_ONLY,
+            // A synced league's sync names this provider (ADR 0011, #1726).
+            ...(syncedLeaguesOnly && { eventSeries: { sportLeague: { eventSyncProviderId: providerId, isActive: true } } }),
           },
           orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }],
           take: FIELD_EVENTS_PER_PROVIDER,

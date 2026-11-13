@@ -345,9 +345,9 @@ export const OFFERABLE_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
 
 /**
  * Whether provider sync may touch a SportEvent — separate from providerId/externalId
- * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: an admin linked it to a provider
- * event, so live scores (and an admin-triggered field load) reach it. Every event is
- * admin-owned; a provider never sets its details or status (ADR-0009).
+ * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: linked to a provider event, so live
+ * scores and its field reach it. On a synced sport league the provider also owns its name, venue
+ * and dates, never its status, which the lifecycle scheduler moves (ADR 0011).
  */
 export const SportEventSyncScope = {
   NONE: 'NONE',

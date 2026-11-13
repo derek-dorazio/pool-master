@@ -944,6 +944,7 @@ describe('IngestionScheduler', () => {
         from: now,
         now,
         to: new Date('2026-05-12T12:00:00.000Z'),
+        syncedLeaguesOnly: false,
       });
       expect(provider.getEventDetails).toHaveBeenCalledWith('field-available-event');
       expect(mockCallbacks.onEventDetail).toHaveBeenCalledWith(fieldAvailableDetail);
@@ -1031,13 +1032,13 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onEventDetail).toHaveBeenCalled();
     });
 
-    it('start() with the default config runs no scheduled field sync: fields load only when an admin asks', async () => {
+    it('start() with the default config loads only synced sport leagues\' fields, never discovering events from the provider', async () => {
       const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
       const registry = createMockRegistry(provider, ['GOLF']);
       const eventReader = readerOf({
-        fields: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
+        fields: [],
         live: [{ providerId: 'mock-provider', externalId: 'evt-1' }],
       });
       const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, { eventReader });
@@ -1050,9 +1051,19 @@ describe('IngestionScheduler', () => {
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
       expect(eventReader.listLiveScoreEvents).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF' }));
-      expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
-      expect(provider.getEventDetails).not.toHaveBeenCalled();
-      expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
+      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF', syncedLeaguesOnly: true }));
+      expect(eventReader.listEventsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ syncedLeaguesOnly: false }));
+    });
+
+    it('paces the field loop at the admin\'s participant interval with the participant switch off as well as on, never the short config recheck', async () => {
+      const off = { ...createEnabledScheduleConfig(), eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 } };
+      const scheduler = (config: typeof off) => new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF']), mockCallbacks, undefined, {
+        configReader: { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) },
+        eventReader: readerOf({}),
+      });
+
+      expect(await scheduler(off)['getFieldSyncDelayMs'](Sport.GOLF)).toBe(360 * 60_000);
+      expect(await scheduler(createEnabledScheduleConfig())['getFieldSyncDelayMs'](Sport.GOLF)).toBe(360 * 60_000);
     });
 
     it('schedules no feed for a covered sport the ingestion sync config does not enable', async () => {
