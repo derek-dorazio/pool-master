@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { OneLineRow } from "./one-line-row";
 
 const items = (count: number) => Array.from({ length: count }, (_, index) => ({ key: String(index), node: <i data-testid={`item-${index}`} /> }));
@@ -24,6 +24,18 @@ describe("OneLineRow", () => {
     expect(screen.getAllByTestId(/^item-/)).toHaveLength(3);
     expect(screen.getByTestId("row-more")).toHaveTextContent("+3");
     expect(screen.getByRole("img", { name: "On six sports" })).toBe(screen.getByTestId("row"));
+  });
+
+  it("leaves the row's padding out of the room, so an item that would fit only inside the padding goes to \"+N\"", () => {
+    // 6 items of 24 px need 144 px: a 148 px row fits them all, until its 8 px of padding is taken off.
+    setWidth(148);
+    const computed = vi.spyOn(window, "getComputedStyle").mockReturnValue({ paddingLeft: "4px", paddingRight: "4px" } as CSSStyleDeclaration);
+    render(<OneLineRow itemPx={24} items={items(6)} label="On six sports" testId="row" />);
+    computed.mockRestore();
+
+    // (140 - 28) / 24 = 4 fit.
+    expect(screen.getAllByTestId(/^item-/)).toHaveLength(4);
+    expect(screen.getByTestId("row-more")).toHaveTextContent("+2");
   });
 
   it("shows every item with no \"+N\" when they all fit", () => {

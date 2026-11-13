@@ -46,8 +46,9 @@ export function ChoiceList({
   return (
     <nav aria-label={ariaLabel} className={cn("rounded-lg border border-border bg-card p-2", className)} data-testid={testId}>
       <ul className="space-y-0.5">
-        {items.map((item) => (
-          <li key={item.to}>
+        {items.map((item, index) => (
+          // Two lines can share a link: a sport and its "+ N more" both open the sport.
+          <li key={`${index}:${item.to}`}>
             <Link
               aria-current={item.isChosen ? "page" : undefined}
               className={cn(

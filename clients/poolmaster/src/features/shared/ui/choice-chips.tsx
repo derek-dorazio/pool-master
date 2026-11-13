@@ -56,13 +56,13 @@ export function ChoiceChips({
       data-testid={testId}
       ref={layout === "scroll" ? ref : undefined}
     >
-      {items.map((item) => (clearable?.replaces === item.to ? (
+      {items.map((item, index) => (clearable?.replaces === item.to ? (
         <Link
           aria-label={`Clear ${clearable.label}`}
           className={cn(CHIP_CLASS_NAME, CHOSEN_CLASS_NAME)}
           data-chosen="true"
           data-testid={clearable.testId}
-          key={item.to}
+          key={`${index}:${item.to}`}
           onClick={item.onClick}
           replace
           to={item.to}
@@ -75,7 +75,7 @@ export function ChoiceChips({
           aria-current={item.isChosen && !clearable ? "page" : undefined}
           className={cn(CHIP_CLASS_NAME, item.isChosen && !clearable ? CHOSEN_CLASS_NAME : UNCHOSEN_CLASS_NAME)}
           data-testid={item.testId}
-          key={item.to}
+          key={`${index}:${item.to}`}
           onClick={item.onClick}
           replace
           to={item.to}

@@ -60,6 +60,22 @@ describe("ChoiceChips", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/how-to-play?sport=hockey");
   });
 
+  it("keeps two choices that open the same page as two chips, with no duplicate-key warning", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    render(
+      <MemoryRouter>
+        <ChoiceChips aria-label="Sport" items={[
+          { isChosen: false, label: "Hockey", to: "?sport=hockey" },
+          { isChosen: false, label: "More hockey", to: "?sport=hockey" },
+        ]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   it("wraps instead of scrolling for a list of every choice", () => {
     renderChips({ layout: "wrap" });
 

@@ -8,7 +8,7 @@ const MORE_PX = 28;
  * Small items of one width on one line, as many as fit, then "+N" for the rest (#1701: a way to
  * play's sport icons on a phone tile). `itemPx` is one item's width plus the gap after it. The
  * whole list is the row's accessible name (`label`), so nothing is lost to the cap. Until the
- * row has been measured it shows every item.
+ * row has been measured it shows every item. Its padding is left out of the room for items.
  */
 export function OneLineRow({
   className,
@@ -28,7 +28,12 @@ export function OneLineRow({
   useLayoutEffect(() => {
     const row = ref.current;
     if (!row) return;
-    const measure = () => setWidth(row.clientWidth);
+    // The row's own padding is no room for items: clientWidth counts it.
+    const measure = () => {
+      const style = getComputedStyle(row);
+      const padding = (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0);
+      setWidth(row.clientWidth === 0 ? 0 : Math.max(1, row.clientWidth - padding));
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(row);

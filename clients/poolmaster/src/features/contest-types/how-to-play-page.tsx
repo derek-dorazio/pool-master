@@ -215,10 +215,10 @@ function ClutchCardTile({ leagues, showSports, isOpen, onToggle, createLeagues }
   }
   // One line a sport: its stat line is the same in every one of its stat pool leagues.
   const statLines = [...new Map(statPoolLeagues.map(({ league, name }) => [league.definition.sport, { sport: league.definition.sport, name }] as const)).values()];
-  const template = statPoolLeagues[0]?.league.groups[0]?.featured;
+  const template = statPoolLeagues[0].league.groups.at(0)?.featured;
   return (
     <ExpandableTile
-      actions={createLeagues.length > 0 ? <CreateContestAction layout="compact" leagues={createLeagues} template={template} testId="how-to-play-clutch-card" typeName={STAT_POOL_CONTEST_TYPE} /> : null}
+      actions={createLeagues.length > 0 && template ? <CreateContestAction layout="compact" leagues={createLeagues} template={template} testId="how-to-play-clutch-card" typeName={STAT_POOL_CONTEST_TYPE} /> : null}
       face={(
         <>
           {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}

@@ -9,6 +9,22 @@ function LocationProbe() {
 }
 
 describe("ChoiceList", () => {
+  it("keeps a sport and its \"+ N more\" line as two lines though both open the sport, with no duplicate-key warning", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    render(
+      <MemoryRouter>
+        <ChoiceList aria-label="Sports and leagues" items={[
+          { isChosen: false, label: "Hockey", to: "?sport=hockey", tone: "heading" },
+          { depth: 1, isChosen: false, label: "+ 3 more", to: "?sport=hockey", tone: "muted" },
+        ]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual(["Hockey", "+ 3 more"]);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   it("lists each choice as a link in a named column, indenting by depth, with a count at the line's end and the chosen line current", () => {
     const onClick = vi.fn();
     render(
