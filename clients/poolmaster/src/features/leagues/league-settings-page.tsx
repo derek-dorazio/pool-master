@@ -3,17 +3,18 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
-  Notice,
   formatDateDisplay,
-  PageHeader,
   IconAvatar,
   LinkButton,
   LOADING_TEXT,
+  LockedSection,
+  Notice,
+  PageHeader,
   SectionBody,
   SectionCard,
-  LockedSection,
-  SettingsRow,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
+  SectionStack,
   useDisplayPreferences,
   WebAddressBox,
 } from '@/features/shared/ui';
@@ -154,9 +155,10 @@ export function LeagueSettingsPage() {
         testId="league-settings-general"
         title="General"
       >
-        <SettingsRows>
-          <SettingsRow
-            label="Name and icon"
+        <SectionRows>
+          <SectionRow
+            layout="setting"
+            name="Name and icon"
             testId="league-settings-name"
             value={(
               <span className="flex items-center gap-3">
@@ -167,29 +169,32 @@ export function LeagueSettingsPage() {
               </span>
             )}
           />
-          <SettingsRow
-            label="Description"
+          <SectionRow
+            layout="setting"
+            name="Description"
             testId="league-settings-description"
             value={league.description?.trim() || <span className="text-muted-foreground">No description</span>}
           />
-          <SettingsRow
-            label="League web address"
+          <SectionRow
+            layout="setting"
+            name="League web address"
             testId="league-settings-web-address"
             value={<WebAddressBox isLive testId="league-settings-address" url={buildLeagueWebAddress(league.leagueCode)} />}
           />
-          <SettingsRow
-            action={(
+          <SectionRow
+            layout="setting"
+            aside={(
               <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
                 Change
               </LinkButton>
             )}
-            label="Commissioners"
+            name="Commissioners"
             testId="league-settings-commissioners"
             value={!members
               ? <span className="text-muted-foreground">{LOADING_TEXT}</span>
               : commissionerNames.join(', ')}
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
@@ -209,25 +214,28 @@ export function LeagueSettingsPage() {
           testId="league-settings-championships"
           title="Championships"
         >
-          <SettingsRows>
-            <SettingsRow
-              label="Championship name"
+          <SectionRows>
+            <SectionRow
+              layout="setting"
+              name="Championship name"
               testId="league-settings-cup-name"
               value={<span className="font-semibold">{league.cupName}</span>}
             />
-            <SettingsRow
-              label="Points table"
+            <SectionRow
+              layout="setting"
+              name="Points table"
               testId="league-settings-points-table"
               value={describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}
             />
             {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
-              <SettingsRow
-                label="Hall of Lame"
+              <SectionRow
+                layout="setting"
+                name="Hall of Lame"
                 testId="league-settings-hall-of-lame"
                 value={league.hallOfLameVisible ? 'Shown' : 'Hidden'}
               />
             ) : null}
-          </SettingsRows>
+          </SectionRows>
         </SectionCard>
       ) : (
         <LockedSection plansTo={buildLeagueAdminPlanPath(league.leagueCode)} testId="league-settings-championships" title="Championships">
@@ -252,22 +260,24 @@ export function LeagueSettingsPage() {
           testId="league-settings-event-emails"
           title="Event emails"
         >
-          <SettingsRows>
-            <SettingsRow
-              label="Sport leagues"
+          <SectionRows>
+            <SectionRow
+              layout="setting"
+              name="Sport leagues"
               testId="league-settings-event-emails-sport-leagues"
               value={sportLeaguesQuery.data
                 ? describeEventEmailSportLeagues(sportLeaguesQuery.data, league.mutedSportLeagueIds)
                 : <span className="text-muted-foreground">{sportLeaguesQuery.isError ? 'Unavailable' : LOADING_TEXT}</span>}
             />
             {hasWeeklyDigest(league) ? (
-              <SettingsRow
-                label="Delivery"
+              <SectionRow
+                layout="setting"
+                name="Delivery"
                 testId="league-settings-event-emails-delivery"
                 value={EVENT_EMAIL_DELIVERY_COPY[league.eventEmailDelivery].label}
               />
             ) : null}
-          </SettingsRows>
+          </SectionRows>
         </SectionCard>
       ) : (
         <LockedSection plansTo={buildLeagueAdminPlanPath(league.leagueCode)} testId="league-settings-event-emails" title="Event emails">
@@ -291,27 +301,32 @@ export function LeagueSettingsPage() {
         testId="league-settings-plan"
         title="Plan"
       >
-        <SettingsRows>
-          <SettingsRow
-            label="Plan"
-            testId="league-settings-plan-name"
-            value={<span className="font-semibold">{LEAGUE_PLAN_LABEL[league.planEntitlements.plan]}</span>}
-          />
-          <SettingsRow
-            label="Premium preview period ends"
-            testId="league-settings-plan-renews"
-            value={formatDateDisplay(league.planRenewsAt, displayPreferences)}
-          />
-          {Object.values(PlanCap).map((cap) => (
-            <SettingsRow
-              key={cap}
-              label={PLAN_CAP_LABEL[cap]}
-              testId={`league-settings-plan-cap-${cap}`}
-              value={formatPlanLimit(league.planEntitlements.caps[cap], displayPreferences.locale)}
+        <SectionStack>
+          <SectionRows>
+            <SectionRow
+              layout="setting"
+              name="Plan"
+              testId="league-settings-plan-name"
+              value={<span className="font-semibold">{LEAGUE_PLAN_LABEL[league.planEntitlements.plan]}</span>}
             />
-          ))}
+            <SectionRow
+              layout="setting"
+              name="Premium preview period ends"
+              testId="league-settings-plan-renews"
+              value={formatDateDisplay(league.planRenewsAt, displayPreferences)}
+            />
+            {Object.values(PlanCap).map((cap) => (
+              <SectionRow
+                layout="setting"
+                key={cap}
+                name={PLAN_CAP_LABEL[cap]}
+                testId={`league-settings-plan-cap-${cap}`}
+                value={formatPlanLimit(league.planEntitlements.caps[cap], displayPreferences.locale)}
+              />
+            ))}
+          </SectionRows>
           {isRootAdmin ? <SectionBody><ExtendLeagueGift league={league} /></SectionBody> : null}
-        </SettingsRows>
+        </SectionStack>
       </SectionCard>
 
       <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />

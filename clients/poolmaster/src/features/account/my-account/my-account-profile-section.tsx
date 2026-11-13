@@ -8,7 +8,7 @@ import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { AUTH_ME_QUERY_KEY, setAuthSessionUser } from '@/features/auth/auth-session-cache';
-import { FormField, FormModal, Input, SettingsRow, SettingsSection, showToast } from '@/features/shared/ui';
+import { FormField, FormModal, Input, SectionCard, SectionRow, SectionRows, showToast } from '@/features/shared/ui';
 import { formatUserName } from '../user-name';
 import { useSectionDialog } from './use-section-dialog';
 import { SELF_USER_ID } from '../user-routing';
@@ -80,11 +80,13 @@ export function MyAccountProfileSection({ user }: { user: UserDto }) {
 
   return (
     <>
-      <SettingsSection editTestId="my-account-profile-edit" onEdit={dialog.openDialog} testId="my-account-profile" title="Profile">
-        <SettingsRow label="Name" testId="my-account-profile-name" value={formatUserName(user.firstName, user.lastName)} />
-        <SettingsRow label="Email" testId="my-account-profile-email" value={user.email} />
-        <SettingsRow label="Username" testId="my-account-profile-username" value={user.username} />
-      </SettingsSection>
+      <SectionCard edit={{ onClick: dialog.openDialog, testId: "my-account-profile-edit" }} testId="my-account-profile" title="Profile">
+        <SectionRows>
+          <SectionRow layout="setting" name="Name" testId="my-account-profile-name" value={formatUserName(user.firstName, user.lastName)} />
+          <SectionRow layout="setting" name="Email" testId="my-account-profile-email" value={user.email} />
+          <SectionRow layout="setting" name="Username" testId="my-account-profile-username" value={user.username} />
+        </SectionRows>
+      </SectionCard>
 
       <FormModal
         canSave={

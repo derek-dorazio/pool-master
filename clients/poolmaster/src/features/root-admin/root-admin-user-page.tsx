@@ -7,18 +7,17 @@ import { formatUserName } from '@/features/account/user-name';
 import { MY_ACCOUNT_PATH } from '@/features/account/user-routing';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Notice,
   Button,
   ConfirmDialog,
-  DangerZoneAction,
   ErrorState,
   formatDateDisplay,
   Input,
   LoadingState,
+  Notice,
   PageHeader,
   SectionCard,
-  SettingsRow,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
   StatusBadge,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -252,11 +251,12 @@ export function RootAdminUserPage() {
         testId="root-admin-user-account"
         title="Account"
       >
-        <SettingsRows>
-          <SettingsRow label="Email" testId="root-admin-user-email" value={viewedUser.email} />
-          <SettingsRow label="Username" value={`@${viewedUser.username}`} />
-          <SettingsRow
-            label="Status"
+        <SectionRows>
+          <SectionRow layout="setting" name="Email" testId="root-admin-user-email" value={viewedUser.email} />
+          <SectionRow layout="setting" name="Username" value={`@${viewedUser.username}`} />
+          <SectionRow
+            layout="setting"
+            name="Status"
             testId="root-admin-user-status"
             value={(
               <StatusBadge tone={isInactive ? 'inactive' : 'active'}>
@@ -264,9 +264,9 @@ export function RootAdminUserPage() {
               </StatusBadge>
             )}
           />
-          <SettingsRow label="Member since" value={formatDateDisplay(viewedUser.createdAt, displayPreferences, 'Unknown')} />
-          <SettingsRow label="Sign-in method" value={viewedUser.authProvider ?? 'EMAIL'} />
-        </SettingsRows>
+          <SectionRow layout="setting" name="Member since" value={formatDateDisplay(viewedUser.createdAt, displayPreferences, 'Unknown')} />
+          <SectionRow layout="setting" name="Sign-in method" value={viewedUser.authProvider ?? 'EMAIL'} />
+        </SectionRows>
       </SectionCard>
 
       <SectionCard
@@ -274,9 +274,10 @@ export function RootAdminUserPage() {
         testId="root-admin-user-access"
         title="Access"
       >
-        <SettingsRows>
-          <SettingsRow
-            action={(
+        <SectionRows>
+          <SectionRow
+            layout="setting"
+            aside={(
               <Button
                 data-testid="root-admin-user-open-role"
                 onClick={() => openDialog('role')}
@@ -286,12 +287,13 @@ export function RootAdminUserPage() {
                 {roleActionLabel}
               </Button>
             )}
-            label="Role"
+            name="Role"
             testId="root-admin-user-role"
             value={viewedUser.isRootAdmin ? 'Root admin' : 'Member'}
           />
-          <SettingsRow
-            action={(
+          <SectionRow
+            layout="setting"
+            aside={(
               <Button
                 data-testid="root-admin-user-open-reset-password"
                 onClick={() => {
@@ -304,7 +306,7 @@ export function RootAdminUserPage() {
                 Reset password
               </Button>
             )}
-            label="Password"
+            name="Password"
             value={temporaryPassword ? (
               <Notice tone="success">
                 <div className="font-semibold">Temporary password</div>
@@ -320,7 +322,7 @@ export function RootAdminUserPage() {
               </Notice>
             ) : 'Set by the user'}
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <SectionCard
@@ -328,9 +330,10 @@ export function RootAdminUserPage() {
         testId="root-admin-user-danger-zone"
         tone="danger"
       >
-        <SettingsRows>
-          <DangerZoneAction
-            action={(
+        <SectionRows>
+          <SectionRow
+            layout="action"
+            aside={(
               <Button
                 data-testid="root-admin-user-open-lifecycle"
                 onClick={() => openDialog('lifecycle')}
@@ -340,13 +343,14 @@ export function RootAdminUserPage() {
                 {lifecycleLabel}
               </Button>
             )}
-            description={isInactive
+            facts={isInactive
               ? 'Restores sign-in and the account\'s place in its leagues.'
               : 'Signs the user out everywhere and hides the account from its leagues until it is reactivated.'}
-            title={lifecycleLabel}
+            name={lifecycleLabel}
           />
-          <DangerZoneAction
-            action={(
+          <SectionRow
+            layout="action"
+            aside={(
               <Button
                 data-testid="root-admin-user-open-delete"
                 disabled={!isInactive || deleteMutation.isPending}
@@ -357,12 +361,12 @@ export function RootAdminUserPage() {
                 Delete account
               </Button>
             )}
-            description={isInactive
+            facts={isInactive
               ? 'Removes the account permanently.'
               : 'Inactivate the account first; only an inactive account can be deleted.'}
-            title="Delete account"
+            name="Delete account"
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <ConfirmDialog

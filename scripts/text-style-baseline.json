@@ -3,7 +3,7 @@
   "clients/poolmaster/src/features/app-shell/app-shell.tsx": 2,
   "clients/poolmaster/src/features/app-shell/league-selector.tsx": 4,
   "clients/poolmaster/src/features/billing/billing-settings-form.tsx": 6,
-  "clients/poolmaster/src/features/billing/contest-expansion-section.tsx": 4,
+  "clients/poolmaster/src/features/billing/contest-expansion-section.tsx": 2,
   "clients/poolmaster/src/features/championships/championship-standings-grid.tsx": 3,
   "clients/poolmaster/src/features/championships/edit-championship-settings-page.tsx": 1,
   "clients/poolmaster/src/features/contest-types/illustrations.tsx": 6,

@@ -8,7 +8,7 @@ import {
   Input,
   Notice,
   SectionCard,
-  SettingsRows,
+  SectionStack,
   showToast,
   Text,
 } from '@/features/shared/ui';
@@ -77,7 +77,7 @@ export function InvitesPageInvitePeopleSection({ invitationsKey, isInactiveLeagu
 
   return (
     <SectionCard testId="league-invite-people" title="Invite people">
-      <SettingsRows>
+      <SectionStack>
         <form className="space-y-3 px-4 py-4" onSubmit={(event) => void handleSendInvite(event)}>
           <FormField helperText="They get their own link by email." label="Invite by email">
             <div className="flex flex-wrap gap-3">
@@ -158,7 +158,7 @@ export function InvitesPageInvitePeopleSection({ invitationsKey, isInactiveLeagu
             </Text>
           ) : null}
         </div>
-      </SettingsRows>
+      </SectionStack>
     </SectionCard>
   );
 }
