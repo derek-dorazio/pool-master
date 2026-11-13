@@ -28,7 +28,6 @@ import { hasPlanFeature } from '@/features/plans/plan-features';
 import {
   Button,
   Chip,
-  DangerZoneAction,
   DateDisplay,
   EmptyState,
   ErrorState,
@@ -42,8 +41,6 @@ import {
   SectionEmpty,
   SectionRow,
   SectionRows,
-  SettingsRow,
-  SettingsRows,
   Text,
 } from '@/features/shared/ui';
 import { coversOneEvent, firstContestEvent } from './contest-events';
@@ -86,20 +83,21 @@ function ContestTiersSection({
       testId="contest-tiers"
       title={title}
     >
-      <SettingsRows>
-        {sortedTiers.length ? (
-          sortedTiers.map((tier) => (
-            <SettingsRow
+      {sortedTiers.length ? (
+        <SectionRows>
+          {sortedTiers.map((tier) => (
+            <SectionRow
+              layout="setting"
               key={tier.tierKey}
-              label={<Chip tone="info">Tier {tier.tierNumber}</Chip>}
+              name={<Chip tone="info">Tier {tier.tierNumber}</Chip>}
               testId={`contest-tier-${tier.tierNumber}`}
               value={countParticipants(tier.assignments.length, noun)}
             />
-          ))
-        ) : (
-          <SectionEmpty testId="contest-tiers-empty">No tiers yet.</SectionEmpty>
-        )}
-      </SettingsRows>
+          ))}
+        </SectionRows>
+      ) : (
+        <SectionEmpty testId="contest-tiers-empty">No tiers yet.</SectionEmpty>
+      )}
     </SectionCard>
   );
 }
@@ -227,10 +225,11 @@ export function ManageContestPage() {
         testId="manage-contest-settings"
         title="Contest"
       >
-        <SettingsRows>
-          <SettingsRow label="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
-          <SettingsRow
-            action={canChangeEvents ? (
+        <SectionRows>
+          <SectionRow layout="setting" name="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
+          <SectionRow
+            layout="setting"
+            aside={canChangeEvents ? (
               <LinkButton
                 data-testid="manage-contest-events-edit"
                 size="sm"
@@ -240,7 +239,7 @@ export function ManageContestPage() {
                 {isMultiEvent ? 'Change events' : 'Add events'}
               </LinkButton>
             ) : isNotOpen ? <FixedNote /> : undefined}
-            label={isMultiEvent ? 'Events' : 'Event'}
+            name={isMultiEvent ? 'Events' : 'Event'}
             testId="manage-contest-event-row"
             value={(
               <>
@@ -255,19 +254,21 @@ export function ManageContestPage() {
               </>
             )}
           />
-          <SettingsRow
-            action={isNotOpen ? <FixedNote /> : undefined}
-            label="Format"
+          <SectionRow
+            layout="setting"
+            aside={isNotOpen ? <FixedNote /> : undefined}
+            name="Format"
             testId="manage-contest-format"
             value={formatSelectionTypeName(contest.selectionType)}
           />
-          <SettingsRow label="Rules" testId="manage-contest-rules" value={rules} />
-          <SettingsRow
-            label="Entries per member"
+          <SectionRow layout="setting" name="Rules" testId="manage-contest-rules" value={rules} />
+          <SectionRow
+            layout="setting"
+            name="Entries per member"
             testId="manage-contest-entries-per-team"
             value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       {isMultiEvent ? (
@@ -299,9 +300,10 @@ export function ManageContestPage() {
           testId="manage-contest-championships"
           title="Championships"
         >
-          <SettingsRows>
-            <SettingsRow
-              action={contest.status === ContestStatus.COMPLETED ? (
+          <SectionRows>
+            <SectionRow
+              layout="setting"
+              aside={contest.status === ContestStatus.COMPLETED ? (
                 <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final">
                   <Lock aria-hidden size={13} />
                   Final
@@ -318,11 +320,11 @@ export function ManageContestPage() {
                   Edit
                 </LinkButton>
               )}
-              label="Cup weight"
+              name="Cup weight"
               testId="manage-contest-cup-weight"
               value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
             />
-          </SettingsRows>
+          </SectionRows>
         </SectionCard>
       ) : null}
 
@@ -338,9 +340,9 @@ export function ManageContestPage() {
 
       {isNotOpen ? (
         <SectionCard testId="manage-contest-danger-zone" tone="danger">
-          <SettingsRows>
-            <DangerZoneAction
-              action={(
+          <SectionRows>
+            <SectionRow
+              aside={(
                 <Button
                   data-testid="contest-delete"
                   disabled={!league.isActive}
@@ -350,10 +352,10 @@ export function ManageContestPage() {
                   Delete contest
                 </Button>
               )}
-              description="Removes this contest for good. Possible only until you open it to the league."
-              title="Delete contest"
+              facts="Removes this contest for good. Possible only until you open it to the league."
+              name="Delete contest"
             />
-          </SettingsRows>
+          </SectionRows>
         </SectionCard>
       ) : null}
 

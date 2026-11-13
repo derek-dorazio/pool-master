@@ -74,7 +74,6 @@ export {
 } from "./simple-table";
 export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
-export { DangerZoneAction, SettingsRow, SettingsRows, SettingsSection } from "./settings-section";
 export { Switch, type SwitchProps } from "./switch";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";
 export { refetchFailed } from "./refetch-failed";
@@ -116,7 +115,7 @@ export { ExpandableTile } from "./expandable-tile";
 export { FaqList, type FaqItem } from "./faq-list";
 export { NumberedSteps, type NumberedStep, type NumberedStepsDensity } from "./numbered-steps";
 export { StickyActionBar } from "./sticky-action-bar";
-export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
+export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionStack, SectionTitle } from "./section-card";
 export { LockedSection } from "./locked-section";
 export { Text, type TextProps } from "./text";
 export { Icon, type IconProps } from "./icon";

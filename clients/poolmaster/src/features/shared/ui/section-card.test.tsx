@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionTitle } from "./section-card";
+import { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote, SectionRow, SectionRows, SectionStack, SectionTitle } from "./section-card";
 
 function inRouter(node: ReactNode) {
   return render(<MemoryRouter>{node}</MemoryRouter>);
@@ -285,5 +285,70 @@ describe("SectionFooterLink", () => {
     expect(link).toHaveTextContent("All contests→");
     expect(link).toHaveClass("uppercase", "text-label", "font-display");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+});
+
+describe("SectionCard edit", () => {
+  it("puts one Edit button in the title, named for the section, that asks to open its dialog", () => {
+    const onEdit = vi.fn();
+    render(
+      <SectionCard edit={{ onClick: onEdit, testId: "profile-edit" }} title="Profile">
+        <SectionRows><SectionRow layout="setting" name="Name" value="Sam Lee" /></SectionRows>
+      </SectionCard>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Profile" }));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("profile-edit")).toHaveTextContent("Edit");
+  });
+
+  it("shows no Edit button for a section without edit", () => {
+    render(
+      <SectionCard title="Profile">
+        <SectionRows><SectionRow layout="setting" name="Name" value="Sam Lee" /></SectionRows>
+      </SectionCard>,
+    );
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+});
+
+describe("SectionRow setting layout", () => {
+  it("shows the setting's name at the left and its current value at the right, as a list item", () => {
+    render(
+      <SectionRows>
+        <SectionRow layout="setting" name="Username" testId="profile-username" value="samlee" valueTestId="profile-username-value" />
+      </SectionRows>,
+    );
+
+    const row = screen.getByTestId("profile-username");
+    expect(row).toHaveClass("justify-between");
+    expect(row).toHaveTextContent("Usernamesamlee");
+    expect(screen.getByTestId("profile-username-value")).toHaveClass("font-semibold", "text-sm");
+    expect(screen.getByRole("listitem")).toContainElement(row);
+  });
+
+  it("keeps a row's own control, such as a switch, at the row's end in place of a value", () => {
+    render(
+      <SectionRows>
+        <SectionRow aside={<button type="button">Turn off</button>} layout="setting" name="Results" testId="results" />
+      </SectionRows>,
+    );
+
+    expect(within(screen.getByTestId("results")).getByRole("button", { name: "Turn off" })).toBeInTheDocument();
+  });
+});
+
+describe("SectionStack", () => {
+  it("divides a section's row list from a form or notice beside it, like rows", () => {
+    render(
+      <SectionStack testId="stack">
+        <SectionRows><SectionRow layout="setting" name="Entries" value="12" /></SectionRows>
+        <SectionBody testId="stack-body">A notice</SectionBody>
+      </SectionStack>,
+    );
+
+    expect(screen.getByTestId("stack")).toHaveClass("divide-y", "divide-border");
+    expect(screen.getByTestId("stack-body")).toHaveTextContent("A notice");
   });
 });

@@ -6,18 +6,17 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
-  Notice,
   Button,
-  DangerZoneAction,
   EmptyState,
   ErrorState,
   LinkButton,
   LoadingState,
-  PendingPage,
+  Notice,
   PageHeader,
+  PendingPage,
   SectionCard,
-  SettingsRow,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
 } from '@/features/shared/ui';
 import { hasErrorCode } from '@/lib/errors';
 import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
@@ -110,10 +109,10 @@ export function ManageTeamPage() {
         testId="manage-team-general"
         title="Name and icon"
       >
-        <SettingsRows>
-          <SettingsRow label="Name" value={team.name} />
-          <SettingsRow label="Icon" value={iconLabel} />
-        </SettingsRows>
+        <SectionRows>
+          <SectionRow layout="setting" name="Name" value={team.name} />
+          <SectionRow layout="setting" name="Icon" value={iconLabel} />
+        </SectionRows>
       </SectionCard>
 
       <TeamOwnersSection
@@ -130,10 +129,10 @@ export function ManageTeamPage() {
       <MyTeamLifecycleNotices lifecycle={lifecycle} />
 
       <SectionCard testId="manage-team-danger-zone" tone="danger">
-        <SettingsRows>
+        <SectionRows>
           {isInactiveTeam ? (
-            <DangerZoneAction
-              action={(
+            <SectionRow
+              aside={(
                 <Button
                   data-testid="manage-team-delete"
                   disabled={!viewer.isRootAdmin || isInactiveLeague || isBusy}
@@ -143,14 +142,14 @@ export function ManageTeamPage() {
                   Delete {team.name}
                 </Button>
               )}
-              description={viewer.isRootAdmin
+              facts={viewer.isRootAdmin
                 ? `Removes ${team.name} for good.`
                 : `Only a root admin can delete ${team.name}.`}
-              title={`Delete ${team.name}`}
+              name={`Delete ${team.name}`}
             />
           ) : (
-            <DangerZoneAction
-              action={(
+            <SectionRow
+              aside={(
                 <Button
                   data-testid="manage-team-inactivate"
                   disabled={isInactiveLeague || isBusy}
@@ -160,11 +159,11 @@ export function ManageTeamPage() {
                   Inactivate {team.name}
                 </Button>
               )}
-              description="Its owners leave the league. Their accounts and other leagues are untouched."
-              title={`Inactivate ${team.name}`}
+              facts="Its owners leave the league. Their accounts and other leagues are untouched."
+              name={`Inactivate ${team.name}`}
             />
           )}
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <MyTeamLifecycleDialogs

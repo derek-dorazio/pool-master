@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { Link } from "react-router";
+import { Button } from "./button";
 import { cn } from "./class-names";
 import { Heading } from "./heading";
 import { HelpTip } from "./help-tip";
+import { Text } from "./text";
 
 /**
  * The one section look (#1561): a title bar with a rule, a body of rows, padded content or one
@@ -77,6 +79,11 @@ type SectionCardBaseProps = {
   bare?: boolean;
   children: ReactNode;
   className?: string;
+  /**
+   * "See it, then Edit": one Edit button in the title bar that opens the section's `FormModal`,
+   * over `SectionRow`s with `layout="setting"` showing the current values.
+   */
+  edit?: { onClick: () => void; testId?: string };
   footer?: SectionFooter;
   headingLevel?: 2 | 3 | 4;
   /** How the section works, behind the title's (?). */
@@ -112,18 +119,24 @@ export function SectionCard(props: SectionCardProps) {
     bare = false,
     children,
     className,
+    edit,
     footer,
     headingLevel = 2,
     padded = false,
     testId,
     titleTestId,
     tone = "default",
-    trailing,
   } = props;
   // A danger zone is always called that, and always says its actions confirm first.
   const title = props.title ?? DANGER_ZONE_TITLE;
   const help = props.help ?? (tone === "danger" ? DANGER_ZONE_HELP : undefined);
   const titleId = useId();
+  const editButton = edit ? (
+    <Button aria-label={`Edit ${typeof title === "string" ? title : "section"}`} data-testid={edit.testId} onClick={edit.onClick} size="sm" variant="secondary">
+      Edit
+    </Button>
+  ) : null;
+  const trailing = editButton ? <>{props.trailing}{editButton}</> : props.trailing;
   return (
     <section
       aria-labelledby={titleId}
@@ -141,6 +154,14 @@ export function SectionCard(props: SectionCardProps) {
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}
     </section>
   );
+}
+
+/**
+ * A section's blocks when it holds more than rows, such as a form or a notice between two row
+ * lists: each block (a `SectionRows`, a `SectionBody`, a form) divided from the next like rows.
+ */
+export function SectionStack({ children, testId }: { children: ReactNode; testId?: string }) {
+  return <div className="divide-y divide-border" data-testid={testId}>{children}</div>;
 }
 
 /** A section's rows: divided, every other one lightly shaded. */
@@ -163,6 +184,7 @@ export function SectionRow({
   facts,
   isHighlighted = false,
   isSelected = false,
+  layout = "row",
   name,
   nameAddon,
   note,
@@ -180,6 +202,11 @@ export function SectionRow({
   facts?: ReactNode;
   isHighlighted?: boolean;
   isSelected?: boolean;
+  /**
+   * `setting` is one setting in a "see it, then Edit" section: the name as a muted label at the
+   * left, the current value and any action at the right, on one line even on a phone.
+   */
+  layout?: "row" | "setting";
   name: ReactNode;
   /** A marker beside the name, such as You or Inactive. */
   nameAddon?: ReactNode;
@@ -206,6 +233,19 @@ export function SectionRow({
     isHighlighted || isSelected ? "bg-primary/10" : undefined,
   );
   const ariaCurrent = isSelected ? "true" : undefined;
+  if (layout === "setting") {
+    return (
+      <li className="even:bg-row-alt">
+        <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2" data-testid={testId}>
+          <Text as="div" className="flex min-w-0 items-center gap-1" variant="meta">{name}</Text>
+          <div className="flex min-w-0 items-center justify-end gap-3 text-right">
+            {value !== undefined && value !== null ? <Text as="div" className="min-w-0 break-words" data-testid={valueTestId} variant="strong" weight="semibold">{value}</Text> : null}
+            {aside}
+          </div>
+        </div>
+      </li>
+    );
+  }
   const content = (
     <>
       {control ? <span className="flex flex-none items-center">{control}</span> : null}

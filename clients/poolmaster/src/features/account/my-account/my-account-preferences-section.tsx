@@ -13,13 +13,14 @@ import {
   FormField,
   FormModal,
   Input,
+  localeDisplayName,
+  SectionCard,
+  SectionRow,
+  SectionRows,
   Select,
-  SettingsRow,
-  SettingsSection,
   showToast,
   timeZoneLabel,
   TimeZoneSelect,
-  localeDisplayName,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { SELF_USER_ID } from '../user-routing';
@@ -94,28 +95,34 @@ export function MyAccountPreferencesSection({ user }: { user: UserDto }) {
 
   return (
     <>
-      <SettingsSection editTestId="my-account-preferences-edit" onEdit={dialog.openDialog} testId="my-account-preferences" title="Preferences">
-        <SettingsRow
-          label="Time zone"
-          testId="my-account-preferences-time-zone"
-          value={timeZoneLabel(user.timezone ?? DEFAULT_DISPLAY_PREFERENCES.timeZone)}
-        />
-        <SettingsRow
-          label="Number and date style"
-          testId="my-account-preferences-locale"
-          value={user.locale ? localeDisplayName(user.locale, displayPreferences) : MATCH_MY_DEVICE}
-        />
-        <SettingsRow
-          label="Clock"
-          testId="my-account-preferences-clock"
-          value={user.timeFormat ? TIME_FORMAT_LABELS[user.timeFormat] : MATCH_MY_DEVICE}
-        />
-        <SettingsRow
-          label="Theme"
-          testId="my-account-preferences-theme"
-          value={COLOR_SCHEME_LABELS[user.colorScheme ?? ColorScheme.DEVICE]}
-        />
-      </SettingsSection>
+      <SectionCard edit={{ onClick: dialog.openDialog, testId: "my-account-preferences-edit" }} testId="my-account-preferences" title="Preferences">
+        <SectionRows>
+          <SectionRow
+            layout="setting"
+            name="Time zone"
+            testId="my-account-preferences-time-zone"
+            value={timeZoneLabel(user.timezone ?? DEFAULT_DISPLAY_PREFERENCES.timeZone)}
+          />
+          <SectionRow
+            layout="setting"
+            name="Number and date style"
+            testId="my-account-preferences-locale"
+            value={user.locale ? localeDisplayName(user.locale, displayPreferences) : MATCH_MY_DEVICE}
+          />
+          <SectionRow
+            layout="setting"
+            name="Clock"
+            testId="my-account-preferences-clock"
+            value={user.timeFormat ? TIME_FORMAT_LABELS[user.timeFormat] : MATCH_MY_DEVICE}
+          />
+          <SectionRow
+            layout="setting"
+            name="Theme"
+            testId="my-account-preferences-theme"
+            value={COLOR_SCHEME_LABELS[user.colorScheme ?? ColorScheme.DEVICE]}
+          />
+        </SectionRows>
+      </SectionCard>
 
       <FormModal
         canSave={!isPending}

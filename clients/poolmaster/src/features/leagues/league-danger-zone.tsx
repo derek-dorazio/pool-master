@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
-  Notice,
   Button,
   ConfirmDialog,
-  DangerZoneAction,
   FormField,
   Input,
+  Notice,
   SectionCard,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -100,10 +100,10 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
         testId="league-danger-zone"
         tone="danger"
       >
-        <SettingsRows>
+        <SectionRows>
           {isInactive ? (
-            <DangerZoneAction
-              action={(
+            <SectionRow
+              aside={(
                 <Button
                   data-testid="league-activate"
                   isLoading={activateMutation.isPending}
@@ -113,7 +113,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
                   {activateMutation.isPending ? 'Activating...' : 'Activate league'}
                 </Button>
               )}
-              description={(
+              facts={(
                 <>
                   The league is inactive. Activate it to reopen entries and changes.
                   {activateMutation.isError ? (
@@ -123,11 +123,11 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
                   ) : null}
                 </>
               )}
-              title="Activate league"
+              name="Activate league"
             />
           ) : (
-            <DangerZoneAction
-              action={(
+            <SectionRow
+              aside={(
                 <Button
                   data-testid="league-inactivate-open"
                   onClick={() => {
@@ -140,12 +140,12 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
                   Inactivate league
                 </Button>
               )}
-              description="Stops new entries and changes. Members can still see standings and history. You can activate it again later."
-              title="Inactivate league"
+              facts="Stops new entries and changes. Members can still see standings and history. You can activate it again later."
+              name="Inactivate league"
             />
           )}
-          <DangerZoneAction
-            action={(
+          <SectionRow
+            aside={(
               <Button
                 data-testid="league-delete-open"
                 disabled={!isInactive}
@@ -156,12 +156,12 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
                 Delete league
               </Button>
             )}
-            description={isInactive
+            facts={isInactive
               ? 'Permanently removes the league and all its history.'
               : 'Permanently removes the league and all its history. Inactivate the league first.'}
-            title="Delete league"
+            name="Delete league"
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <ConfirmDialog
