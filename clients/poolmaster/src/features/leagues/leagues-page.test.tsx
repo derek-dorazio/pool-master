@@ -133,7 +133,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
 
     renderWelcomePage();
 
-    expect(await screen.findByRole('heading', { level: 1, name: /^Welcome to Primetime Commissioner/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /^Welcome to Primetime Commissioner, .*[^.]$/ })).toBeInTheDocument();
     expect(screen.getByTestId('authenticated-landing')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Your leagues' })).toHaveAttribute('data-testid', 'authenticated-landing-empty');
     expect(screen.getByTestId('authenticated-landing-empty-line')).toHaveTextContent('No leagues yet.');

@@ -63,7 +63,7 @@ export function WelcomePage() {
               Create league
             </Button>
           )}
-          title={`Welcome to ${PRODUCT_NAME}, ${formatUserName(auth.user?.firstName, auth.user?.lastName)}.`}
+          title={`Welcome to ${PRODUCT_NAME}, ${formatUserName(auth.user?.firstName, auth.user?.lastName)}`}
         />
         <SectionCard testId="authenticated-landing-empty" title="Your leagues">
           <SectionEmpty testId="authenticated-landing-empty-line">No leagues yet.</SectionEmpty>

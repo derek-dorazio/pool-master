@@ -170,7 +170,7 @@ export function JoinTeamOwnerPage() {
   }
 
   const invitation = invitationQuery.data;
-  const title = invitation ? `Join ${invitation.team.name} in ${invitation.league.name}` : 'Join as a co-owner';
+  const title = invitation ? `Join ${invitation.team.name} in ${invitation.league.name}` : 'Join team';
   const invitationCard = invitation ? (
     <InvitationCard
       inviteCode={invitation.inviteCode}

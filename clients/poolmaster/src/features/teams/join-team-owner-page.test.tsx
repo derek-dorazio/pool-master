@@ -424,7 +424,7 @@ describe('JoinTeamOwnerPage', () => {
       renderJoinTeamOwnerPage();
 
       expect(await screen.findByTestId('team-invite-sign-in')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Join as a co-owner' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Join team' })).toBeInTheDocument();
       expect(screen.queryByTestId('sign-up-form')).not.toBeInTheDocument();
     });
 
