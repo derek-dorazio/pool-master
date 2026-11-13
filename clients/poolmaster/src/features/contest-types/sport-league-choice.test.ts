@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupRounds, sportLeagueChoiceLabel, sportLeagueChoiceObject, sportLeagueChoiceSearch, sportLeagueCount } from './sport-league-choice';
+import { groupRounds, sportLeagueChoiceLabel, sportLeagueChoiceObject, sportLeagueChoiceSearch } from './sport-league-choice';
 
 const NHL = { slug: 'nhl', name: 'NHL', rounds: [{ slug: 'stanley-cup-final', name: 'Stanley Cup Final' }] };
 
@@ -35,15 +35,11 @@ describe('the choice\'s words and link', () => {
   });
 
   it('says what a heading plays: the sport in lower case, the league, its regular season or the round', () => {
-    const hockey = { sport: 'HOCKEY' as const, name: 'Hockey', leagues: [NHL] };
+    const hockey = { sport: 'HOCKEY' as const, name: 'Hockey', leagues: [NHL], count: 1 };
     expect(sportLeagueChoiceObject({ sport: null, league: null, partSlug: null })).toBeNull();
     expect(sportLeagueChoiceObject({ sport: hockey, league: null, partSlug: null })).toBe('hockey');
     expect(sportLeagueChoiceObject({ sport: hockey, league: NHL, partSlug: null })).toBe('NHL');
     expect(sportLeagueChoiceObject({ sport: hockey, league: NHL, partSlug: 'nhl' })).toBe('the NHL regular season');
     expect(sportLeagueChoiceObject({ sport: hockey, league: NHL, partSlug: 'stanley-cup-final' })).toBe('the Stanley Cup Final');
-  });
-
-  it('counts a sport\'s season leagues and their rounds together', () => {
-    expect(sportLeagueCount({ sport: 'HOCKEY', name: 'Hockey', leagues: [NHL, { slug: 'pwhl', name: 'PWHL', rounds: [] }] })).toBe(3);
   });
 });

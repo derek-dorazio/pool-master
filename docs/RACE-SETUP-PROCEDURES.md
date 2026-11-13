@@ -45,8 +45,8 @@ skill gathers and writes the files). Only the numbered steps below need an admin
 - **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
   holds the 2027 US Thoroughbred races announced so far: the Pegasus World Cup and the three
   Triple Crown races (the Preakness is on a Sunday in 2027). Run the workflow with it, dry
-  run first. It creates the **US Thoroughbred** circuit if the site has none and each race
-  as a **draft**, with *Races* `1` and automatic lifecycle **off**: no feed sends a
+  run first. The **US Thoroughbred** circuit is reference data (#1716), so every site has it;
+  the workflow creates each race as a **draft**, with *Races* `1` and automatic lifecycle **off**: no feed sends a
   finishing order, so a race that completed itself would settle its contests on no result.
 - **Post time.** Until the file gives one, a race starts at noon UTC on its day, which closes
   picks early that morning. Once the track announces post time, add it to the race as

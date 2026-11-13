@@ -13,10 +13,15 @@ export interface ContestTypeTile {
   variations: ContestConfigTemplateDto[];
 }
 
-/** A sport league's contest types; a null id holds the templates offered on every event of the sport. */
+/** A sport league's contest types on Contest types: its own templates and its sport's every-event ones. */
 export interface ContestCatalogLeague {
-  sportLeagueId: string | null;
+  sportLeagueId: string;
+  /** What the page calls it, as How to Play does: "NCAA Men's Hockey", not "NCAA Division I Men". */
   name: string;
+  /** Its name in the page's link: `?sport=golf&league=pga-tour`. */
+  slug: string;
+  /** The season league it is a playoff round of (#1701), or null. */
+  parentSportLeagueId: string | null;
   tiles: ContestTypeTile[];
 }
 
@@ -42,41 +47,63 @@ function groupBy<Item>(items: readonly Item[], keyOf: (item: Item) => string) {
   return [...groups.values()];
 }
 
-function toTiles(templates: readonly ContestConfigTemplateDto[]): ContestTypeTile[] {
+/**
+ * One tile per format and kind of event, in the sport's format order, each led by the default of
+ * the templates `preferred` puts first, the format's other templates as its variations. `key`
+ * names the sport league, so a sport-wide type under two leagues is two tiles.
+ */
+function toTiles(
+  key: string,
+  templates: readonly ContestConfigTemplateDto[],
+  selectionTypes: readonly SelectionType[],
+  preferred: (template: ContestConfigTemplateDto) => boolean,
+): ContestTypeTile[] {
   return groupBy(templates, (template) => `${template.eventType ?? 'any'}/${template.selectionType}`)
     .map((group) => {
-      const [featured, ...variations] = [...group].sort(byFeaturedOrder) as [ContestConfigTemplateDto, ...ContestConfigTemplateDto[]];
+      const [featured, ...variations] = [...group].sort((left, right) => Number(preferred(right)) - Number(preferred(left)) || byFeaturedOrder(left, right)) as [ContestConfigTemplateDto, ...ContestConfigTemplateDto[]];
       return {
-        key: `${featured.sportLeagueId ?? 'any'}/${featured.eventType ?? 'any'}/${featured.selectionType}`,
+        key: `${key}/${featured.eventType ?? 'any'}/${featured.selectionType}`,
         selectionType: featured.selectionType,
         featured,
         variations,
       };
     })
-    .sort((left, right) => byFeaturedOrder(left.featured, right.featured));
+    .sort((left, right) => selectionTypes.indexOf(left.selectionType) - selectionTypes.indexOf(right.selectionType)
+      || byFeaturedOrder(left.featured, right.featured));
+}
+
+/** How many contest types sport league sections list together: the number beside a sport on Contest types. */
+export function contestTypeCount(leagues: readonly Pick<ContestCatalogLeague, 'tiles'>[]) {
+  return leagues.reduce((count, league) => count + league.tiles.length, 0);
 }
 
 /**
- * The league contest types page's catalog: each sport in the platform's order, its templates for
- * every event first and then each sport league's by name, one tile per format and kind of event.
- * `leagueNames` names each sport league; a sport league it does not name is left out, as is a
- * sport with no templates.
+ * The league contest types page's catalog (#1716): each sport in the platform's order, a section
+ * for each of its active sport leagues in display order, listing every contest type a contest in
+ * that league can be created from: its own templates and its sport's every-event ones, one tile
+ * per format and kind of event, its own leading. A contest is always created in a sport league,
+ * so there is no section for every event. A sport league with none is left out, as is a sport
+ * with no sport league.
  */
 export function buildLeagueContestCatalog(
   templates: readonly ContestConfigTemplateDto[],
-  leagueNames: ReadonlyMap<string, string>,
+  sportLeagues: readonly SportLeagueDto[],
 ): ContestCatalogSport<ContestCatalogLeague>[] {
   return SUPPORTED_SPORTS.flatMap((sport) => {
-    const definition = getSportDefinition(sport);
-    const groups = groupBy(templates.filter((template) => template.sport === sport), (template) => template.sportLeagueId ?? '')
-      .flatMap((group): ContestCatalogLeague[] => {
-        const sportLeagueId = group[0]?.sportLeagueId ?? null;
-        const name = sportLeagueId === null ? `Every ${definition.vocabulary.event.one}` : leagueNames.get(sportLeagueId);
-        return name === undefined ? [] : [{ sportLeagueId, name, tiles: toTiles(group) }];
+    const sportTemplates = templates.filter((template) => template.sport === sport);
+    const groups = activeSportLeaguesOf(sport, sportLeagues)
+      .map((sportLeague) => {
+        const definition = sportLeagueDefinitionOf(sport, sportLeague);
+        return {
+          sportLeagueId: sportLeague.id,
+          name: sportLeague.displayName ?? sportLeague.name,
+          slug: catalogSlug(sportLeague.name),
+          parentSportLeagueId: sportLeague.parentSportLeagueId,
+          tiles: toTiles(sportLeague.id, offeredIn(sportLeague, definition, sportTemplates), definition.selectionTypes, ownedBy(sportLeague)),
+        };
       })
-      .sort((left, right) => Number(left.sportLeagueId !== null) - Number(right.sportLeagueId !== null)
-        || left.name.localeCompare(right.name));
-    return groups.length ? [{ sport, name: definition.name, groups }] : [];
+      .filter((league) => league.tiles.length > 0);
+    return groups.length ? [{ sport, name: getSportDefinition(sport).name, groups }] : [];
   });
 }
 
@@ -127,6 +154,27 @@ function bySportLeagueDisplayOrder(left: SportLeagueDto, right: SportLeagueDto) 
     || (left.displayName ?? left.name).localeCompare(right.displayName ?? right.name);
 }
 
+/** A sport's active sport leagues, in display order. */
+function activeSportLeaguesOf(sport: Sport, sportLeagues: readonly SportLeagueDto[]) {
+  return sportLeagues
+    .filter((sportLeague) => sportLeague.sport === sport && sportLeague.isActive)
+    .sort(bySportLeagueDisplayOrder);
+}
+
+/**
+ * The templates a contest in a sport league can be created from: its own and its sport's
+ * every-event ones, in the formats it plays (a World Series stat pool takes none of baseball's brackets).
+ */
+function offeredIn(sportLeague: SportLeagueDto, definition: SportDefinition, sportTemplates: readonly ContestConfigTemplateDto[]) {
+  return sportTemplates.filter((template) => (template.sportLeagueId === null || template.sportLeagueId === sportLeague.id)
+    && definition.selectionTypes.includes(template.selectionType));
+}
+
+/** Whether a template is the sport league's own, which leads its format over the sport's. */
+function ownedBy(sportLeague: SportLeagueDto) {
+  return (template: ContestConfigTemplateDto) => template.sportLeagueId === sportLeague.id;
+}
+
 /**
  * The public How to Play page's catalog: each sport, the most popular first, with its formats,
  * one tile each, led by the format's default of the first sport league to offer it; then each of
@@ -141,9 +189,7 @@ export function buildPublicContestCatalog(
     const definition = getSportDefinition(sport);
     const sportTemplates = templates.filter((template) => template.sport === sport);
     const groups = toFormatTiles(sport, sportTemplates, definition.selectionTypes, () => false);
-    const leagues = sportLeagues
-      .filter((sportLeague) => sportLeague.sport === sport && sportLeague.isActive)
-      .sort(bySportLeagueDisplayOrder)
+    const leagues = activeSportLeaguesOf(sport, sportLeagues)
       .map((sportLeague) => {
         const leagueDefinition = sportLeagueDefinitionOf(sport, sportLeague);
         return {
@@ -154,11 +200,9 @@ export function buildPublicContestCatalog(
           definition: leagueDefinition,
           groups: toFormatTiles(
             `${sport}/${sportLeague.id}`,
-            // Only the formats the league plays: a World Series stat pool takes none of baseball's brackets.
-            sportTemplates.filter((template) => (template.sportLeagueId === null || template.sportLeagueId === sportLeague.id)
-              && leagueDefinition.selectionTypes.includes(template.selectionType)),
+            offeredIn(sportLeague, leagueDefinition, sportTemplates),
             leagueDefinition.selectionTypes,
-            (template) => template.sportLeagueId === sportLeague.id,
+            ownedBy(sportLeague),
           ),
         };
       })

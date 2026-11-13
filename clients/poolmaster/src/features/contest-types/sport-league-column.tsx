@@ -1,11 +1,11 @@
 import { ChoiceList, type ChoiceListItem } from '@/features/shared/ui';
-import { REGULAR_SEASON, sportLeagueChoiceSearch, sportLeagueCount, sportSlug, type FilterableSport, type SportLeagueChoice } from './sport-league-choice';
+import { REGULAR_SEASON, sportLeagueChoiceSearch, sportSlug, type FilterableSport, type SportLeagueChoice } from './sport-league-choice';
 
 /** With every sport shown, how many of a sport's leagues and rounds the column lists before "+ N more". */
 const LINES_PER_SPORT = 4;
 
 /**
- * The column's lines: every sport, then each sport with its count. The chosen sport opens to its
+ * The column's lines: every sport, then each sport with its count of contest types. The chosen sport opens to its
  * leagues, each with its regular season and its playoff rounds under it (#1701); with every sport
  * shown, each sport lists its first leagues and rounds and "+ N more".
  */
@@ -16,11 +16,11 @@ function sportLeagueColumnItems(
   onPick?: () => void,
 ): ChoiceListItem[] {
   const all: ChoiceListItem = { isChosen: choice.sport === null, label: 'All sports', onClick: onPick, testId: `${testId}-all`, to: '?', tone: 'heading' };
-  return [all, ...sports.flatMap(({ sport, name, leagues }, index) => {
+  return [all, ...sports.flatMap(({ sport, name, leagues, count }) => {
     const slug = sportSlug(sport);
     const isOpen = choice.sport?.sport === sport;
     const heading: ChoiceListItem = {
-      count: sportLeagueCount(sports[index]),
+      count,
       isChosen: isOpen && choice.league === null,
       label: name,
       onClick: onPick,

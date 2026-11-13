@@ -99,6 +99,7 @@ function toHowToPlaySport(catalog: PublicCatalogSport): HowToPlaySport {
     sport: catalog.sport,
     name: catalog.name,
     catalog,
+    count: wayCountOf(catalog.groups, catalog.leagues),
     leagues: grouped.map(({ league, rounds }) => ({
       slug: league.slug,
       name: league.name,
@@ -121,6 +122,15 @@ function statPoolLeaguesOf(leagues: readonly PublicCatalogLeague[]) {
     const name = league.definition.composite?.name;
     return name && statPoolScoringLine(league.definition) !== null ? [{ league, name }] : [];
   });
+}
+
+/**
+ * How many ways to play the page shows: the formats among `tiles`, and the Clutch Card when a
+ * shown league is a stat pool's. The heading's number, and the column's beside each sport (#1716).
+ */
+function wayCountOf(tiles: readonly ContestTypeTile[], leagues: readonly PublicCatalogLeague[]) {
+  return FORMAT_ORDER.filter((selectionType) => tiles.some((tile) => tile.selectionType === selectionType)).length
+    + (statPoolLeaguesOf(leagues).length > 0 ? 1 : 0);
 }
 
 interface FormatCardProps {
@@ -307,7 +317,7 @@ export function HowToPlayPage() {
     ? chosen.some((tile) => tile.selectionType === selectionType)
     : sportsOffering(selectionType).length > 0);
   const shownLeagues = chosenLeagues ?? (chosenSport ? [chosenSport] : catalog).flatMap((sport) => sport.leagues);
-  const wayCount = formats.length + (statPoolLeaguesOf(shownLeagues).length > 0 ? 1 : 0);
+  const wayCount = wayCountOf(chosen ?? catalog.flatMap((sport) => sport.groups), shownLeagues);
   const playing = sportLeagueChoiceObject(choice);
   const heading = `${formatCount(wayCount, 'way', locale)} to play${playing ? ` ${playing}` : ''}`;
 

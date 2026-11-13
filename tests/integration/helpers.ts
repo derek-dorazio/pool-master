@@ -935,9 +935,11 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.eventSeries.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded
   // with their points presets), and the template's foreign key restricts its delete: it stays.
+  // So does every seeded league, which alone has a display order (the API sets none): US
+  // Thoroughbred has no template of its own, only horse racing's every-race ones (#1716).
   // Sport rows are migration reference data too and always stay: without them a functional suite
   // run after this lane on the same database finds no sport to load into.
-  await prisma.sportLeague.deleteMany({ where: { contestConfigTemplates: { none: {} } } });
+  await prisma.sportLeague.deleteMany({ where: { contestConfigTemplates: { none: {} }, displayOrder: null } });
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();
