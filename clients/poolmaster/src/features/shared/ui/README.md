@@ -189,8 +189,9 @@ never a raw `ul`/`li`: rows are `SectionRow`s, and a list that is not rows is a
 named composite in its feature folder, such as `FeatureList` in `features/plans`
 for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13). A `Tile`
 draws the same 8px corner as `SectionCard` and `Notice` unless it asks for
-`radius="panel"`, the one larger corner, kept for a panel that stands apart from the
-content: a navy hero, the signed-out home's sign-in card, the invite join card, and the event pages. A page never
+`radius="panel"`, the one larger corner, kept for the panels that stand apart from the
+content that `rules/ux-rules.md` §12 item 13 names; the `poolmaster/no-panel-corner` lint rule
+fails it anywhere else. A page never
 types `rounded-2xl`, `rounded-3xl` or `rounded-4xl` itself.
 
 A team's icon and name come from `features/teams`, not this folder, because they

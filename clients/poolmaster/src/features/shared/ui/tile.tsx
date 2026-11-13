@@ -31,9 +31,9 @@ const tileVariants = cva("border", {
       /** The one content corner, 8px, the same as `SectionCard` and `Notice`. */
       sm: "rounded-lg",
       /**
-       * The larger corner a page may use only on a panel that stands apart from the content:
-       * a navy hero, the signed-out home's sign-in card, the invite join card, and the event
-       * pages' own look.
+       * The larger corner, only for a panel that stands apart from the content. Which panels
+       * those are is rules/ux-rules.md §12 item 13; `poolmaster/no-panel-corner` fails it
+       * anywhere else.
        */
       panel: "rounded-2xl",
     },

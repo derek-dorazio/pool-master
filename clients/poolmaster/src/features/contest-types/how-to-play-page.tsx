@@ -317,7 +317,6 @@ export function HowToPlayPage() {
     <LinkButton data-testid="how-to-play-register" state={{ authMode: 'register' }} to="/">Create your account</LinkButton>
   );
 
-
   return (
     <section className="space-y-6" data-testid="how-to-play-page">
       <PageHeader actions={callToAction} testId="how-to-play-header" title="How to Play" />
