@@ -274,6 +274,16 @@ ruleTester.run('no-button-style-override', noButtonStyleOverride, {
     'const d = <span className="px-4 text-primary font-semibold rounded-md">x</span>;',
     // Row casing is no-button-row-override's.
     'const e = <Button className="normal-case tracking-normal">x</Button>;',
+    // Filling or shrinking with the container is placement.
+    'const e2 = <Button className="h-full min-h-0 md:h-full">x</Button>;',
+    // A condition's or comparison's strings are not classes.
+    "const e3 = <Button className={cn(tone === 'border' && 'mt-2', size !== 'text-lg' ? 'ml-2' : 'mr-2')}>x</Button>;",
+    // A grandfathered file at its count passes.
+    {
+      code: 'const e4 = <Button className="px-4">x</Button>;',
+      filename: 'clients/poolmaster/src/features/old.tsx',
+      options: [{ baseline: { 'clients/poolmaster/src/features/old.tsx': 1 } }],
+    },
   ],
   invalid: [
     {
@@ -293,6 +303,23 @@ ruleTester.run('no-button-style-override', noButtonStyleOverride, {
     {
       code: 'const i = <MenuItem className="bg-muted border-b">x</MenuItem>;',
       errors: [{ messageId: 'styleOverride' }],
+    },
+    {
+      // Ring, outline, opacity, letter spacing and casing are look too.
+      code: 'const j = <Button className="ring-2 outline-none opacity-50 tracking-wide lowercase capitalize">x</Button>;',
+      errors: [{ messageId: 'styleOverride', data: { component: 'Button', matches: 'ring-2 outline-none opacity-50 tracking-wide lowercase capitalize' } }],
+    },
+    {
+      // A class key of cn's object form.
+      code: "const k = <Button className={cn({ 'rounded-full': isRound, 'ml-2': true })}>x</Button>;",
+      errors: [{ messageId: 'styleOverride', data: { component: 'Button', matches: 'rounded-full' } }],
+    },
+    {
+      // A grandfathered file over its count reports every override it has, not just the new one.
+      code: 'const l = <><Button className="px-4">a</Button><Button className="text-sm">b</Button></>;',
+      filename: 'clients/poolmaster/src/features/old.tsx',
+      options: [{ baseline: { 'clients/poolmaster/src/features/old.tsx': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
     },
   ],
 });

@@ -10,7 +10,7 @@
  * text-style check it fails both ways: a page over its entry (or a new page with two sections)
  * has sections to move into their own files, and a page under it has been split, so its entry
  * comes down in the same PR. `--update` only lowers entries and drops those at one or none.
- * Tests are exempt.
+ * Tests are exempt. Pages are found by name: a page file not named `*-page.tsx` is not checked.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';

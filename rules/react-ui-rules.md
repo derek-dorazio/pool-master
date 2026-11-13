@@ -284,7 +284,8 @@ The section is the unit that ports to React Native, so its data and actions live
 the page. `npm run rules:check:page-sections` counts the `SectionCard`s each `*-page.tsx` renders
 itself and fails a page with more than one; `scripts/page-sections-baseline.json` lists the big
 pages still waiting to be split, and only shrinks. Each cleanup ticket that rewrites one of them
-splits it as it goes.
+splits it as it goes. The check finds pages by name, so a page file is always named
+`<page>-page.tsx`: a page named otherwise is not checked.
 
 Within one section file, the old backstop still holds: past about 400 lines of production TSX, or
 more than five independent mutations or actions, extract action menus, modal bodies, form objects
@@ -465,9 +466,11 @@ accumulate.
   ESLint rule flags a hand-typed `normal-case` or `tracking-normal` in their `className`. Beyond
   that, a `Button`, `LinkButton` or `MenuItem`'s `className` only places it (margin, width, flex
   or grid placement, visibility): `poolmaster/no-button-style-override` fails a class that sets
-  its height, padding, corner, colour, border or type (#1615). A look the props don't offer is a
-  new variant in `shared/ui/button.tsx`. `eslint-rules/button-style-baseline.mjs` lists the files
-  still restyling one; it only shrinks.
+  its height, padding, corner, colour, border, ring, outline, opacity, letter spacing or type
+  (#1615); `h-full` and `min-h-0` are placement and pass. A look the props don't offer is a new
+  variant in `shared/ui/button.tsx`. `eslint-rules/button-style-baseline.json` counts the
+  overrides each file still restyling one may have, per file, so a listed file cannot add one;
+  it only shrinks.
 - **Text styles live in the shared parts; pages pick a part.** A title is a `Heading`, the small
   uppercase line over one is an `Eyebrow`, and every other piece of text is a `Text`: `body`
   (running text), `meta` (the muted line under a name: counts, dates, a team line), `caption`
