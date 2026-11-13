@@ -9,6 +9,11 @@ or status treatments slice by slice.
 This file should evolve as PoolMaster-specific product decisions are reviewed
 and refined.
 
+This file says which pattern a situation calls for. What each shared piece is for, when to use
+it and when not, and the props that matter are in the pattern catalog,
+`clients/poolmaster/src/features/shared/ui/README.md`, with a link to each piece's gallery
+story; the rules here name a piece and leave its details to the catalog (#1615).
+
 ## Source Bias
 
 PoolMaster should prioritize consumer-product UX conventions over enterprise
