@@ -536,20 +536,22 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### Toward ADR 0011
 
-ADR 0011 makes a live league's sync the source of its events. None of this is built; each item
-is a proposed follow-up on #1723:
+ADR 0011 makes a live league's sync the source of its events. None of this is built. Two
+choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
+its league's events*): on a synced event the provider wins over an admin's edit, and a new
+event waits for an admin's release for now, with automatic release the aim once sync is stable.
 
-- **Scheduled event creation per league.** A loop per synced league that runs the year import's
+- **Scheduled event creation per league** (#1725). A loop per synced league that runs the year import's
   path (`importProviderEventYear`) on a schedule, for the current and next season, so events
   appear without an admin pressing Import. New events are born `DRAFT`.
-- **Field load on by default** for synced leagues, so a new event's participants load without
+- **Field load on by default** (#1726) for synced leagues, so a new event's participants load without
   "Load Participant Field" (today the field loop is off by default).
-- **The sync keeps an event's details current**: dates, name and venue from the provider, so the
+- **The sync keeps an event's details current** (#1727): dates, name and venue from the provider, so the
   lifecycle scheduler moves a rescheduled event on its new dates. Today a sync never writes them.
-- **Games and bracket rows from the feed.** Today an admin builds a bracket's rounds and
+- **Games and bracket rows from the feed** (#1728). Today an admin builds a bracket's rounds and
   matches, and the sync only links a provider game to an open match (*GAME: how a provider game
   finds its match*).
-- **Admin event pages become read and browse** for synced leagues, with create, edit and result
+- **Admin event pages become read and browse** (#1729) for synced leagues, with create, edit and result
   entry kept for leagues no provider covers and for corrections; code comments that cite
   ADR-0009 are updated with the code they describe.
 
