@@ -348,6 +348,16 @@ function primeMocks(opts?: {
 }
 
 describe('ContestLeaderboardPage', () => {
+  it('holds a placeholder header with a tab row while the contest loads, so the tabs do not jump in when it arrives', async () => {
+    primeMocks();
+    getContestMock.mockReturnValue(new Promise(() => {}));
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-pending-header-tabs')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pending-header')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('shows a stat pool\'s players with one column per game, a player\'s name opens their stats in each game, and a hovered row tints its pinned cells too', async () => {
     const base = leaderboardResponse().data;
     const ohtani = {

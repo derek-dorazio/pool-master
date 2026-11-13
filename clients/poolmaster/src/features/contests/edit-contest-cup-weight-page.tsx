@@ -10,7 +10,7 @@ import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { ChoiceCard, ChoiceCardText, ErrorState, FormPage, FormSection, LoadingState } from '@/features/shared/ui';
+import { ChoiceCard, ChoiceCardText, ErrorState, FormPage, FormSection, LoadingState, PendingPage } from '@/features/shared/ui';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
 /**
@@ -32,10 +32,10 @@ export function EditContestCupWeightPage() {
     return <PlanLockedNotice feature={PlanFeature.CUP_SETTINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
   }
   if (managedContestQuery.isLoading) {
-    return <LoadingState body="Loading contest..." />;
+    return <PendingPage spacing={5} testId="edit-cup-weight-pending"><LoadingState body="Loading contest..." /></PendingPage>;
   }
   if (managedContestQuery.isError || !managedContestQuery.data) {
-    return <ErrorState body="We couldn't load this contest." onRetry={() => void managedContestQuery.refetch()} testId="edit-cup-weight-error" />;
+    return <PendingPage spacing={5} testId="edit-cup-weight-pending"><ErrorState body="We couldn't load this contest." onRetry={() => void managedContestQuery.refetch()} testId="edit-cup-weight-error" /></PendingPage>;
   }
   const contest = managedContestQuery.data;
   if (!league.isActive || contest.status === ContestStatus.COMPLETED) {

@@ -20,7 +20,9 @@ The shared UI layer is split into three levels:
    is `LoadingState`, `EmptyState` or `ErrorState`: a card of its own by default,
    `size="inline"` for one line inside a card, `size="plain"` inside a body that is
    already padded; a list's `LoadingState` (or `QueryState`) takes `rows` for faint
-   placeholder rows. A query's loading, error, empty and data branches are one
+   placeholder rows. A page whose header names the thing being read wraps its
+   loading or error state in `PendingPage`, which holds the header's place. A query's
+   loading, error, empty and data branches are one
    `QueryState`, whose error offers Retry from the query's own `refetch`; a
    hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
    several reads, `null` for a failure reading again cannot fix, such as no access). A one-line failure beside what failed, such as a refused save, is

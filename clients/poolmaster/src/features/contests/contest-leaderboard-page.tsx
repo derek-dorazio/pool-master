@@ -12,6 +12,7 @@ import {
   FactList,
   Input,
   LoadingState,
+  PendingPage,
   Pager,
   Tile,
   cn,
@@ -325,7 +326,7 @@ export function ContestLeaderboardPage() {
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
-    return <LoadingState body="Loading contest leaderboard..." />;
+    return <PendingPage hasTabs testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
   }
 
   if (contestQuery.data && isBracket) {
@@ -343,10 +344,12 @@ export function ContestLeaderboardPage() {
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <ErrorState
-        body="We couldn't load this contest."
-        onRetry={() => void contestQuery.refetch()}
-      />
+      <PendingPage hasTabs testId="contest-leaderboard-pending">
+        <ErrorState
+          body="We couldn't load this contest."
+          onRetry={() => void contestQuery.refetch()}
+        />
+      </PendingPage>
     );
   }
 

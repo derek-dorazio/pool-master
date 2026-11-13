@@ -12,6 +12,7 @@ import {
   PageHeader,
   LinkButton,
   LoadingState,
+  PendingPage,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -59,16 +60,18 @@ export function MyTeamPage() {
   // Until the team loads, "no team" is unknown, not true: offering Create team here would invite
   // a viewer who already has a team to create a second one.
   if (myTeamQuery.isLoading) {
-    return <LoadingState testId="my-team-loading" />;
+    return <PendingPage spacing={8} testId="my-team-pending"><LoadingState testId="my-team-loading" /></PendingPage>;
   }
   if (myTeamQuery.isError) {
     return (
-      <ErrorState
-        body={extractErrorMessage(myTeamQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
-        onRetry={() => void myTeamQuery.refetch()}
-        testId="my-team-error"
-        title="This page is unavailable"
-      />
+      <PendingPage spacing={8} testId="my-team-pending">
+        <ErrorState
+          body={extractErrorMessage(myTeamQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+          onRetry={() => void myTeamQuery.refetch()}
+          testId="my-team-error"
+          title="This page is unavailable"
+        />
+      </PendingPage>
     );
   }
 

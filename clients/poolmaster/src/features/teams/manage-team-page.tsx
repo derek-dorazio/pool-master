@@ -13,6 +13,7 @@ import {
   ErrorState,
   LinkButton,
   LoadingState,
+  PendingPage,
   PageHeader,
   SectionCard,
   SettingsRow,
@@ -54,10 +55,10 @@ export function ManageTeamPage() {
     return null;
   }
   if (teamQuery.isLoading) {
-    return <LoadingState body="Loading this member..." testId="manage-team-loading" />;
+    return <PendingPage spacing={8} testId="manage-team-pending"><LoadingState body="Loading this member..." testId="manage-team-loading" /></PendingPage>;
   }
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" />;
+    return <PendingPage spacing={8} testId="manage-team-pending"><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" /></PendingPage>;
   }
   if (!team) {
     return (
