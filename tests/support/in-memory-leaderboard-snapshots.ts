@@ -8,6 +8,7 @@ import type {
   ContestLeaderboardSnapshotRepository,
   ContestLeaderboardSnapshotWrite,
 } from '@poolmaster/shared/db';
+import { DEFAULT_SHOWN_EVENT } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 
 export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSnapshotRepository<Board> {
   readonly rows = new Map<string, ContestLeaderboardSnapshot<Board>>();
@@ -60,7 +61,7 @@ export function placeOnStoredBoard<Board extends PlacedBoard>(
   entryId: string,
   position: number,
 ): void {
-  const key = `${contestId}:`;
+  const key = `${contestId}:${DEFAULT_SHOWN_EVENT}`;
   const row = snapshots.rows.get(key);
   if (!row) throw new Error(`No stored default board for contest ${contestId}`);
   const entries = row.board.board.entries.map((entry) => (entry.entryId === entryId ? { ...entry, position, displayPosition: String(position) } : entry));
