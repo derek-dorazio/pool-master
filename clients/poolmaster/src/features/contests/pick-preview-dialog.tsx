@@ -199,8 +199,9 @@ function GamePickPreview({
 }
 
 /**
- * "Preview picks page" (#1612), beside a setup form's buttons: the page members pick from, drawn
- * from the event's real field and the form's rules as they stand, unsaved, in a large dialog
+ * "Preview contest entry" (#1612), beside a setup form's buttons and on a set-up contest's status
+ * panel: the page members pick from, drawn from the event's real field and the rules as they
+ * stand (the form's, unsaved, or the contest's saved ones), in a large dialog
  * (the whole screen on a phone). The commissioner can tap picks to try it; nothing is saved. A
  * format with no pick screen, or an event with nothing to pick from yet, leaves the button off,
  * with why behind a (?) beside it.
@@ -213,9 +214,10 @@ export function PickPreviewAction({
   participant,
   rulesError,
   selectionType,
+  surface = 'default',
   tierCount,
 }: {
-  /** The form's rules as they stand, or null while they don't read. */
+  /** The rules as they stand, or null while they don't read. */
   configuration: ContestConfigurationRequest | null;
   contestName: string;
   event: PickPreviewEvent | null;
@@ -223,6 +225,8 @@ export function PickPreviewAction({
   participant: SportNoun;
   rulesError: string | null;
   selectionType: SelectionType;
+  /** `inverse` on a navy panel, such as a set-up contest's status panel. */
+  surface?: 'default' | 'inverse';
   tierCount: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -240,12 +244,12 @@ export function PickPreviewAction({
         disabled={reason !== null}
         onClick={() => setIsOpen(true)}
         type="button"
-        variant="secondary"
+        variant={surface === 'inverse' ? 'inverse' : 'secondary'}
       >
-        Preview picks page
+        Preview contest entry
       </Button>
       {reason === null ? null : (
-        <HelpTip label="Why the preview is off" testId="pick-preview-unavailable">{reason}</HelpTip>
+        <HelpTip label="Why the preview is off" surface={surface} testId="pick-preview-unavailable">{reason}</HelpTip>
       )}
       {event !== null && previewRules !== null ? (
         <ReadOnlyDetailModal

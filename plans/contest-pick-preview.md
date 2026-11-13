@@ -48,6 +48,9 @@ Both endpoints read only: they create no contest, entry or pick, and say so in t
   (boxes on one game's grid, not a pick screen) are disabled with that reason. Each type is
   listed in the PR.
 - The golf picks look stays exactly as it is.
+- Later (Derek, 2026-11-13, after testing on QA): the button is named **Preview contest entry**,
+  and a set-up contest's status panel opens the same dialog from its saved rules. It used to
+  link to the member contest page, which hides a contest until it is open and has no way back.
 
 ## Plan gates
 
