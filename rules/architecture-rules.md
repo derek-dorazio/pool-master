@@ -268,13 +268,14 @@ Building toward ADR-0011:
 
 - Sync-driven creation goes through the event service the year import uses (series, rounds and
   default tiers seeded the same way), and every new event is born `DRAFT`, as any event is.
-  For now an admin releases it (Derek, 2026-11-13). That is an interim step, not a lasting
+  For now, on QA, an admin releases it (Derek, 2026-11-13). That is an interim step, not a lasting
   decision: the aim is automatic release once sync is tested and stable, so do not build
   anything that assumes release stays manual.
-- **On a synced event the provider wins.** A field the provider feeds (name, dates, venue,
-  participants, games, results) is overwritten by the next sync, an admin's edit included.
-  There is no admin-correction marker for event details (Derek, 2026-11-13, rejecting a kept
-  correction as needless complexity). Admin result correction keeps working as it does today.
+- **On a synced event the provider wins.** A field the provider feeds for the event itself
+  (name, dates, venue, participants, games) is overwritten by the next sync, an admin's edit
+  included. There is no admin-correction marker for event details (Derek, 2026-11-13, choosing
+  provider-wins over a kept admin correction). Results are not covered: an admin's game result
+  still stands over a provider final (#1531).
 - Build it on the per-league readers (scope ids, `match_keyword`, the shared writers). The
   retired `EVENTSCHEDULE`, `EVENTRESULTS` and rankings feeds and the provider-owned `FULL` scope
   stay removed; do not re-add them, put them behind a flag, or keep them as a fallback.
