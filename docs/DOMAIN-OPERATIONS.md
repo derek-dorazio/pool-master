@@ -649,7 +649,7 @@ are gone (#236).
 | List | `authenticated`, bounded | `listEvents`, filtered by sport, statuses (one or several), sport league (through the series), event year and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, contest-setup readiness and `allowedTransitions` — to every caller, and `adminCounts` (untiered, unpriced, empty tiers, contests across every league) to a root admin only, `null` to anyone else (#1198). `DRAFT` events are listed to root admins only (#431). A caller other than a root admin lists only events in the statuses that can still take a contest (`OFFERABLE_SPORT_EVENT_STATUSES`: `SCHEDULED`, `POSTPONED`, `IN_PROGRESS`) or one sport league's `eventYear`; any other list is the root admin's catalog, 403 `ROOT_ADMIN_ACCESS_REQUIRED` (#1348) |
 | List event years | `authenticated` | `listEventYears`, `GET /events/years?sportLeagueId=`: the years a sport league has events in, earliest first, read without loading the events (#1198, #1251), for a year picker that then lists one year. A year with only `DRAFT` events is listed to root admins only |
 | Read one | `authenticated` | `getEvent`. A `DRAFT` event is 404 `EVENT_NOT_FOUND` to anyone but a root admin (#431) |
-| Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest. Every new event is `DRAFT`: commissioners can't see or use it until it is released |
+| Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league. Seeds the rounds and the default tiers. Provider sync does not create events yet: it updates the one linked to a provider event and skips the rest (ADR-0011 makes sync the source of a live league's events; that work follows #1723). Every new event is `DRAFT`: commissioners can't see or use it until it is released |
 | Clone an event year | `rootAdmin` | `cloneEventYear` re-creates each of a sport league's events in one year as next year's edition (or `targetYear`'s), dates shifted; never the field, tiers, scores or provider link. 422 `EVENT_YEAR_HAS_NO_EVENTS` for an empty source year, 409 `EVENT_YEAR_NOT_EMPTY` for a target year that has events. Leaves the current event year alone |
 | Import an event year from a provider | `rootAdmin` | `importEventYearFromProvider` creates each provider event for a sport league's tour starting in that calendar year that PoolMaster lacks, each as `createEventFromProviderEvent` would, linked for scores. A provider event belongs to the tour when its tour name equals the sport league's `matchKeyword`, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so a re-run creates nothing. 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD`; 404 `PROVIDER_NOT_FOUND` or `SPORT_LEAGUE_NOT_FOUND` (#385) |
 | Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435). The round schedule follows the edit: a new start date moves every round (start and end) by the same amount, and a higher round count adds the missing rounds, each a day after the one before. Lowering the count keeps the stored rounds, but the lifecycle scheduler ignores any past the new count |
@@ -818,8 +818,10 @@ admin; an event participant's ranking comes from the provider's field (#384), an
 carries none leaves the ranking already on the row.
 
 The `EVENTSCHEDULE` and `EVENTRESULTS` feeds were retired in #126, and with them the sport-level
-sync (`submitSportSync`). Events are created and linked by the root admin; the provider's
-upcoming-event catalog is read only on demand. The two remaining feeds, `EVENTPARTICIPANTS` and
+sync (`submitSportSync`). Today events are created and linked by the root admin; the provider's
+upcoming-event catalog is read only on demand. ADR-0011 (superseding ADR-0009) makes a live
+league's sync the source of its events, built on the per-league readers rather than these retired
+feeds; until that lands, the paragraph below describes the code. The two remaining feeds, `EVENTPARTICIPANTS` and
 `EVENTLIVESCORES`, are event-scoped and reach only linked (`SCORES_ONLY`) events. A field sync
 writes the field and its size, never the event's details or status, and a score for a round the
 admin did not schedule is skipped, never creating the round (#435). A live score is written only
@@ -827,8 +829,7 @@ while its event is `IN_PROGRESS`: before, there is nothing to score, and after, 
 the admin's alone. An event's lifecycle is moved
 by the admin or by the date-driven lifecycle scheduler. Sync-run history rows for the retired
 feeds were deleted by migration, and stored ingestion config drops their keys on boot. The stale
-provider event cleanup went too: it cleared events sync used to create, and every event is now an
-admin's (ADR-0009).
+provider event cleanup went too: it cleared events the retired sync used to create (ADR-0009).
 
 ## Contests and entries
 

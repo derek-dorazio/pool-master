@@ -245,26 +245,36 @@ provider loops, the email sender), and prod runs more than one task. So that a j
   draft contest step does (#1195), and re-reads its filter under them, so a row that changed
   meanwhile is kept.
 
-### Provider data reaches only events an admin authored and linked
+### A live provider sync is the source of its league's events
 
-Every event is created by an admin, and a provider feeds only events an admin has linked
-to a provider event. Sync-driven event creation, scheduled event lists, scheduled results
-and the rankings feed are **removed, not legacy**: do not re-add them, put them behind a
-flag, or keep them as a fallback. The decision and its alternatives are
-[ADR-0009](../docs/adr/0009-admin-authored-events-score-only-linking.md).
+For a sport league whose provider sync is live, the sync creates the league's events, loads
+their participants and keeps them current, and an event's status follows its dates. Admin
+authoring and admin result entry are the fallback for leagues no provider covers and for
+correcting a feed. The decision and its alternatives are
+[ADR-0011](../docs/adr/0011-provider-sync-creates-events.md), which supersedes ADR-0009.
 
-- The only feed that runs on a schedule by default is live scores, for linked events.
-- A provider's field and odds are an on-demand complement an admin triggers for one linked
-  event. A provider that has no such feed for a sport or league is a normal empty state,
-  not an error.
-- Listing a provider's events is a lookup behind an admin action (browse, link, year
-  import). It never creates, updates or changes the status of an event by itself.
-- A new feed that would create events or write across events on a schedule needs a new ADR
-  first.
-- A sync writes only what it feeds — scores, the field and the field size. It never writes
-  an event's name, venue, dates, rounds, timing or status, and never creates a round; those
-  are the admin's. `SportEventSyncScope` has two values: `NONE` (unlinked) and `SCORES_ONLY`
-  (linked). There is no provider-owned scope; do not add one.
+What the code does **today**, until the follow-up tickets of #1723 land:
+
+- An event is created by an admin: by hand, from one browsed provider event, or with a league's
+  year import. Nothing creates an event on a schedule yet.
+- The feed that runs on a schedule by default is live scores, for linked events
+  (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field sync loop exists but is
+  off by default; an admin loads or refreshes one event's field.
+- A sync writes scores, the field and the field size. It does not yet write an event's name,
+  venue, dates, rounds or timing.
+- Status moves by the date-driven lifecycle scheduler or by an admin, never by a provider feed.
+
+Building toward ADR-0011:
+
+- Sync-driven creation goes through the event service the year import uses (series, rounds and
+  default tiers seeded the same way), and every new event is born `DRAFT`, as any event is.
+- Build it on the per-league readers (scope ids, `match_keyword`, the shared writers). The
+  retired `EVENTSCHEDULE`, `EVENTRESULTS` and rankings feeds and the provider-owned `FULL` scope
+  stay removed; do not re-add them, put them behind a flag, or keep them as a fallback.
+- Status keeps coming from the lifecycle scheduler reading the event's dates; the sync's part is
+  keeping a synced event's dates current, not setting its status directly.
+- A provider that has no field or odds feed for a sport or league is a normal empty state, not
+  an error.
 
 ### League plans
 

@@ -102,6 +102,6 @@ carries a recommendation; Derek answers by ID. Refreshed 2026-10-28 with the
     scenario testing. Re-check against the chosen provider's production limits in the
     first adapter's ticket.
 
-- `SDP-R6` Events are admin-authored `(Resolved, ADR 0009)`
+- `SDP-R6` Events are admin-authored `(Resolved, ADR 0009; superseded by ADR 0011, 2026-11-13: a live league's sync creates its events)`
   - A provider supplies scores, fields and an event lookup to events an admin has linked.
     It never creates events or moves their status. Provider choice does not change this.
