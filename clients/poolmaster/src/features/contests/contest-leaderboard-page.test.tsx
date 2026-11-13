@@ -403,12 +403,12 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('bg-background', hoverTint);
   });
 
-  it('puts a roster board in the shared section titled Leaderboard, the same frame as every other format', async () => {
+  it('puts a roster board in the shared section titled Standings, the same frame as every other format', async () => {
     primeMocks();
 
     renderLeaderboard();
 
-    const section = await screen.findByRole('region', { name: 'Leaderboard' });
+    const section = await screen.findByRole('region', { name: 'Standings' });
     expect(within(section).getByTestId('contest-leaderboard-board')).toBeInTheDocument();
     expect(within(section).getByTestId('contest-leaderboard-search')).toBeInTheDocument();
   });
