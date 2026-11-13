@@ -15,6 +15,7 @@ import noAdHocMoreInfo from './no-ad-hoc-more-info.mjs';
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
 import noButtonRowOverride from './no-button-row-override.mjs';
+import noButtonStyleOverride from './no-button-style-override.mjs';
 import noPanelCorner from './no-panel-corner.mjs';
 import noRawModal from './no-raw-modal.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
@@ -43,6 +44,7 @@ export default {
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
     'no-button-row-override': noButtonRowOverride,
+    'no-button-style-override': noButtonStyleOverride,
     'no-panel-corner': noPanelCorner,
     'no-raw-modal': noRawModal,
     'no-disabled-tests': noDisabledTests,

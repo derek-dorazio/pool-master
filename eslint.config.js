@@ -13,6 +13,7 @@ import testingLibrary from 'eslint-plugin-testing-library';
 import vitest from '@vitest/eslint-plugin';
 import { createRequire } from 'node:module';
 import poolmaster from './eslint-rules/index.mjs';
+import { BUTTON_STYLE_BASELINE } from './eslint-rules/button-style-baseline.mjs';
 import { QUERY_STATES_BASELINE } from './eslint-rules/query-states-baseline.mjs';
 
 // eslint-plugin-react's `version: 'detect'` calls `context.getFilename()`, which
@@ -319,6 +320,20 @@ export default tseslint.config(
       'poolmaster/no-bare-ui-controls': 'error',
       'poolmaster/no-button-row-override': 'error',
     },
+  },
+  {
+    // #1615: a Button's className only places it; its look comes from variant, size and layout.
+    // Files still restyling one sit on a shrink-only baseline.
+    files: ['clients/poolmaster/src/**/*.tsx'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/**',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      '**/*.stories.tsx',
+      ...BUTTON_STYLE_BASELINE,
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-button-style-override': 'error' },
   },
   {
     // #1697: Tile's panel corner only on the panels rules/ux-rules.md §12 item 13 names. The
