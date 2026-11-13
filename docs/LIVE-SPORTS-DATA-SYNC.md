@@ -104,7 +104,7 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 | Sport league | `match_keyword` | Migration | Adapter tour constant |
 |---|---|---|---|
 | NFL | `NFL` | baseline | `NFL_LEAGUE_NAME` (`nfl-mapping.ts`) |
-| College Football Playoff | `CFP` | `20271119000200_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
+| College Football Playoff | `CFP` | `20271119000300_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
 | NCAA Division I Men (basketball) | `NCAAM` | baseline | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
 | NCAA Division I Women (basketball) | `NCAAW` | baseline | `NCAA_WOMEN.tour` |
 | Premier League | `EPL` | baseline | `EPL_TOUR` (`epl-mapping.ts`) |
@@ -377,7 +377,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 ### College Football Playoff (#1496)
 
 - **Registration.** College Football Playoff sport league, keyword `CFP` (migration
-  `20271119000200_set_cfp_match_keyword`, only where `NULL`). One event per season
+  `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
   (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
   own four. Teams carry the tour `CFP`, so a provider team links by name only to the site's
   teams affiliated with the playoff league.
