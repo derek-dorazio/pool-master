@@ -27,4 +27,13 @@ describe("PendingPage", () => {
 
     expect(screen.getByTestId("contest-header-tabs")).toBeInTheDocument();
   });
+
+  it("spaces header and body with the gap the loaded page uses, so the body does not shift when the read arrives", () => {
+    const { rerender } = render(<PendingPage testId="page"><LoadingState /></PendingPage>);
+    expect(screen.getByTestId("page")).toHaveClass("space-y-6");
+
+    rerender(<PendingPage spacing={8} testId="page"><LoadingState /></PendingPage>);
+    expect(screen.getByTestId("page")).toHaveClass("space-y-8");
+    expect(screen.getByTestId("page")).not.toHaveClass("space-y-6");
+  });
 });

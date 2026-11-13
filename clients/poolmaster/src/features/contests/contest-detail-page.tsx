@@ -242,12 +242,12 @@ export function ContestDetailPage() {
   ]);
 
   if (contestQuery.isLoading) {
-    return <PendingPage hasTabs><LoadingState body="Loading contest detail..." /></PendingPage>;
+    return <PendingPage hasTabs testId="contest-detail-pending"><LoadingState body="Loading contest detail..." /></PendingPage>;
   }
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <PendingPage hasTabs>
+      <PendingPage hasTabs testId="contest-detail-pending">
         <ErrorState
           body="We couldn't load this contest."
           onRetry={() => void contestQuery.refetch()}

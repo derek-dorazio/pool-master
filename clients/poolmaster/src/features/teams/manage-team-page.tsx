@@ -55,10 +55,10 @@ export function ManageTeamPage() {
     return null;
   }
   if (teamQuery.isLoading) {
-    return <PendingPage><LoadingState body="Loading this member..." testId="manage-team-loading" /></PendingPage>;
+    return <PendingPage spacing={8} testId="manage-team-pending"><LoadingState body="Loading this member..." testId="manage-team-loading" /></PendingPage>;
   }
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <PendingPage><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" /></PendingPage>;
+    return <PendingPage spacing={8} testId="manage-team-pending"><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} title="Member unavailable" /></PendingPage>;
   }
   if (!team) {
     return (

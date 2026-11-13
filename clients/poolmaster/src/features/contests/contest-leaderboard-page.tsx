@@ -326,7 +326,7 @@ export function ContestLeaderboardPage() {
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
-    return <PendingPage hasTabs><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
+    return <PendingPage hasTabs testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
   }
 
   if (contestQuery.data && isBracket) {
@@ -344,7 +344,7 @@ export function ContestLeaderboardPage() {
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <PendingPage hasTabs>
+      <PendingPage hasTabs testId="contest-leaderboard-pending">
         <ErrorState
           body="We couldn't load this contest."
           onRetry={() => void contestQuery.refetch()}

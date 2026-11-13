@@ -53,7 +53,7 @@ export function MyAccountPage() {
   }, [user]);
 
   if (!user) {
-    return <PendingPage><LoadingState body="Loading your account..." testId="my-account-loading" /></PendingPage>;
+    return <PendingPage testId="my-account-pending"><LoadingState body="Loading your account..." testId="my-account-loading" /></PendingPage>;
   }
 
   const isInactive = !user.isActive;

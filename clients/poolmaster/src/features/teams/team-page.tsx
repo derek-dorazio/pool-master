@@ -46,11 +46,11 @@ export function TeamPage() {
     return <Navigate replace to={buildLeagueTeamPath(leagueCode)} />;
   }
   if (teamQuery.isLoading) {
-    return <PendingPage><LoadingState body="Loading this member..." testId="team-page-loading" /></PendingPage>;
+    return <PendingPage spacing={8} testId="team-page-pending"><LoadingState body="Loading this member..." testId="team-page-loading" /></PendingPage>;
   }
   const team = teamQuery.data;
   if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
-    return <PendingPage testId="team-page-pending"><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} testId="team-page-error" title="Member unavailable" /></PendingPage>;
+    return <PendingPage spacing={8} testId="team-page-pending"><ErrorState body="We couldn't load this member." onRetry={() => void teamQuery.refetch()} testId="team-page-error" title="Member unavailable" /></PendingPage>;
   }
   if (!team) {
     return (

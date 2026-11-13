@@ -32,10 +32,10 @@ export function EditContestCupWeightPage() {
     return <PlanLockedNotice feature={PlanFeature.CUP_SETTINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
   }
   if (managedContestQuery.isLoading) {
-    return <PendingPage><LoadingState body="Loading contest..." /></PendingPage>;
+    return <PendingPage spacing={5} testId="edit-cup-weight-pending"><LoadingState body="Loading contest..." /></PendingPage>;
   }
   if (managedContestQuery.isError || !managedContestQuery.data) {
-    return <PendingPage><ErrorState body="We couldn't load this contest." onRetry={() => void managedContestQuery.refetch()} testId="edit-cup-weight-error" /></PendingPage>;
+    return <PendingPage spacing={5} testId="edit-cup-weight-pending"><ErrorState body="We couldn't load this contest." onRetry={() => void managedContestQuery.refetch()} testId="edit-cup-weight-error" /></PendingPage>;
   }
   const contest = managedContestQuery.data;
   if (!league.isActive || contest.status === ContestStatus.COMPLETED) {

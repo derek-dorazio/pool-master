@@ -5,7 +5,17 @@ type PendingPageProps = {
   children: ReactNode;
   /** Draw a placeholder tab row too, for a page whose header has tabs. */
   hasTabs?: boolean;
+  /** The gap between header and body: match the loaded page's own, so the body does not shift. */
+  spacing?: PendingPageSpacing;
   testId?: string;
+};
+
+type PendingPageSpacing = 5 | 6 | 8;
+
+const SPACING_CLASSES: Record<PendingPageSpacing, string> = {
+  5: "space-y-5",
+  6: "space-y-6",
+  8: "space-y-8",
 };
 
 /**
@@ -14,9 +24,9 @@ type PendingPageProps = {
  * with its rule, so the frame stays put and only the body below swaps from the shared loading
  * or error state to the page. A page whose header is fixed draws its real header instead.
  */
-export function PendingPage({ children, hasTabs = false, testId }: PendingPageProps) {
+export function PendingPage({ children, hasTabs = false, spacing = 6, testId }: PendingPageProps) {
   return (
-    <section className="space-y-6" data-testid={testId}>
+    <section className={SPACING_CLASSES[spacing]} data-testid={testId}>
       <PageHeaderPlaceholder hasTabs={hasTabs} testId={testId ? `${testId}-header` : undefined} />
       {children}
     </section>

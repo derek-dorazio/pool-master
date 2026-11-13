@@ -131,14 +131,14 @@ export function ManageContestPage() {
     return null;
   }
   if (contestQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
-    return <PendingPage><LoadingState body="Loading contest..." testId="manage-contest-loading" /></PendingPage>;
+    return <PendingPage spacing={8} testId="manage-contest-pending"><LoadingState body="Loading contest..." testId="manage-contest-loading" /></PendingPage>;
   }
   // A contest that is gone answers CONTEST_NOT_FOUND; one of another league is not this league's either.
   const isContestMissing = hasErrorCode(contestQuery.error, 'CONTEST_NOT_FOUND')
     || (contest !== null && contest.leagueId !== league.id);
   if ((contestQuery.isError && !isContestMissing) || managedContestQuery.isError || eventQuery.isError) {
     return (
-      <PendingPage>
+      <PendingPage spacing={8} testId="manage-contest-pending">
         <ErrorState
           body="We couldn't load this contest."
           onRetry={refetchFailed(contestQuery, managedContestQuery, eventQuery)}

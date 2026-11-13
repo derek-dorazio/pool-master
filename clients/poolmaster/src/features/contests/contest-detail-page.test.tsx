@@ -272,6 +272,16 @@ describe('ContestDetailPage (Contest Board)', () => {
     mockLogger.child.mockClear();
   });
 
+  it('holds a placeholder header with a tab row while the contest loads, so the tabs do not jump in when it arrives', async () => {
+    primeMocks({ contestStatus: 'ACTIVE' });
+    getContestMock.mockReturnValue(new Promise(() => {}));
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-detail-pending-header-tabs')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-detail-pending-header')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('shows a live contest as "Live" in the live colour in its header badge, never the raw enum', async () => {
     primeMocks({ contestStatus: 'ACTIVE' });
 
