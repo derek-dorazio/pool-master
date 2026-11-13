@@ -1124,7 +1124,8 @@ model SportLeague {
   /// The season league a playoff round's sport league belongs to (#1701: the Stanley Cup Final
   /// and the NHL Conference Finals are the NHL's, the Men's Frozen Four NCAA Division I Men's
   /// hockey), so pages list each round under its league. Null for a league that is no other's
-  /// round. Reference data, set by the migration that seeds the round league.
+  /// round; a season league its rounds name is not deleted. Reference data, set by the migration
+  /// that seeds the round league.
   parentSportLeagueId String?                  @map("parent_sport_league_id") @db.Uuid
   createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz

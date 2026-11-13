@@ -16,17 +16,28 @@ import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog, catalogSlug } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
 import { SPORT_BLURBS } from './sport-blurbs';
-import { useSportLeagueChoice } from './sport-league-choice';
-import { SportLeagueFilter } from './sport-league-filter';
+import { EveryLeagueCard } from './every-league-card';
+import { SportChipRow } from './sport-chip-row';
+import { groupRounds, useSportLeagueChoice } from './sport-league-choice';
+import { SportLeagueColumn } from './sport-league-column';
 import { STAT_POOL_CONTEST_TYPE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
+
+/** The contest types' anchor, which a league picked further down the page scrolls back to. */
+const CONTEST_TYPES_ANCHOR = 'contest-types';
+
+/** Back up to the contest types, from a league picked below them on a phone. */
+function scrollToTypes() {
+  document.getElementById(CONTEST_TYPES_ANCHOR)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
 
 /**
  * Contest types (#803): every contest the league could run, grouped by sport and sport league,
  * read from the contest templates. A commissioner of an active league gets a "Create this
  * contest" link on each, opening Create contest on that template; every other member sees the
- * same menu without them. The sport switch in the header narrows it to one sport or sport league,
- * as on How to Play, and the choice is kept in the link.
+ * same menu without them. The sport switch, a column of every sport and league on a computer and
+ * chips on a phone as on How to Play (#1701), narrows it to one sport, league or playoff round,
+ * and the choice is kept in the link.
  */
 export function LeagueContestTypesPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'league-contest-types-page' }), []);
@@ -41,14 +52,19 @@ export function LeagueContestTypesPage() {
     templatesQuery.data ?? [],
     new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name])),
   ), [sportLeaguesQuery.data, templatesQuery.data]);
-  // The switch offers each sport's own leagues; the every-event group is no league to choose.
+  // The switch offers each sport's own leagues, each playoff round under its season league
+  // (#1701); the every-event group is no league to choose.
+  const parentIds = useMemo(() => new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.parentSportLeagueId])), [sportLeaguesQuery.data]);
   const filterable = useMemo(() => catalog.map((sport) => ({
     ...sport,
-    leagues: sport.groups.flatMap((group) => (group.sportLeagueId === null ? [] : [{ slug: catalogSlug(group.name), name: group.name }])),
-  })), [catalog]);
+    leagues: groupRounds(sport.groups.flatMap((group) => (group.sportLeagueId === null
+      ? []
+      : [{ id: group.sportLeagueId, parentId: parentIds.get(group.sportLeagueId) ?? null, slug: catalogSlug(group.name), name: group.name }])))
+      .map(({ league, rounds }) => ({ slug: league.slug, name: league.name, rounds: rounds.map(({ slug, name }) => ({ slug, name })) })),
+  })), [catalog, parentIds]);
   const choice = useSportLeagueChoice(filterable);
   const shownSports = choice.sport
-    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.leagueSlug === null || (group.sportLeagueId !== null && catalogSlug(group.name) === choice.leagueSlug)) }]
+    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.leagueSlugs === null || (group.sportLeagueId !== null && choice.leagueSlugs.includes(catalogSlug(group.name)))) }]
     : catalog;
 
   // A championship stat pool league's group says it is a Clutch Card and how its stat is counted (#936).
@@ -87,13 +103,7 @@ export function LeagueContestTypesPage() {
 
   return (
     <section className="space-y-8" data-testid="league-contest-types-page">
-      <PageHeader
-        tabsEnd={templatesQuery.isSuccess && sportLeaguesQuery.isSuccess ? (
-          <SportLeagueFilter leagueSlug={choice.leagueSlug} onChoose={choice.choose} sport={choice.sport?.sport ?? null} sports={filterable} testId="contest-types-sport-filter" />
-        ) : null}
-        testId="contest-types-header"
-        title="Contest types"
-      />
+      <PageHeader testId="contest-types-header" title="Contest types" />
       {canCreate ? null : (
         <Notice data-testid="contest-types-inactive" tone="warning">
           {`${league.name} can run these once the league is active again.`}
@@ -112,24 +122,31 @@ export function LeagueContestTypesPage() {
         testId="contest-types-catalog"
       >
         {() => (
-        <div className="space-y-10">
-          {shownSports.map((sport) => (
-            <SectionCard bare help={SPORT_BLURBS[sport.sport]} key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
-              {sport.groups.map((group) => (
-                <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
-                  <Heading level={4} variant="eyebrow">{group.name}</Heading>
-                  {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
-                    <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
-                      {statPoolLines.get(group.sportLeagueId)}
-                    </Text>
-                  ) : null}
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {group.tiles.map((tile) => <ContestTypeTileCard createPathFor={createPathFor} key={tile.key} tile={tile} />)}
-                  </div>
-                </div>
+        <div className="md:grid md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-6">
+          <SportLeagueColumn choice={choice} className="sticky top-4 max-md:hidden" sports={filterable} testId="contest-types-leagues-column" />
+          <div className="min-w-0 space-y-6">
+            <SportChipRow choice={choice} className="md:hidden" sports={filterable} testId="contest-types-sport-chips" />
+            <div className="scroll-mt-4 space-y-10" id={CONTEST_TYPES_ANCHOR}>
+              {shownSports.map((sport) => (
+                <SectionCard bare help={SPORT_BLURBS[sport.sport]} key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
+                  {sport.groups.map((group) => (
+                    <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
+                      <Heading level={4} variant="eyebrow">{group.name}</Heading>
+                      {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
+                        <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
+                          {statPoolLines.get(group.sportLeagueId)}
+                        </Text>
+                      ) : null}
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {group.tiles.map((tile) => <ContestTypeTileCard createPathFor={createPathFor} key={tile.key} tile={tile} />)}
+                      </div>
+                    </div>
+                  ))}
+                </SectionCard>
               ))}
-            </SectionCard>
-          ))}
+            </div>
+            <EveryLeagueCard className="md:hidden" onPick={scrollToTypes} sports={filterable} testId="contest-types-every-league" />
+          </div>
         </div>
         )}
       </QueryState>

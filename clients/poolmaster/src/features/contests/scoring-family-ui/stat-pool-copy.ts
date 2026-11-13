@@ -20,9 +20,13 @@ export function statPoolContestName(eventName: string): string {
   return `${eventName.replace(/ Final$/, '')} Stars`;
 }
 
-/** How a Clutch Card goes, on How to Play: a line, then three steps, as each way to play's guide. */
-export const STAT_POOL_GUIDE: { summary: string; steps: readonly [string, string, string] } = {
-  summary: 'Pick stars for the title round. Every game is a round, and each star scores one stat in it.',
+/**
+ * How a Clutch Card goes, on How to Play: a line of at most two lines on a phone tile, then, in
+ * the opened tile, how it plays and three steps, as each way to play's guide.
+ */
+export const STAT_POOL_GUIDE: { summary: string; detail: string; steps: readonly [string, string, string] } = {
+  summary: 'Who will come in clutch? Pick your stars.',
+  detail: 'Every game is a round, and each star scores one stat in it.',
   steps: [
     'Pick your stars before the first game: from tiers, under a budget, or by quick pick.',
     'In every game, each star scores their sport’s stat, as a golfer scores each round of a golf pool.',

@@ -1,6 +1,9 @@
 import type { SelectionType } from '@poolmaster/shared/domain';
 
-/** How one way to play goes, on the How to Play page: a line on its card, then three steps. */
+/**
+ * How one way to play goes, on the How to Play page: a line on its card, at most two lines on a
+ * phone tile (#1701), then three steps.
+ */
 export interface FormatGuide {
   summary: string;
   steps: readonly [string, string, string];
@@ -13,7 +16,7 @@ export interface FormatGuide {
  */
 export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
   TIERED: {
-    summary: 'The field is split into tiers. Take a favorite and a long shot.',
+    summary: 'One pick per tier, from favorites to long shots.',
     steps: [
       'The field is ranked into tiers, with the favorites in the first.',
       'Pick from every tier, so every entry has a contender and a dark horse.',
@@ -21,7 +24,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     ],
   },
   BUDGET_PICK: {
-    summary: 'Every pick has a price. Build your lineup under the cap.',
+    summary: 'Every pick has a price. Stay under the cap.',
     steps: [
       'Each player or team has a price, and the best cost the most.',
       'Spend your budget however you like: one star, or a lineup of bargains.',
@@ -37,7 +40,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     ],
   },
   PICK_EM: {
-    summary: 'Pick the winner of every game on the slate.',
+    summary: 'Pick the winner of every game.',
     steps: [
       'Each week, pick a winner in every game.',
       'Change a pick any time before its game kicks off.',
@@ -45,7 +48,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     ],
   },
   BRACKET: {
-    summary: 'Fill in the whole tournament before it starts.',
+    summary: 'Fill in the bracket before it starts.',
     steps: [
       'Pick every game, from the first round to the final.',
       'Later rounds are worth more, and some contests add a bonus for upsets.',
@@ -61,7 +64,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     ],
   },
   SQUARES: {
-    summary: 'Claim squares on a 10 × 10 grid for the big game.',
+    summary: 'Claim squares on a 10 × 10 grid.',
     steps: [
       'Claim your squares on the grid.',
       'Once the grid is full, the numbers for each row and column are drawn.',

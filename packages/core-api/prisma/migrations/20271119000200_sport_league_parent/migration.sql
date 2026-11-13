@@ -1,6 +1,7 @@
 -- #1701: a playoff round's sport league names the season league it belongs to, so How to Play
 -- and Contest types list each round under its league. Reference data: a migration that seeds a
--- new round league sets it with the league.
+-- new round league sets it with the league. A season league its rounds name is refused deletion
+-- (SPORT_LEAGUE_IN_USE), as one with events is.
 ALTER TABLE "sport_leagues" ADD COLUMN "parent_sport_league_id" UUID;
 
 ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_parent_sport_league_id_fkey" FOREIGN KEY ("parent_sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
