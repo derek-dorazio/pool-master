@@ -26,6 +26,7 @@ import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sp
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // American football end to end over HTTP (#702): the NFL playoffs test seed loads into the seeded
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
@@ -86,7 +87,7 @@ describe('SDK Functional: American football', () => {
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
-    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));

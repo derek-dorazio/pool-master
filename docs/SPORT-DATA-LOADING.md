@@ -110,7 +110,8 @@ contests, while a US afternoon or evening finish on that date is still being pla
 event of a sport whose finishing order an admin enters (every racing sport) is created with
 automatic lifecycle off, and one already on the site has it turned off, so it never
 completes, and settles, before its result is in. A test seed carries the results its sport
-is scored on: golf's made-up stroke rounds, a bracket's match results, a race's real
+is scored on: golf's made-up stroke rounds, a bracket's match results (entered as each game is
+played; *Results go in as the games are played* below), a race's real
 finishing order (each runner's `raceResult`, entered just before release as the official
 result; *Seeded 2026 races* below), or a stat pool's real box scores (*Seeded championship
 stat pools* below). Any sport may also have a test slate.
@@ -172,6 +173,14 @@ beside the real ones and always lie just ahead (#1524). The rule is
   ones after it are set up whole (field, odds, tiers, prices, stored scores) but left drafts.
   An admin can release one early on the Manage screens. A bracket event's play-in winners,
   cancellations and results go in only once a run releases it.
+- **Results go in as the games are played** (#1720): a run enters a match's result only once its
+  rolled kickoff (or, with none, the event's start) has passed, so a game still to come stays
+  open for picks and a squares board. Each run first catches up the test events earlier runs
+  loaded: it enters the results of the games played since, moves an event that has started to
+  In Progress, and moves it to Completed, which settles its contests, once every result is in
+  (any other sport's event: once its end has passed). The report lists each as an event update,
+  such as "6 results entered; moved to In Progress". So a run after an event's last game leaves
+  it played and settled, with nothing to do by hand.
 - **Topped up, never piled up**: a league that still has a released test event yet to start is
   left alone, its drafts too, and the report says so. Run it again once that event has started
   and the league's draft moves into the coming week and is released, and a new event fills the
@@ -253,16 +262,18 @@ create with its reseed rule. Because its envelope says `testData`:
 - **Dates rolled from the run** (*A few "Test-" events at a time* above), the kickoffs with them.
 - **Released** with automatic lifecycle off, its 14 teams tiered by odds (seven tiers of two)
   and priced.
-- **Every result already entered**, round by round through the bracket's own calls: the Wild
+- **Every result entered as its game is played** (*Results go in as the games are played*
+  above), round by round through the bracket's own calls: the Wild
   Card games, the Divisional round placed by the server's reseed (each 1 seed hosts the lowest
   seed left in its conference), the conference championships placed by a second reseed (the
   better seed left hosts), and Super Bowl LX, which the Seattle Seahawks win 29-13 over the New
   England Patriots. The Super Bowl also carries its score at the end of each of the first three
   quarters (Seahawks 3-0, 9-0, 12-0), entered before its result, for squares pools (#711).
 
-To test a contest end to end, create and open it and submit entries, then on the event's
-Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
-Running it again tops it up as above.
+To test a contest end to end, create and open it and submit entries before the first kickoff;
+a run after the Super Bowl enters the rest and completes the event, which settles the contest.
+To finish sooner, enter results and use the event's Workflow card *Move to In Progress* and
+*Move to Completed* by hand. Running it again tops it up as above.
 
 ## Seeded NFL regular-season weeks
 
@@ -271,7 +282,7 @@ Running it again tops it up as above.
 3`, of one round whose 16 games link nowhere. Kickoffs, home sides, neutral sites and scores are
 real; the odds are made up. It loads into the `NFL` sport league beside the playoffs seed, and
 keeps that seed's team rankings. Like the playoffs, each week is moved forward, released with its
-32 teams tiered by odds and priced, and has every result entered. To try a postponed game, cancel
+32 teams tiered by odds and priced, and has each result entered once its game is played. To try a postponed game, cancel
 it as [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) *Cancelling an event or a game*
 says.
 
@@ -292,7 +303,7 @@ like any file. Because its envelope says `testData`:
 - **Dates rolled from the run** (*A few "Test-" events at a time* above), the kickoffs with them.
 - **Released** with automatic lifecycle off, its 12 teams tiered by odds (six tiers of two) and
   priced.
-- **Every result already entered**, round by round. Indiana, the 1 seed, comes in on a bye and
+- **Every result entered as its game is played**, round by round. Indiana, the 1 seed, comes in on a bye and
   beats Miami, the 10 seed, 27-21 in the National Championship.
 
 Test a contest on it as for the NFL seed above. Running it again tops it up as above.
@@ -313,7 +324,7 @@ Load each with `mode` `apply` like any file. Because their envelopes say `testDa
   ("West 8 seed (play-in)"), and after release each takes the team that won it (Golden State
   and Orlando the 7 seeds, Memphis and Miami the 8 seeds), keeping its seed, tier and price, as
   *Set winner* does. A field entry's `playInWinner` names that team; test data only.
-- **Every series result already entered**, round by round. The Oklahoma City Thunder beat the
+- **Every series result entered as its Game 1 is played**, round by round. The Oklahoma City Thunder beat the
   Indiana Pacers 4-3 in the NBA Finals; the Las Vegas Aces beat the Phoenix Mercury 4-0 in the
   WNBA Finals.
 
@@ -332,7 +343,7 @@ up by seed. Load it with `mode` `apply` like any file. Because its envelope says
 - **Released** with automatic lifecycle off, the field tiered by odds and priced.
 - **The First Four places filled**: each First Four pairing is a play-in place ("UMBC / Howard"),
   and after release each takes the team that won it, keeping its seed, tier and price.
-- **Every game's result already entered**, round by round. Michigan beat UConn 69-63 for the
+- **Every game's result entered as it is played**, round by round. Michigan beat UConn 69-63 for the
   men's title; UCLA beat South Carolina 79-51 for the women's.
 
 Test a contest on either as for the NFL seed above. Running the file again tops it up as above.
@@ -356,8 +367,8 @@ sport leagues the migrations create:
 A series is one game of the bracket, scored in games won, as the NBA's. Seeds, pairings, scores
 and first-round puck drops are real; later rounds' Game 1 times are an assumed 7 p.m. Eastern,
 and the odds are made up. Each loads as the March Madness seed does: dates moved forward, the
-event released and tiered by odds, each first-round place given the team that won it, and every
-result entered round by round.
+event released and tiered by odds, each first-round place given the team that won it, and each
+result entered round by round as its game is played.
 
 ## Seeded baseball postseason
 

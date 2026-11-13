@@ -44,7 +44,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { oneEventOf } from '../support/sport-test-seed';
+import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -240,7 +240,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     for (const entry of week.field) entry.player = expectDefined(tagged(entry.player));
     for (const game of week.matches ?? []) Object.assign(game, { home: tagged(game.home), away: tagged(game.away) });
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
-    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
@@ -271,7 +271,7 @@ describe('SDK Functional: a soccer week with postponed games', () => {
     const file = oneEventOf('soccer-2026-premier-league-weeks-test.json', 'Premier League', 'Premier League Matchweek 31')(tag, 2026);
     const weekName = file.sportLeagues[0].events[0].name;
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
-    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
     const premierLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.SOCCER } })).data).sportLeagues
       .find((league) => league.name === 'Premier League'));

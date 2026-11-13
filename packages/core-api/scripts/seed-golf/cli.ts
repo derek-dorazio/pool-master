@@ -30,6 +30,12 @@
  * (default 2), and only for a league with no test event still to start. Running it again
  * later loads the next ones (selectTestSeedEvents in seed-golf.ts, #1524).
  *
+ * A test seed's results go in as its games are played (#1720): a load enters only the games whose
+ * kickoff has passed, so the rest stay open for picks and squares. Each later run first catches up
+ * the test events earlier runs loaded (catchUpTestEvents in seed-golf.ts): it enters the results of
+ * the games played since, moves an event that has started to In Progress, and moves one with every
+ * result in (a match event) or past its end (any other) to Completed, which settles its contests.
+ *
  * --release, for a real file, releases each draft event whose field the file carries and that
  * has not started, with tiers by the field's ranking and default prices where missing, so an
  * apply leaves it open for contests. Without it a real file's events stay drafts. A test seed
@@ -46,7 +52,7 @@ import { fileURLToPath } from 'node:url';
 import { createClient, createConfig, type Client } from '@poolmaster/shared/generated/hey-api/client';
 import { getVersion, loginUser } from '@poolmaster/shared/generated/hey-api';
 import { formatLoadReport, LoadAction, LoadMode, type LoadRow, LoadSubject, withoutRepeatedRows } from './load-report';
-import { loadSportData, selectTestSeedEventsOnSite } from './seed-golf';
+import { catchUpTestEvents, loadSportData, selectTestSeedEventsOnSite } from './seed-golf';
 import { errorMessage } from '../../src/core/error-message';
 import { isTestSlate, parseSportDataFile, type SportDataFile } from './sport-data-file';
 import { loadTestParticipants, refuseUnlessTestTarget } from './test-participants';
@@ -167,8 +173,9 @@ async function main(): Promise<void> {
       let rows: LoadRow[];
       if (file.testData && !isTestSlate(file)) {
         // A test seed: a few "Test-" events per sport league, each loaded with its own rolled dates.
-        rows = [];
         const now = new Date();
+        // First the events earlier runs loaded: the games played since, and In Progress or Completed (#1720).
+        rows = await catchUpTestEvents(file, { getClient, now, mode, log });
         const selection = await selectTestSeedEventsOnSite(file, getClient, eventsPerLeague, now);
         for (const league of selection.waiting) {
           rows.push({ sportLeague: league, subject: LoadSubject.EVENT, action: LoadAction.SKIP, name: 'Next test events', detail: 'a test event of this league has not started yet' });

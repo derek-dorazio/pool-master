@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@poolmaster/shared/domain';
 import {
+  dueResultMatchNumbers,
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
   shiftedMatchTimes,
+  testEventTransitions,
+  testSeedEventNameOf,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { expectDefined } from '../../support/expect-defined';
@@ -1045,5 +1048,63 @@ describe('test slates', () => {
     expect(file.scope.contents).toEqual([SportDataContent.PLAYERS, SportDataContent.FIELDS]);
     expect(file.sportLeagues[0].events).toEqual([]);
     expect(file.sportLeagues[0].players.map((player) => player.ranking)).toEqual(file.sportLeagues[0].players.map((_, index) => index + 1));
+  });
+});
+
+describe('test seed results as games are played', () => {
+  const THROUGH = new Date('2026-11-20T12:00:00Z');
+  const stored = (matchNumber: number, scheduledDate: string | null, status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' = 'SCHEDULED') => ({ matchNumber, scheduledDate, status });
+  const withResult = (matchNumber: number) => ({ matchNumber, result: {} });
+
+  it('enters a result only for a game that kicked off by then and is still to be decided on the site', () => {
+    const due = dueResultMatchNumbers(
+      [withResult(1), withResult(2), withResult(3), withResult(4), { matchNumber: 5 }],
+      [
+        stored(1, '2026-11-19T18:00:00Z'),
+        stored(2, '2026-11-21T18:00:00Z'),
+        stored(3, '2026-11-19T18:00:00Z', 'COMPLETED'),
+        stored(4, '2026-11-20T12:00:00Z'),
+        stored(5, '2026-11-19T18:00:00Z'),
+      ],
+      THROUGH,
+      new Date('2026-11-25T00:00:00Z'),
+    );
+
+    // Game 2 is still to come, game 3 already has its result, game 5 carries none in the file.
+    expect(due).toEqual([1, 4]);
+  });
+
+  it('takes the event\'s start for a game with no kickoff', () => {
+    expect(dueResultMatchNumbers([withResult(1)], [stored(1, null)], THROUGH, new Date('2026-11-19T00:00:00Z'))).toEqual([1]);
+    expect(dueResultMatchNumbers([withResult(1)], [stored(1, null)], THROUGH, new Date('2026-11-21T00:00:00Z'))).toEqual([]);
+  });
+
+  it('names the file event a stored test event came from, a numbered copy too', () => {
+    expect(testSeedEventNameOf('Test- NFL Playoffs')).toBe('NFL Playoffs');
+    expect(testSeedEventNameOf('Test- Super Bowl LX (2)')).toBe('Super Bowl LX');
+    expect(testSeedEventNameOf('NFL Playoffs')).toBeNull();
+  });
+
+  describe('the lifecycle a run brings a released test event up to', () => {
+    const event = { status: 'SCHEDULED' as const, startDate: '2026-11-15T12:00:00Z', endDate: '2026-11-30T12:00:00Z' };
+
+    it('leaves one yet to start as it is', () => {
+      expect(testEventTransitions({ ...event, startDate: '2026-11-21T12:00:00Z' }, { now: THROUGH, playsMatches: true, everyResultIn: false })).toEqual([]);
+    });
+
+    it('moves one under way to In Progress while a game is still to be decided', () => {
+      expect(testEventTransitions(event, { now: THROUGH, playsMatches: true, everyResultIn: false })).toEqual(['IN_PROGRESS']);
+      expect(testEventTransitions({ ...event, status: 'IN_PROGRESS' }, { now: THROUGH, playsMatches: true, everyResultIn: false })).toEqual([]);
+    });
+
+    it('completes a bracket or week once every result is in, through In Progress', () => {
+      expect(testEventTransitions(event, { now: THROUGH, playsMatches: true, everyResultIn: true })).toEqual(['IN_PROGRESS', 'COMPLETED']);
+      expect(testEventTransitions({ ...event, status: 'IN_PROGRESS' }, { now: THROUGH, playsMatches: true, everyResultIn: true })).toEqual(['COMPLETED']);
+    });
+
+    it('completes a tournament, race or stat pool, whose results went in at load, once its end has passed', () => {
+      expect(testEventTransitions(event, { now: THROUGH, playsMatches: false, everyResultIn: true })).toEqual(['IN_PROGRESS']);
+      expect(testEventTransitions(event, { now: new Date('2026-12-01T00:00:00Z'), playsMatches: false, everyResultIn: true })).toEqual(['IN_PROGRESS', 'COMPLETED']);
+    });
   });
 });

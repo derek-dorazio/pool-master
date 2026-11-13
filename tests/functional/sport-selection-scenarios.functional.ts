@@ -37,7 +37,7 @@ import {
   parseSportDataFile,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { inSeason, oneEventOf } from '../support/sport-test-seed';
+import { EVERY_GAME_PLAYED, inSeason, oneEventOf } from '../support/sport-test-seed';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -179,7 +179,7 @@ afterAll(async () => {
 /** Loads the row's event and answers it with its sport league. */
 async function loadEvent(scenario: SportScenario, tag: string, season: number) {
   const file = scenario.seed(tag, season);
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const [league] = file.sportLeagues;
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: scenario.sport } })).data).sportLeagues
     .find((row) => row.name === league.name), league.name);

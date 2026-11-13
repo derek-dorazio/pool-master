@@ -30,6 +30,7 @@ import {
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { standardEventPricing } from '../support/budget-pricing';
 
 // Loading a sport data file through the real admin API: a test seed a commissioner can build
@@ -871,7 +872,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
   }
 
   it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
-    const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY });
+    const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     expect(counts(applied)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
 
     const stored = expectDefined(await leagueNamed(league, Sport.AMERICAN_FOOTBALL));
@@ -898,7 +899,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     expect(sides(13)).toEqual(['New England Patriots', 'Seattle Seahawks']);
     expect(byNumber.get(13)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
 
-    expect(changes(await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY }))).toEqual([]);
+    expect(changes(await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED }))).toEqual([]);
   });
 });
 

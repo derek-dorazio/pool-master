@@ -14,6 +14,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // The 2025 NCAA Division I men's and women's singles championships over HTTP (#704 slice 4): the
 // test seed loads each 64-player draw into its NCAA sport league, six rounds named as the NCAA
@@ -70,7 +71,7 @@ function taggedSeed(fileName: string, eventName: (leagueName: string) => string)
 
 /** Loads a seed dated from today (release refuses an event that has started). */
 async function loadSeed(admin: RegisteredUserContext, file: SportDataFile): Promise<void> {
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 }
 
 /** One of a loaded seed's sport leagues and its event. */
