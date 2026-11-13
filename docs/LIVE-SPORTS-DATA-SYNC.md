@@ -252,7 +252,7 @@ scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
   events it is about. When an event is in play (golf's latest round under way, or a match in
   progress since its scheduled start) with no notification for longer than its league's
   `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
-  plus its break; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
+  plus its break; college football 110, for a long playoff halftime; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
   notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
   at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
   A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
@@ -398,6 +398,10 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   names no game as the last.
 - **The field.** The event's field is every team playing in the window, so it holds every bowl
   team as well as the twelve in the bracket; the admin still places the twelve seeds.
+- **The sport's team list is long by design.** `getParticipants(AMERICAN_FOOTBALL)` returns the
+  NFL's 32 teams and every college team `/ncaaf/v1/teams` lists, as basketball's returns every
+  Division I team. The admin's unmapped teams for football are therefore mostly college teams;
+  a college team links by name only to the playoff league's teams, so none takes an NFL row.
 - **Key code.** `ncaaf-mapping.ts` `CFP_LEAGUE`, `cfpGameWindow`, `cfpGamesOf`,
   `parseCfpScope`; `ncaaf-reader.ts`.
 

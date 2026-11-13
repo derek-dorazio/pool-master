@@ -130,7 +130,7 @@ describe('how long a BALLDONTLIE event may stay in play with no notification (#1
 
   it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
     expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
-    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'ncaaf-2025-cfp')).toBe(100);
+    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'ncaaf-2025-cfp')).toBe(110);
     expect(quietMinutes(Sport.BASKETBALL, 'nba-2025-postseason')).toBe(75);
     expect(quietMinutes(Sport.BASKETBALL, 'ncaab-2026-tournament')).toBe(90);
     expect(quietMinutes(Sport.BASKETBALL, 'ncaaw-2026-tournament')).toBe(75);
