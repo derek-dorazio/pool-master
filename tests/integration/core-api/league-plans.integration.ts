@@ -58,6 +58,18 @@ describe('League plans', () => {
     expect(renewsAt).toBeLessThan(sixMonthsOn.getTime() + 3 * 24 * 60 * 60_000);
   });
 
+  it('gifts a new league the plan the public plan list names as its preview, for the months it names, so the Plans page never promises another plan', async () => {
+    const before = new Date();
+    const { league } = await createLeague();
+    const list = LeaguePlanListResponseSchema.parse((await getApp().inject({ method: 'GET', url: API_ROUTES.plans.list })).json());
+
+    expect(list.previewPlan).not.toBeNull();
+    expect(league.planEntitlements.plan).toBe(list.previewPlan);
+    const promised = new Date(before);
+    promised.setUTCMonth(promised.getUTCMonth() + list.previewPeriodMonths);
+    expect(Math.abs(new Date(league.planRenewsAt).getTime() - promised.getTime())).toBeLessThan(3 * 24 * 60 * 60_000);
+  });
+
   it('lets a commissioner move the league to Free at once, returning Free caps and logging who changed it', async () => {
     const { commissioner, league } = await createLeague();
 

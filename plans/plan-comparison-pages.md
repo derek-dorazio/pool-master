@@ -75,7 +75,11 @@ Route `/plans`, outside the sign-in guard, like How to Play. Sections, top to bo
    signed in), over a fact line: "Every plan: every contest type, live leaderboards, unlimited
    members". While the plan list names a `previewPlan`, the offer leads that line, quietly:
    "Premium free for 6 months", plan and length from the API, never a "trial" or a countdown.
-   With no preview it is simply gone.
+   With no preview it is simply gone. Today the server always names one: `previewPlan` is
+   `PREVIEW_PLAN` (Premium, the `leagues.plan` column default, pinned equal by an integration
+   test). It goes null once new leagues stop starting on a gift, which is the change to the
+   column default and `PREVIEW_PLAN` together (`plans/payments.md` §3), and the page needs no
+   change then.
 3. The four plan cards.
 4. **Compare plans**, a section card holding the table. The gifted plan's column is the one
    tinted; with no preview none is. Each row's one-line description (Q6) sits behind a (?) on

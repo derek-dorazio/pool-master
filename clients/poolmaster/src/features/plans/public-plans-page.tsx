@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { LandingSection } from '@/features/event-pages/components/landing-section';
-import { Chip, ErrorState, FaqList, LinkButton, LoadingState, PageHeader, SectionCard } from '@/features/shared/ui';
+import { Chip, ErrorState, FaqList, LinkButton, LoadingState, PageHeader, SectionCard, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { PlanCards } from './plan-cards';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -53,6 +53,7 @@ export function PublicPlansPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'public-plans-page' }), []);
   const auth = useAuth();
   const plansQuery = useLeaguePlansQuery();
+  const { locale } = useDisplayPreferences();
   const choosePlanPath = useChoosePlanPath(auth.isAuthenticated);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export function PublicPlansPage() {
     <LinkButton data-testid={testId} state={{ authMode: 'register' }} to="/">Start free</LinkButton>
   );
 
-  const offer = plansQuery.data ? previewOffer(plansQuery.data) : null;
+  const offer = plansQuery.data ? previewOffer(plansQuery.data, locale) : null;
 
   return (
     <section className="space-y-8" data-testid="public-plans-page">
