@@ -159,7 +159,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(card.getByTestId('contest-readiness-field')).toHaveTextContent('89 golfers in 6 tiers');
     expect(card.getByTestId('contest-readiness-not-started')).toHaveAttribute('data-met', 'true');
     expect(card.getByTestId('contest-open-to-league')).toBeInTheDocument();
-    expect(card.getByRole('link', { name: 'Preview as a member' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+    expect(card.getByRole('button', { name: 'Preview contest entry' })).toBeEnabled();
 
     expect(screen.getByTestId('manage-contest-format')).toHaveTextContent('Tiered');
     expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
@@ -167,6 +167,61 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('The Masters · Augusta National');
     expect(screen.getByTestId('manage-contest-edit')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1/edit');
     expect(screen.getByTestId('contest-delete')).toHaveTextContent('Delete contest');
+  });
+
+  it('previews a contest not yet open as an entry in a dialog from its saved rules, staying on the page, and Close returns to it', async () => {
+    primeMocks();
+    previewRosterPicksMock.mockResolvedValue(apiSuccess({
+      sportEventId: 'event-1', selectionType: 'TIERED', rosterSize: 6, selectionGroups: [], availableParticipantIds: [], pickCount: 0, isComplete: false, lineupSummary: null,
+    }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const card = within(await screen.findByTestId('contest-status-card'));
+    // Members cannot see a contest that is not open, so the preview never links to their page.
+    expect(card.queryByRole('link', { name: /preview/i })).not.toBeInTheDocument();
+    fireEvent.click(card.getByRole('button', { name: 'Preview contest entry' }));
+
+    const dialog = within(await screen.findByTestId('pick-preview-dialog'));
+    expect(dialog.getByTestId('pick-preview-ribbon')).toBeInTheDocument();
+    await waitFor(() => expect(previewRosterPicksMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      body: expect.objectContaining({
+        sportEventId: 'event-1',
+        rules: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
+        sportEventParticipantIds: [],
+      }) as unknown,
+    })));
+    expect(screen.getByTestId('manage-contest-page')).toBeInTheDocument();
+
+    fireEvent.click(dialog.getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => expect(screen.queryByTestId('pick-preview-dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('manage-contest-page')).toBeInTheDocument();
+    expect(updateContestConfigurationMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps Preview contest entry off, with why behind a (?), for a set-up random draw, which has no picks page', async () => {
+    primeMocks({
+      contest: buildContest({ selectionType: SelectionType.RANDOM_DRAW }),
+      managedContest: buildManagedContest({
+        configuration: {
+          id: 'config-contest-1',
+          contestId: 'contest-1',
+          maxEntriesPerSquad: 1,
+          selectionType: SelectionType.RANDOM_DRAW,
+          picksPerEntry: 3,
+          countedScores: 2,
+        },
+      }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const card = within(await screen.findByTestId('contest-status-card'));
+    expect(card.getByRole('button', { name: 'Preview contest entry' })).toBeDisabled();
+    expect(card.getByTestId('pick-preview-unavailable')).toBeInTheDocument();
+    expect(previewRosterPicksMock).not.toHaveBeenCalled();
   });
 
   it('lists the event\'s tiers as Tier 1, Tier 2… with Tier 1 on top, each with its golfer count', async () => {
@@ -796,7 +851,7 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
     renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
 
     fireEvent.change(await screen.findByTestId('contest-tiered-counted-scores'), { target: { value: '3' } });
-    const preview = screen.getByRole('button', { name: 'Preview picks page' });
+    const preview = screen.getByRole('button', { name: 'Preview contest entry' });
     expect(preview.compareDocumentPosition(screen.getByTestId('edit-contest-save')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(preview);
 

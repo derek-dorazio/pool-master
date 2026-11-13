@@ -78,6 +78,7 @@ const config: Config = {
         "on-inverse-subtle": "var(--surface-on-inverse-subtle)",
         "on-inverse-hover": "var(--surface-on-inverse-hover)",
         "inverse-border": "var(--border-on-inverse)",
+        "inverse-border-strong": "var(--border-on-inverse-strong)",
         done: {
           DEFAULT: "var(--status-done)",
           foreground: "var(--text-on-done)",

@@ -30,6 +30,7 @@ const SAME_IN_BOTH_MODES = new Set([
   '--surface-on-inverse-subtle',
   '--surface-on-inverse-hover',
   '--border-on-inverse',
+  '--border-on-inverse-strong',
   '--status-final-surface',
   '--status-final-text',
   '--text-label-on-inverse',

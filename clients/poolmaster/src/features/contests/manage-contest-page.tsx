@@ -162,9 +162,11 @@ export function ManageContestPage() {
   const isTiered = contest.selectionType === SelectionType.TIERED;
   const activeTeamCount = leagueQuery.data?.activeTeamCount ?? 0;
   const { configuration } = managedContest;
+  // Every event of a tiered contest has the same number of tiers; the server checks it.
+  const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
   const rules = formatContestRules(
     configuration,
-    managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0,
+    tierCount,
     getSportDefinition(event.sport).vocabulary.participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
     roundName,
@@ -195,11 +197,13 @@ export function ManageContestPage() {
       />
 
       <ContestStatusCard
+        configuration={configuration}
         contest={contest}
         event={event}
         leagueCode={leagueCode}
         secondChanceRoundName={bracketStartRoundName}
         teamCount={activeTeamCount}
+        tierCount={tierCount}
       />
 
       <SectionCard

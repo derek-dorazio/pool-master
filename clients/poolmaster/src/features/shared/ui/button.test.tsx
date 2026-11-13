@@ -70,6 +70,14 @@ describe("pool-master-3lo.1: shared Button primitives", () => {
   });
 
 
+  it("fills an inverse button lightly and edges it in strong white, so it stands out on a navy panel instead of vanishing into it", () => {
+    render(<Button variant="inverse">Preview contest entry</Button>);
+
+    const button = screen.getByRole("button", { name: "Preview contest entry" });
+    expect(button).toHaveClass("bg-on-inverse-subtle", "border-inverse-border-strong", "text-on-inverse");
+    expect(button).not.toHaveClass("bg-transparent");
+  });
+
   it("rule: marks loading buttons disabled for pending actions", () => {
     render(<Button isLoading>Saving</Button>);
 

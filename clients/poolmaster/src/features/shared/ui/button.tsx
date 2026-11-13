@@ -15,8 +15,8 @@ const buttonVariants = cva(
         subtle:
           "border border-primary/30 bg-primary/10 text-foreground hover:border-primary/40 hover:bg-primary/15",
         ghost: "text-foreground hover:bg-muted/50",
-        /** A plain action on a navy panel: outlined in the panel's border, white text. */
-        inverse: "border border-inverse-border bg-transparent text-on-inverse hover:bg-on-inverse-hover",
+        /** A plain action on a navy panel: a light white fill and a clear white edge, so it reads as a button. */
+        inverse: "border border-inverse-border-strong bg-on-inverse-subtle text-on-inverse hover:bg-on-inverse-hover",
         danger:
           "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15",
         icon: "border border-border bg-background text-muted-foreground hover:bg-muted/40",
