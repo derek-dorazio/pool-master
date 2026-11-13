@@ -16,7 +16,8 @@ const FADE_CLASS_NAMES = {
 
 type Overflow = "none" | keyof typeof FADE_CLASS_NAMES;
 
-const SELECTED_SELECTOR = '[aria-current="page"], [role="tab"][data-state="active"], [role="radio"][aria-checked="true"]';
+// `data-chosen` marks a chosen item no ARIA state names, such as a chip that clears a choice.
+const SELECTED_SELECTOR = '[aria-current="page"], [role="tab"][data-state="active"], [role="radio"][aria-checked="true"], [data-chosen="true"]';
 
 function readOverflow(row: HTMLElement): Overflow {
   const hasBefore = row.scrollLeft > 1;
@@ -78,7 +79,7 @@ export function useScrollRow<T extends HTMLElement>(): { fadeClassName: string; 
       observeSizes();
       revealAndUpdate();
     });
-    mutationObserver.observe(row, { attributeFilter: ["aria-current", "data-state"], childList: true, subtree: true });
+    mutationObserver.observe(row, { attributeFilter: ["aria-current", "data-chosen", "data-state"], childList: true, subtree: true });
     row.addEventListener("scroll", update, { passive: true });
     return () => {
       mutationObserver.disconnect();

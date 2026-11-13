@@ -36,7 +36,13 @@ The shared UI layer is split into three levels:
    a page's headline numbers are a `MetricGrid` instead, and rows with columns
    of their own a `SimpleTable`. Requirements met or not are a `CheckList`
    (missing first, `surface="inverse"` on a navy panel); a fixed run of stages is a
-   `StageTrack` (`surface="inverse"` on a navy panel). Copy to clipboard is a
+   `StageTrack` (`surface="inverse"` on a navy panel). Choices kept in the page's link are
+   `ChoiceChips` (a row of pill links that scrolls on a phone, `layout="wrap"` for a list of every
+   choice, `clearable` for a narrower choice shown in place of the one it narrows) or a
+   `ChoiceList` (a column of indented links in a card, such as every sport and league beside How
+   to Play's cards). Steps that are a reminder rather than the page's subject are a `StepStrip`
+   (the full ones are `NumberedSteps`), and small icons capped at one line with "+N" are a
+   `OneLineRow`. Copy to clipboard is a
    `CopyButton` (`iconOnly` in a tight spot), which says Copied, shows an inline
    error when the browser refuses and logs it; feature code never calls
    `navigator.clipboard` itself. A password box is a `PasswordInput`,

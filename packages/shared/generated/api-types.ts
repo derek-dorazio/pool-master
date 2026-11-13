@@ -2855,7 +2855,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport league
-         * @description Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer or a league's cup: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
+         * @description Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
          */
         delete: operations["deleteSportLeague"];
         options?: never;
@@ -9501,6 +9501,11 @@ export interface components {
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
             displayOrder: number | null;
+            /**
+             * Format: uuid
+             * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+             */
+            parentSportLeagueId: string | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -9586,6 +9591,11 @@ export interface components {
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
+                /**
+                 * Format: uuid
+                 * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+                 */
+                parentSportLeagueId: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -9662,6 +9672,11 @@ export interface components {
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
+                /**
+                 * Format: uuid
+                 * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+                 */
+                parentSportLeagueId: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */

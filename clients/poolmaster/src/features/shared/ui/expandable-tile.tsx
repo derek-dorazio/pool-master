@@ -6,8 +6,11 @@ import { Tile } from "./tile";
 /**
  * A tile whose face is one button that opens it: open, it spans the whole grid row, takes the
  * primary border and shows its details under a rule. The caller owns which tile is open.
+ * `actions` sit on their own row at the closed tile's bottom right, beside the face's button
+ * rather than inside it, so each is a control of its own (#1701: a commissioner's "+ Create").
  */
 export function ExpandableTile({
+  actions,
   children,
   face,
   id,
@@ -15,6 +18,8 @@ export function ExpandableTile({
   onToggle,
   testId,
 }: {
+  /** The closed tile's own actions, such as one small button; none while open. */
+  actions?: ReactNode;
   /** The details, shown only while open. */
   children: ReactNode;
   /** What the closed tile shows: its picture, name and line. */
@@ -44,6 +49,9 @@ export function ExpandableTile({
       >
         {face}
       </Button>
+      {actions && !isOpen ? (
+        <div className="-mt-2 flex justify-end px-2 pb-2" data-testid={`${testId}-actions`}>{actions}</div>
+      ) : null}
       {isOpen ? (
         <div className="space-y-3 border-t border-border px-3 pb-3 pt-3 text-sm" data-testid={`${testId}-details`}>
           {children}

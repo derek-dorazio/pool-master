@@ -442,10 +442,21 @@ administration area (root admin included), reusing the same shared components.
     format whose default sorts first. The seeded-template integration test
     checks all of it. The same names and descriptions are the contest types
     menu (#803): the public How to Play page shows each way to play once, as an
-    illustrated card, with chips naming the sport leagues people know (the NFL,
-    the PGA TOUR), in one row per sport with the sport in a fixed left column,
-    that narrow it to one league or sport and show the sport's picture and line
-    and the league's default templates (#878). The Clutch Card is one more card
+    illustrated card, on the first screen (#1701). On a computer the cards sit
+    beside a column listing every sport with its count of leagues, the chosen
+    sport opened to its leagues, each season league with its regular season and
+    its playoff rounds indented under it by the round's `parentSportLeagueId`
+    (never by matching names); on a phone the column is one row of sport chips
+    above the cards, and an "Every league you can run" card below them lists
+    every league and round as chips that pick it and scroll back up. Choosing
+    narrows the cards to a sport, a league with its rounds, or one part of a
+    league; the heading counts them ("6 ways to play hockey"), the sport's line
+    sits behind its (?), and the chosen league's default templates lead the
+    cards (#878). How a pool runs is one slim strip of three steps, and Coming
+    up follows the cards. A card's line fits two lines on a phone card; its
+    sport icons keep to one line and end with "+N"; a commissioner of an active
+    league gets "+ Create" on its own row at the card's bottom right. The
+    Contest types page switches sport with the same column and chips. The Clutch Card is one more card
     among them, shown while a shown league is a stat pool's: its line and steps,
     each sport's stat line (Box Score, Redzone) as a small tile, and a link to
     `/play/clutch-card` for the rest; no per-league formula list. An open card
@@ -456,7 +467,8 @@ administration area (root admin included), reusing the same shared components.
     by their `displayOrder`: major professional leagues first, then the NCAA's.
     A league whose name alone doesn't say the sport ("NCAA Division I Men") gets
     a `displayName` with its reference data, and every seeded league gets a
-    `displayOrder` there (the seeded-template integration test checks it); a league's Contest
+    `displayOrder` there, and every playoff round its `parentSportLeagueId` (the
+    seeded-template integration test checks both); a league's Contest
     types page shows every sport league's tiles, with "Create this contest"
     links for its commissioners. Both read the templates, so a new template or
     sport shows up there with no copy change. The hand-written parts are
