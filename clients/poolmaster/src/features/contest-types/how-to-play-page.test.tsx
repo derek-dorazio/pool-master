@@ -137,6 +137,18 @@ describe('How to Play', () => {
     }
   });
 
+  it('ends for a signed-out visitor with "Every game day, done right." and the Create your account button, with no sentence', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage();
+
+    const closing = await screen.findByTestId('how-to-play-cta');
+    expect(within(closing).getByRole('heading', { level: 2 })).toHaveTextContent('Every game day, done right.');
+    expect(within(closing).queryByRole('paragraph')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ready to run your pool?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Create an account, start a league, and set up your first contest.')).not.toBeInTheDocument();
+    expect(within(closing).getByTestId('how-to-play-register')).toHaveTextContent('Create your account');
+  });
+
   it('opens a way to play to its three steps and the sports that offer it, and choosing one of those sports narrows the page to it', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
@@ -264,6 +276,7 @@ describe('How to Play', () => {
     await screen.findByTestId('how-to-play-format-TIERED');
     expect(screen.getByTestId('how-to-play-leagues')).toHaveAttribute('href', '/welcome');
     expect(screen.queryByTestId('how-to-play-register')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('how-to-play-cta')).not.toBeInTheDocument();
   });
 
   describe('a championship stat pool league', () => {

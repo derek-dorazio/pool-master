@@ -36,4 +36,21 @@ describe("NumberedSteps", () => {
 
     expect(screen.getByTestId("steps")).toHaveClass("grid-flow-col");
   });
+
+  it("draws a step with no body as its numeral and title only", () => {
+    render(<NumberedSteps steps={[{ title: "Start your league" }]} testId="steps" />);
+    const [step] = within(screen.getByTestId("steps")).getAllByRole("listitem");
+
+    expect(step).toHaveTextContent(/^1Start your league$/);
+  });
+
+  it("sets compact steps with a smaller numeral and title than the comfortable default", () => {
+    const { rerender } = render(<NumberedSteps steps={STEPS} />);
+    expect(screen.getByText("1")).toHaveClass("text-2xl");
+    expect(screen.getByRole("heading", { name: "Start your league" })).not.toHaveClass("text-sm");
+
+    rerender(<NumberedSteps density="compact" steps={STEPS} />);
+    expect(screen.getByText("1")).toHaveClass("text-lg");
+    expect(screen.getByRole("heading", { name: "Start your league" })).toHaveClass("text-sm");
+  });
 });

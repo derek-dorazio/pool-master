@@ -151,4 +151,34 @@ describe('SignUpForm', () => {
       body: expect.objectContaining({ inviteCode: 'TEAM123', username: 'jrivers' }) as unknown,
     }));
   });
+
+  it('labels its fields with no sample names, asks Password then Confirm password, and submits with Create account', () => {
+    renderForm();
+
+    for (const testId of ['sign-up-first-name', 'sign-up-last-name', 'sign-up-username']) {
+      expect(screen.getByTestId(testId)).not.toHaveAttribute('placeholder');
+    }
+    expect(screen.getByLabelText('Password')).toBe(screen.getByTestId('sign-up-password'));
+    expect(screen.getByLabelText('Confirm password')).toBe(screen.getByTestId('sign-up-confirm-password'));
+    expect(screen.queryByText('Create password')).not.toBeInTheDocument();
+    expect(screen.getByTestId('sign-up-submit')).toHaveTextContent(/^Create account$/);
+    expect(screen.queryByText('Register and continue')).not.toBeInTheDocument();
+  });
+
+  it('keeps the time zone help behind a (?) rather than a sentence under the field', () => {
+    renderForm();
+
+    expect(screen.getByTestId('sign-up-time-zone-help')).toBeInTheDocument();
+    expect(screen.queryByText('Dates and times are shown in this zone. You can change it later in your account.')).not.toBeInTheDocument();
+  });
+
+  it('says Creating account... on the button while the account is being made', async () => {
+    registerUserMock.mockReturnValue(new Promise(() => undefined));
+    renderForm();
+    fillAccount();
+
+    fireEvent.click(screen.getByTestId('sign-up-submit'));
+
+    expect(await screen.findByRole('button', { name: 'Creating account...' })).toBeDisabled();
+  });
 });

@@ -61,14 +61,6 @@ vi.mock('./auth-context', () => ({
   useAuth: () => authState,
 }));
 
-vi.mock('@/features/leagues/invitation-context-card', () => ({
-  InvitationContextCard: ({
-    title,
-  }: {
-    title: string;
-  }) => <div data-testid="invitation-context-card">{title}</div>,
-}));
-
 vi.mock('@/features/leagues/invitation-preview', () => ({
   fetchInvitationPreview: fetchInvitationPreviewMock,
   getInvitationPreviewQueryKey: (inviteCode: string) => ['test', 'league-invite', inviteCode],
@@ -133,6 +125,11 @@ function renderAuthHomePage(
   return { ...utils, queryClient };
 }
 
+/** Radix tabs switch on the mouse press, as a real click starts. */
+function openCreateAccount() {
+  fireEvent.mouseDown(screen.getByRole('tab', { name: 'Create account' }));
+}
+
 describe('AuthHomePage', () => {
   afterEach(() => {
     loginUserMock.mockReset();
@@ -158,7 +155,7 @@ describe('AuthHomePage', () => {
     });
 
     expect(screen.getByTestId('auth-start-banner')).toHaveTextContent('You\'re starting a Championship Weekend pool');
-    expect(screen.getByRole('radio', { name: 'Create account' })).toBeChecked();
+    expect(screen.getByRole('tab', { name: 'Create account' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('offers a Forgot password? link on the sign in form, and not on the create account form', () => {
@@ -166,7 +163,7 @@ describe('AuthHomePage', () => {
 
     expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    openCreateAccount();
 
     expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument();
   });
@@ -394,7 +391,7 @@ describe('AuthHomePage', () => {
 
     renderAuthHomePage();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    openCreateAccount();
     fireEvent.change(screen.getByTestId('sign-up-first-name'), {
       target: { value: 'Derek' },
     });
@@ -440,7 +437,7 @@ describe('AuthHomePage', () => {
 
     const { queryClient } = renderAuthHomePage();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    openCreateAccount();
     fireEvent.change(screen.getByTestId('sign-up-first-name'), {
       target: { value: 'Reg' },
     });
@@ -471,7 +468,7 @@ describe('AuthHomePage', () => {
   });
 
   function fillAndSubmitRegisterForm(timeZone?: string) {
-    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    openCreateAccount();
     fireEvent.change(screen.getByTestId('sign-up-first-name'), { target: { value: 'Reg' } });
     fireEvent.change(screen.getByTestId('sign-up-last-name'), { target: { value: 'User' } });
     fireEvent.change(screen.getByTestId('sign-up-email'), {
@@ -576,7 +573,7 @@ describe('AuthHomePage', () => {
     );
   });
 
-  it('names the league and squad of a co-owner invitation and sends the visitor back to it', async () => {
+  it('heads a co-owner invite "Join {team} in {league}" over the league card, with no sentences, steps or way back', async () => {
     fetchTeamOwnerInvitationPreviewMock.mockResolvedValue({
       inviteCode: 'TEAMCODE1',
       status: 'PENDING',
@@ -587,11 +584,14 @@ describe('AuthHomePage', () => {
 
     renderAuthHomePage({ pathname: '/', state: { from: '/team-invite/TEAMCODE1' } });
 
-    expect(await screen.findByText("You're almost inside Big Dawgs.")).toBeVisible();
-    expect(screen.getByText(/Sign in to join Beer Bellies as a co-owner/)).toBeVisible();
-    expect(screen.getByTestId('invitation-context-card')).toHaveTextContent('Co-owner invite');
-    expect(screen.getByText(/to join Beer Bellies as a co-owner\.$/)).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Back to invitation' })).toHaveAttribute('href', '/team-invite/TEAMCODE1');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Join Beer Bellies in Big Dawgs' })).toBeVisible();
+    const card = screen.getByTestId('invitation-context-card');
+    expect(card).toHaveTextContent('Co-owner invite');
+    expect(card).toHaveTextContent('Big Dawgs');
+    expect(within(card).queryByRole('paragraph')).not.toBeInTheDocument();
+    expect(screen.queryByText(/almost inside|as a co-owner|After you/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to invitation' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('auth-steps')).not.toBeInTheDocument();
     expect(fetchTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith('TEAMCODE1');
   });
 
@@ -612,7 +612,7 @@ describe('AuthHomePage', () => {
     );
   });
 
-  it('names the league of a league invitation and offers the way back to it', async () => {
+  it('heads a league invite "Join {league}" over the league card, with no sentences, steps or way back', async () => {
     fetchInvitationPreviewMock.mockResolvedValue({
       inviteCode: 'LEAGUE123',
       status: 'PENDING',
@@ -621,9 +621,62 @@ describe('AuthHomePage', () => {
 
     renderAuthHomePage({ pathname: '/', state: { from: '/invite/LEAGUE123' } });
 
-    expect(await screen.findByText("You're almost inside Big Dawgs.")).toBeVisible();
-    expect(screen.getByTestId('invitation-context-card')).toHaveTextContent('League invite');
-    expect(screen.getByText(/come back to this invitation to join the league/)).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Back to invitation' })).toHaveAttribute('href', '/invite/LEAGUE123');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Join Big Dawgs' })).toBeVisible();
+    const card = screen.getByTestId('invitation-context-card');
+    expect(card).toHaveTextContent('League invite');
+    expect(card).toHaveTextContent('Invite code LEAGUE123');
+    expect(within(card).queryByRole('paragraph')).not.toBeInTheDocument();
+    expect(screen.queryByText(/almost inside|come back to this invitation|After you/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to invitation' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('auth-steps')).not.toBeInTheDocument();
+  });
+
+  it('heads a plain visit "Make every game day count." over the three How to Play step titles and the How to play and Plans links', () => {
+    renderAuthHomePage();
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Make every game day count.' })).toBeVisible();
+    const steps = within(screen.getByTestId('auth-steps')).getAllByRole('listitem');
+    expect(steps.map((step) => within(step).getByRole('heading').textContent)).toEqual([
+      'Start a league',
+      'Run contests on real events',
+      'Follow it live',
+    ]);
+    // Titles only: How to Play's step sentences stay on How to Play.
+    expect(screen.queryByText(/invites everyone with one link/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'How to play' })).toHaveAttribute('href', '/how-to-play');
+    expect(screen.getByRole('link', { name: 'Plans' })).toHaveAttribute('href', '/plans');
+  });
+
+  it('shows no tagline, explainers, feature notes, post-form line or Continue to welcome link', () => {
+    renderAuthHomePage();
+
+    expect(screen.queryByText('The ultimate game-day contest manager.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/gives commissioners one place/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Commissioners create a league/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Members join by invitation/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/After you create your account/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Continue to welcome' })).not.toBeInTheDocument();
+  });
+
+  it('switches between Sign in and Create account as tabs, opening on Sign in', () => {
+    renderAuthHomePage();
+
+    expect(screen.getByRole('tablist', { name: 'Sign in or create account' })).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Sign in' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('auth-login-submit')).toHaveTextContent('Sign in');
+
+    openCreateAccount();
+
+    expect(screen.getByRole('tab', { name: 'Create account' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('sign-up-form')).toBeVisible();
+    expect(screen.queryByTestId('auth-login-submit')).not.toBeInTheDocument();
+  });
+
+  it('gives the sign-in fields no sample text, only their labels', () => {
+    renderAuthHomePage();
+
+    expect(screen.getByTestId('auth-login-identifier')).not.toHaveAttribute('placeholder');
+    expect(screen.getByLabelText('Username or email')).toBe(screen.getByTestId('auth-login-identifier'));
   });
 });
