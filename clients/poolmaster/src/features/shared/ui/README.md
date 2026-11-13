@@ -69,6 +69,8 @@ Holds the header's place while a page whose header names the thing being read lo
 - **Use when:** the `PageHeader` shows the team, contest or league being read.
 - **Don't use when:** the header is fixed text; draw the real header and put `QueryState`
   (`size="tile"`) in the body.
+- **Props that matter:** `hasTabs` draws a placeholder tab row too, for a header with tabs;
+  `spacing` matches the loaded page's gap between header and body, so the body does not shift.
 - **Story:** [pending-page.stories.tsx](./pending-page.stories.tsx)
 
 ### `SplitContentLayout`
@@ -103,12 +105,14 @@ The one section look: a title bar with a rule, a body, and an optional footer li
     the section works, `trailing` for one badge, count or filter.
   - `edit` puts one Edit in the title, the settings card's way into its `FormModal`.
   - `padded` gives forms, charts or metric grids the card's padding; `bare` keeps the title and
-    rule without the box (a section whose body is a `DataGrid`); `tone="danger"` is a danger zone.
+    rule without the box (a section whose body is a `DataGrid`); `tone="danger"` is a danger zone,
+    whose rows are `SectionRow`s with `layout="action"`.
   - The body is `SectionRows` of `SectionRow`s, or one `SectionEmpty` italic line. A
     `SectionRow` has a name, a muted fact line and note, one figure as `value`, and one badge,
     action or `Switch` as `aside`; `to` makes the whole row a link, `control` puts a checkbox at
-    its start with the row as its label, `picture` a small 16:10 drawing, and `layout="setting"`
-    sets name left and value right.
+    its start with the row as its label, `picture` a small 16:10 drawing, `layout="setting"`
+    sets name left and value right, and `layout="action"` is one action of a danger zone: its
+    name and what it does, never truncated, with its button beside them (under them on a phone).
   - `SectionBody` is the padded block on its own beside rows, `SectionNote` a muted line about
     the data, `SectionStack` divides a section's row lists from a form or notice between them,
     and `SectionFooterLink` is the blue small-caps footer link with an arrow.
@@ -574,7 +578,7 @@ import them from there.
 - **A page that waits on a read** keeps its `PageHeader` and puts `QueryState` (`size="tile"`) in
   the body, or wraps both in `PendingPage` when the header names what is read.
 - **League pages and administration areas** use `LeagueMenu`, `ToolsArea`, `PageHeader`,
-  settings cards, a danger-zone `SectionCard`, and `FormPage` for a full-page edit
+  settings cards, a danger-zone `SectionCard` of `layout="action"` rows, and `FormPage` for a full-page edit
   (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*).
 - **Public and landing pages** use `NumberedSteps` or `StepStrip`, `FaqList`, `ExpandableTile`,
   `Countdown`, `StickyActionBar` and the event page kit.
