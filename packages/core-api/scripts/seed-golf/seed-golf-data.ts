@@ -3,7 +3,7 @@
  * move, which of a test seed's events a run loads, and what each stored round looks like. No I/O, so it is unit tested alone.
  */
 
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { isTestEventName, TEST_EVENT_NAME_PREFIX, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -243,7 +243,7 @@ export function dueResultMatchNumbers(
   const withResult = new Set(fileMatches.filter((match) => match.result !== undefined).map((match) => match.matchNumber));
   return storedMatches
     .filter((match) => withResult.has(match.matchNumber)
-      && match.status === 'SCHEDULED'
+      && match.status === MatchStatus.SCHEDULED
       && (match.scheduledDate === null ? eventStart.getTime() : Date.parse(match.scheduledDate)) <= through.getTime())
     .map((match) => match.matchNumber)
     .sort((left, right) => left - right);

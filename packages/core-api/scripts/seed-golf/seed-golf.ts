@@ -44,7 +44,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches, type SportStat } from '@poolmaster/shared/domain';
+import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches, type SportStat } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -1165,7 +1165,7 @@ export async function catchUpTestEvents(
       if (playsMatches) {
         const bracket = await must(getEventBracket({ client, path: { eventId: stored.id } }), `Read the bracket of ${stored.name}`);
         const due = dueResultMatchNumbers(fileEvent.matches ?? [], bracket.matches, through, eventStart);
-        const decided = new Set([...due, ...bracket.matches.filter((match) => match.status !== 'SCHEDULED').map((match) => match.matchNumber)]);
+        const decided = new Set([...due, ...bracket.matches.filter((match) => match.status !== MatchStatus.SCHEDULED).map((match) => match.matchNumber)]);
         everyResultIn = (fileEvent.matches ?? []).every((match) => match.result === undefined || decided.has(match.matchNumber));
         if (due.length > 0) {
           if (apply) await enterBracketResultsFor(client, stored.id, { ...fileEvent, name: stored.name }, through, eventStart);
@@ -1180,7 +1180,7 @@ export async function catchUpTestEvents(
           const { error } = await transitionEvent({ client, path: { eventId: stored.id }, body: { toStatus } });
           if (error !== undefined) {
             action = LoadAction.CONFLICT;
-            details.push(`not moved to ${label}: ${JSON.stringify(error)}`);
+            details.push(`not moved to ${label}: ${refusalMessage(error)}`);
             break;
           }
         }
@@ -1193,6 +1193,14 @@ export async function catchUpTestEvents(
     }
   }
   return rows;
+}
+
+/** What a refused API call says: the error envelope's message, or the body as JSON when it has none. */
+function refusalMessage(error: unknown): string {
+  const envelope = typeof error === 'object' && error !== null && 'error' in error ? error.error : null;
+  return typeof envelope === 'object' && envelope !== null && 'message' in envelope && typeof envelope.message === 'string'
+    ? envelope.message
+    : JSON.stringify(error);
 }
 
 /** selectTestSeedEvents against the site: reads each sport league's events of the seed's season. */
