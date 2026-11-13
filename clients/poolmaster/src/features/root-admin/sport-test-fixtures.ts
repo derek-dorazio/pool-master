@@ -147,6 +147,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     participantType: null,
     scoringFamily: null,
     displayOrder: null,
+    parentSportLeagueId: null,
     currentEventYear: null,
     isActive: true,
     affiliationCount: 0,

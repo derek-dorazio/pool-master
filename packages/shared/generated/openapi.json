@@ -19006,6 +19006,14 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "parentSportLeagueId": {
+            "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "affiliationCount": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -19046,6 +19054,7 @@
           "participantType",
           "scoringFamily",
           "displayOrder",
+          "parentSportLeagueId",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -19231,6 +19240,14 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
+                "parentSportLeagueId": {
+                  "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -19271,6 +19288,7 @@
                 "participantType",
                 "scoringFamily",
                 "displayOrder",
+                "parentSportLeagueId",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -19435,6 +19453,14 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               },
+              "parentSportLeagueId": {
+                "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
               "affiliationCount": {
                 "type": "integer",
                 "minimum": -9007199254740991,
@@ -19475,6 +19501,7 @@
               "participantType",
               "scoringFamily",
               "displayOrder",
+              "parentSportLeagueId",
               "affiliationCount",
               "sportEventCount",
               "createdAt",

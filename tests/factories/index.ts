@@ -60,6 +60,7 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     name: `Sport League ${id}`,
     displayName: null,
     displayOrder: null,
+    parentSportLeagueId: null,
     matchKeyword: null,
     currentEventYear: null,
     isActive: true,

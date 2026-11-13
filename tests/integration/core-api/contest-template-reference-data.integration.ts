@@ -801,6 +801,55 @@ describe('The seeded NFL league and its knockout templates', () => {
     expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s Hockey National Championship']);
     expect(namesBySport.get(Sport.SOCCER)?.slice(-4)).toEqual(['Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final']);
   });
+
+  it('names the season league of every seeded championship stat pool round, in its own sport, and leaves every season league without one', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      select: {
+        name: true,
+        scoringFamily: true,
+        sport: { select: { sport: true } },
+        parentSportLeague: { select: { name: true, parentSportLeagueId: true, sport: { select: { sport: true } } } },
+      },
+      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
+    });
+    // A round is a championship stat pool league; every one names its parent, and nothing else does.
+    expect(leagues.filter((league) => (league.scoringFamily === 'COMPOSITE') !== (league.parentSportLeague !== null)).map((league) => league.name)).toEqual([]);
+    for (const league of leagues.filter((each) => each.parentSportLeague !== null)) {
+      expect(league.parentSportLeague?.sport.sport).toBe(league.sport.sport);
+      // One level only: a round's parent is a season league, never another round.
+      expect(league.parentSportLeague?.parentSportLeagueId).toBeNull();
+    }
+    const parentOf = (sport: Sport) => leagues
+      .filter((league) => league.sport.sport === sport && league.parentSportLeague !== null)
+      .map((league) => [league.name, league.parentSportLeague?.name]);
+    expect(parentOf(Sport.HOCKEY)).toEqual([
+      ['NHL Conference Finals', 'NHL'],
+      ['Stanley Cup Final', 'NHL'],
+      ['Men\'s Frozen Four', 'NCAA Division I Men'],
+      ['Men\'s Hockey National Championship', 'NCAA Division I Men'],
+    ]);
+    expect(parentOf(Sport.AMERICAN_FOOTBALL)).toEqual([
+      ['Championship Weekend', 'NFL'],
+      ['Super Bowl', 'NFL'],
+      ['CFP Semifinals', 'College Football Playoff'],
+      ['CFP National Championship', 'College Football Playoff'],
+    ]);
+    expect(parentOf(Sport.BASKETBALL)).toEqual([
+      ['NBA Conference Finals', 'NBA'],
+      ['NBA Finals', 'NBA'],
+      ['Men\'s Final Four', 'NCAA Division I Men'],
+      ['Men\'s Basketball National Championship', 'NCAA Division I Men'],
+      ['WNBA Semifinals', 'WNBA'],
+      ['WNBA Finals', 'WNBA'],
+    ]);
+    expect(parentOf(Sport.BASEBALL)).toEqual([['League Championship Series', 'MLB'], ['World Series', 'MLB']]);
+    expect(parentOf(Sport.SOCCER)).toEqual([
+      ['Champions League Semifinals', 'UEFA Champions League'],
+      ['Champions League Final', 'UEFA Champions League'],
+      ['Women\'s World Cup Semifinals', 'FIFA Women\'s World Cup'],
+      ['Women\'s World Cup Final', 'FIFA Women\'s World Cup'],
+    ]);
+  });
 });
 
 // What contest creation holds a template's rules to, checked on every seeded template of every

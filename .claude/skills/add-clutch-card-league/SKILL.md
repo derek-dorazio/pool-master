@@ -34,6 +34,7 @@ Write this in the ticket, each open point a question with a recommendation:
 | Shape | One event per round. When a round holds two series (conference finals, semifinals), both are one event and game N holds each series' Game N |
 | Sport and composite | The sport, and so the composite its stars score (Triple Threat, Power Play, Box Score, Redzone, Hat Trick) |
 | Display order | Its `display_order` among the sport's leagues: after the sport's existing stat pool leagues, in the calendar order of their rounds |
+| Season league | The league whose round it is (the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four): its `parent_sport_league_id`, which How to Play and Contest types list it under |
 | Last season | Which season the test data is: the latest one fully played. A round still being played is not "as played" yet, so use the year before |
 
 Men's and women's competitions are always separate leagues. Two sports could have a round of the
@@ -52,6 +53,8 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
    `("sport_id", "name")`. Where the data provider lists the round as an event, set
    `match_keyword` to the tour the provider gives it (a series league's round carries its round
    name, "NBA Finals"), or the league's year import finds nothing and its stars load twice.
+   Set `parent_sport_league_id` to its season league, looked up by sport and name; a round
+   without one lists apart from its league, and the reference-data integration test fails.
 3. Insert its three default setups, one per format, in this order: Tiered (six tiers, one pick
    each, best four count), Budget (six stars under the cap, best four) and Quick pick (three stars,
    all count), each `is_default`, scored by `COMPOSITE_TOTAL`. Template keys are
@@ -78,8 +81,9 @@ total, every game's box score, and each line checked against a second source.
 Each of these names the rounds, and a missing one fails a test or leaves copy out of date:
 
 - `contest-template-reference-data.integration.ts`: the sport's league names in order, and the
-  stat pool leagues table (league, template key prefix, composite). Add the round to both, and to
-  the test name that lists the championships.
+  stat pool leagues table (league, template key prefix, composite), and each sport's rounds with
+  their season league. Add the round to all three, and to the test name that lists the
+  championships.
 - `tests/unit/core-api/seed-golf.test.ts`: a `describe` for the new file. Name its scope, its
   events' dates and game counts, which teams play which game, and two or three real stat lines a
   reader can look up.

@@ -1066,65 +1066,72 @@ model Sport {
 /// because League is already the PoolMaster office-pool model. See plans/124
 /// §4.2 design note.
 model SportLeague {
-  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportId            String                   @map("sport_id") @db.Uuid
-  name               String                   @db.VarChar(255)
-  matchKeyword       String?                  @map("match_keyword") @db.VarChar(255)
+  id                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportId             String                   @map("sport_id") @db.Uuid
+  name                String                   @db.VarChar(255)
+  matchKeyword        String?                  @map("match_keyword") @db.VarChar(255)
   /// The event year the tour is currently on — a business pointer, not a foreign
   /// key: "set as current" refuses a year with no events for this tour, which is the
   /// integrity the season FK used to give (plans/147 decision 6).
-  currentEventYear   Int?                     @map("current_event_year")
-  isActive           Boolean                  @default(true) @map("is_active")
+  currentEventYear    Int?                     @map("current_event_year")
+  isActive            Boolean                  @default(true) @map("is_active")
   /// How a bracket's winners reach their next match (#722): by fixed links, or reseeded by seed
   /// after a round (the NFL). Only a sport played as a bracket reads it.
-  bracketAdvancement PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
+  bracketAdvancement  PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
   /// What the sport league calls its bracket's rounds, first to final (#706: the NBA's First Round,
   /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
   /// Reference data, set by the migration that seeds the league.
-  roundNames         String[]                 @default([]) @map("round_names")
+  roundNames          String[]                 @default([]) @map("round_names")
   /// How many tiers a new event of the sport league starts with (#707: the College Football
   /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
   /// data, set by the migration that seeds the league.
-  tierCount          Int?                     @map("tier_count")
+  tierCount           Int?                     @map("tier_count")
   /// The periods its games are played in, when not its sport's (#786: men's college basketball
   /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
   /// league.
-  matchPeriodLayout  PrismaMatchPeriodLayout? @map("match_period_layout")
+  matchPeriodLayout   PrismaMatchPeriodLayout? @map("match_period_layout")
   /// The first round whose matches are single games a squares pool can be played on, when not
   /// every round's are (#787: a Champions League two-legged tie or an MLS best-of-three series
   /// is one match with no half-time score). Null: every round. Reference data, set by the
   /// migration that seeds the league.
-  squaresFromRound   Int?                     @map("squares_from_round")
+  squaresFromRound    Int?                     @map("squares_from_round")
   /// Each round's best-of length, first to final, lined up with the event's last round as
   /// `roundNames` is (#1545: the NBA's 7, 7, 7, 7). Empty, or a round with no entry, plays single
   /// games. Reference data, set where the league is seeded; a game-score sync reads it to count a
   /// series' wins.
-  roundSeriesLengths Int[]                    @default([]) @map("round_series_lengths")
+  roundSeriesLengths  Int[]                    @default([]) @map("round_series_lengths")
   /// What screens call the sport league, when not what its sport calls one (#834: the NCAA's
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.
-  noun               PrismaSportLeagueNoun?   @map("noun")
+  noun                PrismaSportLeagueNoun?   @map("noun")
   /// What screens call the sport league away from its sport's own pages, when its name alone
   /// does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null:
   /// the name. Reference data, set by the migration that seeds the league.
-  displayName        String?                  @map("display_name") @db.VarChar(255)
+  displayName         String?                  @map("display_name") @db.VarChar(255)
   /// Where the sport league sits among its sport's leagues wherever they are listed together
   /// (How to Play's chips): the major professional leagues first, then the NCAA's. Lower comes
   /// first; null comes after every ordered league, by name. Reference data, set by the migration
   /// that seeds the league.
-  displayOrder       Int?                     @map("display_order")
+  displayOrder        Int?                     @map("display_order")
   /// Who competes in its events, when not its sport's (#934: the World Series stat pool's field is
   /// players, not teams). Null: the sport's. Reference data, set by the migration that seeds the
   /// league.
-  participantType    PrismaParticipantType?   @map("participant_type")
+  participantType     PrismaParticipantType?   @map("participant_type")
   /// How its events are scored, when not by its sport's family (#934: COMPOSITE for a
   /// championship stat pool). Null: the sport's. Reference data, set by the migration that seeds
   /// the league.
-  scoringFamily      PrismaScoringFamily?     @map("scoring_family")
-  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  scoringFamily       PrismaScoringFamily?     @map("scoring_family")
+  /// The season league a playoff round's sport league belongs to (#1701: the Stanley Cup Final
+  /// and the NHL Conference Finals are the NHL's, the Men's Frozen Four NCAA Division I Men's
+  /// hockey), so pages list each round under its league. Null for a league that is no other's
+  /// round. Reference data, set by the migration that seeds the round league.
+  parentSportLeagueId String?                  @map("parent_sport_league_id") @db.Uuid
+  createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   sport                  Sport                          @relation(fields: [sportId], references: [id])
+  parentSportLeague      SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
+  rounds                 SportLeague[]                  @relation("SportLeagueRounds")
   affiliations           ParticipantLeagueAffiliation[]
   eventSeries            EventSeries[]
   contestConfigTemplates ContestConfigTemplate[]

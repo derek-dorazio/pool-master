@@ -1123,6 +1123,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     displayOrder: row.displayOrder,
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,
+    parentSportLeagueId: row.parentSportLeagueId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

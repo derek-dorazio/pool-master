@@ -33,6 +33,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     noun: null,
     displayName: null,
     displayOrder: null,
+    parentSportLeagueId: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),
