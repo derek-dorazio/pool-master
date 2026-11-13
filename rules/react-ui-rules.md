@@ -241,7 +241,10 @@ Rules:
   the pattern lands, and the old component stays marked as retiring in the gallery and the
   catalog until the last one merges. Each new pattern also lands with a check that keeps it in
   place (an ESLint rule or a scanner with a baseline that only shrinks, like
-  `rules:check:text-styles`) and with its gallery story (*Component Gallery*, below).
+  `rules:check:text-styles`) and with its gallery story (*Component Gallery*, below). A
+  baseline is only ever lowered: `rules:check:baseline-ratchet` compares every baseline with
+  the base commit and fails on an entry raised or added by hand (#1619), so a new baseline file
+  is added to that script's `BASELINES` list in the PR that creates it.
 
 ### Server Data Form-State Hazard
 
