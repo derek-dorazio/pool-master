@@ -22,6 +22,12 @@ export interface SportLeague extends DomainEntity {
    */
   currentEventYear: number | null;
   isActive: boolean;
+  /**
+   * The provider whose sync creates and keeps its events (ADR 0011, #1725); null when an admin
+   * authors them. A root admin sets it once the league's reader is built and the provider is
+   * configured.
+   */
+  eventSyncProviderId: string | null;
   /** How its bracket winners reach their next match; read only for a sport played as a bracket. */
   bracketAdvancement: BracketAdvancement;
   /**

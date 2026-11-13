@@ -43,7 +43,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId'>>;
 
 /**
  * What still uses a sport league, each a reason it cannot be deleted (#1400). Its affiliations
@@ -69,6 +69,8 @@ export interface SportLeagueRepository {
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
+  /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
+  findEventSynced(): Promise<SportLeague[]>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**

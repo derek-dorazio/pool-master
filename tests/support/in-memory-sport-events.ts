@@ -117,7 +117,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -189,8 +189,9 @@ export class InMemorySportEvents {
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
+      findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null });
         this.sportLeagues.push(created);
         return created;
       },

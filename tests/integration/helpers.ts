@@ -337,7 +337,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });

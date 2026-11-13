@@ -1127,6 +1127,12 @@ model SportLeague {
   /// round; a season league its rounds name is not deleted. Reference data, set by the migration
   /// that seeds the round league.
   parentSportLeagueId String?                  @map("parent_sport_league_id") @db.Uuid
+  /// The provider whose sync creates and keeps this sport league's events (ADR 0011, #1725):
+  /// a scheduled pass imports the provider's events for the league's tour, born DRAFT. Null:
+  /// an admin authors them. Set by a root admin per league, only once its reader is built and
+  /// the provider is configured; a business pointer, not a foreign key, since providers are
+  /// configuration rather than rows.
+  eventSyncProviderId String?                  @map("event_sync_provider_id") @db.VarChar(100)
   createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

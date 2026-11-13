@@ -2862,7 +2862,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -9473,6 +9473,8 @@ export interface components {
             currentEventYear: number | null;
             /** @description Whether the sport league is in use; a read filter, not a write lock. */
             isActive: boolean;
+            /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
+            eventSyncProviderId: string | null;
             /**
              * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
              * @enum {string}
@@ -9563,6 +9565,8 @@ export interface components {
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
+                /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
+                eventSyncProviderId: string | null;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -9644,6 +9648,8 @@ export interface components {
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
+                /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
+                eventSyncProviderId: string | null;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -9721,6 +9727,8 @@ export interface components {
             /** @description null clears it. */
             matchKeyword?: string | null;
             isActive?: boolean;
+            /** @description Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way. */
+            eventSyncProviderId?: string | null;
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
             currentEventYear?: number;
             /**

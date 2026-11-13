@@ -61,6 +61,7 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
     >
       <SectionRows>
         <SectionRow layout="setting" name="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
+        <SectionRow layout="setting" name="Event sync" value={sportLeague.eventSyncProviderId ?? 'Off'} />
         <SectionRow layout="setting" name="Roster size" value={sportLeague.affiliationCount} />
         <SectionRow layout="setting" name={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
         <SectionRow layout="setting" name="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />

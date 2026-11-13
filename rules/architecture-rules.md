@@ -253,10 +253,13 @@ authoring and admin result entry are the fallback for leagues no provider covers
 correcting a feed. The decision and its alternatives are
 [ADR-0011](../docs/adr/0011-provider-sync-creates-events.md), which supersedes ADR-0009.
 
-What the code does **today**, until the follow-up tickets of #1723 land:
+What the code does **today**, while the follow-up tickets of #1723 land:
 
-- An event is created by an admin: by hand, from one browsed provider event, or with a league's
-  year import. Nothing creates an event on a schedule yet.
+- A sport league is synced once a root admin names its provider (`SportLeague.eventSyncProviderId`,
+  #1725). Once a day `SyncedEventCreationScheduler` runs the admin's year import for each synced
+  league, this calendar year and the next, so its events appear as linked drafts. Every other
+  league's events are created by an admin: by hand, from one browsed provider event, or with the
+  year import.
 - The feed that runs on a schedule by default is live scores, for linked events
   (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field sync loop exists but is
   off by default; an admin loads or refreshes one event's field.

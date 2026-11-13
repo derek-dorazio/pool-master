@@ -35,7 +35,8 @@ import type { StatLineWriterDeps } from '../scoring-families/composite/stat-line
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
-import { SportLeagueService } from '../sport-catalog/sport-league-service';
+import { SportLeagueService, type SportDataProviderLookup } from '../sport-catalog/sport-league-service';
+import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
@@ -234,6 +235,12 @@ export function createSportEventServices(
   lifecycle: EventLifecycleService = createEventLifecycleService(prisma, { logger }),
   /** Every admin write that changes a board carries its rebuild job (#1466); without it, none are rebuilt. */
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+  /**
+   * The registered providers a sport league's event sync may name (ADR 0011). Pass the app's
+   * registry wherever a sport league is updated; omitted, none is registered, so turning a
+   * league's sync on is refused.
+   */
+  providers: SportDataProviderLookup = new ProviderRegistry(),
 ): SportEventServices {
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
@@ -266,7 +273,7 @@ export function createSportEventServices(
     raceResults: createRaceResultService(prisma, logger, leaderboards),
     statLines: createStatLineService(prisma, logger, leaderboards),
     matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
-    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
+    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, providers, logger }),
   };
 }
 
