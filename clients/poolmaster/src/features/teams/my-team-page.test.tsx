@@ -228,13 +228,14 @@ describe('My team', () => {
     expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toBeDisabled();
   });
 
-  it('does not offer the name-and-icon form while the viewer\'s squad is still loading', async () => {
+  it('does not offer the name-and-icon form while the viewer\'s squad is still loading, and holds the header\'s place', async () => {
     primeTeam();
     getLeagueSquadMock.mockReturnValue(new Promise(() => undefined));
 
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-pending-header')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
   });
 
@@ -857,7 +858,7 @@ describe('Another team\'s page', () => {
     expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' } }));
   });
 
-  it('says the member could not be loaded, not that they left, when reading the team fails', async () => {
+  it('says the member could not be loaded, not that they left, under a placeholder header, when reading the team fails', async () => {
     primeTeam();
     getLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' } },
@@ -867,6 +868,7 @@ describe('Another team\'s page', () => {
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
 
     expect(await screen.findByTestId('team-page-error')).toHaveTextContent("We couldn't load this member.");
+    expect(screen.getByTestId('team-page-pending-header')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByTestId('team-page-not-found')).not.toBeInTheDocument();
   });
 });

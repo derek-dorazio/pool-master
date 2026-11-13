@@ -36,7 +36,6 @@ export function ExpandableTile({
       data-testid={testId}
       id={id}
       padding="none"
-      radius="md"
     >
       <Button
         aria-expanded={isOpen}

@@ -4,7 +4,7 @@ import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { HelpTip, Notice, QueryState, SettingsRow, SettingsSection, Switch } from '@/features/shared/ui';
+import { HelpTip, Notice, QueryState, SectionBody, SectionCard, SectionRow, SectionRows, Switch } from '@/features/shared/ui';
 import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from '../email-preferences';
 import { SELF_USER_ID } from '../user-routing';
 
@@ -39,17 +39,17 @@ export function MyAccountNotificationsSection() {
   const pending = mutation.isPending ? mutation.variables : undefined;
 
   return (
-    <SettingsSection
+    <SectionCard
       help="Invitations and account emails, such as password resets, are always sent."
       testId="my-account-notifications"
       title="Email notifications"
     >
       {mutation.isError ? (
-        <div className="px-4 py-3">
+        <SectionBody>
           <Notice data-testid="my-account-notifications-save-error" tone="danger">
             {extractErrorMessage(mutation.error, { fallback: 'We could not save that change.' })}
           </Notice>
-        </div>
+        </SectionBody>
       ) : null}
       <QueryState
         error={extractErrorMessage(preferencesQuery.error, { fallback: 'We could not load your email settings.' })}
@@ -58,12 +58,13 @@ export function MyAccountNotificationsSection() {
         rows={5}
         testId="my-account-notifications"
       >
-        {(data) => data.preferences.map(({ category, enabled }) => {
+        {(data) => <SectionRows>{data.preferences.map(({ category, enabled }) => {
           const { label, description } = EMAIL_CATEGORY_LABELS[category];
           const checked = pending?.category === category ? pending.enabled : enabled;
           return (
-            <SettingsRow
-              action={(
+            <SectionRow
+              layout="setting"
+              aside={(
                 <Switch
                   checked={checked}
                   disabled={mutation.isPending}
@@ -73,7 +74,7 @@ export function MyAccountNotificationsSection() {
                 />
               )}
               key={category}
-              label={(
+              name={(
                 <>
                   {label}
                   <HelpTip label={`About ${label}`} testId={`my-account-notifications-${category}-help`}>
@@ -84,8 +85,8 @@ export function MyAccountNotificationsSection() {
               testId={`my-account-notifications-row-${category}`}
             />
           );
-        })}
+        })}</SectionRows>}
       </QueryState>
-    </SettingsSection>
+    </SectionCard>
   );
 }

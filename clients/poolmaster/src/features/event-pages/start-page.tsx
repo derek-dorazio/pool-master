@@ -153,7 +153,7 @@ function StartForUser({ request }: { request: StartRequest }) {
 
   return (
     <section className="mx-auto max-w-2xl space-y-6" data-testid="start-page">
-      <Tile className="space-y-4" padding="lg" radius="lg">
+      <Tile className="space-y-4" padding="lg" radius="panel">
         <Eyebrow>{`You're starting a ${copy.name} pool`}</Eyebrow>
         <Heading level={1} variant="display">
           {runs.length ? 'Which league is it for?' : 'Start your own league'}

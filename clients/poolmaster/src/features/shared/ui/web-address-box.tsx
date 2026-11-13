@@ -32,7 +32,6 @@ export function WebAddressBox({ isLive, notLiveHint, testId, url }: WebAddressBo
       className="flex flex-wrap items-center justify-between gap-3"
       data-testid={testId}
       padding="sm"
-      radius="sm"
       variant="subtle"
     >
       <Text

@@ -7,19 +7,19 @@ import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import {
   Button,
-  Chip,
   ErrorState,
   FormField,
   IconPalette,
   Input,
   LinkButton,
   LoadingState,
+  Notice,
   PublicInviteJoinPage,
   SectionCard,
   Text,
   Tile,
 } from '@/features/shared/ui';
-import { InvitationContextCard } from './invitation-context-card';
+import { InvitationCard } from './invitation-card';
 import { describeUnusableInvitation, UNKNOWN_INVITATION } from './unusable-invitation';
 import { InvitationStatusPage } from './invitation-status-page';
 import {
@@ -229,20 +229,10 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
     },
   });
 
-  const redirectMessage = useMemo(() => {
-    if (!inviteCode) {
-      return 'This invitation link is missing a code.';
-    }
-
-    if (!isAuthenticated) {
-      return 'Sign in or create an account first, then come back to accept this invitation.';
-    }
-
-    return null;
-  }, [inviteCode, isAuthenticated]);
 
   const selectedIcon = getTeamIconOption(selectedIconKey);
-  const unusableInvitation = hasErrorCode(invitationQuery.error, 'LEAGUE_INVITATION_NOT_FOUND')
+  // A link with no code is as unusable as one the server doesn't know.
+  const unusableInvitation = !inviteCode || hasErrorCode(invitationQuery.error, 'LEAGUE_INVITATION_NOT_FOUND')
     ? UNKNOWN_INVITATION
     : describeUnusableInvitation(invitationQuery.data?.status);
 
@@ -250,30 +240,37 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
     return <InvitationStatusPage invitation={unusableInvitation} />;
   }
 
-  if (redirectMessage) {
+  const title = invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Join league';
+  const invitationCard = invitationQuery.data ? (
+    <InvitationCard inviteCode={invitationQuery.data.inviteCode} leagueName={invitationQuery.data.league.name} />
+  ) : null;
+  const invitationState = (
+    <>
+      {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="join-league-invitation-loading" /> : null}
+      {invitationQuery.isError ? (
+        <ErrorState
+          body="We could not load this invitation."
+          onRetry={() => void invitationQuery.refetch()}
+          size="plain"
+          testId="join-league-invitation-error"
+        />
+      ) : null}
+    </>
+  );
+
+  if (!isAuthenticated) {
     return (
       <PublicInviteJoinPage
-        title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Join league'}
-      >
-        <p className="mt-3 text-sm text-muted-foreground">{redirectMessage}</p>
-        {invitationQuery.data ? (
-          <div className="mt-5">
-            <InvitationContextCard
-              inviteCode={invitationQuery.data.inviteCode}
-              leagueName={invitationQuery.data.league.name}
-              message="You've been invited to join this league. Sign in with your existing account, or create a new account and then come back here to accept the invite."
-              title="League invite"
-            />
-          </div>
-        ) : null}
-        <div className="mt-5 flex flex-wrap gap-3">
+        primaryAction={(
           <LinkButton
             data-testid="invite-sign-in"
             state={{ from: buildInvitePath(inviteCode) }}
             to="/"
           >
-            Sign in to continue
+            Sign in
           </LinkButton>
+        )}
+        secondaryAction={(
           <LinkButton
             data-testid="invite-create-account"
             state={{ authMode: 'register', from: buildInvitePath(inviteCode) }}
@@ -282,54 +279,46 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
           >
             Create account
           </LinkButton>
-          <LinkButton to="/" variant="secondary">
-            Back to home
-          </LinkButton>
-        </div>
+        )}
+        testId="join-league-signed-out"
+        title={title}
+      >
+        {invitationState}
+        {invitationCard}
       </PublicInviteJoinPage>
     );
   }
 
   return (
     <PublicInviteJoinPage
-      context={(
-        <Chip>
-          Invitation
-        </Chip>
-      )}
+      primaryAction={invitationQuery.data ? (
+        <Button
+          data-testid="invite-accept"
+          disabled={acceptMutation.isPending || !teamName.trim()}
+          onClick={() => acceptMutation.mutate()}
+          type="button"
+        >
+          {acceptMutation.isPending ? 'Joining...' : 'Join league'}
+        </Button>
+      ) : null}
+      secondaryAction={invitationQuery.data ? (
+        <LinkButton data-testid="invite-not-now" to="/welcome" variant="secondary">
+          Not now
+        </LinkButton>
+      ) : null}
       testId="join-league-page"
-      title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}
+      title={title}
     >
-      <p className="mt-2 text-sm text-muted-foreground">
-        Review the invitation, create your team, and join when you&apos;re ready.
-      </p>
-
       {/* One column at every width: the page is a narrow card, so a side-by-side split
           squeezed the icon palette into tiles too small for their labels. */}
-      <div className="mt-6 space-y-5">
-        <div className="space-y-4 text-sm text-muted-foreground">
-          {invitationQuery.isLoading ? <LoadingState body="Loading invitation..." size="plain" testId="join-league-invitation-loading" /> : null}
-          {invitationQuery.isError ? (
-            <ErrorState
-              body="We could not load this invitation."
-              onRetry={() => void invitationQuery.refetch()}
-              size="plain"
-              testId="join-league-invitation-error"
-            />
-          ) : null}
-          {invitationQuery.data ? (
-            <InvitationContextCard
-              inviteCode={invitationQuery.data.inviteCode}
-              leagueName={invitationQuery.data.league.name}
-              message="Name your team and select Join League when you're ready."
-              title="Ready to join"
-            />
-          ) : null}
-          {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
-          {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
-          {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
-        </div>
-
+      <div className="space-y-5">
+        {invitationState}
+        {invitationCard}
+        {acceptMutation.isError ? (
+          <Notice data-testid="join-league-accept-error" tone="danger">
+            {extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}
+          </Notice>
+        ) : null}
         <SectionCard
           headingLevel={3}
           help="Every member plays in the league as a team, with a name and an icon. Choose yours now; you can change both later."
@@ -346,10 +335,9 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
                 value={teamName}
               />
             </FormField>
-
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
-              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm" radius="sm">
+              <Tile className="flex items-center gap-4" data-testid="join-league-selected-icon" padding="sm">
                 <TeamAvatar iconKey={selectedIconKey} size="lg" />
                 <div className="min-w-0">
                   <Text as="div" variant="caption">Selected icon</Text>
@@ -369,22 +357,6 @@ function JoinLeagueByInvite({ inviteCode }: { inviteCode: string }) {
           </div>
         </SectionCard>
       </div>
-
-      {invitationQuery.data ? (
-        <div className="mt-5 flex gap-3">
-          <Button
-            data-testid="invite-accept"
-            disabled={acceptMutation.isPending || !teamName.trim()}
-            onClick={() => acceptMutation.mutate()}
-            type="button"
-          >
-            {acceptMutation.isPending ? 'Joining...' : 'Join league'}
-          </Button>
-          <LinkButton to="/welcome" variant="secondary">
-            Back
-          </LinkButton>
-        </div>
-      ) : null}
     </PublicInviteJoinPage>
   );
 }

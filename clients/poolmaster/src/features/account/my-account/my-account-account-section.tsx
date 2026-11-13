@@ -5,7 +5,7 @@ import { deleteUser, disableUser, enableUser, type UserDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useAuth } from '@/features/auth/auth-context';
 import { AUTH_ME_QUERY_KEY, setAuthSessionUser } from '@/features/auth/auth-session-cache';
-import { Button, ConfirmDialog, HelpTip, SettingsRow, SettingsSection, useMutationActionWorkflow } from '@/features/shared/ui';
+import { Button, ConfirmDialog, HelpTip, SectionCard, SectionRow, SectionRows, useMutationActionWorkflow } from '@/features/shared/ui';
 import { SELF_USER_ID } from '../user-routing';
 import { ACCOUNT_ACTION_ERROR } from './my-account-helpers';
 
@@ -85,39 +85,43 @@ export function MyAccountAccountSection({ user }: { user: UserDto }) {
 
   return (
     <>
-      <SettingsSection testId="my-account-account" title="Account" tone="danger">
-        <SettingsRow
-          action={(
-            <Button data-testid="my-account-lifecycle-open" onClick={() => setDialog('lifecycle')} size="sm" variant="secondary">
-              {isInactive ? 'Reactivate' : 'Inactivate'}
-            </Button>
-          )}
-          label={isInactive ? 'Show me in my leagues' : 'Hide me from my leagues'}
-          testId="my-account-lifecycle"
-        />
-        <SettingsRow
-          action={(
-            <Button
-              data-testid="my-account-delete-open"
-              disabled={!isInactive || deleteAction.isPending}
-              onClick={() => setDialog('delete')}
-              size="sm"
-              variant="danger"
-            >
-              Delete
-            </Button>
-          )}
-          label={(
-            <>
-              Delete account
-              <HelpTip label="About deleting your account" testId="my-account-delete-help">
-                You can delete your account once it is inactive. Deleting it can&apos;t be undone.
-              </HelpTip>
-            </>
-          )}
-          testId="my-account-delete"
-        />
-      </SettingsSection>
+      <SectionCard testId="my-account-account" title="Account" tone="danger">
+        <SectionRows>
+          <SectionRow
+            layout="setting"
+            aside={(
+              <Button data-testid="my-account-lifecycle-open" onClick={() => setDialog('lifecycle')} size="sm" variant="secondary">
+                {isInactive ? 'Reactivate' : 'Inactivate'}
+              </Button>
+            )}
+            name={isInactive ? 'Show me in my leagues' : 'Hide me from my leagues'}
+            testId="my-account-lifecycle"
+          />
+          <SectionRow
+            layout="setting"
+            aside={(
+              <Button
+                data-testid="my-account-delete-open"
+                disabled={!isInactive || deleteAction.isPending}
+                onClick={() => setDialog('delete')}
+                size="sm"
+                variant="danger"
+              >
+                Delete
+              </Button>
+            )}
+            name={(
+              <>
+                Delete account
+                <HelpTip label="About deleting your account" testId="my-account-delete-help">
+                  You can delete your account once it is inactive. Deleting it can&apos;t be undone.
+                </HelpTip>
+              </>
+            )}
+            testId="my-account-delete"
+          />
+        </SectionRows>
+      </SectionCard>
 
       <ConfirmDialog
         confirmLabel={isInactive ? 'Reactivate account' : 'Inactivate account'}

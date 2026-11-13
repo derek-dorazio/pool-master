@@ -88,19 +88,15 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
     <LeaderboardFrame
       contest={contest}
       leagueCode={leagueCode}
-      notes={(
-        <>
-          <YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.totalPoints} testId="pick-em-leaderboard-my-best" />
-          {isUnderWay ? null : (
-            <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>
-          )}
-        </>
+      notes={isUnderWay ? null : (
+        <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>
       )}
       summary={(
         <span data-testid="pick-em-leaderboard-mode">{formatPickEmRulesName(board)}</span>
       )}
     >
       <ScoreboardGrid
+        trailing={<YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.totalPoints} testId="pick-em-leaderboard-my-best" />}
         columns={pickEmColumns(contestId, leagueCode, contest.leagueId, mySquadId, board.weeks)}
         data={board.entries}
         emptyMessage="No entry has submitted a week yet."

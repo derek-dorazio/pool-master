@@ -91,13 +91,13 @@ Use those conventions as the starting point, but bias toward a consumer app:
     the raw `Modal` or Radix's dialog root; only `shared/ui` draws them.
 - **Settings sections: see it, then Edit** (#1597). A page of someone's settings
   (My account; league settings as they move over) shows every setting as it
-  stands, never behind a dialog: a `SettingsSection` per group, its rows
-  `SettingsRow`s with the label left and the value right, and one Edit in the
-  title that opens the group's `FormModal`. A setting that takes effect the
+  stands, never behind a dialog: a `SectionCard` per group with `edit`, its rows
+  `SectionRow`s with `layout="setting"` (the name left and the value right), and
+  the one Edit in the title that opens the group's `FormModal`. A setting that takes effect the
   moment it is flipped, such as an email notification, is a `Switch` in its row,
   with no Save; a refused flip goes back and says why in a `Notice`. How a group
   or a row works sits behind a (?) `HelpTip`, never as a sentence. Destructive
-  rows go in a `SettingsSection` with `tone="danger"`, last, each confirming
+  rows go in a `SectionCard` with `tone="danger"`, last, each confirming
   first. It is a grouped list of label/value rows, so it maps one to one onto a
   native settings screen.
 - Do not overload compact selector rows with extra icons or multiple competing
@@ -192,7 +192,8 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - A read's loading, error and empty states have one look everywhere: a spinner line (with
   faint placeholder rows for a list), a red line with Retry, and an italic empty line. A header
   that doesn't depend on the read stays put; a page whose header names the thing being loaded
-  shows the state in place of the page until it arrives. Every failed read offers Retry, except
+  wraps the state in `PendingPage`, which holds the header's place with a faint placeholder
+  (and a placeholder tab row when the header has tabs), so only the body swaps (#1607). Every failed read offers Retry, except
   a failure reading again cannot fix (not found, no access), which passes `onRetry={null}`. A
   button's pending label ("Saving...") is not a page state. The shared parts are named in
   `clients/poolmaster/src/features/shared/ui/README.md`, and
@@ -357,12 +358,12 @@ administration area (root admin included), reusing the same shared components.
 5. **One edit for all properties.** An entity's editable properties are edited
    together on one form with one Save, never a dialog per property.
 6. **Danger zone.** Destructive actions sit in their own marked section at the
-   bottom of the settings page (a `SectionCard` with `tone="danger"` holding
-   `DangerZoneAction`s), each with a confirm step, never beside everyday
+   bottom of the settings page (a `SectionCard` with `tone="danger"` whose
+   `SectionRow`s name each action, say what it does in `facts` and hold its
+   button in `aside`), each with a confirm step, never beside everyday
    actions. Settings themselves are shown as labelled rows with one Edit for the
-   group, in the title bar's trailing slot: a `SettingsSection` (§3 *Settings
-   sections*), or, until a page moves over, a `SectionCard` holding
-   `SettingsRows` of `SettingsRow`.
+   group, in the title bar's trailing slot (§3 *Settings sections*). There is one
+   row list: a settings row is a `SectionRow` too, never a component of its own.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
    the same `Pager`. A long ranked list also offers a way to jump to the
@@ -527,8 +528,11 @@ administration area (root admin included), reusing the same shared components.
     tools file may be added.
 
     Pages never draw their own rounded box (#1591). A box that holds content
-    is a `SectionCard` (titled) or a `Tile` (untitled, `radius="sm"` for the
-    shared 8px corner inside a section), a box telling the user something
+    is a `SectionCard` (titled) or a `Tile` (untitled), both with the one 8px
+    content corner. `Tile`'s only other corner is `radius="panel"`, for a
+    panel that stands apart from the content: a navy hero, the signed-out
+    home's sign-in card, the invite join card (`PublicInviteJoinPage`)
+    and the event pages (#1638). A box telling the user something
     they must know is a `Notice`, and a clickable box is a `Button` or a link
     row; a choice in a dialog is a `ConfirmDialog` with Cancel and its one
     action. `npm run rules:check:card-corners` counts `rounded-2xl`,

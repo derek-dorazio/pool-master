@@ -16,7 +16,6 @@ import {
   SectionCard,
   SectionRow,
   SectionRows,
-  StepStrip,
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -25,7 +24,9 @@ import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeag
 import { CreateContestAction } from './create-contest-action';
 import { EveryLeagueCard } from './every-league-card';
 import { FORMAT_GUIDES } from './format-guides';
-import { ClutchCardIllustration, FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
+import { HowItWorksStrip } from './how-it-works';
+import { ClutchCardIllustration, FormatIllustration, SportIllustration } from './illustrations';
+import { HOW_TO_PLAY_CLOSING_TITLE } from './public-headlines';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { SportChipRow } from './sport-chip-row';
 import { groupRounds, sportLeagueChoiceObject, sportLeagueChoiceSearch, useSportLeagueChoice, type FilterableSport } from './sport-league-choice';
@@ -36,13 +37,6 @@ import { useSportLeaguesQuery } from './use-sport-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
 import { LandingSection } from '@/features/event-pages/components/landing-section';
 import { CLUTCH_CARD_PAGE_PATH, howToPlayFormatAnchor } from '@/features/event-pages/event-page-paths';
-
-/** How a pool runs, in three steps, each with its picture: one slim strip (#1701). */
-const HOW_IT_WORKS: readonly { picture: StepPicture; title: string }[] = [
-  { picture: 'league', title: 'Start a league' },
-  { picture: 'contest', title: 'Pick a contest' },
-  { picture: 'live', title: 'Follow it live' },
-];
 
 /** The ways to play in the order the page lists them. */
 const FORMAT_ORDER = Object.values(SelectionType);
@@ -323,14 +317,13 @@ export function HowToPlayPage() {
     <LinkButton data-testid="how-to-play-register" state={{ authMode: 'register' }} to="/">Create your account</LinkButton>
   );
 
-  const steps = HOW_IT_WORKS.map(({ picture, title }) => ({ title, picture: <StepIllustration className="aspect-[16/10] w-full" step={picture} /> }));
 
   return (
     <section className="space-y-6" data-testid="how-to-play-page">
       <PageHeader actions={callToAction} testId="how-to-play-header" title="How to Play" />
 
       {/* On a computer the steps lead, slim; on a phone they follow the ways to play. */}
-      <StepStrip className="max-md:hidden" steps={steps} testId="how-to-play-steps" />
+      <HowItWorksStrip className="max-md:hidden" testId="how-to-play-steps" />
 
       <QueryState
         error="We couldn't load the contest types."
@@ -373,7 +366,7 @@ export function HowToPlayPage() {
                   </div>
                 </SectionCard>
               </div>
-              <StepStrip className="md:hidden" steps={steps} testId="how-to-play-steps-phone" />
+              <HowItWorksStrip className="md:hidden" testId="how-to-play-steps-phone" />
               <ComingUpRow key={chosenSport?.sport ?? 'all'} sport={chosenSport?.sport} testId="how-to-play-coming-up" />
               <EveryLeagueCard className="md:hidden" onPick={pickBelow} sports={sports} testId="how-to-play-every-league" />
             </div>
@@ -382,7 +375,7 @@ export function HowToPlayPage() {
       </QueryState>
 
       {auth.isAuthenticated ? null : (
-        <LandingSection intro="Create an account, start a league, and set up your first contest." testId="how-to-play-cta" title="Ready to run your pool?">
+        <LandingSection testId="how-to-play-cta" title={HOW_TO_PLAY_CLOSING_TITLE}>
           {callToAction}
         </LandingSection>
       )}

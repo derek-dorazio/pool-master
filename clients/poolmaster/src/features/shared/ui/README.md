@@ -20,7 +20,9 @@ The shared UI layer is split into three levels:
    is `LoadingState`, `EmptyState` or `ErrorState`: a card of its own by default,
    `size="inline"` for one line inside a card, `size="plain"` inside a body that is
    already padded; a list's `LoadingState` (or `QueryState`) takes `rows` for faint
-   placeholder rows. A query's loading, error, empty and data branches are one
+   placeholder rows. A page whose header names the thing being read wraps its
+   loading or error state in `PendingPage`, which holds the header's place. A query's
+   loading, error, empty and data branches are one
    `QueryState`, whose error offers Retry from the query's own `refetch`; a
    hand-drawn `ErrorState` takes `onRetry` (`refetchFailed(...)` when it waits on
    several reads, `null` for a failure reading again cannot fix, such as no access). A one-line failure beside what failed, such as a refused save, is
@@ -105,13 +107,13 @@ that is not a table pages through `Pager`, the same Previous/Next control.
 
 League pages and administration areas use the pieces named in
 `rules/ux-rules.md` §12 *League Pages and Commissioner Tools*: `LeagueMenu`,
-`ToolsArea`, `PageHeader`, a `SettingsSection` of `SettingsRow`s for
-settings, "see it, then Edit": label left and value right, one Edit in the title
-opening the group's `FormModal`, and a `Switch` in a row for a setting that saves
-the moment it is flipped (pages not yet moved over use a `SectionCard` of
-`SettingsRows`; a `bare` `SectionCard` titles a section whose body
-is a `DataGrid`), a `SectionCard` with `tone="danger"` of `DangerZoneAction`s
-for a danger zone, and `FormPage` for a full-page edit
+`ToolsArea`, `PageHeader`, a `SectionCard` with `edit` of `SectionRow`s with
+`layout="setting"` for settings, "see it, then Edit": name left and value right,
+one Edit in the title opening the group's `FormModal`, and a `Switch` in a row's
+`aside` for a setting that saves the moment it is flipped (a `bare` `SectionCard`
+titles a section whose body is a `DataGrid`; a `SectionStack` divides a section's
+row lists from a form or notice between them), a `SectionCard` with
+`tone="danger"` of `SectionRow`s for a danger zone, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon). A `FormPage` saved by one
 mutation takes its submit, pending state and error from `formPageSave` in
 `@/lib/form-page-save`. A root admin settings group's form is built on
@@ -138,7 +140,8 @@ line: beside the breadcrumb, or at the end of the title row after any actions. I
 stays on the first line on a phone. A `description` is only for a rule the reader needs or
 the entity's own words, never a sentence saying what the page is. A page's views
 are `PageTabs` in the header's `tabs` slot — `variant="link"` for views with
-their own address, `variant="state"` inside the page's own `Tabs` root — and a
+their own address, `variant="state"` inside the page's own `Tabs` root; views of
+one card rather than the page, such as Sign in / Create account, are a `TabbedCard` — and a
 filter that changes every tab or the whole page, such as a season or a sport, is a
 `FilterPicker` in `tabsEnd` (with no tabs it has the bottom line to itself). On a phone
 `PageTabs` and `LeagueMenu` scroll sideways through `useScrollRow`: the selected
@@ -183,9 +186,10 @@ hand-build a heading inside a `Tile`. A section inside another section's padded
 body titles itself one level down (`headingLevel={4}` under a level 3). Data is
 never a raw `ul`/`li`: rows are `SectionRow`s, and a list that is not rows is a
 named composite in its feature folder, such as `FeatureList` in `features/plans`
-for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13). A box
-inside a section (a selected icon, the team you'll co-own) is a `Tile` with
-`radius="sm"`, the same 8px corner as `SectionCard` and `Notice`; a page never
+for a plan's ticked or hidden features (`rules/ux-rules.md` §12 item 13). A `Tile`
+draws the same 8px corner as `SectionCard` and `Notice` unless it asks for
+`radius="panel"`, the one larger corner, kept for a panel that stands apart from the
+content: a navy hero, the signed-out home's sign-in card, the invite join card, and the event pages. A page never
 types `rounded-2xl`, `rounded-3xl` or `rounded-4xl` itself.
 
 A team's icon and name come from `features/teams`, not this folder, because they

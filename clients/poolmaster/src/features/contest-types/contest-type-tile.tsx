@@ -19,7 +19,7 @@ export function ContestTypeTileCard({ tile, createPathFor }: ContestTypeTileCard
   const { featured, variations } = tile;
   const featuredPath = createPathFor?.(featured);
   return (
-    <Tile className="flex h-full flex-col gap-3" data-testid={`contest-type-${featured.templateKey}`} padding="sm" radius="md">
+    <Tile className="flex h-full flex-col gap-3" data-testid={`contest-type-${featured.templateKey}`} padding="sm">
       <Eyebrow className="flex items-center gap-2" tone="muted">
         <Icon aria-hidden="true" className="h-4 w-4" />
         {formatSelectionTypeName(tile.selectionType)}

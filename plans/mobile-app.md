@@ -228,7 +228,7 @@ reads alike in both apps and `shared/ui/README.md` describes both:
 - Text: `Heading` (same `variant`s: hero, display, page, section, subtitle, label, eyebrow,
   card), `Eyebrow`, `Text` with the theme's sizes. Caps and italics follow the house type
   style in `react-ui-rules.md` §5.
-- Surfaces: `Tile` (default, inverse, inverseDeep), `SectionCard` (with `SectionRows` and `SettingsRows`).
+- Surfaces: `Tile` (default, inverse, inverseDeep), `SectionCard` (with `SectionRows`).
 - Actions: `Button` and `LinkButton` (variants and `layout="row"`), `MenuItem`, `CopyButton`
   (the system share sheet as well as copy).
 - Status: `Chip`, `StatusBadge`, `Countdown`, `Progress`.

@@ -37,7 +37,7 @@ export function LifecyclePanel({
       className="grid gap-4 px-5 py-5"
       data-testid="contest-status-card"
       padding="none"
-      radius="md"
+      radius="panel"
       variant="inverse"
     >
       <StageTrack

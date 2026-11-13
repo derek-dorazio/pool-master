@@ -9,8 +9,6 @@ import {
   SectionCard,
   SectionRow,
   SectionRows,
-  SettingsRow,
-  SettingsRows,
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -101,20 +99,21 @@ function ParticipantHome({ player }: { player: ParticipantDto }) {
         testId="root-admin-participant-details"
         title="Details"
       >
-        <SettingsRows>
-          <SettingsRow label="First name" value={player.firstName || 'Not set'} />
-          <SettingsRow label="Last name" value={player.lastName || 'Not set'} />
-          <SettingsRow label="Short name" value={player.shortName || 'Not set'} />
-          <SettingsRow label="Nationality" value={player.nationality || 'Not set'} />
-          <SettingsRow label="Role" value={player.role || 'Not set'} />
-          <SettingsRow label="Team affiliation" value={player.teamAffiliation || 'Not set'} />
-          <SettingsRow label="External ID" value={player.externalId || 'Not set'} />
-          <SettingsRow
-            label="Status"
+        <SectionRows>
+          <SectionRow layout="setting" name="First name" value={player.firstName || 'Not set'} />
+          <SectionRow layout="setting" name="Last name" value={player.lastName || 'Not set'} />
+          <SectionRow layout="setting" name="Short name" value={player.shortName || 'Not set'} />
+          <SectionRow layout="setting" name="Nationality" value={player.nationality || 'Not set'} />
+          <SectionRow layout="setting" name="Role" value={player.role || 'Not set'} />
+          <SectionRow layout="setting" name="Team affiliation" value={player.teamAffiliation || 'Not set'} />
+          <SectionRow layout="setting" name="External ID" value={player.externalId || 'Not set'} />
+          <SectionRow
+            layout="setting"
+            name="Status"
             testId="root-admin-participant-status-row"
             value={participantStatusLabel(player.status)}
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <ParticipantMappingsSection participantId={player.id} />

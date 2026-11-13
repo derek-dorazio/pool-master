@@ -79,7 +79,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
       <Text as="p" data-testid="contest-entry-draw-done" variant="meta">
         {`Dealt by the commissioner’s draw on ${formatDateTimeDisplay(drawnAt, displayPreferences)}. The draw is final.`}
       </Text>
-      <Tile padding="none" radius="lg">
+      <Tile padding="none">
         <ul aria-label={`Dealt ${noun.many}`} className="divide-y divide-border">
           {dealtGolfers.map((golfer) => (
             <li className="px-4 py-3" key={golfer.sportEventParticipantId}>

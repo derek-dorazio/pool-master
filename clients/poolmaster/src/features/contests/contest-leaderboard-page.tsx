@@ -12,6 +12,7 @@ import {
   FactList,
   Input,
   LoadingState,
+  PendingPage,
   Pager,
   Tile,
   cn,
@@ -34,7 +35,7 @@ import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
 import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
-import { LeaderboardFrame } from './leaderboard-kit';
+import { LeaderboardFrame, LeaderboardSection } from './leaderboard-kit';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
@@ -220,7 +221,6 @@ function EntryBlock({
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
       id={entryBlockId(entry.entryId)}
       padding="none"
-      radius="lg"
       variant="subtle"
     >
       {/* #389: the grey entry bar opens and closes its own participant rows; the entry's (i) (#1564) sits above it. */}
@@ -326,7 +326,7 @@ export function ContestLeaderboardPage() {
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
-    return <LoadingState body="Loading contest leaderboard..." />;
+    return <PendingPage hasTabs testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
   }
 
   if (contestQuery.data && isBracket) {
@@ -344,10 +344,12 @@ export function ContestLeaderboardPage() {
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <ErrorState
-        body="We couldn't load this contest."
-        onRetry={() => void contestQuery.refetch()}
-      />
+      <PendingPage hasTabs testId="contest-leaderboard-pending">
+        <ErrorState
+          body="We couldn't load this contest."
+          onRetry={() => void contestQuery.refetch()}
+        />
+      </PendingPage>
     );
   }
 
@@ -440,9 +442,9 @@ export function ContestLeaderboardPage() {
         value={leaderboardQuery.data.sportEventId}
       />
 
-      <Tile>
+      <LeaderboardSection>
         {view.entries.length > 0 ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <Input
                 aria-label="Find an entry"
@@ -521,7 +523,7 @@ export function ContestLeaderboardPage() {
             </div>
           </div>
         </div>
-        <div className="px-4 pt-3">
+        <div>
           <Pager
             onNext={() => setPageIndex(currentPage + 1)}
             onPrevious={() => setPageIndex(currentPage - 1)}
@@ -532,11 +534,11 @@ export function ContestLeaderboardPage() {
           />
         </div>
         {view.footnote ? (
-          <p className="px-4 pt-3 text-xs text-muted-foreground" data-testid={view.footnote.testId}>
+          <p className="text-xs text-muted-foreground" data-testid={view.footnote.testId}>
             {view.footnote.text}
           </p>
         ) : null}
-      </Tile>
+      </LeaderboardSection>
     </LeaderboardFrame>
   );
 }

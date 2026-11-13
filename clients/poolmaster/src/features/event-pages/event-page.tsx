@@ -29,7 +29,7 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
   const offerCopy = eventPageOfferCopy(copy, offer);
   const isOpen = offer.state === EventPageOfferState.OPEN;
   return (
-    <Tile className={cn('flex flex-col gap-3', offer.isPrimary ? 'border-primary' : null)} data-testid={testId} padding="md" radius="md">
+    <Tile className={cn('flex flex-col gap-3', offer.isPrimary ? 'border-primary' : null)} data-testid={testId} padding="md" radius="panel">
       {offerCopy.isNew ? <Chip className="self-start" tone="active">New</Chip> : null}
       <Heading level={3} variant="card" size="xl">{offerCopy.contestType}</Heading>
       <p className="text-sm font-semibold text-foreground">{`Starts as: ${offer.template.name}`}</p>

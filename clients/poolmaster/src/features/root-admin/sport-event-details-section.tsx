@@ -4,8 +4,8 @@ import {
   formatDateTimeDisplay,
   LinkButton,
   SectionCard,
-  SettingsRow,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { buildSportEventPath, buildSportLeaguePath } from './manage-navigation';
@@ -44,17 +44,18 @@ export function SportEventDetailsSection({
       testId="root-admin-sport-event-details"
       title="Details"
     >
-      <SettingsRows>
-        <SettingsRow label="Venue" value={tournament.venue || 'Not set'} />
-        <SettingsRow label="Location" value={tournament.location || 'Not set'} />
-        <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
-        <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
-        <SettingsRow label={upperFirst(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
+      <SectionRows>
+        <SectionRow layout="setting" name="Venue" value={tournament.venue || 'Not set'} />
+        <SectionRow layout="setting" name="Location" value={tournament.location || 'Not set'} />
+        <SectionRow layout="setting" name="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
+        <SectionRow layout="setting" name="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
+        <SectionRow layout="setting" name={upperFirst(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
         {scoresUnplayedRoundsAgainstPar ? (
-          <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />
+          <SectionRow layout="setting" name="Par per round" value={tournament.roundsPar ?? 'From scores'} />
         ) : null}
-        <SettingsRow
-          label={upperFirst(sportLeagueNoun.one)}
+        <SectionRow
+          layout="setting"
+          name={upperFirst(sportLeagueNoun.one)}
           value={(
             <LinkButton
               data-testid="root-admin-sport-event-home-tour-link"
@@ -66,8 +67,8 @@ export function SportEventDetailsSection({
             </LinkButton>
           )}
         />
-        <SettingsRow label="Event year" value={tournament.eventYear} />
-      </SettingsRows>
+        <SectionRow layout="setting" name="Event year" value={tournament.eventYear} />
+      </SectionRows>
     </SectionCard>
   );
 }

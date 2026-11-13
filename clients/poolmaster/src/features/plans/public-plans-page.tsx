@@ -98,7 +98,7 @@ export function PublicPlansPage() {
       </SectionCard>
 
       {auth.isAuthenticated ? null : (
-        <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
+        <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md">
           <div>
             <Heading level={3} variant="card">Start your league today</Heading>
             <p className="text-sm text-muted-foreground">Set up a league, invite your office, and open your first contest in minutes.</p>

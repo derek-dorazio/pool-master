@@ -9,6 +9,7 @@ import {
   SectionNote,
   SectionRow,
   SectionRows,
+  SectionStack,
   SectionTitle,
 } from "./section-card";
 import { StatusBadge } from "./status-badge";
@@ -52,6 +53,36 @@ export const WithBodyAndTrailing: Story = {
         <Text>Share this address with members so they can join.</Text>
         <SectionNote>Anyone with the address can ask to join.</SectionNote>
       </SectionBody>
+    ),
+  },
+};
+
+/** Settings, "see it, then Edit": name left, value right, and one Edit in the title. */
+export const Settings: Story = {
+  args: {
+    title: "Profile",
+    edit: { onClick: () => undefined },
+    children: (
+      <SectionRows>
+        <SectionRow layout="setting" name="Name" value="Sam Lee" />
+        <SectionRow layout="setting" name="Username" value="samlee" />
+        <SectionRow aside={<Button size="sm" variant="secondary">Change</Button>} layout="setting" name="Password" />
+      </SectionRows>
+    ),
+  },
+};
+
+/** A row list, then a notice, divided from each other like rows. */
+export const WithStack: Story = {
+  args: {
+    title: "Entries",
+    children: (
+      <SectionStack>
+        <SectionRows>
+          <SectionRow layout="setting" name="Entries" value="12 of 12" />
+        </SectionRows>
+        <SectionBody><SectionNote>This contest is full.</SectionNote></SectionBody>
+      </SectionStack>
     ),
   },
 };

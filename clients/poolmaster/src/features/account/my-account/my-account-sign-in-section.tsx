@@ -5,7 +5,7 @@ import { UserPasswordChangeRequestSchema } from '@poolmaster/shared/dto';
 import { changeUserPassword } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { Button, FormField, FormModal, PasswordInput, SettingsRow, SettingsSection, showToast } from '@/features/shared/ui';
+import { Button, FormField, FormModal, PasswordInput, SectionCard, SectionRow, SectionRows, showToast } from '@/features/shared/ui';
 import { SELF_USER_ID } from '../user-routing';
 import { ACCOUNT_ACTION_ERROR } from './my-account-helpers';
 import { useSectionDialog } from './use-section-dialog';
@@ -49,17 +49,20 @@ export function MyAccountSignInSection() {
 
   return (
     <>
-      <SettingsSection testId="my-account-sign-in" title="Sign-in">
-        <SettingsRow
-          action={(
-            <Button aria-label="Change password" data-testid="my-account-password-change" onClick={dialog.openDialog} size="sm" variant="secondary">
-              Change
-            </Button>
-          )}
-          label="Password"
-          testId="my-account-password"
-        />
-      </SettingsSection>
+      <SectionCard testId="my-account-sign-in" title="Sign-in">
+        <SectionRows>
+          <SectionRow
+            layout="setting"
+            aside={(
+              <Button aria-label="Change password" data-testid="my-account-password-change" onClick={dialog.openDialog} size="sm" variant="secondary">
+                Change
+              </Button>
+            )}
+            name="Password"
+            testId="my-account-password"
+          />
+        </SectionRows>
+      </SectionCard>
 
       <FormModal
         canSave={!isPending && currentPassword.length > 0 && newPassword.length >= 8 && confirmNewPassword.length >= 8}

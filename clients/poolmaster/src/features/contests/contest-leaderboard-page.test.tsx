@@ -348,6 +348,16 @@ function primeMocks(opts?: {
 }
 
 describe('ContestLeaderboardPage', () => {
+  it('holds a placeholder header with a tab row while the contest loads, so the tabs do not jump in when it arrives', async () => {
+    primeMocks();
+    getContestMock.mockReturnValue(new Promise(() => {}));
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-pending-header-tabs')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pending-header')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('shows a stat pool\'s players with one column per game, a player\'s name opens their stats in each game, and a hovered row tints its pinned cells too', async () => {
     const base = leaderboardResponse().data;
     const ohtani = {
@@ -391,6 +401,16 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-row')).toHaveClass('group/pick');
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-position')).toHaveClass('bg-background', hoverTint);
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('bg-background', hoverTint);
+  });
+
+  it('puts a roster board in the shared section titled Standings, the same frame as every other format', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    const section = await screen.findByRole('region', { name: 'Standings' });
+    expect(within(section).getByTestId('contest-leaderboard-board')).toBeInTheDocument();
+    expect(within(section).getByTestId('contest-leaderboard-search')).toBeInTheDocument();
   });
 
   it('renders each entry\'s standing with a row per golfer, a total and one cell per round', async () => {

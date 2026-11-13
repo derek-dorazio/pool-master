@@ -5,13 +5,12 @@ import type { SportLeagueDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
-  DangerZoneAction,
   InlineError,
   LinkButton,
   PageHeader,
   SectionCard,
-  SettingsRow,
-  SettingsRows,
+  SectionRow,
+  SectionRows,
   StatusBadge,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -60,12 +59,12 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
       testId="root-admin-sport-league-details"
       title="Details"
     >
-      <SettingsRows>
-        <SettingsRow label="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
-        <SettingsRow label="Roster size" value={sportLeague.affiliationCount} />
-        <SettingsRow label={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
-        <SettingsRow label="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
-      </SettingsRows>
+      <SectionRows>
+        <SectionRow layout="setting" name="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
+        <SectionRow layout="setting" name="Roster size" value={sportLeague.affiliationCount} />
+        <SectionRow layout="setting" name={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
+        <SectionRow layout="setting" name="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
+      </SectionRows>
     </SectionCard>
   );
 }
@@ -94,9 +93,10 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
   return (
     <>
       <SectionCard testId="root-admin-sport-league-danger-zone" tone="danger">
-        <SettingsRows>
-          <DangerZoneAction
-            action={(
+        <SectionRows>
+          <SectionRow
+            layout="action"
+            aside={(
               <Button
                 data-testid="root-admin-sport-league-home-toggle-active"
                 onClick={() => setConfirmOpen(true)}
@@ -106,12 +106,12 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
                 {actionLabel}
               </Button>
             )}
-            description={sportLeague.isActive
+            facts={sportLeague.isActive
               ? `Marks the ${sportLeagueNoun.one} inactive. Its roster and ${event.many} stay as they are.`
               : `Marks the ${sportLeagueNoun.one} active again.`}
-            title={actionLabel}
+            name={actionLabel}
           />
-        </SettingsRows>
+        </SectionRows>
       </SectionCard>
 
       <ConfirmDialog

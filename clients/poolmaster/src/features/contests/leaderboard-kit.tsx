@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { DataGrid, Tile } from '@/features/shared/ui';
+import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
@@ -14,22 +14,39 @@ import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboar
  * own columns and notes.
  */
 
-/** A board's standings: the scoreboard grid in a tile, searchable by entry, a page at a time. */
+/**
+ * The one frame every leaderboard format's standings sit in (#1578): a section titled
+ * Standings (the page's tab already says Leaderboard), with the viewer's best place in its title
+ * bar. It is bare, a title and rule with no box, because the board is the page's long content:
+ * a box's padding would cost a phone's board 32px of its width.
+ */
+export function LeaderboardSection({ children, trailing }: { children: ReactNode; trailing?: ReactNode }) {
+  return (
+    <SectionCard bare testId="contest-leaderboard-card" title="Standings" trailing={trailing}>
+      {children}
+    </SectionCard>
+  );
+}
+
+/** A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a page at a time. */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
   data,
   emptyMessage,
   rowTestIdPrefix,
   tableTestId,
+  trailing,
 }: {
   columns: ColumnDef<Row>[];
   data: Row[];
   emptyMessage: string;
   rowTestIdPrefix: string;
   tableTestId: string;
+  /** The title bar's trailing slot: the viewer's best place (`YourBestNote`). */
+  trailing?: ReactNode;
 }) {
   return (
-    <Tile>
+    <LeaderboardSection trailing={trailing}>
       <DataGrid
         headerTone="scoreboard"
         columns={columns}
@@ -42,7 +59,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
         showColumnFilters={false}
         tableTestId={tableTestId}
       />
-    </Tile>
+    </LeaderboardSection>
   );
 }
 
@@ -90,7 +107,7 @@ export function LeaderboardFrame({
 }
 
 /**
- * The note naming the viewer's best placed entry: the first of their squad's placed rows, since
+ * The viewer's best placed entry, for the Standings title bar: the first of their squad's placed rows, since
  * the server ranks best first. Nothing when the viewer has no placed entry on the board.
  */
 export function YourBestNote<Row extends BoardRow>({
@@ -111,5 +128,5 @@ export function YourBestNote<Row extends BoardRow>({
   if (!myBest) {
     return null;
   }
-  return <p data-testid={testId}>{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(points(myBest))}`}</p>;
+  return <Text data-testid={testId} variant="meta">{`Your best: ${myBest.displayPosition} · ${myBest.entryName}, ${formatPoints(points(myBest))}`}</Text>;
 }

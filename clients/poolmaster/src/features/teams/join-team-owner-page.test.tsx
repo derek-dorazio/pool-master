@@ -118,7 +118,7 @@ describe('JoinTeamOwnerPage', () => {
     renderJoinTeamOwnerPage();
 
     expect(await screen.findByTestId('sign-up-form')).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Join Beer Bellies as a co-owner' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Join Beer Bellies in Big Dawgs' })).toBeInTheDocument();
     expect(screen.getByTestId('sign-up-submit')).toBeVisible();
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
@@ -128,7 +128,9 @@ describe('JoinTeamOwnerPage', () => {
     expect(screen.getByRole('region', { name: 'Create your account' })).toHaveAttribute('data-testid', 'team-invite-register');
     expect(screen.getByTestId('team-invite-register-help')).toBeInTheDocument();
     expect(screen.queryByText(/uses the email this invitation was sent to/)).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: "What you're joining" })).toHaveClass('rounded-lg');
+    expect(screen.getByTestId('invitation-card-team')).toHaveTextContent('Beer Bellies');
+    expect(screen.getByTestId('invitation-card-role')).toHaveTextContent('A co-owner');
+    expect(screen.queryByText(/Create your account to join as a co-owner|This invitation adds you/)).not.toBeInTheDocument();
     expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
     // No email field: the account uses the invited address, which the server reads off the
     // invitation. That is the security property, so its absence is asserted.
@@ -422,7 +424,7 @@ describe('JoinTeamOwnerPage', () => {
       renderJoinTeamOwnerPage();
 
       expect(await screen.findByTestId('team-invite-sign-in')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Join as a co-owner' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Join team' })).toBeInTheDocument();
       expect(screen.queryByTestId('sign-up-form')).not.toBeInTheDocument();
     });
 
@@ -593,7 +595,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
     fireEvent.change(await screen.findByRole('textbox', { name: 'First name' }), { target: { value: ' Jordan ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Last name' }), { target: { value: ' Rivers ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: '  JRivers ' } });
-    fireEvent.change(screen.getByLabelText('Create password'), { target: { value: 'correct-horse-battery-1' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-1' } });
     fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'correct-horse-battery-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
 

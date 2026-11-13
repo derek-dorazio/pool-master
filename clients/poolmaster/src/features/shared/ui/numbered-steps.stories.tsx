@@ -17,3 +17,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+/** Titles only, set tighter: three steps beside the sign-in form, or under it on a phone. */
+export const CompactTitlesOnly: Story = {
+  args: {
+    className: "grid-cols-3 gap-3",
+    density: "compact",
+    steps: [{ title: "Create a league" }, { title: "Invite friends" }, { title: "Start a contest" }],
+  },
+};

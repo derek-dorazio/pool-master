@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, Navigate, useLocation, useNavigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
 import { LoginRequestSchema } from "@poolmaster/shared/dto";
 import { loginUser } from "@/lib/api";
-import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
+import { InvitationCard } from "@/features/leagues/invitation-card";
 import {
   Notice,
   Button,
@@ -14,12 +14,17 @@ import {
   FormField,
   Heading,
   Input,
+  LinkButton,
   PasswordInput,
   refetchFailed,
-  SegmentedControl,
-  StatusBadge,
-  Tile,
+  TabbedCard,
 } from "@/features/shared/ui";
+import { HowItWorksSteps } from "@/features/contest-types/how-it-works";
+import {
+  joinLeagueHeadline,
+  joinTeamHeadline,
+  SIGN_IN_HEADLINE,
+} from "@/features/contest-types/public-headlines";
 import {
   fetchInvitationPreview,
   getInvitationPreviewQueryKey,
@@ -37,8 +42,8 @@ import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { SignUpForm } from "./sign-up-form";
 import { eventPageCopy } from "@/features/event-pages/event-page-copy";
+import { HOW_TO_PLAY_PATH } from "@/features/event-pages/event-page-paths";
 import { parseStartReturnPath } from "@/features/event-pages/start-path";
-import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -239,165 +244,130 @@ export function AuthHomePage() {
     );
   }
 
-  return (
-    <Tile className="shadow-lg" padding="lg" radius="xl">
-      {/* On a phone the form comes straight after the headline and the two feature notes follow
-          it; on a wide screen the notes sit under the headline, beside the form. */}
-      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr]">
-        <div className="space-y-5 lg:col-start-1 lg:row-start-1">
-          <StatusBadge className="hidden text-muted-foreground sm:inline-flex" tone="brandOutline">
-            {PRODUCT_TAGLINE}
-          </StatusBadge>
-          <div className="space-y-3">
-            <Heading className="max-w-xl" level={2} tone="inherit" variant="hero">
-              {inviteContext
-                ? `You're almost inside ${inviteContext.league.name}.`
-                : teamInviteContext
-                  ? `You're almost inside ${teamInviteContext.league.name}.`
-                  : "Run your league, make your picks, and keep every pool night organized."}
-            </Heading>
-            <p className="max-w-xl text-base text-muted-foreground">
-              {inviteContext
-                ? "Sign in to join with your existing account, or create a new account to accept the invitation."
-                : teamInviteContext
-                  ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account to accept the invitation.`
-                  : `${PRODUCT_NAME} gives commissioners one place to create leagues, invite members, and run contests.`}
-            </p>
-          </div>
-          {inviteContext ? (
-            <>
-              <InvitationContextCard
-                inviteCode={inviteContext.inviteCode}
-                leagueName={inviteContext.league.name}
-                message="After you sign in or create your account, you can review the invite and choose to join."
-                title="League invite"
-              />
-            </>
-          ) : teamInviteContext ? (
-            <InvitationContextCard
-              inviteCode={teamInviteContext.inviteCode}
-              leagueName={teamInviteContext.league.name}
-              message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you can review the invitation and accept it.`}
-              title="Co-owner invite"
-            />
-          ) : startRequest ? (
-            <Notice data-testid="auth-start-banner" tone="info">
-              {`You're starting a ${eventPageCopy(startRequest).name} pool`}
-            </Notice>
-          ) : null}
-          {(inviteCode && invitePreviewQuery.isError) ||
-          (teamInviteCode && teamInvitePreviewQuery.isError) ? (
-            <ErrorState
-              body="We couldn't load the invitation preview. You can still sign in or create an account, then return to the invitation link."
-              onRetry={refetchFailed(invitePreviewQuery, teamInvitePreviewQuery)}
-              testId="auth-invite-preview-error"
-            />
-          ) : null}
-        </div>
-
-        <Tile className="lg:col-start-2 lg:row-span-2 lg:row-start-1" padding="md" radius="xl" variant="subtle">
-          <SegmentedControl
-            aria-label="Authentication mode"
-            onChange={(nextMode) =>
-              setMode(nextMode === "register" ? "register" : "login")
-            }
-            options={[
-              { label: "Sign in", value: "login" },
-              {
-                label: "Create account",
-                testId: "auth-mode-register",
-                value: "register",
-              },
-            ]}
-            value={mode}
-          />
-
-          {mode === "login" && serverError ? (
-            <Notice className="mt-4" data-testid="auth-server-error" tone="danger">
-              {serverError}
-            </Notice>
-          ) : null}
-
-          {mode === "login" ? (
-            <form
-              className="mt-6 space-y-4"
-              onSubmit={(e) => void loginForm.handleSubmit(handleLogin)(e)}
-            >
-              <FormField
-                error={loginForm.formState.errors.identifier?.message}
-                label="Username or email"
-              >
-                <Input
-                  {...loginForm.register("identifier")}
-                  data-testid="auth-login-identifier"
-                  placeholder="yourname or you@example.com"
-                  type="text"
-                />
-              </FormField>
-
-              <FormField
-                error={loginForm.formState.errors.password?.message}
-                label="Password"
-              >
-                <PasswordInput
-                  {...loginForm.register("password")}
-                  autoComplete="current-password"
-                  data-testid="auth-login-password"
-                />
-              </FormField>
-              <Link
-                className="inline-block text-sm font-medium text-primary hover:underline"
-                data-testid="auth-forgot-password"
-                to={FORGOT_PASSWORD_PATH}
-              >
-                Forgot password?
-              </Link>
-
-              <Button
-                className="w-full"
-                data-testid="auth-login-submit"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
-            </form>
-          ) : (
-            <div className="mt-6">
-              <SignUpForm onRegistered={handleRegistered} />
-            </div>
-          )}
-
-          <p className="mt-5 text-sm text-muted-foreground">
-            {inviteContext
-              ? "After you create your account, you'll come back to this invitation to join the league."
-              : teamInviteContext
-                ? `After you create your account, you'll come back to this invitation to join ${teamInviteContext.team.name} as a co-owner.`
-                : "After you create your account, you can set up your first league."}
-          </p>
-          <Link
-            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-            to={inviteCode || teamInviteCode ? destination : "/welcome"}
-          >
-            {inviteCode || teamInviteCode
-              ? "Back to invitation"
-              : "Continue to welcome"}
-          </Link>
-        </Tile>
-
-        {inviteContext || teamInviteContext ? null : (
-          <div className="grid gap-3 self-start text-sm text-muted-foreground sm:grid-cols-2 lg:col-start-1 lg:row-start-2 lg:-mt-3">
-            <Tile padding="sm" radius="md" variant="subtle">
-              Commissioners create a league, give it a memorable league code,
-              and invite their members.
-            </Tile>
-            <Tile padding="sm" radius="md" variant="subtle">
-              Members join by invitation, create their team,
-              and enter contests.
-            </Tile>
-          </div>
-        )}
+  const isInvite = Boolean(inviteContext ?? teamInviteContext);
+  const headline = inviteContext
+    ? joinLeagueHeadline(inviteContext.league.name)
+    : teamInviteContext
+      ? joinTeamHeadline(teamInviteContext.team.name, teamInviteContext.league.name)
+      : SIGN_IN_HEADLINE;
+  // A league or co-owner invite shows the league it leads to where the steps would be.
+  const besideTheForm = inviteContext ? (
+    <InvitationCard
+      inviteCode={inviteContext.inviteCode}
+      leagueName={inviteContext.league.name}
+      title="League invite"
+    />
+  ) : teamInviteContext ? (
+    <InvitationCard
+      inviteCode={teamInviteContext.inviteCode}
+      leagueName={teamInviteContext.league.name}
+      team={teamInviteContext.team}
+      title="Co-owner invite"
+    />
+  ) : (
+    <div className="space-y-4" data-testid="auth-how-it-works">
+      <HowItWorksSteps testId="auth-steps" />
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <LinkButton data-testid="auth-how-to-play" size="sm" to={HOW_TO_PLAY_PATH} variant="link">How to play</LinkButton>
+        <LinkButton data-testid="auth-plans" size="sm" to="/plans" variant="link">Plans</LinkButton>
       </div>
-    </Tile>
+    </div>
+  );
+
+  const loginView = (
+    <form
+      className="space-y-4"
+      onSubmit={(e) => void loginForm.handleSubmit(handleLogin)(e)}
+    >
+      {serverError ? (
+        <Notice data-testid="auth-server-error" tone="danger">
+          {serverError}
+        </Notice>
+      ) : null}
+      <FormField
+        error={loginForm.formState.errors.identifier?.message}
+        label="Username or email"
+      >
+        <Input
+          {...loginForm.register("identifier")}
+          autoComplete="username"
+          data-testid="auth-login-identifier"
+          type="text"
+        />
+      </FormField>
+
+      <FormField
+        error={loginForm.formState.errors.password?.message}
+        label="Password"
+      >
+        <PasswordInput
+          {...loginForm.register("password")}
+          autoComplete="current-password"
+          data-testid="auth-login-password"
+        />
+      </FormField>
+
+      <Button
+        className="w-full"
+        data-testid="auth-login-submit"
+        disabled={isSubmitting}
+        type="submit"
+      >
+        {isSubmitting ? "Signing in..." : "Sign in"}
+      </Button>
+      <LinkButton data-testid="auth-forgot-password" size="sm" to={FORGOT_PASSWORD_PATH} variant="link">
+        Forgot password?
+      </LinkButton>
+    </form>
+  );
+
+  return (
+    // On a phone the form comes straight after the headline (after an invite's league card),
+    // and the steps follow it; on a wide screen the steps or the league sit under the headline,
+    // beside the form.
+    <div
+      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:grid-rows-[auto_1fr] lg:gap-x-12"
+      data-testid="auth-home-page"
+    >
+      <Heading className="lg:col-start-1 lg:row-start-1" level={1} variant="hero">
+        {headline}
+      </Heading>
+
+      {isInvite ? <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div> : null}
+
+      <div className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        {startRequest && !isInvite ? (
+          <Notice data-testid="auth-start-banner" tone="info">
+            {`You're starting a ${eventPageCopy(startRequest).name} pool`}
+          </Notice>
+        ) : null}
+        {(inviteCode && invitePreviewQuery.isError) ||
+        (teamInviteCode && teamInvitePreviewQuery.isError) ? (
+          <ErrorState
+            body="We couldn't load the invitation preview. You can still sign in or create an account, then return to the invitation link."
+            onRetry={refetchFailed(invitePreviewQuery, teamInvitePreviewQuery)}
+            testId="auth-invite-preview-error"
+          />
+        ) : null}
+        <TabbedCard
+          aria-label="Sign in or create account"
+          onValueChange={(nextMode) => setMode(nextMode === "register" ? "register" : "login")}
+          radius="panel"
+          tabs={[
+            { content: loginView, label: "Sign in", testId: "auth-mode-login", value: "login" },
+            {
+              content: <SignUpForm onRegistered={handleRegistered} />,
+              label: "Create account",
+              testId: "auth-mode-register",
+              value: "register",
+            },
+          ]}
+          testId="auth-card"
+          value={mode}
+        />
+      </div>
+
+      {isInvite ? null : <div className="lg:col-start-1 lg:row-start-2">{besideTheForm}</div>}
+    </div>
   );
 }
