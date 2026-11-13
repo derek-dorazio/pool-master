@@ -27,13 +27,14 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport } = useManagedSport();
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const homePath = buildSportLeaguePath(sport, sportLeague.id);
+  const currentSyncProviderId = sportLeague.eventSyncProviderId ?? '';
 
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: sportLeague.name,
       matchKeyword: sportLeague.matchKeyword ?? '',
-      eventSyncProviderId: sportLeague.eventSyncProviderId ?? '',
+      eventSyncProviderId: currentSyncProviderId,
     },
     mode: 'onChange',
   });
@@ -43,17 +44,26 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
     onSuccess: () => void navigate(homePath),
     refusedMessage: 'Sport league update was rejected',
     sportLeagueId: sportLeague.id,
+    // Sync is sent only when it changed, so renaming a league whose provider is no longer
+    // registered is not refused for a provider the admin did not touch.
     toBody: (values: EditValues) => ({
       name: values.name,
       matchKeyword: values.matchKeyword?.trim() ?? '',
-      eventSyncProviderId: values.eventSyncProviderId === '' ? null : values.eventSyncProviderId,
+      ...(values.eventSyncProviderId !== currentSyncProviderId && {
+        eventSyncProviderId: values.eventSyncProviderId === '' ? null : values.eventSyncProviderId,
+      }),
     }),
   });
   // Only a provider covering the sport can sync its events; one already chosen stays listed.
   const providers = useProvidersQuery();
   // poolmaster-allow-list-lookup: the handful of registered providers is the picker's whole source
-  const syncProviders = (providers.data ?? []).filter((provider) =>
-    provider.sportsCovered.includes(sport) || provider.providerId === sportLeague.eventSyncProviderId);
+  const otherSyncProviders = (providers.data ?? []).filter((provider) =>
+    provider.sportsCovered.includes(sport) && provider.providerId !== currentSyncProviderId);
+  // The league's own provider is one option from the first render, named by its id until the list
+  // loads (or if it fails), so the picker never shows Off for a synced league.
+  // poolmaster-allow-list-lookup: the same handful of providers, already loaded for the picker
+  const currentProviderName = providers.data?.find((provider) => provider.providerId === currentSyncProviderId)?.providerName
+    ?? currentSyncProviderId;
 
   return (
     <FormPage
@@ -81,7 +91,8 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
       >
         <Select data-testid="root-admin-sport-league-edit-event-sync" {...form.register('eventSyncProviderId')}>
           <option value="">Off</option>
-          {syncProviders.map((provider) => (
+          {currentSyncProviderId === '' ? null : <option value={currentSyncProviderId}>{currentProviderName}</option>}
+          {otherSyncProviders.map((provider) => (
             <option key={provider.providerId} value={provider.providerId}>
               {provider.providerName}
             </option>

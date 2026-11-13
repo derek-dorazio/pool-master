@@ -225,7 +225,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
       expect(updateSportLeagueMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { sportLeagueId: 'pga' },
-          body: { name: 'PGA TOUR', matchKeyword: 'PGA', eventSyncProviderId: null },
+          body: { name: 'PGA TOUR', matchKeyword: 'PGA' },
         }),
       ),
     );
@@ -248,6 +248,39 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
         expect.objectContaining({ body: { name: 'PGA Tour', matchKeyword: 'PGA', eventSyncProviderId: 'balldontlie' } }),
       ),
     );
+  });
+
+  it('shows and keeps a synced tour\'s provider when the provider list arrives after the form, sending no sync change on a rename', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ eventSyncProviderId: 'balldontlie' })] } });
+    let resolveProviders: (value: unknown) => void = () => undefined;
+    listProvidersMock.mockReturnValue(new Promise((resolve) => { resolveProviders = resolve; }));
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ eventSyncProviderId: 'balldontlie' }) } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    expect(sync).toHaveValue('balldontlie');
+    resolveProviders({ data: { providers: [provider('balldontlie', 'BALLDONTLIE', ['GOLF'])] } });
+    await screen.findByRole('option', { name: 'BALLDONTLIE' });
+    expect(sync).toHaveValue('balldontlie');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-edit-save'));
+
+    await waitFor(() =>
+      expect(updateSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { name: 'PGA Tour', matchKeyword: 'PGA' } }),
+      ),
+    );
+  });
+
+  it('keeps showing a synced tour\'s provider by its id when the provider list fails to load', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ eventSyncProviderId: 'balldontlie' })] } });
+    listProvidersMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } }, response: { status: 500 } });
+    renderPage('pga', '/edit');
+
+    const sync = await screen.findByTestId('root-admin-sport-league-edit-event-sync');
+    expect(sync).toHaveValue('balldontlie');
+    expect(screen.getByRole('option', { name: 'balldontlie' })).toBeInTheDocument();
   });
 
   it('turns the tour\'s event sync off by choosing Off, sending null', async () => {

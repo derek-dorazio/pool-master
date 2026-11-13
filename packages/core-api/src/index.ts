@@ -282,11 +282,13 @@ export function buildApp() {
   };
 
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
+  // One set of event services for the admin routes and the synced event creation sweep.
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
   const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, registry, app.log),
-    sportEvents: createSportEventServices(prisma, app.log, eventLifecycleService, leaderboards, registry).sportEvents,
+    sportEvents: sportEventServices.sportEvents,
     jobLock,
     logger: app.log,
   });
@@ -364,6 +366,7 @@ export function buildApp() {
     providerRegistry: registry,
     cdn,
     leaderboards,
+    services: sportEventServices,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry: registry });
