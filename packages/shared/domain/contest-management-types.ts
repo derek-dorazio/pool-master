@@ -67,6 +67,12 @@ export interface SportEvent extends DomainEntity {
    */
   participantType?: ParticipantType | null;
   scoringFamily?: ScoringFamily | null;
+  /**
+   * The provider whose sync creates and keeps the series' sport league's events (ADR 0011), read
+   * through the series like `sportLeagueId`; absent when an admin authors them. Whether this
+   * event is one the sync keeps is `isProviderSyncedEvent`.
+   */
+  eventSyncProviderId?: string;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

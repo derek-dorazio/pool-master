@@ -557,9 +557,12 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Games and bracket rows from the feed** (#1728). Today an admin builds a bracket's rounds and
   matches, and the sync only links a provider game to an open match (*GAME: how a provider game
   finds its match*).
-- **Admin event pages become read and browse** (#1729) for synced leagues, with create, edit and result
-  entry kept for leagues no provider covers and for corrections; code comments that cite
-  ADR-0009 are updated with the code they describe.
+- **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its
+  sport league's `event_sync_provider_id` names the provider it is linked to for scores
+  (`isProviderSyncedEvent`, `SportEventDto.providerSynced`). Manage shows such an event's source
+  as that provider's sync, and its name, venue and dates read-only on Edit details, never sent;
+  location, rounds, par, field, tiers, prices, release and result entry stay the admin's. Create
+  stays for leagues no provider covers and for an event the feed lacks.
 
 ## 7. Reviewing a provider PR: what a new league should touch
 

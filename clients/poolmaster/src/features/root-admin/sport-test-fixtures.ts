@@ -41,6 +41,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     participantType: null,
     scoringFamily: null,
     syncScope: 'NONE',
+    providerSynced: false,
     autoLifecycleEnabled: true,
     tierCount: 6,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },

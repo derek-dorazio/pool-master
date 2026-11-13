@@ -1164,7 +1164,7 @@ const SPORT_EVENT_INCLUDE = {
   eventSeries: {
     select: {
       sportLeagueId: true,
-      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true } },
+      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, eventSyncProviderId: true } },
     },
   },
 } as const;
@@ -1192,6 +1192,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
     ...(row.eventSeries.sportLeague.participantType !== null && { participantType: row.eventSeries.sportLeague.participantType }),
     ...(row.eventSeries.sportLeague.scoringFamily !== null && { scoringFamily: row.eventSeries.sportLeague.scoringFamily }),
+    ...(row.eventSeries.sportLeague.eventSyncProviderId !== null && { eventSyncProviderId: row.eventSeries.sportLeague.eventSyncProviderId }),
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

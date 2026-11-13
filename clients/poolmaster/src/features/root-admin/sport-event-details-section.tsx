@@ -16,7 +16,8 @@ import { upperFirst } from '@/lib/upper-first';
 /**
  * The event's properties as labelled rows, with one Edit for all of them
  * (rules/ux-rules.md §12 rules 5 and 6). The sport league and event year are fixed at creation.
- * Par per round shows only for a family that scores unplayed rounds against it.
+ * Par per round shows only for a family that scores unplayed rounds against it. Source says
+ * whether the provider's sync keeps the event's name, venue and dates (ADR 0011) or an admin does.
  */
 export function SportEventDetailsSection({
   sportLeagueName,
@@ -45,6 +46,7 @@ export function SportEventDetailsSection({
       title="Details"
     >
       <SectionRows>
+        <SectionRow layout="setting" name="Source" value={tournament.providerSynced ? `${tournament.providerId} sync` : 'Admin'} />
         <SectionRow layout="setting" name="Venue" value={tournament.venue || 'Not set'} />
         <SectionRow layout="setting" name="Location" value={tournament.location || 'Not set'} />
         <SectionRow layout="setting" name="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />

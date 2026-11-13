@@ -357,6 +357,40 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     });
   });
 
+  it('shows a provider-synced event\'s name, venue and dates read-only and saves only what an admin still owns', async () => {
+    seedDefaults();
+    getEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' }) } });
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, location: 'Augusta, GA' }) } });
+    renderPage();
+
+    const details = await screen.findByTestId('root-admin-sport-event-details');
+    expect(within(details).getByText('balldontlie sync')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('root-admin-sport-event-home-edit'));
+    const modal = await screen.findByTestId('root-admin-sport-event-edit-page');
+    for (const testId of ['name', 'venue', 'start', 'end']) {
+      expect(within(modal).getByTestId(`root-admin-sport-event-edit-${testId}`)).toHaveAttribute('readonly');
+    }
+    expect(within(modal).getByText('Name, venue and dates come from the balldontlie sync.')).toBeInTheDocument();
+    fireEvent.change(within(modal).getByTestId('root-admin-sport-event-edit-location'), { target: { value: 'Augusta, GA' } });
+    fireEvent.click(within(modal).getByTestId('root-admin-sport-event-edit-save'));
+
+    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
+    const { body } = updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> };
+    expect(body).toMatchObject({ location: 'Augusta, GA', rounds: 4 });
+    for (const providerField of ['name', 'venue', 'startDate', 'endDate']) expect(body).not.toHaveProperty(providerField);
+  });
+
+  it('keeps an admin-authored event\'s name, venue and dates editable, with Admin as its source', async () => {
+    seedDefaults();
+    renderPage();
+
+    const details = await screen.findByTestId('root-admin-sport-event-details');
+    expect(within(details).getByText('Admin')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('root-admin-sport-event-home-edit'));
+    const modal = await screen.findByTestId('root-admin-sport-event-edit-page');
+    expect(within(modal).getByTestId('root-admin-sport-event-edit-name')).not.toHaveAttribute('readonly');
+  });
+
   it('saves the par per round an admin enters, and sends null when it is left blank', async () => {
     seedDefaults();
     updateEventMock.mockResolvedValue({ data: { event: tournament({ roundsPar: 72 }) } });

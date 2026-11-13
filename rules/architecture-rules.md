@@ -264,7 +264,8 @@ What the code does **today**, while the follow-up tickets of #1723 land:
   (`SportEventSyncScope` `SCORES_ONLY`; `NONE` is unlinked). The field sync loop exists but is
   off by default; an admin loads or refreshes one event's field.
 - A sync writes scores, the field and the field size. It does not yet write an event's name,
-  venue, dates, rounds or timing.
+  venue, dates, rounds or timing. Manage already shows a provider-synced event's name, venue and
+  dates read-only (`isProviderSyncedEvent`, #1729), since the provider wins over an edit.
 - Status moves by the date-driven lifecycle scheduler or by an admin, never by a provider feed.
 
 Building toward ADR-0011:
