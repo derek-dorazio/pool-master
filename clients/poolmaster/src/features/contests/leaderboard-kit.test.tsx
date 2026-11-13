@@ -99,6 +99,12 @@ describe('totalColumn', () => {
 });
 
 describe('ScoreboardGrid', () => {
+  it('sits in the shared section titled Leaderboard, so pick\'em, bracket, survivor and squares boards share one frame', () => {
+    renderBoard([placeColumn('board')]);
+
+    expect(within(screen.getByRole('region', { name: 'Leaderboard' })).getByTestId('board')).toBeInTheDocument();
+  });
+
   it('says the board\'s own empty message when no entry is on it', () => {
     renderBoard([placeColumn('board')], []);
 

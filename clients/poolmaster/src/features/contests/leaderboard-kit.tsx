@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { DataGrid, Tile } from '@/features/shared/ui';
+import { DataGrid, SectionCard } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
@@ -14,7 +14,19 @@ import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboar
  * own columns and notes.
  */
 
-/** A board's standings: the scoreboard grid in a tile, searchable by entry, a page at a time. */
+/**
+ * The one frame every leaderboard format's standings sit in (#1578): a section titled
+ * Leaderboard, with the board as its padded body.
+ */
+export function LeaderboardSection({ children }: { children: ReactNode }) {
+  return (
+    <SectionCard padded testId="contest-leaderboard-card" title="Leaderboard">
+      {children}
+    </SectionCard>
+  );
+}
+
+/** A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a page at a time. */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
   data,
@@ -29,7 +41,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
   tableTestId: string;
 }) {
   return (
-    <Tile>
+    <LeaderboardSection>
       <DataGrid
         headerTone="scoreboard"
         columns={columns}
@@ -42,7 +54,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
         showColumnFilters={false}
         tableTestId={tableTestId}
       />
-    </Tile>
+    </LeaderboardSection>
   );
 }
 
