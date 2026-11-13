@@ -30,7 +30,7 @@ Choosing between them: a comment can only constrain code that already exists, so
 Good ADR candidates:
 
 - Choice of a cross-cutting tool or convention (e.g. which task tracker, which API client, which test framework layer).
-- A system-shaping constraint that many modules must build around (e.g. every event is admin-authored and providers only link scores).
+- A system-shaping constraint that many modules must build around (e.g. a live provider sync is the source of a league's events).
 
 Being deliberated, and having rejected alternatives, is not enough on its own: every feature-design fork has both. The *subject* must be cross-cutting.
 
@@ -58,5 +58,6 @@ Not ADR candidates:
 - [ADR-0006 — GitHub Issues as the live task tracker](./0006-github-issues-as-live-task-tracker.md) *(supersedes ADR-0001)*
 - [ADR-0007 — Small validity matrices live in code, not the database](./0007-small-validity-matrices-live-in-code.md)
 - [ADR-0008 — Agent guidance is task-shaped and single-tool](./0008-single-tool-task-shaped-agent-guidance.md)
-- [ADR-0009 — Admin-authored events and score-only linking are the only provider pattern](./0009-admin-authored-events-score-only-linking.md)
+- [ADR-0009 — Admin-authored events and score-only linking are the only provider pattern](./0009-admin-authored-events-score-only-linking.md) *(superseded by ADR-0011)*
 - [ADR-0010 — React Native with Expo for the iPhone and Android app](./0010-react-native-expo-for-mobile.md)
+- [ADR-0011 — Once a league's provider sync is live, the sync creates its events](./0011-provider-sync-creates-events.md) *(supersedes ADR-0009)*

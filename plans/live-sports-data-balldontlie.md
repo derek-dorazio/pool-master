@@ -88,9 +88,11 @@ The target:
 4. **A slow scheduled poll as the safety net**, for deliveries that never arrive, and a
    final reconciliation sync when a game or round ends.
 
-Admins still author every event (ADR 0009). The provider only supplies data to events,
-matches and games an admin has linked to it, and it never creates events or moves an
-event's status.
+Today admins still author every event, and the provider only supplies data to events,
+matches and games linked to it. ADR 0011 (2026-11-13, superseding ADR 0009) sets the
+direction: once a league's sync is live, the sync creates its events and loads their fields,
+status follows the event's dates, and the admin mainly reviews and browses. The follow-up work
+is listed on #1723.
 
 ## Linking
 

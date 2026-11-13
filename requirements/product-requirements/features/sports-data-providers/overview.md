@@ -44,8 +44,10 @@ Prices for every provider that sells through sales are quotes we have not asked 
 
 ## What we need from a provider
 
-The product shapes the ask. Per ADR 0009, an admin authors every event and a provider only
-supplies data to an event an admin has linked. So the feeds are:
+The product shapes the ask. This brief was written under ADR 0009 (an admin authors every
+event and a provider only supplies data to a linked one); ADR 0011 has since made a live
+league's sync the source of its events, which adds a schedule feed per synced league to the
+list below. The feeds as first framed are:
 
 | Feed | When it runs | What it carries | Must be live? |
 |---|---|---|---|
@@ -276,7 +278,7 @@ Why it stays:
   provider bill and no scrambling (`rules/architecture-rules.md` §6 *Manual-testing seed
   data goes through the admin API*).
 - **Season schedules** are once a year per league, a few dozen facts, and an admin authors
-  events anyway (ADR 0009). The pipeline or a provider's event lookup both work; the
+  events anyway (ADR 0009, since superseded by ADR 0011 for synced leagues). The pipeline or a provider's event lookup both work; the
   pipeline needs no adapter.
 - **Results-only sports with no affordable provider** (horse racing, cycling, marathons, the
   PWHL, NCAA tennis): one finishing order per event, loaded or entered after the event.

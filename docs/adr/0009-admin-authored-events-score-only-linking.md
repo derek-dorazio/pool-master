@@ -1,6 +1,6 @@
 # ADR 0009: Admin-Authored Events and Score-Only Linking Are the Only Provider Pattern
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0011
 - **Date:** 2026-10-07
 
 ## Context

@@ -124,8 +124,9 @@ In order:
 5. **Field seeding and pricing.** Confirm the seeding source feeds tiers and budget prices
    through the existing event services, and that an event can be released (step 0).
 6. **Admin results.** An admin must be able to enter or correct every result without a
-   provider (`rules/architecture-rules.md` §4 *Provider data reaches only events an admin
-   authored and linked*). A new family's results route refuses an event of another family
+   provider: admin entry is the fallback for a league no feed covers and for correcting one
+   (`rules/architecture-rules.md` §4 *A live provider sync is the source of its league's
+   events*). A new family's results route refuses an event of another family
    with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. On the web, the family
    adds its entry to `SCORING_FAMILY_ADMIN_UI` (exhaustive, so the build asks for it): the
    results page's name and body. The Manage event, field, tier, participant and sport league

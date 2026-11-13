@@ -11,9 +11,12 @@ The plan behind the work, and the decisions Derek made on it, are in
 
 ## The short version
 
-- **Admins author events; providers only feed them** (ADR 0009). A sync never creates a
-  `sport_events` row and never moves an event's status. It writes scores, fields and links onto
-  rows an admin made or imported.
+- **Where this is going: the sync creates a live league's events** (ADR 0011, superseding
+  ADR 0009). Once a league's sync is live, it creates the league's events, loads their fields
+  and keeps their dates current, and the lifecycle scheduler moves their status from those
+  dates; the admin reviews, releases and browses. **Today** that is not built: an admin makes or
+  imports every `sport_events` row, and a sync writes scores, fields and links onto it and never
+  moves its status. *Toward ADR 0011* below lists what is missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
   games but no events, a *scope id* the adapter invents and parses back (`nfl-2026-week-12`,
@@ -118,7 +121,8 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 
 ### 2b. Event rows, by an admin action
 
-An event is created and linked in one of three ways, all root admin routes under
+Today an admin action is the only way an event is made; ADR 0011 moves this to the sync for a
+live league (see *Toward ADR 0011*). An event is created and linked in one of three ways, all root admin routes under
 `/api/v1/events` (`events/routes.ts`):
 
 | Action | Route | What it writes |
@@ -324,7 +328,10 @@ no feed). The lifecycle sweep will not complete an event holding a line still in
 
 ### What moves an event's status
 
-Not the sync. `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
+Not the sync, and ADR 0011 keeps it that way: status follows the event's dates. What ADR 0011
+adds is the sync keeping a synced event's dates current, which it does not do yet.
+
+Today, `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
 COMPLETED` from the event's round schedule, unless `auto_lifecycle_enabled` is off, and settlement
 and emails follow from that as background jobs (see `docs/BACKGROUND-JOBS.md`). Until an event is
 `IN_PROGRESS`, every live score for it is skipped with the warning
@@ -526,6 +533,25 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 |---|---|---|
 | Not read yet | | UCL two-leg ties, MLS best-of-three. |
 | Waiting for the GOAT key | #1500 | College Football Playoff: confirm the vendor carries bowl and playoff games, how it numbers their season and week, and whether a game marks the playoff. If one does, swap `CFP_LEAGUE.window` for it. Confirm the `ncaaf.game.*` webhook names. |
+
+### Toward ADR 0011
+
+ADR 0011 makes a live league's sync the source of its events. None of this is built; each item
+is a proposed follow-up on #1723:
+
+- **Scheduled event creation per league.** A loop per synced league that runs the year import's
+  path (`importProviderEventYear`) on a schedule, for the current and next season, so events
+  appear without an admin pressing Import. New events are born `DRAFT`.
+- **Field load on by default** for synced leagues, so a new event's participants load without
+  "Load Participant Field" (today the field loop is off by default).
+- **The sync keeps an event's details current**: dates, name and venue from the provider, so the
+  lifecycle scheduler moves a rescheduled event on its new dates. Today a sync never writes them.
+- **Games and bracket rows from the feed.** Today an admin builds a bracket's rounds and
+  matches, and the sync only links a provider game to an open match (*GAME: how a provider game
+  finds its match*).
+- **Admin event pages become read and browse** for synced leagues, with create, edit and result
+  entry kept for leagues no provider covers and for corrections; code comments that cite
+  ADR-0009 are updated with the code they describe.
 
 ## 7. Reviewing a provider PR: what a new league should touch
 
