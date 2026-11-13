@@ -193,6 +193,7 @@ export function createGameScoreWriterDeps(
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     results: createMatchResultService(prisma, logger, createEventLifecycleService(prisma, { logger }), leaderboards),
+    playIns: createSportEventBracketService(prisma, logger, leaderboards),
     logger,
   };
 }

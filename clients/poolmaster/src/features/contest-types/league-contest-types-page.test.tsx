@@ -130,23 +130,62 @@ describe('League › Contest types', () => {
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
   });
 
-  it('narrows the page with the same sport switch as How to Play, in the header: a sport shows only its section, a league only its group, and All sports every one', async () => {
+  it('narrows the page with the same sport and league column as How to Play: a sport shows only its section, a league only its group, and All sports every one', async () => {
     primeMocks('MEMBER');
     renderPage('/league/BIGDAWGS/admin/contest-types?sport=basketball');
 
     expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
     expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
-    const filter = within(screen.getByTestId('contest-types-header-tab-row')).getByRole('combobox', { name: 'Sport' });
-    expect(filter).toHaveValue('basketball');
-    expect(within(filter).getAllByRole('option').map((option) => option.textContent)).toEqual(['All sports', 'All basketball', 'NBA', 'All american football', 'NFL']);
+    const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
+    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Basketball 1', 'NBA', 'American football 1']);
+    expect(within(column).getByRole('link', { current: 'page' })).toHaveTextContent('Basketball');
 
-    fireEvent.change(filter, { target: { value: 'american-football/nfl' } });
+    fireEvent.click(screen.getByTestId('contest-types-leagues-column-american-football'));
+    fireEvent.click(within(column).getByRole('link', { name: 'NFL' }));
     expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
     expect(screen.queryByTestId('contest-types-sport-BASKETBALL')).not.toBeInTheDocument();
 
-    fireEvent.change(filter, { target: { value: '' } });
+    fireEvent.click(within(column).getByRole('link', { name: 'All sports' }));
     expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toBeInTheDocument();
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
+  });
+
+  it('switches sport on a phone with the same chip row and "Every league you can run" card as How to Play', async () => {
+    primeMocks('MEMBER');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football&league=nfl');
+
+    expect(await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    const chips = screen.getByRole('navigation', { name: 'Sport' });
+    fireEvent.click(within(chips).getByRole('link', { name: 'Clear NFL' }));
+    expect(within(screen.getByRole('navigation', { name: 'Sport' })).getByRole('link', { current: 'page' })).toHaveTextContent('American football');
+
+    fireEvent.click(within(screen.getByTestId('contest-types-every-league')).getByRole('link', { name: 'NBA' }));
+    expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+  });
+
+  it('lists a playoff round under its season league, and choosing the league shows the round\'s group with its own', async () => {
+    primeMocks('MEMBER');
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
+      ...TEMPLATES,
+      template('super-bowl-tiered', { id: 'tpl-super-bowl', sportLeagueId: 'super-bowl' }),
+    ] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+      { id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null, parentSportLeagueId: null },
+      { id: 'super-bowl', name: 'Super Bowl', sport: 'AMERICAN_FOOTBALL', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', parentSportLeagueId: NFL },
+      { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null, parentSportLeagueId: null },
+    ] } });
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football&league=nfl');
+
+    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
+    expect(football).toHaveTextContent('super-bowl-tiered name');
+    expect(football).toHaveTextContent('nfl-tiered-doubling name');
+    const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
+    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Basketball 1', 'American football 2', 'NFL', 'Regular season', 'Super Bowl']);
+
+    fireEvent.click(within(column).getByRole('link', { name: 'Super Bowl' }));
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('super-bowl-tiered name');
+    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toHaveTextContent('nfl-tiered-doubling name');
   });
 
   it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {

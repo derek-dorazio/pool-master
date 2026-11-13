@@ -192,6 +192,32 @@ describe('game scores from a provider', () => {
     expect(final).toMatchObject({ externalGameId: null, homeSportEventParticipantId: entryOf('Duke').id });
   });
 
+  it('fills a First Four play-in place with the winner the provider names in its round of 64 game, links that game in the same sync, and scores it on the next (#1571)', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
+    const prisma = getPrisma();
+    await prisma.sportEventMatch.updateMany({ where: { sportEventId: event.id }, data: { externalGameId: null } });
+    // Houston's place is the play-in place "UMBC / Howard" instead; UMBC, linked to the provider, won it.
+    const sportId = (await prisma.participant.findUniqueOrThrow({ where: { id: entryOf('Houston').participantId } })).sportId;
+    const [pairing, umbc] = await Promise.all(['UMBC / Howard', 'UMBC Retrievers'].map((name) => prisma.participant.create({ data: { sportId, name, participantType: 'TEAM' } })));
+    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, providerId: PROVIDER, externalId: `${externalId}-team-umbc` } });
+    const place = entryOf('Houston');
+    await prisma.sportEventParticipant.update({ where: { id: place.id }, data: { participantId: pairing.id, isPlayInPlace: true } });
+    const roundOf64 = { externalGameId: 'p-1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: `${externalId}-team-umbc`, playInWinnerTeamExternalId: `${externalId}-team-umbc` };
+
+    await publish(externalId, [{ ...roundOf64, state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }]);
+
+    const filled = await prisma.sportEventParticipant.findUniqueOrThrow({ where: { id: place.id } });
+    expect(filled).toMatchObject({ participantId: umbc.id, isPlayInPlace: false });
+    expect((await matches.findBySportEvent(event.id))[0]).toMatchObject({ externalGameId: 'p-1', awaySportEventParticipantId: place.id, status: MatchStatus.SCHEDULED });
+
+    const result = await publish(externalId, [{ ...roundOf64, state: ProviderGameState.FINAL, homeScore: 62, awayScore: 70 }]);
+
+    expect(result).toMatchObject({ updatesPersisted: 1 });
+    const [first, , final] = await matches.findBySportEvent(event.id);
+    expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 62, awayScore: 70, resultSource: MatchResultSource.PROVIDER });
+    expect(final.homeSportEventParticipantId).toBe(place.id);
+  });
+
   it('counts each NBA series\' games as wins, completing a series at four and sending its winner on, and shows a series still on as its wins so far (#1545)', async () => {
     // The NBA's rounds are best of seven, as its reference data says.
     const { event, externalId, entryOf, teamId, matches } = await linkedBracket(Sport.BASKETBALL, 'NBA');

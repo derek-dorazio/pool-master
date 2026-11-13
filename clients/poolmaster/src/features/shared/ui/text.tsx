@@ -56,6 +56,8 @@ const textVariants = cva("", {
       base: "text-base",
       lg: "text-lg",
       xl: "text-xl",
+      /** Small on a phone, `sm` from the small breakpoint: a tile's line that must fit two lines two-across on a phone. */
+      xsToSm: "text-xs sm:text-sm",
     },
     /** Emphasis: names and points that stand out in a row (`semibold`) or a total (`bold`). */
     weight: {

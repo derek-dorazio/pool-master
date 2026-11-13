@@ -48,8 +48,8 @@ describe('reset-qa-database image inventory', () => {
   it('lists this repository\'s migrations in applied order', () => {
     const names = migrationsInImage(fileURLToPath(new URL('../prisma/migrations', import.meta.url)));
     assert.deepEqual(names, [...names].sort(), 'must be in timestamp order');
-    assert.equal(names[0], '20271114000000_baseline_schema', 'the squashed baseline comes first');
-    assert.ok(names.includes('20271114000100_baseline_reference_data'));
+    assert.equal(names[0], '20271119000000_baseline_schema', 'the squashed baseline comes first');
+    assert.ok(names.includes('20271119000100_baseline_reference_data'));
     assert.ok(!names.includes('migration_lock.toml'), 'files are not migrations');
   });
 });

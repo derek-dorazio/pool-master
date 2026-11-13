@@ -94,26 +94,27 @@ the order it happens.
 | Table | Row | Why the sync needs it |
 |---|---|---|
 | `sports` | One per sport (baseline). | Participants and events hang off it. |
-| `sport_leagues` | One per league or Clutch Card league (baseline `20271114000100_baseline_reference_data`). Carries `scoring_family`, `round_names` and `match_keyword` (`round_series_lengths` is added by the next row's migration). | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
-| `sport_leagues.match_keyword` | Set per league by a small migration, only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
-| `sport_leagues.round_series_lengths` | `20271117000200_add_round_series_lengths`: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]` (seeded `[3,7,7]`, corrected by `20271118002300_wnba_semifinals_best_of_five`), MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
-| `background_jobs` enum | `20271118000000_add_provider_event_sync_job_type` adds `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
+| `sport_leagues` | One per league or Clutch Card league (baseline `20271119000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
+| `sport_leagues.match_keyword` | Every league below is set in the baseline. A league added later gets a small migration that sets it only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
+| `sport_leagues.round_series_lengths` | Baseline: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
+| `background_jobs` enum | Baseline `20271119000000_baseline_schema` carries `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
 
-The keyword migrations on `main`, and the tour each matches:
+The keyword each league is seeded with in the baseline, and the tour it matches. The history was squashed on 2026-11-12, so each league's own keyword migration is folded into the baseline:
 
 | Sport league | `match_keyword` | Migration | Adapter tour constant |
 |---|---|---|---|
 | NFL | `NFL` | baseline | `NFL_LEAGUE_NAME` (`nfl-mapping.ts`) |
-| NCAA Division I Men (basketball) | `NCAAM` | `20271116000000_set_ncaab_mens_match_keyword` | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
-| NCAA Division I Women (basketball) | `NCAAW` | `20271116000100_set_ncaaw_womens_match_keyword` | `NCAA_WOMEN.tour` |
-| Premier League | `EPL` | `20271116000200_set_premier_league_match_keyword` | `EPL_TOUR` (`epl-mapping.ts`) |
-| FIFA World Cup | `FIFAWC` | `20271117000100_set_fifa_world_cup_match_keyword` | `FIFA_WC_TOUR` (`fifa-world-cup-mapping.ts`) |
-| NBA | `NBA` | `20271117000300_set_nba_match_keyword` | `NBA_PLAYOFFS.tour` (`nba-mapping.ts`) |
-| NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | `20271117000500_set_nba_clutch_card_match_keywords` | the round's `name` in `NBA_PLAYOFFS.rounds` |
-| PGA TOUR | `NULL` in the seed (see *Gaps* below) | none | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
-| NHL | `NHL` | `20271118001000_set_nhl_match_keyword` | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
-| MLB | `MLB` | `20271118002100_set_mlb_match_keyword` | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
-| WNBA | `WNBA` | `20271118002200_set_wnba_match_keyword` | `WNBA_PLAYOFFS.tour` (`wnba-mapping.ts`) |
+| College Football Playoff | `CFP` | `20271119000300_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
+| NCAA Division I Men (basketball) | `NCAAM` | baseline | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
+| NCAA Division I Women (basketball) | `NCAAW` | baseline | `NCAA_WOMEN.tour` |
+| Premier League | `EPL` | baseline | `EPL_TOUR` (`epl-mapping.ts`) |
+| FIFA World Cup | `FIFAWC` | baseline | `FIFA_WC_TOUR` (`fifa-world-cup-mapping.ts`) |
+| NBA | `NBA` | baseline | `NBA_PLAYOFFS.tour` (`nba-mapping.ts`) |
+| NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | baseline | the round's `name` in `NBA_PLAYOFFS.rounds` |
+| PGA TOUR | `PGA TOUR` | baseline | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
+| NHL | `NHL` | baseline | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
+| MLB | `MLB` | baseline | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
+| WNBA | `WNBA` | baseline | `WNBA_PLAYOFFS.tour` (`wnba-mapping.ts`) |
 
 ### 2b. Event rows, by an admin action
 
@@ -251,7 +252,7 @@ scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
   events it is about. When an event is in play (golf's latest round under way, or a match in
   progress since its scheduled start) with no notification for longer than its league's
   `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
-  plus its break; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
+  plus its break; college football 110, for a long playoff halftime; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
   notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
   at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
   A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
@@ -296,10 +297,11 @@ finish position (racing) accepts none, and its batches are skipped with
 A `GameScoreUpdate` carries the vendor game id, both teams' prefixed external ids, a state and the
 score. The writer maps the two teams through `participant_provider_mappings` to field rows, then:
 
-1. **Single-game rounds** (NFL, NCAA, World Cup, Premier League). A game no match holds yet is
+1. **Single-game rounds** (NFL, College Football Playoff, NCAA, World Cup, Premier League). A game no match holds yet is
    linked to the one open match whose two sides are those teams (`gamesToLink`). Two candidates
    either way link nothing; a later sync tries again. Once linked, `@@unique([sport_event_id,
-   external_game_id])` holds it.
+   external_game_id])` holds it. A game naming a First Four winner first fills that side's
+   play-in place (see *First Four* under the NCAA tournaments below).
 2. **Best-of series** (`round_series_lengths[round] > 1`: NBA, NHL, MLB, WNBA). The match links no
    game. Every sync the reader hands over *every* game of the event; the writer counts each final
    game's winner between the match's two teams and writes the wins so far as the live score, and
@@ -340,6 +342,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 |---|---|---|---|---|---|---|
 | PGA TOUR | the vendor's tournament id (`18`) | golfer, bare vendor id | `/pga/v2/tournaments`, `/pga/v2/tournament_competitors` (GOAT), `/pga/v1/players` (OWGR), `/pga/v2/tournament_results` (ALL-STAR) | `GOLF` | `pga-contract.ts`, `pga-mapping.ts`, the PGA half of `balldontlie-adapter.ts` | 4 tournament events |
 | NFL | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `/nfl/v1/games`, `/nfl/v1/teams` | `GAME` | `nfl-contract.ts`, `nfl-mapping.ts`, `nfl-reader.ts` | `nfl.game.*` |
+| College Football Playoff | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `/ncaaf/v1/games` (`start_date`, `end_date`: the season's window), `/ncaaf/v1/teams` | `GAME` | `ncaaf-contract.ts`, `ncaaf-mapping.ts`, `ncaaf-reader.ts` | `ncaaf.game.*` (names assumed) |
 | NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
 | NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nba.game.*` (#1667) |
 | NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | `nba.game.*` (the `nba-` prefix covers both) |
@@ -371,20 +374,63 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **Key code.** `nfl-mapping.ts` `parseNflScope`, `nflScopeId`, `nflTeamExternalId`;
   `nfl-reader.ts`.
 
+### College Football Playoff (#1496)
+
+- **Registration.** College Football Playoff sport league, keyword `CFP` (migration
+  `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
+  (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
+  own four. Teams carry the tour `CFP`, so a provider team links by name only to the site's
+  teams affiliated with the playoff league.
+- **The date rule.** The vendor's college games carry no postseason flag, bowl name or venue. So
+  a season's playoff games are every game from noon UTC on the day after the first Saturday of
+  December (conference championship day) through January 31 of the next year:
+  `CFP_LEAGUE.window` (`cfpGameWindow`) in `ncaaf-mapping.ts`, a rule in code, not stored
+  data. Derek chose it on 2026-11-13, to be backed out for the vendor's own marker if a key
+  shows the feed has one. The reader asks by `start_date`/`end_date` and keeps only the games
+  inside the window whatever the filter let through, since a Saturday night title game kicks
+  off on the Sunday in UTC (the 2025 Big Ten title game, 01:00 UTC on December 7).
+- **Why the window starts there.** A conference title game can pair two playoff teams (2025:
+  Indiana v Ohio State). Handed to the GAME writer with the bracket's games, it would link to
+  the open match between those two teams, a first round or later match, and score it.
+- **Sync.** `NcaafReader.liveScores(scope)` hands over every game in the window, bowls between
+  other schools included; the writer's team-pair link keeps only the bracket's games. The event
+  is complete only once the window has closed and every game in it is done, since the window
+  names no game as the last.
+- **The field.** The event's field is every team playing in the window, so it holds every bowl
+  team as well as the twelve in the bracket; the admin still places the twelve seeds.
+- **The sport's team list is long by design.** `getParticipants(AMERICAN_FOOTBALL)` returns the
+  NFL's 32 teams and every college team `/ncaaf/v1/teams` lists, as basketball's returns every
+  Division I team. The admin's unmapped teams for football are therefore mostly college teams;
+  a college team links by name only to the playoff league's teams, so none takes an NFL row.
+- **Key code.** `ncaaf-mapping.ts` `CFP_LEAGUE`, `cfpGameWindow`, `cfpGamesOf`,
+  `parseCfpScope`; `ncaaf-reader.ts`.
+
 ### NCAA men's and women's tournaments (#1496 parts 4a, 4b)
 
 - **Registration.** Keywords `NCAAM` / `NCAAW` by migration. One event per season. The bracket
-  starts at the round of 64; First Four games carry no score. Teams carry their seed and their
+  starts at the round of 64; First Four games carry no score (see *First Four* below). Teams carry their seed and their
   league's tour, so a school's men's and women's teams link to their own rows.
 - **Sync.** `NcaaTournamentReader.liveScores(season)` reads the bracket; one reader class serves
   both, configured by `NCAA_MEN` / `NCAA_WOMEN`.
+- **First Four (#1571).** Each First Four pairing is a play-in place on the site ("UMBC / Howard"),
+  which names its two teams only in that label. Once the vendor calls a First Four game final, the
+  winner's round of 64 game carries `playInWinnerTeamExternalId`. The GAME writer finds the one
+  match where the winner's opponent plays a play-in place, and fills that place with the winner
+  through `fillPlayInSlot`, the admin's own path (`head-to-head/play-in-fill.ts`). The game then
+  links and scores like any other, in the same sync. Region and seed are not used: the women's
+  bracket document has no region. Nothing is filled, and a warning is logged
+  (`liveScore.playIn.*`), when:
+  - the winner has no team mapping, or the opponent is not on the field;
+  - the opponent plays no play-in place, or plays two;
+  - `fillPlayInSlot` refuses the winner.
+  In each case the admin fills the place, as before. A place already filled is never touched.
 - **Key code.** `ncaa-tournament-mapping.ts` (`parseNcaaTournamentScope`, the league configs),
   `ncaa-tournament-reader.ts`.
 
 ### NBA playoffs bracket (#1496, PR #1656)
 
-- **Registration.** NBA sport league, keyword `NBA` (`20271117000300`), `round_series_lengths
-  [7,7,7,7]` (`20271117000200`). One event per season (`nba-2025-postseason`, played in 2026:
+- **Registration.** NBA sport league, keyword `NBA` (baseline), `round_series_lengths
+  [7,7,7,7]` (baseline). One event per season (`nba-2025-postseason`, played in 2026:
   `playoffYearOffset: 1`).
 - **Sync.** `PlayoffsReader.liveScores(season)` reads every postseason game of the season and
   hands all of them over every time, because the GAME writer counts series wins from the batch.
@@ -405,8 +451,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### NHL playoffs bracket (#1496, PR #1662)
 
-- **Registration.** NHL sport league, keyword `NHL` (`20271118001000`), `round_series_lengths
-  [7,7,7,7]` (`20271117000200`). One event per season (`nhl-2025-postseason`, played in 2026:
+- **Registration.** NHL sport league, keyword `NHL` (baseline), `round_series_lengths
+  [7,7,7,7]` (baseline). One event per season (`nhl-2025-postseason`, played in 2026:
   `playoffYearOffset: 1`). `NHL_PLAYOFFS.rounds` names the four rounds a future NHL Clutch Card
   league would key to (*NHL First Round*, *NHL Second Round*, *NHL Conference Finals*, *Stanley
   Cup Final*), but the NHL reads no box scores yet, so it is a `PlayoffsReader` and lists no round.
@@ -419,8 +465,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### MLB postseason bracket (#1496)
 
-- **Registration.** MLB sport league, keyword `MLB` (`20271118002100`), `round_series_lengths
-  [3,5,7,7]` (`20271117000200`). One event per season (`mlb-2026-postseason`, played the same
+- **Registration.** MLB sport league, keyword `MLB` (baseline), `round_series_lengths
+  [3,5,7,7]` (baseline). One event per season (`mlb-2026-postseason`, played the same
   year: `playoffYearOffset: 0`). `MLB_POSTSEASON.rounds` names *MLB Wild Card Series*, *MLB
   Division Series*, *MLB League Championship Series* and *World Series*; the four top seeds' byes
   are no series, so their first series is round 2. No round is listed until MLB reads box scores.
@@ -431,8 +477,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### WNBA playoffs bracket (#1496)
 
-- **Registration.** WNBA sport league, keyword `WNBA` (`20271118002200`), `round_series_lengths
-  [3,5,7]` (`20271118002300` corrects the seeded `[3,7,7]`: the semifinals are best of five). One
+- **Registration.** WNBA sport league, keyword `WNBA` (baseline), `round_series_lengths
+  [3,5,7]` (baseline; the semifinals are best of five). One
   event per season (`wnba-2026-postseason`, played the same year: `playoffYearOffset: 0`).
   `WNBA_PLAYOFFS.rounds` names *WNBA First Round*, *WNBA Semifinals* and *WNBA Finals*; no round
   is listed until the WNBA reads box scores.
@@ -448,7 +494,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **Registration.** Each round reached is listed as an event of its own
   (`nba-2025-postseason-round-4`), named and toured by `NBA_PLAYOFFS.rounds[r-1].name`. The two
   Clutch Card sport leagues, *NBA Finals* and *NBA Conference Finals*, are keyed to their own names
-  (`20271117000500`), so each league's import finds only its round, and the NBA league's import
+  (baseline), so each league's import finds only its round, and the NBA league's import
   finds only the season. Rounds 1 and 2 are listed but no sport league imports them. The field is
   the round's teams' active players, `nba-player-<id>`, toured by the round name so they link by
   name to the stars already loaded from the round's data file. The existing Load Participant Field
@@ -478,7 +524,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 | Work | Where | What it adds |
 |---|---|---|
-| Not read yet | | College Football Playoff (the vendor marks no postseason), UCL two-leg ties, MLS best-of-three. |
+| Not read yet | | UCL two-leg ties, MLS best-of-three. |
+| Waiting for the GOAT key | #1500 | College Football Playoff: confirm the vendor carries bowl and playoff games, how it numbers their season and week, and whether a game marks the playoff. If one does, swap `CFP_LEAGUE.window` for it. Confirm the `ncaaf.game.*` webhook names. |
 
 ## 7. Reviewing a provider PR: what a new league should touch
 
@@ -513,13 +560,15 @@ None is fixed here; each is for the owning thread to confirm.
 
 - **NBA had no webhook entry.** Fixed by #1667: `nba` is in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`
   with the prefix `nba-`, which covers both the bracket and the round events.
+- **College football's webhook event names are assumed** (`ncaaf.game.started`,
+  `game.period_ended`, `game.ended`, the NFL's names). The subscription covers every college
+  game, but a notification queues a sync only for a CFP event in play, so a regular
+  season Saturday triggers nothing.
 - **NHL, MLB and WNBA webhook event names are assumed.** Their entries subscribe to `game.started`,
   `game.period_ended` and `game.ended`, the NFL and NCAA names. The vendor's webhook document
   has not been checked for hockey, baseball or the WNBA (an inning may not be a "period"); confirm the
   names once the key exists.
-- **PGA TOUR's `match_keyword` is seeded `NULL`.** The comment on `PGA_TOUR_NAME` says the league
-  finds these events "with no keyword set by hand", but `listTourEventsForYear` refuses a league
-  with no keyword (422), and the browse with a league filter falls back to no filter. Either an
-  admin has set it on QA by hand, or PGA TOUR needs a keyword migration like the others.
+- **PGA TOUR's `match_keyword` was seeded `NULL`.** Fixed by #1666, which set it to `PGA TOUR`;
+  the baseline now carries it.
 - **`PROVIDER_EVENT_SYNC` was missing from `docs/BACKGROUND-JOBS.md`**, whose rule is that a new
   job type is added to its table. This PR adds the row.

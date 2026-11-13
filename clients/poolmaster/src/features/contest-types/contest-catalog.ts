@@ -87,6 +87,8 @@ export interface PublicCatalogLeague {
   name: string;
   /** Its name in the page's link: `?sport=basketball&league=wnba`. */
   slug: string;
+  /** The season league it is a playoff round of (#1701: the NHL for the Stanley Cup Final), or null. */
+  parentSportLeagueId: string | null;
   /** What it plays: its sport's definition, or a stat pool's for a championship stat pool league (#936). */
   definition: SportDefinition;
   groups: ContestTypeTile[];
@@ -148,6 +150,7 @@ export function buildPublicContestCatalog(
           sportLeagueId: sportLeague.id,
           name: sportLeague.displayName ?? sportLeague.name,
           slug: catalogSlug(sportLeague.name),
+          parentSportLeagueId: sportLeague.parentSportLeagueId,
           definition: leagueDefinition,
           groups: toFormatTiles(
             `${sport}/${sportLeague.id}`,

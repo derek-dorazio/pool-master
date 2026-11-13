@@ -7964,6 +7964,10 @@ export type SportLeagueDto = {
      */
     displayOrder: number | null;
     /**
+     * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+     */
+    parentSportLeagueId: string | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -8068,6 +8072,10 @@ export type SportLeagueListResponse = {
          */
         displayOrder: number | null;
         /**
+         * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+         */
+        parentSportLeagueId: string | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -8158,6 +8166,10 @@ export type SportLeagueResponse = {
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
         displayOrder: number | null;
+        /**
+         * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
+         */
+        parentSportLeagueId: string | null;
         /**
          * Participants currently affiliated with the sport league.
          */

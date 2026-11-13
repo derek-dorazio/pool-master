@@ -105,9 +105,24 @@ function signInTo(leagues: ReturnType<typeof buildLeague>[], role: LeagueRole = 
   });
 }
 
-/** The sport switch in the page header. */
-function sportFilter() {
-  return screen.getByRole('combobox', { name: 'Sport' });
+/** The column of every sport and league beside the ways to play, on a computer. */
+function leaguesColumn() {
+  return screen.getByRole('navigation', { name: 'Sports and leagues' });
+}
+
+/** The column's lines, as their words. */
+function columnLines() {
+  return within(leaguesColumn()).getAllByRole('link').map((link) => link.textContent);
+}
+
+/** The line or chip the page shows as chosen. */
+function chosenIn(container: HTMLElement) {
+  return within(container).getAllByRole('link').filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.textContent);
+}
+
+/** The ways to play's heading: "3 ways to play hockey". */
+async function waysToPlayHeading() {
+  return within(await screen.findByTestId('how-to-play-formats')).getAllByRole('heading', { level: 2 })[0];
 }
 
 describe('How to Play', () => {
@@ -120,17 +135,21 @@ describe('How to Play', () => {
     expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
   });
 
-  it('shows a signed-out visitor the three steps, one card for each way to play a template offers, and a way to create an account', async () => {
+  it('shows a signed-out visitor the ways to play first, counted in their heading, beside every sport, with the three steps as one slim strip and a way to create an account', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
 
     expect(await screen.findByTestId('how-to-play-format-TIERED')).toHaveTextContent('Tiered');
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play');
     expect(screen.getByTestId('how-to-play-steps')).toHaveTextContent('Start a league');
+    expect(screen.getByTestId('how-to-play-steps')).toHaveTextContent('Pick a contest');
+    // The slim strip names each step and says nothing more.
+    expect(screen.getByTestId('how-to-play-steps')).not.toHaveTextContent('invites everyone with one link');
     expect(screen.getByTestId('how-to-play-format-SQUARES')).toHaveTextContent('Squares');
+    expect(screen.getByTestId('how-to-play-format-SQUARES')).toHaveTextContent('Claim squares on a 10 × 10 grid.');
     expect(screen.queryByTestId('how-to-play-format-BRACKET')).not.toBeInTheDocument();
-    expect(within(sportFilter()).getByRole('option', { name: 'All golf' })).toBeInTheDocument();
-    expect(sportFilter()).toHaveValue('');
-    expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
+    expect(chosenIn(leaguesColumn())).toEqual(['All sports']);
+    expect(chosenIn(screen.getByTestId('how-to-play-sport-chips'))).toEqual(['All sports']);
     expect(listContestConfigTemplatesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { active: 'true' } }));
     for (const register of screen.getAllByTestId('how-to-play-register')) {
       expect(register).toHaveAttribute('href', '/');
@@ -162,7 +181,8 @@ describe('How to Play', () => {
 
     fireEvent.click(within(details).getByTestId('how-to-play-format-TIERED-sport-GOLF'));
     expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=golf');
-    expect(sportFilter()).toHaveValue('golf');
+    expect(chosenIn(leaguesColumn())).toEqual(['Golf 2']);
+    expect(await waysToPlayHeading()).toHaveTextContent('1 way to play golf');
     expect(screen.queryByTestId('how-to-play-format-SQUARES')).not.toBeInTheDocument();
   });
 
@@ -179,24 +199,28 @@ describe('How to Play', () => {
     expect(screen.getByTestId('how-to-play-format-TIERED-sport-GOLF')).toHaveTextContent('GolfPGA TOUR · LPGA Tour · DP World Tour + 1 more');
   });
 
-  it('narrows the page to the sport its link names: that sport\'s picture with its line behind the (?), only its ways to play, and its default template inside each', async () => {
+  it('narrows the page to the sport its link names: its count and name in the heading, its line behind the (?), only its ways to play, and its default template inside each', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage('/how-to-play?sport=american-football');
 
-    const banner = await screen.findByTestId('how-to-play-sport-banner');
-    expect(within(banner).getByRole('heading', { name: 'American football' })).toBeInTheDocument();
+    const formats = await screen.findByTestId('how-to-play-formats');
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play american football');
     // The sport's line sits behind the section's (?), never as a sentence in it.
-    expect(banner).not.toHaveTextContent('Weekly pick\'em and survivor');
-    fireEvent.click(within(banner).getByRole('button', { name: 'How this section works' }));
-    expect(screen.getByTestId('how-to-play-sport-banner-help-callout')).toHaveTextContent('Weekly pick\'em and survivor');
+    expect(formats).not.toHaveTextContent('Weekly pick\'em and survivor');
+    fireEvent.click(within(formats).getAllByRole('button', { name: 'How this section works' })[0]);
+    expect(screen.getByTestId('how-to-play-formats-help-callout')).toHaveTextContent('Weekly pick\'em and survivor');
     expect(screen.getByTestId('how-to-play-format-SQUARES')).toBeInTheDocument();
+    // With one sport shown, a tile needs no sport icons.
+    expect(screen.queryByTestId('how-to-play-format-SQUARES-sports-icons')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('how-to-play-format-SQUARES-toggle'));
     expect(screen.getByTestId('how-to-play-format-SQUARES-details')).toHaveTextContent('nfl-squares name. nfl-squares description.');
 
-    fireEvent.change(sportFilter(), { target: { value: '' } });
+    fireEvent.click(within(leaguesColumn()).getByTestId('how-to-play-leagues-column-all'));
     expect(screen.getByTestId('location')).toHaveTextContent(/^\/how-to-play$/);
-    expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play');
+    // A new choice closes the open tile.
+    expect(screen.queryByTestId('how-to-play-format-SQUARES-details')).not.toBeInTheDocument();
   });
 
   it('opens the way to play a contest page\'s link names, at its sport, and scrolls it into view', async () => {
@@ -206,7 +230,7 @@ describe('How to Play', () => {
 
     const details = await screen.findByTestId('how-to-play-format-TIERED-details');
     expect(within(within(details).getAllByRole('list')[0]).getAllByRole('listitem')).toHaveLength(3);
-    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('Golf');
+    expect(await waysToPlayHeading()).toHaveTextContent('1 way to play golf');
     await vi.waitFor(() => expect(scrollIntoView.mock.contexts).toContain(screen.getByTestId('how-to-play-format-TIERED')));
     scrollIntoView.mockRestore();
   });
@@ -219,44 +243,62 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-format-TIERED-details')).not.toBeInTheDocument();
   });
 
-  it('offers every sport in the header switch, each with its leagues under it, the most popular sport first and its major league first', async () => {
+  it('lists every sport in the column with its count of leagues, the most popular first, each with its first leagues while every sport is shown, and the chosen sport opens to all of its leagues', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
 
     await screen.findByTestId('how-to-play-format-TIERED');
-    expect(within(screen.getByTestId('how-to-play-header-tab-row')).getByRole('combobox', { name: 'Sport' })).toBe(screen.getByTestId('how-to-play-sport-filter'));
-    expect(within(sportFilter()).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'All sports', 'All american football', 'NFL', 'College Football Playoff', 'All golf', 'PGA TOUR', 'LPGA Tour',
-    ]);
-    expect(within(within(sportFilter()).getByRole('group', { name: 'Golf' })).getAllByRole('option').map((option) => option.textContent)).toEqual(['All golf', 'PGA TOUR', 'LPGA Tour']);
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 2', 'PGA TOUR', 'LPGA Tour']);
+
+    fireEvent.click(within(leaguesColumn()).getByTestId('how-to-play-leagues-column-golf'));
+    expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=golf');
+    // Another sport closes to its name and count while one is chosen.
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'Golf 2', 'PGA TOUR', 'LPGA Tour']);
   });
 
-  it('narrows the page to a chosen league: its name over its sport\'s picture, only the ways to play it offers, and its own template inside each, kept in the link', async () => {
+  it('caps each sport at four lines with every sport shown, and counts the rest as "+ N more", which chooses that sport', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+      ...SPORT_LEAGUES,
+      sportLeagueFixture({ id: 'dpw', sport: 'GOLF', name: 'DP World Tour', displayOrder: 30 }),
+      sportLeagueFixture({ id: 'liv', sport: 'GOLF', name: 'LIV Golf', displayOrder: 40 }),
+      sportLeagueFixture({ id: 'kft', sport: 'GOLF', name: 'Korn Ferry Tour', displayOrder: 50 }),
+    ] } });
     renderPage();
 
     await screen.findByTestId('how-to-play-format-TIERED');
-    fireEvent.change(sportFilter(), { target: { value: 'american-football/college-football-playoff' } });
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 5', 'PGA TOUR', 'LPGA Tour', 'DP World Tour', 'LIV Golf', '+ 1 more']);
+    expect(within(leaguesColumn()).getByTestId('how-to-play-leagues-column-golf-more')).toHaveAttribute('href', '/how-to-play?sport=golf');
+  });
+
+  it('narrows the page to a league chosen in the column: its name in the heading, only the ways to play it offers, and its own template inside each, kept in the link', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage('/how-to-play?sport=american-football');
+
+    fireEvent.click(await screen.findByTestId('how-to-play-leagues-column-american-football-college-football-playoff'));
     expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=american-football&league=college-football-playoff');
-    expect(sportFilter()).toHaveValue('american-football/college-football-playoff');
-    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('College Football Playoff');
+    expect(chosenIn(leaguesColumn())).toEqual(['College Football Playoff']);
+    expect(await waysToPlayHeading()).toHaveTextContent('1 way to play College Football Playoff');
     expect(screen.queryByTestId('how-to-play-format-SQUARES')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
     expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('cfp-tiered name. cfp-tiered description.');
   });
 
-  it('opens on the league its link names, and choosing the league\'s sport widens the page to every league of it', async () => {
+  it('opens on the league its link names, shown on a phone as one chip in its sport\'s place whose × goes back to the sport', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage('/how-to-play?sport=american-football&league=nfl');
 
-    expect(await screen.findByTestId('how-to-play-sport-banner')).toHaveTextContent('NFL');
-    expect(sportFilter()).toHaveValue('american-football/nfl');
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play NFL');
+    const chips = screen.getByTestId('how-to-play-sport-chips');
+    expect(within(chips).queryByTestId('how-to-play-sport-chips-american-football')).not.toBeInTheDocument();
+    const clear = within(chips).getByRole('link', { name: 'Clear NFL' });
+    expect(clear).toHaveTextContent('NFL');
 
-    fireEvent.change(sportFilter(), { target: { value: 'american-football' } });
+    fireEvent.click(clear);
     expect(screen.getByTestId('location')).toHaveTextContent(/^\/how-to-play\?sport=american-football$/);
-    expect(sportFilter()).toHaveValue('american-football');
-    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('American football');
+    expect(chosenIn(screen.getByTestId('how-to-play-sport-chips'))).toEqual(['American football']);
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play american football');
   });
 
   it('shows every sport when the link names a sport with no contest types', async () => {
@@ -264,8 +306,26 @@ describe('How to Play', () => {
     renderPage('/how-to-play?sport=curling');
 
     expect(await screen.findByTestId('how-to-play-format-SQUARES')).toBeInTheDocument();
-    expect(sportFilter()).toHaveValue('');
-    expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
+    expect(chosenIn(leaguesColumn())).toEqual(['All sports']);
+    expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play');
+  });
+
+  it('lists every sport\'s leagues as chips in the "Every league you can run" card, each linking to that league and scrolling back up to the ways to play', async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, 'scrollIntoView');
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage();
+
+    const card = await screen.findByTestId('how-to-play-every-league');
+    expect(within(card).getByRole('heading', { name: 'Every league you can run' })).toBeInTheDocument();
+    expect(within(card).getByRole('navigation', { name: 'Golf leagues' })).toHaveTextContent('PGA TOURLPGA Tour');
+    const lpga = within(card).getByRole('link', { name: 'LPGA Tour' });
+    expect(lpga).toHaveAttribute('href', '/how-to-play?sport=golf&league=lpga-tour');
+
+    fireEvent.click(lpga);
+    expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=golf&league=lpga-tour');
+    expect(scrollIntoView.mock.contexts.map((element) => (element as HTMLElement).id)).toContain('ways-to-play');
+    expect(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear LPGA Tour' })).toBeInTheDocument();
+    scrollIntoView.mockRestore();
   });
 
   it('sends a signed-in member to their leagues instead of to registration', async () => {
@@ -399,6 +459,173 @@ describe('How to Play', () => {
       fireEvent.click(await screen.findByTestId('how-to-play-format-TIERED-toggle'));
       expect(screen.queryByTestId('how-to-play-format-TIERED-create')).not.toBeInTheDocument();
       expect(listLeaguesMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a season league with playoff rounds', () => {
+    // The NHL's own tiered and hockey's survivor, and the Stanley Cup Final's stat pool tiered.
+    const HOCKEY = [
+      template('nhl-tiered', { sport: 'HOCKEY', sportLeagueId: 'nhl' }),
+      template('hockey-survivor', { sport: 'HOCKEY', selectionType: 'SURVIVOR', contestFormat: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } }),
+      template('stanley-cup-final-tiered', { sport: 'HOCKEY', sportLeagueId: 'stanley-cup-final' }),
+    ];
+    // Display order puts the rounds after every season league; the parent link still lists them under the NHL.
+    const HOCKEY_LEAGUES = [
+      sportLeagueFixture({ id: 'nhl', sport: 'HOCKEY', name: 'NHL', displayOrder: 10 }),
+      sportLeagueFixture({ id: 'pwhl', sport: 'HOCKEY', name: 'PWHL', displayOrder: 20 }),
+      sportLeagueFixture({ id: 'stanley-cup-final', sport: 'HOCKEY', name: 'Stanley Cup Final', displayOrder: 50, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', parentSportLeagueId: 'nhl' }),
+    ];
+
+    beforeEach(() => {
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: HOCKEY } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: HOCKEY_LEAGUES } });
+    });
+
+    it('lists each round under the league its parent link names, after the league\'s regular season, and not after the other leagues', async () => {
+      renderPage('/how-to-play?sport=hockey');
+
+      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play hockey');
+      expect(columnLines()).toEqual(['All sports', 'Hockey 3', 'NHL', 'Regular season', 'Stanley Cup Final', 'PWHL']);
+      expect(within(leaguesColumn()).getByRole('link', { name: 'Stanley Cup Final' })).toHaveAttribute('href', '/how-to-play?sport=hockey&league=nhl&part=stanley-cup-final');
+      // On a phone the card lists the round right after its league.
+      expect(within(screen.getByTestId('how-to-play-every-league')).getByRole('navigation', { name: 'Hockey leagues' })).toHaveTextContent('NHLStanley Cup FinalPWHL');
+    });
+
+    it('shows a league with its rounds\' ways to play too: the Clutch Card on the NHL', async () => {
+      renderPage('/how-to-play?sport=hockey&league=nhl');
+
+      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play NHL');
+      expect(chosenIn(leaguesColumn())).toEqual(['NHL']);
+      expect(screen.getByTestId('how-to-play-format-SURVIVOR')).toBeInTheDocument();
+      expect(screen.getByTestId('how-to-play-clutch-card')).toBeInTheDocument();
+      // The league's own template leads its tile.
+      fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
+      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('nhl-tiered name.');
+    });
+
+    it('narrows to the regular season alone, with no Clutch Card', async () => {
+      renderPage('/how-to-play?sport=hockey&league=nhl&part=nhl');
+
+      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play the NHL regular season');
+      expect(chosenIn(leaguesColumn())).toEqual(['Regular season']);
+      expect(screen.queryByTestId('how-to-play-clutch-card')).not.toBeInTheDocument();
+      expect(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear NHL · Regular season' })).toHaveAttribute('href', '/how-to-play?sport=hockey');
+    });
+
+    it('narrows to one round, named in the heading and as one clearable chip on a phone', async () => {
+      renderPage('/how-to-play?sport=hockey&league=nhl&part=stanley-cup-final');
+
+      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play the Stanley Cup Final');
+      expect(chosenIn(leaguesColumn())).toEqual(['Stanley Cup Final']);
+      expect(screen.queryByTestId('how-to-play-format-SURVIVOR')).not.toBeInTheDocument();
+      expect(screen.getByTestId('how-to-play-clutch-card')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
+      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('stanley-cup-final-tiered name.');
+
+      fireEvent.click(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear NHL · Stanley Cup Final' }));
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/how-to-play\?sport=hockey$/);
+    });
+
+    it('drops a part the league does not have, back to the whole league', async () => {
+      renderPage('/how-to-play?sport=hockey&league=nhl&part=frozen-four');
+
+      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play NHL');
+    });
+
+    it('gives the Clutch Card its new line on the tile, and how it plays once opened', async () => {
+      renderPage('/how-to-play?sport=hockey');
+
+      const tile = await screen.findByTestId('how-to-play-clutch-card');
+      expect(tile).toHaveTextContent('Who will come in clutch? Pick your stars.');
+      expect(tile).not.toHaveTextContent('Every game is a round');
+      fireEvent.click(screen.getByTestId('how-to-play-clutch-card-toggle'));
+      expect(screen.getByTestId('how-to-play-clutch-card-details')).toHaveTextContent('Every game is a round, and each star scores one stat in it.');
+    });
+  });
+
+  describe('a tile\'s sport icons', () => {
+    let restoreLayout: () => void = () => undefined;
+    afterEach(() => restoreLayout());
+
+    /** Every element reads `width` px wide, as a tile's icon row would on a phone. */
+    function layOutRowsAt(width: number) {
+      const original = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth');
+      Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => width });
+      restoreLayout = () => {
+        delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+        if (original) Object.defineProperty(Element.prototype, 'clientWidth', original);
+      };
+    }
+
+    it('keeps the icons to one line and counts the rest as "+N", naming every sport for screen readers', async () => {
+      // Room for two icons at 24px each, after the 28px kept for "+N".
+      layOutRowsAt(80);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
+        template('golf-tiered', {}),
+        template('nfl-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl' }),
+        template('nba-tiered', { sport: 'BASKETBALL' }),
+        template('nhl-tiered', { sport: 'HOCKEY' }),
+      ] } });
+      renderPage();
+
+      const icons = await screen.findByTestId('how-to-play-format-TIERED-sports-icons');
+      await vi.waitFor(() => expect(within(icons).getByTestId('how-to-play-format-TIERED-sports-icons-more')).toHaveTextContent('+2'));
+      expect(icons).toHaveAccessibleName('On American football, Basketball, Hockey, Golf');
+    });
+
+    it('shows every icon, with no "+N", when they all fit', async () => {
+      layOutRowsAt(300);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage();
+
+      const icons = await screen.findByTestId('how-to-play-format-TIERED-sports-icons');
+      expect(within(icons).queryByTestId('how-to-play-format-TIERED-sports-icons-more')).not.toBeInTheDocument();
+      expect(icons).toHaveAccessibleName('On American football, Golf');
+    });
+  });
+
+  describe('"+ Create" on a closed tile', () => {
+    it('opens Create contest on the tile\'s template in the one league a commissioner runs, named for its type, beside the tile\'s own button', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage('/how-to-play?sport=american-football&league=nfl');
+
+      const create = await screen.findByRole('link', { name: 'Create a Squares contest' });
+      expect(create).toHaveTextContent('+ Create');
+      expect(create).toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-nfl-squares');
+      // A sibling of the tile's toggle, never inside it.
+      expect(screen.getByTestId('how-to-play-format-SQUARES-toggle')).not.toContainElement(create);
+      expect(screen.getByTestId('how-to-play-format-SQUARES-actions')).toContainElement(create);
+
+      fireEvent.click(screen.getByTestId('how-to-play-format-SQUARES-toggle'));
+      expect(screen.queryByRole('link', { name: 'Create a Squares contest' })).not.toBeInTheDocument();
+    });
+
+    it('asks which league from a menu when a commissioner runs several', async () => {
+      signInTo([
+        buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' }),
+        buildLeague({ id: 'family', leagueCode: 'FAMILY', name: 'Family pool' }),
+      ]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage('/how-to-play?sport=american-football&league=nfl');
+
+      const create = await screen.findByRole('button', { name: 'Create a Tiered contest' });
+      fireEvent.pointerDown(create, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+      const menu = await screen.findByTestId('how-to-play-format-TIERED-quick-create-menu');
+      expect(menu).toHaveTextContent('Create contest in');
+      expect(within(menu).getByTestId('how-to-play-format-TIERED-quick-create-OFFICE')).toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-nfl-tiered');
+      expect(within(menu).getByTestId('how-to-play-format-TIERED-quick-create-FAMILY')).toHaveAttribute('href', '/league/FAMILY/admin/contests/new?template=id-nfl-tiered');
+    });
+
+    it('shows a member who runs no league no "+ Create"', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })], LeagueRole.MEMBER);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage();
+
+      await screen.findByTestId('how-to-play-format-TIERED');
+      await vi.waitFor(() => expect(listLeaguesMock).toHaveBeenCalled());
+      expect(screen.queryByTestId('how-to-play-format-TIERED-actions')).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /^Create a / })).not.toBeInTheDocument();
     });
   });
 

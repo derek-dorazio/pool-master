@@ -265,7 +265,7 @@ export function AuthHomePage() {
     />
   ) : (
     <div className="space-y-4" data-testid="auth-how-it-works">
-      <HowItWorksSteps testId="auth-steps" titlesOnly />
+      <HowItWorksSteps testId="auth-steps" />
       <div className="flex flex-wrap gap-x-6 gap-y-2">
         <LinkButton data-testid="auth-how-to-play" size="sm" to={HOW_TO_PLAY_PATH} variant="link">How to play</LinkButton>
         <LinkButton data-testid="auth-plans" size="sm" to="/plans" variant="link">Plans</LinkButton>

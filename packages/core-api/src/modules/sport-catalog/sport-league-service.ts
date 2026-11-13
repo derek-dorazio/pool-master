@@ -151,7 +151,8 @@ export class SportLeagueService {
   /**
    * Deletes a sport league nothing uses any more (#1400), with its affiliations and its series that
    * have no events. 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it,
-   * while it has an event, a contest setup, an event page offer or a league's cup.
+   * while it has an event, a contest setup, an event page offer, a league's cup or a playoff round
+   * that names it as its season league.
    */
   async deleteSportLeague(sportLeagueId: string): Promise<void> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
@@ -327,5 +328,6 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
     ...counted(uses.contestTemplateCount, 'contest setup', 'contest setups'),
     ...counted(uses.eventPageOfferCount, 'event page offer', 'event page offers'),
     ...counted(uses.cupCount, 'league cup', 'league cups'),
+    ...counted(uses.roundCount, 'playoff round', 'playoff rounds'),
   ];
 }

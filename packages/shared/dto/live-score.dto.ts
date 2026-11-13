@@ -64,6 +64,7 @@ export const GameScoreUpdateSchema = z.object({
     .describe('The home team\'s shoot-out score, for a game level after extra time and settled by a shoot-out (#1532); left out or null otherwise.'),
   awayShootoutScore: z.number().int().min(0).nullable().optional()
     .describe('The away team\'s shoot-out score, beside `homeShootoutScore`.'),
+  playInWinnerTeamExternalId: z.string().min(1).optional().describe('Set when one of the game\'s two teams got here by winning a play-in game (#1571, the March Madness First Four): that team\'s provider-side id. The match\'s side for it is the play-in place, which the team fills.'),
 }).describe('Head-to-head game update emitted by game adapters.');
 export type GameScoreUpdate = z.infer<typeof GameScoreUpdateSchema>;
 

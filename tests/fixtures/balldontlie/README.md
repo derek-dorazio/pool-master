@@ -4,8 +4,8 @@ What the BALLDONTLIE adapter's tests read, and the vendor document they are held
 adapter was built before any account existed, so everything here comes from the vendor's
 published OpenAPI document, not from recorded traffic.
 
-- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/mlb.yml`, `openapi/wnba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL,
+- `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaaf.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
+  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/mlb.yml`, `openapi/wnba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL, college football,
   NCAA men's and women's basketball, NBA, NHL, MLB, WNBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
@@ -48,6 +48,13 @@ published OpenAPI document, not from recorded traffic.
   franchise in no conference. Every one
   must fit the document (`wnba-contract.test.ts`).
 
+- `ncaaf/*.json` are written to the NCAAF document's schemas, which give no response examples:
+  the 2025 season from a late November game to the national championship, with the Big Ten title
+  game between two playoff teams (Indiana v Ohio State, kicked off 8 PM Eastern on Saturday
+  December 6, so `2025-12-07T01:00Z`), the Army-Navy game and all eleven playoff games, the real
+  pairings and scores; the 2026 season's title game and its first round just begun, with a live,
+  a scheduled and an `unknown` game; and five teams. Every one must fit the document
+  (`ncaaf-contract.test.ts`).
 - `epl/*.json` are written to the EPL document's schemas, which give no response examples: the
   2026 season's matchweek 11 with two finals (one a draw), a live, a scheduled and a postponed
   match, matchweek 12 with a scheduled and an `unknown` match, a match with no round number, and
@@ -92,6 +99,22 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
   `full_name` are always sent, though the document requires none of them; a game missing one
   fails the sync with the field named. A score is sent once a game starts; before kickoff the
   adapter ignores any.
+
+- NCAAF: the vendor carries bowl and playoff games at all, and lists them by `date` under
+  `start_date` and `end_date`. The document marks no game as a playoff game, so the adapter
+  reads a season's College Football Playoff as every game from noon UTC on the day after the
+  first Saturday of December through January 31 (`CFP_LEAGUE` in `ncaaf-mapping.ts`), and keeps
+  only those in the window whatever the date filter let through (its time zone is not
+  documented). `--game-event ncaaf-2025-cfp` prints the game count: the bowls and the
+  playoff's eleven games together. If a game turns out to carry a playoff or postseason marker,
+  replace the window with it (Derek, 2026-11-13).
+- NCAAF: how the vendor numbers a January game's `season` and `week` is not documented; the
+  adapter reads by date alone, so either numbering works.
+- NCAAF: a team's `full_name` is the name the site's College Football Playoff teams are loaded
+  under ("Indiana Hoosiers"), so the first import links them. College teams carry the tour
+  `CFP` and link only to the playoff league's teams.
+- NCAAF: `/ncaaf/v1/teams` returns every team in one response, as the document shows it with no
+  paging.
 
 - NCAAB: `/ncaab/v1/bracket?season=<s>` lists the whole tournament, every round, from Selection
   Sunday on, with later rounds' sides null until they are decided. A tournament is called

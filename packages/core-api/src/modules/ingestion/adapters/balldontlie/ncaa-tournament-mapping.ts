@@ -10,9 +10,11 @@
  *
  * The two brackets number their rounds differently (the men's First Four is round 1, the
  * women's round 0), so each league names its own. PoolMaster's bracket starts at the round of
- * 64, with each First Four pairing one play-in place an admin fills with its winner. So First
- * Four games carry no score here, since no match is theirs, and their teams are left out of the
- * field before and after they play: the play-in place stands for them.
+ * 64, with each First Four pairing one play-in place filled with its winner. So First Four games
+ * carry no score here, since no match is theirs, and their teams are left out of the field before
+ * and after they play: the play-in place stands for them. Once a First Four game is final, its
+ * winner's round of 64 game names it (`playInWinnerTeamExternalId`), and that game fills the place
+ * (#1571).
  *
  * Team ids are prefixed by league (`ncaab-team-150`, `ncaaw-team-150`): the vendor numbers each
  * league's teams on its own, and a bare number would collide with another sport's. Each team
@@ -181,11 +183,19 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
 
 /**
  * Each bracket game's teams, state and score, for the GAME live-score category: every game from
- * the round of 64 on whose two teams are decided. A game whose state the vendor calls `unknown`
- * is left out.
+ * the round of 64 on whose two teams are decided. A First Four winner's round of 64 game names
+ * that team as the play-in place's (`playInWinnerTeamExternalId`), the place it fills. A game whose
+ * state the vendor calls `unknown` is left out.
  */
 export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: readonly NcaaBracketGame[]): GameScoreUpdate[] {
   const path = bracketPathOf(league);
+  const playInWinners = new Set(games.flatMap((game) => {
+    if (game.round !== league.firstFourRound || game.status_state !== CompetitionStatusState.FINAL) return [];
+    const home = decidedTeam(game.home_team);
+    const away = decidedTeam(game.away_team);
+    if (!home || !away || home.score === undefined || home.score === null || away.score === undefined || away.score === null || home.score === away.score) return [];
+    return [home.score > away.score ? home.id : away.id];
+  }));
   return games.flatMap((game) => {
     const home = decidedTeam(game.home_team);
     const away = decidedTeam(game.away_team);
@@ -193,6 +203,8 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
     if (required(game.round, path, gameName(game), 'round') <= league.firstFourRound) return [];
     const state = GAME_STATE_BY_STATUS[game.status_state];
     const started = hasStarted(state);
+    // Only its round of 64 game: in a later round the place is long filled and the winner is a team like any other.
+    const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
       externalGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
       homeTeamExternalId: ncaaTeamExternalId(league, home.id),
@@ -200,6 +212,7 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
       state,
       homeScore: started ? home.score ?? null : null,
       awayScore: started ? away.score ?? null : null,
+      ...(playInWinner ? { playInWinnerTeamExternalId: ncaaTeamExternalId(league, playInWinner.id) } : {}),
     }];
   });
 }
