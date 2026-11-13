@@ -35,9 +35,12 @@ export const LeaguePlanListResponseSchema = z.object({
   previewPeriodMonths: z.number().int().min(1).describe(
     'How many months of Premium every new league is gifted from signup (#986), before it moves to Free.',
   ),
+  previewPlan: z.enum(LeaguePlan).nullable().describe(
+    'The plan every new league is gifted from signup for `previewPeriodMonths` (#1614), or null while no preview is offered. The Plans page highlights its column and names the offer only while it is set.',
+  ),
   paymentsEnabled: z.boolean().describe('Whether expanding a contest is charged. While false, expanding is free.'),
   expansionPrices: BillingConfigSchema.shape.expansionPrices,
-}).describe('What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan.');
+}).describe('What each league plan allows, which plan new leagues are gifted and for how long, and what expanding a contest costs on each plan.');
 export type LeaguePlanListResponse = z.infer<typeof LeaguePlanListResponseSchema>;
 
 export const ExtendPlanRenewalRequestSchema = z.object({

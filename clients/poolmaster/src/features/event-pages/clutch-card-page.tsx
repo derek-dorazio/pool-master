@@ -263,7 +263,9 @@ function Faq() {
   const copy = CLUTCH_CARD_PAGE.faq;
   return (
     <LandingSection eyebrow={copy.eyebrow} id="questions" testId="clutch-card-faq" title={copy.title}>
-      <FaqList items={copy.items} />
+      <Tile className="overflow-hidden" padding="none">
+        <FaqList items={copy.items} />
+      </Tile>
     </LandingSection>
   );
 }

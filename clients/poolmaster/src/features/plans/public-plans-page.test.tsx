@@ -65,7 +65,7 @@ describe('PublicPlansPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows a visitor all four plans with the caps from the plan settings, every one free for now, and the Premium preview period every new league gets', async () => {
+  it('shows a visitor all four plans with the caps from the plan settings, every one free for now, and the Premium preview every new league gets in the fact line', async () => {
     renderPage();
 
     const free = within(await screen.findByTestId('plan-card-FREE'));
@@ -78,8 +78,41 @@ describe('PublicPlansPage', () => {
     expect(pro.getByText('Everything in Free, plus')).toBeInTheDocument();
     expect(pro.getByTestId('plan-card-PRO-highlights')).toHaveTextContent('8 more emails');
     expect(screen.getByTestId('plan-card-PREMIUM-highlights')).toHaveTextContent('All years');
-    expect(screen.getByTestId('public-plans-free-note')).toHaveTextContent('Every new league gets Premium free for a 6-month preview period');
+    expect(screen.getByTestId('public-plans-header')).toHaveTextContent('Premium free for 6 months · Every plan: every contest type, live leaderboards, unlimited members');
     expect(listLeaguesMock).not.toHaveBeenCalled();
+  });
+
+  it('tints the comparison column of the plan new leagues are gifted, and no other', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('plan-comparison-column-PREMIUM')).toHaveAttribute('data-highlighted', 'true');
+    for (const plan of [LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PLATINUM]) {
+      expect(screen.getByTestId(`plan-comparison-column-${plan}`)).not.toHaveAttribute('data-highlighted');
+    }
+  });
+
+  it('moves the tint to whichever plan the preview gives', async () => {
+    listLeaguePlansMock.mockResolvedValue(apiSuccess(buildPlanListResponse(PLANS, { previewPlan: LeaguePlan.PRO, previewPeriodMonths: 3 })));
+
+    renderPage();
+
+    expect(await screen.findByTestId('plan-comparison-column-PRO')).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId('plan-comparison-column-PREMIUM')).not.toHaveAttribute('data-highlighted');
+    expect(screen.getByTestId('public-plans-header')).toHaveTextContent('Pro free for 3 months · Every plan');
+  });
+
+  it('shows no offer and tints no column while no preview is offered, keeping Start free and the fact line', async () => {
+    listLeaguePlansMock.mockResolvedValue(apiSuccess(buildPlanListResponse(PLANS, { previewPlan: null })));
+
+    renderPage();
+
+    await screen.findByTestId('plan-comparison-table');
+    expect(screen.getByTestId('public-plans-header')).not.toHaveTextContent(/free for/);
+    expect(screen.getByTestId('public-plans-header')).toHaveTextContent('Every plan: every contest type, live leaderboards, unlimited members');
+    expect(screen.getByTestId('public-plans-start')).toHaveTextContent('Start free');
+    for (const plan of Object.values(LeaguePlan)) {
+      expect(screen.getByTestId(`plan-comparison-column-${plan}`)).not.toHaveAttribute('data-highlighted');
+    }
   });
 
   it('lists each plan\'s contest expansion prices, free while payments are off', async () => {
@@ -114,6 +147,7 @@ describe('PublicPlansPage', () => {
     expect(start).toHaveTextContent('Start free');
     expect(start).toHaveAttribute('href', '/');
     expect(screen.getByTestId('public-plans-start-footer')).toHaveTextContent('Start free');
+    expect(within(screen.getByTestId('public-plans-cta')).getByRole('heading', { name: 'Start your league today' })).toBeInTheDocument();
   });
 
   it('starts the comparison with the twelve emails folded to a count per plan, and opens them on a tap', async () => {
@@ -126,9 +160,24 @@ describe('PublicPlansPage', () => {
     fireEvent.click(emails.getByTestId('plan-comparison-toggle-EMAILS'));
 
     const reminder = within(emails.getByTestId('plan-comparison-row-EMAIL_CONTEST_ENTRY_REMINDER'));
-    expect(reminder.getByText('Nudges members who haven\'t entered yet.')).toBeInTheDocument();
-    expect(reminder.getAllByLabelText(/included/i).map((icon) => icon.getAttribute('aria-label')))
-      .toEqual(['Not included', 'Included', 'Included', 'Included']);
+    expect(reminder.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['Not included', 'Included', 'Included', 'Included']);
+  });
+
+  it('keeps each row\'s description behind a (?) on its name, not under it', async () => {
+    renderPage();
+    const entries = within(await screen.findByTestId('plan-comparison-row-ENTRIES_PER_CONTEST'));
+
+    expect(entries.getByRole('button', { name: 'About Entries per contest' })).toBeInTheDocument();
+    expect(entries.getByRole('rowheader')).toHaveTextContent(/^Entries per contest$/);
+  });
+
+  it('opens a question to its answer inside the Questions section', async () => {
+    renderPage();
+    const questions = within(await screen.findByRole('region', { name: 'Questions' }));
+
+    expect(questions.queryByText(/choose its plan in league settings/)).not.toBeInTheDocument();
+    fireEvent.click(questions.getByRole('button', { name: 'Who chooses the plan?' }));
+    expect(questions.getByText(/choose its plan in league settings/)).toBeVisible();
   });
 
   it('sends a signed-in commissioner of one league straight to that league\'s plan page', async () => {

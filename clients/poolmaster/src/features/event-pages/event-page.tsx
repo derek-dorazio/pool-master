@@ -4,6 +4,7 @@ import { buildEventPagePath, EventPageOfferState, getSportDefinition } from '@po
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
+import { previewOffer } from '@/features/plans/preview-offer';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, cn, EmptyState, ErrorState, Eyebrow, formatDateDisplay, Heading, LinkButton, LoadingState, NumberedSteps, StickyActionBar, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { LandingDisclaimer } from './components/landing-disclaimer';
@@ -61,6 +62,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   const sportName = getSportDefinition(page.sport).name;
   const primary = page.offers.find((offer) => offer.isPrimary);
   const plansQuery = useLeaguePlansQuery();
+  const gift = plansQuery.data ? previewOffer(plansQuery.data) : null;
   const sportPagesQuery = useEventPagesQuery(page.sport, { upcoming: true });
   // poolmaster-allow-list-lookup: the sport's few upcoming event pages, shown as what comes next
   const nextUp = withPrimaryOffer((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
@@ -88,11 +90,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
         <div className="flex flex-wrap items-center gap-3" ref={hero}>
           <StartButton request={startRequest} testId="event-page-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
         </div>
-        {plansQuery.data ? (
-          <Chip data-testid="event-page-gift" tone="active">
-            {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
-          </Chip>
-        ) : null}
+        {gift ? <Chip data-testid="event-page-gift" tone="active">{gift}</Chip> : null}
       </PhotoHero>
 
       {page.offers.length > 0 ? (

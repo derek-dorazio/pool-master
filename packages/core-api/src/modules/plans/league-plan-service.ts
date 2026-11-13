@@ -15,7 +15,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import { LeaguePlanChangeReason, type League, type LeaguePlan } from '@poolmaster/shared/domain';
+import { LeaguePlan, LeaguePlanChangeReason, type League } from '@poolmaster/shared/domain';
 import { LeagueNotFoundError, LeagueOperationError } from '../leagues/service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
@@ -24,6 +24,12 @@ import type { PlanEntitlementsService } from './plan-entitlements-service';
  * `leagues.plan_renews_at` column default adds the same six months at signup.
  */
 export const PREMIUM_PREVIEW_PERIOD_MONTHS = 6;
+
+/**
+ * The plan every new league is gifted from signup (plans/payments.md §3): the `leagues.plan`
+ * column default. The public plan list names it so the Plans page can highlight it (#1614).
+ */
+export const PREVIEW_PLAN: LeaguePlan = LeaguePlan.PREMIUM;
 
 export interface LeaguePlanServiceDeps {
   leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals' | 'moveEndedPlansToFree' | 'findLastPlanChange'>;

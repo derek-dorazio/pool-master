@@ -1,4 +1,5 @@
-import { createContext, useContext, type ComponentProps } from "react";
+import { ChevronDown } from "lucide-react";
+import { createContext, useContext, type ComponentProps, type ReactNode } from "react";
 import { cn } from "./class-names";
 
 /**
@@ -107,4 +108,56 @@ export type TableCellProps = ComponentProps<"td"> & CellLayout;
 export function TableCell({ align, className, numeric, ...props }: TableCellProps) {
   const { density } = useContext(TableContext);
   return <td className={cellClassName(density, { align, numeric }, className)} {...props} />;
+}
+
+/**
+ * A row that heads a group of body rows: its label, in small capitals on the muted fill. With
+ * `onToggle` the label is the button that folds the group, with the `ExpandableRow` chevron,
+ * which turns while the group is open. `cells` are what the row shows beside the label, such as
+ * a folded group's counts; without them the label spans `colSpan` columns.
+ */
+export function TableGroupRow({
+  cells,
+  colSpan,
+  isOpen = true,
+  label,
+  labelClassName,
+  onToggle,
+  testId,
+  toggleTestId,
+}: {
+  cells?: ReactNode;
+  colSpan?: number;
+  isOpen?: boolean;
+  label: string;
+  /** Layout for the label cell alone, such as keeping it pinned in a table that scrolls sideways. Never type styles. */
+  labelClassName?: string;
+  onToggle?: () => void;
+  testId?: string;
+  toggleTestId?: string;
+}) {
+  const { density } = useContext(TableContext);
+  return (
+    <tr className="border-t border-border bg-muted" data-testid={testId}>
+      <th
+        className={cellClassName(density, {}, cn("bg-muted text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground", labelClassName))}
+        colSpan={colSpan}
+        scope="rowgroup"
+      >
+        {onToggle ? (
+          <button
+            aria-expanded={isOpen}
+            className="flex items-center gap-1 rounded-sm uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid={toggleTestId}
+            onClick={onToggle}
+            type="button"
+          >
+            {label}
+            <ChevronDown aria-hidden className={cn("size-4 flex-none transition-transform", isOpen ? "rotate-180" : undefined)} />
+          </button>
+        ) : label}
+      </th>
+      {cells}
+    </tr>
+  );
 }

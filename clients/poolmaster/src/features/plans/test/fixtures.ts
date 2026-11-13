@@ -12,7 +12,7 @@ export function buildPlanEntitlements(overrides: Partial<PlanEntitlementsDto> = 
   };
 }
 
-/** The plan list as the API returns it: the plans given, a six-month preview, and the default expansion prices with payments off. */
+/** The plan list as the API returns it: the plans given, a six-month Premium preview, and the default expansion prices with payments off. */
 export function buildPlanListResponse(
   plans: PlanEntitlementsDto[],
   overrides: Partial<Omit<LeaguePlanListResponse, 'plans'>> = {},
@@ -21,6 +21,7 @@ export function buildPlanListResponse(
   return {
     plans,
     previewPeriodMonths: 6,
+    previewPlan: LeaguePlan.PREMIUM,
     paymentsEnabled: false,
     expansionPrices: {
       FREE: [band(50, 10), band(100, 20), band(200, 30), band(500, 40)],

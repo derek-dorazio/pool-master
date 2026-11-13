@@ -78,9 +78,10 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     expect(plans[3]?.caps).toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
   });
 
-  it('tells a visitor how long every new league\'s Premium gift runs, and each plan\'s contest expansion prices, free while payments are off', async () => {
+  it('tells a visitor that every new league is gifted Premium and for how long, and each plan\'s contest expansion prices, free while payments are off', async () => {
     const list = LeaguePlanListResponseSchema.parse(expectDefined((await listLeaguePlans({ client: getSdkClient() })).data));
 
+    expect(list.previewPlan).toBe(LeaguePlan.PREMIUM);
     expect(list.previewPeriodMonths).toBe(6);
     expect(list.paymentsEnabled).toBe(false);
     expect(list.expansionPrices.FREE[0]).toEqual({ entriesPerContest: 50, priceCents: 1000 });

@@ -71,6 +71,7 @@ export {
   TableBody,
   TableCell,
   TableHead,
+  TableGroupRow,
   TableHeaderCell,
   TableRow,
 } from "./simple-table";

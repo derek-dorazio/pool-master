@@ -30,7 +30,8 @@ The shared UI layer is split into three levels:
    `poolmaster/no-hand-written-query-states` fails one in feature code. A small table is a
    `SimpleTable` built from its parts (`density="compact"` inside a card,
    `surface="inverse"` on a navy panel, `isHighlighted` for the viewer's row,
-   `numeric` for figures); an upload preview is an `UploadPreviewTable`; a
+   `numeric` for figures, `TableGroupRow` for a group heading that folds with the
+   `ExpandableRow` chevron); an upload preview is an `UploadPreviewTable`; a
    table that needs search or sorting is a `DataGrid`. Labels beside their values are a
    `FactList` (`layout="inline"` by default; `"inset"` under a row that opened
    it; `"columns"` for a few facts side by side, stacking on a phone;
@@ -198,8 +199,9 @@ are a product piece: `TeamAvatar` draws the icon in its coloured square, and
 markers and an optional line underneath.
 
 Public and landing pages share four more pieces. `NumberedSteps` shows steps in tiles under one
-gold numeral style, with an optional picture. `FaqList` shows questions that open to their
-answers. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
+gold numeral style, with an optional picture. `FaqList` shows questions as `ExpandableRow` rows that open to their
+answers, with no frame of its own: inside a `SectionCard` titled "Questions", or a `Tile` on a
+landing page. `ExpandableTile` is a tile whose face opens it across its grid row. `Countdown` shows
 days, hours and minutes as one timer. `StickyActionBar` is the slim bar a phone keeps at the
 bottom while the block it stands in for is out of view: an event page's hero button, or a pick
 page's submit section. The event page kit (`StartButton`, `LandingSection`, `PhotoHero`,

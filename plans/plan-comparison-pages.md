@@ -71,14 +71,19 @@ moves its tick on both pages and its line in the highlights with no deploy
 Route `/plans`, outside the sign-in guard, like How to Play. Sections, top to bottom:
 
 1. Header with How to Play, **Plans**, Sign in and Start free.
-2. Heading, one line on what every plan includes, and the gift pill (Derek 2026-10-24):
-   "Every new league gets Premium free for a 6-month preview period", the length read from
-   config, never a "trial" or a countdown. It replaces "Every plan is free for now".
+2. The page header (#1614): **Plans** with Start free as its one button ("Choose for a league"
+   signed in), over a fact line: "Every plan: every contest type, live leaderboards, unlimited
+   members". While the plan list names a `previewPlan`, the offer leads that line, quietly:
+   "Premium free for 6 months", plan and length from the API, never a "trial" or a countdown.
+   With no preview it is simply gone.
 3. The four plan cards.
-4. **Compare every plan**: the table, each row with its one-line description (Q6).
-5. A few questions: who chooses the plan, what happens on a lower plan, no member limit, what a
-   sports league is.
-6. A closing Start free band.
+4. **Compare plans**, a section card holding the table. The gifted plan's column is the one
+   tinted; with no preview none is. Each row's one-line description (Q6) sits behind a (?) on
+   its name, which lets the four plan columns fit a phone, and feature groups fold with the
+   `TableGroupRow` chevron.
+5. **Questions**, a section card of rows that open to their answers: who chooses the plan, what
+   happens on a lower plan, no member limit, what a sports league is.
+6. Signed out, a closing "Start your league today" with Start free, from the event-page kit.
 
 Linked from the signed-out header, the landing page and the foot of How to Play.
 
