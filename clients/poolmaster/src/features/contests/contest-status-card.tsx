@@ -1,5 +1,5 @@
 import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
-import type { ContestDto, SportEventDto } from '@/lib/api';
+import type { ContestDto, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
 import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
@@ -15,6 +15,7 @@ import {
 } from '@/features/shared/ui';
 import { LifecyclePanel } from './lifecycle-panel';
 import { OpenContestAction } from './open-contest-action';
+import { PickPreviewAction } from './pick-preview-dialog';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
@@ -30,15 +31,17 @@ function entriesCloseAt(event: SportEventDto, secondChanceRoundName: string | nu
 }
 
 function NotOpenCard({
+  configuration,
   contest,
   event,
-  leagueCode,
   secondChanceRoundName,
+  tierCount,
 }: {
+  configuration: ContestManagementDetailDto['configuration'];
   contest: ContestDto;
   event: SportEventDto;
-  leagueCode: string;
   secondChanceRoundName: string | null;
+  tierCount: number;
 }) {
   const checks = getContestReadinessChecks(event, new Date(), secondChanceRoundName);
   const isReady = checks.every((check) => check.isMet);
@@ -48,9 +51,18 @@ function NotOpenCard({
       actions={(
         <>
           <OpenContestAction contestId={contest.id} contestName={contest.name} leagueId={contest.leagueId} />
-          <LinkButton data-testid="contest-preview-as-member" to={buildLeagueContestPath(leagueCode, contest.id)} variant="inverse">
-            Preview as a member
-          </LinkButton>
+          {/* A dialog, never the member page: members cannot see a contest until it is open. */}
+          <PickPreviewAction
+            configuration={configuration}
+            contestName={contest.name}
+            event={event}
+            leagueId={contest.leagueId}
+            participant={getSportDefinition(event.sport).vocabulary.participant}
+            rulesError={null}
+            selectionType={configuration.selectionType}
+            surface="inverse"
+            tierCount={tierCount}
+          />
         </>
       )}
       help={`Only commissioners can see it until it's open. Once it's open, members can enter until ${entriesCloseAt(event, secondChanceRoundName)}, and these settings can't change.`}
@@ -234,28 +246,42 @@ function PlayedCard({
 }
 
 /**
- * What a contest needs from its commissioner now, by status: before opening, the readiness checks
- * and Open to league; while open, how many squads have entered (or, for a random draw, Run draw
+ * What a contest needs from its commissioner now, by status: before opening, the readiness checks,
+ * Open to league and Preview contest entry; while open, how many squads have entered (or, for a random draw, Run draw
  * and then when it ran); once live or final, the way to
  * its leaderboard.
  */
 export function ContestStatusCard({
+  configuration,
   contest,
   event,
   leagueCode,
   secondChanceRoundName = null,
   teamCount,
+  tierCount,
 }: {
+  /** The contest's saved rules: a set-up contest previews its entry from them. */
+  configuration: ContestManagementDetailDto['configuration'];
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
   /** A second-chance bracket's starting round by name (#721): its entries close at that round's first game. */
   secondChanceRoundName?: string | null;
   teamCount: number;
+  /** The event's tier count, which a tiered preview needs. */
+  tierCount: number;
 }) {
   switch (contest.status) {
     case ContestStatus.DRAFT:
-      return <NotOpenCard contest={contest} event={event} leagueCode={leagueCode} secondChanceRoundName={secondChanceRoundName} />;
+      return (
+        <NotOpenCard
+          configuration={configuration}
+          contest={contest}
+          event={event}
+          secondChanceRoundName={secondChanceRoundName}
+          tierCount={tierCount}
+        />
+      );
     case ContestStatus.OPEN:
       return contest.selectionType === SelectionType.RANDOM_DRAW
         ? <DrawOpenCard contest={contest} event={event} leagueCode={leagueCode} />

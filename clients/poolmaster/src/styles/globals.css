@@ -104,6 +104,8 @@
     --border-default: color-mix(in srgb, var(--tint-base) 18%, transparent);
     --border-strong: var(--color-navy-600);
     --border-on-inverse: color-mix(in srgb, var(--text-on-inverse) 12%, transparent);
+    /* An outlined button's edge on a navy panel: strong enough to read as a button. */
+    --border-on-inverse-strong: color-mix(in srgb, var(--text-on-inverse) 45%, transparent);
     --accent-primary: var(--color-gold-400);
     --accent-primary-hover: var(--color-gold-300);
     /* Gold and red as the base of a tint: the accent and danger, in each mode's own shade. */

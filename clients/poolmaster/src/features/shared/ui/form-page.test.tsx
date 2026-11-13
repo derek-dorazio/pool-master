@@ -45,9 +45,9 @@ describe("FormPage", () => {
   });
 
   it("puts an extra action first in the button row, before Cancel and Save", () => {
-    renderFormPage({ extraAction: <button type="button">Preview picks page</button> });
+    renderFormPage({ extraAction: <button type="button">Preview contest entry</button> });
 
-    const extra = screen.getByRole("button", { name: "Preview picks page" });
+    const extra = screen.getByRole("button", { name: "Preview contest entry" });
     const cancel = screen.getByRole("link", { name: "Cancel" });
     expect(extra.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
