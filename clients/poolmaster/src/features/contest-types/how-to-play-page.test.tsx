@@ -181,7 +181,7 @@ describe('How to Play', () => {
 
     fireEvent.click(within(details).getByTestId('how-to-play-format-TIERED-sport-GOLF'));
     expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=golf');
-    expect(chosenIn(leaguesColumn())).toEqual(['Golf 2']);
+    expect(chosenIn(leaguesColumn())).toEqual(['Golf 1']);
     expect(await waysToPlayHeading()).toHaveTextContent('1 way to play golf');
     expect(screen.queryByTestId('how-to-play-format-SQUARES')).not.toBeInTheDocument();
   });
@@ -243,17 +243,17 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-format-TIERED-details')).not.toBeInTheDocument();
   });
 
-  it('lists every sport in the column with its count of leagues, the most popular first, each with its first leagues while every sport is shown, and the chosen sport opens to all of its leagues', async () => {
+  it('lists every sport in the column with its count of ways to play, the number its heading gives once chosen, the most popular first, each with its first leagues while every sport is shown, and the chosen sport opens to all of its leagues', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
 
     await screen.findByTestId('how-to-play-format-TIERED');
-    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 2', 'PGA TOUR', 'LPGA Tour']);
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 1', 'PGA TOUR', 'LPGA Tour']);
 
     fireEvent.click(within(leaguesColumn()).getByTestId('how-to-play-leagues-column-golf'));
     expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=golf');
     // Another sport closes to its name and count while one is chosen.
-    expect(columnLines()).toEqual(['All sports', 'American football 2', 'Golf 2', 'PGA TOUR', 'LPGA Tour']);
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'Golf 1', 'PGA TOUR', 'LPGA Tour']);
   });
 
   it('caps each sport at four lines with every sport shown, and counts the rest as "+ N more", which chooses that sport', async () => {
@@ -267,7 +267,7 @@ describe('How to Play', () => {
     renderPage();
 
     await screen.findByTestId('how-to-play-format-TIERED');
-    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 5', 'PGA TOUR', 'LPGA Tour', 'DP World Tour', 'LIV Golf', '+ 1 more']);
+    expect(columnLines()).toEqual(['All sports', 'American football 2', 'NFL', 'College Football Playoff', 'Golf 1', 'PGA TOUR', 'LPGA Tour', 'DP World Tour', 'LIV Golf', '+ 1 more']);
     expect(within(leaguesColumn()).getByTestId('how-to-play-leagues-column-golf-more')).toHaveAttribute('href', '/how-to-play?sport=golf');
   });
 

@@ -13,7 +13,7 @@ import { sportEventsQueryOptions } from '@/features/contests/sport-events-query'
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
 import { Heading, Notice, PageHeader, QueryState, refetchFailed, SectionCard, Text } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { buildLeagueContestCatalog, catalogSlug } from './contest-catalog';
+import { buildLeagueContestCatalog, contestTypeCount } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { EveryLeagueCard } from './every-league-card';
@@ -33,9 +33,10 @@ function scrollToTypes() {
 
 /**
  * Contest types (#803): every contest the league could run, grouped by sport and sport league,
- * read from the contest templates. A commissioner of an active league gets a "Create this
- * contest" link on each, opening Create contest on that template; every other member sees the
- * same menu without them. The sport switch, a column of every sport and league on a computer and
+ * read from the contest templates: each sport league lists its own and its sport's every-event
+ * types (#1716), since a contest is always created in one. A commissioner of an active league
+ * gets a "Create this contest" link on each, opening Create contest on that template in that
+ * sport league; every other member sees the same menu without them. The sport switch, a column of every sport and league on a computer and
  * chips on a phone as on How to Play (#1701), narrows it to one sport, league or playoff round,
  * and the choice is kept in the link.
  */
@@ -48,23 +49,21 @@ export function LeagueContestTypesPage() {
 
   const templatesQuery = useActiveContestTemplatesQuery();
   const sportLeaguesQuery = useSportLeaguesQuery();
-  const catalog = useMemo(() => buildLeagueContestCatalog(
-    templatesQuery.data ?? [],
-    new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name])),
-  ), [sportLeaguesQuery.data, templatesQuery.data]);
-  // The switch offers each sport's own leagues, each playoff round under its season league
-  // (#1701); the every-event group is no league to choose.
-  const parentIds = useMemo(() => new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.parentSportLeagueId])), [sportLeaguesQuery.data]);
+  const catalog = useMemo(
+    () => buildLeagueContestCatalog(templatesQuery.data ?? [], sportLeaguesQuery.data ?? []),
+    [sportLeaguesQuery.data, templatesQuery.data],
+  );
+  // The switch offers each sport's leagues, each playoff round under its season league (#1701),
+  // and counts the contest types the sport lists (#1716).
   const filterable = useMemo(() => catalog.map((sport) => ({
     ...sport,
-    leagues: groupRounds(sport.groups.flatMap((group) => (group.sportLeagueId === null
-      ? []
-      : [{ id: group.sportLeagueId, parentId: parentIds.get(group.sportLeagueId) ?? null, slug: catalogSlug(group.name), name: group.name }])))
+    count: contestTypeCount(sport.groups),
+    leagues: groupRounds(sport.groups.map((group) => ({ ...group, id: group.sportLeagueId, parentId: group.parentSportLeagueId })))
       .map(({ league, rounds }) => ({ slug: league.slug, name: league.name, rounds: rounds.map(({ slug, name }) => ({ slug, name })) })),
-  })), [catalog, parentIds]);
+  })), [catalog]);
   const choice = useSportLeagueChoice(filterable);
   const shownSports = choice.sport
-    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.leagueSlugs === null || (group.sportLeagueId !== null && choice.leagueSlugs.includes(catalogSlug(group.name)))) }]
+    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.leagueSlugs === null || choice.leagueSlugs.includes(group.slug)) }]
     : catalog;
 
   // A championship stat pool league's group says it is a Clutch Card and how its stat is counted (#936).
@@ -91,15 +90,16 @@ export function LeagueContestTypesPage() {
     return leagueContext.element;
   }
 
-  // While a sport's events load, its links stand; once they arrive, a type with no event says so.
-  const createPathFor = canCreate
+  // Create opens on the section's sport league (#1716). While a sport's events load, its links
+  // stand; once they arrive, a type with no event in that league coming up says so.
+  const createPathFor = (sportLeagueId: string) => (canCreate
     ? (template: ContestConfigTemplateDto) => {
       const events = eventsBySport.get(template.sport);
-      return events === undefined || contestEventsForTemplate(events, template).length
-        ? buildLeagueAdminContestCreateFromTemplatePath(league.leagueCode, template.id)
+      return events === undefined || contestEventsForTemplate(events.filter((event) => event.sportLeagueId === sportLeagueId), template).length
+        ? buildLeagueAdminContestCreateFromTemplatePath(league.leagueCode, template.id, sportLeagueId)
         : null;
     }
-    : undefined;
+    : undefined);
 
   return (
     <section className="space-y-8" data-testid="league-contest-types-page">
@@ -130,15 +130,17 @@ export function LeagueContestTypesPage() {
               {shownSports.map((sport) => (
                 <SectionCard bare help={SPORT_BLURBS[sport.sport]} key={sport.sport} testId={`contest-types-sport-${sport.sport}`} title={sport.name}>
                   {sport.groups.map((group) => (
-                    <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
+                    <div className="space-y-3" key={group.sportLeagueId}>
                       <Heading level={4} variant="eyebrow">{group.name}</Heading>
-                      {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
+                      {statPoolLines.has(group.sportLeagueId) ? (
                         <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
                           {statPoolLines.get(group.sportLeagueId)}
                         </Text>
                       ) : null}
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {group.tiles.map((tile) => <ContestTypeTileCard createPathFor={createPathFor} key={tile.key} tile={tile} />)}
+                        {group.tiles.map((tile) => (
+                          <ContestTypeTileCard createPathFor={createPathFor(group.sportLeagueId)} key={tile.key} testId={`contest-type-${group.slug}`} tile={tile} />
+                        ))}
                       </div>
                     </div>
                   ))}

@@ -798,6 +798,8 @@ describe('The seeded NFL league and its knockout templates', () => {
     expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s Basketball National Championship', 'WNBA Semifinals', 'WNBA Finals']);
     expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
+    // #1716: horse racing's one league is reference data, as every other sport's leagues are.
+    expect(namesBySport.get(Sport.HORSE_RACING)).toEqual(['US Thoroughbred']);
     expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s Hockey National Championship']);
     expect(namesBySport.get(Sport.SOCCER)?.slice(-4)).toEqual(['Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final']);
   });

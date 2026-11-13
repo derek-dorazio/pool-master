@@ -15,21 +15,21 @@ export interface FilterableLeague extends FilterableRound {
   rounds: readonly FilterableRound[];
 }
 
-/** A sport as the switch offers it: its name and its leagues, each with its rounds under it. */
+/**
+ * A sport as the switch offers it: its name, its leagues, each with its rounds under it, and the
+ * number beside it, which is how many contest types the page lists with the sport chosen (#1716):
+ * How to Play's ways to play, Contest types' tiles under all its leagues.
+ */
 export interface FilterableSport {
   sport: Sport;
   name: string;
   leagues: readonly FilterableLeague[];
+  count: number;
 }
 
 /** A sport as a page's link names it: `?sport=horse-racing`. */
 export function sportSlug(sport: Sport) {
   return sport.toLowerCase().replaceAll('_', '-');
-}
-
-/** How many sport leagues a sport offers, its season leagues and their rounds together. */
-export function sportLeagueCount(sport: FilterableSport) {
-  return sport.leagues.reduce((count, league) => count + 1 + league.rounds.length, 0);
 }
 
 /**

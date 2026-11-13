@@ -123,9 +123,13 @@ export function buildLeagueAdminContestCreatePath(leagueCode: string) {
   return `/league/${leagueCode}/admin/contests/new`;
 }
 
-/** Create contest started on one contest template (#803), as the contest types page links to it. */
-export function buildLeagueAdminContestCreateFromTemplatePath(leagueCode: string, templateId: string) {
-  return `${buildLeagueAdminContestCreatePath(leagueCode)}?template=${encodeURIComponent(templateId)}`;
+/**
+ * Create contest started on one contest template (#803), as the contest types page links to it,
+ * and on an event of one sport league when the link names one (#1716).
+ */
+export function buildLeagueAdminContestCreateFromTemplatePath(leagueCode: string, templateId: string, sportLeagueId?: string) {
+  const league = sportLeagueId ? `&sportLeague=${encodeURIComponent(sportLeagueId)}` : '';
+  return `${buildLeagueAdminContestCreatePath(leagueCode)}?template=${encodeURIComponent(templateId)}${league}`;
 }
 
 export function buildLeagueAdminContestPath(leagueCode: string, contestId: string) {

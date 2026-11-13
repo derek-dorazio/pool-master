@@ -972,6 +972,24 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-event-event-1')).not.toBeChecked();
   });
 
+  it('starts on the soonest event of the sport league the contest types page asked for, not an earlier one in another league', async () => {
+    primeCommonMocks();
+    // The common golf events, each now in a tour: the Masters on the PGA TOUR, the rest on the LPGA Tour.
+    const { data } = await (listEventsMock() as Promise<{ data: { events: Array<{ id: string }> } }>);
+    listEventsMock.mockClear();
+    const byLeague: Record<string, string> = { 'event-1': 'pga-tour', 'event-2': 'lpga-tour', 'event-3': 'lpga-tour' };
+    listEventsMock.mockResolvedValue({ data: { events: data.events.map((event) => ({ ...event, sportLeagueId: byLeague[event.id] })) } });
+    // Its templates are golf's every-tournament ones, in no tour.
+    const templates = await (listContestConfigTemplatesMock() as Promise<{ data: { templates: object[] } }>);
+    listContestConfigTemplatesMock.mockClear();
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: templates.data.templates.map((template) => ({ ...template, sportLeagueId: null })) } });
+    renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=33333333-3333-4333-8333-333333333333&sportLeague=lpga-tour');
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toBeChecked());
+    expect(screen.getByTestId('contest-event-event-2')).toBeChecked();
+    expect(screen.getByTestId('contest-event-event-1')).not.toBeChecked();
+  });
+
   it('starts on the usual default when the template asked for is not one of the active templates', async () => {
     primeCommonMocks();
     renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=99999999-9999-4999-8999-999999999999');

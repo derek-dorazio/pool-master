@@ -449,7 +449,8 @@ administration area (root admin included), reusing the same shared components.
     checks all of it. The same names and descriptions are the contest types
     menu (#803): the public How to Play page shows each way to play once, as an
     illustrated card, on the first screen (#1701). On a computer the cards sit
-    beside a column listing every sport with its count of leagues, the chosen
+    beside a column listing every sport with its count of the contest types the
+    page lists with it chosen (ways to play here; #1716), the chosen
     sport opened to its leagues, each season league with its regular season and
     its playoff rounds indented under it by the round's `parentSportLeagueId`
     (never by matching names); on a phone the column is one row of sport chips
@@ -462,7 +463,12 @@ administration area (root admin included), reusing the same shared components.
     up follows the cards. A card's line fits two lines on a phone card; its
     sport icons keep to one line and end with "+N"; a commissioner of an active
     league gets "+ Create" on its own row at the card's bottom right. The
-    Contest types page switches sport with the same column and chips. The Clutch Card is one more card
+    Contest types page switches sport with the same column and chips, and has a
+    section per active sport league listing every contest type a contest in it
+    can start from: its own templates and its sport's every-event ones, its own
+    leading their format, and no "every event" section, since a contest is
+    always created in a sport league; Create from a section starts on that
+    league (#1716). The Clutch Card is one more card
     among them, shown while a shown league is a stat pool's: its line and steps,
     each sport's stat line (Box Score, Redzone) as a small tile, and a link to
     `/play/clutch-card` for the rest; no per-league formula list. An open card

@@ -99,6 +99,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
     && isCreatableSelectionType(template.selectionType)) ?? null;
   const requestedTemplateProgress = useRef<'sport' | 'event' | 'settled'>('sport');
+  // A contest type chosen in one sport league's section names it, `?sportLeague=<id>` (#1716): a
+  // sport-wide template starts on that league's soonest event, not another league's.
+  const requestedSportLeagueId = searchParams.get('sportLeague');
   // An event page's start (#1008) also names the edition, `?event=<id>`, and a later-round
   // bracket's first round, `?startRound=<n>`: chosen once, with the template.
   const requestedEventId = searchParams.get('event');
@@ -136,10 +139,14 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const sportDefinition = selectedEvent ? eventSportDefinition(selectedEvent) : getSportDefinition(sport);
   const { participant } = sportDefinition.vocabulary;
   const statPoolScoring = statPoolScoringLine(sportDefinition);
-  // The events that can start a requested template, whatever format the page is on.
+  // The events that can start a requested template, whatever format the page is on, in the
+  // requested sport league when the link names one.
   const requestedEvents = useMemo(
-    () => (requestedTemplate ? contestEventsForTemplate(eventsQuery.data ?? [], requestedTemplate) : []),
-    [eventsQuery.data, requestedTemplate],
+    () => (requestedTemplate
+      ? contestEventsForTemplate(eventsQuery.data ?? [], requestedTemplate)
+        .filter((event) => requestedSportLeagueId === null || event.sportLeagueId === requestedSportLeagueId)
+      : []),
+    [eventsQuery.data, requestedSportLeagueId, requestedTemplate],
   );
   // A knockout under way takes only a second-chance bracket.
   const isEventUnderWay = selectedEvent !== null && !selectedEvent.contestEligible;
