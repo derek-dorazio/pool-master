@@ -120,7 +120,7 @@ describe('BalldontlieAdapter (NFL)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a week with the teams playing in it, reading only that week\'s regular season games', async () => {
+    it('gives a week with the teams playing in it and its games as scheduled, reading only that week\'s regular season games', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -130,6 +130,12 @@ describe('BalldontlieAdapter (NFL)', () => {
       expect(detail?.participants.map((team) => team.externalId)).toEqual(
         ['nfl-team-25', 'nfl-team-27', 'nfl-team-9', 'nfl-team-4', 'nfl-team-17', 'nfl-team-3', 'nfl-team-31', 'nfl-team-30'],
       );
+      expect(detail?.games).toHaveLength(4);
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: 'nfl-team-25', awayTeamExternalId: 'nfl-team-27', isNeutralSite: false });
+      expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
+      expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
+      const teamsInGames = detail?.games?.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]);
+      expect(teamsInGames?.slice().sort()).toEqual(detail?.participants.map((team) => team.externalId).sort());
       expect(requestLine(harness.api)).toEqual(['/nfl/v1/games?seasons[]=2026&season_types[]=2&weeks[]=12&per_page=100']);
     });
 
@@ -140,6 +146,8 @@ describe('BalldontlieAdapter (NFL)', () => {
       const detail = await harness.adapter.getEventDetails('nfl-2026-postseason');
 
       expect(detail).toMatchObject({ name: 'NFL Playoffs', status: 'IN_PROGRESS', participantCount: 5 });
+      // A bracket's games are not a week's: the playoffs list none.
+      expect(detail?.games).toBeUndefined();
       expect(requestLine(harness.api)).toEqual(['/nfl/v1/games?seasons[]=2026&season_types[]=3&per_page=100']);
     });
 

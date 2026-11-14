@@ -263,6 +263,8 @@ export function buildApp() {
       }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
+      // A synced league's event takes its games once its field is in (ADR 0011, #1728).
+      await sportEventServices.providerGames.afterFieldLoad(detail);
       return persisted;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {

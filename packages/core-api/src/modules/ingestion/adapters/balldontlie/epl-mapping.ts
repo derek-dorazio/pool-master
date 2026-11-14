@@ -18,7 +18,7 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
-import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
+import type { ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { SoccerMatch, SoccerTeam } from './soccer-contract';
@@ -131,6 +131,21 @@ export function toEplFieldParticipants(matches: readonly SoccerMatch[], teams: r
     }
   }
   return [...field.values()];
+}
+
+/**
+ * A matchweek's matches as scheduled, each in the matchweek's one round, for a synced league's
+ * event to take its matches from (#1728). Every Premier League match is at the home ground.
+ */
+export function toEplScheduledGames(matches: readonly SoccerMatch[]): ProviderScheduledGame[] {
+  return matches.map((match) => ({
+    externalGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
+    roundNumber: 1,
+    homeTeamExternalId: eplTeamExternalId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
+    awayTeamExternalId: eplTeamExternalId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
+    scheduledAt: new Date(required(match.date, EPL_MATCHES_PATH, matchName(match), 'date')),
+    isNeutralSite: false,
+  }));
 }
 
 /**

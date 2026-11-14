@@ -12,7 +12,7 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
-import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
+import type { ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import { NflSeasonType, type NflGame, type NflTeam } from './nfl-contract';
@@ -151,6 +151,21 @@ export function toNflFieldParticipants(games: readonly NflGame[]): ProviderParti
     }
   }
   return [...teams.values()];
+}
+
+/**
+ * A week's games as scheduled, each in the week's one round, for a synced league's event to take
+ * its matches from (#1728). The vendor does not mark a neutral site, so none is.
+ */
+export function toNflScheduledGames(games: readonly NflGame[]): ProviderScheduledGame[] {
+  return games.map((game) => ({
+    externalGameId: String(required(game.id, game.id, 'id')),
+    roundNumber: 1,
+    homeTeamExternalId: nflTeamExternalId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
+    awayTeamExternalId: nflTeamExternalId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
+    scheduledAt: new Date(required(game.date, game.id, 'date')),
+    isNeutralSite: false,
+  }));
 }
 
 /** Each game's teams, state and score, for the GAME live-score category. */

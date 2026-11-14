@@ -23,6 +23,7 @@ import {
   toEplGameScoreUpdates,
   toEplMatchweekEvent,
   toEplMatchweekEvents,
+  toEplScheduledGames,
   toEplTeamParticipant,
   type EplScope,
 } from './epl-mapping';
@@ -59,7 +60,7 @@ export class EplReader {
     if (matches.length === 0) return null;
     const teams = await this.client.get(EPL_TEAMS_PATH, { season: scope.season }, soccerTeamListSchema);
     const participants = toEplFieldParticipants(matches, teams.data);
-    return { ...toEplMatchweekEvent(scope, matches, participants.length), participants };
+    return { ...toEplMatchweekEvent(scope, matches, participants.length), participants, games: toEplScheduledGames(matches) };
   }
 
   /** The teams of the season under way. */

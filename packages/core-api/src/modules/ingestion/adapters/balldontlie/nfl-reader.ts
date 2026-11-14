@@ -14,6 +14,7 @@ import {
   seasonTypeOf,
   toGameScoreUpdates,
   toNflFieldParticipants,
+  toNflScheduledGames,
   toNflSportEvent,
   toNflSportEvents,
   toNflTeamParticipant,
@@ -59,7 +60,12 @@ export class NflReader {
     const games = await this.gamesOf(scope);
     if (games.length === 0) return null;
     const participants = toNflFieldParticipants(games);
-    return { ...toNflSportEvent(scope, games, participants.length), participants };
+    // A week's games are its matches; the playoffs' bracket is built another way (#1728).
+    return {
+      ...toNflSportEvent(scope, games, participants.length),
+      participants,
+      ...(scope.kind === NflScopeKind.WEEK && { games: toNflScheduledGames(games) }),
+    };
   }
 
   /** Every NFL team. */

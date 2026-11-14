@@ -165,6 +165,25 @@ export interface ProviderEventMetadata {
 
 export interface SportEventDetail extends SportEvent {
   participants: ProviderParticipant[];
+  /**
+   * The event's games as the provider schedules them, for an event whose games the provider lists
+   * up front (a game week, #1728); left out where it does not. A synced league's event takes its
+   * matches from them (`ProviderGameSlateService`).
+   */
+  games?: ProviderScheduledGame[];
+}
+
+/**
+ * One game of an event as its provider schedules it (ADR 0011, #1728): the provider's game id,
+ * the round it is in, both teams by the provider's external id, and its kickoff.
+ */
+export interface ProviderScheduledGame {
+  externalGameId: string;
+  roundNumber: number;
+  homeTeamExternalId: string;
+  awayTeamExternalId: string;
+  scheduledAt: Date | null;
+  isNeutralSite: boolean;
 }
 
 export interface ProviderParticipant {

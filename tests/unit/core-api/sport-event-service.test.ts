@@ -4,6 +4,7 @@ import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
+import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
@@ -823,6 +824,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
         statLines: stubInstance(StatLineService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),
+        providerGames: stubInstance(ProviderGameSlateService, {}),
       },
       eventLifecycle: lifecycle,
       scoreSource: stubInstance(EventScoreSourceService, {}),
@@ -891,6 +893,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
         statLines: stubInstance(StatLineService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),
+        providerGames: stubInstance(ProviderGameSlateService, {}),
       },
       eventLifecycle: context.lifecycle,
       scoreSource: stubInstance(EventScoreSourceService, {}),
