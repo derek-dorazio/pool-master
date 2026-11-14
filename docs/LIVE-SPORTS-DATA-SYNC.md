@@ -210,7 +210,8 @@ bare player id.
 ### 2d. Game rows for a synced game week, after the field load
 
 A game week's event detail (an NFL week, a Premier League matchweek) carries the provider's
-`games`: each game's id, round, both teams and kickoff (`ProviderScheduledGame`,
+`games`: each game's id, round, both teams and kickoff. A game is matched to a stored match by its
+two teams, whichever side each is on (`ProviderScheduledGame`,
 `nfl-mapping.ts` `toNflScheduledGames`, `epl-mapping.ts` `toEplScheduledGames`). The NFL postseason
 lists none. After every field load, `ProviderGameSlateService.afterFieldLoad`
 (`events/provider-game-slate.ts`, #1728) turns them into the event's matches when the event is
@@ -218,8 +219,8 @@ provider-synced (`isProviderSyncedEvent`):
 
 | Event status | What the provider's games do |
 |---|---|
-| `DRAFT` | Become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. A stored set that differs, an admin's included, is replaced, since the provider wins and nobody has picked yet. An identical set writes nothing. |
-| Released, not finished | Pairings stay fixed. A match not yet started takes the provider's moved kickoff (`updateMatch`). A game whose pairing no match holds is logged for an admin. |
+| `DRAFT` | When the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
+| Released, not finished | Pairings and sides stay fixed. A match not yet started takes the provider's moved kickoff (`updateMatch`). A pairing no match holds, or a home and away swap, is logged for an admin. |
 | `COMPLETED`, `CANCELLED` | Nothing. |
 
 The games wait for the field: when a team is not in the event's field yet, nothing loads and the

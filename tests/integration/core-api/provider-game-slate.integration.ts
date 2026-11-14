@@ -86,7 +86,7 @@ describe('Provider game slate (#1728)', () => {
 
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 7)] }))
-      .resolves.toEqual({ outcome: 'KICKOFFS_MOVED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
     expect(await matchesOf(event.id)).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 7 * HOUR).toISOString()],

@@ -19,7 +19,7 @@ import type { BracketMatchInput, SportEventBracketService } from './sport-event-
 /** What one slate sync did to the event's games, and why when it did nothing. */
 export type ProviderGameSlateOutcome =
   | { outcome: 'LOADED'; sportEventId: string; matchCount: number }
-  | { outcome: 'KICKOFFS_MOVED'; sportEventId: string; matchNumbers: number[] }
+  | { outcome: 'MATCHES_UPDATED'; sportEventId: string; matchNumbers: number[] }
   | { outcome: 'UNCHANGED'; sportEventId: string }
   | { outcome: 'SKIPPED'; reason: 'NO_EVENT' | 'NOT_SYNCED' | 'PLAYS_NO_GAMES' | 'FINISHED' | 'TEAMS_NOT_IN_FIELD' };
 
@@ -32,16 +32,18 @@ export interface ProviderGameSlateDeps {
   logger?: FastifyBaseLogger;
 }
 
-/** The match fields a slate decides, to tell whether the stored games already are the slate. */
-type SlateKey = Pick<BracketMatchInput, 'matchNumber' | 'roundNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId' | 'isNeutralSite' | 'scheduledDate'>;
+type Sides = Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>;
 
 /**
  * A synced sport league's event takes its games from its provider (ADR 0011, #1728): a game
  * week's games (an NFL week, a Premier League matchweek) become the event's matches, as an admin
- * would load them through `loadBracket`. While the event is a draft the provider's slate replaces
- * whatever is stored when it differs: the provider wins, and nobody can have picked yet. Once
- * the event is released its pairings are fixed, so only a game's kickoff follows the provider, on
- * a match not yet started; a pairing the provider changes after release is logged for an admin.
+ * would load them through `loadBracket`. Each provider game is matched to a stored match by its
+ * two teams, whichever side each is on. While the event is a draft and the provider's pairings
+ * differ from the stored ones, the slate replaces them: the provider wins, and nobody can have
+ * picked yet. Otherwise each match is kept, with its spread, and takes the provider's kickoff if
+ * it has not started; on a draft it also takes the provider's home and away, its spread turned
+ * around. Once the event is released its pairings and sides are fixed: a pairing or a swap the
+ * provider makes after release is logged for an admin.
  * A finished or cancelled event, an event whose league is not synced to this provider, and one
  * whose teams are not all in its field yet (the field load comes first) are left alone.
  */
@@ -80,8 +82,8 @@ export class ProviderGameSlateService {
       return { outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' };
     }
     const stored = await this.deps.matches.findBySportEvent(event.id);
-    if (event.status === SportEventStatus.DRAFT) {
-      if (sameSlate(stored, slate)) return { outcome: 'UNCHANGED', sportEventId: event.id };
+    const draft = event.status === SportEventStatus.DRAFT;
+    if (draft && !samePairings(stored, slate)) {
       await this.deps.bracket.loadBracket(event.id, slate);
       this.deps.logger?.info(
         { sportEventId: event.id, providerId: input.providerId, externalId: input.externalId, matchCount: slate.length, replaced: stored.length },
@@ -89,7 +91,7 @@ export class ProviderGameSlateService {
       );
       return { outcome: 'LOADED', sportEventId: event.id, matchCount: slate.length };
     }
-    return this.moveKickoffs(event, stored, slate);
+    return this.updateMatches(event, draft, stored, slate);
   }
 
   /** The provider's games as the event's matches, in kickoff order; null when a team is not in the field. */
@@ -126,10 +128,14 @@ export class ProviderGameSlateService {
       }));
   }
 
-  /** A released event: each not-yet-started match of the same two teams takes the provider's kickoff. */
-  private async moveKickoffs(event: SportEvent, stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): Promise<ProviderGameSlateOutcome> {
+  /**
+   * Each stored match of a provider game's two teams takes the game's kickoff while it has not
+   * started, and on a draft the game's home and away, its spread turned around with them.
+   */
+  private async updateMatches(event: SportEvent, draft: boolean, stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): Promise<ProviderGameSlateOutcome> {
     const storedByPair = new Map(stored.map((match) => [pairKey(match), match]));
-    const moved: number[] = [];
+    const updated: number[] = [];
+    const swapped: number[] = [];
     const unmatched: string[] = [];
     for (const game of slate) {
       const match = storedByPair.get(pairKey(game));
@@ -137,23 +143,34 @@ export class ProviderGameSlateService {
         unmatched.push(pairKey(game));
         continue;
       }
-      if (match.status !== MatchStatus.SCHEDULED || sameTime(match.scheduledDate, game.scheduledDate) || game.scheduledDate === null) continue;
-      await this.deps.bracket.updateMatch(event.id, match.matchNumber, { scheduledDate: game.scheduledDate });
-      moved.push(match.matchNumber);
+      const isSwapped = match.homeSportEventParticipantId !== game.homeSportEventParticipantId;
+      const movesKickoff = match.status === MatchStatus.SCHEDULED && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
+      if (isSwapped && !draft) swapped.push(match.matchNumber);
+      const patch = {
+        ...(movesKickoff && { scheduledDate: game.scheduledDate }),
+        ...(isSwapped && draft && {
+          homeSportEventParticipantId: game.homeSportEventParticipantId,
+          awaySportEventParticipantId: game.awaySportEventParticipantId,
+          ...(match.homeSpread !== null && { homeSpread: -match.homeSpread }),
+        }),
+      };
+      if (Object.keys(patch).length === 0) continue;
+      await this.deps.bracket.updateMatch(event.id, match.matchNumber, patch);
+      updated.push(match.matchNumber);
     }
-    if (unmatched.length > 0) {
+    if (unmatched.length > 0 || swapped.length > 0) {
       this.deps.logger?.warn(
-        { sportEventId: event.id, unmatchedPairings: unmatched },
-        'A released synced event\'s provider lists games its matches do not hold; an admin decides',
+        { sportEventId: event.id, ...(unmatched.length > 0 && { unmatchedPairings: unmatched }), ...(swapped.length > 0 && { swappedMatchNumbers: swapped }) },
+        'A released synced event\'s provider changed games its matches hold fixed; an admin decides',
       );
     }
-    if (moved.length === 0) return { outcome: 'UNCHANGED', sportEventId: event.id };
-    this.deps.logger?.info({ sportEventId: event.id, matchNumbers: moved }, 'Moved a synced event\'s kickoffs to its provider\'s');
-    return { outcome: 'KICKOFFS_MOVED', sportEventId: event.id, matchNumbers: moved };
+    if (updated.length === 0) return { outcome: 'UNCHANGED', sportEventId: event.id };
+    this.deps.logger?.info({ sportEventId: event.id, matchNumbers: updated }, 'Kept a synced event\'s matches current with its provider\'s games');
+    return { outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: updated };
   }
 }
 
-function skipReason(event: SportEvent | null): Exclude<ProviderGameSlateOutcome, { outcome: 'LOADED' | 'KICKOFFS_MOVED' | 'UNCHANGED' }>['reason'] | null {
+function skipReason(event: SportEvent | null): Extract<ProviderGameSlateOutcome, { outcome: 'SKIPPED' }>['reason'] | null {
   if (event === null) return 'NO_EVENT';
   if (!isProviderSyncedEvent(event)) return 'NOT_SYNCED';
   if (!eventPlaysMatches(event)) return 'PLAYS_NO_GAMES';
@@ -167,21 +184,18 @@ function byRoundThenKickoff(left: ProviderScheduledGame, right: ProviderSchedule
     || left.externalGameId.localeCompare(right.externalGameId);
 }
 
-function pairKey(match: Pick<BracketMatchInput, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>): string {
-  return `${match.homeSportEventParticipantId ?? '-'}@${match.awaySportEventParticipantId ?? '-'}`;
+/** A match's two teams, whichever side each is on. */
+function pairKey(match: Sides): string {
+  return [match.homeSportEventParticipantId ?? '-', match.awaySportEventParticipantId ?? '-'].sort().join('|');
 }
 
 function sameTime(left: Date | null, right: Date | null): boolean {
   return (left?.getTime() ?? null) === (right?.getTime() ?? null);
 }
 
-function slateKey(match: SlateKey): string {
-  return [match.matchNumber, match.roundNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId, match.isNeutralSite, match.scheduledDate?.toISOString() ?? null].join('|');
-}
-
-/** Whether the stored matches already are the provider's slate, match for match. */
-function sameSlate(stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): boolean {
+/** Whether the stored matches pair the same teams as the provider's games, kickoffs and sides aside. */
+function samePairings(stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): boolean {
   if (stored.length !== slate.length) return false;
-  const storedKeys = new Set(stored.map(slateKey));
-  return slate.every((match) => storedKeys.has(slateKey(match)));
+  const storedPairs = new Set(stored.map(pairKey));
+  return slate.every((match) => storedPairs.has(pairKey(match)));
 }

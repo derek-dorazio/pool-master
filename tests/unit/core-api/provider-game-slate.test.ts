@@ -99,7 +99,53 @@ describe('ProviderGameSlateService', () => {
     expect((await store.matchRepo().findBySportEvent(event.id)).map((match) => match.id)).toEqual(idsBefore);
   });
 
-  it('replaces a draft\'s games, an admin\'s included, when the provider\'s pairings or kickoffs change', async () => {
+  it('moves only the kickoff on a draft whose pairings are unchanged, keeping every match and the admin\'s spreads', async () => {
+    const { service, event, store, matchesNow, field } = setup();
+    await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
+    store.matchRows = store.matchRows.map((match) => ({ ...match, homeSpread: match.matchNumber === 1 ? -3.5 : 6.5 }));
+    const idsBefore = store.matchRows.map((match) => match.id);
+
+    // The Packers game's kickoff firms up an hour earlier, so it now sorts first.
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', -1)] }))
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+
+    expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
+    expect(store.matchRows.map((match) => match.homeSpread)).toEqual([-3.5, 6.5]);
+    expect(await matchesNow()).toEqual([
+      [1, field.Bears, field.Lions, KICKOFF.toISOString()],
+      [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() - HOUR).toISOString()],
+    ]);
+  });
+
+  it('swaps a draft match\'s sides when the provider swaps home and away, turning the admin\'s spread around with them', async () => {
+    const { service, event, store, matchesNow, field } = setup();
+    await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
+    store.matchRows = store.matchRows.map((match) => ({ ...match, homeSpread: match.matchNumber === 1 ? -3.5 : null }));
+
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Lions', 'Bears', 0), WEEK[0]] }))
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+
+    expect(await matchesNow()).toEqual([
+      [1, field.Lions, field.Bears, KICKOFF.toISOString()],
+      [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 3 * HOUR).toISOString()],
+    ]);
+    expect(store.matchRows.map((match) => match.homeSpread)).toEqual([3.5, null]);
+  });
+
+  it('keeps a released match\'s sides when the provider swaps home and away, moving its kickoff and logging the swap for an admin', async () => {
+    const { service, event, store, matchesNow, field, logger } = setup();
+    await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
+    await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Lions', 'Bears', 1), WEEK[0]] }))
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+
+    expect((await matchesNow())[0]).toEqual([1, field.Bears, field.Lions, new Date(KICKOFF.getTime() + HOUR).toISOString()]);
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, swappedMatchNumbers: [1] }), expect.any(String));
+    expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ unmatchedPairings: expect.anything() }), expect.any(String));
+  });
+
+  it('replaces a draft\'s games, an admin\'s included, when the provider\'s pairings change', async () => {
     const { service, event, field, matchesNow } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
 
@@ -120,14 +166,14 @@ describe('ProviderGameSlateService', () => {
 
     const flexed = [game('g1', 'Bears', 'Lions', 5), game('g2', 'Packers', 'Vikings', 8), game('g9', 'Bears', 'Vikings', 9)];
     await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: flexed }))
-      .resolves.toEqual({ outcome: 'KICKOFFS_MOVED', sportEventId: event.id, matchNumbers: [2] });
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
 
     expect(await matchesNow()).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 8 * HOUR).toISOString()],
     ]);
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ sportEventId: event.id, unmatchedPairings: [`${field.Bears}@${field.Vikings}`] }),
+      expect.objectContaining({ sportEventId: event.id, unmatchedPairings: [[field.Bears, field.Vikings].sort().join('|')] }),
       expect.any(String),
     );
   });
