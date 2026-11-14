@@ -38,7 +38,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 // and what update and delete refuse — against an in-memory store. The adapters behind the
 // same ports are tested against Postgres in sport-event-repositories.integration.
 
-function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, leaderboards?: RecordingLeaderboardRebuilds) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, leaderboards?: RecordingLeaderboardRebuilds, logger?: ReturnType<typeof fakeLogger>) {
   const store = new InMemorySportEvents();
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
@@ -83,6 +83,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
     leaderboards,
+    logger,
     now: () => NOW,
   });
   return { store, service, sportLeague, lifecycle, sportEvents, reminderRechecks };
@@ -284,6 +285,32 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'A Links', endDate: listed.endDate }));
+  });
+
+  it('logs an event whose update fails and still keeps the league\'s other events current', async () => {
+    const logger = fakeLogger();
+    const { service, sportLeague, sportEvents } = setup(Sport.GOLF, undefined, undefined, logger);
+    const second = { ...listed, externalId: 'pga-2026-b', name: 'Bravo Classic', startDate: new Date('2026-04-09T12:00:00.000Z'), endDate: new Date('2026-04-12T23:00:00.000Z') };
+    const { created } = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [listed, second] });
+    const [failing, kept] = created.map(({ event }) => event.id);
+    const realUpdate = service.updateEvent.bind(service);
+    jest.spyOn(service, 'updateEvent').mockImplementation(async (id, updates, options) => {
+      if (id === failing) throw new Error('round shift refused');
+      return realUpdate(id, updates, options);
+    });
+
+    const changes = await service.keepProviderEventsCurrent({
+      sportLeagueId: sportLeague.id,
+      providerId: 'feed',
+      providerEvents: [{ ...listed, name: 'Alpha Renamed' }, { ...second, name: 'Bravo Renamed' }],
+    });
+
+    expect(changes).toEqual([{ sportEventId: kept, externalId: 'pga-2026-b', changed: ['name'] }]);
+    expect((await sportEvents.findById(kept))?.name).toBe('Bravo Renamed');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ sportEventId: failing, externalId: 'pga-2026-a', error: 'round shift refused' }),
+      'Could not keep a synced event current with its provider',
+    );
   });
 
   it('never touches an event of another sport league linked to the same provider event', async () => {

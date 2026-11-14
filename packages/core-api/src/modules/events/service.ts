@@ -323,7 +323,7 @@ export class SportEventService {
    * leagues as an admin's move would, and the lifecycle scheduler then moves the status on the new
    * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). A venue or end
    * the provider does not send is left as it is, not cleared. One read for the events, then one
-   * update per event that changed.
+   * update per event that changed; an update that fails is logged and the rest still go.
    */
   async keepProviderEventsCurrent(input: {
     sportLeagueId: string;
@@ -342,8 +342,16 @@ export class SportEventService {
       const updates = providerDetailUpdates(event, providerEvent);
       const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
       if (changed.length === 0) continue;
-      await this.updateEvent(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
-      changes.push({ sportEventId: event.id, externalId: event.externalId, changed });
+      try {
+        await this.updateEvent(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
+        changes.push({ sportEventId: event.id, externalId: event.externalId, changed });
+      } catch (error) {
+        // One event's refused update must not hold back the rest; the next sweep tries it again.
+        this.deps.logger?.error(
+          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId: event.externalId, changed, error: error instanceof Error ? error.message : String(error) },
+          'Could not keep a synced event current with its provider',
+        );
+      }
     }
     if (changes.length > 0) {
       this.deps.logger?.info(
