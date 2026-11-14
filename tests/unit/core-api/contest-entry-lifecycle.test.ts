@@ -454,13 +454,39 @@ describe('ContestService entries — confirmation email', () => {
   });
 });
 
+/** Gives the setup's contest one event that has not started, so its entries can be submitted for it. */
+function withUpcomingEvent(world: InMemoryContestWorld, contest: { id: string }) {
+  const event = world.addSportEvent({ startDate: new Date(Date.now() + 60 * 60 * 1000) });
+  const stored = expectDefined(world.contests.get(contest.id));
+  world.contests.set(contest.id, { ...stored, sportEventIds: [event.id] });
+  return event;
+}
+
 describe('ContestService entries — reads', () => {
+  it('lists another team\'s entry only once it is submitted, while the reader\'s own drafts stay listed', async () => {
+    const { world, owner, rival, contest, service } = setup();
+    const event = withUpcomingEvent(world, contest);
+    const theirDraft = await service.createEntry(contest.id, rival.id);
+    const myDraft = await service.createEntry(contest.id, owner.id);
+
+    const beforeSubmit = await service.listEntries(contest.id, owner.id);
+    world.setEntryEventStatus(theirDraft.id, event.id, 'SUBMITTED', new Date());
+    const afterSubmit = await service.listEntries(contest.id, owner.id);
+    const asRival = await service.listEntries(contest.id, rival.id);
+
+    expect(beforeSubmit.entries.map((entry) => entry.id)).toEqual([myDraft.id]);
+    expect(afterSubmit.entries.map((entry) => entry.id)).toEqual([myDraft.id, theirDraft.id]);
+    expect(asRival.entries.map((entry) => entry.id)).toEqual([theirDraft.id]);
+  });
+
   it('lists the reader\'s own entries first, with picks shown only for their own while the contest is open', async () => {
     const { world, owner, rival, contest, service } = setup();
+    const event = withUpcomingEvent(world, contest);
     const theirs = await service.createEntry(contest.id, rival.id);
     const mine = await service.createEntry(contest.id, owner.id);
     world.addPick(theirs.id, 'sep-1');
     world.addPick(mine.id, 'sep-2');
+    world.setEntryEventStatus(theirs.id, event.id, 'SUBMITTED', new Date());
 
     const result = await service.listEntries(contest.id, owner.id);
 
@@ -477,6 +503,7 @@ describe('ContestService entries — reads', () => {
     world.contests.set(contest.id, { ...contest, sportEventIds: [event.id] });
     const theirs = await service.createEntry(contest.id, rival.id);
     world.addPick(theirs.id, 'sep-1');
+    world.setEntryEventStatus(theirs.id, event.id, 'SUBMITTED', new Date());
     world.contests.set(contest.id, { ...contest, sportEventIds: [event.id], status: ContestStatus.ACTIVE });
     world.sportEvents.set(event.id, { ...event, startDate: new Date(Date.now() - 60 * 1000) });
 
@@ -486,10 +513,12 @@ describe('ContestService entries — reads', () => {
     expect(result.entries[0].participants?.map((pick) => pick.sportEventParticipantId)).toEqual(['sep-1']);
   });
 
-  it('shows a member with no team every entry as someone else\'s', async () => {
+  it('shows a member with no team every submitted entry as someone else\'s', async () => {
     const { world, owner, commissioner, contest, service } = setup();
+    const event = withUpcomingEvent(world, contest);
     const theirs = await service.createEntry(contest.id, owner.id);
     world.addPick(theirs.id, 'sep-1');
+    world.setEntryEventStatus(theirs.id, event.id, 'SUBMITTED', new Date());
 
     const result = await service.listEntries(contest.id, commissioner.id);
 
