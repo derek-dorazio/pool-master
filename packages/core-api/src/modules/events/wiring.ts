@@ -43,6 +43,7 @@ import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
+import { ProviderGameSlateService } from './provider-game-slate';
 import { ReadCache } from '../../core/read-cache';
 import { readEventFieldCacheTtlMs, type EventFieldCache } from './event-field-cache';
 import { SportEventParticipantService } from './sport-event-participant-service';
@@ -161,6 +162,8 @@ export interface SportEventServices {
   statLines: StatLineService;
   matchResults: MatchResultService;
   sportLeagues: SportLeagueService;
+  /** A synced league's event's games from its provider (#1728). */
+  providerGames: ProviderGameSlateService;
 }
 
 export function createMatchResultService(
@@ -269,6 +272,14 @@ export function createSportEventServices(
       logger,
     }),
     field: createSportEventParticipantService(prisma, logger, leaderboards),
+    providerGames: new ProviderGameSlateService({
+      sportEvents: events,
+      matches: new PrismaSportEventMatchRepository(prisma),
+      field: new PrismaSportEventParticipantRepository(prisma),
+      mappings: new PrismaParticipantProviderMappingRepository(prisma),
+      bracket,
+      logger,
+    }),
     golfScores: createGolfScoreService(prisma, logger, leaderboards),
     raceResults: createRaceResultService(prisma, logger, leaderboards),
     statLines: createStatLineService(prisma, logger, leaderboards),

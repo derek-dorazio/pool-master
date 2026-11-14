@@ -132,7 +132,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a matchweek with the teams playing in it, named from the season\'s teams', async () => {
+    it('gives a matchweek with the teams playing in it, named from the season\'s teams, and its matches as scheduled', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -143,6 +143,10 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
         ['epl-team-12', 'Manchester City'],
         ['epl-team-9', 'Fulham'],
       ]);
+      expect(detail?.games).toHaveLength(5);
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: 'epl-team-12', awayTeamExternalId: 'epl-team-9', isNeutralSite: false });
+      expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
+      expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       expect(requestLine(harness.api)).toEqual(['/epl/v2/matches?season=2026&per_page=100', '/epl/v2/teams?season=2026']);
     });
 
