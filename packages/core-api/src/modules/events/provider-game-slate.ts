@@ -16,6 +16,7 @@ import {
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 import { reseededRounds, roundPlacementBlocker } from './bracket-reseed';
 import type { BracketMatchInput, SportEventBracketService } from './sport-event-bracket-service';
+import type { SportEventRoundService } from './sport-event-round-service';
 
 /** What one slate sync did to the event's games, and why when it did nothing. */
 export type ProviderGameSlateOutcome =
@@ -30,6 +31,7 @@ export interface ProviderGameSlateDeps {
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   bracket: Pick<SportEventBracketService, 'loadBracket' | 'updateMatch' | 'proposeRoundMatchups' | 'setRoundMatchups'>;
+  rounds: Pick<SportEventRoundService, 'listRounds' | 'reschedule'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -59,6 +61,9 @@ export interface ProviderGameSlateInput {
  * stored one; the games then keep its kickoffs current. Once released, a reseeded round whose
  * teams the provider's games name is placed by the server's own reseed (`proposeRoundMatchups`)
  * when the provider pairs the teams the same way; a different pairing is logged for an admin.
+ *
+ * After a sync that loaded or changed matches, each round whose matches have a kickoff starts at
+ * the earliest of them; a round with none yet keeps its date.
  *
  * A finished or cancelled event, an event whose league is not synced to this provider, and one
  * whose teams are not all in its field yet (the field load comes first) are left alone.
@@ -97,6 +102,12 @@ export class ProviderGameSlateService {
     if (fieldRowOf === null) {
       return { outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' };
     }
+    const outcome = await this.syncMatches(event, input, fieldRowOf);
+    if (outcome.outcome !== 'UNCHANGED') await this.dateRoundsByKickoff(event.id);
+    return outcome;
+  }
+
+  private async syncMatches(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<ProviderGameSlateOutcome> {
     const slate = slateOf(input.games, fieldRowOf);
     const stored = await this.deps.matches.findBySportEvent(event.id);
     const draft = event.status === SportEventStatus.DRAFT;
@@ -116,6 +127,24 @@ export class ProviderGameSlateService {
     const placed = await this.placeReseededRounds(event, stored, slate);
     const current = placed.length === 0 ? stored : await this.deps.matches.findBySportEvent(event.id);
     return this.updateMatches(event, draft, current, slate, placed);
+  }
+
+  /** Moves each round whose matches have a kickoff to the earliest of them; a round with none keeps its date. */
+  private async dateRoundsByKickoff(sportEventId: string): Promise<void> {
+    const [matches, rounds] = await Promise.all([this.deps.matches.findBySportEvent(sportEventId), this.deps.rounds.listRounds(sportEventId)]);
+    const firstKickoff = new Map<number, number>();
+    for (const match of matches) {
+      if (match.scheduledDate === null) continue;
+      const earliest = firstKickoff.get(match.roundNumber);
+      if (earliest === undefined || match.scheduledDate.getTime() < earliest) firstKickoff.set(match.roundNumber, match.scheduledDate.getTime());
+    }
+    const moved = rounds.flatMap((round) => {
+      const kickoff = firstKickoff.get(round.roundNumber);
+      return kickoff === undefined || kickoff === round.scheduledDate.getTime()
+        ? []
+        : [{ roundNumber: round.roundNumber, scheduledDate: new Date(kickoff), scheduledEndAt: round.scheduledEndAt }];
+    });
+    if (moved.length > 0) await this.deps.rounds.reschedule(sportEventId, moved);
   }
 
   /**

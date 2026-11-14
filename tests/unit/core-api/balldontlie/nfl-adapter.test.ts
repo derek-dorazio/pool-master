@@ -163,14 +163,18 @@ describe('BalldontlieAdapter (NFL)', () => {
       ]);
     });
 
-    it('gives a postseason the standings do not seed yet the teams its games have so far, and no bracket', async () => {
-      const harness = setup({ ...defaultRoutes, '/nfl/v1/standings': () => ({ body: { data: [] } }) });
+    it('gives a postseason the standings do not seed yet the NFL teams its games have so far, leaving out an all-star game\'s, and no bracket', async () => {
+      const [first] = gamesIn('games-2026-postseason-partial.json');
+      const allStar = { ...first, id: 403699, week: 4, date: '2027-02-01T20:00:00.000Z', status_state: 'scheduled', home_team: { id: 901, conference: 'AFC', full_name: 'AFC' }, visitor_team: { id: 902, conference: 'NFC', full_name: 'NFC' } };
+      const withAllStar = pagedRoute([...games, allStar], (row, query) => query.getAll('seasons[]').map(Number).includes(row.season) && row.postseason);
+      const harness = setup({ ...defaultRoutes, '/nfl/v1/games': withAllStar, '/nfl/v1/standings': () => ({ body: { data: [] } }) });
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('nfl-2026-postseason');
 
       expect(detail).toMatchObject({ participantCount: 5 });
-      expect(detail?.games).toHaveLength(3);
+      expect(detail?.participants.map((team) => team.externalId)).not.toContain('nfl-team-901');
+      expect(detail?.games?.map((game) => game.externalGameId)).toEqual(['403601', '403602', '403603']);
       expect(detail?.bracket).toBeUndefined();
     });
 

@@ -231,12 +231,15 @@ live-score sync, as below.
 (`ProviderBracketMatch`): every match from the first round to the final, numbered, linked and in
 its region as an admin would load it, each side the team the seeds place there or empty. The NFL's
 field is each conference's seeds 1 to 7 from `/nfl/v1/standings` (`playoff_seed`), so the 1 seeds
-are in the field before they play, and its bracket is matches 1 to 6 for the Wild Card (2 hosts 7,
+are in the field before they play (until the standings seed anyone, the field is the vendor's
+NFL teams in its games so far, never an all-star game's sides), and its bracket is matches 1 to 6 for the Wild Card (2 hosts 7,
 3 hosts 6, 4 hosts 5; AFC first), 7 to 10 for the Divisional round with each 1 seed home in 7 and
 9, 11 and 12 for the Conference Championships, linked to the Super Bowl, 13, at a neutral site
 (`toNflPlayoffField`, `toNflPlayoffBracket`). Its games are the ones with both teams in the field,
 each in its round by its week's place among the postseason's weeks, since the vendor skips a week
-before the Super Bowl (`toNflPostseasonGames`). The event has four rounds.
+before the Super Bowl (`toNflPostseasonGames`). The event has four rounds. After any sync that
+loads or changes matches, week or playoff, each round whose matches have a kickoff starts at the
+earliest of them (`SportEventRoundService.reschedule`); a round with none yet keeps its date.
 
 | Event status | What the bracket and games do |
 |---|---|

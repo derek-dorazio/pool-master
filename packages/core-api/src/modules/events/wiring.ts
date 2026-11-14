@@ -278,6 +278,7 @@ export function createSportEventServices(
       field: new PrismaSportEventParticipantRepository(prisma),
       mappings: new PrismaParticipantProviderMappingRepository(prisma),
       bracket,
+      rounds,
       logger,
     }),
     golfScores: createGolfScoreService(prisma, logger, leaderboards),

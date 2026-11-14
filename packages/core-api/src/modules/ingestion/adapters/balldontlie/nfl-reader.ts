@@ -12,6 +12,7 @@ import { NflSeasonType, nflGameListSchema, nflStandingListSchema, nflTeamListSch
 import {
   nflScopeId,
   NflScopeKind,
+  nflTeamExternalId,
   seasonTypeOf,
   toGameScoreUpdates,
   toNflFieldParticipants,
@@ -64,7 +65,7 @@ export class NflReader {
    * The scope with its teams and games; null when the vendor has no game in it yet. A week's teams
    * are the ones playing its games. The postseason's are each conference's seeds 1 to 7 from the
    * season's standings, with their seeds, so the 1 seeds are in its field before they play (until
-   * the standings seed anyone, the teams its games have so far), and
+   * the standings seed anyone, the NFL teams its games have so far), and
    * once both conferences are seeded it carries its whole bracket (#1728).
    */
   async eventDetails(scope: NflScope): Promise<SportEventDetail | null> {
@@ -76,8 +77,8 @@ export class NflReader {
     }
     const standings = await this.client.get(STANDINGS_PATH, { season: scope.season }, nflStandingListSchema);
     const seeded = toNflPlayoffField(standings.data);
-    // Before the standings seed anyone, the field is the teams the games have so far.
-    const participants = seeded.length > 0 ? seeded : toNflFieldParticipants(games);
+    // Before the standings seed anyone, the field is the NFL teams the games have so far.
+    const participants = seeded.length > 0 ? seeded : await this.nflTeamsPlaying(games);
     const scheduled = toNflPostseasonGames(games, new Set(participants.map((team) => team.externalId)));
     const bracket = toNflPlayoffBracket(seeded, scheduled);
     return {
@@ -86,6 +87,16 @@ export class NflReader {
       games: scheduled,
       ...(bracket !== null && { bracket }),
     };
+  }
+
+  /**
+   * The teams of the games between two of the vendor's NFL teams, so an all-star game's sides,
+   * which the vendor may list in the postseason, are no team of the field.
+   */
+  private async nflTeamsPlaying(games: readonly NflGame[]): Promise<ProviderParticipant[]> {
+    const nflTeams = new Set((await this.teams()).map((team) => team.externalId));
+    const isNflTeam = (teamId: number | undefined) => teamId !== undefined && nflTeams.has(nflTeamExternalId(teamId));
+    return toNflFieldParticipants(games.filter((game) => isNflTeam(game.home_team?.id) && isNflTeam(game.visitor_team?.id)));
   }
 
   /** Every NFL team. */

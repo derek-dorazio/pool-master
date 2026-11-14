@@ -3,6 +3,7 @@ import type { ContestRepository } from '@poolmaster/shared/db';
 import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus, SportEventSyncScope, type SportEventStatus as Status } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
+import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
@@ -63,6 +64,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     field: store.fieldRepo(),
     mappings: store.mappingRepo(),
     bracket,
+    rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     logger,
   });
   const matchesNow = async () => (await store.matchRepo().findBySportEvent(event.id))
@@ -243,6 +245,7 @@ describe('ProviderGameSlateService', () => {
     // One conference of an NFL-style postseason: seeds 2 to 7 play the Wild Card, the 1 seed waits
     // in the reseeded Divisional round, whose two winners meet in the final.
     const SEEDS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+    const roundDefault = (roundNumber: number) => new Date(KICKOFF.getTime() - 2 * HOUR + (roundNumber - 1) * 24 * HOUR);
     const team = (seed: number) => `seed-${seed}`;
 
     function playoffSetup({ status = SportEventStatus.DRAFT }: { status?: Status } = {}) {
@@ -260,7 +263,8 @@ describe('ProviderGameSlateService', () => {
         syncScope: SportEventSyncScope.SCORES_ONLY,
         eventSyncProviderId: PROVIDER,
       });
-      void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: new Date(KICKOFF.getTime() + (roundNumber - 1) * 7 * 24 * HOUR) })));
+      // A day apart from two hours before the first kickoff, as a provider event's rounds are made.
+      void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })));
       const field = new Map(SEEDS.map((seed) => {
         const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
         void store.mappingRepo().bind({ participantId: participant.id, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT', mappedAt: KICKOFF });
@@ -292,6 +296,7 @@ describe('ProviderGameSlateService', () => {
         field: store.fieldRepo(),
         mappings: store.mappingRepo(),
         bracket,
+        rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
         logger,
       });
       const sync = (games: readonly ProviderScheduledGame[], shape: readonly ProviderBracketMatch[] = BRACKET) =>
@@ -308,7 +313,9 @@ describe('ProviderGameSlateService', () => {
           return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide, homeScore: 20, awayScore: 17 };
         });
       };
-      return { store, event, rowOf, bracket, service, logger, sync, sides, playWildCard };
+      const roundDates = async () => (await store.roundRepo().findBySportEvent(event.id))
+        .map((round) => [round.roundNumber, round.scheduledDate.toISOString()]);
+      return { store, event, rowOf, bracket, service, logger, sync, sides, playWildCard, roundDates };
     }
 
     const slot = (matchNumber: number, roundNumber: number, home: number | null, away: number | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
@@ -356,6 +363,18 @@ describe('ProviderGameSlateService', () => {
       expect(byNumber.get(1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 
+    it('dates each round of a loaded playoff by its earliest kickoff, and leaves a round with no kickoff yet where it is', async () => {
+      const { sync, roundDates } = playoffSetup();
+
+      await sync([playoffGame('w1', 1, 2, 7, 3), playoffGame('w2', 1, 3, 6, 1), playoffGame('w3', 1, 4, 5, 5)], BRACKET.map((match) => (match.roundNumber === 1 ? { ...match, scheduledAt: new Date(KICKOFF.getTime() + match.matchNumber * HOUR) } : match)));
+
+      expect(await roundDates()).toEqual([
+        [1, new Date(KICKOFF.getTime() + HOUR).toISOString()],
+        [2, roundDefault(2).toISOString()],
+        [3, roundDefault(3).toISOString()],
+      ]);
+    });
+
     it('keeps a draft bracket of the provider\'s shape and only moves a Wild Card kickoff the provider moved', async () => {
       const { sync, store, event } = playoffSetup();
       await sync(WILD_CARD);
@@ -376,7 +395,7 @@ describe('ProviderGameSlateService', () => {
     });
 
     it('places a released playoff\'s reseeded round from the provider\'s games once the round before is played, taking their kickoffs', async () => {
-      const { sync, sides, rowOf, store, event, playWildCard } = playoffSetup();
+      const { sync, sides, rowOf, store, event, playWildCard, roundDates } = playoffSetup();
       await sync(WILD_CARD);
       await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
       playWildCard();
@@ -392,6 +411,7 @@ describe('ProviderGameSlateService', () => {
         .sort((left, right) => left.matchNumber - right.matchNumber)
         .map((match) => [match.matchNumber, match.scheduledDate?.toISOString()]);
       expect(kickoffs).toEqual([[4, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [5, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
+      expect((await roundDates())[1]).toEqual([2, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()]);
     });
 
     it('leaves a released reseeded round unplaced, and tells an admin, when the provider pairs its teams differently from the reseed', async () => {
