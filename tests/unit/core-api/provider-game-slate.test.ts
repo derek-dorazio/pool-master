@@ -115,8 +115,8 @@ describe('ProviderGameSlateService', () => {
     const { service, event, store, matchesNow, field, logger } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
-    const [first] = await store.matchRepo().findBySportEvent(event.id);
-    await store.matchRepo().update(first.id, { status: MatchStatus.IN_PROGRESS });
+    // The week's first game kicked off.
+    store.matchRows = store.matchRows.map((match) => (match.matchNumber === 1 ? { ...match, status: MatchStatus.IN_PROGRESS } : match));
 
     const flexed = [game('g1', 'Bears', 'Lions', 5), game('g2', 'Packers', 'Vikings', 8), game('g9', 'Bears', 'Vikings', 9)];
     await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: flexed }))

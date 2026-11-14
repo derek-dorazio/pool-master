@@ -46,8 +46,8 @@ async function syncedWeek() {
     autoLifecycleEnabled: true,
   });
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
-  const field: Record<string, string> = {};
-  for (const name of ['Bears', 'Lions', 'Packers', 'Vikings']) {
+  const field = { Bears: '', Lions: '', Packers: '', Vikings: '' };
+  for (const name of ['Bears', 'Lions', 'Packers', 'Vikings'] as const) {
     // poolmaster-allow-query-in-loop: four test fixture teams
     const team = await prisma.participant.create({ data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' } });
     // poolmaster-allow-query-in-loop: four test fixture teams
