@@ -1,0 +1,514 @@
+{
+  "data": [
+    {
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      },
+      "playoff_seed": 1,
+      "wins": 14,
+      "losses": 3,
+      "ties": 0,
+      "overall_record": "14-3",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 3,
+        "conference": "AFC",
+        "division": "EAST",
+        "location": "Buffalo",
+        "name": "Bills",
+        "full_name": "Buffalo Bills",
+        "abbreviation": "BUF"
+      },
+      "playoff_seed": 2,
+      "wins": 13,
+      "losses": 4,
+      "ties": 0,
+      "overall_record": "13-4",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 6,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Baltimore",
+        "name": "Ravens",
+        "full_name": "Baltimore Ravens",
+        "abbreviation": "BAL"
+      },
+      "playoff_seed": 3,
+      "wins": 12,
+      "losses": 5,
+      "ties": 0,
+      "overall_record": "12-5",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 13,
+        "conference": "AFC",
+        "division": "SOUTH",
+        "location": "Houston",
+        "name": "Texans",
+        "full_name": "Houston Texans",
+        "abbreviation": "HOU"
+      },
+      "playoff_seed": 4,
+      "wins": 11,
+      "losses": 6,
+      "ties": 0,
+      "overall_record": "11-6",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 8,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Pittsburgh",
+        "name": "Steelers",
+        "full_name": "Pittsburgh Steelers",
+        "abbreviation": "PIT"
+      },
+      "playoff_seed": 6,
+      "wins": 9,
+      "losses": 8,
+      "ties": 0,
+      "overall_record": "9-8",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 18,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Los Angeles",
+        "name": "Chargers",
+        "full_name": "Los Angeles Chargers",
+        "abbreviation": "LAC"
+      },
+      "playoff_seed": 5,
+      "wins": 10,
+      "losses": 7,
+      "ties": 0,
+      "overall_record": "10-7",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 16,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Denver",
+        "name": "Broncos",
+        "full_name": "Denver Broncos",
+        "abbreviation": "DEN"
+      },
+      "playoff_seed": 7,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 25,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Detroit",
+        "name": "Lions",
+        "full_name": "Detroit Lions",
+        "abbreviation": "DET"
+      },
+      "playoff_seed": 1,
+      "wins": 14,
+      "losses": 3,
+      "ties": 0,
+      "overall_record": "14-3",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 9,
+        "conference": "NFC",
+        "division": "EAST",
+        "location": "Philadelphia",
+        "name": "Eagles",
+        "full_name": "Philadelphia Eagles",
+        "abbreviation": "PHI"
+      },
+      "playoff_seed": 2,
+      "wins": 13,
+      "losses": 4,
+      "ties": 0,
+      "overall_record": "13-4",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 30,
+        "conference": "NFC",
+        "division": "SOUTH",
+        "location": "Tampa Bay",
+        "name": "Buccaneers",
+        "full_name": "Tampa Bay Buccaneers",
+        "abbreviation": "TB"
+      },
+      "playoff_seed": 3,
+      "wins": 12,
+      "losses": 5,
+      "ties": 0,
+      "overall_record": "12-5",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 31,
+        "conference": "NFC",
+        "division": "WEST",
+        "location": "Los Angeles",
+        "name": "Rams",
+        "full_name": "Los Angeles Rams",
+        "abbreviation": "LAR"
+      },
+      "playoff_seed": 4,
+      "wins": 11,
+      "losses": 6,
+      "ties": 0,
+      "overall_record": "11-6",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 26,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Minnesota",
+        "name": "Vikings",
+        "full_name": "Minnesota Vikings",
+        "abbreviation": "MIN"
+      },
+      "playoff_seed": 5,
+      "wins": 10,
+      "losses": 7,
+      "ties": 0,
+      "overall_record": "10-7",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 4,
+        "conference": "NFC",
+        "division": "EAST",
+        "location": "Washington",
+        "name": "Commanders",
+        "full_name": "Washington Commanders",
+        "abbreviation": "WAS"
+      },
+      "playoff_seed": 6,
+      "wins": 9,
+      "losses": 8,
+      "ties": 0,
+      "overall_record": "9-8",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 27,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Green Bay",
+        "name": "Packers",
+        "full_name": "Green Bay Packers",
+        "abbreviation": "GB"
+      },
+      "playoff_seed": 7,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 1,
+        "conference": "NFC",
+        "division": "SOUTH",
+        "location": "Atlanta",
+        "name": "Falcons",
+        "full_name": "Atlanta Falcons",
+        "abbreviation": "ATL"
+      },
+      "playoff_seed": 8,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2025
+    },
+    {
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      },
+      "playoff_seed": 1,
+      "wins": 14,
+      "losses": 3,
+      "ties": 0,
+      "overall_record": "14-3",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 3,
+        "conference": "AFC",
+        "division": "EAST",
+        "location": "Buffalo",
+        "name": "Bills",
+        "full_name": "Buffalo Bills",
+        "abbreviation": "BUF"
+      },
+      "playoff_seed": 2,
+      "wins": 13,
+      "losses": 4,
+      "ties": 0,
+      "overall_record": "13-4",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 6,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Baltimore",
+        "name": "Ravens",
+        "full_name": "Baltimore Ravens",
+        "abbreviation": "BAL"
+      },
+      "playoff_seed": 3,
+      "wins": 12,
+      "losses": 5,
+      "ties": 0,
+      "overall_record": "12-5",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 13,
+        "conference": "AFC",
+        "division": "SOUTH",
+        "location": "Houston",
+        "name": "Texans",
+        "full_name": "Houston Texans",
+        "abbreviation": "HOU"
+      },
+      "playoff_seed": 4,
+      "wins": 11,
+      "losses": 6,
+      "ties": 0,
+      "overall_record": "11-6",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 8,
+        "conference": "AFC",
+        "division": "NORTH",
+        "location": "Pittsburgh",
+        "name": "Steelers",
+        "full_name": "Pittsburgh Steelers",
+        "abbreviation": "PIT"
+      },
+      "playoff_seed": 6,
+      "wins": 9,
+      "losses": 8,
+      "ties": 0,
+      "overall_record": "9-8",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 18,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Los Angeles",
+        "name": "Chargers",
+        "full_name": "Los Angeles Chargers",
+        "abbreviation": "LAC"
+      },
+      "playoff_seed": 5,
+      "wins": 10,
+      "losses": 7,
+      "ties": 0,
+      "overall_record": "10-7",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 16,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Denver",
+        "name": "Broncos",
+        "full_name": "Denver Broncos",
+        "abbreviation": "DEN"
+      },
+      "playoff_seed": 7,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 25,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Detroit",
+        "name": "Lions",
+        "full_name": "Detroit Lions",
+        "abbreviation": "DET"
+      },
+      "playoff_seed": 1,
+      "wins": 14,
+      "losses": 3,
+      "ties": 0,
+      "overall_record": "14-3",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 9,
+        "conference": "NFC",
+        "division": "EAST",
+        "location": "Philadelphia",
+        "name": "Eagles",
+        "full_name": "Philadelphia Eagles",
+        "abbreviation": "PHI"
+      },
+      "playoff_seed": 2,
+      "wins": 13,
+      "losses": 4,
+      "ties": 0,
+      "overall_record": "13-4",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 30,
+        "conference": "NFC",
+        "division": "SOUTH",
+        "location": "Tampa Bay",
+        "name": "Buccaneers",
+        "full_name": "Tampa Bay Buccaneers",
+        "abbreviation": "TB"
+      },
+      "playoff_seed": 3,
+      "wins": 12,
+      "losses": 5,
+      "ties": 0,
+      "overall_record": "12-5",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 31,
+        "conference": "NFC",
+        "division": "WEST",
+        "location": "Los Angeles",
+        "name": "Rams",
+        "full_name": "Los Angeles Rams",
+        "abbreviation": "LAR"
+      },
+      "playoff_seed": 4,
+      "wins": 11,
+      "losses": 6,
+      "ties": 0,
+      "overall_record": "11-6",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 26,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Minnesota",
+        "name": "Vikings",
+        "full_name": "Minnesota Vikings",
+        "abbreviation": "MIN"
+      },
+      "playoff_seed": 5,
+      "wins": 10,
+      "losses": 7,
+      "ties": 0,
+      "overall_record": "10-7",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 4,
+        "conference": "NFC",
+        "division": "EAST",
+        "location": "Washington",
+        "name": "Commanders",
+        "full_name": "Washington Commanders",
+        "abbreviation": "WAS"
+      },
+      "playoff_seed": 6,
+      "wins": 9,
+      "losses": 8,
+      "ties": 0,
+      "overall_record": "9-8",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 27,
+        "conference": "NFC",
+        "division": "NORTH",
+        "location": "Green Bay",
+        "name": "Packers",
+        "full_name": "Green Bay Packers",
+        "abbreviation": "GB"
+      },
+      "playoff_seed": 7,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2026
+    },
+    {
+      "team": {
+        "id": 1,
+        "conference": "NFC",
+        "division": "SOUTH",
+        "location": "Atlanta",
+        "name": "Falcons",
+        "full_name": "Atlanta Falcons",
+        "abbreviation": "ATL"
+      },
+      "playoff_seed": 8,
+      "wins": 8,
+      "losses": 9,
+      "ties": 0,
+      "overall_record": "8-9",
+      "season": 2026
+    }
+  ]
+}

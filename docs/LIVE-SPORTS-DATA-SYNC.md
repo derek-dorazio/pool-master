@@ -16,7 +16,7 @@ The plan behind the work, and the decisions Derek made on it, are in
   and keeps their dates current, and the lifecycle scheduler moves their status from those
   dates; the admin reviews, releases and browses. **Today** a sweep every six hours creates a
   synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
-  loads their fields (*2c*), and a game week takes its games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
+  loads their fields (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
   row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
@@ -207,13 +207,12 @@ Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202
 provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's
 bare player id.
 
-### 2d. Game rows for a synced game week, after the field load
+### 2d. Game rows for a synced game week or playoff, after the field load
 
 A game week's event detail (an NFL week, a Premier League matchweek) carries the provider's
 `games`: each game's id, round, both teams and kickoff. A game is matched to a stored match by its
 two teams, whichever side each is on (`ProviderScheduledGame`,
-`nfl-mapping.ts` `toNflScheduledGames`, `epl-mapping.ts` `toEplScheduledGames`). The NFL postseason
-lists none. After every field load, `ProviderGameSlateService.afterFieldLoad`
+`nfl-mapping.ts` `toNflScheduledGames`, `epl-mapping.ts` `toEplScheduledGames`). After every field load, `ProviderGameSlateService.afterFieldLoad`
 (`events/provider-game-slate.ts`, #1728) turns them into the event's matches when the event is
 provider-synced (`isProviderSyncedEvent`):
 
@@ -227,6 +226,25 @@ The games wait for the field: when a team is not in the event's field yet, nothi
 missing teams are logged. A refused load is logged and never fails the field load, and the next
 field load tries again. Spreads stay the admin's (#720). A game links to its match on the first
 live-score sync, as below.
+
+**A fixed-shape playoff** (the NFL postseason) also carries its whole `bracket`
+(`ProviderBracketMatch`): every match from the first round to the final, numbered, linked and in
+its region as an admin would load it, each side the team the seeds place there or empty. The NFL's
+field is each conference's seeds 1 to 7 from `/nfl/v1/standings` (`playoff_seed`), so the 1 seeds
+are in the field before they play (until the standings seed anyone, the field is the vendor's
+NFL teams in its games so far, never an all-star game's sides), and its bracket is matches 1 to 6 for the Wild Card (2 hosts 7,
+3 hosts 6, 4 hosts 5; AFC first), 7 to 10 for the Divisional round with each 1 seed home in 7 and
+9, 11 and 12 for the Conference Championships, linked to the Super Bowl, 13, at a neutral site
+(`toNflPlayoffField`, `toNflPlayoffBracket`). Its games are the ones with both teams in the field,
+each in its round by its week's place among the postseason's weeks, since the vendor skips a week
+before the Super Bowl (`toNflPostseasonGames`). The event has four rounds. After any sync that
+loads or changes matches, week or playoff, each round whose matches have a kickoff starts at the
+earliest of them (`SportEventRoundService.reschedule`); a round with none yet keeps its date.
+
+| Event status | What the bracket and games do |
+|---|---|
+| `DRAFT` | When the stored bracket's shape or teams differ from the provider's, match by match (or none is stored), the provider's bracket is loaded through `loadBracket`. Otherwise it is kept and its matches take the games' kickoffs, as for a week. |
+| Released, not finished | A reseeded round still open, whose every game the provider lists with both teams once the round before is played, is placed by the server's own reseed (`proposeRoundMatchups`, then `setRoundMatchups`) when the provider pairs the same teams; a different pairing is logged for an admin. A placed match then takes its game's kickoff. |
 
 ## 3. Triggers
 
@@ -590,8 +608,8 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks): see *2d*. Still to come are fixed-shape playoffs (NBA, NHL, MLB, WNBA, CFP,
-  World Cup, NFL postseason) and the NCAA tournaments from the vendor's bracket. For those an admin
+  League matchweeks) and the NFL postseason: see *2d*. Still to come are the other fixed-shape
+  playoffs (NBA, NHL, MLB, WNBA, CFP, World Cup) and the NCAA tournaments from the vendor's bracket. For those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).
 - **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its

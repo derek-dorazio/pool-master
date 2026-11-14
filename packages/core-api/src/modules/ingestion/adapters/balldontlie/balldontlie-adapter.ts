@@ -6,7 +6,8 @@
  * category. Plan tiers, as the vendor documents them: tournaments and players are free,
  * tournament results need ALL-STAR, the field (`tournament_competitors`) needs GOAT.
  *
- * NFL (#1496, `nfl-reader.ts`): regular season weeks and the postseason as events, their teams,
+ * NFL (#1496, `nfl-reader.ts`): regular season weeks and the postseason as events, their teams
+ * (the postseason's seeded from the standings), their games, the postseason's bracket (#1728),
  * and their games' scores in the GAME category. An event id that names an NFL scope
  * (`nfl-2026-week-12`) is read as one.
  *

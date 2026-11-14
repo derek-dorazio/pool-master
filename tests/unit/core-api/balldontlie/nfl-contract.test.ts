@@ -4,6 +4,8 @@ import {
   nflGameListSchema,
   nflGameSchema,
   NflSeasonType,
+  nflStandingListSchema,
+  nflStandingSchema,
   nflTeamListSchema,
   nflTeamSchema,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract';
@@ -29,6 +31,7 @@ describe('BALLDONTLIE NFL fixtures', () => {
     ['games-2026-week-12.json', '/nfl/v1/games', nflGameListSchema],
     ['games-2025-postseason.json', '/nfl/v1/games', nflGameListSchema],
     ['games-2026-postseason-partial.json', '/nfl/v1/games', nflGameListSchema],
+    ['standings.json', '/nfl/v1/standings', nflStandingListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -48,6 +51,7 @@ describe('BALLDONTLIE NFL fields the adapter reads', () => {
   const pairs: Array<[component: string, adapterSchema: z.ZodType]> = [
     ['NFLGame', nflGameSchema],
     ['NFLTeam', nflTeamSchema],
+    ['NFLStandings', nflStandingSchema],
     ['Pagination', balldontliePaginationSchema],
   ];
 
