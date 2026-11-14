@@ -1,9 +1,9 @@
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
-import { MatchStatus, Sport, SportEventStatus, SportEventSyncScope, type SportEventStatus as Status } from '@poolmaster/shared/domain';
+import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus, SportEventSyncScope, type SportEventStatus as Status } from '@poolmaster/shared/domain';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import type { ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -236,6 +236,199 @@ describe('ProviderGameSlateService', () => {
         expect.objectContaining({ externalId: event.externalId, error: 'bracket refused' }),
         'Could not sync event games from provider',
       );
+    });
+  });
+
+  describe('a fixed-shape playoff', () => {
+    // One conference of an NFL-style postseason: seeds 2 to 7 play the Wild Card, the 1 seed waits
+    // in the reseeded Divisional round, whose two winners meet in the final.
+    const SEEDS = [1, 2, 3, 4, 5, 6, 7] as const;
+    const team = (seed: number) => `seed-${seed}`;
+
+    function playoffSetup({ status = SportEventStatus.DRAFT }: { status?: Status } = {}) {
+      const store = new InMemorySportEvents();
+      const sport = store.addSport(Sport.AMERICAN_FOOTBALL);
+      const league = store.addSportLeague(sport.id, 'NFL');
+      store.sportLeagues = store.sportLeagues.map((row) => (row.id === league.id ? { ...row, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } : row));
+      const event = store.addEvent({
+        sportLeagueId: league.id,
+        sport: Sport.AMERICAN_FOOTBALL,
+        status,
+        rounds: 3,
+        providerId: PROVIDER,
+        externalId: 'nfl-2026-postseason',
+        syncScope: SportEventSyncScope.SCORES_ONLY,
+        eventSyncProviderId: PROVIDER,
+      });
+      void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: new Date(KICKOFF.getTime() + (roundNumber - 1) * 7 * 24 * HOUR) })));
+      const field = new Map(SEEDS.map((seed) => {
+        const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
+        void store.mappingRepo().bind({ participantId: participant.id, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT', mappedAt: KICKOFF });
+        return [seed, store.addToField(event.id, participant.id, { seedNumber: seed }).id] as const;
+      }));
+      const rowOf = (seed: number) => field.get(seed) ?? '';
+      let sequence = 0;
+      const bracket = new SportEventBracketService({
+        sportEvents: store.sportEventRepo(),
+        sportLeagues: store.sportLeagueRepo(),
+        rounds: store.roundRepo(),
+        field: store.fieldRepo(),
+        participants: store.participantRepo(),
+        affiliations: store.affiliationRepo(),
+        matches: store.matchRepo(),
+        tiers: store.tierRepo(),
+        valuations: store.valuationRepo(),
+        contests: { recheckReminders: jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined) },
+        ...NO_PICKS_ON_EVENT,
+        newId: () => {
+          sequence += 1;
+          return `match-${sequence}`;
+        },
+      });
+      const logger = fakeLogger();
+      const service = new ProviderGameSlateService({
+        sportEvents: store.sportEventRepo(),
+        matches: store.matchRepo(),
+        field: store.fieldRepo(),
+        mappings: store.mappingRepo(),
+        bracket,
+        logger,
+      });
+      const sync = (games: readonly ProviderScheduledGame[], shape: readonly ProviderBracketMatch[] = BRACKET) =>
+        service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games, bracket: shape });
+      const sides = () => store.matchRows
+        .slice()
+        .sort((left, right) => left.matchNumber - right.matchNumber)
+        .map((match) => [match.matchNumber, match.homeSportEventParticipantId, match.awaySportEventParticipantId]);
+      /** Round 1 played: the 2 and 4 seeds win at home, the 6 seed wins away. */
+      const playWildCard = () => {
+        const winners = new Map([[1, MatchSide.HOME], [2, MatchSide.AWAY], [3, MatchSide.HOME]]);
+        store.matchRows = store.matchRows.map((match) => {
+          const winnerSide = winners.get(match.matchNumber);
+          return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide, homeScore: 20, awayScore: 17 };
+        });
+      };
+      return { store, event, rowOf, bracket, service, logger, sync, sides, playWildCard };
+    }
+
+    const slot = (matchNumber: number, roundNumber: number, home: number | null, away: number | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
+      matchNumber,
+      roundNumber,
+      homeTeamExternalId: home === null ? null : team(home),
+      awayTeamExternalId: away === null ? null : team(away),
+      isNeutralSite: false,
+      scheduledAt: null,
+      advancesTo: null,
+      regionLabel: 'AFC',
+      ...fill,
+    });
+    const BRACKET = [
+      slot(1, 1, 2, 7, { scheduledAt: KICKOFF }),
+      slot(2, 1, 3, 6, { scheduledAt: KICKOFF }),
+      slot(3, 1, 4, 5, { scheduledAt: KICKOFF }),
+      slot(4, 2, 1, null),
+      slot(5, 2, null, null),
+      slot(6, 3, null, null, { regionLabel: null, isNeutralSite: true }),
+    ].map((match) => (match.matchNumber === 4 ? { ...match, advancesTo: { matchNumber: 6, side: MatchSide.HOME } } : match.matchNumber === 5 ? { ...match, advancesTo: { matchNumber: 6, side: MatchSide.AWAY } } : match));
+    const playoffGame = (id: string, roundNumber: number, home: number, away: number, hoursAfterKickoff = 0): ProviderScheduledGame => ({
+      externalGameId: id,
+      roundNumber,
+      homeTeamExternalId: team(home),
+      awayTeamExternalId: team(away),
+      scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR),
+      isNeutralSite: false,
+    });
+    const WILD_CARD = [playoffGame('w1', 1, 2, 7), playoffGame('w2', 1, 3, 6), playoffGame('w3', 1, 4, 5)];
+
+    it('loads a synced draft playoff\'s whole bracket, first round to final, with its regions and links', async () => {
+      const { sync, sides, rowOf, store, event } = playoffSetup();
+
+      await expect(sync(WILD_CARD)).resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
+
+      expect(sides()).toEqual([
+        [1, rowOf(2), rowOf(7)], [2, rowOf(3), rowOf(6)], [3, rowOf(4), rowOf(5)],
+        [4, rowOf(1), null], [5, null, null], [6, null, null],
+      ]);
+      const byNumber = new Map(store.matchRows.map((match) => [match.matchNumber, match]));
+      expect(byNumber.get(4)?.advancesToMatchId).toBe(byNumber.get(6)?.id);
+      expect(byNumber.get(5)?.advancesToSide).toBe(MatchSide.AWAY);
+      expect(byNumber.get(6)).toMatchObject({ isNeutralSite: true, regionLabel: null });
+      expect(byNumber.get(1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
+    });
+
+    it('keeps a draft bracket of the provider\'s shape and only moves a Wild Card kickoff the provider moved', async () => {
+      const { sync, store, event } = playoffSetup();
+      await sync(WILD_CARD);
+      const idsBefore = store.matchRows.map((match) => match.id);
+
+      await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[]))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
+    });
+
+    it('reloads a draft bracket when the provider\'s seeds change who plays whom', async () => {
+      const { sync, sides, rowOf, event } = playoffSetup();
+      await sync(WILD_CARD);
+      const reseeded = BRACKET.map((match) => (match.matchNumber === 2 ? slot(2, 1, 3, 5, { scheduledAt: KICKOFF }) : match.matchNumber === 3 ? slot(3, 1, 4, 6, { scheduledAt: KICKOFF }) : match));
+
+      await expect(sync([], reseeded)).resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
+      expect(sides().slice(1, 3)).toEqual([[2, rowOf(3), rowOf(5)], [3, rowOf(4), rowOf(6)]]);
+    });
+
+    it('places a released playoff\'s reseeded round from the provider\'s games once the round before is played, taking their kickoffs', async () => {
+      const { sync, sides, rowOf, store, event, playWildCard } = playoffSetup();
+      await sync(WILD_CARD);
+      await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+      playWildCard();
+
+      // The 1 seed hosts the worst seed left (the 6), and the 2 hosts the 4.
+      const divisional = [playoffGame('d1', 2, 1, 6, 168), playoffGame('d2', 2, 2, 4, 170)];
+      await expect(sync([...WILD_CARD, ...divisional]))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [4, 5] });
+
+      expect(sides().slice(3, 5)).toEqual([[4, rowOf(1), rowOf(6)], [5, rowOf(2), rowOf(4)]]);
+      const kickoffs = store.matchRows.filter((match) => match.roundNumber === 2).map((match) => [match.matchNumber, match.scheduledDate?.toISOString()]);
+      expect(kickoffs.sort()).toEqual([[4, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [5, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
+    });
+
+    it('leaves a released reseeded round unplaced, and tells an admin, when the provider pairs its teams differently from the reseed', async () => {
+      const { sync, sides, store, event, playWildCard, logger } = playoffSetup();
+      await sync(WILD_CARD);
+      await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+      playWildCard();
+
+      await expect(sync([...WILD_CARD, playoffGame('d1', 2, 1, 4, 168), playoffGame('d2', 2, 2, 6, 170)]))
+        .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
+
+      expect(sides().slice(3, 5)).toEqual([[4, expect.any(String), null], [5, null, null]]);
+      expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: event.id, roundNumber: 2 }), expect.stringContaining('pairs the teams differently'));
+    });
+
+    it('waits to place a reseeded round until every game of the round before has its result', async () => {
+      const { sync, sides, store, event, bracket } = playoffSetup();
+      await sync(WILD_CARD);
+      await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+      const propose = jest.spyOn(bracket, 'proposeRoundMatchups');
+
+      await expect(sync([...WILD_CARD, playoffGame('d1', 2, 1, 6, 168), playoffGame('d2', 2, 2, 4, 170)]))
+        .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
+      expect(propose).not.toHaveBeenCalled();
+      expect(sides()[4]).toEqual([5, null, null]);
+    });
+
+    it('leaves the bracket unloaded while a team the bracket names is not in the field yet', async () => {
+      const { sync, sides } = playoffSetup();
+
+      await expect(sync([], BRACKET.map((match) => (match.matchNumber === 4 ? slot(4, 2, 8, null) : match))))
+        .resolves.toEqual({ outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' });
+      expect(sides()).toEqual([]);
+    });
+
+    it('syncs an event detail that carries a bracket but no games after a field load', async () => {
+      const { service, event } = playoffSetup();
+
+      await expect(service.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, bracket: BRACKET }))
+        .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
     });
   });
 });

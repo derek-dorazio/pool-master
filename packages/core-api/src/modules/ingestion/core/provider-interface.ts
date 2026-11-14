@@ -10,7 +10,7 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 
 // --- Provider Interface ---
@@ -171,6 +171,26 @@ export interface SportEventDetail extends SportEvent {
    * matches from them (`ProviderGameSlateService`).
    */
   games?: ProviderScheduledGame[];
+  /**
+   * The event's whole bracket, for a playoff whose shape is fixed (the NFL postseason, #1728):
+   * every match from the first round to the final, each side the team the seeds place there or
+   * null while a result or a reseed decides it. Left out until the provider's seeds fill the first
+   * round. A synced league's draft event loads it as its bracket; `games` then keeps it current.
+   */
+  bracket?: ProviderBracketMatch[];
+}
+
+/** One match of a provider's fixed-shape bracket, numbered and linked as the event's bracket is. */
+export interface ProviderBracketMatch {
+  matchNumber: number;
+  roundNumber: number;
+  homeTeamExternalId: string | null;
+  awayTeamExternalId: string | null;
+  isNeutralSite: boolean;
+  scheduledAt: Date | null;
+  /** The match and side its winner goes to; null for the final, and for a match before a reseed. */
+  advancesTo: { matchNumber: number; side: MatchSide } | null;
+  regionLabel: string | null;
 }
 
 /**

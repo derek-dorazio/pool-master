@@ -58,3 +58,17 @@ export const nflGameListSchema = z.object({
   data: z.array(nflGameSchema),
   meta: balldontliePaginationSchema.optional(),
 });
+
+/**
+ * `NFLStandings` from `/nfl/v1/standings`: a team's place in its conference. `playoff_seed` is the
+ * team's seed in its conference; the postseason's field is the seeds 1 to 7 of each (#1728).
+ */
+export const nflStandingSchema = z.object({
+  team: nflTeamSchema.optional(),
+  playoff_seed: z.number().int().optional(),
+});
+export type NflStanding = z.infer<typeof nflStandingSchema>;
+
+export const nflStandingListSchema = z.object({
+  data: z.array(nflStandingSchema),
+});

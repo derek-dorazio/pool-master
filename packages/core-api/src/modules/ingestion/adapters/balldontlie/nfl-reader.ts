@@ -1,19 +1,23 @@
 /**
  * The BALLDONTLIE NFL reads behind the adapter (#1496): the season's games grouped into events
  * (a regular season week, or the postseason), a scope's teams, every NFL team, and a scope's
- * game scores. The games and teams endpoints name no paid tier in the vendor's document.
+ * game scores, and a season's standings for the postseason's seeds. The games, teams and standings
+ * endpoints name no paid tier in the vendor's document.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import type { BalldontlieClient } from './balldontlie-client';
-import { NflSeasonType, nflGameListSchema, nflTeamListSchema, type NflGame } from './nfl-contract';
+import { NflSeasonType, nflGameListSchema, nflStandingListSchema, nflTeamListSchema, type NflGame } from './nfl-contract';
 import {
   nflScopeId,
   NflScopeKind,
   seasonTypeOf,
   toGameScoreUpdates,
   toNflFieldParticipants,
+  toNflPlayoffBracket,
+  toNflPlayoffField,
+  toNflPostseasonGames,
   toNflScheduledGames,
   toNflSportEvent,
   toNflSportEvents,
@@ -23,6 +27,7 @@ import {
 
 const GAMES_PATH = '/nfl/v1/games';
 const TEAMS_PATH = '/nfl/v1/teams';
+const STANDINGS_PATH = '/nfl/v1/standings';
 
 /** A range spanning more seasons than this reads the current and next season instead of every one. */
 const MAX_SEASONS_READ = 3;
@@ -55,16 +60,31 @@ export class NflReader {
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The scope with the teams playing its games; null when the vendor has no game in it yet. */
+  /**
+   * The scope with its teams and games; null when the vendor has no game in it yet. A week's teams
+   * are the ones playing its games. The postseason's are each conference's seeds 1 to 7 from the
+   * season's standings, with their seeds, so the 1 seeds are in its field before they play (until
+   * the standings seed anyone, the teams its games have so far), and
+   * once both conferences are seeded it carries its whole bracket (#1728).
+   */
   async eventDetails(scope: NflScope): Promise<SportEventDetail | null> {
     const games = await this.gamesOf(scope);
     if (games.length === 0) return null;
-    const participants = toNflFieldParticipants(games);
-    // A week's games are its matches; the playoffs' bracket is built another way (#1728).
+    if (scope.kind === NflScopeKind.WEEK) {
+      const participants = toNflFieldParticipants(games);
+      return { ...toNflSportEvent(scope, games, participants.length), participants, games: toNflScheduledGames(games) };
+    }
+    const standings = await this.client.get(STANDINGS_PATH, { season: scope.season }, nflStandingListSchema);
+    const seeded = toNflPlayoffField(standings.data);
+    // Before the standings seed anyone, the field is the teams the games have so far.
+    const participants = seeded.length > 0 ? seeded : toNflFieldParticipants(games);
+    const scheduled = toNflPostseasonGames(games, new Set(participants.map((team) => team.externalId)));
+    const bracket = toNflPlayoffBracket(seeded, scheduled);
     return {
       ...toNflSportEvent(scope, games, participants.length),
       participants,
-      ...(scope.kind === NflScopeKind.WEEK && { games: toNflScheduledGames(games) }),
+      games: scheduled,
+      ...(bracket !== null && { bracket }),
     };
   }
 

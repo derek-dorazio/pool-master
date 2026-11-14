@@ -1,7 +1,8 @@
-import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
+import { z } from 'zod';
+import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
-import { nflGameListSchema, type NflGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract';
+import { nflGameListSchema, nflStandingListSchema, type NflGame, type NflStanding } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-contract';
 import {
   NflScopeKind,
   nflScopeId,
@@ -10,6 +11,9 @@ import {
   seasonTypeOf,
   toGameScoreUpdates,
   toNflFieldParticipants,
+  toNflPlayoffBracket,
+  toNflPlayoffField,
+  toNflPostseasonGames,
   toNflSportEvent,
   toNflSportEvents,
   toNflTeamParticipant,
@@ -21,6 +25,8 @@ const week12 = gamesIn('games-2026-week-12.json');
 const [weekFinal, weekLive, weekScheduled, weekUnknown] = week12;
 const postseason2025 = gamesIn('games-2025-postseason.json');
 const postseason2026 = gamesIn('games-2026-postseason-partial.json');
+const standingRows = z.object({ data: z.array(z.looseObject({ season: z.number() })) }).parse(readBalldontlieFixture('nfl', 'standings.json')).data;
+const standings2025: NflStanding[] = nflStandingListSchema.parse({ data: standingRows.filter((row) => row.season === 2025) }).data;
 const WEEK_12 = { kind: NflScopeKind.WEEK, season: 2026, week: 12 } as const;
 const POSTSEASON_2025 = { kind: NflScopeKind.POSTSEASON, season: 2025 } as const;
 
@@ -78,8 +84,8 @@ describe('NFL events', () => {
     });
   });
 
-  it('leaves the playoffs\' rounds to the sport, and completes them only once all 13 games are done', () => {
-    expect(toNflSportEvent(POSTSEASON_2025, postseason2025)).toMatchObject({ name: 'NFL Playoffs', status: 'COMPLETED', rounds: undefined });
+  it('gives the playoffs their four rounds, and completes them only once all 13 games are done', () => {
+    expect(toNflSportEvent(POSTSEASON_2025, postseason2025)).toMatchObject({ name: 'NFL Playoffs', status: 'COMPLETED', rounds: 4 });
     expect(toNflSportEvent(POSTSEASON_2025, postseason2025.slice(0, 6))).toMatchObject({ status: 'IN_PROGRESS' });
   });
 
@@ -171,5 +177,67 @@ describe('NFL game scores', () => {
     expect(() => toGameScoreUpdates([{ ...weekFinal, id: undefined }])).toThrow('has no id');
     expect(() => toGameScoreUpdates([{ ...weekFinal, home_team: { full_name: 'Detroit Lions' } }])).toThrow('has no home_team.id');
     expect(() => toGameScoreUpdates([{ ...weekFinal, visitor_team: undefined }])).toThrow('has no visitor_team');
+  });
+});
+
+describe('NFL postseason bracket', () => {
+  const field = toNflPlayoffField(standings2025);
+  const games = toNflPostseasonGames(postseason2025, new Set(field.map((team) => team.externalId)));
+  const team = (abbreviation: string) => {
+    const found = field.find((participant) => participant.metadata['abbreviation'] === abbreviation);
+    if (found === undefined) throw new Error(`no ${abbreviation} in the field`);
+    return found.externalId;
+  };
+
+  it('seeds each conference\'s top seven from the standings, AFC first and best seed first, and leaves out the eighth', () => {
+    expect(field.map((participant) => [participant.metadata['abbreviation'], participant.metadata.seed])).toEqual([
+      ['KC', 1], ['BUF', 2], ['BAL', 3], ['HOU', 4], ['LAC', 5], ['PIT', 6], ['DEN', 7],
+      ['DET', 1], ['PHI', 2], ['TB', 3], ['LAR', 4], ['MIN', 5], ['WAS', 6], ['GB', 7],
+    ]);
+  });
+
+  it('puts each postseason game in its round by its week\'s place, the Super Bowl fourth and neutral despite the vendor\'s week 5', () => {
+    expect(games.map((game) => game.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(games.filter((game) => game.isNeutralSite).map((game) => game.roundNumber)).toEqual([4]);
+  });
+
+  it('leaves out a game with a team outside the field, such as an all-star game, and a game whose teams are not decided', () => {
+    const allStar: NflGame = { ...postseason2025[0] as NflGame, id: 999, week: 4, home_team: { id: 90, full_name: 'AFC' }, visitor_team: { id: 91, full_name: 'NFC' } };
+    const undecided: NflGame = { ...postseason2025[12] as NflGame, id: 998, home_team: undefined };
+    const scheduled = toNflPostseasonGames([...postseason2025, allStar, undecided], new Set(field.map((participant) => participant.externalId)));
+    expect(scheduled.map((game) => game.externalGameId)).not.toContain('999');
+    expect(scheduled.map((game) => game.externalGameId)).not.toContain('998');
+    expect(scheduled.at(-1)).toMatchObject({ externalGameId: '402513', roundNumber: 4 });
+  });
+
+  it('lays out the whole bracket: the Wild Card by seed, the 1 seeds waiting in the Divisional round, the championships linked to the Super Bowl', () => {
+    const bracket = toNflPlayoffBracket(field, games);
+    expect(bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo, match.isNeutralSite])).toEqual([
+      [1, 1, 'AFC', team('BUF'), team('DEN'), null, false],
+      [2, 1, 'AFC', team('BAL'), team('PIT'), null, false],
+      [3, 1, 'AFC', team('HOU'), team('LAC'), null, false],
+      [4, 1, 'NFC', team('PHI'), team('GB'), null, false],
+      [5, 1, 'NFC', team('TB'), team('WAS'), null, false],
+      [6, 1, 'NFC', team('LAR'), team('MIN'), null, false],
+      [7, 2, 'AFC', team('KC'), null, null, false],
+      [8, 2, 'AFC', null, null, null, false],
+      [9, 2, 'NFC', team('DET'), null, null, false],
+      [10, 2, 'NFC', null, null, null, false],
+      [11, 3, 'AFC', null, null, { matchNumber: 13, side: MatchSide.HOME }, false],
+      [12, 3, 'NFC', null, null, { matchNumber: 13, side: MatchSide.AWAY }, false],
+      [13, 4, null, null, null, null, true],
+    ]);
+  });
+
+  it('gives a Wild Card match its game\'s kickoff once the provider lists it, and none before', () => {
+    const listed = toNflPlayoffBracket(field, games);
+    expect(listed?.[0]?.scheduledAt).toEqual(new Date('2026-01-11T18:00:00.000Z'));
+    expect(listed?.slice(6).every((match) => match.scheduledAt === null)).toBe(true);
+    expect(toNflPlayoffBracket(field, [])?.[0]?.scheduledAt).toBeNull();
+  });
+
+  it('lays out no bracket until both conferences have their seven seeds', () => {
+    expect(toNflPlayoffBracket(field.filter((participant) => participant.metadata.seed !== 7 || participant.metadata['conference'] !== 'NFC'), games)).toBeNull();
+    expect(toNflPlayoffBracket([], games)).toBeNull();
   });
 });
