@@ -242,7 +242,7 @@ describe('ProviderGameSlateService', () => {
   describe('a fixed-shape playoff', () => {
     // One conference of an NFL-style postseason: seeds 2 to 7 play the Wild Card, the 1 seed waits
     // in the reseeded Divisional round, whose two winners meet in the final.
-    const SEEDS = [1, 2, 3, 4, 5, 6, 7] as const;
+    const SEEDS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
     const team = (seed: number) => `seed-${seed}`;
 
     function playoffSetup({ status = SportEventStatus.DRAFT }: { status?: Status } = {}) {
@@ -387,8 +387,11 @@ describe('ProviderGameSlateService', () => {
         .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [4, 5] });
 
       expect(sides().slice(3, 5)).toEqual([[4, rowOf(1), rowOf(6)], [5, rowOf(2), rowOf(4)]]);
-      const kickoffs = store.matchRows.filter((match) => match.roundNumber === 2).map((match) => [match.matchNumber, match.scheduledDate?.toISOString()]);
-      expect(kickoffs.sort()).toEqual([[4, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [5, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
+      const kickoffs = store.matchRows
+        .filter((match) => match.roundNumber === 2)
+        .sort((left, right) => left.matchNumber - right.matchNumber)
+        .map((match) => [match.matchNumber, match.scheduledDate?.toISOString()]);
+      expect(kickoffs).toEqual([[4, new Date(KICKOFF.getTime() + 168 * HOUR).toISOString()], [5, new Date(KICKOFF.getTime() + 170 * HOUR).toISOString()]]);
     });
 
     it('leaves a released reseeded round unplaced, and tells an admin, when the provider pairs its teams differently from the reseed', async () => {

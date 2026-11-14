@@ -165,7 +165,6 @@ export class ProviderGameSlateService {
       const games = slate.filter((game) => game.roundNumber === roundNumber);
       const open = round.some((match) => match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null);
       if (!open || games.length !== round.length || roundPlacementBlocker(stored, roundNumber) !== null) continue;
-      // poolmaster-allow-query-in-loop: a playoff has a reseeded round or two, and one is placed at a time
       const proposal = await this.deps.bracket.proposeRoundMatchups(event.id, roundNumber);
       const providerPairs = new Set(games.map(pairKey));
       if (!proposal.every((matchup) => providerPairs.has(pairKey(matchup)))) {
@@ -175,7 +174,6 @@ export class ProviderGameSlateService {
         );
         continue;
       }
-      // poolmaster-allow-query-in-loop: as above
       await this.deps.bracket.setRoundMatchups(event.id, roundNumber, proposal);
       placed.push(...proposal.map((matchup) => matchup.matchNumber));
       this.deps.logger?.info({ sportEventId: event.id, roundNumber }, 'Placed a synced event\'s reseeded round from its provider\'s games');

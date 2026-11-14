@@ -202,8 +202,8 @@ describe('NFL postseason bracket', () => {
   });
 
   it('leaves out a game with a team outside the field, such as an all-star game, and a game whose teams are not decided', () => {
-    const allStar: NflGame = { ...postseason2025[0] as NflGame, id: 999, week: 4, home_team: { id: 90, full_name: 'AFC' }, visitor_team: { id: 91, full_name: 'NFC' } };
-    const undecided: NflGame = { ...postseason2025[12] as NflGame, id: 998, home_team: undefined };
+    const allStar: NflGame = { ...postseason2025[0], id: 999, week: 4, home_team: { id: 90, full_name: 'AFC' }, visitor_team: { id: 91, full_name: 'NFC' } };
+    const undecided: NflGame = { ...postseason2025[12], id: 998, home_team: undefined };
     const scheduled = toNflPostseasonGames([...postseason2025, allStar, undecided], new Set(field.map((participant) => participant.externalId)));
     expect(scheduled.map((game) => game.externalGameId)).not.toContain('999');
     expect(scheduled.map((game) => game.externalGameId)).not.toContain('998');
