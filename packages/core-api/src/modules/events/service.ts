@@ -108,6 +108,27 @@ export interface ProviderEventYearImport {
   skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' }>;
 }
 
+/** One synced event whose details its provider changed, and which details (#1727). */
+export interface ProviderEventDetailsChange {
+  sportEventId: string;
+  externalId: string;
+  changed: ReadonlyArray<keyof Pick<SportEventUpdate, 'name' | 'venue' | 'startDate' | 'endDate'>>;
+}
+
+/**
+ * Which of a synced event's details its provider may still change, by status (#1727): every one
+ * before play, only the name, venue and end while it is under way (a rain delay moves the end, never
+ * the start that already happened), and none once it is over.
+ */
+const PROVIDER_DETAILS_BY_STATUS: Readonly<Record<SportEventStatus, ReadonlyArray<ProviderEventDetailsChange['changed'][number]>>> = {
+  [SportEventStatus.DRAFT]: ['name', 'venue', 'startDate', 'endDate'],
+  [SportEventStatus.SCHEDULED]: ['name', 'venue', 'startDate', 'endDate'],
+  [SportEventStatus.POSTPONED]: ['name', 'venue', 'startDate', 'endDate'],
+  [SportEventStatus.IN_PROGRESS]: ['name', 'venue', 'endDate'],
+  [SportEventStatus.COMPLETED]: [],
+  [SportEventStatus.CANCELLED]: [],
+};
+
 /** Shift a date to the same month/day in `date.year + years` (leap-year safe). */
 export function shiftYears(date: Date, years: number): Date {
   const shifted = new Date(date.getTime());
@@ -292,6 +313,53 @@ export class SportEventService {
       'Imported provider event year',
     );
     return { created, skipped };
+  }
+
+  /**
+   * #1727 (ADR 0011) — a synced sport league's events keep their provider's name, venue and dates.
+   * For each provider event already linked to one of the league's events, the details its status
+   * still lets change (`PROVIDER_DETAILS_BY_STATUS`) are written where they differ, through
+   * `updateEvent`: the admin's own path, so a moved start shifts the rounds and tells the
+   * leagues as an admin's move would, and the lifecycle scheduler then moves the status on the new
+   * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). A venue or end
+   * the provider does not send is left as it is, not cleared. One read for the events, then one
+   * update per event that changed; an update that fails is logged and the rest still go.
+   */
+  async keepProviderEventsCurrent(input: {
+    sportLeagueId: string;
+    providerId: string;
+    providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
+  }): Promise<ProviderEventDetailsChange[]> {
+    const linked = await this.deps.sportEvents.findByProviderRefs(
+      input.providerId,
+      input.providerEvents.map((providerEvent) => providerEvent.externalId),
+    );
+    const providerEventById = new Map(input.providerEvents.map((providerEvent) => [providerEvent.externalId, providerEvent]));
+    const changes: ProviderEventDetailsChange[] = [];
+    for (const event of linked) {
+      const providerEvent = providerEventById.get(event.externalId);
+      if (!providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
+      const updates = providerDetailUpdates(event, providerEvent);
+      const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
+      if (changed.length === 0) continue;
+      try {
+        await this.updateEvent(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
+        changes.push({ sportEventId: event.id, externalId: event.externalId, changed });
+      } catch (error) {
+        // One event's refused update must not hold back the rest; the next sweep tries it again.
+        this.deps.logger?.error(
+          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId: event.externalId, changed, error: error instanceof Error ? error.message : String(error) },
+          'Could not keep a synced event current with its provider',
+        );
+      }
+    }
+    if (changes.length > 0) {
+      this.deps.logger?.info(
+        { sportLeagueId: input.sportLeagueId, providerId: input.providerId, changes },
+        'Kept synced events current with their provider',
+      );
+    }
+    return changes;
   }
 
   /**
@@ -721,5 +789,18 @@ function providerEdition(
       autoLifecycleEnabled: true,
     },
     rounds: schedule,
+  };
+}
+
+/** The provider's details that differ from the event's; a venue or end it does not send is no change. */
+function providerDetailUpdates(
+  event: SportEvent,
+  providerEvent: ProviderEventDetail,
+): Pick<SportEventUpdate, 'name' | 'venue' | 'startDate' | 'endDate'> {
+  return {
+    ...(providerEvent.name !== event.name && { name: providerEvent.name }),
+    ...(providerEvent.venue !== null && providerEvent.venue !== (event.venue ?? null) && { venue: providerEvent.venue }),
+    ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),
+    ...(providerEvent.endDate !== null && providerEvent.endDate.getTime() !== event.endDate?.getTime() && { endDate: providerEvent.endDate }),
   };
 }

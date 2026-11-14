@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import type { SportLeague } from '@poolmaster/shared/domain';
 import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
-import type { ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
+import type { ProviderEventDetailsChange, ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
 import { buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
@@ -23,14 +23,22 @@ function importOf(createdCount: number): ProviderEventYearImport {
 
 type ListTourEvents = jest.Mock<Promise<Array<ReturnType<typeof providerEvent>>>, [string, string, number]>;
 type ImportYear = jest.Mock<Promise<ProviderEventYearImport>, [{ sportLeagueId: string; eventYear: number; providerId: string }]>;
+type KeepCurrent = jest.Mock<Promise<ProviderEventDetailsChange[]>, [{ sportLeagueId: string; providerId: string; providerEvents: ReadonlyArray<ReturnType<typeof providerEvent>> }]>;
 
-function build(options: { leagues: SportLeague[]; listTourEventsForYear?: ListTourEvents; jobLock?: ReturnType<typeof heldHere> }) {
+function changeOf(externalId: string): ProviderEventDetailsChange {
+  return { sportEventId: `se-${externalId}`, externalId, changed: ['startDate'] };
+}
+
+function build(options: { leagues: SportLeague[]; listTourEventsForYear?: ListTourEvents; keepProviderEventsCurrent?: KeepCurrent; jobLock?: ReturnType<typeof heldHere> }) {
   const sportLeagues = { findEventSynced: jest.fn().mockResolvedValue(options.leagues) };
   const scoreSource = {
     listTourEventsForYear: options.listTourEventsForYear
       ?? jest.fn<ReturnType<ListTourEvents>, Parameters<ListTourEvents>>(async (_providerId, sportLeagueId, eventYear) => [providerEvent(`${sportLeagueId}-${eventYear}`)]),
   };
-  const sportEvents = { importProviderEventYear: jest.fn<ReturnType<ImportYear>, Parameters<ImportYear>>().mockResolvedValue(importOf(1)) };
+  const sportEvents = {
+    importProviderEventYear: jest.fn<ReturnType<ImportYear>, Parameters<ImportYear>>().mockResolvedValue(importOf(1)),
+    keepProviderEventsCurrent: options.keepProviderEventsCurrent ?? jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>().mockResolvedValue([]),
+  };
   const logger = fakeLogger();
   const scheduler = new SyncedEventCreationScheduler({
     sportLeagues,
@@ -58,6 +66,42 @@ describe('SyncedEventCreationScheduler', () => {
       [{ sportLeagueId: 'sl-nfl', eventYear: 2026, providerId: 'balldontlie', providerEvents: [providerEvent('sl-nfl-2026')] }],
       [{ sportLeagueId: 'sl-nfl', eventYear: 2027, providerId: 'balldontlie', providerEvents: [providerEvent('sl-nfl-2027')] }],
     ]);
+  });
+
+  it('keeps each synced league\'s already-linked events current with the same provider events it imported, after the import', async () => {
+    const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
+    const keepProviderEventsCurrent = jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>()
+      .mockResolvedValueOnce([changeOf('sl-nfl-2026')])
+      .mockResolvedValue([]);
+    const { scheduler, sportEvents, logger } = build({ leagues: [nfl], keepProviderEventsCurrent });
+
+    await scheduler.runSweep();
+
+    expect(keepProviderEventsCurrent.mock.calls).toEqual([
+      [{ sportLeagueId: 'sl-nfl', providerId: 'balldontlie', providerEvents: [providerEvent('sl-nfl-2026')] }],
+      [{ sportLeagueId: 'sl-nfl', providerId: 'balldontlie', providerEvents: [providerEvent('sl-nfl-2027')] }],
+    ]);
+    expect(sportEvents.importProviderEventYear.mock.invocationCallOrder[0]).toBeLessThan(keepProviderEventsCurrent.mock.invocationCallOrder[0]);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ createdCount: 2, updatedCount: 1, failedCount: 0 }),
+      'Synced event creation sweep finished',
+    );
+  });
+
+  it('counts a league whose kept-current step fails as failed and carries on with the next year', async () => {
+    const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
+    const keepProviderEventsCurrent = jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>()
+      .mockRejectedValueOnce(new Error('update refused'))
+      .mockResolvedValue([]);
+    const { scheduler, logger } = build({ leagues: [nfl], keepProviderEventsCurrent });
+
+    await scheduler.runSweep();
+
+    expect(keepProviderEventsCurrent).toHaveBeenCalledTimes(2);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ failedCount: 1 }),
+      'Synced event creation sweep finished',
+    );
   });
 
   it('imports with each league\'s own provider', async () => {
@@ -91,7 +135,7 @@ describe('SyncedEventCreationScheduler', () => {
       'Synced event creation failed for a sport league',
     );
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ leagueCount: 2, createdCount: 3, failedCount: 1 }),
+      expect.objectContaining({ leagueCount: 2, createdCount: 3, updatedCount: 0, failedCount: 1 }),
       'Synced event creation sweep finished',
     );
   });
@@ -111,7 +155,7 @@ describe('SyncedEventCreationScheduler', () => {
     const scheduler = new SyncedEventCreationScheduler({
       sportLeagues: { findEventSynced: jest.fn().mockResolvedValue([synced]) },
       scoreSource: { listTourEventsForYear },
-      sportEvents: { importProviderEventYear: jest.fn().mockResolvedValue(importOf(0)) },
+      sportEvents: { importProviderEventYear: jest.fn().mockResolvedValue(importOf(0)), keepProviderEventsCurrent: jest.fn().mockResolvedValue([]) },
       jobLock: heldHere(),
     });
     scheduler.start();

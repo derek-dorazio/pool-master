@@ -38,7 +38,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 // and what update and delete refuse — against an in-memory store. The adapters behind the
 // same ports are tested against Postgres in sport-event-repositories.integration.
 
-function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, leaderboards?: RecordingLeaderboardRebuilds) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, leaderboards?: RecordingLeaderboardRebuilds, logger?: ReturnType<typeof fakeLogger>) {
   const store = new InMemorySportEvents();
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
@@ -83,6 +83,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
     leaderboards,
+    logger,
     now: () => NOW,
   });
   return { store, service, sportLeague, lifecycle, sportEvents, reminderRechecks };
@@ -229,6 +230,97 @@ describe('SportEventService.importProviderEventYear', () => {
 
     expect(again.created).toEqual([]);
     expect(again.skipped.map((row) => row.reason)).toEqual(['ALREADY_LINKED', 'ALREADY_LINKED', 'ALREADY_LINKED']);
+  });
+});
+
+describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const listed = { externalId: 'pga-2026-a', name: 'Alpha Open', venue: 'A Links', startDate: new Date('2026-03-05T12:00:00.000Z'), endDate: new Date('2026-03-08T23:00:00.000Z') };
+
+  async function linkedEvent(status?: SportEventStatus, sportName?: Sport, notice?: SportEventChangedNotice) {
+    const built = setup(sportName, notice);
+    const { created } = await built.service.importProviderEventYear({ sportLeagueId: built.sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [listed] });
+    const { event } = created[0];
+    if (status) await built.store.sportEventRepo().update(event.id, { status });
+    return { ...built, eventId: event.id };
+  }
+
+  it('writes a released event\'s new provider name, venue and dates over the admin\'s, moving its rounds and telling its leagues of the moved start', async () => {
+    const notice = recordingSportEventChangedNotice();
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED, Sport.GOLF, notice);
+    await service.updateEvent(eventId, { name: 'Admin Renamed Open' }, TELL);
+    const moved = { ...listed, name: 'Alpha Invitational', venue: 'B Links', startDate: new Date(listed.startDate.getTime() + 7 * DAY), endDate: new Date(listed.endDate.getTime() + 7 * DAY) };
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [moved] });
+
+    expect(changes).toEqual([{ sportEventId: eventId, externalId: 'pga-2026-a', changed: ['name', 'venue', 'startDate', 'endDate'] }]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Invitational', venue: 'B Links', startDate: moved.startDate, endDate: moved.endDate }));
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith({ id: eventId, startDate: moved.startDate }, { kind: 'RESCHEDULED', previousStart: listed.startDate });
+  });
+
+  it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.IN_PROGRESS);
+    const delayed = { ...listed, venue: 'Rain Links', startDate: new Date(listed.startDate.getTime() + DAY), endDate: new Date(listed.endDate.getTime() + DAY) };
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [delayed] });
+
+    expect(changes.map((change) => change.changed)).toEqual([['venue', 'endDate']]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'Rain Links', startDate: listed.startDate, endDate: delayed.endDate }));
+  });
+
+  it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])('leaves a %s event exactly as it is, whatever the provider now says', async (status) => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(status);
+    const before = await sportEvents.findById(eventId);
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed', startDate: new Date(listed.startDate.getTime() + DAY) }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(before);
+  });
+
+  it('keeps the venue and end when the provider stops sending them, and changes nothing when the details still match', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent();
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, venue: null, endDate: null }, { ...listed, externalId: 'not-linked' }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'A Links', endDate: listed.endDate }));
+  });
+
+  it('logs an event whose update fails and still keeps the league\'s other events current', async () => {
+    const logger = fakeLogger();
+    const { service, sportLeague, sportEvents } = setup(Sport.GOLF, undefined, undefined, logger);
+    const second = { ...listed, externalId: 'pga-2026-b', name: 'Bravo Classic', startDate: new Date('2026-04-09T12:00:00.000Z'), endDate: new Date('2026-04-12T23:00:00.000Z') };
+    const { created } = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [listed, second] });
+    const [failing, kept] = created.map(({ event }) => event.id);
+    const realUpdate = service.updateEvent.bind(service);
+    jest.spyOn(service, 'updateEvent').mockImplementation(async (id, updates, options) => {
+      if (id === failing) throw new Error('round shift refused');
+      return realUpdate(id, updates, options);
+    });
+
+    const changes = await service.keepProviderEventsCurrent({
+      sportLeagueId: sportLeague.id,
+      providerId: 'feed',
+      providerEvents: [{ ...listed, name: 'Alpha Renamed' }, { ...second, name: 'Bravo Renamed' }],
+    });
+
+    expect(changes).toEqual([{ sportEventId: kept, externalId: 'pga-2026-b', changed: ['name'] }]);
+    expect((await sportEvents.findById(kept))?.name).toBe('Bravo Renamed');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ sportEventId: failing, externalId: 'pga-2026-a', error: 'round shift refused' }),
+      'Could not keep a synced event current with its provider',
+    );
+  });
+
+  it('never touches an event of another sport league linked to the same provider event', async () => {
+    const { service, store, sportEvents, eventId } = await linkedEvent();
+    const otherLeague = store.addSportLeague(store.sportLeagues[0].sportId, 'Other Tour');
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: otherLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed' }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Open' }));
   });
 });
 

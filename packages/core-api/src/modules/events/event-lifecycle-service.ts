@@ -6,8 +6,8 @@
  * produce byte-identical downstream behavior — there is exactly one code
  * path for "what happens when a sport event's status changes."
  *
- * Every transition is driven by an admin or the lifecycle scheduler; a provider never
- * moves an event's status (ADR-0009). An undeclared jump in
+ * Every transition is driven by an admin or the lifecycle scheduler; a provider moves a
+ * synced event's dates, never its status (ADR 0011). An undeclared jump in
  * SPORT_EVENT_STATUS_TRANSITIONS throws EventLifecycleError
  * (422 SPORT_EVENT_INVALID_TRANSITION). DRAFT → SCHEDULED is the release (#431): only
  * `SportEventService.releaseEvent`, after its readiness checks, may take it, so any other

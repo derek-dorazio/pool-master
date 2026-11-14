@@ -3,7 +3,8 @@ import { SportEventStatus } from './enums';
 /**
  * Declared SportEvent lifecycle transitions, keyed by current status. Every transition is
  * admin- or scheduler-driven and enforced strictly (`422 SPORT_EVENT_INVALID_TRANSITION` on an
- * undeclared jump); a provider never moves an event's status (ADR-0009).
+ * undeclared jump). A provider never sets a status directly: a synced event's provider moves its
+ * dates, and the lifecycle scheduler moves the status on them (ADR 0011).
  *
  * `DRAFT` → `SCHEDULED` is the release (#431). It is declared here so it reads as a real step,
  * but only the release action may take it, after its readiness checks; the generic transition

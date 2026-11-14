@@ -218,8 +218,9 @@ export class IngestionService {
    * exists yet for (providerId, externalId) — there is no scope to violate.
    *
    * A linked event (`SCORES_ONLY`) accepts both event feeds: live scores, and the field
-   * feed (EVENTPARTICIPANTS) behind the admin's Load/Refresh field action. The field feed
-   * writes only the field and its size, never the event's details or status (ADR-0009).
+   * feed (EVENTPARTICIPANTS), from the field loop or the admin's Load/Refresh field action.
+   * The field feed writes only the field and its size; a synced event's details are kept
+   * current by `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011).
    * An unlinked event (`NONE`) accepts neither.
    */
   private async assertFeedsAllowedForSyncScope(
