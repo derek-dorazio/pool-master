@@ -16,7 +16,7 @@ import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboar
 
 /**
  * The one frame every leaderboard format's standings sit in (#1578): a section titled
- * Standings (the page's tab already says Leaderboard), with the viewer's best place in its title
+ * Standings, with the viewer's best place in its title
  * bar. It is bare, a title and rule with no box, because the board is the page's long content:
  * a box's padding would cost a phone's board 32px of its width.
  */
@@ -64,8 +64,8 @@ export function ScoreboardGrid<Row extends BoardRow>({
 }
 
 /**
- * A leaderboard page: the contest's frame on its Leaderboard option, the board's own notes under
- * the title, then the settled note once the contest is final, and the board underneath.
+ * A contest's page once it is live or final (#1739): the contest's frame, the board's own notes
+ * under the title, then the settled note once the contest is final, and the board underneath.
  */
 export function LeaderboardFrame({
   children,
@@ -88,7 +88,6 @@ export function LeaderboardFrame({
   return (
     <ContestPageFrame
       contest={contest}
-      current="leaderboard"
       headerTestId="contest-leaderboard-header"
       leagueCode={leagueCode}
       notes={notes || isSettled ? (
@@ -97,7 +96,6 @@ export function LeaderboardFrame({
           {isSettled ? <p data-testid="contest-leaderboard-settled-note">{settledNote}</p> : null}
         </>
       ) : undefined}
-      picksRevealed
       summary={summary}
       testId="contest-leaderboard"
     >

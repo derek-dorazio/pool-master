@@ -187,7 +187,7 @@ describe('LeagueContestsPage', () => {
     expect(listContestsMock.mock.calls[0]?.[0]).not.toHaveProperty('query');
   });
 
-  it('groups live contests before open ones, opening live on the leaderboard and open on Entries', async () => {
+  it('groups live contests before open ones, each opening its one contest page', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({
       data: { contests: [contest('contest-1', 'Masters Pick 6'), contest('contest-3', 'US Open Pick 6', 'ACTIVE')] },
@@ -198,7 +198,7 @@ describe('LeagueContestsPage', () => {
 
     const groups = await screen.findAllByRole('region', { name: /^(Live|Open)$/ });
     expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual(['Live', 'Open']);
-    expect(screen.getByTestId('league-contest-contest-3')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-3/leaderboard');
+    expect(screen.getByTestId('league-contest-contest-3')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-3');
     expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
   });
 
@@ -360,14 +360,14 @@ describe('LeagueContestsPage links', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('opens an open contest on its Entries and a live one on its Leaderboard', async () => {
+  it('opens an open contest and a live one at their one contest page', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [contest('open-1', 'Masters Pick 6'), contest('live-1', 'PGA Championship Tiers', 'ACTIVE')] } });
 
     renderLeagueContestsPage();
 
     expect(await screen.findByTestId('league-contest-open-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
-    expect(screen.getByTestId('league-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+    expect(screen.getByTestId('league-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 });
 

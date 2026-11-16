@@ -1,7 +1,6 @@
 import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
 import {
-  buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import {
@@ -229,7 +228,7 @@ function PlayedCard({
   return (
     <LifecyclePanel
       actions={(
-        <LinkButton data-testid="contest-status-leaderboard" to={buildLeagueContestLeaderboardPath(leagueCode, contest.id)} variant="inverse">
+        <LinkButton data-testid="contest-status-leaderboard" to={buildLeagueContestPath(leagueCode, contest.id)} variant="inverse">
           {isFinal ? 'See the results' : 'Full leaderboard'}
         </LinkButton>
       )}

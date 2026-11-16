@@ -65,10 +65,10 @@ describe('CurrentContestList', () => {
     expect(screen.queryByTestId('list-group-draft')).not.toBeInTheDocument();
   });
 
-  it('opens a live contest on its leaderboard and an open one on its Entries page', () => {
+  it('opens a live contest and an open one at the same contest page address, with no /leaderboard', () => {
     drawList();
 
-    expect(screen.getByTestId('list-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live/leaderboard');
+    expect(screen.getByTestId('list-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live');
     expect(screen.getByTestId('list-submitted')).toHaveAttribute('href', '/league/BIGDAWGS/contests/submitted');
   });
 

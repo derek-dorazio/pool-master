@@ -90,6 +90,7 @@ function renderBracketEntry(entryId = 'entry-1') {
       <MemoryRouter initialEntries={[`/league/BIGDAWGS/contests/contest-1/entries/${entryId}`]}>
         <Routes>
           <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
+          <Route element={<div data-testid="contest-page" />} path="/league/:leagueCode/contests/:contestId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -116,6 +117,14 @@ describe('Bracket contest entry page', () => {
     ]) {
       mock.mockReset();
     }
+  });
+
+  it('offers the bracket\'s name to change on its own pick screen while entries are open, above Submit, the contest page having no Rename', async () => {
+    primeMocks();
+    renderBracketEntry();
+
+    const rename = await screen.findByTestId('contest-entry-rename-input');
+    expect(rename.compareDocumentPosition(screen.getByTestId('bracket-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('lays a bracket contest\'s games out by round, each region\'s games under its name, with the final where the regions meet last, and never reads the roster selection room', async () => {
@@ -204,7 +213,7 @@ describe('Bracket contest entry page', () => {
     expect(screen.getByTestId('bracket-submit-hint')).toHaveTextContent('Pick every game to submit: 7 still to pick.');
   });
 
-  it('saves the tiebreaker on its own with no picks, then submits the bracket once the server allows it and shows it submitted', async () => {
+  it('saves the tiebreaker on its own with no picks, then submits the bracket once the server allows it and returns to the contest\'s page', async () => {
     const filled = filledBracketGames();
     primeMocks({ gamePicks: gamePicksFixture({ games: filled }) });
     saveGamePicksMock.mockResolvedValue({ data: gamePicksFixture({ games: filled, tiebreakerValue: 141, canSubmit: true }) });
@@ -229,8 +238,7 @@ describe('Bracket contest entry page', () => {
 
     await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalledTimes(1));
     expect(submitGamePicksMock.mock.calls[0]?.[0]).toMatchObject({ path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' } });
-    expect(await screen.findByTestId('bracket-submitted')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
+    expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
   });
 
   it.each([

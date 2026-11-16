@@ -1454,6 +1454,13 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
+    // Another team's entry is listed only once submitted (#1739): the commissioner's is.
+    const submitted = await prisma.contestEntryEvent.updateMany({
+      where: { contestEntryId: commissionerEntryId, sportEventId: sportEvent.id },
+      data: { status: 'SUBMITTED', submittedAt: new Date() },
+    });
+    expect(submitted.count).toBe(1);
+
     // Pre-event-start, member's perspective:
     // - picksRevealed=false at the response level.
     // - the member's own entry has participants[].

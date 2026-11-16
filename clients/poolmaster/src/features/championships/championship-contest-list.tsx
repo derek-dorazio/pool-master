@@ -1,6 +1,5 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestResultSummaryDto } from '@/lib/api';
-import { buildContestLandingPath } from '@/features/leagues/league-routing';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { SectionEmpty, SectionRows, StatusBadge, formatCupPoints, formatPlace, useDisplayPreferences } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
 import { describeContestResult, SquadFinishShown } from './championship-view';
@@ -48,7 +47,7 @@ export function ChampionshipContestList({
             startsAt={null}
             status={state.badge ? <StatusBadge tone="neutral">{state.badge}</StatusBadge> : null}
             testId={`${testIdPrefix}-${contest.contestId}`}
-            to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
+            to={buildLeagueContestPath(leagueCode, contest.contestId)}
             trailing={contest.squadFinish ? describeSquadFinish(contest.squadFinish, finishShown, locale) : null}
           />
         );

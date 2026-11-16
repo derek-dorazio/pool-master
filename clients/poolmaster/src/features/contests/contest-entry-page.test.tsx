@@ -462,8 +462,7 @@ describe('ContestEntryPage', () => {
     // An unfinished tier says so in its title row: its count and what it still needs.
     expect(screen.getByTestId('contest-entry-group-count-tier-1')).toHaveTextContent('0/1 saved');
     expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveTextContent('Next up');
-    expect(screen.getByTestId('contest-menu-entries')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByTestId('contest-menu-entries')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-view-team-link')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
@@ -1660,6 +1659,23 @@ describe('ContestEntryPage — a random-draw entry', () => {
     });
     getSelectionStateMock.mockResolvedValue({ data: drawState(dealtIds, drawnAt) });
   }
+
+  it('offers a draw entry\'s name to change on its own, there being no lineup to submit, while entries are open', async () => {
+    primeDrawMocks([], null);
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
+  });
+
+  it('offers no name change once the draw has run, entries being closed', async () => {
+    primeDrawMocks(['sep-1', 'sep-3'], '2026-04-08T15:00:00.000Z');
+
+    renderContestEntryPage();
+
+    await screen.findByText('Scottie Scheffler');
+    expect(screen.queryByTestId('contest-entry-rename-input')).not.toBeInTheDocument();
+  });
 
   it('before the draw, says the commissioner\'s draw will deal the entry its golfers and offers nothing to pick or submit', async () => {
     primeDrawMocks([], null);

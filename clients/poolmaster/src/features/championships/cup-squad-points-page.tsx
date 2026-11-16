@@ -1,6 +1,6 @@
 import { useParams } from 'react-router';
-import { ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
-import { buildContestLandingPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
+import { PlanFeature } from '@poolmaster/shared/domain';
+import { buildLeagueContestPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import {
   Breadcrumbs,
   ErrorState,
@@ -74,7 +74,7 @@ export function CupSquadPointsPage() {
                     : 'No entry'}
                   startsAt={null}
                   testId={`cup-squad-contest-${contest.contestId}`}
-                  to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: ContestStatus.COMPLETED })}
+                  to={buildLeagueContestPath(leagueCode, contest.contestId)}
                   trailing={`${formatCupPoints(contest.points, locale)} pts`}
                 />
               );

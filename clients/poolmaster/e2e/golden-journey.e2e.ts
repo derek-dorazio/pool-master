@@ -498,11 +498,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('the contest is on the board with no entries, and on the league\'s contest list', async () => {
       await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
       await expect(page.getByTestId('contest-board')).toBeVisible();
-      await expect(page.getByTestId('contest-detail-header-name')).toHaveText(run.contestName);
+      await expect(page.getByTestId('contest-page-header-name')).toHaveText(run.contestName);
       // The contest is this run's own and seconds old: zero entries is a fact about it, not
       // about anything else in the database. The new league is on its Premium gift, whose cap of
       // 100 entries per contest the board shows beside the count.
-      await expect(page.getByTestId('contest-board-total-count')).toHaveText(/\b0 of 100$/);
+      await expect(page.getByTestId('contest-board-total-count')).toHaveText(/\b0 of 100 entered$/);
       await page.goto(`/league/${run.leagueCode}/contests`);
       await expect(page.getByTestId('league-contests-page')).toBeVisible();
       await expect(page.getByTestId(`league-contest-${state.contestId}`)).toContainText(run.contestName);
@@ -683,9 +683,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('the entry is on the board as the member\'s own', async () => {
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toBeVisible();
-      await expect(page.getByTestId(`contest-board-entry-spotlight-${state.entryId}`)).toBeVisible();
-      await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveCount(0);
-      await expect(page.getByTestId('contest-board-my-count')).toHaveText(/\b1$/);
+      await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toHaveAttribute('data-mine', 'true');
+      await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveText('Submitted');
     });
 
     await test.step('the entry page shows its six picks', async () => {
@@ -696,18 +695,17 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       }
     });
 
-    await test.step('rename the entry inline on the board', async () => {
+    await test.step('rename the entry on its pick screen; saving returns to the contest page', async () => {
       const name = e2eName('Entry', run.runId);
-      await page.getByTestId('contest-menu-entries').click();
-      await page.getByTestId(`contest-board-rename-${state.entryId}`).click();
-      await page.getByTestId(`contest-board-rename-input-${state.entryId}`).fill(name);
+      await page.getByTestId('contest-entry-header-name-input').fill(name);
       const renamed = await submitAndRead<{ entry: { name: string } }>(
         page,
-        `contest-board-rename-save-${state.entryId}`,
+        'contest-entry-submit',
         'PATCH',
         `/api/v1/contests/${state.contestId}/entries/${state.entryId}`,
       );
       expect(renamed.entry.name).toBe(name);
+      await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toContainText(name);
     });
 
@@ -810,10 +808,11 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   // #362 — opened before play, as a member watching for the start would have it. The contest is
-  // still open, so the leaderboard read refuses it and the page shows its error state.
-  const leaderboardTab = await test.step('open the leaderboard page before the event starts', async () => {
+  // still open, so its page lists the entries (#1739).
+  const leaderboardTab = await test.step('open the contest page before the event starts: it lists the entries', async () => {
     const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
-    await expect(tab.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN')).toBeVisible();
+    await expect(tab.getByTestId(`contest-board-entry-${state.entryId}`)).toBeVisible();
+    await expect(tab.getByTestId('contest-leaderboard')).toHaveCount(0);
     await page.bringToFront();
     return tab;
   });
@@ -830,14 +829,13 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     expect(moved.event.status).toBe('IN_PROGRESS');
   });
 
-  await test.step('the leaderboard page opened before the start goes live without a reload', async () => {
+  await test.step('the contest page opened before the start turns into the leaderboard without a reload', async () => {
     // The browser reproduction of #362: before the fix this page kept the contest status it
     // loaded with and never fetched the leaderboard again.
     await leaderboardTab.bringToFront();
     await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`))
       .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
-    await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_LEADERBOARD_PICKS_HIDDEN'))
-      .toHaveCount(0);
+    await expect(leaderboardTab.getByTestId('contest-board-entries')).toHaveCount(0);
     await leaderboardTab.close();
   });
 
@@ -849,20 +847,13 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await page.bringToFront();
   });
 
-  await test.step('the member\'s picks are revealed on the board and the leaderboard carries a score', async () => {
-    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
-    await page.getByTestId(`contest-board-toggle-${state.entryId}`).click();
-    for (const playerId of state.playerIds) {
-      await expect(
-        page.getByTestId(`contest-entry-pick-${state.entryId}-${playerId}`),
-      ).toBeVisible();
-    }
-    // The board shows picks and never scores (#111). The leaderboard page rendering the entry
-    // is asserted in the step above; this read checks every golfer has a round-1 score.
+  await test.step('the member\'s picks are revealed on the contest page, now its leaderboard, and each carries a score', async () => {
+    // This read checks every golfer has a round-1 score; the page then shows the entry's picks.
     const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
-    const { participants } = (await leaderboard.json()) as {
+    const { participants, entries } = (await leaderboard.json()) as {
       participants: { id: string; rounds?: { roundNumber: number; golf?: { strokes: number } | null }[] }[];
+      entries: { entryId: string; picks: { pickId: string }[] }[];
     };
     const scored = participants.filter(
       (participant) =>
@@ -870,6 +861,15 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
         && participant.rounds?.some((round) => round.roundNumber === 1 && round.golf != null),
     );
     expect(scored.map((participant) => participant.id).sort()).toEqual([...state.fieldEntryIds].sort());
+
+    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
+    // The root admin has no entry of their own, so the member's row starts closed.
+    await page.getByTestId(`contest-leaderboard-entry-toggle-${state.entryId}`).click();
+    const picks = entries.find((entry) => entry.entryId === state.entryId)?.picks ?? [];
+    expect(picks).toHaveLength(state.fieldEntryIds.length);
+    for (const pick of picks) {
+      await expect(page.getByTestId(`contest-leaderboard-pick-${state.entryId}-${pick.pickId}`)).toBeVisible();
+    }
   });
 
   await test.step('the new league and both new users are visible to the root admin', async () => {
@@ -1358,7 +1358,7 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
 
   await test.step('the member\'s leaderboard switches between the tournaments, each with its own picks and total', async () => {
     await adminSignIn(page, { identifier: run.member.username, password: state.memberPassword });
-    await page.goto(`/league/${run.leagueCode}/contests/${contestId}/leaderboard`);
+    await page.goto(`/league/${run.leagueCode}/contests/${contestId}`);
     const switcher = page.getByTestId('contest-leaderboard-event-switcher');
     await expect(switcher).toBeVisible();
     for (const tournament of tournaments) {
@@ -1504,7 +1504,7 @@ const LIVE_PAGE_TIMEOUT_MS = 75_000;
  */
 async function openLeaderboardTab(page: Page, leagueCode: string, contestId: string): Promise<Page> {
   const tab = await page.context().newPage();
-  await tab.goto(`/league/${leagueCode}/contests/${contestId}/leaderboard`);
+  await tab.goto(`/league/${leagueCode}/contests/${contestId}`);
   return tab;
 }
 
@@ -1514,6 +1514,11 @@ async function expectLeaderboardPageShowsRound(tab: Page, entryId: string, pickI
   await expect(tab.getByTestId(`contest-leaderboard-round-header-${round}`))
     .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
   await expect(tab.getByTestId(`contest-leaderboard-entry-${entryId}`)).toBeVisible();
+  // Rows start closed for anyone but their owner (#1739); once opened, a row stays open across polls.
+  const toggle = tab.getByTestId(`contest-leaderboard-entry-toggle-${entryId}`);
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click();
+  }
   for (const pickId of pickIds) {
     await expect(tab.getByTestId(`contest-leaderboard-pick-round-${entryId}-${pickId}-${round}`)).not.toHaveText('—');
   }

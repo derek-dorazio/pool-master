@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
-import { buildContestLandingPath, buildLeaguePath } from '@/features/leagues/league-routing';
+import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import { DateDisplay, QueryState, SectionCard, SectionRow, SectionRows, formatMoneyCents, useDisplayPreferences } from '@/features/shared/ui';
 import { useLeaguePaymentsQuery, useMyPaymentsQuery } from './use-payments-queries';
 
@@ -65,7 +65,7 @@ export function LeaguePaymentsSection({ leagueId, leagueCode }: { leagueId: stri
               paidAt={payment.paidAt}
               testId={`league-payment-${payment.id}`}
               what={payment.contest
-                ? <Link className="hover:underline" to={buildContestLandingPath(leagueCode, payment.contest)}>{payment.description}</Link>
+                ? <Link className="hover:underline" to={buildLeagueContestPath(leagueCode, payment.contest.id)}>{payment.description}</Link>
                 : payment.description}
               who={payment.payer?.name ?? null}
             />

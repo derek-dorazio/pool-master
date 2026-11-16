@@ -520,9 +520,10 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
     const read = await readKnockoutLeaderboard(page, state.contestId, state.entryId);
     expect(pointsBySeed(read, state.fieldEntryIds)).toEqual(POINTS_AFTER_ROUND_1);
 
-    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
+    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
     await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toHaveText(String(EXPECTED_TOTAL_AFTER_ROUND_1));
-    // Every entry opens with its picks showing.
+    // The root admin has no entry of their own, so every row starts closed: Show all details opens them.
+    await page.getByTestId('contest-leaderboard-toggle-all').click();
     await expect(page.getByTestId(`contest-leaderboard-entry-toggle-${state.entryId}`)).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('contest-leaderboard-upset-bonus-header')).toBeVisible();
     const fever = pickOf(read, state.fieldEntryIds, 6);
@@ -561,10 +562,11 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
     expect(read.position).toBe(1);
     expect(pointsBySeed(read, state.fieldEntryIds)).toEqual(POINTS_AFTER_FINAL);
 
-    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
+    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
     await expect(page.getByTestId('contest-leaderboard-settled-note')).toBeVisible();
     await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toHaveText(String(EXPECTED_TOTAL));
-    // Every entry opens with its picks showing.
+    // The root admin has no entry of their own, so every row starts closed: Show all details opens them.
+    await page.getByTestId('contest-leaderboard-toggle-all').click();
     await expect(page.getByTestId(`contest-leaderboard-entry-toggle-${state.entryId}`)).toHaveAttribute('aria-expanded', 'true');
     const aces = pickOf(read, state.fieldEntryIds, 2);
     const mercury = pickOf(read, state.fieldEntryIds, 4);

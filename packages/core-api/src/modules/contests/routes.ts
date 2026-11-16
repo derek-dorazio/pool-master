@@ -233,7 +233,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'List contest entries',
       description:
-        'Lists the contest entries currently registered for the contest, including data needed for administration and participant views. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+        'Lists the contest\'s entries, the requester\'s own team\'s first. Another team\'s entry is listed once it has been submitted for one of the contest\'s events; drafts are listed only to their own team. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'listContestEntries',
       response: {
         401: schemaRef('ErrorEnvelope'),

@@ -474,7 +474,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
     expect(entry?.totalScore).toBe(EXPECTED_ENTRY_POINTS);
     expect(entry?.position).toBe(1);
 
-    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
+    await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
     await expect(page.getByTestId('contest-leaderboard-settled-note')).toBeVisible();
     await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toContainText(String(EXPECTED_ENTRY_POINTS));
   });

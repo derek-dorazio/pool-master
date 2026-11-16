@@ -38,6 +38,8 @@ import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
 import { LeaderboardFrame, LeaderboardSection } from './leaderboard-kit';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
+import { EntryDetailsToggle } from './entry-details-toggle';
+import { useOpenEntryRows } from './use-open-entry-rows';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
@@ -46,8 +48,8 @@ import { upperFirst } from '@/lib/upper-first';
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
  *
- * Its own route, deliberately not folded into the contest board: that page is entry and
- * update, pre-live, and this one is live and post-settlement results. Nothing about how an
+ * A contest's page once it is live or final (#1739); before then the same address lists its
+ * entries (`ContestEntryListPage`). Nothing about how an
  * entry was drafted appears here — no tier, price, rank, odds or category — which is what
  * makes the view format-agnostic: a tiered pool and a budget pool render identically,
  * because "N golfers, M counting" is all a leaderboard is about. The columns after the total are
@@ -297,9 +299,6 @@ export function ContestLeaderboardPage() {
   const displayPreferences = useDisplayPreferences();
   const { contestId = '' } = useParams<{ contestId: string }>();
 
-  // #389 — which entries' participant rows are hidden. Keyed by entry id so it survives the live
-  // polls; an entry that first appears mid-session starts expanded like every other.
-  const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
@@ -323,10 +322,16 @@ export function ContestLeaderboardPage() {
     sportEventId: requestedEventId,
   });
   const { leagueCode, viewer } = useContestLeague(contestQuery.data?.leagueId);
+  // #389, #1739 — the viewer's own entries start open and everyone else's closed.
+  const mySquadId = viewer.mySquadId;
+  const myEntryIds = leaderboardQuery.data?.entries
+    .filter((entry) => mySquadId !== null && entry.squadId === mySquadId)
+    .map((entry) => entry.entryId) ?? [];
+  const openRows = useOpenEntryRows(myEntryIds);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
-    return <PendingPage hasTabs testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
+    return <PendingPage testId="contest-leaderboard-pending"><LoadingState body="Loading contest leaderboard..." /></PendingPage>;
   }
 
   if (contestQuery.data && isBracket) {
@@ -344,7 +349,7 @@ export function ContestLeaderboardPage() {
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <PendingPage hasTabs testId="contest-leaderboard-pending">
+      <PendingPage testId="contest-leaderboard-pending">
         <ErrorState
           body="We couldn't load this contest."
           onRetry={() => void contestQuery.refetch()}
@@ -371,22 +376,7 @@ export function ContestLeaderboardPage() {
     contest.status === ContestStatus.COMPLETED || hasContestEventStarted(sportEvent)
   ));
 
-  const allCollapsed = view.entries.length > 0
-    && view.entries.every((entry) => collapsedEntryIds.has(entry.entryId));
-  const toggleEntry = (entryId: string) => {
-    setCollapsedEntryIds((current) => {
-      const next = new Set(current);
-      if (!next.delete(entryId)) {
-        next.add(entryId);
-      }
-      return next;
-    });
-  };
-  const toggleAllEntries = () => {
-    setCollapsedEntryIds(allCollapsed ? new Set() : new Set(view.entries.map((entry) => entry.entryId)));
-  };
-
-  const mySquadId = viewer.mySquadId;
+  const allEntryIds = view.entries.map((entry) => entry.entryId);
   const matchingEntries = view.entries.filter((entry) => matchesSearch(entry, search));
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
   // A refetch or a narrower search can leave fewer pages than the one being shown.
@@ -409,11 +399,7 @@ export function ContestLeaderboardPage() {
     flushSync(() => {
       setSearch('');
       setPageIndex(Math.floor(myBestIndex / LEADERBOARD_PAGE_SIZE));
-      setCollapsedEntryIds((current) => {
-        const next = new Set(current);
-        next.delete(target.entryId);
-        return next;
-      });
+      openRows.open(target.entryId);
     });
     document.getElementById(entryBlockId(target.entryId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   };
@@ -469,14 +455,11 @@ export function ContestLeaderboardPage() {
                 </Button>
               ) : null}
             </div>
-            <Button
-              data-testid="contest-leaderboard-toggle-all"
-              onClick={toggleAllEntries}
-              size="sm"
-              variant="secondary"
-            >
-              {allCollapsed ? 'Show Details' : 'Hide Details'}
-            </Button>
+            <EntryDetailsToggle
+              allOpen={openRows.allOpen(allEntryIds)}
+              onToggle={(open) => openRows.setAll(allEntryIds, open)}
+              testId="contest-leaderboard-toggle-all"
+            />
           </div>
         ) : null}
         {/*
@@ -512,11 +495,11 @@ export function ContestLeaderboardPage() {
                     entry={entry}
                     contestEvents={contestEvents}
                     gridTemplateColumns={gridTemplateColumns}
-                    isCollapsed={collapsedEntryIds.has(entry.entryId)}
+                    isCollapsed={!openRows.isOpen(entry.entryId)}
                     isMine={isMySquadsEntry(mySquadId)(entry)}
                     key={entry.entryId}
                     league={{ code: leagueCode, id: contest.leagueId }}
-                    onToggle={() => toggleEntry(entry.entryId)}
+                    onToggle={() => openRows.toggle(entry.entryId)}
                   />
                 ))
               )}

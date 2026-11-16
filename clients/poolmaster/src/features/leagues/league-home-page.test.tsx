@@ -271,14 +271,13 @@ describe('League Home', () => {
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(await upNext.findByRole('heading', { name: 'RBC Heritage Tiers' })).toBeInTheDocument();
     expect(upNext.getByRole('timer')).toHaveAccessibleName('Entries close in 2 days 14 hours 6 minutes');
-    expect(upNext.getByRole('link', { name: 'Make your picks' })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/sooner',
-    );
+    // Make your picks starts the entry and opens its pick screen, so it is a button, not a link to the contest.
+    expect(upNext.getByRole('button', { name: 'Make your picks' })).toBeInTheDocument();
+    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
     expect(within(screen.getByTestId('league-home-current-contests')).getByText('US Open Pick 6')).toBeInTheDocument();
   });
 
-  it('offers View entry up next once the team has submitted its entry', async () => {
+  it('offers Edit picks up next once the team has submitted its entry, opening the entry\'s pick screen', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
       entriesByContest: { 'open-1': [entry('open-1', 'team-1')] },
@@ -287,7 +286,7 @@ describe('League Home', () => {
     renderLeagueHome();
 
     const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByRole('link', { name: 'View entry' })).toHaveAttribute(
+    expect(await upNext.findByRole('link', { name: 'Edit picks' })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/open-1/entries/open-1-team-1',
     );
@@ -328,7 +327,7 @@ describe('League Home', () => {
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
-    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
+    expect(upNext.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
     expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
   });
 
@@ -343,7 +342,7 @@ describe('League Home', () => {
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
-    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
+    expect(upNext.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
     expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
   });
 
@@ -394,7 +393,7 @@ describe('League Home', () => {
     expect(myRow).toHaveTextContent('Yours');
     expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/live-1/leaderboard',
+      '/league/BIGDAWGS/contests/live-1',
     );
   });
 
@@ -421,7 +420,7 @@ describe('League Home', () => {
     expect(await standings.findByText('Net Gains')).toBeInTheDocument();
     expect(standings.queryByText('Bogey Men')).not.toBeInTheDocument();
     expect(standings.getByRole('heading', { name: 'NBA Finals Stars · Top 5' })).toBeInTheDocument();
-    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-2/leaderboard');
+    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-2');
     expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
     expect(getContestLeaderboardMock.mock.lastCall?.[0]).toMatchObject({ path: { contestId: 'live-2' } });
   });
@@ -453,7 +452,7 @@ describe('League Home', () => {
     expect(await within(card).findByTestId('league-home-contest-group-live')).toHaveTextContent('Masters Pick 6');
     expect(within(card).getByTestId('league-home-contest-group-open')).toHaveTextContent('US Open Pick 6');
     expect(within(card).queryByTestId('league-home-contest-open-1')).not.toBeInTheDocument();
-    expect(within(card).getByTestId('league-home-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+    expect(within(card).getByTestId('league-home-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 
   it('makes one request each for the league, its contests, the team\'s entries and one live leaderboard', async () => {

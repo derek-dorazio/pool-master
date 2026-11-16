@@ -28,6 +28,7 @@ import { contestSchedule } from './use-contest-schedule';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { RosterContestEntryLineupSection, type PickChange } from './roster-contest-entry-lineup-section';
+import { EntryRenameSection } from './entry-rename-section';
 import { RosterContestEntrySubmitSection } from './roster-contest-entry-submit-section';
 import { useContestQuery } from './use-contest-query';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -500,10 +501,8 @@ export function RosterContestEntryPage() {
     <ContestEntryFrame
       contest={contest}
       entry={entrySummary}
-      entryId={entryId}
       leagueCode={leagueCode}
       phase={getContestPhaseLabel(contest, isEditable)}
-      picksRevealed={entryQuery.data?.picksRevealed ?? false}
       status={picksHidden ? null : entryStatus}
       statusFacts={[{ id: 'entries-close', label: 'Entries', value: isEditable ? 'Close when the event starts' : 'Closed' }]}
       title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
@@ -552,6 +551,11 @@ export function RosterContestEntryPage() {
           {entrySummary ? `This entry belongs to ${entrySummary.squadName}.` : 'This entry belongs to someone else.'}
         </Notice>
       )}
+
+      {/* A drawn lineup has nothing to submit, so its name changes on its own (#1739). */}
+      {isRandomDraw && isMyEntry && detailsEditable && entrySummary ? (
+        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={entrySummary.name} />
+      ) : null}
 
       {showFinish ? (
         <RosterContestEntrySubmitSection

@@ -113,6 +113,13 @@ describe('Squares contest entry page', () => {
     }
   });
 
+  it('offers the viewer\'s entry\'s name to change on the grid page while entries are open, the contest page having no Rename', async () => {
+    primeMocks();
+    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+
+    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
+  });
+
   it('shows the grid with each claimed box under its entry\'s name, the viewer\'s own highlighted, the team names on the edges, no digits before the draw, and the viewer\'s claimed count', async () => {
     primeMocks();
     renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');

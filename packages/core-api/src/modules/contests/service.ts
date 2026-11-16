@@ -475,8 +475,10 @@ export class ContestService {
   }
 
   /**
-   * Every entry of the contest, the requester's own squad's first. Each lists its picks: all of
-   * the requester's own squad's, and only the revealed events' picks of everyone else's.
+   * The contest's entries, the requester's own squad's first. Another squad's entry is listed
+   * once it has been submitted for one of the contest's events: a draft shows only to its own
+   * squad (#1739). Each lists its picks: all of the requester's own squad's, and only the
+   * revealed events' picks of everyone else's.
    */
   async listEntries(
     contestId: string,
@@ -1780,7 +1782,10 @@ export class ContestService {
     contest: Contest,
     options: { requesterSquadId: string | null; revealedEventIds: ReadonlySet<string> },
   ): Promise<ContestEntryDto[]> {
-    const rows = await this.deps.entries.findByContestWithSquad(contest.id);
+    const rows = (await this.deps.entries.findByContestWithSquad(contest.id)).filter((row) => (
+      row.squadId === options.requesterSquadId
+      || row.events.some((event) => event.status === ContestEntryStatus.SUBMITTED)
+    ));
 
     const entryIds = rows.map((row) => row.id);
     const [pickCountByEntry, picks] = await Promise.all([

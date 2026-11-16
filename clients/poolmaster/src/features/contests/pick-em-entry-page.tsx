@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import {
   ContestEntryStatus,
   PickEmMode,
@@ -27,10 +27,13 @@ import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
+import { EntryRenameSection } from './entry-rename-section';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { EntrySubmitBar } from './entry-submit-bar';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
+  canRenameEntries,
   CONTEST_ENTRY_STATUS_LABELS,
   contestStatusLabel,
 } from './contest-status';
@@ -121,6 +124,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
   const leagueCode = useContestLeagueCode();
+  const navigate = useNavigate();
 
   const switchWeek = (next: string) => {
     saveMutation.reset();
@@ -192,10 +196,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     <ContestEntryFrame
       contest={contest}
       entry={entrySummary}
-      entryId={entryId}
       leagueCode={leagueCode}
       phase={contestStatusLabel(contest.status)}
-      picksRevealed={entryQuery.data?.picksRevealed ?? false}
       rules={[
         ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
         ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
@@ -313,6 +315,10 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         />
       </SectionCard>
 
+      {/* The name above Submit, so Submit stays the page's last action. */}
+      {gamePicks.ownEntry && canRenameEntries(contest) ? (
+        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
+      ) : null}
       {gamePicks.ownEntry && (canChange || isSubmitted) ? (
         <EntrySubmitBar
           error={submitMutation.error ? errorMessage(submitMutation.error, 'We could not submit this week. Please try again.') : null}
@@ -327,7 +333,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             label: isPlayoff ? 'Submit entry' : 'Submit week',
             onSubmit: () => {
               submitMutation.reset();
-              submitMutation.mutate();
+              // A submitted week returns to the contest's page (#1739).
+              submitMutation.mutate(undefined, { onSuccess: () => void navigate(buildLeagueContestPath(leagueCode, contestId)) });
             },
             testId: 'pick-em-submit',
           }}

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import {
@@ -15,10 +15,12 @@ import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
 import { ContestEntryFrame } from './contest-header';
+import { EntryRenameSection } from './entry-rename-section';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
-import { contestStatusLabel } from './contest-status';
+import { canRenameEntries, contestStatusLabel } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { useGamePicks } from './use-game-picks';
@@ -67,6 +69,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
   const leagueCode = useContestLeagueCode();
+  const navigate = useNavigate();
 
   if (gamePicksQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading bracket..." />;
@@ -114,10 +117,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     <ContestEntryFrame
       contest={contest}
       entry={entrySummary}
-      entryId={entryId}
       leagueCode={leagueCode}
       phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
-      picksRevealed={entryQuery.data?.picksRevealed ?? false}
       status={picksHidden ? null : gamePicks.status}
       testId="bracket-entry-page"
       title={gamePicks.entryName}
@@ -166,6 +167,10 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             <BracketBoard canPick={canPick} isBusy={saveMutation.isPending} onPick={pick} rounds={rounds} />
           </SectionCard>
 
+          {/* The name above Submit, so Submit stays the page's last action. */}
+          {gamePicks.ownEntry && canRenameEntries(contest) ? (
+            <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
+          ) : null}
           {canPick ? (
             <BracketSubmitPanel
               gamePicks={gamePicks}
@@ -178,7 +183,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               }}
               onSubmit={() => {
                 submitMutation.reset();
-                submitMutation.mutate();
+                // A submitted bracket returns to the contest's page (#1739).
+                submitMutation.mutate(undefined, { onSuccess: () => void navigate(buildLeagueContestPath(leagueCode, contestId)) });
               }}
               onTiebreakerChange={setTiebreakerDraft}
               saveError={tiebreakerError}

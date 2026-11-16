@@ -392,12 +392,23 @@ administration area (root admin included), reusing the same shared components.
    not "Back to" and "View" links on each page. A contest's pages share
    `ContestPageFrame`, the plain `PageHeader` with no card: a breadcrumb (Contests / contest, and / entry on an entry
    page) whose Contests opens the league's contests on that contest's tab,
-   scrolled to it and tinted (`?focus=`), the contest's status badge in the
-   status slot, then the tabs Leaderboard once
-   picks are revealed, Entries, and My entry once the viewer has one (My
-   entries, opening Entries on only theirs, once they have two or more). A
-   contest page shows its way to play in words and links to How to Play opened
-   on it, never the raw format codes. A contest page under a league that is not
+   scrolled to it and tinted (`?focus=`), and the contest's status badge in the
+   status slot. **A contest has one page, at one address, with no tabs; its view
+   follows the stage** (`ContestPage`). While entries are open it is the entry
+   list, laid out like the leaderboard: names only, other teams' entries once
+   submitted (a draft shows only to its own team), the viewer's own first,
+   highlighted, with their status and ✎ to the pick screen. Once live or final it
+   is the leaderboard. Rows open and close with the shared `ExpandableRow`, the
+   viewer's own start open, and "Show all details" / "Hide all details" above the
+   list opens or closes every row that has details. The old `/leaderboard`
+   address redirects to it. **Buttons never land on the contest page**: Make
+   your picks, Create another entry (the header's action while more entries are
+   allowed, a full-contest notice in its place otherwise), Edit picks and ✎ open
+   the pick screen, a new entry being created on the way; submitting there
+   returns to the contest page. An entry's name changes on its pick screen,
+   never by a Rename on the contest page. A contest page shows its way to play
+   in words in its fact line with a (?) linking to How to Play opened on it,
+   never the raw format codes. A contest page under a league that is not
    the contest's own is replaced with the same page under its own league. A contest leaderboard is built from the leaderboard
    kit in `features/contests` (`LeaderboardFrame`, `ScoreboardGrid`, the Place,
    Entry and total columns, and `YourBestNote` for the viewer's best entry) and

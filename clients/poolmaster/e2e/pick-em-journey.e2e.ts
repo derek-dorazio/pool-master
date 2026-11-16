@@ -351,19 +351,12 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
     await expect(page.getByTestId('pick-em-submit')).toBeEnabled();
     const submitted = await submitAndRead<{ status: string }>(page, 'pick-em-submit', 'POST', `${gamePicksPath()}/submit`);
     expect(submitted.status).toBe('SUBMITTED');
-    await expect(page.getByTestId('pick-em-submitted')).toBeVisible();
-    await expect(page.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
   });
 
-  await test.step('the season leaderboard lists the entry, with no points before the first kickoff', async () => {
-    // The board is rebuilt in a background job a moment after the week is submitted (#1463).
-    await expect(async () => {
-      await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
-      await expect(page.getByTestId('pick-em-leaderboard-table')).toBeVisible();
-      await expect(page.getByTestId(`pick-em-leaderboard-row-${state.entryId}`)).toBeVisible({ timeout: 2_000 });
-    }).toPass({ timeout: 30_000 });
-    await expect(page.getByTestId(`pick-em-leaderboard-total-${state.entryId}`)).toHaveText('0 pts');
-    await expect(page.getByTestId('pick-em-leaderboard-not-started')).toBeVisible();
+  await test.step('submitting returns to the contest page, which lists the entry as the member\'s before the first kickoff', async () => {
+    await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toHaveAttribute('data-mine', 'true');
+    await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveText('Submitted');
+    await expect(page.getByTestId('contest-leaderboard')).toHaveCount(0);
   });
 
   await test.step('the member logs out', async () => {
