@@ -55,7 +55,7 @@ function leaderboardFixture(entries: LeaderboardEntry[]): ContestLeaderboardResp
     participantType: null,
     scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-    countingRule: { type: 'BEST_N', count: 4 },
+    countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     participants: [],
     entries,
     asOf: null,

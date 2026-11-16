@@ -20,8 +20,10 @@ export const QueryKeys = {
     detail: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId] as const,
     /** One event's games: what a squares contest's game picker offers (#711). */
     games: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'games'] as const,
-    /** One event's field: the team names a squares game picker shows (#711). */
+    /** One event's field: the team names a squares game picker shows (#711), and each lineup pick's tier and price (#1740). */
     field: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field'] as const,
+    /** One event's pick tiers: the Tier a lineup's pick shows on the contest page (#1740). */
+    tiers: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'tiers'] as const,
     /** One sport league's events in one event year: what a contest's event picker offers. */
     bySportLeagueYear: (sportLeagueId: QueryKeyId, eventYear: number) =>
       ['poolmaster', 'sport-events', 'sport-league', sportLeagueId, eventYear] as const,

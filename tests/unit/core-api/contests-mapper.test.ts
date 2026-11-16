@@ -124,7 +124,7 @@ describe('toContestLeaderboardResponse', () => {
       participantType: null,
       scoringFamily: null,
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N', count: 4 },
+      countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
       participants: [],
       entries: [],
       asOf: null,
@@ -142,7 +142,7 @@ describe('toContestLeaderboardResponse', () => {
       participantType: null,
       scoringFamily: null,
       scoringDefinitionId: 'FINISH_POSITION_POINTS',
-      countingRule: { type: 'BEST_N', count: 3 },
+      countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
       participants: [],
       entries: [{
         entryId: 'entry-1',
@@ -189,7 +189,7 @@ describe('toContestLeaderboardResponse', () => {
       participantType: ParticipantType.INDIVIDUAL,
       scoringFamily: ScoringFamily.COMPOSITE,
       scoringDefinitionId: 'COMPOSITE_TOTAL',
-      countingRule: { type: 'BEST_N', count: 4 },
+      countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
       participants: [],
       entries: [{
         entryId: 'entry-1',
@@ -239,7 +239,7 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     participantType: null,
     scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-    countingRule: { type: 'BEST_N', count: 4 },
+    countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     participants: [],
     entries: [{
       entryId: 'entry-1',

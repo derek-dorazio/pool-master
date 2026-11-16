@@ -84,7 +84,7 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
     participantType: null,
     scoringFamily: null,
     scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
-    countingRule: { type: 'BEST_N', count: 4 },
+    countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     participants: [team()],
     entries: [entry],
     asOf: null,

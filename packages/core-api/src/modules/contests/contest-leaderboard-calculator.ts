@@ -6,8 +6,11 @@
  */
 import {
   compareScores,
+  getTieredRosterSize,
+  getTiersInPlay,
   PARTICIPANT_SCORING_DEFINITIONS,
   rankSortedScores,
+  SelectionType,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
   type ContestSelectionConfig,
@@ -20,10 +23,16 @@ import type {
   ContestEntryStandingRow,
   ScoredContestEntryPickRow,
 } from '../../mappers/contests.mapper';
+import type { SportEventParticipantView } from '../events/sport-event-participant-service';
 
 export interface ContestCountingRule {
   type: 'BEST_N';
   count: number;
+}
+
+/** The counting rule as the leaderboard states it: N, and the M picks a full entry holds. */
+export interface ContestLeaderboardCountingRule extends ContestCountingRule {
+  pickCount: number | null;
 }
 
 /** What the leaderboard reads off a contest's configuration: its counting inputs and its scoring rules. */
@@ -102,6 +111,35 @@ export interface ParticipantScore {
   score: number | null;
   detail: ParticipantScoreDetail;
   asOf: Date | null;
+}
+
+/**
+ * How many picks a full entry holds under the contest's rules (#1740), so the leaderboard can say
+ * "best 4 of 6" once: a budget roster's size, a draw's picks per entry, or a tiered entry's tiers
+ * in play times its picks per tier. A released event has no empty tier, so its tier count is the
+ * tiers its field is placed in. Null for a contest with no lineup, or a tiered event not yet tiered.
+ */
+export function resolveLineupSize(
+  configJson: ContestSelectionConfig | null | undefined,
+  field: readonly Pick<SportEventParticipantView, 'valuation'>[],
+): number | null {
+  switch (configJson?.selectionType) {
+    case SelectionType.BUDGET_PICK:
+      return configJson.rosterSize;
+    case SelectionType.RANDOM_DRAW:
+      return configJson.picksPerEntry;
+    case SelectionType.TIERED: {
+      const tierCount = new Set(field.flatMap((row) => (row.valuation?.sportEventTierId ? [row.valuation.sportEventTierId] : []))).size;
+      return tierCount === 0 ? null : getTieredRosterSize(getTiersInPlay(tierCount, configJson.tiersUsed), configJson.picksPerTier);
+    }
+    // Game-pick contests hold no lineup, so there is no "of M" to state.
+    case SelectionType.PICK_EM:
+    case SelectionType.BRACKET:
+    case SelectionType.SURVIVOR:
+    case SelectionType.SQUARES:
+    case undefined:
+      return null;
+  }
 }
 
 export function resolveContestCountingRule(

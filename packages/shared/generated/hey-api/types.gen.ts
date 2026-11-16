@@ -12003,6 +12003,10 @@ export type ContestCountingRuleDto = {
      * N: how many picks count toward each entry's total.
      */
     count: number;
+    /**
+     * M: how many picks a full entry holds under the contest's rules, so a client can state "best N of M" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered.
+     */
+    pickCount: number | null;
 };
 
 /**
@@ -12045,6 +12049,10 @@ export type ContestLeaderboardResponse = {
          * N: how many picks count toward each entry's total.
          */
         count: number;
+        /**
+         * M: how many picks a full entry holds under the contest's rules, so a client can state "best N of M" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered.
+         */
+        pickCount: number | null;
     };
     /**
      * The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.

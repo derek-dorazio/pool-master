@@ -12,6 +12,8 @@ const {
   getEventMock,
   listContestEntriesMock,
   getLeagueMock,
+  listEventParticipantsMock,
+  listEventTiersMock,
   mockLogger,
   updateContestEntryMock,
 } = vi.hoisted(() => {
@@ -32,6 +34,8 @@ const {
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
+    listEventTiersMock: vi.fn(),
     mockLogger: logger,
     updateContestEntryMock: vi.fn(),
   };
@@ -45,6 +49,9 @@ bindApiMocks({
   // used to list every squad in the league and scan each one's members for the signed-in user.
   getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
+  // #1740 — a lineup pick's tier or price is its field row's: the event's field and tiers.
+  listEventParticipants: listEventParticipantsMock,
+  listEventTiers: listEventTiersMock,
   updateContestEntry: updateContestEntryMock,
 });
 
@@ -122,10 +129,12 @@ function buildEntry(overrides: Partial<{
   participants: Array<{
     pickId: string;
     sportEventParticipantId: string;
+    sportEventId: string;
     participantId: string;
     participantName: string;
     pickedAt: string;
     teamAffiliation?: string;
+    role?: string;
   }> | undefined;
 }> = {}) {
   return {
@@ -164,8 +173,14 @@ function primeMocks(opts?: {
   entriesPerContest?: number;
   /** The league plan's entries per contest; the contest's own cap unless given. */
   planEntriesPerContest?: number;
-  selectionType?: 'TIERED' | 'PICK_EM';
+  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
   allEntryCount?: number;
+  /** The event's field rows' tier ids and prices, by field row id; none unless given. */
+  field?: Record<string, { tierId?: string; price?: number }>;
+  /** The event's tiers, by id; none unless given. */
+  tiers?: Record<string, number>;
+  /** The budget contests' cap on the event; none unless given. */
+  salaryCap?: number;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -197,6 +212,39 @@ function primeMocks(opts?: {
         }],
         myEntryIds: myEntries.map((entry) => entry.id),
         ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
+      },
+    },
+  });
+
+  listEventParticipantsMock.mockResolvedValue({
+    data: {
+      participants: Object.entries(opts?.field ?? {}).map(([id, values]) => ({
+        id,
+        sportEventId: 'event-1',
+        valuation: {
+          id: `valuation-${id}`,
+          sportEventTierId: values.tierId ?? null,
+          tierOrderIndex: null,
+          tierAssignedSource: null,
+          price: values.price ?? null,
+          priceAssignedSource: null,
+        },
+      })),
+    },
+  });
+  listEventTiersMock.mockResolvedValue({
+    data: {
+      tiers: Object.entries(opts?.tiers ?? {}).map(([id, tierNumber]) => ({
+        id, sportEventId: 'event-1', tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber,
+      })),
+    },
+  });
+  getEventMock.mockResolvedValue({
+    data: {
+      event: {
+        id: 'event-1',
+        name: 'The Masters',
+        pricing: opts?.salaryCap === undefined ? null : { salaryCap: opts.salaryCap },
       },
     },
   });
@@ -254,8 +302,8 @@ function primeMocks(opts?: {
 }
 
 const PICKS = [
-  { pickId: 'pick-2', sportEventParticipantId: 'sep-2', participantId: 'participant-2', participantName: 'Scottie Scheffler', pickedAt: '2026-04-01T00:00:00.000Z' },
-  { pickId: 'pick-1', sportEventParticipantId: 'sep-1', participantId: 'participant-1', participantName: 'Rory McIlroy', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'Northern Ireland' },
+  { pickId: 'pick-2', sportEventParticipantId: 'sep-2', sportEventId: 'event-1', participantId: 'participant-2', participantName: 'Scottie Scheffler', pickedAt: '2026-04-01T00:00:00.000Z' },
+  { pickId: 'pick-1', sportEventParticipantId: 'sep-1', sportEventId: 'event-1', participantId: 'participant-1', participantName: 'Rory McIlroy', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'Northern Ireland' },
 ];
 
 const MINE = buildEntry({ id: 'entry-1', squadId: 'squad-1', name: 'Birdie Hunters 1', picksCount: 2, participants: PICKS });
@@ -268,6 +316,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     getContestMock.mockReset();
     getEventMock.mockReset();
     listContestEntriesMock.mockReset();
+    listEventParticipantsMock.mockReset();
+    listEventTiersMock.mockReset();
     getLeagueMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.warn.mockReset();
@@ -373,19 +423,71 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(theirs).not.toHaveTextContent('6 picks');
   });
 
-  it('opens the viewer\'s lineup entry to its picks in name order, each with its team, and closes it again', async () => {
-    primeMocks({ entries: [MINE] });
+  it('opens the viewer\'s tiered entry to its picks, tier 1 first, each with its tier and team, and closes it again', async () => {
+    primeMocks({ entries: [MINE], field: { 'sep-1': { tierId: 'tier-b' }, 'sep-2': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1, 'tier-b': 2 } });
 
     renderContestBoard();
 
     const picks = await screen.findByTestId('contest-entry-picks-entry-1');
-    expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-/).map((row) => row.textContent)).toEqual([
-      'Rory McIlroyNorthern Ireland',
-      'Scottie Scheffler',
-    ]);
+    await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
+      'Scottie Scheffler1',
+      'Rory McIlroy · Northern Ireland2',
+    ]));
+    expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferTier$/);
+    expect(listEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
+    expect(getEventMock).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('contest-board-toggle-entry-1'));
     expect(screen.queryByTestId('contest-entry-picks-entry-1')).not.toBeInTheDocument();
+  });
+
+  it('shows a budget entry\'s picks dearest first with their prices, and what they cost of the cap on its status line', async () => {
+    primeMocks({ entries: [MINE], selectionType: 'BUDGET_PICK', field: { 'sep-1': { price: 12_000 }, 'sep-2': { price: 9_500 } }, salaryCap: 50_000 });
+
+    renderContestBoard();
+
+    const picks = await screen.findByTestId('contest-entry-picks-entry-1');
+    await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
+      'Rory McIlroy · Northern Ireland$12,000',
+      'Scottie Scheffler$9,500',
+    ]));
+    expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferPrice$/);
+    expect(await screen.findByText('Submitted · $21,500 of $50,000')).toBeInTheDocument();
+    expect(listEventTiersMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a random draw entry\'s drawn picks by name with nothing beside them, reading nothing of the event', async () => {
+    primeMocks({ entries: [MINE], selectionType: 'RANDOM_DRAW' });
+
+    renderContestBoard();
+
+    const picks = await screen.findByTestId('contest-entry-picks-entry-1');
+    expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
+      'Rory McIlroy · Northern Ireland',
+      'Scottie Scheffler',
+    ]);
+    expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted$/);
+    expect(listEventParticipantsMock).not.toHaveBeenCalled();
+    expect(listEventTiersMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a Clutch Card pick with its team and playing role beside its name', async () => {
+    const player = { pickId: 'pick-9', sportEventParticipantId: 'sep-9', sportEventId: 'event-1', participantId: 'participant-9', participantName: 'Patrick Mahomes', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'KC', role: 'QB' };
+    primeMocks({ entries: [buildEntry({ id: 'entry-1', name: 'Birdie Hunters 1', picksCount: 1, participants: [player] })], field: { 'sep-9': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1 } });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-entry-pick-entry-1-participant-9')).toHaveTextContent('Patrick Mahomes · KC QB');
+  });
+
+  it('leaves out an entry\'s picks in the contest\'s other events', async () => {
+    const elsewhere = { ...PICKS[0], pickId: 'pick-7', participantId: 'participant-7', participantName: 'Jon Rahm', sportEventId: 'event-0' };
+    primeMocks({ entries: [buildEntry({ id: 'entry-1', name: 'Birdie Hunters 1', picksCount: 3, participants: [...PICKS, elsewhere] })] });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-entry-picks-entry-1');
+    expect(screen.queryByText('Jon Rahm')).not.toBeInTheDocument();
   });
 
   it('says an own entry has no picks yet when it is opened before any is chosen', async () => {

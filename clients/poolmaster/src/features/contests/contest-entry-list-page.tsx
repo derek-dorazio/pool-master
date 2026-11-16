@@ -3,6 +3,7 @@ import {
   ContestFormat,
   ContestStatus,
   SelectionType,
+  formatDollars,
   formatSelectionTypeName,
 } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
@@ -38,6 +39,9 @@ import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
 import { ContestPagePending } from './contest-page-pending';
 import { EntryDetailsPeek } from './entry-details-peek';
+import { EntryLineupPicks } from './entry-lineup-picks';
+import { contestRosterParticipantNoun } from './contest-sport';
+import { lineupSpend, useLineupPickValues, type LineupPickValues } from './use-lineup-pick-values';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
 import { MineMarker } from './mine-marker';
@@ -58,37 +62,29 @@ function opensToPicks(contest: Pick<ContestDto, 'contestFormat'>) {
   return contest.contestFormat === ContestFormat.ROSTER;
 }
 
-/** An entry's own line under its name: submitted, or a draft and how many picks it holds. */
-function describeOwnEntry(entry: ContestEntryDto, currentEventId: string | undefined) {
-  return entryEventStatus(entry, currentEventId) === ContestEntryStatus.SUBMITTED
+/**
+ * An entry's own line under its name: submitted, or a draft and how many picks it holds, and in a
+ * budget contest what its picks cost of the cap.
+ */
+function describeOwnEntry(entry: ContestEntryDto, currentEventId: string | undefined, spend: ReturnType<typeof lineupSpend>) {
+  const status = entryEventStatus(entry, currentEventId) === ContestEntryStatus.SUBMITTED
     ? 'Submitted'
     : `Draft · ${formatPickCount(entry.picksCount)}`;
+  if (!spend) {
+    return status;
+  }
+  return spend.salaryCap === null
+    ? `${status} · ${formatDollars(spend.spent)}`
+    : `${status} · ${formatDollars(spend.spent)} of ${formatDollars(spend.salaryCap)}`;
 }
 
 function formatPickCount(count: number) {
   return count === 1 ? '1 pick' : `${String(count)} picks`;
 }
 
-/** One entry's picks, opened under the viewer's own row: each pick's name, and its team where it has one. */
-function EntryPicks({ entry }: { entry: ContestEntryDto }) {
-  const participants = [...(entry.participants ?? [])].sort((left, right) => left.participantName.localeCompare(right.participantName));
-  if (participants.length === 0) {
-    return <Text as="p" className="px-4 py-3" tone="muted" variant="meta">No picks yet.</Text>;
-  }
-  return (
-    <div className="divide-y divide-border" data-testid={`contest-entry-picks-${entry.id}`}>
-      {participants.map((participant) => (
-        <div
-          className="flex items-baseline justify-between gap-3 px-4 py-2"
-          data-testid={`contest-entry-pick-${entry.id}-${participant.participantId}`}
-          key={participant.pickId}
-        >
-          <Text variant="body">{participant.participantName}</Text>
-          {participant.teamAffiliation ? <Text tone="muted" variant="meta">{participant.teamAffiliation}</Text> : null}
-        </div>
-      ))}
-    </div>
-  );
+/** The entry's picks in the event the page shows: a multi-event contest's entry holds each event's. */
+function picksInEvent(entry: ContestEntryDto, sportEventId: string | undefined) {
+  return (entry.participants ?? []).filter((pick) => pick.sportEventId === sportEventId);
 }
 
 /**
@@ -103,6 +99,7 @@ function EntryRow({
   isMine,
   isOpen,
   leagueCode,
+  lineupValues,
   onToggle,
 }: {
   canEdit: boolean;
@@ -112,8 +109,11 @@ function EntryRow({
   isMine: boolean;
   isOpen: boolean;
   leagueCode: string;
+  /** What the contest's lineup picks show beside their names, for the viewer's own rows. */
+  lineupValues: LineupPickValues | undefined;
   onToggle: () => void;
 }) {
+  const picks = picksInEvent(entry, currentEventId);
   const summary = (
     <div className="flex items-center justify-between gap-3">
       <span className="block min-w-0">
@@ -133,7 +133,7 @@ function EntryRow({
         </span>
         {isMine ? (
           <Text as="span" className="mt-1 block" data-testid={`contest-board-entry-status-${entry.id}`} tone="muted" variant="caption">
-            {describeOwnEntry(entry, currentEventId)}
+            {describeOwnEntry(entry, currentEventId, lineupSpend(picks, lineupValues))}
           </Text>
         ) : null}
       </span>
@@ -171,7 +171,7 @@ function EntryRow({
           summary={summary}
           toggleTestId={`contest-board-toggle-${entry.id}`}
         >
-          <EntryPicks entry={entry} />
+          <EntryLineupPicks entryId={entry.id} noun={contestRosterParticipantNoun(contest)} picks={picks} values={lineupValues} />
         </ExpandableRow>
       ) : (
         <div className="bg-muted px-4 py-3" data-testid={`contest-board-entry-bar-${entry.id}`}>{summary}</div>
@@ -200,6 +200,13 @@ export function ContestEntryListPage() {
     .filter((entry) => myTeamId !== null && entry.squadId === myTeamId)
     .map((entry) => entry.id);
   const openRows = useOpenEntryRows(myEntryIds);
+  // Each event takes its own submitted picks (#713): an entry's status is the current event's.
+  const currentEventId = contestQuery.data ? currentContestEvent(contestQuery.data)?.sportEventId : undefined;
+  const lineupValues = useLineupPickValues(
+    contestQuery.data?.selectionType,
+    currentEventId ?? '',
+    contestQuery.data !== undefined && opensToPicks(contestQuery.data) && myEntryIds.length > 0,
+  );
 
   useEffect(() => {
     if (contestQuery.isError) {
@@ -218,8 +225,6 @@ export function ContestEntryListPage() {
   const schedule = contestSchedule(contest);
   const entries = contestEntriesQuery.data?.entries ?? [];
   const entriesOpen = areContestEntriesOpen(contest, schedule?.startsAt);
-  // Each event takes its own submitted picks (#713): an entry's status is the current event's.
-  const currentEventId = currentContestEvent(contest)?.sportEventId;
   // The cap counts every team's drafts too: its plan's (#947), or its expansion (#987).
   const entryCount = contest.allEntryCount ?? entries.length;
   const entryCap = contest.entriesPerContest;
@@ -333,6 +338,7 @@ export function ContestEntryListPage() {
                 isOpen={openRows.isOpen(entry.id)}
                 key={entry.id}
                 leagueCode={leagueCode}
+                lineupValues={lineupValues}
                 onToggle={() => openRows.toggle(entry.id)}
               />
             ))

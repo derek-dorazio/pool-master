@@ -234,6 +234,7 @@ export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSche
 export const ContestCountingRuleDtoSchema = z.object({
   type: z.literal('BEST_N').describe('Sum the best N picks\' totals for each entry.'),
   count: z.number().int().min(1).describe('N: how many picks count toward each entry\'s total.'),
+  pickCount: z.number().int().min(1).nullable().describe('M: how many picks a full entry holds under the contest\'s rules, so a client can state "best N of M" once (#1740). A tiered entry\'s is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered.'),
 }).describe('How an entry\'s picks combine into its total.');
 export type ContestCountingRuleDto = z.infer<typeof ContestCountingRuleDtoSchema>;
 

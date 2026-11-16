@@ -14,6 +14,7 @@ import {
   rankContestEntryStandings,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
+  resolveLineupSize,
   type ParticipantScore,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-calculator';
 
@@ -222,6 +223,39 @@ describe('contest counting rule', () => {
   it('has no counting rule when the configuration has no rules, or there is no configuration', () => {
     expect(resolveContestCountingRule(config(null))).toBeNull();
     expect(resolveContestCountingRule(null)).toBeNull();
+  });
+});
+
+describe('a full entry\'s pick count, the M of "best N of M"', () => {
+  const tieredField = (tierIds: (string | null)[]) => tierIds.map((sportEventTierId) => ({
+    valuation: sportEventTierId ? { sportEventTierId } : null,
+  })) as Parameters<typeof resolveLineupSize>[1];
+
+  it('is a budget contest\'s roster size', () => {
+    expect(resolveLineupSize({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 }, [])).toBe(6);
+  });
+
+  it('is a random draw\'s picks per entry', () => {
+    expect(resolveLineupSize({ selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 3, countedScores: 2 }, [])).toBe(3);
+  });
+
+  it('is a tiered contest\'s tiers in the event times its picks per tier', () => {
+    const field = tieredField(['t1', 't1', 't2', 't3', null]);
+    expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 }, field)).toBe(6);
+  });
+
+  it('caps a tiered contest\'s tiers at the tiers it uses', () => {
+    const field = tieredField(['t1', 't2', 't3', 't4']);
+    expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 2, countedScores: 2 }, field)).toBe(2);
+  });
+
+  it('is unknown for a tiered contest whose event is not tiered yet', () => {
+    expect(resolveLineupSize({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, tieredField([null, null]))).toBeNull();
+  });
+
+  it('is unknown for a contest with no lineup rules', () => {
+    expect(resolveLineupSize(null, [])).toBeNull();
+    expect(resolveLineupSize({ selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false }, [])).toBeNull();
   });
 });
 

@@ -100,6 +100,7 @@ import {
   applySettledContestTotals,
   rankContestTotals,
   resolveContestCountingRule,
+  resolveLineupSize,
   resolveContestScoringDefinition,
   type ContestEntryEventScore,
   type ContestLeaderboardEntryInput,
@@ -980,7 +981,8 @@ export class ContestService {
       participantType: shownEvent.participantType ?? null,
       scoringFamily: shownEvent.scoringFamily ?? null,
       scoringDefinitionId,
-      countingRule: shownCountingRule,
+      // #1740 — M of "best N of M": the picks a full entry holds, said once in the header.
+      countingRule: { ...shownCountingRule, pickCount: resolveLineupSize(configuration?.configJson, shown.field) },
       participants: shown.field,
       entries: leaderboardEntries,
       asOf: shown.asOf,

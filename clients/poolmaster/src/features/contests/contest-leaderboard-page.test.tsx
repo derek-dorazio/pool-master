@@ -195,7 +195,7 @@ function leaderboardResponse(entryTotalScore = -5) {
       sportEventId: 'event-1',
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N', count: 1 },
+      countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
       participants: [
         participant({
           id: 'sep-1',
@@ -651,17 +651,73 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-unplayed-note')).not.toBeInTheDocument();
   });
 
-  it('strikes through a dropped pick and leaves a counting pick unstruck', async () => {
-    primeMocks();
+  it('lists every pick of a best-4-of-6 entry, striking through and italicising the two that do not count, and states the rule once in the header', async () => {
+    const golfers = [
+      { id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 },
+      { id: 'sep-2', name: 'Rory McIlroy', eventScoreToPar: -5 },
+      { id: 'sep-3', name: 'Ludvig Aberg', eventScoreToPar: -4 },
+      { id: 'sep-4', name: 'Viktor Hovland', eventScoreToPar: 3 },
+      { id: 'sep-5', name: 'Rickie Fowler', eventScoreToPar: 4 },
+      { id: 'sep-6', name: 'Jordan Spieth', eventScoreToPar: 6 },
+    ];
+    const board = leaderboardWithGolfers(golfers);
+    primeMocks({
+      leaderboard: {
+        ...board,
+        countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+        entries: board.entries.map((entry) => ({
+          ...entry,
+          countingPickLimit: 4,
+          picks: entry.picks.map((pick, index) => ({ ...pick, isCounting: index < 4, isDropped: index >= 4 })),
+        })),
+      },
+    });
 
     renderLeaderboard();
 
-    const dropped = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-2');
-    expect(within(dropped).getByText('Scottie Scheffler')).toHaveClass('line-through');
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-6');
+    const names = golfers.map((_, index) => screen.getByTestId(`contest-leaderboard-pick-entry-1-pick-${index + 1}-name`));
+    expect(names.map((name) => name.classList.contains('line-through') && name.classList.contains('italic')))
+      .toEqual([false, false, false, false, true, true]);
+    expect(screen.getByTestId('contest-leaderboard-counting-rule')).toHaveTextContent('Best 4 of 6 golfers count');
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).not.toHaveTextContent(/count ·|scored/);
+  });
 
-    const counting = screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(within(counting).getByText('Rory McIlroy')).not.toHaveClass('line-through');
-    expect(within(counting).getByText('-5')).not.toHaveClass('line-through');
+  it('takes the rule\'s "of M" from the contest\'s full entry, not from the entries on the board, so short entries cannot shrink it', async () => {
+    const golfers = [
+      { id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 },
+      { id: 'sep-2', name: 'Rory McIlroy', eventScoreToPar: -5 },
+    ];
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 4, pickCount: 6 } } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-counting-rule')).toHaveTextContent('Best 4 of 6 golfers count');
+  });
+
+  it('states no rule when the full entry\'s size is not known yet, rather than guess at it', async () => {
+    const golfers = [{ id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 }];
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 4, pickCount: null } } });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(screen.queryByTestId('contest-leaderboard-counting-rule')).not.toBeInTheDocument();
+  });
+
+  it('strikes through no pick and states no rule when every pick counts', async () => {
+    const golfers = [
+      { id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 },
+      { id: 'sep-2', name: 'Rory McIlroy', eventScoreToPar: null },
+    ];
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 2, pickCount: 2 } } });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-2');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).not.toHaveClass('line-through');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-2-name')).not.toHaveClass('line-through');
+    expect(screen.queryByTestId('contest-leaderboard-counting-rule')).not.toBeInTheDocument();
   });
 
   it('never renders entry-selection metadata, even though the payload carries it', async () => {
@@ -709,7 +765,7 @@ describe('ContestLeaderboardPage', () => {
         sportEventId: 'event-1',
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -733,7 +789,7 @@ describe('ContestLeaderboardPage', () => {
         sportEventId: 'event-1',
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         participants: [],
         entries: [],
         asOf: null,
@@ -1080,7 +1136,6 @@ describe('ContestLeaderboardPage', () => {
 
     const entry = await screen.findByTestId('contest-leaderboard-entry-entry-1');
     expect(entry).toHaveTextContent('This entry has no scored picks yet.');
-    expect(entry).toHaveTextContent('0 scored');
   });
 });
 

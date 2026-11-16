@@ -87,7 +87,7 @@ const board: ContestLeaderboardResponse = {
   participantType: ParticipantType.INDIVIDUAL,
   scoringFamily: ScoringFamily.COMPOSITE,
   scoringDefinitionId: 'COMPOSITE_TOTAL',
-  countingRule: { type: 'BEST_N', count: 4 },
+  countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
   participants: [ohtani, rojas],
   entries: [{
     entryId: 'entry-1',
