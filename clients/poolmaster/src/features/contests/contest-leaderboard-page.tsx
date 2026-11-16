@@ -135,13 +135,14 @@ const PINNED_CELL_SURFACE =
  */
 function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; gridTemplateColumns: string; pick: LeaderboardPickRow }) {
   const { breakdown } = pick;
-  const isDroppedClass = pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground';
+  // #1740 — a pick outside the best N: listed, struck through and in italics, out of the total.
+  const isDroppedClass = pick.isDropped ? 'italic text-muted-foreground line-through' : 'text-foreground';
   const testId = `contest-leaderboard-pick-${entryId}-${pick.pickId}`;
   const cells = (
     <div className="grid gap-2 text-sm" style={{ gridTemplateColumns }}>
       <span className={cn(PINNED_POSITION, PINNED_CELL_SURFACE, 'text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
       {/* The worst M - N picks: visibly present, visibly excluded from the total. */}
-      <span className={cn(PINNED_NAME, PINNED_CELL_SURFACE, 'min-w-0 truncate', isDroppedClass)} data-testid={`${testId}-name`}>{pick.participantName}</span>
+      <span className={cn(PINNED_NAME, PINNED_CELL_SURFACE, 'min-w-0 truncate', isDroppedClass)} data-dropped={pick.isDropped || undefined} data-testid={`${testId}-name`}>{pick.participantName}</span>
       <span className={cn('text-right font-medium', isDroppedClass)}>
         {pick.total ?? NO_SCORE}
       </span>
@@ -255,9 +256,6 @@ function EntryBlock({
                   />
                 </span>
                 {isMine ? <MineMarker /> : null}
-              </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
-                best {entry.countingPickLimit} of {entry.picks.length} count · {entry.scoredPickCount} scored
               </span>
               {contestEvents && entry.events.length > 0 ? (
                 <span className="mt-1 block text-xs text-muted-foreground" data-testid={`contest-leaderboard-events-${entry.entryId}`}>
@@ -376,6 +374,12 @@ export function ContestLeaderboardPage() {
     contest.status === ContestStatus.COMPLETED || hasContestEventStarted(sportEvent)
   ));
 
+  // #1740 — the counting rule shows once, in the header, rather than on every entry's bar.
+  const lineupSize = Math.max(0, ...leaderboardQuery.data.entries.map((entry) => entry.picks.length));
+  const countingRule = leaderboardQuery.data.countingRule.count < lineupSize
+    ? `Best ${String(leaderboardQuery.data.countingRule.count)} of ${String(lineupSize)} ${participantNoun.many} count`
+    : null;
+
   const allEntryIds = view.entries.map((entry) => entry.entryId);
   const matchingEntries = view.entries.filter((entry) => matchesSearch(entry, search));
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
@@ -416,6 +420,7 @@ export function ContestLeaderboardPage() {
       // #246 — an entry's standing is frozen at settlement while each participant's own score
       // stays live, so a late correction can make the two disagree on this very page. Say so
       // rather than let it read as a bug.
+      summary={countingRule ? <span data-testid="contest-leaderboard-counting-rule">{countingRule}</span> : undefined}
       settledNote={`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; each pick's score shows current event data and can differ after a late score correction.`}
     >
       <ContestEventSwitcher

@@ -397,8 +397,13 @@ administration area (root admin included), reusing the same shared components.
    follows the stage** (`ContestPage`). While entries are open it is the entry
    list, laid out like the leaderboard: names only, other teams' entries once
    submitted (a draft shows only to its own team), the viewer's own first,
-   highlighted, with their status and ✎ to the pick screen. Once live or final it
-   is the leaderboard. Rows open and close with the shared `ExpandableRow`, the
+   highlighted, with their status and ✎ to the pick screen. A lineup entry opens
+   to its picks on the leaderboard's pick-row grid with the value it was picked
+   by beside each, the field's own: its tier, its price (and the status line says
+   what the picks cost of the cap), or nothing for a random draw. Once live or final it
+   is the leaderboard: the counting rule ("Best 4 of 6 golfers count") shows once
+   in the header, never on each entry, and an opened entry lists every pick, the
+   ones outside the count struck through and in italics. Rows open and close with the shared `ExpandableRow`, the
    viewer's own start open, and "Show all details" / "Hide all details" above the
    list opens or closes every row that has details. The old `/leaderboard`
    address redirects to it. **Buttons never land on the contest page**: Make

@@ -398,21 +398,19 @@ describe('buildLeaderboardView', () => {
     ]);
   });
 
-  it('reports an entry holding fewer scored picks than the counting rule allows', () => {
-    // A three-of-five entry on day one, with one golfer posted: the rule still says three.
+  it('strikes out no pick of an entry holding fewer scored picks than the counting rule counts', () => {
+    // A three-of-five entry on day one, with one golfer posted: that golfer counts, and nobody is dropped yet.
     const view = buildLeaderboardView(responseFixture({
       participants: [rory],
       entries: [entryFixture({
         countingPickLimit: 3,
         scoredPickCount: 1,
         totalScore: -5,
-        picks: [pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1' })],
+        picks: [pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1', isCounting: true, isDropped: false })],
       })],
     }));
 
-    expect(view.entries[0].countingPickLimit).toBe(3);
-    expect(view.entries[0].scoredPickCount).toBe(1);
-    expect(view.entries[0].picks).toHaveLength(1);
+    expect(view.entries[0].picks.map((pick) => pick.isDropped)).toEqual([false]);
   });
 
   it('drops a pick whose pointer does not resolve to a field row', () => {
