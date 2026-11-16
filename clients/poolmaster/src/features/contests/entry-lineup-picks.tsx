@@ -76,30 +76,30 @@ export function EntryLineupPicks({
   return (
     <div className="divide-y divide-border" data-testid={`contest-entry-picks-${entryId}`}>
       <div
-        className="grid gap-2 px-4 py-2 text-xs font-medium uppercase text-muted-foreground"
+        className="grid gap-2 px-4 py-2"
         data-testid={`contest-entry-picks-head-${entryId}`}
         style={{ gridTemplateColumns: GRID_COLUMNS }}
       >
-        <span>{upperFirst(noun.one)}</span>
-        <span className="text-right">{heading}</span>
+        <Text variant="label">{upperFirst(noun.one)}</Text>
+        <Text className="text-right" variant="label">{heading}</Text>
       </div>
       {orderPicks(picks, values).map((pick) => {
         const value = pickValue(pick, values);
         const affiliation = pickAffiliation(pick);
         return (
           <div
-            className="grid items-baseline gap-2 px-4 py-2 text-sm"
+            className="grid items-baseline gap-2 px-4 py-2"
             data-testid={`contest-entry-pick-${entryId}-${pick.participantId}`}
             key={pick.pickId}
             style={{ gridTemplateColumns: GRID_COLUMNS }}
           >
-            <span className="min-w-0 truncate text-foreground">
+            <Text className="min-w-0 truncate" size="sm" tone="default" variant="body">
               {pick.participantName}
-              {affiliation ? <span className="text-muted-foreground">{` · ${affiliation}`}</span> : null}
-            </span>
-            <span className="text-right text-foreground" data-testid={`contest-entry-pick-value-${entryId}-${pick.participantId}`}>
+              {affiliation ? <Text size="inherit" tone="muted" variant="meta">{` · ${affiliation}`}</Text> : null}
+            </Text>
+            <Text className="text-right" data-testid={`contest-entry-pick-value-${entryId}-${pick.participantId}`} size="sm" tone="default" variant="value">
               {value === undefined ? null : values?.kind === 'price' ? formatDollars(value) : String(value)}
-            </span>
+            </Text>
           </div>
         );
       })}
