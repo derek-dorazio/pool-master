@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryFrame, ContestPageFrame } from './contest-header';
-import { entryPageView, type ContestView } from './contest-page-view';
 
 const { getLeagueMock } = vi.hoisted(() => ({ getLeagueMock: vi.fn() }));
 
@@ -58,30 +57,22 @@ afterEach(() => {
 
 function renderFrame({
   contestOverrides = {},
-  current = 'entries',
   entryName,
   leagueCode = 'BIGDAWGS',
-  myEntryIds = contest.myEntryIds,
-  picksRevealed = true,
   title,
   url,
 }: {
   contestOverrides?: Partial<ContestDto>;
-  current?: ContestView | null;
   entryName?: string;
   leagueCode?: string;
-  myEntryIds?: string[];
-  picksRevealed?: boolean;
   title?: string;
   url?: string;
 } = {}) {
   renderAt(
     <ContestPageFrame
-      contest={{ ...contest, myEntryIds, ...contestOverrides }}
-      current={current}
+      contest={{ ...contest, ...contestOverrides }}
       entryName={entryName}
       leagueCode={leagueCode}
-      picksRevealed={picksRevealed}
       testId="frame"
       title={title}
       headerTestId="frame-header"
@@ -120,77 +111,11 @@ describe('ContestPageFrame', () => {
     expect(screen.getByTestId('frame-header-name')).toHaveTextContent('Casey Crushers 1');
   });
 
-  it('offers Leaderboard, Entries and My entry in that order once picks are revealed and the viewer has one entry, on the current page', () => {
-    renderFrame({ current: 'leaderboard' });
-
-    const options = within(screen.getByRole('navigation', { name: 'Contest pages' })).getAllByRole('link');
-    expect(options.map((option) => option.getAttribute('data-testid'))).toEqual([
-      'contest-menu-leaderboard',
-      'contest-menu-entries',
-      'contest-menu-my-entry',
-    ]);
-    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByText('My entry')).toBeInTheDocument();
-  });
-
-  it('opens the viewer\'s only entry from My entry', () => {
+  it('carries no Leaderboard / Entries / My entry tabs: the contest has one page whose view follows its stage', () => {
     renderFrame();
 
-    fireEvent.click(screen.getByTestId('contest-menu-my-entry'));
-
-    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
-  });
-
-  it('names the option My entries and opens Entries showing only the viewer\'s when they have two or more entries', () => {
-    renderFrame({ myEntryIds: ['entry-1', 'entry-2'] });
-
-    expect(screen.getByText('My entries')).toBeInTheDocument();
-    expect(screen.queryByText('My entry')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('contest-menu-my-entry'));
-
-    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1?mine=1');
-  });
-
-  it('leaves out My entry when the viewer has no entry in the contest', () => {
-    renderFrame({ myEntryIds: [] });
-
-    expect(screen.getByTestId('contest-menu-leaderboard')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-menu-my-entry')).not.toBeInTheDocument();
-  });
-
-  it('leaves out Leaderboard until picks are revealed, since its read is refused before then', () => {
-    renderFrame({ picksRevealed: false });
-
-    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('aria-current', 'page');
-    expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-my-entry')).toBeInTheDocument();
-  });
-
-  it('links each tab to its page, Leaderboard to the board and Entries to the contest', () => {
-    renderFrame();
-
-    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
-    expect(screen.getByTestId('contest-menu-entries')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
-  });
-
-  it('selects no option on another team\'s entry page', () => {
-    renderFrame({ current: null });
-
-    expect(screen.getByTestId('contest-menu-entries')).not.toHaveAttribute('aria-current');
-    expect(screen.getByTestId('contest-menu-my-entry')).not.toHaveAttribute('aria-current');
-  });
-});
-
-describe('entryPageView', () => {
-  it('names the viewer\'s only entry page My entry and another team\'s entry page nothing', () => {
-    expect(entryPageView(contest, 'entry-1')).toBe('my-entry');
-    expect(entryPageView(contest, 'entry-9')).toBeNull();
-    expect(entryPageView({ myEntryIds: undefined }, 'entry-1')).toBeNull();
-  });
-
-  it('names none of a viewer\'s several entry pages My entry, since My entries is then their list', () => {
-    expect(entryPageView({ myEntryIds: ['entry-1', 'entry-2'] }, 'entry-1')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Contest pages' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-menu-entries')).not.toBeInTheDocument();
   });
 });
 
@@ -211,16 +136,16 @@ describe('The contest breadcrumb', () => {
     );
   });
 
-  it('trails Contests, the contest and the entry on an entry page, the contest opening where it lands', () => {
-    renderFrame({ current: null, entryName: 'Birdie Hunters 2', url: '/league/BIGDAWGS/contests/contest-1/entries/entry-9' });
+  it('trails Contests, the contest and the entry on an entry page, the contest opening its one page', () => {
+    renderFrame({ entryName: 'Birdie Hunters 2', url: '/league/BIGDAWGS/contests/contest-1/entries/entry-9' });
 
     expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
-    expect(breadcrumbs().getByRole('link', { name: 'Masters Pool' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/leaderboard');
+    expect(breadcrumbs().getByRole('link', { name: 'Masters Pool' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
     expect(breadcrumbs().getByText('Birdie Hunters 2')).toHaveAttribute('aria-current', 'page');
   });
 
   it('shows no Back to league button, the breadcrumb being the way back', () => {
-    renderFrame({ current: null, entryName: 'Birdie Hunters 2' });
+    renderFrame({ entryName: 'Birdie Hunters 2' });
 
     expect(screen.queryByRole('link', { name: 'Back to league' })).not.toBeInTheDocument();
   });
@@ -252,10 +177,8 @@ describe('ContestEntryFrame', () => {
         <ContestEntryFrame
           contest={contest}
           entry={entry}
-          entryId="entry-1"
           leagueCode="BIGDAWGS"
           phase="Open until the first game"
-          picksRevealed={false}
           rules={['Confidence']}
           status={status}
           title="Birdie Hunters 2"
@@ -275,7 +198,6 @@ describe('ContestEntryFrame', () => {
     expect(screen.queryByTestId('contest-entry-header-status-slot')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent(/^Masters Pool · Confidence$/);
     expect(screen.getByText('The picks')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-menu-my-entry')).toHaveAttribute('aria-current', 'page');
   });
 
   it('leads the status peek with the status and the contest\'s phase, not the entry\'s name again, then the entry\'s dates', () => {

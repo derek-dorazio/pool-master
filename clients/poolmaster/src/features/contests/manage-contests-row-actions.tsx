@@ -1,7 +1,7 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import type { ContestDto } from '@/lib/api';
-import { buildContestLandingPath } from '@/features/leagues/league-routing';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { RowActionsMenu, type RowAction } from '@/features/shared/ui';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { OpenContestFromListDialog } from './open-contest-from-list-dialog';
@@ -35,7 +35,7 @@ export function ManageContestsRowActions({
           { label: 'Delete', onSelect: () => setDialog('delete'), testId: `${testPrefix}-delete`, tone: 'danger' },
         ]
       : []
-    : [{ label: 'View as members see it', testId: `${testPrefix}-view`, to: buildContestLandingPath(leagueCode, contest) }];
+    : [{ label: 'View as members see it', testId: `${testPrefix}-view`, to: buildLeagueContestPath(leagueCode, contest.id) }];
   const setDialogOpen = (which: Exclude<RowDialog, null>) => (open: boolean) => setDialog(open ? which : null);
 
   return (

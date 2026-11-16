@@ -362,14 +362,14 @@ describe('Commissioner tools › Contests › one contest', () => {
   it.each([
     ['live', 'ACTIVE', 'Full leaderboard'],
     ['final', 'COMPLETED', 'See the results'],
-  ] as const)('links a %s contest to its leaderboard', async (_label, status, linkName) => {
+  ] as const)('links a %s contest to its contest page, which shows its leaderboard', async (_label, status, linkName) => {
     primeMocks({ contest: buildContest({ status }), managedContest: buildManagedContest({ status }) });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByRole('link', { name: linkName })).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/contest-1/leaderboard',
+      '/league/BIGDAWGS/contests/contest-1',
     );
     expect(screen.getByTestId('manage-contest-locked')).toBeInTheDocument();
   });

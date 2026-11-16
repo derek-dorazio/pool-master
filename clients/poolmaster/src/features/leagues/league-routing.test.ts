@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
-  buildContestLandingPath,
   buildContestsFocusPath,
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
@@ -107,21 +106,9 @@ describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
   });
 });
 
-describe('buildContestLandingPath', () => {
-  it('opens a contest still taking entries on its Entries page', () => {
-    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.OPEN })).toBe('/league/BIGDAWGS/contests/c1');
-  });
-
-  it('opens a commissioner draft on its Entries page', () => {
-    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.DRAFT })).toBe('/league/BIGDAWGS/contests/c1');
-  });
-
-  it('opens a live contest on its Leaderboard', () => {
-    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.ACTIVE })).toBe('/league/BIGDAWGS/contests/c1/leaderboard');
-  });
-
-  it('opens a final contest on its Leaderboard', () => {
-    expect(buildContestLandingPath('BIGDAWGS', { id: 'c1', status: ContestStatus.COMPLETED })).toBe('/league/BIGDAWGS/contests/c1/leaderboard');
+describe('buildLeagueContestPath', () => {
+  it('gives a contest one address whatever its status, with no separate leaderboard address', () => {
+    expect(buildLeagueContestPath('BIGDAWGS', 'c1')).toBe('/league/BIGDAWGS/contests/c1');
   });
 });
 

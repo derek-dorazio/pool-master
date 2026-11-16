@@ -4,8 +4,9 @@ import { Button, FormField, Input, Notice } from '@/features/shared/ui';
 const ENTRY_NAME_MAX_LENGTH = 100;
 
 /**
- * The one rename-entry form (#1579): the entry page's name field and the contest page's Rename.
- * With `save` it carries its own Save name and Cancel; without, the page's Submit saves it.
+ * The one rename-entry form (#1579): the name field on an entry's pick screen, where an entry's
+ * name changes (#1739). With `save` it carries its own Save name and Cancel; without, the page's
+ * Submit saves it.
  */
 export function EntryNameField({
   disabled = false,

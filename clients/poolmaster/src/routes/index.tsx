@@ -21,10 +21,9 @@ import { ClutchCardPage } from '@/features/event-pages/clutch-card-page';
 import { StartPage } from '@/features/event-pages/start-page';
 import { LeagueContestTypesPage } from '@/features/contest-types/league-contest-types-page';
 import { CreateContestPage } from '@/features/contests/create-contest/create-contest-page';
-import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ContestEntryLeagueRedirect } from '@/features/contests/contest-entry-league-redirect';
-import { ContestLeaderboardPage } from '@/features/contests/contest-leaderboard-page';
+import { ContestLeaderboardRedirect, ContestPage } from '@/features/contests/contest-page';
 import { LeagueContestHistoryPage } from '@/features/contests/league-contest-history-page';
 import { LeagueContestsPage } from '@/features/contests/league-contests-page';
 import { ContestEventsPage } from '@/features/contests/contest-events-page';
@@ -342,11 +341,11 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/contests/:contestId',
-            element: <ContestDetailPage />,
+            element: <ContestPage />,
           },
           {
             path: 'league/:leagueCode/contests/:contestId/leaderboard',
-            element: <ContestLeaderboardPage />,
+            element: <ContestLeaderboardRedirect />,
           },
           {
             path: 'league/:leagueCode/contests/:contestId/entries/:entryId',

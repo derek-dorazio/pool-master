@@ -1219,7 +1219,7 @@ describe('League plan', () => {
 
 // The leagues list is only touched by delete; it must drop the league.
 describe('League payments', () => {
-  it('lists the league\'s payments on League settings, newest first, each linking to its contest where the contest opens: Entries while open, Leaderboard once live', async () => {
+  it('lists the league\'s payments on League settings, newest first, each linking to its contest\'s one page', async () => {
     primeMocks();
     listLeaguePaymentsMock.mockResolvedValue(apiSuccess({
       payments: [
@@ -1262,7 +1262,7 @@ describe('League payments', () => {
     // A deleted contest's line keeps its description, with nothing to link to.
     expect(within(lines[1]).queryByRole('link')).not.toBeInTheDocument();
     expect(within(lines[2]).getByRole('link', { name: 'Live Pool: up to 50 entries, free while payments are off' }))
-      .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
+      .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
     expect(listLeaguePaymentsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
   });
 

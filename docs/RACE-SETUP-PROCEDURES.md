@@ -206,7 +206,7 @@ the race's result but not the settled standings.
 ## 5. Check the settled leaderboard
 
 As a member or commissioner, open the contest's leaderboard
-(`/league/:leagueCode/contests/:contestId/leaderboard`). It shows "Final result, settled …",
+(`/league/:leagueCode/contests/:contestId`, which is the leaderboard once the contest is live). It shows "Final result, settled …",
 each pick's place in the *Finish* column (`T2` for a dead heat, `DNF`, `DQ`, `DNS` or
 *Scratched* otherwise), and each entry's points from the contest's points table. With the
 Win / Place / Show preset an entry holding the winner and the third-placed horse scores 6.

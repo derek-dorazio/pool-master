@@ -75,22 +75,12 @@ export function buildLeagueContestHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/contests/history`;
 }
 
+/**
+ * A contest's one page (#1739), whatever its status: the entry list while entries are open, the
+ * leaderboard once it is live or final.
+ */
 export function buildLeagueContestPath(leagueCode: string, contestId: string) {
   return `/league/${leagueCode}/contests/${contestId}`;
-}
-
-export function buildLeagueContestLeaderboardPath(leagueCode: string, contestId: string) {
-  return `/league/${leagueCode}/contests/${contestId}/leaderboard`;
-}
-
-/**
- * Where a contest opens from any list (#1388's one link rule): a contest still taking entries
- * (or a commissioner's draft) opens its Entries page; a live or final one opens its Leaderboard.
- */
-export function buildContestLandingPath(leagueCode: string, contest: Pick<ContestDto, 'id' | 'status'>) {
-  return contest.status === ContestStatus.ACTIVE || contest.status === ContestStatus.COMPLETED
-    ? buildLeagueContestLeaderboardPath(leagueCode, contest.id)
-    : buildLeagueContestPath(leagueCode, contest.id);
 }
 
 /**

@@ -323,7 +323,8 @@ test('act 4: the commissioner draws the numbers, and the digits appear along the
   const { run } = state;
 
   await adminSignIn(page, { identifier: run.commissioner.username, password: state.commissionerPassword });
-  await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
+  // Before kickoff the contest's page lists its entries under the grid, where the commissioner draws.
+  await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
   await expect(page.getByTestId('squares-board')).toBeVisible();
   await expect(page.getByTestId('squares-row-digit-0')).toHaveText('');
 

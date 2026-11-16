@@ -67,14 +67,13 @@ function renderLeaderboard() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
       <MemoryRouter
-        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1/leaderboard' }]}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1' }]}
       >
         <Routes>
           <Route
             element={<ContestLeaderboardPage />}
-            path="/league/:leagueCode/contests/:contestId/leaderboard"
+            path="/league/:leagueCode/contests/:contestId"
           />
-          <Route element={<div data-testid="contest-board" />} path="/league/:leagueCode/contests/:contestId" />
           <Route
             element={<div data-testid="contest-entry-page" />}
             path="/league/:leagueCode/contests/:contestId/entries/:entryId"
@@ -319,7 +318,7 @@ function primeMocks(opts?: {
   contestStatus?: ContestStatusFixture;
   leaderboard?: Record<string, unknown>;
   leaderboardError?: { code: string; message: string };
-  /** The viewer's team, and its entries in this contest. */
+  /** The viewer's team (Birdie Hunters, which holds entry-1, unless a test says otherwise), and its entries in this contest. */
   mySquadId?: string | null;
   myEntryIds?: string[];
 }) {
@@ -328,7 +327,7 @@ function primeMocks(opts?: {
   getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE', opts?.myEntryIds));
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
-  const mySquadId = opts?.mySquadId ?? null;
+  const mySquadId = opts?.mySquadId === undefined ? 'squad-1' : opts.mySquadId;
   getLeagueMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague(), {
     membership: buildLeagueMembership({ role: 'MEMBER' }),
     squadMembership: mySquadId ? buildLeagueSquadMember({ squadId: mySquadId }) : null,
@@ -348,14 +347,14 @@ function primeMocks(opts?: {
 }
 
 describe('ContestLeaderboardPage', () => {
-  it('holds a placeholder header with a tab row while the contest loads, so the tabs do not jump in when it arrives', async () => {
+  it('holds a placeholder header with no tab row while the contest loads, since a contest page has no tabs', async () => {
     primeMocks();
     getContestMock.mockReturnValue(new Promise(() => {}));
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-leaderboard-pending-header-tabs')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-leaderboard-pending-header')).toHaveAttribute('aria-hidden', 'true');
+    expect(await screen.findByTestId('contest-leaderboard-pending-header')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByTestId('contest-leaderboard-pending-header-tabs')).not.toBeInTheDocument();
   });
 
   it('shows a stat pool\'s players with one column per game, a player\'s name opens their stats in each game, and a hovered row tints its pinned cells too', async () => {
@@ -549,7 +548,7 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
   });
 
-  it('names each entry alone on its bar with an (i) for its team, and opening the (i) leaves the picks open', async () => {
+  it('names each entry alone on its bar with an (i) for its team, and opening the (i) leaves the row as it was', async () => {
     primeMocks({ leaderboard: leaderboardWithTwoEntries() });
 
     renderLeaderboard();
@@ -559,34 +558,44 @@ describe('ContestLeaderboardPage', () => {
     expect(bar).not.toHaveTextContent('Eagle Eyes');
     fireEvent.click(within(bar).getByRole('button', { name: 'About Chalk Talk' }));
 
-    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2')).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByTestId('contest-leaderboard-entry-peek-entry-2-callout')).toBeInTheDocument();
   });
 
-  it('collapses every entry with Hide Details, expands them with Show Details, and still lets one bar toggle afterwards', async () => {
+  it('opens the viewer\'s own entry and leaves everyone else\'s closed', async () => {
     primeMocks({ leaderboard: leaderboardWithTwoEntries() });
 
     renderLeaderboard();
 
-    const toggleAll = await screen.findByTestId('contest-leaderboard-toggle-all');
-    expect(toggleAll).toHaveTextContent('Hide Details');
+    expect(await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-1')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2')).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-pick-3')).not.toBeInTheDocument();
+  });
+
+  it('opens every entry with Show all details, closes them with Hide all details, and still lets one bar toggle afterwards', async () => {
+    primeMocks({ leaderboard: leaderboardWithTwoEntries() });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    const toggleAll = screen.getByTestId('contest-leaderboard-toggle-all');
+    // One of two is open, so the toolbar offers to open them all.
+    expect(toggleAll).toHaveTextContent('Show all details');
 
     fireEvent.click(toggleAll);
-    expect(toggleAll).toHaveTextContent('Show Details');
+    expect(toggleAll).toHaveTextContent('Hide all details');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-3')).toBeInTheDocument();
+
+    fireEvent.click(toggleAll);
+    expect(toggleAll).toHaveTextContent('Show all details');
     expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-pick-3')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2'));
     expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-3')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1')).not.toBeInTheDocument();
-    // Not every entry is collapsed any more, so the toolbar offers to hide them all again.
-    expect(toggleAll).toHaveTextContent('Hide Details');
-
-    fireEvent.click(toggleAll);
-    fireEvent.click(toggleAll);
-    expect(toggleAll).toHaveTextContent('Hide Details');
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-3')).toBeInTheDocument();
   });
 
   it('keeps a collapsed entry collapsed across a live poll', async () => {
@@ -932,34 +941,14 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('returns to Entries through the contest menu, with Leaderboard selected', async () => {
+  it('shows no Entries / Leaderboard / My entry tabs: the contest page is the leaderboard once live', async () => {
     primeMocks();
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
-    fireEvent.click(screen.getByTestId('contest-menu-entries'));
-
-    expect(await screen.findByTestId('contest-board')).toBeInTheDocument();
-  });
-
-  it('offers My entry in the contest menu once the viewer\'s team has an entry, and opens it', async () => {
-    primeMocks({ mySquadId: 'squad-1', myEntryIds: ['entry-1'] });
-
-    renderLeaderboard();
-
-    fireEvent.click(await screen.findByTestId('contest-menu-my-entry'));
-
-    expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
-  });
-
-  it('does not offer My entry when the viewer\'s team has no entry', async () => {
-    primeMocks();
-
-    renderLeaderboard();
-
-    await screen.findByTestId('contest-menu-leaderboard');
-    expect(screen.queryByTestId('contest-menu-my-entry')).not.toBeInTheDocument();
+    await screen.findByTestId('contest-leaderboard-entry-entry-1');
+    expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-menu-entries')).not.toBeInTheDocument();
   });
 
   it('finds an entry by its entry name or its team\'s name, and says so when nothing matches', async () => {
@@ -1042,7 +1031,6 @@ describe('ContestLeaderboardPage', () => {
 
     await screen.findByTestId('contest-leaderboard-entry-entry-1');
     // The viewer's team comes from the league context; the answer is only meaningful once it has.
-    await screen.findByTestId('contest-menu-entries');
     await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
     await act(async () => {
       await Promise.resolve();

@@ -99,7 +99,7 @@ describe('totalColumn', () => {
 });
 
 describe('ScoreboardGrid', () => {
-  it('sits in the shared section titled Standings, not repeating the Leaderboard tab, so pick\'em, bracket, survivor and squares boards share one frame', () => {
+  it('sits in the shared section titled Standings, so pick\'em, bracket, survivor and squares boards share one frame', () => {
     renderBoard([placeColumn('board')]);
 
     const section = screen.getByRole('region', { name: 'Standings' });
@@ -131,11 +131,11 @@ function renderFrame(props: Partial<Parameters<typeof LeaderboardFrame>[0]> = {}
 }
 
 describe('LeaderboardFrame', () => {
-  it('frames the board on the Leaderboard option with its notes under the title', () => {
+  it('frames the board under the contest\'s name, with no tabs, and its notes under the title', () => {
     renderFrame();
 
     expect(screen.getByTestId('contest-leaderboard-header-name')).toHaveTextContent('Masters Pool');
-    expect(screen.getByTestId('contest-menu-leaderboard')).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('Your best: T1');
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('The board');
   });

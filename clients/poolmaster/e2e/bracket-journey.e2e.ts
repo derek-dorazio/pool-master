@@ -339,8 +339,9 @@ test('act 3: a new member joins, fills in the bracket, sees a changed pick clear
     await expect(page.getByTestId('bracket-submit')).toBeEnabled();
     const submitted = await submitAndRead<{ status: string }>(page, 'bracket-submit', 'POST', `${gamePicksPath()}/submit`);
     expect(submitted.status).toBe('SUBMITTED');
-    await expect(page.getByTestId('bracket-submitted')).toBeVisible();
-    await expect(page.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
+    // Submitting returns to the contest's page, which lists the entry as the member's, submitted.
+    await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toHaveAttribute('data-mine', 'true');
+    await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveText('Submitted');
   });
 
   await test.step('the member logs out', async () => {

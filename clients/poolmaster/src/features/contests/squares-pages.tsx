@@ -3,7 +3,8 @@ import { useParams } from 'react-router';
 import { describeSquaresRules } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
 import { ContestPageFrame } from './contest-header';
-import { entryPageView } from './contest-page-view';
+import { EntryRenameSection } from './entry-rename-section';
+import { canRenameEntries } from './contest-status';
 import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { SquaresBoardView } from './squares-board-view';
@@ -34,11 +35,9 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
   return (
     <ContestPageFrame
       contest={contest}
-      current={entryPageView(contest, entryId)}
       entryName={entry?.name ?? ''}
       headerTestId="contest-entry-header"
       leagueCode={leagueCode}
-      picksRevealed={entryQuery.data?.picksRevealed ?? false}
       summary={(
         <span data-testid="contest-entry-summary">
           {[contest.name, squaresRules(boardQuery.data)].filter((part) => part !== null).join(' · ')}
@@ -53,6 +52,9 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
         myEntryIds={contest.myEntryIds ?? []}
         shownEntryId={entryId}
       />
+      {entry && (contest.myEntryIds ?? []).includes(entryId) && canRenameEntries(contest) ? (
+        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={entry.name} />
+      ) : null}
     </ContestPageFrame>
   );
 }

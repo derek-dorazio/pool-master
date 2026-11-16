@@ -41,14 +41,14 @@ describe('CurrentContestsCard', () => {
     expect(screen.getByTestId('league-home-all-contests')).toHaveAttribute('href', '/league/BIGDAWGS/contests');
   });
 
-  it('opens a live contest on its leaderboard, the whole row being the link', () => {
+  it('opens a live contest on its contest page, the whole row being the link', () => {
     drawCard();
 
-    expect(screen.getByTestId('league-home-contest-contest-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-live/leaderboard');
+    expect(screen.getByTestId('league-home-contest-contest-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-live');
     expect(screen.getByRole('link', { name: /Masters Tiers/ })).toBe(screen.getByTestId('league-home-contest-contest-live'));
   });
 
-  it('opens an open contest on its Entries page', () => {
+  it('opens an open contest on its contest page', () => {
     drawCard();
 
     expect(screen.getByTestId('league-home-contest-contest-open')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-open');
@@ -147,7 +147,7 @@ describe('LiveStandingsCard', () => {
     const card = within(screen.getByTestId('league-home-live-standings'));
     expect(await card.findByText('Bogey Men')).toBeInTheDocument();
     expect(card.getByRole('heading', { name: 'Masters Tiers · Top 5' })).toBeInTheDocument();
-    expect(card.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1/leaderboard');
+    expect(card.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
     expect(card.queryByRole('radiogroup')).not.toBeInTheDocument();
   });
 

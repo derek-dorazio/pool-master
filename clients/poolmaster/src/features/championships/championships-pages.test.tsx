@@ -91,7 +91,7 @@ function renderChampionships(path: string) {
               <Route element={<PointsRacePage />} path="race/:sportLeagueId" />
               <Route element={<CupSquadPointsPage />} path="race/:sportLeagueId/squads/:squadId" />
             </Route>
-            <Route element={<div data-testid="leaderboard" />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
+            <Route element={<div data-testid="leaderboard" />} path="/league/:leagueCode/contests/:contestId" />
             <Route element={<AllYearsPage />} path="/league/:leagueCode/history" />
           </Routes>
         </MemoryRouter>
@@ -387,7 +387,7 @@ describe('Championships › Championship', () => {
     expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { year: 2026 } }));
   });
 
-  it('opens a contest\'s final leaderboard from its row', async () => {
+  it('opens a final contest\'s page, which is its leaderboard, from its row', async () => {
     primeViewer();
 
     renderChampionships('/league/BIGDAWGS/championships/2026');
@@ -395,7 +395,7 @@ describe('Championships › Championship', () => {
     fireEvent.click(await screen.findByTestId('championship-contest-contest-1'));
 
     expect(await screen.findByTestId('leaderboard')).toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1/leaderboard');
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1');
   });
 
   it('narrows the contests to a matrix cell\'s when its count is tapped, with the squad\'s place and points, and back to all of them', async () => {
@@ -809,7 +809,7 @@ describe('Championships › Points race', () => {
     expect(screen.queryByTestId('cup-race-chart')).not.toBeInTheDocument();
   });
 
-  it('lists every contest with its weight and state, a final or live one opening its leaderboard', async () => {
+  it('lists every contest with its weight and state, each opening its contest page', async () => {
     primeViewer();
 
     renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
@@ -817,10 +817,10 @@ describe('Championships › Points race', () => {
     const bonus = await screen.findByTestId('cup-contest-contest-2');
     expect(bonus).toHaveTextContent('Won by Birdie Bandits');
     expect(bonus).toHaveTextContent('x1.5');
-    expect(bonus).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
+    expect(bonus).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
     expect(screen.getByTestId('cup-contest-contest-3')).toHaveTextContent('Not counted');
     expect(screen.getByTestId('cup-contest-contest-4')).toHaveTextContent('Live');
-    expect(screen.getByTestId('cup-contest-contest-4')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-4/leaderboard');
+    expect(screen.getByTestId('cup-contest-contest-4')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-4');
   });
 
   it('opens an open contest in the cup on its contest page, since it has no leaderboard before picks are revealed', async () => {
@@ -889,7 +889,7 @@ describe('Championships › Points race', () => {
 });
 
 describe('Championships › a squad\'s cup points', () => {
-  it('shows the squad\'s total and each counted contest with its place, weight and points, opening its leaderboard, from one read of the cup by season and sports league', async () => {
+  it('shows the squad\'s total and each counted contest with its place, weight and points, opening its contest page, from one read of the cup by season and sports league', async () => {
     primeViewer();
     getCupSquadPointsMock.mockResolvedValue(apiSuccess({
       squadPoints: {
@@ -915,7 +915,7 @@ describe('Championships › a squad\'s cup points', () => {
     }));
     expect(listCupsMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveTextContent('T4 of 12 · x1.5');
-    expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
+    expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2');
     expect(screen.getByTestId('cup-squad-contest-contest-5')).toHaveTextContent('No entry');
     // Each is the shared contest row: when it finished, and the squad's points on the right.
     expect(screen.getByTestId('cup-squad-contest-contest-2-date')).toHaveTextContent('Finished');

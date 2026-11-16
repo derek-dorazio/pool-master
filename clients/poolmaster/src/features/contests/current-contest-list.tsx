@@ -1,6 +1,6 @@
 import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
-import { buildContestLandingPath } from '@/features/leagues/league-routing';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { Eyebrow, SectionEmpty, SectionRows, formatCount, formatNumber, formatPlace, useDisplayPreferences } from '@/features/shared/ui';
 import { ContestRow } from './contest-row';
 import { CURRENT_CONTEST_GROUP_LABEL, groupCurrentContests } from './current-contests';
@@ -69,7 +69,7 @@ export function CurrentContestList({
                   note={describeMyEntry(leagueCode, contest, myEntries, entriesState, hasTeam).note}
                   startsAt={listedContestStartsAt(contest)}
                   testId={`${testIdPrefix}-${contest.id}`}
-                  to={buildContestLandingPath(leagueCode, contest)}
+                  to={buildLeagueContestPath(leagueCode, contest.id)}
                   trailing={bestPlace ? formatPlace(bestPlace) : null}
                 />
               );

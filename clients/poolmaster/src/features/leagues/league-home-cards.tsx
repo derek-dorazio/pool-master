@@ -5,6 +5,7 @@ import { CurrentContestList } from '@/features/contests/current-contest-list';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { EntryDetailsPeek } from '@/features/contests/entry-details-peek';
 import { MineMarker } from '@/features/contests/mine-marker';
+import { StartEntryButton } from '@/features/contests/start-entry-button';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   Countdown,
@@ -40,7 +41,7 @@ import {
 import { cupProgress, cupsOnShow, describeCupStanding } from '@/features/championships/cup-view';
 import { useSeasonCupsQuery } from '@/features/championships/use-cups-query';
 import {
-  buildLeagueContestLeaderboardPath,
+  buildLeagueContestPath,
   buildLeagueContestsPath,
   buildLeaguePointsRacePath,
   buildLeagueTeamPath,
@@ -84,9 +85,19 @@ export function UpNextCard({
       </p>
       <Countdown label="Entries close in" now={now} testId="league-home-countdown" tone="inverse" until={upNext.closesAt} />
       <div className="flex flex-wrap items-center gap-3">
-        <LinkButton data-testid="league-home-up-next-action" size="sm" to={next.to}>
-          {next.label}
-        </LinkButton>
+        {next.kind === 'start' ? (
+          <StartEntryButton
+            contestId={upNext.contest.id}
+            label={next.label}
+            leagueCode={leagueCode}
+            size="sm"
+            testId="league-home-up-next-action"
+          />
+        ) : (
+          <LinkButton data-testid="league-home-up-next-action" size="sm" to={next.to}>
+            {next.label}
+          </LinkButton>
+        )}
         <span className="text-sm text-on-inverse-muted">{next.note}</span>
       </div>
     </Tile>
@@ -182,7 +193,7 @@ export function LiveStandingsCard({
       footer={{
         label: 'Full leaderboard',
         testId: 'league-home-full-leaderboard',
-        to: buildLeagueContestLeaderboardPath(leagueCode, contest.id),
+        to: buildLeagueContestPath(leagueCode, contest.id),
       }}
       testId="league-home-live-standings"
       title={`${contest.name} · Top 5`}

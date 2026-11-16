@@ -1,5 +1,5 @@
 import type { CupContestRowDto } from '@/lib/api';
-import { buildContestLandingPath } from '@/features/leagues/league-routing';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { SectionEmpty, SectionRows, StatusBadge } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
 import { CUP_WEIGHT_LABELS, describeCupContest } from './cup-view';
@@ -27,7 +27,7 @@ export function CupContestList({ contests, leagueCode }: { contests: CupContestR
             startsAt={contest.firstEventStartsAt}
             status={<StatusBadge tone={state.tone}>{state.label}</StatusBadge>}
             testId={`cup-contest-${contest.contestId}`}
-            to={buildContestLandingPath(leagueCode, { id: contest.contestId, status: contest.status })}
+            to={buildLeagueContestPath(leagueCode, contest.contestId)}
             trailing={weight}
           />
         );

@@ -2,6 +2,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { type ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@poolmaster/shared/dto';
 import type { StatusBadgeProps } from '@/features/shared/ui';
+import { contestSchedule } from './use-contest-schedule';
 
 /**
  * How often a contest page re-reads what can change under it while the contest is live or
@@ -68,6 +69,11 @@ export function areContestEntriesOpen(
     return false;
   }
   return !startsAt || now.getTime() < new Date(startsAt).getTime();
+}
+
+/** Whether an entry's name can still change (#1739): until entries close, as the server allows. */
+export function canRenameEntries(contest: ContestDto, now: Date = new Date()) {
+  return areContestEntriesOpen(contest, contestSchedule(contest)?.startsAt, now);
 }
 
 export function shouldPollContestEntries(status: ContestStatus | null | undefined) {

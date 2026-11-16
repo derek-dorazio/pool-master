@@ -85,6 +85,7 @@ function renderPickEmEntry(entryId = 'entry-1') {
       <MemoryRouter initialEntries={[`/league/BIGDAWGS/contests/contest-1/entries/${entryId}`]}>
         <Routes>
           <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
+          <Route element={<div data-testid="contest-page" />} path="/league/:leagueCode/contests/:contestId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -114,6 +115,13 @@ describe('Pick\'em contest entry page', () => {
     ]) {
       mock.mockReset();
     }
+  });
+
+  it('offers the entry\'s name to change on its own pick screen while entries are open, the contest page having no Rename', async () => {
+    primeMocks();
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
   });
 
   it('opens on the week being picked, lists its games in kickoff order with the away team first, and never reads the roster selection room', async () => {
@@ -199,7 +207,7 @@ describe('Pick\'em contest entry page', () => {
     expect(await screen.findByTestId('pick-em-tiebreaker-saved')).toHaveTextContent('Saved tiebreaker: 44 total points.');
   });
 
-  it('submits a week with every game picked and its tiebreaker saved, then says the week counts', async () => {
+  it('submits a week with every game picked and its tiebreaker saved, then returns to the contest\'s page', async () => {
     const picked = week1Games({
       1: { pick: weekPick(NFL_TEAMS.packers) },
       2: { pick: weekPick(NFL_TEAMS.chiefs) },
@@ -215,13 +223,27 @@ describe('Pick\'em contest entry page', () => {
     expect(screen.queryByTestId('pick-em-submit-hint')).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('pick-em-submit'));
 
-    expect(await screen.findByTestId('pick-em-submitted')).toHaveTextContent('This week counts.');
+    expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
     expect(submitGamePicksMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'week-1' },
     }));
-    // The status beside the entry's name says it is submitted.
-    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
-    expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
+  });
+
+  it('stays on the week with the refusal shown when its submit is refused', async () => {
+    const picked = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    primeMocks({ week: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, canSubmit: true }) });
+    submitGamePicksMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Boom' } }, status: 500 });
+    renderPickEmEntry();
+
+    fireEvent.click(await screen.findByTestId('pick-em-submit'));
+
+    await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalled());
+    expect(await screen.findByTestId('pick-em-submit')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
   });
 
   it('ranks a confidence pool\'s picks, swapping the two values in one save when the value chosen is already on another pick', async () => {
