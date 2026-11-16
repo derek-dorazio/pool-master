@@ -119,11 +119,12 @@ describe('Bracket contest entry page', () => {
     }
   });
 
-  it('offers the bracket\'s name to change on its own pick screen while entries are open, the contest page having no Rename', async () => {
+  it('offers the bracket\'s name to change on its own pick screen while entries are open, above Submit, the contest page having no Rename', async () => {
     primeMocks();
     renderBracketEntry();
 
-    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
+    const rename = await screen.findByTestId('contest-entry-rename-input');
+    expect(rename.compareDocumentPosition(screen.getByTestId('bracket-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('lays a bracket contest\'s games out by round, each region\'s games under its name, with the final where the regions meet last, and never reads the roster selection room', async () => {

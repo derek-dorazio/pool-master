@@ -2,8 +2,8 @@ import { Navigate, useParams } from 'react-router';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { ErrorState, LoadingState, PendingPage } from '@/features/shared/ui';
 import { ContestEntryListPage } from './contest-entry-list-page';
+import { ContestPagePending } from './contest-page-pending';
 import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import { useContestQuery } from './use-contest-query';
 
@@ -22,15 +22,8 @@ export function ContestPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
   const contestQuery = useContestQuery(contestId);
 
-  if (contestQuery.isLoading) {
-    return <PendingPage testId="contest-page-pending"><LoadingState body="Loading contest..." /></PendingPage>;
-  }
-  if (contestQuery.isError || !contestQuery.data) {
-    return (
-      <PendingPage testId="contest-page-pending">
-        <ErrorState body="We couldn't load this contest." onRetry={() => void contestQuery.refetch()} />
-      </PendingPage>
-    );
+  if (!contestQuery.data) {
+    return <ContestPagePending isError={contestQuery.isError} onRetry={() => void contestQuery.refetch()} />;
   }
   return showsLeaderboard(contestQuery.data) ? <ContestLeaderboardPage /> : <ContestEntryListPage />;
 }

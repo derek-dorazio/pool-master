@@ -27,7 +27,6 @@ import {
   LinkButton,
   LoadingState,
   Notice,
-  PendingPage,
   SectionCard,
   Text,
   Tile,
@@ -37,6 +36,7 @@ import {
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
+import { ContestPagePending } from './contest-page-pending';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
@@ -188,7 +188,7 @@ function EntryRow({
  * once the contest is full a notice stands there instead.
  */
 export function ContestEntryListPage() {
-  const logger = getLogger().child({ feature: 'contest-board' });
+  const logger = getLogger().child({ feature: 'contest-page' });
   const { contestId = '' } = useParams<{ contestId: string }>();
   const { locale } = useDisplayPreferences();
 
@@ -204,21 +204,14 @@ export function ContestEntryListPage() {
   useEffect(() => {
     if (contestQuery.isError) {
       logger.warn(
-        { action: 'contestBoard.contest.failed', data: { contestId, leagueCode }, err: contestQuery.error },
-        'Contest Board failed to load contest data',
+        { action: 'contestPage.contest.failed', data: { contestId, leagueCode }, err: contestQuery.error },
+        'Contest page failed to load contest data',
       );
     }
   }, [contestId, contestQuery.error, contestQuery.isError, leagueCode, logger]);
 
-  if (contestQuery.isLoading) {
-    return <PendingPage testId="contest-detail-pending"><LoadingState body="Loading contest detail..." /></PendingPage>;
-  }
-  if (contestQuery.isError || !contestQuery.data) {
-    return (
-      <PendingPage testId="contest-detail-pending">
-        <ErrorState body="We couldn't load this contest." onRetry={() => void contestQuery.refetch()} />
-      </PendingPage>
-    );
+  if (!contestQuery.data) {
+    return <ContestPagePending isError={contestQuery.isError} onRetry={() => void contestQuery.refetch()} />;
   }
 
   const contest = contestQuery.data;
@@ -249,11 +242,11 @@ export function ContestEntryListPage() {
         />
       ) : null}
       contest={contest}
-      headerTestId="contest-detail-header"
+      headerTestId="contest-page-header"
       leagueCode={leagueCode}
       summary={(
         <>
-          <span className="inline-flex items-center" data-testid="contest-detail-summary">
+          <span className="inline-flex items-center" data-testid="contest-page-summary">
             {formatSelectionTypeName(contest.selectionType)}
             <HelpTip
               className="-my-2"
@@ -265,12 +258,12 @@ export function ContestEntryListPage() {
             </HelpTip>
           </span>
           {schedule ? (
-            <span data-testid="contest-detail-schedule">
-              <span data-testid="contest-detail-starts">
+            <span data-testid="contest-page-schedule">
+              <span data-testid="contest-page-starts">
                 Starts <DateDisplay tone="inherit" value={schedule.startsAt} />
               </span>
               {schedule.endsAt ? (
-                <span data-testid="contest-detail-ends">
+                <span data-testid="contest-page-ends">
                   {' · '}Ends <DateDisplay tone="inherit" value={schedule.endsAt} />
                 </span>
               ) : null}

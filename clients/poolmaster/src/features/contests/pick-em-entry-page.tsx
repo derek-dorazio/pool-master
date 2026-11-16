@@ -315,6 +315,10 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         />
       </SectionCard>
 
+      {/* The name above Submit, so Submit stays the page's last action. */}
+      {gamePicks.ownEntry && canRenameEntries(contest) ? (
+        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
+      ) : null}
       {gamePicks.ownEntry && (canChange || isSubmitted) ? (
         <EntrySubmitBar
           error={submitMutation.error ? errorMessage(submitMutation.error, 'We could not submit this week. Please try again.') : null}
@@ -344,9 +348,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             </Notice>
           ) : null}
         </EntrySubmitBar>
-      ) : null}
-      {gamePicks.ownEntry && canRenameEntries(contest) ? (
-        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
       ) : null}
     </ContestEntryFrame>
   );

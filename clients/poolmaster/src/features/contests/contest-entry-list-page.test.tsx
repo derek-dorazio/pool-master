@@ -280,8 +280,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-detail-pending-header')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.queryByTestId('contest-detail-pending-header-tabs')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('contest-page-pending-header')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByTestId('contest-page-pending-header-tabs')).not.toBeInTheDocument();
   });
 
   it('names the way to play in words in the fact line, with a (?) beside it linking to How to Play on that format at its sport', async () => {
@@ -289,8 +289,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-detail-summary')).toHaveTextContent('Tiered');
-    expect(screen.getByTestId('contest-detail-summary')).not.toHaveTextContent(/TIERED|STROKE_PLAY/);
+    expect(await screen.findByTestId('contest-page-summary')).toHaveTextContent('Tiered');
+    expect(screen.getByTestId('contest-page-summary')).not.toHaveTextContent(/TIERED|STROKE_PLAY/);
     fireEvent.click(screen.getByTestId('contest-how-to-play'));
     expect(await screen.findByTestId('contest-how-to-play-link')).toHaveAttribute('href', '/how-to-play?sport=golf&format=TIERED');
   });
@@ -324,8 +324,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     renderContestBoard();
 
     // A visitor with no saved zone sees US Eastern, named.
-    expect(await screen.findByTestId('contest-detail-starts')).toHaveTextContent('Starts Apr 9, 2026, 8:00 AM EDT');
-    expect(screen.getByTestId('contest-detail-ends')).toHaveTextContent('Ends Apr 12, 2026, 7:00 PM EDT');
+    expect(await screen.findByTestId('contest-page-starts')).toHaveTextContent('Starts Apr 9, 2026, 8:00 AM EDT');
+    expect(screen.getByTestId('contest-page-ends')).toHaveTextContent('Ends Apr 12, 2026, 7:00 PM EDT');
     expect(getEventMock).not.toHaveBeenCalled();
   });
 
@@ -334,7 +334,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent('Ends Apr 14, 2026, 2:00 PM EDT');
+    expect(await screen.findByTestId('contest-page-ends')).toHaveTextContent('Ends Apr 14, 2026, 2:00 PM EDT');
   });
 
   it('lists the viewer\'s entries first, marked Yours and highlighted, each with its status and ✎ to its pick screen', async () => {
@@ -565,7 +565,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     renderContestBoard();
 
     expect(await screen.findByText("We couldn't load this contest.")).toBeInTheDocument();
-    expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'contestBoard.contest.failed' }), expect.any(String));
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'contestPage.contest.failed' }), expect.any(String));
   });
 
   it('shows an entries error, not an empty list, when the entries cannot be read', async () => {

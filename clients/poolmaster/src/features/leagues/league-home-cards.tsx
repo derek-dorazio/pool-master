@@ -91,6 +91,7 @@ export function UpNextCard({
             label={next.label}
             leagueCode={leagueCode}
             size="sm"
+            surface="inverse"
             testId="league-home-up-next-action"
           />
         ) : (

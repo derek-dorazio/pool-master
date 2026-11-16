@@ -117,11 +117,12 @@ describe('Pick\'em contest entry page', () => {
     }
   });
 
-  it('offers the entry\'s name to change on its own pick screen while entries are open, the contest page having no Rename', async () => {
+  it('offers the entry\'s name to change on its own pick screen while entries are open, above Submit, the contest page having no Rename', async () => {
     primeMocks();
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
+    const rename = await screen.findByTestId('contest-entry-rename-input');
+    expect(rename.compareDocumentPosition(screen.getByTestId('pick-em-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('opens on the week being picked, lists its games in kickoff order with the away team first, and never reads the roster selection room', async () => {

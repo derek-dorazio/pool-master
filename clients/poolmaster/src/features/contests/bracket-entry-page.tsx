@@ -167,6 +167,10 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             <BracketBoard canPick={canPick} isBusy={saveMutation.isPending} onPick={pick} rounds={rounds} />
           </SectionCard>
 
+          {/* The name above Submit, so Submit stays the page's last action. */}
+          {gamePicks.ownEntry && canRenameEntries(contest) ? (
+            <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
+          ) : null}
           {canPick ? (
             <BracketSubmitPanel
               gamePicks={gamePicks}
@@ -196,9 +200,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               </Text>
             </SectionCard>
           )}
-          {gamePicks.ownEntry && canRenameEntries(contest) ? (
-            <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
-          ) : null}
         </>
       )}
     </ContestEntryFrame>
