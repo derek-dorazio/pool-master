@@ -83,7 +83,7 @@ const golfLeaderboard: ContestLeaderboardResponse = {
   participantType: null,
   scoringFamily: null,
   scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-  countingRule: { type: 'BEST_N', count: 1 },
+  countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
   participants: [cutGolfer],
   entries: [entry],
   asOf: null,

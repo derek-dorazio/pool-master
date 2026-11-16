@@ -195,7 +195,7 @@ function leaderboardResponse(entryTotalScore = -5) {
       sportEventId: 'event-1',
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N', count: 1 },
+      countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
       participants: [
         participant({
           id: 'sep-1',
@@ -664,7 +664,7 @@ describe('ContestLeaderboardPage', () => {
     primeMocks({
       leaderboard: {
         ...board,
-        countingRule: { type: 'BEST_N', count: 4 },
+        countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
         entries: board.entries.map((entry) => ({
           ...entry,
           countingPickLimit: 4,
@@ -683,12 +683,34 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).not.toHaveTextContent(/count ·|scored/);
   });
 
+  it('takes the rule\'s "of M" from the contest\'s full entry, not from the entries on the board, so short entries cannot shrink it', async () => {
+    const golfers = [
+      { id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 },
+      { id: 'sep-2', name: 'Rory McIlroy', eventScoreToPar: -5 },
+    ];
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 4, pickCount: 6 } } });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-counting-rule')).toHaveTextContent('Best 4 of 6 golfers count');
+  });
+
+  it('states no rule when the full entry\'s size is not known yet, rather than guess at it', async () => {
+    const golfers = [{ id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 }];
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 4, pickCount: null } } });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(screen.queryByTestId('contest-leaderboard-counting-rule')).not.toBeInTheDocument();
+  });
+
   it('strikes through no pick and states no rule when every pick counts', async () => {
     const golfers = [
       { id: 'sep-1', name: 'Scottie Scheffler', eventScoreToPar: -9 },
       { id: 'sep-2', name: 'Rory McIlroy', eventScoreToPar: null },
     ];
-    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 2 } } });
+    primeMocks({ leaderboard: { ...leaderboardWithGolfers(golfers), countingRule: { type: 'BEST_N', count: 2, pickCount: 2 } } });
 
     renderLeaderboard();
 
@@ -743,7 +765,7 @@ describe('ContestLeaderboardPage', () => {
         sportEventId: 'event-1',
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -767,7 +789,7 @@ describe('ContestLeaderboardPage', () => {
         sportEventId: 'event-1',
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-        countingRule: { type: 'BEST_N', count: 1 },
+        countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         participants: [],
         entries: [],
         asOf: null,

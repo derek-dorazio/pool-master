@@ -122,7 +122,7 @@ function responseFixture(
     participantType: null,
     scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-    countingRule: { type: 'BEST_N', count: 2 },
+    countingRule: { type: 'BEST_N', count: 2, pickCount: 6 },
     participants: [],
     entries: [],
     asOf: null,

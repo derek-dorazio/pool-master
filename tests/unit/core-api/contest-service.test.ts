@@ -1141,7 +1141,7 @@ describe('ContestService', () => {
       const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
       expect(result.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
-      expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
+      expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2, pickCount: null });
       expect(result.entries.map((entry) => [entry.entryId, entry.totalScore, entry.position])).toEqual([
         ['entry-2', -9, 1],
         ['entry-1', -7, 2],
@@ -2061,7 +2061,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
 
     const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
-    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 4 });
+    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 4, pickCount: null });
     expect(result.asOf).toEqual(settledAt.toISOString());
     expect(result.entries.map((entry) => [entry.entryId, entry.position, entry.totalScore])).toEqual([
       ['entry-2', 1, -9],
@@ -2080,7 +2080,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
 
     const { board: result } = await service.getLeaderboard('contest-1', 'user-1');
 
-    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2 });
+    expect(result.countingRule).toEqual({ type: 'BEST_N', count: 2, pickCount: null });
     expect(result.entries).toHaveLength(1);
     expect(result.entries[0]).toMatchObject({ totalScore: null, position: null });
   });

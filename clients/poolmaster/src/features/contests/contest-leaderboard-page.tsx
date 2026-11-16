@@ -374,10 +374,12 @@ export function ContestLeaderboardPage() {
     contest.status === ContestStatus.COMPLETED || hasContestEventStarted(sportEvent)
   ));
 
-  // #1740 — the counting rule shows once, in the header, rather than on every entry's bar.
-  const lineupSize = Math.max(0, ...leaderboardQuery.data.entries.map((entry) => entry.picks.length));
-  const countingRule = leaderboardQuery.data.countingRule.count < lineupSize
-    ? `Best ${String(leaderboardQuery.data.countingRule.count)} of ${String(lineupSize)} ${participantNoun.many} count`
+  // #1740 — the counting rule shows once, in the header, rather than on every entry's bar. M is
+  // what a full entry holds under the contest's rules, so a short entry cannot shrink it; where
+  // the server cannot know M yet, the header says nothing rather than guess.
+  const { count: countedPicks, pickCount } = leaderboardQuery.data.countingRule;
+  const countingRule = pickCount !== null && countedPicks < pickCount
+    ? `Best ${String(countedPicks)} of ${String(pickCount)} ${participantNoun.many} count`
     : null;
 
   const allEntryIds = view.entries.map((entry) => entry.entryId);
@@ -417,10 +419,10 @@ export function ContestLeaderboardPage() {
           {view.currentRoundLabel}
         </Chip>
       ) : null}
+      summary={countingRule ? <span data-testid="contest-leaderboard-counting-rule">{countingRule}</span> : undefined}
       // #246 — an entry's standing is frozen at settlement while each participant's own score
       // stays live, so a late correction can make the two disagree on this very page. Say so
       // rather than let it read as a bug.
-      summary={countingRule ? <span data-testid="contest-leaderboard-counting-rule">{countingRule}</span> : undefined}
       settledNote={`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; each pick's score shows current event data and can differ after a late score correction.`}
     >
       <ContestEventSwitcher

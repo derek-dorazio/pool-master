@@ -28295,11 +28295,21 @@
             "minimum": 1,
             "maximum": 9007199254740991,
             "description": "N: how many picks count toward each entry's total."
+          },
+          "pickCount": {
+            "description": "M: how many picks a full entry holds under the contest's rules, so a client can state \"best N of M\" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
           }
         },
         "required": [
           "type",
-          "count"
+          "count",
+          "pickCount"
         ],
         "additionalProperties": false,
         "description": "How an entry's picks combine into its total."
@@ -28383,11 +28393,21 @@
                 "minimum": 1,
                 "maximum": 9007199254740991,
                 "description": "N: how many picks count toward each entry's total."
+              },
+              "pickCount": {
+                "description": "M: how many picks a full entry holds under the contest's rules, so a client can state \"best N of M\" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 9007199254740991
               }
             },
             "required": [
               "type",
-              "count"
+              "count",
+              "pickCount"
             ],
             "additionalProperties": false,
             "description": "How an entry's picks combine into its total."

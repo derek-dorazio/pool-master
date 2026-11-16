@@ -12544,6 +12544,8 @@ export interface components {
             type: "BEST_N";
             /** @description N: how many picks count toward each entry's total. */
             count: number;
+            /** @description M: how many picks a full entry holds under the contest's rules, so a client can state "best N of M" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered. */
+            pickCount: number | null;
         };
         /** @description Member-facing contest leaderboard. Live, entry standings are computed from the events' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest's totals are the ones frozen at its settlement. */
         ContestLeaderboardResponse: {
@@ -12580,6 +12582,8 @@ export interface components {
                 type: "BEST_N";
                 /** @description N: how many picks count toward each entry's total. */
                 count: number;
+                /** @description M: how many picks a full entry holds under the contest's rules, so a client can state "best N of M" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered. */
+                pickCount: number | null;
             };
             /** @description The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId. */
             participants: {

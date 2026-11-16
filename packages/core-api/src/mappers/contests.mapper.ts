@@ -32,7 +32,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   participantScoreDetailFor,
-  type ContestCountingRule,
+  type ContestLeaderboardCountingRule,
   type ParticipantScore,
 } from '../modules/contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
@@ -134,7 +134,7 @@ export interface ContestLeaderboardModel {
   participantType: ParticipantType | null;
   scoringFamily: ScoringFamily | null;
   scoringDefinitionId: ParticipantScoringDefinitionId;
-  countingRule: ContestCountingRule;
+  countingRule: ContestLeaderboardCountingRule;
   /** The shown event's field rows, published as the event's own canonical DTO. */
   participants: SportEventParticipantView[];
   entries: ContestLeaderboardEntryRow[];
