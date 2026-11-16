@@ -24,6 +24,7 @@ import {
   ErrorState,
   ExpandableRow,
   HelpTip,
+  LinkButton,
   LoadingState,
   Notice,
   PendingPage,
@@ -294,13 +295,13 @@ export function ContestEntryListPage() {
           {viewer.isCommissioner ? (
             <>
               {' '}
-              <Link
-                className="font-medium text-primary underline"
+              <LinkButton
                 data-testid="contest-board-full-expand-link"
                 to={buildLeagueAdminContestPath(leagueCode, contest.id)}
+                variant="link"
               >
                 Expand contest
-              </Link>
+              </LinkButton>
             </>
           ) : null}
         </Notice>
