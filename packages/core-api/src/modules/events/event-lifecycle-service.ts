@@ -334,6 +334,8 @@ export class EventLifecycleService {
       await this.activateContestsPastCutoff(sportEvent, now);
       return;
     }
+    // A reopened contest goes live again through the same activation, which queues its "Contest is
+    // live" job a second time; the outbox's idempotency key (contest, event and member) sends nothing new.
     await this.reopenContestsBeforeStart(sportEvent, now);
   }
 
