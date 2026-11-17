@@ -18,6 +18,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ParticipantRepository,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
@@ -27,8 +28,9 @@ import type {
 import {
   findBudgetPricingProblem,
   eventSportDefinition,
+  FieldOrderBasis,
+  orderField,
   SportEventStatus,
-  TierSource,
   ValuationSource,
   type EventPricingConfig,
   type SportDefinition,
@@ -37,7 +39,7 @@ import {
   type SportEventParticipantValuation,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
-import { compareNullsLast, deriveGolfPrices } from '../golf/golf-seeding-algorithm';
+import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
 
 /** One field row's place in a tier. */
@@ -84,6 +86,8 @@ export interface SportEventTierServiceDeps {
   tiers: SportEventTierRepository;
   valuations: SportEventParticipantValuationRepository;
   field: SportEventParticipantRepository;
+  /** The field's names, the order's last tie-break (#1807). */
+  participants: Pick<ParticipantRepository, 'findByIds'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -184,7 +188,8 @@ export class SportEventTierService {
   }
 
   /**
-   * Sorts the active field by `source`, then fills the tiers in tier order. With a `tierSize`,
+   * Puts the active field in its one order (#1807, `orderField`: odds, then seed, then rank,
+   * decided for the whole field, then name), then fills the tiers in tier order. With a `tierSize`,
    * each tier takes that many and the last tier takes everyone left. With none, an event that
    * keeps its sport's default tier count gets the sport's designed layout (golf's six tiers of
    * ten, horse racing's three, three and the rest) while that layout reaches every tier; any
@@ -193,16 +198,14 @@ export class SportEventTierService {
    * left empty unless the field is smaller than the tier count. Recomputed from the current tiers and
    * field every run — nothing persisted to drift (plans/124 §4.5a).
    */
-  async autoAssignTiers(input: { sportEventId: string; source: TierSource; tierSize?: number }): Promise<SportEventTierGroup[]> {
+  async autoAssignTiers(input: { sportEventId: string; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const event = await this.requireEditableEvent(input.sportEventId);
     const tiers = await this.deps.tiers.findBySportEvent(input.sportEventId);
     if (tiers.length === 0) {
       this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return [];
     }
-    const active = (await this.deps.field.findBySportEvent(input.sportEventId)).filter((entry) => entry.isActive);
-    const ordered = [...active].sort((left, right) => compareForTiering(left, right, input.source));
-    const source = input.source === TierSource.RANKING ? ValuationSource.AUTO_RANKING : ValuationSource.AUTO_ODDS;
+    const { ordered, source } = await this.orderedActiveField(input.sportEventId);
     const layout = eventSportDefinition(event).defaultTierLayout;
     const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
     const tierSize = input.tierSize ?? (fitsLayout ? layout.tierSize : undefined);
@@ -220,7 +223,7 @@ export class SportEventTierService {
     this.deps.logger?.info(
       {
         sportEventId: input.sportEventId,
-        source: input.source,
+        source,
         tierSize: tierSize ?? null,
         spread: tierSize === undefined ? 'EVEN' : 'FIXED_SIZE',
         tierCount: tiers.length,
@@ -315,9 +318,9 @@ export class SportEventTierService {
   }
 
   /**
-   * Prices the active field on the budget curve (#93) with `pricingConfig`'s values, best seed
-   * first, then participants with no seed by odds, shortest first (#653), and
-   * records those values on the event, in one write. A separate, later action from seeding (plans/124
+   * Prices the active field on the budget curve (#93) with `pricingConfig`'s values, in the field's
+   * one order, the same auto-assigned tiers use (#1807), and records those values on the event, in
+   * one write. A separate, later action from seeding (plans/124
    * §4.7a), repeatable with other values until release. Tiers are untouched. 422
    * PRICING_CONFIG_INVALID when the values contradict each other.
    */
@@ -328,32 +331,49 @@ export class SportEventTierService {
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
-    const active = (await this.deps.field.findBySportEvent(sportEventId))
-      .filter((entry) => entry.isActive)
-      .sort((left, right) => left.id.localeCompare(right.id));
-    if (active.length === 0) {
+    const { ordered, source } = await this.orderedActiveField(sportEventId);
+    if (ordered.length === 0) {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
     }
-    const priced = deriveGolfPrices(
-      active.map((entry) => ({ participantId: entry.id, seedNumber: entry.seedNumber ?? null, oddsToWin: entry.oddsToWin ?? null, ranking: entry.ranking ?? null })),
-      pricingConfig,
-    );
+    const priced = deriveGolfPrices(ordered.map((entry) => ({ participantId: entry.id })), pricingConfig);
     await this.deps.valuations.assignEventPrices({
       sportEventId,
       pricingConfig,
       assignments: priced.map((entry) => ({
         sportEventParticipantId: entry.participantId,
         price: entry.price,
-        source: ValuationSource.AUTO_RANKING,
+        source,
       })),
     });
 
     this.deps.logger?.info(
-      { sportEventId, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: priced.length },
+      { sportEventId, source, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: priced.length },
       'Auto-assigned prices',
     );
     return this.getEffectiveValuationsForSportEvent(sportEventId);
+  }
+
+  /**
+   * The event's active field in its one order (#1807), the order tiers and prices are both filled
+   * in, and the source the value that decided it records.
+   */
+  private async orderedActiveField(sportEventId: string): Promise<{ ordered: SportEventParticipant[]; source: ValuationSource }> {
+    const active = (await this.deps.field.findBySportEvent(sportEventId))
+      .filter((entry) => entry.isActive)
+      // A full tie keeps this order, so the result never depends on how the rows were read.
+      .sort((left, right) => left.participantId.localeCompare(right.participantId));
+    const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))
+      .map((participant) => [participant.id, participant.name]));
+    const { ordered, decision } = orderField(active.map((entry) => ({
+      entry,
+      oddsToWin: entry.oddsToWin,
+      seedNumber: entry.seedNumber,
+      ranking: entry.ranking,
+      // Every field row names a participant (a foreign key), so a missing name only ties.
+      name: nameOf.get(entry.participantId) ?? '',
+    })));
+    return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis] };
   }
 
   /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */
@@ -372,13 +392,13 @@ export class SportEventTierService {
   }
 }
 
-/** Ranking or odds first as `source` says, the other second, then participant id for a stable order. */
-function compareForTiering(left: SportEventParticipant, right: SportEventParticipant, source: TierSource): number {
-  const byRanking = compareNullsLast(left.ranking, right.ranking);
-  const byOdds = compareNullsLast(left.oddsToWin, right.oddsToWin);
-  const [first, second] = source === TierSource.RANKING ? [byRanking, byOdds] : [byOdds, byRanking];
-  return first || second || left.participantId.localeCompare(right.participantId, undefined, { sensitivity: 'base' });
-}
+/** What an automatic tier or price records, by the value that decided the field's order (#1807). */
+const SOURCE_BY_BASIS: Record<FieldOrderBasis, ValuationSource> = {
+  [FieldOrderBasis.ODDS]: ValuationSource.AUTO_ODDS,
+  [FieldOrderBasis.SEED]: ValuationSource.AUTO_SEED,
+  [FieldOrderBasis.RANKING]: ValuationSource.AUTO_RANKING,
+  [FieldOrderBasis.NAME]: ValuationSource.AUTO_NAME,
+};
 
 /**
  * The tier index of the participant at `index` when `fieldSize` participants are spread evenly

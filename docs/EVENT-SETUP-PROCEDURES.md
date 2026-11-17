@@ -114,8 +114,9 @@ with the provider's again, as it does grid edits (#415).
 
 ## 5. Build tiers
 
-*Tiers* (`/manage/sports/golf/events/:id/tiers`), then *Auto-assign tiers from ranking*. A golf
-event starts with six tiers. Auto-assign fills them in ranking order, ten golfers at a time,
+*Tiers* (`/manage/sports/golf/events/:id/tiers`), then *Auto-assign tiers*. A golf
+event starts with six tiers. Auto-assign fills them in the field's order (odds, then seed, then
+rank, by the first value every golfer has; the dialog says which), ten golfers at a time,
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
 10/10/10/10/10/30. If you add or delete tiers first, auto-assign instead spreads the field
 evenly over them from the top, larger tiers first: the same 80 golfers on five tiers come out

@@ -10930,13 +10930,8 @@ export interface components {
             /** @description A tierKey from this request; required when a removed tier still has participants in it. */
             reassignOrphansTo?: string;
         };
-        /** @description Fills the event's tiers from the active field. */
+        /** @description Fills the event's tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name. */
         AutoAssignSportEventTiersRequest: {
-            /**
-             * @description What the active field is ordered by before the tiers are filled.
-             * @enum {string}
-             */
-            source: "ODDS" | "RANKING";
             /** @description Participants per tier; the last tier takes the rest. Omitted: an event with its sport's default tier count gets the sport's tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). */
             tierSize?: number;
         };
@@ -10992,11 +10987,11 @@ export interface components {
             /** @description Order within the tier. */
             tierOrderIndex: number | null;
             /** @enum {string|null} */
-            tierAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+            tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
             /** @description Price in a budget contest; null when unpriced. */
             price: number | null;
             /** @enum {string|null} */
-            priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+            priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
         };
         /** @description A field row's running standing. The score lives in the sport's extension. */
         SportEventParticipantStandingDto: {
@@ -11171,11 +11166,11 @@ export interface components {
                 /** @description Order within the tier. */
                 tierOrderIndex: number | null;
                 /** @enum {string|null} */
-                tierAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                 /** @description Price in a budget contest; null when unpriced. */
                 price: number | null;
                 /** @enum {string|null} */
-                priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
             } | null;
             /** @description Null until the participant has a scored round, or a race result. */
             standing: {
@@ -11381,11 +11376,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
@@ -11632,11 +11627,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
@@ -12759,11 +12754,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_RANKING" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
