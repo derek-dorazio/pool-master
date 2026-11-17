@@ -6,15 +6,17 @@
  *
  * - **Each week** the entry picks one team to win. It survives the week when that team wins, and
  *   when its game is cancelled (the entry did nothing wrong).
- * - **It is out** after a loss, a tie (no winner, as in pick'em), or a week that started with no
- *   submitted pick. Once out it plays no later week, whatever it picked there. A playoff round
- *   that starts with no pick puts the entry out too, as does running out of unused teams.
+ * - **It loses a life** with a loss, a tie (no winner, as in pick'em), or a week that started with
+ *   no submitted pick, and **it is out** when that was its last (#1754): a contest gives each
+ *   entry one life, or two. A week that costs a life the entry keeps playing with is LIFE_LOST.
+ *   Once out it plays no later week, whatever it picked there. A playoff round that starts with
+ *   no pick costs a life too, as does running out of unused teams.
  * - **Each team once:** a team picked in a week the entry submitted is used for the rest of the
  *   season, by its participant, since each week has its own field rows. When the contest lets
  *   teams be picked again once every team is used (#787), the season runs in cycles: each team
  *   once a cycle, and a cycle ends when the entry has used every team (`survivorTeamsUsedInCycle`).
  * - **The score** is the weeks survived: entries out in the same week tie, and entries still
- *   standing at the end share the win.
+ *   standing at the end with the same lives left share the win.
  */
 import { MatchSide, MatchStatus, SurvivorWeekOutcome, type SportEventMatch } from '@poolmaster/shared/domain';
 
@@ -50,6 +52,10 @@ export interface SurvivorRun {
   eliminatedAt: number | null;
   /** How many weeks the entry survived: its score. */
   weeksSurvived: number;
+  /** The weeks that cost the entry a life, the one that put it out included. */
+  livesLost: number;
+  /** The lives the entry has left: 0 once it is out. */
+  livesLeft: number;
   /** The participants the entry picked in the weeks it submitted, before it went out. */
   usedParticipantIds: Set<string>;
 }
@@ -69,12 +75,13 @@ export function survivorPickOutcome(
   return winner === pick.sportEventParticipantId ? SurvivorWeekOutcome.SURVIVED : SurvivorWeekOutcome.ELIMINATED;
 }
 
-/** The entry's season so far, its weeks in week order. */
-export function survivorRun(weeks: readonly SurvivorWeek[]): SurvivorRun {
+/** The entry's season so far, its weeks in week order, with the contest's `lives` (`survivorLivesOf`). */
+export function survivorRun(weeks: readonly SurvivorWeek[], lives: number): SurvivorRun {
   const results: SurvivorWeekResult[] = [];
   const usedParticipantIds = new Set<string>();
   let eliminatedAt: number | null = null;
   let weeksSurvived = 0;
+  let livesLost = 0;
   for (const week of weeks) {
     if (eliminatedAt !== null || week.cancelled) {
       results.push({ sportEventId: week.sportEventId, roundNumber: week.roundNumber, outcome: null });
@@ -92,10 +99,17 @@ export function survivorRun(weeks: readonly SurvivorWeek[]): SurvivorRun {
       outcome = survivorPickOutcome(week.games, week.pick);
     }
     if (outcome === SurvivorWeekOutcome.SURVIVED) weeksSurvived += 1;
-    if (outcome === SurvivorWeekOutcome.ELIMINATED) eliminatedAt = results.length;
+    if (outcome === SurvivorWeekOutcome.ELIMINATED) {
+      livesLost += 1;
+      if (livesLost < lives) {
+        outcome = SurvivorWeekOutcome.LIFE_LOST;
+      } else {
+        eliminatedAt = results.length;
+      }
+    }
     results.push({ sportEventId: week.sportEventId, roundNumber: week.roundNumber, outcome });
   }
-  return { weeks: results, eliminatedAt, weeksSurvived, usedParticipantIds };
+  return { weeks: results, eliminatedAt, weeksSurvived, livesLost, livesLeft: Math.max(lives - livesLost, 0), usedParticipantIds };
 }
 
 /**

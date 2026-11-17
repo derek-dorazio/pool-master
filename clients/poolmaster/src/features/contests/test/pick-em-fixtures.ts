@@ -243,7 +243,7 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
     entries: [
       {
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
-        alive: true, eliminatedInWeek: null, weeksSurvived: 1, position: 1, displayPosition: '1',
+        alive: true, eliminatedInWeek: null, weeksSurvived: 1, livesLeft: 1, livesLost: 0, position: 1, displayPosition: '1',
         weeks: [
           { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Chiefs' },
           { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null },
@@ -251,7 +251,7 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
       },
       {
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
-        alive: false, eliminatedInWeek: 2, weeksSurvived: 1, position: 2, displayPosition: '2',
+        alive: false, eliminatedInWeek: 2, weeksSurvived: 1, livesLeft: 0, livesLost: 1, position: 2, displayPosition: '2',
         weeks: [
           { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
           { sportEventId: 'week-2', roundNumber: 1, outcome: 'ELIMINATED', team: 'Bears' },
@@ -308,7 +308,7 @@ export function playoffSurvivorLeaderboardFixture(): SurvivorLeaderboardResponse
     entries: [
       {
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
-        alive: true, eliminatedInWeek: null, weeksSurvived: 1, position: 1, displayPosition: '1',
+        alive: true, eliminatedInWeek: null, weeksSurvived: 1, livesLeft: 1, livesLost: 0, position: 1, displayPosition: '1',
         weeks: [
           { sportEventId: 'playoffs', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
           { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },
@@ -316,7 +316,7 @@ export function playoffSurvivorLeaderboardFixture(): SurvivorLeaderboardResponse
       },
       {
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
-        alive: false, eliminatedInWeek: 1, weeksSurvived: 0, position: 2, displayPosition: '2',
+        alive: false, eliminatedInWeek: 1, weeksSurvived: 0, livesLeft: 0, livesLost: 1, position: 2, displayPosition: '2',
         weeks: [
           { sportEventId: 'playoffs', roundNumber: 1, outcome: 'ELIMINATED', team: 'Chiefs' },
           { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },

@@ -32,6 +32,16 @@ describe('contest-management dto schemas', () => {
     expect(ContestConfigurationRequestSchema.safeParse({ selectionType: 'PICK_EM', mode: 'SPREAD' }).success).toBe(false);
   });
 
+  it('accepts survivor rules of 1 or 2 lives, or none named, and refuses 0, 3 or a fraction', () => {
+    const lives = (value: unknown) => ContestConfigurationRequestSchema.safeParse({ selectionType: 'SURVIVOR', lives: value }).success;
+    expect(lives(1)).toBe(true);
+    expect(lives(2)).toBe(true);
+    expect(lives(undefined)).toBe(true);
+    expect(lives(0)).toBe(false);
+    expect(lives(3)).toBe(false);
+    expect(lives(1.5)).toBe(false);
+  });
+
   it('accepts a PREDICTION create with confidence pick\'em rules, keeping the mode and the spread option', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Week 1 confidence',

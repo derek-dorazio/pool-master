@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DetailsPeek, PeekCard } from "./details-peek";
@@ -128,6 +128,33 @@ describe("PeekCard", () => {
     fireEvent.click(button);
     expect(screen.getByTestId("score-callout")).toHaveTextContent("G2 · Jayson Tatum");
     expect(screen.getByTestId("score-callout")).toHaveTextContent("Points19");
+  });
+
+  it("makes a whole board cell the way in when its trigger is cell, opening its card on a tap", () => {
+    render(
+      <DetailsPeek icon="BH" label="Row 1, column 1: Big Hitters" testId="box" trigger="cell">
+        <PeekCard facts={[{ label: "Numbers", value: "Chiefs 7 · Eagles 3" }]} title="Big Hitters" />
+      </DetailsPeek>,
+    );
+    const button = screen.getByTestId("box");
+
+    expect(button).toHaveTextContent("BH");
+    expect(button).toHaveClass("size-full");
+    fireEvent.click(button);
+    expect(screen.getByTestId("box-callout")).toHaveTextContent("Big Hitters");
+    expect(screen.getByTestId("box-callout")).toHaveTextContent("Chiefs 7 · Eagles 3");
+  });
+
+  it("draws a card with no facts as its name alone, with no empty fact list or rule under it", () => {
+    render(
+      <DetailsPeek label="Row 1, column 1: Big Hitters" testId="box" trigger="cell">
+        <PeekCard facts={[]} testId="peek-card" title="Big Hitters" />
+      </DetailsPeek>,
+    );
+    fireEvent.click(screen.getByTestId("box"));
+
+    expect(screen.getByTestId("peek-card")).toHaveTextContent(/^Big Hitters$/);
+    expect(within(screen.getByTestId("peek-card")).queryByRole("term")).not.toBeInTheDocument();
   });
 
   it("shows the thing's name, its subtitle, each fact by its label, and the link on", () => {

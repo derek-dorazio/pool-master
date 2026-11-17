@@ -1,76 +1,77 @@
-import { Eyebrow, SectionCard, Text } from '@/features/shared/ui';
+import { Check } from 'lucide-react';
+import { Icon, SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Text } from '@/features/shared/ui';
 import { EntryDetailsPeek } from './entry-details-peek';
+import { MineMarker } from './mine-marker';
 import type { SquaresMomentRow } from './squares-board';
 
-/** A quarter's winning entry by name, with the (i) for its team once there is a winner to name. */
-function WinnerEntry({ entryName, leagueCode, leagueId, squadId, testId }: {
-  entryName: string | null;
-  leagueCode: string;
-  leagueId: string;
-  squadId: string | undefined;
-  testId: string;
-}) {
-  return (
-    <div className="flex items-center">
-      <Text variant="strong" weight="semibold">{entryName ?? 'No winner'}</Text>
-      {entryName !== null && squadId ? (
-        <EntryDetailsPeek className="-my-2" entryName={entryName} leagueCode={leagueCode} leagueId={leagueId} squadId={squadId} testId={testId} />
-      ) : null}
-    </div>
-  );
-}
-
 /**
- * A squares board's winners (#711), one box per quarter: its label, the winning entry with its
- * team's (i), and the score that won it, or "Not scored yet". Shown once the numbers are drawn.
+ * A squares board's winners (#711, a table since #1758), one row per scoring moment: its tag (Q1,
+ * Q2, Q3, Final), the score that won it, the winning box's numbers, and the entry holding that
+ * box with its team's (i), marked as the viewer's with Yours and a tick.
  */
 export function SquaresWinners({
   awayTeamName,
   homeTeamName,
-  isFinal,
   leagueCode,
   leagueId,
   moments,
+  myEntryIds,
   squadIdOf,
 }: {
-  awayTeamName: string | null | undefined;
-  homeTeamName: string | null | undefined;
-  isFinal: boolean;
+  awayTeamName: string;
+  homeTeamName: string;
   leagueCode: string;
   leagueId: string;
   moments: readonly SquaresMomentRow[];
+  myEntryIds: readonly string[];
   /** The team of a winning entry, for its (i). */
   squadIdOf: (contestEntryId: string | null) => string | undefined;
 }) {
   return (
-    <SectionCard headingLevel={3} padded testId="squares-winners" title={isFinal ? 'Winners' : 'Winners so far'}>
-      <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-        {moments.map((moment) => (
-          <li
-            className="rounded-lg border border-border px-3 py-2"
-            data-testid={`squares-winner-${moment.periodNumber}`}
-            key={moment.periodNumber}
-          >
-            <Eyebrow tone="muted">{moment.label}</Eyebrow>
-            {moment.winner ? (
-              <>
-                <WinnerEntry
-                  entryName={moment.winner.entryName}
-                  leagueCode={leagueCode}
-                  leagueId={leagueId}
-                  squadId={squadIdOf(moment.winner.contestEntryId)}
-                  testId={`squares-winner-${moment.periodNumber}-peek`}
-                />
-                <Text as="div" variant="meta">
-                  {`${awayTeamName ?? 'Away'} ${moment.winner.awayScore}, ${homeTeamName ?? 'Home'} ${moment.winner.homeScore}`}
-                </Text>
-              </>
-            ) : (
-              <Text as="div" variant="meta">Not scored yet</Text>
-            )}
-          </li>
-        ))}
-      </ul>
-    </SectionCard>
+    <SimpleTable data-testid="squares-winners" density="compact">
+      <caption className="sr-only">Winners</caption>
+      <TableHead>
+        <tr>
+          <TableHeaderCell><span className="sr-only">Period</span></TableHeaderCell>
+          <TableHeaderCell>Score</TableHeaderCell>
+          <TableHeaderCell>Box</TableHeaderCell>
+          <TableHeaderCell>Winner</TableHeaderCell>
+        </tr>
+      </TableHead>
+      <TableBody>
+        {moments.map(({ periodNumber, tag, winner }) => {
+          const isMine = winner !== null && winner.contestEntryId !== null && myEntryIds.includes(winner.contestEntryId);
+          const squadId = winner ? squadIdOf(winner.contestEntryId) : undefined;
+          return (
+            <TableRow data-mine={isMine || undefined} data-testid={`squares-winner-${periodNumber}`} isHighlighted={isMine} key={periodNumber}>
+              <TableHeaderCell scope="row"><Text variant="strong" weight="semibold">{tag}</Text></TableHeaderCell>
+              {winner ? (
+                <>
+                  <TableCell>{`${awayTeamName} ${winner.awayScore}, ${homeTeamName} ${winner.homeScore}`}</TableCell>
+                  <TableCell>{`${awayTeamName} ${winner.awayScore % 10} · ${homeTeamName} ${winner.homeScore % 10}`}</TableCell>
+                  <TableCell>
+                    <span className="flex flex-wrap items-center gap-1">
+                      <Text variant="strong" weight="semibold">{winner.entryName ?? 'No winner'}</Text>
+                      {winner.entryName !== null && squadId ? (
+                        <EntryDetailsPeek className="-my-2" entryName={winner.entryName} leagueCode={leagueCode} leagueId={leagueId} squadId={squadId} testId={`squares-winner-${periodNumber}-peek`} />
+                      ) : null}
+                      {isMine ? (
+                        <>
+                          <MineMarker />
+                          <Icon data-testid={`squares-winner-${periodNumber}-won`} icon={Check} size={16} tone="done" />
+                          <span className="sr-only">Won</span>
+                        </>
+                      ) : null}
+                    </span>
+                  </TableCell>
+                </>
+              ) : (
+                <TableCell colSpan={3}><Text variant="meta">Not scored yet</Text></TableCell>
+              )}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </SimpleTable>
   );
 }

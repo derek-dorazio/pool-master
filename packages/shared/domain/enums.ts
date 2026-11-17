@@ -297,11 +297,13 @@ export type PredictedResult = (typeof PredictedResult)[keyof typeof PredictedRes
 
 /**
  * How a survivor entry's week went (#719). SURVIVED: its team won, or its game was cancelled.
- * ELIMINATED: its team lost or tied, or the week started with no submitted pick. PENDING: its
- * game is still to be decided.
+ * ELIMINATED: its team lost or tied, or the week started with no submitted pick, and that cost
+ * the entry its last life. LIFE_LOST: the same, in a contest of two lives (#1754), costing a life
+ * the entry stays in with. PENDING: its game is still to be decided.
  */
 export const SurvivorWeekOutcome = {
   SURVIVED: 'SURVIVED',
+  LIFE_LOST: 'LIFE_LOST',
   ELIMINATED: 'ELIMINATED',
   PENDING: 'PENDING',
 } as const;

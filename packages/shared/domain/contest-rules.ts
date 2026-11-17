@@ -23,6 +23,7 @@ import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from '
  * - **Survivor:** a prediction contest (#719). Each week the entry picks one team to win, never one
  *   it picked in an earlier week; a loss, a tie or a week left unsubmitted puts it out. With
  *   `reuseTeamsOnceAllUsed` (#787), an entry that has used every team starts again with all of them.
+ *   With `lives` 2 (#1754) the first such week costs a life and the entry stays in; the second puts it out.
  * - **Squares:** a squares contest on one game (#711). The entry claims up to `maxSquaresPerEntry`
  *   boxes of a 10x10 grid; nothing is picked or scored by a definition.
  *
@@ -80,12 +81,19 @@ export const BracketContestRulesSchema = z.object({
 }).describe('Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round\'s first game.');
 export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 
+/** A survivor entry's lives (#1754): one by default, two at most, so an entry can lose once and stay in. */
+export const SURVIVOR_LIVES_DEFAULT = 1;
+export const SURVIVOR_LIVES_MAX = 2;
+
 export const SurvivorContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.SURVIVOR),
+  lives: z.number().int().min(1).max(SURVIVOR_LIVES_MAX).optional()
+    .describe('How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.'),
   reuseTeamsOnceAllUsed: z.boolean().optional()
     .describe('Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest\'s weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.'),
-}).describe('Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
+}).describe('Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win.');
 export type SurvivorContestRules = z.infer<typeof SurvivorContestRulesSchema>;
+
 
 /** The most boxes one squares entry may hold: the whole grid. */
 export const SQUARES_GRID_SIZE = 10;
@@ -149,6 +157,14 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   SurvivorContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
+
+/**
+ * A contest's survivor lives from its rules (#1754): 1 when they name none, as every contest
+ * before lives did, and for rules of any other selection type.
+ */
+export function survivorLivesOf(rules: ContestSelectionConfig | null | undefined): number {
+  return rules?.selectionType === SelectionType.SURVIVOR ? rules.lives ?? SURVIVOR_LIVES_DEFAULT : SURVIVOR_LIVES_DEFAULT;
+}
 
 const maxEntriesPerSquadSchema = z.number().int().min(1).nullable().optional()
   .describe('Maximum entries a Squad may create. Null means unlimited.');

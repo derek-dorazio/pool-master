@@ -12,6 +12,7 @@ import {
   SelectionType,
   SportEventStatus,
   SurvivorWeekOutcome,
+  survivorLivesOf,
   matchPeriodsOf,
   hasEverySquaresScoringMoment,
   squaresScoringMoments,
@@ -107,6 +108,11 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
  * The reads a settlement fan-out shares across its contests (#1199): the events, their matches
  * and fields, each read once however many contests are on the event.
  */
+/** A survivor week whose game is decided for the entry: survived, a life lost (#1754), or out. */
+function isDecidedSurvivorWeek(outcome: SurvivorWeekOutcome | null): boolean {
+  return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.LIFE_LOST || outcome === SurvivorWeekOutcome.ELIMINATED;
+}
+
 type SettlementReads = Omit<ContestSettlementDeps, 'sportEvents'> & {
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
 };
@@ -488,8 +494,8 @@ export class ContestSettlementService {
    * event is a week per round (#785), so its standing is the rounds the entry survived in it, most
    * first. Entries out before the event have no standing for it, and a cancelled week counts for nothing (#743). A
    * week settles once. When the contest's last week settles, the contest standings are ranked from
-   * the season's run, as the live board ranks it (entries still in first, then weeks survived,
-   * entries out in the same week sharing a place), and the contest is COMPLETED.
+   * the season's run, as the live board ranks it (entries still in first, then lives left (#1754),
+   * then weeks survived, entries out in the same week sharing a place), and the contest is COMPLETED.
    */
   private async settleSurvivorWeek(
     reads: SettlementReads,
@@ -500,16 +506,16 @@ export class ContestSettlementService {
     weekSettled: boolean,
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const sportEventId = sportEvent.id;
+    const lives = survivorLivesOf((await reads.configurations.findByContest(contest.id))?.configJson);
     if (sportEvent.status !== SportEventStatus.CANCELLED && !weekSettled) {
-      const season = await loadSurvivorSeason(reads, contest, completedAt);
+      const season = await loadSurvivorSeason(reads, contest, completedAt, lives);
       // A playoff event is several weeks, one per round (#785): its standing counts the rounds survived in it.
       const weekIndexes = season.weeks.flatMap((week, index) => (week.event.id === sportEventId ? [index] : []));
       const decided = season.entries.flatMap(({ entry, run }) => {
         const outcomes = weekIndexes.map((index) => run.weeks[index]?.outcome ?? null);
         const survived = outcomes.filter((outcome) => outcome === SurvivorWeekOutcome.SURVIVED).length;
-        return outcomes.some((outcome) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED)
-          ? [{ entry, survived, decidedCount: outcomes.filter((outcome) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length }]
-          : [];
+        const decidedCount = outcomes.filter(isDecidedSurvivorWeek).length;
+        return decidedCount > 0 ? [{ entry, survived, decidedCount }] : [];
       });
       const placeOf = (survived: number) => {
         const position = 1 + decided.filter((other) => other.survived > survived).length;
@@ -536,14 +542,14 @@ export class ContestSettlementService {
     }
     // Ranked from the season's run, as the live board is, not from the weekly snapshots: a week
     // settled before an earlier week's result was in froze an entry the run later puts out.
-    const season = await loadSurvivorSeason(reads, contest, completedAt);
+    const season = await loadSurvivorSeason(reads, contest, completedAt, lives);
     const playedWeeks = season.weeks.filter((week) => !week.cancelled).length;
     const standingsUpserted = await this.writeContestTotals(contest, season.entries.map(({ entry, run, position, displayPosition }) => ({
       entryId: entry.id,
       position,
       displayPosition,
       score: run.weeksSurvived,
-      scoredPickCount: run.weeks.filter(({ outcome }) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length,
+      scoredPickCount: run.weeks.filter(({ outcome }) => isDecidedSurvivorWeek(outcome)).length,
     })), playedWeeks, completedAt, completedAt);
     const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a survivor contest\'s season after its last week');

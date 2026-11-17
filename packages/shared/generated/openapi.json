@@ -10226,6 +10226,12 @@
                   "SURVIVOR"
                 ]
               },
+              "lives": {
+                "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2
+              },
               "reuseTeamsOnceAllUsed": {
                 "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                 "type": "boolean"
@@ -10415,7 +10421,7 @@
               "selectionType"
             ],
             "additionalProperties": false,
-            "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+            "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
           }
         ]
       },
@@ -10995,6 +11001,12 @@
                       "SURVIVOR"
                     ]
                   },
+                  "lives": {
+                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
                   "reuseTeamsOnceAllUsed": {
                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                     "type": "boolean"
@@ -11023,7 +11035,7 @@
                   "contestId"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
           },
@@ -12442,6 +12454,12 @@
                       "SURVIVOR"
                     ]
                   },
+                  "lives": {
+                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
                   "reuseTeamsOnceAllUsed": {
                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                     "type": "boolean"
@@ -12631,7 +12649,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
           }
@@ -13078,6 +13096,12 @@
                           "SURVIVOR"
                         ]
                       },
+                      "lives": {
+                        "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2
+                      },
                       "reuseTeamsOnceAllUsed": {
                         "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                         "type": "boolean"
@@ -13106,7 +13130,7 @@
                       "contestId"
                     ],
                     "additionalProperties": false,
-                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                   }
                 ]
               },
@@ -14578,6 +14602,12 @@
                             "SURVIVOR"
                           ]
                         },
+                        "lives": {
+                          "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2
+                        },
                         "reuseTeamsOnceAllUsed": {
                           "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                           "type": "boolean"
@@ -14767,7 +14797,7 @@
                         "selectionType"
                       ],
                       "additionalProperties": false,
-                      "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                      "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                     }
                   ]
                 }
@@ -16091,6 +16121,12 @@
                       "SURVIVOR"
                     ]
                   },
+                  "lives": {
+                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
                   "reuseTeamsOnceAllUsed": {
                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                     "type": "boolean"
@@ -16280,7 +16316,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
           }
@@ -17654,6 +17690,12 @@
                           "SURVIVOR"
                         ]
                       },
+                      "lives": {
+                        "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2
+                      },
                       "reuseTeamsOnceAllUsed": {
                         "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                         "type": "boolean"
@@ -17843,7 +17885,7 @@
                       "selectionType"
                     ],
                     "additionalProperties": false,
-                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                   }
                 ]
               }
@@ -26828,6 +26870,12 @@
                       "SURVIVOR"
                     ]
                   },
+                  "lives": {
+                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
                   "reuseTeamsOnceAllUsed": {
                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                     "type": "boolean"
@@ -27017,7 +27065,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
           },
@@ -31470,11 +31518,23 @@
                   "maximum": 9007199254740991,
                   "description": "The weeks the entry survived: its score."
                 },
+                "livesLeft": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2,
+                  "description": "The lives the entry has left: the contest's lives (1 or 2) less the weeks it lost. 0 once it is out."
+                },
+                "livesLost": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "The weeks that cost the entry a life, the one that put it out included."
+                },
                 "position": {
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "The entry's place: entries still in first, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end."
+                  "description": "The entry's place: entries still in first, then by lives left, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end with the same lives left."
                 },
                 "displayPosition": {
                   "type": "string",
@@ -31496,13 +31556,14 @@
                         "description": "The round of the event the week is, as on the contest's weeks."
                       },
                       "outcome": {
-                        "description": "SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.",
+                        "description": "SURVIVED when the picked team won or its game was cancelled. After a loss, a tie or a week not submitted by its first kickoff: LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last. PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.",
                         "type": [
                           "string",
                           "null"
                         ],
                         "enum": [
                           "SURVIVED",
+                          "LIFE_LOST",
                           "ELIMINATED",
                           "PENDING",
                           null
@@ -31537,6 +31598,8 @@
                 "alive",
                 "eliminatedInWeek",
                 "weeksSurvived",
+                "livesLeft",
+                "livesLost",
                 "position",
                 "displayPosition",
                 "weeks"
@@ -32891,6 +32954,12 @@
                       "SURVIVOR"
                     ]
                   },
+                  "lives": {
+                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
                   "reuseTeamsOnceAllUsed": {
                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                     "type": "boolean"
@@ -32900,7 +32969,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
               }
             ]
           },
@@ -51844,6 +51913,12 @@
                           "SURVIVOR"
                         ]
                       },
+                      "lives": {
+                        "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2
+                      },
                       "reuseTeamsOnceAllUsed": {
                         "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                         "type": "boolean"
@@ -52033,7 +52108,7 @@
                       "selectionType"
                     ],
                     "additionalProperties": false,
-                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                   }
                 ]
               }
@@ -53600,6 +53675,12 @@
                                 "SURVIVOR"
                               ]
                             },
+                            "lives": {
+                              "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 2
+                            },
                             "reuseTeamsOnceAllUsed": {
                               "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                               "type": "boolean"
@@ -53789,7 +53870,7 @@
                             "selectionType"
                           ],
                           "additionalProperties": false,
-                          "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                          "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                         }
                       ]
                     }
@@ -55374,6 +55455,12 @@
                                     "SURVIVOR"
                                   ]
                                 },
+                                "lives": {
+                                  "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 2
+                                },
                                 "reuseTeamsOnceAllUsed": {
                                   "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                                   "type": "boolean"
@@ -55563,7 +55650,7 @@
                                 "selectionType"
                               ],
                               "additionalProperties": false,
-                              "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                              "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                             }
                           ]
                         }
@@ -57185,6 +57272,12 @@
                                       "SURVIVOR"
                                     ]
                                   },
+                                  "lives": {
+                                    "description": "How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.",
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2
+                                  },
                                   "reuseTeamsOnceAllUsed": {
                                     "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.",
                                     "type": "boolean"
@@ -57374,7 +57467,7 @@
                                   "selectionType"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted costs a life, and the entry is out when its last life is gone; the last entries standing win."
                               }
                             ]
                           }

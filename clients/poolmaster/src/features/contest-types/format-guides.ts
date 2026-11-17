@@ -60,7 +60,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     steps: [
       'Each round, pick one team to win.',
       'You can’t pick the same team twice.',
-      'A loss knocks you out, and the last entry standing wins.',
+      'A loss knocks you out, unless your pool gives you a second life. The last entry standing wins.',
     ],
   },
   SQUARES: {

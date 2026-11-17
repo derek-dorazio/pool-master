@@ -101,7 +101,10 @@ Two readings of this chain have both been held at once, so it is worth stating p
   walkover or default, #825) has no real final score, so its winner covers.
 - **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
   a season (by participant, not field row), out after a loss, a tie or a week not submitted by
-  its first kickoff, and out for good. A pick on a cancelled game survives, and since it locks only at
+  its first kickoff, and out for good. A contest may give each entry two **lives** (`lives`,
+  #1754; 1 by default, 2 at most): then the first such week costs a life (`LIFE_LOST`, shown red
+  while the entry stays "In · 1 life left") and the second puts it out; entries still in rank by
+  lives left before weeks survived. A pick on a cancelled game survives, and since it locks only at
   its game's kickoff, it can still be swapped to a later game that week. On a playoff bracket (#785)
   each round is a week: the event is submitted once with its first round's pick, each later
   round takes one pick before its first game or the entry is out, and running out of unused teams

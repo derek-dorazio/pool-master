@@ -4596,6 +4596,10 @@ export type ContestConfigurationRequest = {
 } | {
     selectionType: 'SURVIVOR';
     /**
+     * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+     */
+    lives?: number;
+    /**
      * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
      */
     reuseTeamsOnceAllUsed?: boolean;
@@ -4945,6 +4949,10 @@ export type ContestManagementDetailDto = {
         maxEntriesPerSquad?: number | null;
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+         */
+        lives?: number;
         /**
          * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
@@ -5438,6 +5446,10 @@ export type ContestConfigTemplateDto = {
     } | {
         selectionType: 'SURVIVOR';
         /**
+         * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+         */
+        lives?: number;
+        /**
          * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
@@ -5705,6 +5717,10 @@ export type ContestManagementResponse = {
             maxEntriesPerSquad?: number | null;
         } | {
             selectionType: 'SURVIVOR';
+            /**
+             * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+             */
+            lives?: number;
             /**
              * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
@@ -6222,6 +6238,10 @@ export type ContestConfigTemplateListResponse = {
         } | {
             selectionType: 'SURVIVOR';
             /**
+             * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+             */
+            lives?: number;
+            /**
              * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
             reuseTeamsOnceAllUsed?: boolean;
@@ -6706,6 +6726,10 @@ export type UpdateContestConfigTemplateRequest = {
         };
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+         */
+        lives?: number;
         /**
          * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
@@ -7226,6 +7250,10 @@ export type ContestConfigTemplateResponse = {
             };
         } | {
             selectionType: 'SURVIVOR';
+            /**
+             * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+             */
+            lives?: number;
             /**
              * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
@@ -11355,6 +11383,10 @@ export type CreateContestRequest = {
     } | {
         selectionType: 'SURVIVOR';
         /**
+         * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+         */
+        lives?: number;
+        /**
          * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
@@ -13358,7 +13390,15 @@ export type SurvivorLeaderboardResponse = {
          */
         weeksSurvived: number;
         /**
-         * The entry's place: entries still in first, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end.
+         * The lives the entry has left: the contest's lives (1 or 2) less the weeks it lost. 0 once it is out.
+         */
+        livesLeft: number;
+        /**
+         * The weeks that cost the entry a life, the one that put it out included.
+         */
+        livesLost: number;
+        /**
+         * The entry's place: entries still in first, then by lives left, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end with the same lives left.
          */
         position: number;
         /**
@@ -13375,9 +13415,9 @@ export type SurvivorLeaderboardResponse = {
              */
             roundNumber: number;
             /**
-             * SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.
+             * SURVIVED when the picked team won or its game was cancelled. After a loss, a tie or a week not submitted by its first kickoff: LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last. PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.
              */
-            outcome: 'SURVIVED' | 'ELIMINATED' | 'PENDING' | null;
+            outcome: 'SURVIVED' | 'LIFE_LOST' | 'ELIMINATED' | 'PENDING' | null;
             /**
              * The team the entry picked, once its game has kicked off. Null before then, and with no pick.
              */
@@ -13925,6 +13965,10 @@ export type GamePickPreviewRequest = {
         startsAtRound: number;
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+         */
+        lives?: number;
         /**
          * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
@@ -22103,6 +22147,10 @@ export type EventPageOfferDto = {
         } | {
             selectionType: 'SURVIVOR';
             /**
+             * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+             */
+            lives?: number;
+            /**
              * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
             reuseTeamsOnceAllUsed?: boolean;
@@ -22708,6 +22756,10 @@ export type EventPageDto = {
                 };
             } | {
                 selectionType: 'SURVIVOR';
+                /**
+                 * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+                 */
+                lives?: number;
                 /**
                  * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
                  */
@@ -23319,6 +23371,10 @@ export type EventPageResponse = {
                     };
                 } | {
                     selectionType: 'SURVIVOR';
+                    /**
+                     * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+                     */
+                    lives?: number;
                     /**
                      * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
                      */
@@ -23945,6 +24001,10 @@ export type EventPageListResponse = {
                     };
                 } | {
                     selectionType: 'SURVIVOR';
+                    /**
+                     * How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1.
+                     */
+                    lives?: number;
                     /**
                      * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
                      */

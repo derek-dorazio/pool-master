@@ -7,15 +7,15 @@ const meta = {
   args: {
     awayTeamName: 'Chiefs',
     homeTeamName: 'Eagles',
-    isFinal: false,
     leagueCode: 'STORY',
     leagueId: 'league-1',
+    myEntryIds: ['e1'],
     squadIdOf: () => undefined,
     moments: [
-      { periodNumber: 1, label: 'Q1', winner: { periodNumber: 1, awayScore: 7, homeScore: 3, rowIndex: 7, columnIndex: 3, contestEntryId: 'e1', entryName: 'Birdie Bandits 1' } },
-      { periodNumber: 2, label: 'Half', winner: { periodNumber: 2, awayScore: 14, homeScore: 10, rowIndex: 4, columnIndex: 0, contestEntryId: null, entryName: null } },
-      { periodNumber: 3, label: 'Q3', winner: null },
-      { periodNumber: 4, label: 'Final', winner: null },
+      { periodNumber: 1, tag: 'Q1', winner: { periodNumber: 1, awayScore: 7, homeScore: 3, rowIndex: 7, columnIndex: 3, contestEntryId: 'e1', entryName: 'Birdie Bandits 1' } },
+      { periodNumber: 2, tag: 'Q2', winner: { periodNumber: 2, awayScore: 14, homeScore: 10, rowIndex: 4, columnIndex: 0, contestEntryId: null, entryName: null } },
+      { periodNumber: 3, tag: 'Q3', winner: null },
+      { periodNumber: 4, tag: 'Final', winner: null },
     ],
   },
 } satisfies Meta<typeof SquaresWinners>;
@@ -23,5 +23,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Mid-game: two quarters scored (one box unclaimed, "No winner"), two still to play. */
+/** Mid-game: Q1 won by the viewer (Yours and a tick), Q2's box unclaimed ("No winner"), two still to play. */
 export const SoFar: Story = {};
