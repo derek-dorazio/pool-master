@@ -115,6 +115,21 @@ describe("DetailsPeek", () => {
 });
 
 describe("PeekCard", () => {
+  it("makes a value itself the way in when its trigger is text, opening its card on a tap", () => {
+    render(
+      <DetailsPeek icon="22" label="G2 stats for Jayson Tatum" testId="score" trigger="text">
+        <PeekCard facts={[{ label: "Points", value: "19" }]} title="G2 · Jayson Tatum" />
+      </DetailsPeek>,
+    );
+    const button = screen.getByTestId("score");
+
+    expect(button).toHaveTextContent("22");
+    expect(button).not.toHaveClass("size-9");
+    fireEvent.click(button);
+    expect(screen.getByTestId("score-callout")).toHaveTextContent("G2 · Jayson Tatum");
+    expect(screen.getByTestId("score-callout")).toHaveTextContent("Points19");
+  });
+
   it("shows the thing's name, its subtitle, each fact by its label, and the link on", () => {
     drawPeek();
     fireEvent.click(screen.getByRole("button", { name: "About Incubus 1" }));

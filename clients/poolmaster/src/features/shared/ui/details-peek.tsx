@@ -20,6 +20,7 @@ export function DetailsPeek({
   label,
   onHoverStart,
   testId,
+  trigger = "icon",
 }: {
   /** The peek card, usually a `PeekCard`, or a component that reads its data and draws one. */
   children: ReactNode;
@@ -30,6 +31,11 @@ export function DetailsPeek({
   label: string;
   onHoverStart?: () => void;
   testId: string;
+  /**
+   * `icon` is the (i) after a thing's name; `text` makes a value itself the way in, dotted
+   * underneath, such as a game's score on a stat pool leaderboard opening that game's stats.
+   */
+  trigger?: "icon" | "text";
 }) {
   return (
     <InfoPopover
@@ -40,6 +46,7 @@ export function DetailsPeek({
       onHoverStart={onHoverStart}
       padding="none"
       testId={testId}
+      trigger={trigger}
     >
       {children}
     </InfoPopover>

@@ -288,7 +288,9 @@ navy tooltip of one to three plain sentences and at most one link.
 - **Use when:** facts about one thing in a list.
 - **Props that matter:** `label`; `onHoverStart` to start a read as the mouse arrives. It opens
   after a short hover delay, so scanning a list does not flash every row, and mounts its card
-  only when it opens. `PeekCard` takes `title`, `subtitle`, `facts` and one `link`.
+  only when it opens. `trigger="text"` makes a value itself the way in instead of the (i),
+  dotted underneath, such as a game's score opening that game's stats; `icon` is then the
+  value. `PeekCard` takes `title`, `subtitle`, `facts` and one `link`.
   `EntryDetailsPeek` in `features/contests` is the product peek for an entry.
 - **Story:** [details-peek.stories.tsx](./details-peek.stories.tsx)
 

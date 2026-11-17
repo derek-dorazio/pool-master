@@ -8,12 +8,15 @@ import {
   Chip,
   EmptyState,
   ErrorState,
+  DetailsPeek,
   ExpandableRow,
-  FactList,
   Input,
+  PeekCard,
   LoadingState,
   PendingPage,
   Pager,
+  Switch,
+  Text,
   Tile,
   cn,
   formatDateTimeDisplay,
@@ -130,58 +133,64 @@ const PINNED_CELL_SURFACE =
   'bg-background group-hover/pick:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]';
 
 /**
- * One participant under an entry. Where the family breaks a score into parts (a stat pool
- * player's games), the row is an `ExpandableRow` that opens them beneath it.
+ * One participant under an entry. Where the family's cells are made of stats (a stat pool
+ * player's games), the entry's Stats switch adds a line of them under the name (#1747), and each
+ * game's score opens that game's stats in a popover.
  */
-function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; gridTemplateColumns: string; pick: LeaderboardPickRow }) {
-  const { breakdown } = pick;
+function PickRow({
+  entryId,
+  gridTemplateColumns,
+  pick,
+  showStats,
+}: {
+  entryId: string;
+  gridTemplateColumns: string;
+  pick: LeaderboardPickRow;
+  showStats: boolean;
+}) {
   // #1740 — a pick outside the best N: listed, struck through and in italics, out of the total.
   const isDroppedClass = pick.isDropped ? 'italic text-muted-foreground line-through' : 'text-foreground';
   const testId = `contest-leaderboard-pick-${entryId}-${pick.pickId}`;
-  const cells = (
-    <div className="grid gap-2 text-sm" style={{ gridTemplateColumns }}>
-      <span className={cn(PINNED_POSITION, PINNED_CELL_SURFACE, 'text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
-      {/* The worst M - N picks: visibly present, visibly excluded from the total. */}
-      <span className={cn(PINNED_NAME, PINNED_CELL_SURFACE, 'min-w-0 truncate', isDroppedClass)} data-dropped={pick.isDropped || undefined} data-testid={`${testId}-name`}>{pick.participantName}</span>
-      <span className={cn('text-right font-medium', isDroppedClass)}>
-        {pick.total ?? NO_SCORE}
-      </span>
-      {pick.detailCells.map((cell) => (
-        // #478 — a cell the participant did not play counts at a fixed value; set apart
-        // so the total is explainable, and named for a screen reader.
-        <span
-          aria-label={cell.unplayed?.ariaLabel}
-          className={cn('text-right text-muted-foreground', cell.unplayed && 'italic')}
-          data-testid={cell.testId}
-          data-unplayed={cell.unplayed ? true : undefined}
-          key={cell.key}
-        >
-          {cell.text ?? NO_SCORE}
-        </span>
-      ))}
-    </div>
-  );
-  if (!breakdown) {
-    return <div className="px-4 py-2" data-testid={testId}>{cells}</div>;
-  }
   return (
-    <div data-testid={testId}>
-      <ExpandableRow
-        label={`Game by game for ${pick.participantName}`}
-        rowClassName="group/pick"
-        rowTestId={`${breakdown.testId}-row`}
-        summary={cells}
-        toggleTestId={`${breakdown.testId}-toggle`}
-      >
-        <div className={VISIBLE_WIDTH} data-testid={`${breakdown.testId}-frame`}>
-          <FactList
-            density="compact"
-            facts={breakdown.lines.map((line) => ({ id: line.key, label: line.label, value: line.text }))}
-            layout="inset"
-            testId={breakdown.testId}
-          />
-        </div>
-      </ExpandableRow>
+    <div className="group/pick px-4 py-2 transition hover:bg-row-hover" data-testid={testId}>
+      <div className="grid items-start gap-2 text-sm" style={{ gridTemplateColumns }}>
+        <span className={cn(PINNED_POSITION, PINNED_CELL_SURFACE, 'text-muted-foreground')} data-testid={`${testId}-position`}>{pick.position ?? NO_SCORE}</span>
+        {/* The worst M - N picks: visibly present, visibly excluded from the total. */}
+        <span className={cn(PINNED_NAME, PINNED_CELL_SURFACE, 'min-w-0', isDroppedClass)} data-dropped={pick.isDropped || undefined} data-testid={`${testId}-name`}>
+          <span className="block truncate">{pick.participantName}</span>
+          {showStats && pick.statLine ? (
+            // Inside the name's cell, a dropped pick's line is struck through and italic with it.
+            <Text as="span" className="block" data-testid={`${testId}-stats`} size="xs" tone="muted" variant="meta">
+              {pick.statLine}
+            </Text>
+          ) : null}
+        </span>
+        <span className={cn('text-right font-medium', isDroppedClass)}>
+          {pick.total ?? NO_SCORE}
+        </span>
+        {pick.detailCells.map((cell) => (
+          // #478 — a cell the participant did not play counts at a fixed value; set apart
+          // so the total is explainable, and named for a screen reader.
+          <span
+            aria-label={cell.unplayed?.ariaLabel}
+            className={cn('text-right text-muted-foreground', cell.unplayed && 'italic')}
+            data-testid={cell.testId}
+            data-unplayed={cell.unplayed ? true : undefined}
+            key={cell.key}
+          >
+            {cell.peek ? (
+              <DetailsPeek
+                icon={cell.text ?? NO_SCORE}
+                label={`${cell.peek.title} stats`}
+                testId={`${cell.testId}-peek`}
+                trigger="text"
+              >
+                <PeekCard facts={cell.peek.facts} title={cell.peek.title} />
+              </DetailsPeek>
+            ) : (cell.text ?? NO_SCORE)}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -193,7 +202,9 @@ function EntryBlock({
   isCollapsed,
   isMine,
   league,
+  onStatsChange,
   onToggle,
+  showStats,
 }: {
   entry: LeaderboardEntryRow;
   /** The contest's league, for the entry's (i) peek at its team. */
@@ -203,7 +214,11 @@ function EntryBlock({
   gridTemplateColumns: string;
   isCollapsed: boolean;
   isMine: boolean;
+  /** Flips the entry's Stats switch; absent on a board whose picks have no stat lines. */
+  onStatsChange: ((on: boolean) => void) | null;
   onToggle: () => void;
+  /** Whether the entry's Stats switch is on: each pick's stat line shows under its name. */
+  showStats: boolean;
 }) {
   const picks = entry.picks.length === 0 ? (
     <p className="px-4 py-3 text-sm text-muted-foreground">
@@ -212,7 +227,7 @@ function EntryBlock({
   ) : (
     <div className="divide-y divide-border">
       {entry.picks.map((pick) => (
-        <PickRow entryId={entry.entryId} gridTemplateColumns={gridTemplateColumns} key={pick.pickId} pick={pick} />
+        <PickRow entryId={entry.entryId} gridTemplateColumns={gridTemplateColumns} key={pick.pickId} pick={pick} showStats={showStats} />
       ))}
     </div>
   );
@@ -277,11 +292,26 @@ function EntryBlock({
                 </span>
               ) : null}
             </span>
-            <span
-              className="score-total text-foreground"
-              data-testid={`contest-leaderboard-total-${entry.entryId}`}
-            >
-              {entry.total ?? NO_SCORE}
+            {/* ml-auto keeps the switch and total at the right end when a phone wraps them under the name. */}
+            <span className="ml-auto flex items-center gap-3">
+              {onStatsChange ? (
+                // #1747 — one switch per entry turns on every pick's stat line at once.
+                <span className="flex items-center gap-2">
+                  <Switch
+                    checked={showStats}
+                    label={`Stats for ${entry.entryName}`}
+                    onCheckedChange={onStatsChange}
+                    testId={`contest-leaderboard-stats-${entry.entryId}`}
+                  />
+                  <Text aria-hidden as="span" size="xs" variant="label">Stats</Text>
+                </span>
+              ) : null}
+              <span
+                className="score-total text-foreground"
+                data-testid={`contest-leaderboard-total-${entry.entryId}`}
+              >
+                {entry.total ?? NO_SCORE}
+              </span>
             </span>
           </div>
         }
@@ -326,6 +356,8 @@ export function ContestLeaderboardPage() {
     .filter((entry) => mySquadId !== null && entry.squadId === mySquadId)
     .map((entry) => entry.entryId) ?? [];
   const openRows = useOpenEntryRows(myEntryIds);
+  // #1747 — which entries show their picks' stat lines: the viewer's own start on, as they start open.
+  const statsRows = useOpenEntryRows(myEntryIds);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
@@ -364,7 +396,7 @@ export function ContestLeaderboardPage() {
   const view = buildLeaderboardView(leaderboardQuery.data);
   const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
-  const hasPickBreakdowns = view.entries.some((entry) => entry.picks.some((pick) => pick.breakdown));
+  const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));
   const isMultiEvent = contest.sportEvents.length > 1;
   const contestEvents = isMultiEvent
     ? new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent]))
@@ -383,6 +415,7 @@ export function ContestLeaderboardPage() {
     : null;
 
   const allEntryIds = view.entries.map((entry) => entry.entryId);
+  const openEntryIds = allEntryIds.filter(openRows.isOpen);
   const matchingEntries = view.entries.filter((entry) => matchesSearch(entry, search));
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
   // A refetch or a narrower search can leave fewer pages than the one being shown.
@@ -462,11 +495,25 @@ export function ContestLeaderboardPage() {
                 </Button>
               ) : null}
             </div>
-            <EntryDetailsToggle
-              allOpen={openRows.allOpen(allEntryIds)}
-              onToggle={(open) => openRows.setAll(allEntryIds, open)}
-              testId="contest-leaderboard-toggle-all"
-            />
+            <div className="flex flex-wrap items-center gap-3">
+              {hasStatLines ? (
+                // #1747 — every opened entry's Stats switch at once; with every one on, it turns them off.
+                <Button
+                  data-testid="contest-leaderboard-toggle-all-stats"
+                  disabled={openEntryIds.length === 0}
+                  onClick={() => statsRows.setAll(openEntryIds, !statsRows.allOpen(openEntryIds))}
+                  size="sm"
+                  variant="secondary"
+                >
+                  {statsRows.allOpen(openEntryIds) ? 'Hide all stats' : 'Show all stats'}
+                </Button>
+              ) : null}
+              <EntryDetailsToggle
+                allOpen={openRows.allOpen(allEntryIds)}
+                onToggle={(open) => openRows.setAll(allEntryIds, open)}
+                testId="contest-leaderboard-toggle-all"
+              />
+            </div>
           </div>
         ) : null}
         {/*
@@ -476,8 +523,7 @@ export function ContestLeaderboardPage() {
         <div className={cn('overflow-x-auto [container-type:inline-size]', POS_WIDTH)} data-testid="contest-leaderboard-board">
           <div className="min-w-min" data-testid="contest-leaderboard-board-content">
             <div
-              // A board whose pick rows open (a stat pool's games) keeps room for their chevron.
-              className={cn('grid gap-2 rounded-lg bg-surface-inverse py-2 pl-4 text-xs font-medium uppercase text-primary', hasPickBreakdowns ? 'pr-11' : 'pr-4')}
+              className="grid gap-2 rounded-lg bg-surface-inverse px-4 py-2 text-xs font-medium uppercase text-primary"
               data-testid="contest-leaderboard-column-headers"
               style={{ gridTemplateColumns }}
             >
@@ -485,8 +531,11 @@ export function ContestLeaderboardPage() {
               <span className={cn(PINNED_NAME, 'bg-surface-inverse')}>{upperFirst(participantNoun.one)}</span>
               <span className="text-right">Tot</span>
               {view.detailColumns.map((column) => (
-                <span className="text-right" data-testid={column.testId} key={column.key}>
+                <span className="flex flex-col items-end gap-1 text-right" data-testid={column.testId} key={column.key}>
                   {column.label}
+                  {column.isLive ? (
+                    <Chip className="px-1.5 py-0" data-testid={`${column.testId ?? column.key}-live`} tone="live">Live</Chip>
+                  ) : null}
                 </span>
               ))}
             </div>
@@ -506,7 +555,15 @@ export function ContestLeaderboardPage() {
                     isMine={isMySquadsEntry(mySquadId)(entry)}
                     key={entry.entryId}
                     league={{ code: leagueCode, id: contest.leagueId }}
+                    onStatsChange={hasStatLines ? (on) => {
+                      // Turning stats on for a closed entry opens it, so the stats show.
+                      statsRows.setAll([entry.entryId], on);
+                      if (on) {
+                        openRows.open(entry.entryId);
+                      }
+                    } : null}
                     onToggle={() => openRows.toggle(entry.entryId)}
+                    showStats={statsRows.isOpen(entry.entryId)}
                   />
                 ))
               )}
