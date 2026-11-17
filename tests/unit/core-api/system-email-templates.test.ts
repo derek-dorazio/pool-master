@@ -435,7 +435,7 @@ describe('pool-master-98i system email templates', () => {
       const long = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-long';
 
       expect(message.html).toContain(`<a href="${green}"`);
-      expect(message.html.match(new RegExp(`<a href="${long.replace(/[?.]/g, '\\$&')}"`, 'g'))).toHaveLength(2);
+      expect(message.html.split(`<a href="${long}"`)).toHaveLength(3);
       expect(message.html).not.toContain('?entry=entry-amen');
       expect(message.text).toContain(`T2. Green Jackets, yours, -9, no change <${green}>`);
       expect(message.text).toContain(`Missed the cut from Long Shots: Danny Willett, Mike Weir. <${long}>`);
@@ -1053,7 +1053,8 @@ describe('the member contest emails\' header, contest card and places', () => {
     const greenUrl = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
 
     expect(message.text).toContain(`Your place: T2, Green Jackets, -9. Same place as the last update. <${greenUrl}>`);
-    expect(message.html).toMatch(new RegExp(`<a href="${greenUrl.replace(/[.?]/g, '\\$&')}"[^>]*>Green Jackets</a> · -9`));
+    const callout = message.html.slice(message.html.indexOf(`<a href="${greenUrl}"`));
+    expect(callout.slice(callout.indexOf('>') + 1)).toMatch(/^Green Jackets<\/a> · -9/);
     expect(final.text).toContain(`Your place: 1st, Green Jackets, -14. Your final place. <${greenUrl}>`);
   });
 
@@ -1103,7 +1104,7 @@ describe('the member contest emails\' header, contest card and places', () => {
     const message = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
     const green = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
 
-    expect(message.html.match(new RegExp(`<a href="${green.replace(/[?.]/g, '\\$&')}"`, 'g'))).toHaveLength(3);
+    expect(message.html.split(`<a href="${green}"`)).toHaveLength(4);
     expect(message.html).toContain('?entry=entry-long');
     expect(message.text).toContain(`Congratulations, Morgan Member won Masters Pick 6 with Green Jackets! <${green}>`);
   });
