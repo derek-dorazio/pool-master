@@ -646,6 +646,18 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     scroll.mockRestore();
   });
 
+  it('opens another team\'s squares entry a commissioner\'s link names, shading its boxes and claiming for it until they choose another', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ role: 'COMMISSIONER', selectionType: 'SQUARES', entries: [MINE, buildEntry({ id: 'entry-2', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team 1' })] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-2');
+
+    expect(await screen.findByTestId('squares-claim-for')).toHaveValue('entry-2');
+    await waitFor(() => expect(screen.getByTestId('squares-box-1-1')).toHaveAttribute('data-linked', 'true'));
+    scroll.mockRestore();
+  });
+
   it('gives a bracket entry of the viewer\'s a bracket icon before its name, "Edit bracket" to its pick page, in place of ✎, and another team\'s entry none', async () => {
     primeMocks({ selectionType: 'BRACKET', entries: [MINE, THEIRS] });
 
