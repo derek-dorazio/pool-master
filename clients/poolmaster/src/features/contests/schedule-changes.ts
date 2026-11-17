@@ -4,10 +4,14 @@ import type { ContestDto } from '@/lib/api';
 /** What the schedule-change line reads of a contest's events. */
 type ScheduledEvent = Pick<ContestDto['sportEvents'][number], 'name' | 'startDate' | 'status'>;
 
+/** How many schedule changes the line names before it counts the rest. */
+const MAX_SCHEDULE_CHANGES = 3;
+
 /**
  * The one line under a contest's header when any of its events is not going ahead as scheduled
  * (#1768): "Week 12 postponed to Mon, Nov 24, 8:15 PM. Week 13 cancelled: no points." Null when
- * every event is on schedule. `formatStart` words a start time as the viewer reads it.
+ * every event is on schedule. Past three changes it names the latest three and counts the rest
+ * ("Plus 2 more earlier."). `formatStart` words a start time as the viewer reads it.
  */
 export function describeScheduleChanges(
   sportEvents: readonly ScheduledEvent[],
@@ -22,7 +26,11 @@ export function describeScheduleChanges(
     }
     return [];
   });
-  return lines.length ? lines.join(' ') : null;
+  if (lines.length <= MAX_SCHEDULE_CHANGES) {
+    return lines.length ? lines.join(' ') : null;
+  }
+  // A long season keeps one short line: its latest changes, and how many earlier ones there were.
+  return `${lines.slice(-MAX_SCHEDULE_CHANGES).join(' ')} Plus ${String(lines.length - MAX_SCHEDULE_CHANGES)} more earlier.`;
 }
 
 /**

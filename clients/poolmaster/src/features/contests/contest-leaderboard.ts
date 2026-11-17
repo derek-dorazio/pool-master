@@ -84,7 +84,11 @@ export interface LeaderboardView {
  * never re-sorted here, because position and its tie-aware `displayPosition` were decided
  * server-side against the scoring definition's direction.
  */
-export function buildLeaderboardView(response: ContestLeaderboardResponse, context?: LeaderboardContext): LeaderboardView {
+export function buildLeaderboardView(
+  response: ContestLeaderboardResponse,
+  context?: LeaderboardContext,
+  { isLive = false }: { /** The contest is live (ACTIVE): only then does an unscored board stand level at 0. */ isLive?: boolean } = {},
+): LeaderboardView {
   // The shown event's definition: a stat pool plays its sport's composite, not its bracket.
   const sport = eventSportDefinition(response);
   const family = getScoringFamilyUi(sport).leaderboard(response, sport, context);
@@ -93,8 +97,10 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse, conte
     response.participants.map((participant) => [participant.id, participant]),
   );
 
-  // #1768 — live before the first score, every entry stands level at 0 rather than unplaced.
-  const isUnscored = response.entries.length > 0 && response.entries.every((entry) => entry.totalScore === null);
+  // #1768 — live before the first score, every entry stands level at 0 rather than unplaced. A
+  // final board with nothing scored (every event cancelled) keeps its entries unplaced instead,
+  // so it never crowns everyone tied for 1st.
+  const isUnscored = isLive && response.entries.length > 0 && response.entries.every((entry) => entry.totalScore === null);
   const unscoredPlace = response.entries.length > 1 ? 'T1' : '1';
   const entries = response.entries.map((entry) => ({
     entryId: entry.entryId,

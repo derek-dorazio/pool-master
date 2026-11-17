@@ -935,10 +935,11 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByTestId('contest-leaderboard-position-entry-1');
-    // A golf board reads no games, so it passes no games context.
+    // A golf board reads no games, so it passes no games context; the contest's status says whether it is live.
     expect(buildLeaderboardView).toHaveBeenCalledWith(
       expect.objectContaining({ contestId: 'contest-1', scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' }),
       undefined,
+      { isLive: true },
     );
     buildLeaderboardView.mockRestore();
   });

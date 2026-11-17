@@ -352,18 +352,30 @@ describe('buildLeaderboardView', () => {
       ]);
   });
 
-  it('ties every entry at 1st with a 0 total while nothing on the board is scored yet', () => {
+  it('ties every entry at 1st with a 0 total on a live contest while nothing on the board is scored yet', () => {
     const view = buildLeaderboardView(responseFixture({
       entries: [
         entryFixture({ entryId: 'entry-a', displayPosition: null, totalScore: null }),
         entryFixture({ entryId: 'entry-b', displayPosition: null, totalScore: null }),
       ],
-    }));
+    }), undefined, { isLive: true });
 
     expect(view.isUnscored).toBe(true);
     expect(view.entries.map((entry) => [entry.entryId, entry.position, entry.displayPosition, entry.total]))
       .toEqual([['entry-a', 1, 'T1', 'E'], ['entry-b', 1, 'T1', 'E']]);
-    expect(buildLeaderboardView(responseFixture({ entries: [entryFixture({ displayPosition: null, totalScore: null })] })).entries[0].displayPosition).toBe('1');
+    expect(buildLeaderboardView(responseFixture({ entries: [entryFixture({ displayPosition: null, totalScore: null })] }), undefined, { isLive: true }).entries[0].displayPosition).toBe('1');
+  });
+
+  it('leaves an unscored final board unplaced, so a contest whose events were all cancelled crowns nobody', () => {
+    const view = buildLeaderboardView(responseFixture({
+      entries: [
+        entryFixture({ entryId: 'entry-a', position: null, displayPosition: null, totalScore: null }),
+        entryFixture({ entryId: 'entry-b', position: null, displayPosition: null, totalScore: null }),
+      ],
+    }));
+
+    expect(view.isUnscored).toBe(false);
+    expect(view.entries.map((entry) => [entry.position, entry.displayPosition, entry.total])).toEqual([[null, null, null], [null, null, null]]);
   });
 
   it('shows no total for an entry with nothing scored yet while others are scored', () => {

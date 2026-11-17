@@ -31,7 +31,7 @@ function placeAt(position: number, rows: FinalRow[], metal: TrophyMetal): Winner
 
 /**
  * A final board's winners (#1768): the entries at 1st, then those at 2nd and 3rd where the board
- * has them (a tie for 1st between two leaves no 2nd), each tie naming everyone at the place; and
+ * has them, each tie naming everyone at the place; a tie for 1st shows only the tied winners; and
  * the viewer's finish, every entry of theirs best first, "of" every entry on the board. Null when
  * the board placed nobody.
  */
@@ -47,13 +47,15 @@ export function describeFinalStandings(rows: readonly FinalRow[], locale?: strin
     return null;
   }
   const first = placed[0].position;
-  const runnersUp = [2, 3]
+  const winners = byPosition.get(first) ?? [];
+  // A tie for 1st is the whole banner: it names everyone tied, with no runners-up beneath them.
+  const runnersUp = winners.length > 1 ? [] : [2, 3]
     .filter((position) => position > first && byPosition.has(position))
     .map((position) => placeAt(position, byPosition.get(position) ?? [], METALS[position] ?? 'bronze'));
   const mine = placed.filter((row) => row.isMine).map((row) => formatOrdinal(row.position));
   return {
     runnersUp,
-    winner: placeAt(first, byPosition.get(first) ?? [], 'gold'),
+    winner: placeAt(first, winners, 'gold'),
     yourFinish: mine.length ? `You finished ${formatAndList(mine, locale)} of ${String(rows.length)}` : null,
   };
 }

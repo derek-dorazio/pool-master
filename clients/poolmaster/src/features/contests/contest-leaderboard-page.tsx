@@ -413,7 +413,7 @@ export function ContestLeaderboardPage() {
     games: gamesQuery.data,
     roundName,
     formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
-  } : undefined);
+  } : undefined, { isLive: contestQuery.data.status === ContestStatus.ACTIVE });
   const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));

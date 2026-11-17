@@ -13,6 +13,13 @@ describe('describeScheduleChanges', () => {
     ], formatStart)).toBe('Week 12 postponed to at 2026-11-25T01:15:00.000Z. Week 13 cancelled: no points.');
   });
 
+  it('names only the latest three changes and counts the earlier ones, so a long season keeps one short line', () => {
+    const cancelled = (week: number) => ({ name: `Week ${String(week)}`, startDate: '2026-11-01T01:15:00.000Z', status: SportEventStatus.CANCELLED });
+
+    expect(describeScheduleChanges([cancelled(3), cancelled(5), cancelled(8), cancelled(9), cancelled(12)], formatStart))
+      .toBe('Week 8 cancelled: no points. Week 9 cancelled: no points. Week 12 cancelled: no points. Plus 2 more earlier.');
+  });
+
   it('says nothing while every event is on schedule', () => {
     expect(describeScheduleChanges([
       { name: 'Week 12', startDate: '2026-11-25T01:15:00.000Z', status: SportEventStatus.SCHEDULED },
