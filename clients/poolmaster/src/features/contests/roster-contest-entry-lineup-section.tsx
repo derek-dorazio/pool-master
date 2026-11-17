@@ -1,7 +1,7 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import type { SelectionStateResponse } from '@/lib/api';
 import type { Sport, SportNoun } from '@poolmaster/shared/domain';
-import { Notice, SectionCard, Text } from '@/features/shared/ui';
+import { Notice, SectionCard } from '@/features/shared/ui';
 import {
   EditableSelectionGroup,
   LockedSelectionGroup,
@@ -22,6 +22,7 @@ export function RosterContestEntryLineupSection({
   drawState,
   expandedGroupId,
   groupToggleRefs,
+  howToPlay = null,
   isBudget,
   isBusy,
   isEditable,
@@ -34,7 +35,6 @@ export function RosterContestEntryLineupSection({
   pickError,
   pickedAtById,
   picksHidden,
-  progressNote,
   selectionGroups,
   sport,
 }: {
@@ -42,6 +42,8 @@ export function RosterContestEntryLineupSection({
   drawState: DrawState | null;
   expandedGroupId: string | null;
   groupToggleRefs: RefObject<Record<string, HTMLButtonElement | null>>;
+  /** How to pick, behind the title's (?), with its link to How to Play; none on a preview. */
+  howToPlay?: { help: ReactNode; link: { label: string; to: string } } | null;
   isBudget: boolean;
   isBusy: boolean;
   isEditable: boolean;
@@ -59,7 +61,6 @@ export function RosterContestEntryLineupSection({
   /** When each picked participant was picked, so a full tier's swap drops the newest. */
   pickedAtById: ReadonlyMap<string, string>;
   picksHidden: boolean;
-  progressNote: string | null;
   selectionGroups: SelectionGroup[];
   sport: Sport | null;
 }) {
@@ -69,10 +70,15 @@ export function RosterContestEntryLineupSection({
     : isEditable ? 'Build your lineup' : 'Saved lineup detail';
 
   return (
-    <SectionCard headingLevel={3} padded testId="contest-entry-lineup" title={title} titleTestId="contest-entry-builder-heading">
-      {progressNote ? (
-        <Text as="p" data-testid="contest-entry-progress" size="sm" variant="meta">{progressNote}</Text>
-      ) : null}
+    <SectionCard
+      headingLevel={3}
+      help={howToPlay?.help}
+      helpLink={howToPlay?.link}
+      padded
+      testId="contest-entry-lineup"
+      title={title}
+      titleTestId="contest-entry-builder-heading"
+    >
       {drawState ? (
         <DrawLineup noun={noun} selectionState={drawState} />
       ) : (

@@ -303,7 +303,11 @@ export function LockedSelectionGroup({
   );
 }
 
-/** The entry's tiebreaker prediction, for a scoring family that asks for one. */
+/**
+ * The entry's tiebreaker prediction, for a scoring family that asks for one: a choice from the
+ * family's list. Not `TiebreakerNumberField` (tiebreaker-number-field.tsx), the free number a
+ * pick'em week or a bracket takes for one game's total.
+ */
 export function TiebreakerField({
   disabled,
   onChange,

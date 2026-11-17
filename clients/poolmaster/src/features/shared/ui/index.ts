@@ -68,6 +68,7 @@ export { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
 export { HelpTip } from "./help-tip";
 export { SplitContentLayout } from "./layout-presets";
 export { MetricGrid, MetricTile } from "./metric-grid";
+export { StatStrip, type StatStripItem } from "./stat-strip";
 export { FactList, type Fact, type FactListDensity, type FactListLayout } from "./fact-list";
 export { CheckList, type CheckItem } from "./check-list";
 export { StageTrack, type StageTrackSurface } from "./stage-track";

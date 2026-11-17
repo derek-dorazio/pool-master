@@ -209,6 +209,13 @@ A page's headline numbers, each a figure over its label.
 - **Props that matter:** `MetricTile` takes `label`, `value` and an optional `helperText`.
 - **Story:** [metric-grid.stories.tsx](./metric-grid.stories.tsx)
 
+### `StatStrip`
+A pick screen's progress in one line: two or three labelled numbers, no helper text.
+- **Use when:** how far an entry is on its pick screen ("Picked 9 of 14 · Points 0 · Max 14").
+- **Don't use when:** a page's headline numbers that stand alone (`MetricGrid`).
+- **Props that matter:** `items` (`label`, `value`, optional `testId` for the value).
+- **Story:** [stat-strip.stories.tsx](./stat-strip.stories.tsx)
+
 ### `CheckList`
 Requirements, each met or not, missing ones first.
 - **Use when:** a readiness check, such as a contest's setup.

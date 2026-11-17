@@ -171,7 +171,7 @@ describe('Preview contest entry', () => {
     await waitFor(() => expect(previewRosterPicksMock).toHaveBeenLastCalledWith(expect.objectContaining({
       body: expect.objectContaining({ sportEventParticipantIds: ['sep-scheffler'] }) as unknown,
     })));
-    expect(await screen.findByTestId('contest-entry-progress')).toHaveTextContent('1 of 2 picked');
+    expect(await screen.findByTestId('contest-entry-picked-count')).toHaveTextContent('1 of 2');
     // The ribbon says nothing is saved, so the tier counts what is picked, never "saved".
     expect(screen.getByTestId('contest-entry-group-count-tier-1')).toHaveTextContent('1/1 picked');
     expect(createContestMock).not.toHaveBeenCalled();

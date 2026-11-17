@@ -129,10 +129,10 @@ function ScheduleChangeNotice({
 }
 
 /**
- * A pick entry page's frame (#1296): the entry's name with its status icon beside it, a summary
- * line of the contest and any rules the page names (the title already names the entry), then the
- * page's picks.
- * The status, contest phase and dates sit in the icon's callout so the page opens on its picks.
+ * A pick entry page's frame (#1296, #1769): the entry's name with its status icon beside it, and
+ * under the name a status line saying where the entry stands ("Not submitted · submit by Thu
+ * 8:15 PM", "Out in Week 9"), then the page's picks. The status, contest phase, the contest's
+ * rules and the dates sit in the icon's callout so the page opens on its picks.
  */
 export function ContestEntryFrame({
   children,
@@ -142,7 +142,8 @@ export function ContestEntryFrame({
   phase,
   rules = [],
   status,
-  statusFacts,
+  statusFacts = [],
+  statusLine,
   testId,
   title,
 }: {
@@ -153,15 +154,18 @@ export function ContestEntryFrame({
   leagueCode: string;
   /** The contest's phase as the page words it. */
   phase: string;
-  /** The contest's rules as the summary names them, after its name, such as a pick'em's mode. */
+  /** The contest's rules as the page names them, such as a pick'em's mode; in the status callout. */
   rules?: string[];
   /** The entry's status, or null while another team's entry is hidden. */
   status: ContestEntryStatus | null;
   /** The page's own lines in the status peek, after the contest's phase. */
   statusFacts?: EntryStatusFact[];
+  /** Where the entry stands, in one short line under its name. */
+  statusLine: string;
   testId?: string;
   title: string;
 }) {
+  const facts = rules.length > 0 ? [{ id: 'rules', label: 'Rules', value: rules.join(' · ') }, ...statusFacts] : statusFacts;
   return (
     <ContestPageFrame
       contest={contest}
@@ -169,12 +173,10 @@ export function ContestEntryFrame({
       headerTestId="contest-entry-header"
       leagueCode={leagueCode}
       status={null}
-      summary={(
-        <span data-testid="contest-entry-summary">{[contest.name, ...rules].join(' · ')}</span>
-      )}
+      summary={<span data-testid="contest-entry-status-line">{statusLine}</span>}
       testId={testId}
       title={title}
-      titleAside={<EntryStatusPeek entry={entry} facts={statusFacts} phase={phase} status={status} />}
+      titleAside={<EntryStatusPeek entry={entry} facts={facts} phase={phase} status={status} />}
     >
       {children}
     </ContestPageFrame>

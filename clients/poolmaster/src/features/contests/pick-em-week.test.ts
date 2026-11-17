@@ -90,8 +90,18 @@ describe('pick\'em week helpers', () => {
       .toBe('Rank every pick from 1 to 3: 2 still to rank.');
     expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 1, 2]) })))
       .toBe('Use each value from 1 to 3 once: a value is on more than one pick.');
-    expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Save your tiebreaker to submit.');
+    expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Enter your tiebreaker to submit.');
     expect(weekSubmitHint(pickEmWeekFixture({ games: allPicked([null, null, null]), tiebreakerValue: 41 }))).toBeNull();
+  });
+
+  it('asks for no tiebreaker once its game has started, since there is no field left to enter it in', () => {
+    const games = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    expect(weekSubmitHint(pickEmWeekFixture({ games }), { tiebreakerOpen: false })).toBeNull();
+    expect(weekSubmitHint(pickEmWeekFixture({ games }), { tiebreakerOpen: true })).toBe('Enter your tiebreaker to submit.');
   });
 });
 

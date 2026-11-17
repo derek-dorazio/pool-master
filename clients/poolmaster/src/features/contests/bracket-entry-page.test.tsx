@@ -29,6 +29,7 @@ const {
   mockLogger,
   saveGamePicksMock,
   submitGamePicksMock,
+  updateContestEntryMock,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockImplementation(() => logger);
@@ -43,6 +44,7 @@ const {
     mockLogger: logger,
     saveGamePicksMock: vi.fn(),
     submitGamePicksMock: vi.fn(),
+    updateContestEntryMock: vi.fn(),
   };
 });
 
@@ -56,6 +58,7 @@ bindApiMocks({
   getContestEntry: getContestEntryMock,
   saveGamePicks: saveGamePicksMock,
   submitGamePicks: submitGamePicksMock,
+  updateContestEntry: updateContestEntryMock,
 });
 
 // The league-context hook reads the cached session user; the page renders bare here.
@@ -114,18 +117,39 @@ describe('Bracket contest entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
+      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock, updateContestEntryMock,
     ]) {
       mock.mockReset();
     }
   });
 
-  it('offers the bracket\'s name to change on its own pick screen while entries are open, above Submit, the contest page having no Rename', async () => {
+  it('ends the screen with one Name and submit card holding the name, the final\'s tiebreaker and Submit bracket, after the picks, and says when to submit by under the name', async () => {
     primeMocks();
     renderBracketEntry();
 
-    const rename = await screen.findByTestId('contest-entry-rename-input');
-    expect(rename.compareDocumentPosition(screen.getByTestId('bracket-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const card = await screen.findByTestId('bracket-finish');
+    expect(within(card).getByRole('heading', { name: 'Name and submit' })).toBeInTheDocument();
+    expect(within(card).getByTestId('contest-entry-name-input')).toHaveValue('Derek’s Bracket');
+    expect(within(card).getByLabelText('Tiebreaker · total points in the final')).toBe(screen.getByTestId('bracket-tiebreaker-input'));
+    expect(within(card).getByTestId('bracket-submit')).toHaveTextContent('Submit bracket');
+    expect(screen.getByTestId('bracket-picks').compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('Not submitted · submit by the opening tip-off');
+    expect(screen.getByTestId('bracket-progress')).toHaveTextContent('Picked0 of 7Points0 ptsMax0 pts');
+  });
+
+  it('saves a changed name with Submit bracket, before the submit', async () => {
+    const filled = filledBracketGames();
+    primeMocks({ gamePicks: gamePicksFixture({ games: filled, tiebreakerValue: 141, canSubmit: true }) });
+    updateContestEntryMock.mockResolvedValue({ data: { entry: { id: 'entry-1', name: 'Chalk Talk' } } });
+    submitGamePicksMock.mockResolvedValue({ data: gamePicksFixture({ games: filled, tiebreakerValue: 141, status: 'SUBMITTED' }) });
+    renderBracketEntry();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-name-input'), { target: { value: 'Chalk Talk' } });
+    fireEvent.click(screen.getByTestId('bracket-submit'));
+
+    await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalledTimes(1));
+    expect(updateContestEntryMock).toHaveBeenCalledWith(expect.objectContaining({ body: { name: 'Chalk Talk' } }));
+    expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
 
   it('draws the whole bracket on a desktop: the first region on the left, the second mirrored on the right and the final where they meet, each round named over its column, and never reads the roster selection room', async () => {
@@ -155,7 +179,7 @@ describe('Bracket contest entry page', () => {
     expect(team(1, TEAMS.vermont.sportEventParticipantId)).toHaveTextContent('Vermont');
     expect(screen.getByTestId('bracket-game-5-open-home')).toHaveTextContent('Elite Eight winner');
     expect(screen.getByTestId('bracket-game-7-open-away')).toHaveTextContent('Final Four winner');
-    expect(screen.getByTestId('bracket-progress')).toHaveTextContent('0 of 7 picked');
+    expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7');
   });
 
   it('saves a pick through saveGamePicks and shows the bracket the server answers with, so a later pick the change cleared is shown cleared', async () => {
@@ -189,7 +213,7 @@ describe('Bracket contest entry page', () => {
     await waitFor(() => expect(team(1, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
     expect(team(5, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByTestId(`bracket-game-5-team-${TEAMS.duke.sportEventParticipantId}`)).not.toBeInTheDocument();
-    expect(screen.getByTestId('bracket-progress')).toHaveTextContent('2 of 7 picked');
+    expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('2 of 7');
   });
 
   it('shows the server\'s reason and reads the bracket again when a pick is refused', async () => {
@@ -213,10 +237,10 @@ describe('Bracket contest entry page', () => {
 
     await screen.findByTestId('bracket-submit');
     expect(screen.getByTestId('bracket-submit')).toBeDisabled();
-    expect(screen.getByTestId('bracket-submit-hint')).toHaveTextContent('Pick every game to submit: 7 still to pick.');
+    expect(screen.getByTestId('bracket-finish-status')).toHaveTextContent('Pick every game to submit: 7 still to pick.');
   });
 
-  it('saves the tiebreaker on its own with no picks, then submits the bracket once the server allows it and returns to the contest\'s page', async () => {
+  it('saves a typed tiebreaker with no picks when Submit bracket is pressed, then submits the bracket and returns to the contest\'s page', async () => {
     const filled = filledBracketGames();
     primeMocks({ gamePicks: gamePicksFixture({ games: filled }) });
     saveGamePicksMock.mockResolvedValue({ data: gamePicksFixture({ games: filled, tiebreakerValue: 141, canSubmit: true }) });
@@ -226,18 +250,15 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-submit');
-    expect(screen.getByTestId('bracket-submit-hint')).toHaveTextContent('Save your tiebreaker to submit.');
+    expect(screen.getByTestId('bracket-finish-status')).toHaveTextContent('Enter your tiebreaker to submit.');
     expect(screen.getByTestId('bracket-submit')).toBeDisabled();
 
     fireEvent.change(screen.getByTestId('bracket-tiebreaker-input'), { target: { value: '141' } });
-    fireEvent.click(screen.getByTestId('bracket-tiebreaker-save'));
+    expect(screen.getByTestId('bracket-finish-status')).toHaveTextContent('Submit by the opening tip-off');
+    fireEvent.click(screen.getByTestId('bracket-submit'));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(saveGamePicksMock.mock.calls[0]?.[0]).toMatchObject({ body: { picks: [], tiebreakerValue: 141 } });
-    expect(await screen.findByTestId('bracket-tiebreaker-saved')).toHaveTextContent('Saved tiebreaker: 141 total points.');
-    await waitFor(() => expect(screen.getByTestId('bracket-submit')).toBeEnabled());
-
-    fireEvent.click(screen.getByTestId('bracket-submit'));
 
     await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalledTimes(1));
     expect(submitGamePicksMock.mock.calls[0]?.[0]).toMatchObject({ path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' } });
@@ -246,7 +267,7 @@ describe('Bracket contest entry page', () => {
 
   it.each([
     ['PREDICTION_WEEK_INCOMPLETE', 'Every game needs a pick before your bracket can be submitted.'],
-    ['PREDICTION_TIEBREAKER_MISSING', 'Save your tiebreaker, the total points of the final, before you submit.'],
+    ['PREDICTION_TIEBREAKER_MISSING', 'Enter your tiebreaker, the total points of the final, before you submit.'],
   ])('explains a submit refused with 409 %s in plain words', async (code, message) => {
     const filled = filledBracketGames();
     primeMocks({ gamePicks: gamePicksFixture({ games: filled, tiebreakerValue: 141, canSubmit: true }) });
@@ -264,10 +285,11 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-submit');
-    expect(screen.getByText(/^Pick the winner of each match\. A later match offers the players you picked/)).toBeInTheDocument();
-    expect(screen.getByTestId('bracket-submit-hint')).toHaveTextContent('Pick every match to submit: 7 still to pick.');
-    expect(screen.getByText('Total sets in the final, both players together. It only breaks a tie on points.')).toBeInTheDocument();
-    expect(screen.getByTestId('bracket-submit-panel')).not.toHaveTextContent(/\bteams?\b|\bgames?\b/);
+    fireEvent.click(screen.getByTestId('contest-entry-builder-heading-help'));
+    expect(screen.getByTestId('contest-entry-builder-heading-help-callout')).toHaveTextContent(/^Pick the winner of each match\. A later match offers the players you picked/);
+    expect(screen.getByTestId('bracket-finish-status')).toHaveTextContent('Pick every match to submit: 7 still to pick.');
+    expect(screen.getByLabelText('Tiebreaker · total sets in the final')).toBeInTheDocument();
+    expect(screen.getByTestId('bracket-finish')).not.toHaveTextContent(/\bteams?\b|\bgames?\b/);
   });
 
   it('refuses a tiebreaker outside 0 to 999 at the field without saving it', async () => {
@@ -277,7 +299,7 @@ describe('Bracket contest entry page', () => {
     fireEvent.change(await screen.findByTestId('bracket-tiebreaker-input'), { target: { value: '1000' } });
 
     expect(screen.getByText('Enter a whole number from 0 to 999.')).toBeInTheDocument();
-    expect(screen.getByTestId('bracket-tiebreaker-save')).toBeDisabled();
+    expect(screen.getByTestId('bracket-submit')).toBeDisabled();
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
 
@@ -322,7 +344,7 @@ describe('Bracket contest entry page', () => {
 
     expect(await screen.findByTestId('bracket-picks-hidden')).toHaveTextContent('This bracket stays hidden until the opening tip-off.');
     expect(screen.getByTestId('contest-entry-header-name')).toHaveTextContent('Chalk All The Way');
-    expect(screen.getByTestId('contest-entry-summary')).not.toHaveTextContent('Derek’s Great Golf Guys');
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Hidden until the event starts$/);
     expect(screen.queryByTestId('bracket-board')).not.toBeInTheDocument();
   });
 
@@ -336,11 +358,11 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry('entry-2');
 
     expect(await screen.findByTestId('contest-entry-header-name')).toHaveTextContent('Chalk All The Way');
-    expect(screen.getByTestId('contest-entry-summary')).not.toHaveTextContent('Derek’s Great Golf Guys');
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Submitted$/);
     expect(team(7, TEAMS.duke.sportEventParticipantId)).not.toHaveRole('button');
     expect(screen.getByTestId('bracket-champion')).toHaveTextContent('Champion');
     expect(screen.getByTestId('bracket-champion')).not.toHaveTextContent('Your champion');
-    expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bracket-finish')).not.toBeInTheDocument();
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
 });
@@ -349,7 +371,7 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
+      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock, updateContestEntryMock,
     ]) {
       mock.mockReset();
     }
@@ -367,7 +389,7 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
     expect(within(middle).getAllByTestId('bracket-round-5')[0]).toHaveTextContent('Final Four');
     expect(within(middle).getByTestId('bracket-round-6')).toHaveTextContent('National Championship');
     expect(screen.queryByTestId('bracket-round-1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7 picked');
+    expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7');
   });
 
   it('offers the starting round\'s decided teams as choices, and has a later side wait on that round\'s winner', async () => {
@@ -389,7 +411,7 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
     await screen.findByTestId('bracket-board');
     fireEvent.click(screen.getByTestId('contest-entry-status'));
     expect(screen.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the first game of the Elite Eight');
-    expect(screen.getByText('Picks lock at the first game of the Elite Eight.')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('Not submitted · submit by the first game of the Elite Eight');
     expect(screen.queryByText(/opening tip-off/)).not.toBeInTheDocument();
   });
 
