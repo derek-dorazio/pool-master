@@ -41,13 +41,38 @@ export interface PlayoffsLeague {
   /** The month (0-based) from which the reader takes a new season as the one under way. */
   seasonRolloverMonth: number;
   /**
-   * A bracket fixed by seed, which the provider's slate loads whole (#1728): the groups that each
-   * seed their own half, in bracket order and by the team's `metadata.conference` (the NBA's
-   * conferences), or null for a league seeded as one (the WNBA). Left out where the league's
-   * bracket is not built from its seeds yet.
+   * How the league's bracket is seeded, which the provider's slate loads whole (#1728); left out
+   * where the bracket is not built from the feed yet. See `series-playoff-bracket.ts`.
    */
-  bracket?: { groups: readonly string[] | null };
+  bracket?: PlayoffsBracketShape;
 }
+
+export const BracketShapeKind = {
+  /** Seeded 1 to n within each group: the NBA's conferences, or the WNBA as one. */
+  SEEDED: 'SEEDED',
+  /** Seeded by division within each conference, a division's winner meeting a wild card: the NHL's. */
+  DIVISIONS: 'DIVISIONS',
+  /** Six seeds a league, the top two waiting out the first round: MLB's. */
+  BYES: 'BYES',
+} as const;
+export type BracketShapeKind = (typeof BracketShapeKind)[keyof typeof BracketShapeKind];
+
+/** One conference of a division-seeded bracket: its name on a team, its region label, and its divisions in bracket order. */
+export interface DivisionBracketConference {
+  name: string;
+  label: string;
+  divisions: readonly string[];
+}
+
+/**
+ * A bracket fixed by seed. `groups` seed their own half each, in bracket order, by a team's
+ * `metadata.conference` (null for a league seeded as one); `conferences` order a division bracket;
+ * `leagues` order a bye bracket by a team's `metadata.league`.
+ */
+export type PlayoffsBracketShape =
+  | { kind: typeof BracketShapeKind.SEEDED; groups: readonly string[] | null }
+  | { kind: typeof BracketShapeKind.DIVISIONS; conferences: DivisionBracketConference[] }
+  | { kind: typeof BracketShapeKind.BYES; leagues: ReadonlyArray<{ name: string; label: string }> };
 
 /** A team as a league's normalizer reads it. */
 export interface PlayoffTeam {

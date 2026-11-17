@@ -500,7 +500,7 @@ describe('Survivor contest entry page', () => {
   });
 
   it('says an entry that is out went out and offers no pick or submit', async () => {
-    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] }, canSubmit: false }));
+    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] }, canSubmit: false }));
     renderPickEmEntry();
 
     expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Out in week 1$/);
@@ -510,7 +510,7 @@ describe('Survivor contest entry page', () => {
   });
 
   it('shows a refused pick of a used team in product copy', async () => {
-    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: null, usedParticipantIds: [] } }));
+    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] } }));
     saveGamePicksMock.mockResolvedValue({ error: { error: { code: 'PREDICTION_TEAM_ALREADY_USED', message: 'Team already used.' } } });
     renderPickEmEntry();
 
@@ -575,7 +575,7 @@ describe('Playoff survivor entry page', () => {
   });
 
   it('says which round put an entry out', async () => {
-    primePlayoff(playoffSurvivorFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] } }));
+    primePlayoff(playoffSurvivorFixture({ survivor: { eliminatedInWeek: 1, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] } }));
     renderPickEmEntry();
 
     expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Out in the Conference Championship$/);

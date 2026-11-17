@@ -78,7 +78,7 @@ export const survivorPredictionEngine: PredictionEngine = {
     for (const pick of picked.filter(isTeamChoice)) {
       const participantId = season?.participantIdOf.get(pick.sportEventParticipantId);
       if (seen.has(pick.sportEventParticipantId)
-        || (participantId !== undefined && season?.usedParticipantIds.has(participantId) === true)) {
+        || (participantId !== undefined && season?.usedTeamWeeks.has(participantId) === true)) {
         issues.push({ kind: PredictionIssueKind.TEAM_ALREADY_USED, sportEventParticipantId: pick.sportEventParticipantId });
       }
       seen.add(pick.sportEventParticipantId);

@@ -11641,13 +11641,30 @@ export type ContestDto = {
      */
     enteredSquadCount?: number;
     /**
-     * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+     * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.
      */
     allEntryCount?: number;
     /**
      * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
      */
     myEntryIds?: Array<string>;
+    /**
+     * How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.
+     */
+    progress?: {
+        /**
+         * How many have been played: games, weeks or events, as `unit` says.
+         */
+        played: number;
+        /**
+         * How many there are, cancelled ones left out.
+         */
+        total: number;
+        /**
+         * What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several.
+         */
+        unit: 'GAMES' | 'WEEKS' | 'EVENTS';
+    } | null;
     /**
      * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
      */
@@ -11660,6 +11677,24 @@ export type ContestDto = {
     drawnAt?: string | null;
     createdAt?: string;
     updatedAt?: string;
+};
+
+/**
+ * How far a live contest has got (#1782): "9 of 14 games played", "11 of 18 weeks played".
+ */
+export type ContestProgressDto = {
+    /**
+     * How many have been played: games, weeks or events, as `unit` says.
+     */
+    played: number;
+    /**
+     * How many there are, cancelled ones left out.
+     */
+    total: number;
+    /**
+     * What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several.
+     */
+    unit: 'GAMES' | 'WEEKS' | 'EVENTS';
 };
 
 /**
@@ -12574,13 +12609,30 @@ export type ContestResponse = {
          */
         enteredSquadCount?: number;
         /**
-         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.
          */
         allEntryCount?: number;
         /**
          * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
          */
         myEntryIds?: Array<string>;
+        /**
+         * How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.
+         */
+        progress?: {
+            /**
+             * How many have been played: games, weeks or events, as `unit` says.
+             */
+            played: number;
+            /**
+             * How many there are, cancelled ones left out.
+             */
+            total: number;
+            /**
+             * What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several.
+             */
+            unit: 'GAMES' | 'WEEKS' | 'EVENTS';
+        } | null;
         /**
          * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
          */
@@ -12654,13 +12706,30 @@ export type ContestListResponse = {
          */
         enteredSquadCount?: number;
         /**
-         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.
+         * Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.
          */
         allEntryCount?: number;
         /**
          * The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.
          */
         myEntryIds?: Array<string>;
+        /**
+         * How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.
+         */
+        progress?: {
+            /**
+             * How many have been played: games, weeks or events, as `unit` says.
+             */
+            played: number;
+            /**
+             * How many there are, cancelled ones left out.
+             */
+            total: number;
+            /**
+             * What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several.
+             */
+            unit: 'GAMES' | 'WEEKS' | 'EVENTS';
+        } | null;
         /**
          * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
          */
@@ -13422,6 +13491,47 @@ export type SurvivorLeaderboardResponse = {
              * The team the entry picked, once its game has kicked off. Null before then, and with no pick.
              */
             team: string | null;
+            /**
+             * The picked team's short name ("KC") when it has one, shown with the team; else null.
+             */
+            teamShortName: string | null;
+            /**
+             * The picked team's game, shown with the team: null whenever the team is.
+             */
+            game: {
+                /**
+                 * The team the picked team played.
+                 */
+                opponent: string;
+                /**
+                 * The opponent's short name ("BUF") when it has one.
+                 */
+                opponentShortName: string | null;
+                /**
+                 * Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                 */
+                side: 'HOME' | 'AWAY';
+                /**
+                 * The game is at neither team's home ground: "KC v BUF" either way.
+                 */
+                isNeutralSite: boolean;
+                /**
+                 * Kickoff, when known.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * The game's status: COMPLETED once its result is in.
+                 */
+                status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+                /**
+                 * The picked team's score, once there is one.
+                 */
+                teamScore: number | null;
+                /**
+                 * The opponent's score, once there is one.
+                 */
+                opponentScore: number | null;
+            } | null;
         }>;
     }>;
 };
@@ -13652,9 +13762,28 @@ export type GamePicksResponse = {
          */
         eliminatedInWeek: number | null;
         /**
-         * The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team's entry, as they could show picks not yet revealed.
+         * The teams the entry picked in its other submitted weeks, a lost week's included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team's entry, as they could show picks not yet revealed.
          */
-        usedParticipantIds: Array<string> | null;
+        usedTeams: Array<{
+            /**
+             * The team, by participant: the same team in every week's field.
+             */
+            participantId: string;
+            /**
+             * The week the entry picked it in, 1 for the contest's first week.
+             */
+            weekNumber: number;
+        }> | null;
+        /**
+         * The week number each of this event's rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week.
+         */
+        roundWeeks: Array<{
+            roundNumber: number;
+            /**
+             * 1 for the contest's first week.
+             */
+            weekNumber: number;
+        }>;
     } | null;
     /**
      * The entry's status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.
@@ -24133,6 +24262,10 @@ export type ListContestResultsQuery = {
      */
     place?: number;
     /**
+     * Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year.
+     */
+    finishedSince?: string;
+    /**
      * The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.
      */
     finishOf?: string;
@@ -31027,6 +31160,10 @@ export type ListContestResultsData = {
          * With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).
          */
         place?: number;
+        /**
+         * Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year.
+         */
+        finishedSince?: string;
         /**
          * The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.
          */

@@ -89,6 +89,13 @@ export const SetContestCupWeightRequestSchema = z.object({
 }).describe('Request payload for setting how much a contest counts toward its cup and the championship.');
 export type SetContestCupWeightRequest = z.infer<typeof SetContestCupWeightRequestSchema>;
 
+export const ContestProgressDtoSchema = z.object({
+  played: z.number().int().min(0).describe('How many have been played: games, weeks or events, as `unit` says.'),
+  total: z.number().int().min(1).describe('How many there are, cancelled ones left out.'),
+  unit: z.enum(['GAMES', 'WEEKS', 'EVENTS']).describe('What is counted: GAMES, the one event\'s games of a one-event prediction contest; WEEKS, the events of a prediction season (pick\'em, survivor); EVENTS, the events of a roster contest of several.'),
+}).describe('How far a live contest has got (#1782): "9 of 14 games played", "11 of 18 weeks played".');
+export type ContestProgressDto = z.infer<typeof ContestProgressDtoSchema>;
+
 export const ContestDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -105,8 +112,9 @@ export const ContestDtoSchema = z.object({
   sport: z.enum(Sport).nullable().optional(),
   entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.'),
   enteredSquadCount: z.number().int().min(0).optional().describe('Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.'),
-  allEntryCount: z.number().int().min(0).optional().describe('Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.'),
+  allEntryCount: z.number().int().min(0).optional().describe('Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.'),
   myEntryIds: z.array(z.string()).optional().describe('The requester\'s own squad\'s entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.'),
+  progress: ContestProgressDtoSchema.nullable().optional().describe('How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.'),
   entriesPerContest: z.number().int().min(1).nullable().describe('The most entries the contest takes, every squad\'s drafts included: its league plan\'s cap or its expansion (#987), whichever is higher. Null for no limit.'),
   startsAt: z.iso.datetime().nullable().optional(),
   endsAt: z.iso.datetime().nullable().optional(),
@@ -339,6 +347,7 @@ registerSchema('ContestEntryEventDto', ContestEntryEventDtoSchema);
 registerSchema('ContestEntryEventResultDto', ContestEntryEventResultDtoSchema);
 registerSchema('ContestLeaderboardQuery', ContestLeaderboardQuerySchema);
 registerSchema('ContestDto', ContestDtoSchema);
+registerSchema('ContestProgressDto', ContestProgressDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetailDtoSchema);
 registerSchema('ParticipantScoringDefinitionId', ParticipantScoringDefinitionIdSchema);

@@ -197,14 +197,20 @@ describe('history handlers', () => {
     const refused = await callHandler(failing.listContestResults, stubRequest({ params: { id: 'league-1' }, query: { year: 2026, place: 1 } }));
 
     expect(ok.body).toEqual({ contests: [] });
-    expect(service.listYearContests).toHaveBeenCalledWith('league-1', 2026, { squadId: 's1', place: 1, finishOf: undefined });
+    expect(service.listYearContests).toHaveBeenCalledWith('league-1', 2026, { squadId: 's1', place: 1, finishOf: undefined, finishedSince: undefined });
     expect(refused).toMatchObject({ statusCode: 400, body: { error: { code: 'SQUAD_ID_REQUIRED' } } });
   });
 
-  it('passes the squad whose finish every listed contest carries on to the service', async () => {
+  it('passes the squad whose finish every listed contest carries, and the moment finals are listed since as a date, on to the service', async () => {
     await callHandler(handlers.listContestResults, stubRequest({ params: { id: 'league-1' }, query: { year: 2026, finishOf: 's1' } }));
 
-    expect(service.listYearContests).toHaveBeenLastCalledWith('league-1', 2026, { squadId: undefined, place: undefined, finishOf: 's1' });
+    expect(service.listYearContests).toHaveBeenLastCalledWith('league-1', 2026, { squadId: undefined, place: undefined, finishOf: 's1', finishedSince: undefined });
+
+    await callHandler(handlers.listContestResults, stubRequest({ params: { id: 'league-1' }, query: { year: 2026, finishOf: 's1', finishedSince: '2026-11-14T12:00:00.000Z' } }));
+
+    expect(service.listYearContests).toHaveBeenLastCalledWith('league-1', 2026, {
+      squadId: undefined, place: undefined, finishOf: 's1', finishedSince: new Date('2026-11-14T12:00:00.000Z'),
+    });
   });
 });
 

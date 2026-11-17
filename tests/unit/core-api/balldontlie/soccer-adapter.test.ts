@@ -243,6 +243,31 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
     await expect(harness.adapter.getEventDetails('fifa-wc-2018-knockout')).resolves.toBeNull();
   });
 
+  it('gives an edition\'s games and whole bracket once its round of 32 is set, from one read of its matches (#1728)', async () => {
+    const knockoutMatches = z.object({ data: z.array(worldCupRow) }).parse(readBalldontlieFixture('fifa', 'matches-2026-knockout.json')).data;
+    const harness = setup({ ...defaultRoutes, '/fifa/worldcup/v1/matches': worldCupRoute(knockoutMatches) });
+    restore = harness.restore;
+
+    const detail = await harness.adapter.getEventDetails('fifa-wc-2026-knockout');
+
+    expect(detail).toMatchObject({ externalId: 'fifa-wc-2026-knockout', rounds: 5, participantCount: 32 });
+    expect(detail?.games).toHaveLength(16);
+    expect(detail?.bracket).toHaveLength(31);
+    expect(detail?.bracket?.[30]).toMatchObject({ roundNumber: 5, advancesTo: null });
+    expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?seasons[]=2026&per_page=100']);
+  });
+
+  it('gives no bracket for an edition whose listing is partial, with its field still loaded', async () => {
+    const harness = setup();
+    restore = harness.restore;
+
+    const detail = await harness.adapter.getEventDetails('fifa-wc-2026-knockout');
+
+    expect(detail?.participants.length).toBeGreaterThan(0);
+    expect(detail?.bracket).toBeUndefined();
+    expect(detail?.games).toEqual([]);
+  });
+
   it('gives a bracket\'s match scores in the GAME category, with the 2022 final\'s shoot-out', async () => {
     const harness = setup();
     restore = harness.restore;

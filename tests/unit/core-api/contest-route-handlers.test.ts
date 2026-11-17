@@ -41,6 +41,8 @@ function contestService(overrides: Record<string, unknown> = {}) {
     countEntriesByContest: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 3]]))),
     findEventsForContests: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['event-1', masters]]))),
     findEntryCaps: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 50]]))),
+    countAllEntriesByContest: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 5]]))),
+    findLiveProgress: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', { played: 2, total: 4, unit: 'WEEKS' }]]))),
     listFinishedYears: jest.fn((..._args: unknown[]) => Promise.resolve([2026, 2025])),
     listMyLeagueEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] })),
     getContest: jest.fn((..._args: unknown[]) => Promise.resolve(contest)),
@@ -75,13 +77,16 @@ const contestParams = { contestId: 'contest-1' };
 const entryParams = { contestId: 'contest-1', entryId: 'entry-1' };
 
 describe('contest read handlers', () => {
-  it('lists a league\'s contests for the reader, with entry counts, events and entry caps', async () => {
+  it('lists a league\'s contests for the reader, with entry counts drafts included, events, entry caps and live progress', async () => {
     const fake = contestService();
 
     const reply = await callHandler(handlersOver(fake).listContests, stubRequest({ params: { id: 'league-1' }, query: { finishedYear: 2025 }, authUser: me }));
 
     expect(fake.listByLeague).toHaveBeenCalledWith('league-1', { userId: 'user-1', isRootAdmin: false }, 2025);
-    expect(reply.body).toMatchObject({ contests: [{ id: 'contest-1', entryCount: 3, entriesPerContest: 50, sportEvents: [{ name: 'The Masters' }] }] });
+    expect(reply.body).toMatchObject({ contests: [{
+      id: 'contest-1', entryCount: 3, allEntryCount: 5, entriesPerContest: 50, progress: { played: 2, total: 4, unit: 'WEEKS' }, sportEvents: [{ name: 'The Masters' }],
+    }] });
+    expect(fake.findLiveProgress).toHaveBeenCalledWith([contest], new Map([['event-1', masters]]));
   });
 
   it('lists the years a league finished contests in, and the caller\'s own entries in it', async () => {

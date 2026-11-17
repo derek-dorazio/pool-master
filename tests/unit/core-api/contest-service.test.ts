@@ -212,6 +212,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     predictions: { findByEntriesAndEvent: jest.fn().mockResolvedValue([]), findByEntriesAndEvents: jest.fn().mockResolvedValue([]) },
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents: jest.fn().mockResolvedValue([]) },
     participants: { findByIds: jest.fn().mockResolvedValue([]) },
+    fieldRows: { findByIds: jest.fn().mockResolvedValue([]) },
     standings: fakeContestEntryStandingRepo(),
     eventStandings: fakeContestEntryEventStandingRepo(),
     memberships: createMockMembershipRepo(),
@@ -613,6 +614,52 @@ describe('ContestService', () => {
       expect(counts).toEqual(new Map([['contest-1', 2], ['contest-2', 1]]));
       expect(entryRepo.countSubmittedByContests).toHaveBeenCalledTimes(1);
       expect(entryRepo.findByContest).not.toHaveBeenCalled();
+    });
+
+    it('counts every entry the listed contests hold, drafts included, in one grouped read (#1781)', async () => {
+      const entryRepo = createMockEntryRepo({ countByContests: jest.fn().mockResolvedValue(new Map([['contest-1', 10]])) });
+      const service = buildService({ entries: entryRepo });
+
+      await expect(service.countAllEntriesByContest(['contest-1'])).resolves.toEqual(new Map([['contest-1', 10]]));
+      expect(entryRepo.countByContests).toHaveBeenCalledTimes(1);
+    });
+
+    it('gives each live contest its progress, reading games once for every one-event pick\'em among them and never for a season or a roster contest (#1782)', async () => {
+      const findBySportEvents = jest.fn().mockResolvedValue([
+        { sportEventId: 'week-12', status: 'COMPLETED' },
+        { sportEventId: 'week-12', status: 'IN_PROGRESS' },
+        { sportEventId: 'week-12', status: 'CANCELLED' },
+        { sportEventId: 'week-13', status: 'COMPLETED' },
+        { sportEventId: 'week-13', status: 'SCHEDULED' },
+      ]);
+      const service = buildService({ matches: { findBySportEvent: jest.fn(), findBySportEvents } });
+      const event = (id: string, status: string) => [id, { id, name: id, startDate: new Date(), status }] as const;
+      const eventsById = new Map([event('week-12', 'IN_PROGRESS'), event('week-13', 'IN_PROGRESS'), event('w1', 'COMPLETED'), event('w2', 'IN_PROGRESS'), event('masters', 'IN_PROGRESS')]);
+      const contests = [
+        buildContest({ id: 'one-week', contestFormat: 'PREDICTION', status: 'ACTIVE', sportEventIds: ['week-12'] }),
+        buildContest({ id: 'other-week', contestFormat: 'PREDICTION', status: 'ACTIVE', sportEventIds: ['week-13'] }),
+        buildContest({ id: 'season', contestFormat: 'PREDICTION', status: 'ACTIVE', sportEventIds: ['w1', 'w2'] }),
+        buildContest({ id: 'golf', contestFormat: 'ROSTER', status: 'ACTIVE', sportEventIds: ['masters'] }),
+        buildContest({ id: 'open', contestFormat: 'PREDICTION', status: 'OPEN', sportEventIds: ['week-12'] }),
+      ];
+
+      const progress = await service.findLiveProgress(contests, eventsById as never);
+
+      expect(progress).toEqual(new Map([
+        ['one-week', { played: 1, total: 2, unit: 'GAMES' }],
+        ['other-week', { played: 1, total: 2, unit: 'GAMES' }],
+        ['season', { played: 1, total: 2, unit: 'WEEKS' }],
+      ]));
+      expect(findBySportEvents).toHaveBeenCalledTimes(1);
+      expect(findBySportEvents).toHaveBeenCalledWith(['week-12', 'week-13']);
+    });
+
+    it('reads no games when no listed contest counts them', async () => {
+      const findBySportEvents = jest.fn();
+      const service = buildService({ matches: { findBySportEvent: jest.fn(), findBySportEvents } });
+
+      await expect(service.findLiveProgress([buildContest({ id: 'open', status: 'OPEN', sportEventIds: ['e1'] })], new Map())).resolves.toEqual(new Map());
+      expect(findBySportEvents).not.toHaveBeenCalled();
     });
   });
 

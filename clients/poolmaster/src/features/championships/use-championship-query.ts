@@ -62,19 +62,21 @@ export function useChampionshipQuery(leagueId: string, year: number) {
 /**
  * The contests that went final in a championship year (#837), newest first: every one, or one
  * squad's counted contests, or one cell of its matrix row. `finishOf` puts one squad's finish on
- * every row without narrowing the list (the viewer's team on the Past tab). Asks for nothing until
- * a year is chosen.
+ * every row without narrowing the list (the viewer's team on the Past tab); `finishedSince` keeps
+ * only those gone final since an ISO instant (League Home's last few days, #1782). Asks for
+ * nothing until a year is chosen.
  */
 export function useChampionshipContestsQuery(
   leagueId: string,
   year: number | null,
   filter: ContestResultFilter | null,
   finishOf: string | null = null,
+  finishedSince: string | null = null,
 ) {
   const squadId = filter?.squadId ?? null;
   const place = filter?.place ?? null;
   return useQuery({
-    queryKey: QueryKeys.championship.contests(leagueId, year, squadId, place, finishOf),
+    queryKey: QueryKeys.championship.contests(leagueId, year, squadId, place, finishOf, finishedSince),
     queryFn: async (): Promise<ContestResultSummaryDto[]> => {
       if (year === null) {
         throw new Error('Championship contests asked for without a year.');
@@ -86,6 +88,7 @@ export function useChampionshipContestsQuery(
           ...(squadId === null ? {} : { squadId }),
           ...(place === null ? {} : { place }),
           ...(finishOf === null ? {} : { finishOf }),
+          ...(finishedSince === null ? {} : { finishedSince }),
         },
       });
 

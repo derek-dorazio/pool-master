@@ -1,14 +1,17 @@
-import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
+import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { CompetitionStatusState } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/competition-status';
 import { fifaMatchListSchema, fifaTeamListSchema, type FifaMatch } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-contract';
 import {
   knockoutMatchesOf,
   parseWorldCupScope,
+  bracketMatchesOf,
+  toWorldCupBracket,
   toWorldCupEvent,
   toWorldCupEvents,
   toWorldCupFieldParticipants,
   toWorldCupGameScoreUpdates,
+  toWorldCupScheduledGames,
   toWorldCupTeamParticipant,
   worldCupScopeId,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-mapping';
@@ -132,5 +135,95 @@ describe('World Cup match scores', () => {
   it('refuses a match with both teams but no id, or a team with no id', () => {
     expect(() => toWorldCupGameScoreUpdates([{ ...netherlandsUsa, id: undefined }])).toThrow('a match with both teams has no id');
     expect(() => toWorldCupGameScoreUpdates([{ ...netherlandsUsa, away_team: { name: 'United States' } }])).toThrow('match 2249 has no away team id');
+  });
+});
+
+/**
+ * The 2026 knockout listing as the vendor gives it once the round of 32 is set: every knockout
+ * match from 73 to 104, the round of 32's teams decided, later sides by their source match
+ * ("Winner of Match 74"), but match 89's home side already decided, its source gone.
+ */
+const fullKnockout2026 = knockoutMatchesOf(matchesIn('matches-2026-knockout.json'));
+const byVendorNumber = (number: number): FifaMatch => {
+  const match = fullKnockout2026.find((each) => each.match_number === number);
+  if (!match) throw new Error(`fixture has no match ${String(number)}`);
+  return match;
+};
+const replaced = (number: number, change: Partial<FifaMatch>): FifaMatch[] =>
+  fullKnockout2026.map((match) => (match.match_number === number ? { ...match, ...change } : match));
+
+describe('a World Cup bracket and its games from the feed (#1728)', () => {
+  it('leaves the play-off for third place out of the bracket, by its stage name or a side from a semifinal\'s loser', () => {
+    expect(bracketMatchesOf(fullKnockout2026).map((match) => match.match_number)).not.toContain(103);
+    expect(bracketMatchesOf(fullKnockout2026)).toHaveLength(31);
+    const unnamed = { ...byVendorNumber(103), stage: { name: 'Match for 3rd', order: 6 } };
+    expect(bracketMatchesOf([unnamed])).toEqual([]);
+  });
+
+  it('counts the 2026 knockout as five rounds, the round of 32 to the final, and gives no rounds for a partial listing', () => {
+    expect(toWorldCupEvent(WC_2026, fullKnockout2026).rounds).toBe(5);
+    expect(toWorldCupEvent(WC_2022, knockout2022).rounds).toBeUndefined();
+    expect(toWorldCupEvent(WC_2026, knockout2026).rounds).toBeUndefined();
+  });
+
+  it('numbers the round of 32 in bracket order read back from the final, each pair\'s winners meeting in the next round', () => {
+    const bracket = toWorldCupBracket(fullKnockout2026);
+    expect(bracket).toHaveLength(31);
+    // From the final (104) back: 101 then 102; 97, 98, 99, 100; then the round of 16 and 32 they come from.
+    const vendorOrder = [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87];
+    const homeIds = vendorOrder.map((number) => `fifa-wc-team-${String(byVendorNumber(number).home_team?.id)}`);
+    expect(bracket?.slice(0, 16).map((match) => match.homeTeamExternalId)).toEqual(homeIds);
+    expect(bracket?.[0]).toEqual({
+      matchNumber: 1,
+      roundNumber: 1,
+      homeTeamExternalId: 'fifa-wc-team-23',
+      awayTeamExternalId: 'fifa-wc-team-33',
+      isNeutralSite: true,
+      scheduledAt: new Date(byVendorNumber(74).datetime ?? ''),
+      advancesTo: { matchNumber: 17, side: MatchSide.HOME },
+      regionLabel: null,
+    });
+    expect(bracket?.[1].advancesTo).toEqual({ matchNumber: 17, side: MatchSide.AWAY });
+    expect(bracket?.map((match) => match.roundNumber)).toEqual([...Array<number>(16).fill(1), ...Array<number>(8).fill(2), 3, 3, 3, 3, 4, 4, 5]);
+    expect(bracket?.[16]).toMatchObject({ matchNumber: 17, homeTeamExternalId: null, awayTeamExternalId: null, advancesTo: { matchNumber: 25, side: MatchSide.HOME } });
+    expect(bracket?.[28]).toMatchObject({ matchNumber: 29, scheduledAt: new Date(byVendorNumber(101).datetime ?? ''), advancesTo: { matchNumber: 31, side: MatchSide.HOME } });
+    expect(bracket?.[30]).toMatchObject({ matchNumber: 31, roundNumber: 5, advancesTo: null, scheduledAt: new Date(byVendorNumber(104).datetime ?? '') });
+  });
+
+  it('links a decided side to the match its team won the round before, the same as its source would', () => {
+    const decided = toWorldCupBracket(fullKnockout2026);
+    const bySource = toWorldCupBracket(replaced(89, { home_team: null, home_team_source: { type: 'winner', source_match_number: 74 } }));
+    expect(bySource).toEqual(decided);
+  });
+
+  it('gives no bracket until every round of 32 side is decided', () => {
+    expect(toWorldCupBracket(replaced(80, { away_team: null, away_team_source: { type: 'group_2nd' } }))).toBeNull();
+  });
+
+  it('gives no bracket for a partial listing, or for a side that links to no match of the round before', () => {
+    expect(toWorldCupBracket(knockout2022)).toBeNull();
+    expect(toWorldCupBracket(knockout2026)).toBeNull();
+    expect(toWorldCupBracket(replaced(97, { away_team_source: { type: 'winner', source_match_number: 74 } }))).toBeNull();
+    expect(toWorldCupBracket(replaced(98, { home_team_source: { type: 'winner', source_match_number: 89 } }))).toBeNull();
+    expect(toWorldCupBracket(replaced(91, { home_team_source: null }))).toBeNull();
+  });
+
+  it('gives each bracket match with both teams decided as a game in its round at a neutral site, and no third-place game', () => {
+    const games = toWorldCupScheduledGames(fullKnockout2026);
+    expect(games).toHaveLength(16);
+    expect(games[0]).toEqual({
+      externalGameId: '2673',
+      roundNumber: 1,
+      homeTeamExternalId: `fifa-wc-team-${String(byVendorNumber(73).home_team?.id)}`,
+      awayTeamExternalId: `fifa-wc-team-${String(byVendorNumber(73).away_team?.id)}`,
+      scheduledAt: new Date(byVendorNumber(73).datetime ?? ''),
+      isNeutralSite: true,
+    });
+    const settled = replaced(89, { away_team: { id: 7, name: 'Germany' }, away_team_source: null });
+    expect(toWorldCupScheduledGames(settled).find((game) => game.externalGameId === '2689')).toMatchObject({ roundNumber: 2, homeTeamExternalId: 'fifa-wc-team-23', awayTeamExternalId: 'fifa-wc-team-7' });
+  });
+
+  it('gives no games while the rounds cannot be told from a partial listing', () => {
+    expect(toWorldCupScheduledGames(knockout2026)).toEqual([]);
   });
 });

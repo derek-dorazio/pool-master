@@ -256,7 +256,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     })).data);
     expect(aliceWeek1).toMatchObject({
       selectionType: SelectionType.SURVIVOR, mode: null, pickedCount: 1, tiebreakerMatchId: null, canSubmit: true,
-      survivor: { eliminatedInWeek: null, usedParticipantIds: [] },
+      survivor: { eliminatedInWeek: null, usedTeams: [] },
     });
     expect(aliceWeek1.games.flatMap((game) => (game.pick ? [game.sportEventMatchId] : []))).toEqual([week1.gameId(1)]);
     for (const [client, entryId, pick] of [
@@ -293,7 +293,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
 
     // --- Week 2: Duke is used up for Alice, and Bob is out -----------------------------------------
     const aliceWeek2 = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(week2, entries.alice) })).data);
-    expect(aliceWeek2.survivor?.usedParticipantIds).toEqual([teamIds[0]]);
+    expect(aliceWeek2.survivor?.usedTeams).toEqual([{ participantId: teamIds[0], weekNumber: 1 }]);
     expectFunctionalError(
       await saveGamePicks({ client: alice.client, path: path(week2, entries.alice), body: { picks: [week2.pick(1, 'home')] } }),
       { status: 409, code: 'PREDICTION_TEAM_ALREADY_USED' },

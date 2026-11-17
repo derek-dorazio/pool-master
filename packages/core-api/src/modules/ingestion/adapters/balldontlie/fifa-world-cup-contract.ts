@@ -1,5 +1,5 @@
 /**
- * The BALLDONTLIE FIFA World Cup responses, as far as PoolMaster reads them (#1496): an
+ * The BALLDONTLIE FIFA World Cup responses, as far as PoolMaster reads them (#1496, #1728): an
  * edition's matches and teams (`/fifa/worldcup/v1`).
  *
  * Built the way `nfl-contract.ts` is: each schema names only the fields the adapter uses, with
@@ -34,18 +34,38 @@ export const fifaSeasonSchema = z.object({
   year: z.number().int().optional(),
 });
 
+/** `FIFAStage`: a match's stage, by name ("Round of 16") and its place in the edition's order. */
+export const fifaStageSchema = z.object({
+  name: z.string().optional(),
+  order: z.number().int().optional(),
+});
+
+/**
+ * `FIFAMatchTeamSource`: where a knockout side not yet decided comes from: the winner (or loser)
+ * of an earlier match by its number, or a group's place.
+ */
+export const fifaMatchTeamSourceSchema = z.object({
+  type: z.string().optional(),
+  source_match_number: z.number().int().nullable().optional(),
+});
+export type FifaMatchTeamSource = z.infer<typeof fifaMatchTeamSourceSchema>;
+
 /** `FIFAGroup`: read only for whether a match has one, which makes it a group stage match. */
 export const fifaGroupSchema = z.object({});
 
 /** `FIFAMatch`, from an edition's matches. A knockout side is null until it is decided. */
 export const fifaMatchSchema = z.object({
   id: z.number().int().optional(),
+  match_number: z.number().int().nullable().optional(),
   datetime: z.iso.datetime({ offset: true }).optional(),
   status_state: competitionStatusStateSchema,
   season: fifaSeasonSchema.optional(),
+  stage: fifaStageSchema.optional(),
   group: fifaGroupSchema.nullable().optional(),
   home_team: fifaTeamSchema.nullable().optional(),
   away_team: fifaTeamSchema.nullable().optional(),
+  home_team_source: fifaMatchTeamSourceSchema.nullable().optional(),
+  away_team_source: fifaMatchTeamSourceSchema.nullable().optional(),
   home_score: z.number().int().nullable().optional(),
   away_score: z.number().int().nullable().optional(),
   home_score_penalties: z.number().int().nullable().optional(),

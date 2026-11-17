@@ -49,8 +49,8 @@ export type PredictionIssue =
  * participant, and whether it is already out. Read only for an engine that `readsEarlierWeeks`.
  */
 export interface PredictionSeason {
-  /** The teams, by participant, the entry picked in the other events it submitted. This event's own rounds are read from its picks. */
-  usedParticipantIds: ReadonlySet<string>;
+  /** The teams, by participant, the entry picked in the other events it submitted, each to the week number it was picked in. This event's own rounds are read from its picks. */
+  usedTeamWeeks: ReadonlyMap<string, number>;
   /** The week number (1 for the contest's first week) that put the entry out; null while it stands. */
   eliminatedInWeek: number | null;
   /** Each field row of this week's event, by id, to its participant. */

@@ -120,7 +120,7 @@ describe('survivor week helpers', () => {
   });
 
   it('lets an entry that is out change nothing, and keeps a pick whose game has kicked off as the week\'s', () => {
-    expect(canChangeWeek(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] } }))).toBe(false);
+    expect(canChangeWeek(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] } }))).toBe(false);
     const kickedOff = week1Games({ 2: { locked: true, pick: weekPick(NFL_TEAMS.chiefs) } });
     expect(canChangeWeek(survivorWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(false);
     expect(canChangeWeek(pickEmWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(true);
@@ -140,13 +140,14 @@ describe('playoff survivor helpers', () => {
     expect(currentWeekRound({ games: playoff.games.map((game) => ({ ...game, locked: false })) })).toBe(1);
   });
 
-  it('shows one round as its own week, counting its picks and marking teams picked in other rounds as used', () => {
+  it('shows one round as its own week, counting its picks and marking teams picked in other rounds as used in that round\'s week', () => {
     const round2 = roundWeek(playoffSurvivorFixture(), 2);
     expect(round2.games.map((game) => game.sportEventMatchId)).toEqual(['match-2', 'match-3']);
     expect(round2.gameCount).toBe(2);
     expect(round2.pickedCount).toBe(0);
     expect(isTeamUsed(round2, NFL_TEAMS.bills)).toBe(true);
     expect(isTeamUsed(round2, NFL_TEAMS.bears)).toBe(false);
+    expect(round2.survivor?.usedTeams).toEqual([{ participantId: NFL_TEAMS.bills.participantId, weekNumber: 1 }]);
 
     const round1 = roundWeek(playoffSurvivorFixture(), 1);
     expect(round1.pickedCount).toBe(1);

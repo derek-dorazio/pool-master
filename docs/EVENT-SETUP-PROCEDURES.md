@@ -297,7 +297,9 @@ league phase's top eight are placed straight into the Round of 16 (a bye scores 
 each two-legged tie is one game of the bracket, scored on aggregate, scheduled at the first
 leg, its home side the first leg's host. A tie level on aggregate goes to its shoot-out, as a
 single match does. The Copa América starts at the quarter-finals; every other competition
-starts on four tiers of four.
+starts on four tiers of four. Where the World Cup's sync is live, the feed loads its knockout
+bracket instead, in FIFA's own order rather than by ranking, once every round of 32 team is
+decided (`LIVE-SPORTS-DATA-SYNC.md` *2d*).
 
 Soccer's club and college playoffs are four more sport leagues, each naming its own rounds:
 MLS, the NWSL, and the NCAA Division I men's and women's tournaments. MLS starts at its wild

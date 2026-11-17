@@ -63,7 +63,7 @@ async function seedLeague() {
 }
 
 describe('PrismaChampionshipRepository (#863)', () => {
-  it('writes a contest\'s finishes once, keeping the first when settlement writes them again, and reads them back by league and year', async () => {
+  it('writes a contest\'s finishes once, keeping the first when settlement writes them again, and reads them back by league and year, or only those settled since a moment', async () => {
     const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, squads, contest } = await seedLeague();
     const masters = await contest('Masters');
@@ -90,6 +90,9 @@ describe('PrismaChampionshipRepository (#863)', () => {
       [squads.birdies.id, 2, 800],
     ]);
     await expect(repo.findByLeagueYear(league.id, 2025)).resolves.toEqual([]);
+    // Settled at 23:00: kept from that moment, left out after it (#1782).
+    await expect(repo.findByLeagueYear(league.id, 2026, new Date('2026-04-12T23:00:00.000Z'))).resolves.toHaveLength(2);
+    await expect(repo.findByLeagueYear(league.id, 2026, new Date('2026-04-12T23:00:00.001Z'))).resolves.toEqual([]);
     await expect(repo.findByLeague(league.id)).resolves.toHaveLength(2);
   });
 

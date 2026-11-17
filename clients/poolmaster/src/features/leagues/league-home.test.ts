@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import { MatchStatus } from '@poolmaster/shared/domain';
-import { buildBracketTopStandings, buildTopStandings, countsEventGames, describeLiveProgress, splitHomeContests } from './league-home';
+import { buildBracketTopStandings, buildTopStandings, describeLiveProgress, splitHomeContests } from './league-home';
 import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixtures';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
@@ -90,6 +89,14 @@ describe('splitHomeContests', () => {
     expect(more.map((contest) => contest.id)).toEqual(['full']);
   });
 
+  it('treats a contest full only of drafts as full, from the list\'s count of every entry', () => {
+    const fullOfDrafts = onEvent('drafts', '2026-04-18T12:00:00.000Z', { entriesPerContest: 4, entryCount: 1, allEntryCount: 4 });
+    const { heroes, more } = splitHomeContests([fullOfDrafts, openSoon], { now: NOW, showDrafts: false });
+
+    expect(heroes.map((contest) => contest.id)).toEqual(['open-soon']);
+    expect(more.map((contest) => contest.id)).toEqual(['drafts']);
+  });
+
   it('makes no hero of an open contest whose entries have closed before it went live', () => {
     const closed = onEvent('closed', '2026-04-14T12:00:00.000Z');
 
@@ -102,48 +109,15 @@ describe('splitHomeContests', () => {
 });
 
 describe('describeLiveProgress', () => {
-  function event(id: string, status: 'COMPLETED' | 'IN_PROGRESS' | 'SCHEDULED') {
-    return { sportEventId: id, sequence: 1, name: id, startDate: '2026-04-10T12:00:00.000Z', endDate: null, status, participantType: null, scoringFamily: null };
-  }
-
-  it("counts a season pick'em or survivor in weeks played, never calling a week a game", () => {
-    const contest = contestFixture({
-      id: 'pickem',
-      contestFormat: 'PREDICTION',
-      sportEvents: [event('a', 'COMPLETED'), event('b', 'COMPLETED'), event('c', 'IN_PROGRESS')],
-    });
-
-    expect(describeLiveProgress(contest)).toBe('2 of 3 weeks played');
-    expect(countsEventGames(contest)).toBe(false);
+  it('words the list\'s progress in its unit: games, weeks or events played', () => {
+    expect(describeLiveProgress({ progress: { played: 9, total: 14, unit: 'GAMES' } }, 'en-US')).toBe('9 of 14 games played');
+    expect(describeLiveProgress({ progress: { played: 11, total: 18, unit: 'WEEKS' } }, 'en-US')).toBe('11 of 18 weeks played');
+    expect(describeLiveProgress({ progress: { played: 1, total: 2, unit: 'EVENTS' } }, 'en-US')).toBe('1 of 2 events played');
   });
 
-  it("counts a one-week pick'em's games played, leaving cancelled games out", () => {
-    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
-    const games = [
-      ...Array.from({ length: 9 }, () => ({ status: MatchStatus.COMPLETED })),
-      ...Array.from({ length: 5 }, () => ({ status: MatchStatus.SCHEDULED })),
-      { status: MatchStatus.CANCELLED },
-    ];
-
-    expect(countsEventGames(contest)).toBe(true);
-    expect(describeLiveProgress(contest, games)).toBe('9 of 14 games played');
-  });
-
-  it("says nothing for a one-event prediction contest until its games are read, or when it is a single game", () => {
-    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
-
-    expect(describeLiveProgress(contest)).toBeNull();
-    expect(describeLiveProgress(contest, [{ status: MatchStatus.IN_PROGRESS }])).toBeNull();
-  });
-
-  it('counts events played for a contest of several events that are not games', () => {
-    const contest = contestFixture({ id: 'season', sportEvents: [event('a', 'COMPLETED'), event('b', 'SCHEDULED')] });
-
-    expect(describeLiveProgress(contest)).toBe('1 of 2 events played');
-  });
-
-  it('says nothing for a contest of one event, whose progress is its leaderboard', () => {
-    expect(describeLiveProgress(contestFixture({ id: 'one', sportEvents: [event('a', 'IN_PROGRESS')] }))).toBeNull();
+  it('says nothing where the list gives no progress', () => {
+    expect(describeLiveProgress({ progress: null }, 'en-US')).toBeNull();
+    expect(describeLiveProgress({}, 'en-US')).toBeNull();
   });
 });
 

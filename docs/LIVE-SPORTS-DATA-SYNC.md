@@ -287,8 +287,41 @@ standings are read only once the whole first round is out, so an NBA playoffs is
 matches until the play-in is played. The vendor documents no tier for the standings: where the
 plan refuses them (401 or 403), the read logs `balldontlie.playoffs.standingsRefused` and carries on
 with the field and the series games but no bracket, which an admin then builds; any other failure
-fails the read as before. The NHL's and MLB's postseasons give no games yet: an admin builds their
-brackets.
+fails the read as before. MLB's teams list is read the same way (`balldontlie.playoffs.teamsRefused`).
+When the reads succeed but the standings do not place the whole first round, the read logs
+`balldontlie.playoffs.bracketUnplaced` and loads no bracket, so a refusal is never silent. **The NHL's bracket** is seeded by division instead
+(`BracketShapeKind.DIVISIONS`): `/nhl/v1/standings` gives no rank, so every team is ranked across
+the league by points, then regulation wins, regulation and overtime wins, and wins
+(`toNhlSeedRanks`; the league's later tie-breaks are not read). In each conference, East first,
+each division has two first-round series, told by its teams: its best-ranked team is its winner,
+whose series is whichever one it plays (the wild card it meets may have more points and be home),
+and its other series is the one between two more of its own teams, its second and third. The
+winner's series is listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is
+each match's region.
+Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. **MLB's
+bracket** has byes (`BracketShapeKind.BYES`): `/mlb/v1/standings` gives no seed, so each league's
+division winners are seeded 1 to 3 by `league_rank` and its next three clubs 4 to 6 (`toMlbSeeds`;
+a league with a club missing either place gets no seeds). In each league, American first, the
+Wild Card Series are 4 v 5 and 3 v 6, the 1 seed hosts the 4/5 winner and the 2 seed the 3/6
+winner in the Division Series, and the 1 seed's half hosts the League Championship Series; the
+American League's champion is home in the World Series, display only (home field there goes to the
+better record, which is not modelled). The two top seeds play no
+first-round game, so the read also takes the league's teams (`/mlb/v1/teams`) and adds them to the
+field, since the slate loads nothing while a bracket team is missing from it.
+
+**The World Cup's knockout bracket** is single games, built from the edition's
+`/fifa/worldcup/v1/matches` (`fifa-world-cup-mapping.ts`). The play-off for third place fits no
+match of the site's bracket and is left out (`bracketMatchesOf`). The rounds are the knockout
+stages in the vendor's stage order, the first one round 1: five from 2026, the round of 32 on, and
+four before; a listing that skips a stage or is not a whole bracket's worth tells no rounds, and
+gives no games or bracket. Each later match names the matches its sides come from
+(`home_team_source`, "Winner of Match 74") until a side is decided, when the team stands there
+instead, so the bracket (`toWorldCupBracket`) reads the order back from the final: each match puts
+the match its home side comes from (by source, or the one its team won) before its away side's,
+the round of 32 numbered 1 to 16 in that order and each later round below it, each side the
+vendor's home or away, every match at a neutral site with no region. It loads once every round of
+32 team is decided. The games are the bracket's matches with both teams decided
+(`toWorldCupScheduledGames`).
 
 ## 3. Triggers
 
@@ -576,6 +609,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   `seasons`, not `seasons[]`; a game is placed on its `game_date`, since `start_time_utc` has no
   documented format. The teams list keeps only teams in a conference, leaving out a moved or folded
   franchise.
+- **Bracket.** `NHL_PLAYOFFS.bracket` seeds by division from `/nhl/v1/standings` points
+  (`toNhlSeedRanks`) once the first round is out, and gives each series as a game (*2d*).
 - **Key code.** `nhl-contract.ts`; `nhl-mapping.ts` `NHL_PLAYOFFS`, `nhlPlayoffsSource`,
   `toNhlPlayoffGame`, `isNhlFranchise`.
 
@@ -588,6 +623,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   are no series, so their first series is round 2. No round is listed until MLB reads box scores.
 - **Sync.** As the NBA bracket's, a side's runs being its score. The teams list keeps only the
   American and National League clubs, so an All-Star side is left out.
+- **Bracket.** `MLB_POSTSEASON.bracket` seeds six clubs a league from `/mlb/v1/standings`
+  (`toMlbSeeds`), the top two with byes, and gives each series as a game (*2d*).
 - **Key code.** `mlb-contract.ts`; `mlb-mapping.ts` `MLB_POSTSEASON`, `mlbPostseasonSource`,
   `toMlbPlayoffGame`, `isMlbClub`.
 
@@ -628,13 +665,15 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   `toPlayoffRoundEvent`, `toPlayoffRoundBoxScores`, `toPlayoffPlayerParticipant`;
   `nba-mapping.ts` `toNbaStatLine`, `toNbaPlayoffPlayer`.
 
-### Premier League (#1496 part 4c) and World Cup (#1496 part 4d)
+### Premier League (#1496 part 4c) and World Cup (#1496 part 4d, #1728)
 
 - **Registration.** Keywords `EPL` / `FIFAWC` by migration. A Premier League matchweek is the
   season's matches grouped by round number and forms no bracket, so a draw is a result. A World
   Cup edition's knockout bracket is one event.
 - **Sync.** `EplReader.liveScores` / `WorldCupReader.liveScores`. World Cup games level after
   extra time carry shoot-out scores, which the writer uses to name the winner.
+- **Bracket.** The World Cup's games and whole knockout bracket come from its matches' stages and
+  team sources: see *2d*.
 - **Key code.** `epl-mapping.ts`, `epl-reader.ts`, `fifa-world-cup-mapping.ts`,
   `fifa-world-cup-reader.ts`, shared `competition-status.ts` (the vendor's game states to ours).
 
@@ -656,8 +695,8 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks), the NFL postseason, the NCAA men's tournament and the NBA's and WNBA's
-  playoffs: see *2d*. Still to come are the other fixed-shape playoffs (NHL, MLB, World Cup). The
+  League matchweeks), the NFL postseason, the NCAA men's tournament, the NBA's, WNBA's and NHL's
+  playoffs, MLB's postseason and the World Cup's knockout stage: see *2d*. The
   CFP has no committee seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).

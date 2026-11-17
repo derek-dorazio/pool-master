@@ -31,6 +31,23 @@ export const nhlTeamListSchema = z.object({
   meta: balldontliePaginationSchema.optional(),
 });
 
+/**
+ * `NHLStanding` from `/nhl/v1/standings`: a team's points and the counts that break a tie, from
+ * which the bracket ranks the teams (the document gives no rank or seed).
+ */
+export const nhlStandingSchema = z.object({
+  team: nhlTeamSchema.optional(),
+  points: z.number().int().optional(),
+  regulation_wins: z.number().int().optional(),
+  regulation_plus_ot_wins: z.number().int().optional(),
+  wins: z.number().int().optional(),
+});
+export type NhlStanding = z.infer<typeof nhlStandingSchema>;
+
+export const nhlStandingListSchema = z.object({
+  data: z.array(nhlStandingSchema),
+});
+
 /** `NHLGame` from `/nhl/v1/games`. */
 export const nhlGameSchema = z.object({
   id: z.number().int().optional(),

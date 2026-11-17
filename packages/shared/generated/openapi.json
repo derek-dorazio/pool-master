@@ -27494,7 +27494,7 @@
             "maximum": 9007199254740991
           },
           "allEntryCount": {
-            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
@@ -27505,6 +27505,42 @@
             "items": {
               "type": "string"
             }
+          },
+          "progress": {
+            "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "played": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "How many have been played: games, weeks or events, as `unit` says."
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "How many there are, cancelled ones left out."
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "GAMES",
+                  "WEEKS",
+                  "EVENTS"
+                ],
+                "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+              }
+            },
+            "required": [
+              "played",
+              "total",
+              "unit"
+            ],
+            "additionalProperties": false
           },
           "entriesPerContest": {
             "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -27558,6 +27594,39 @@
         ],
         "additionalProperties": false,
         "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
+      },
+      "ContestProgressDto": {
+        "type": "object",
+        "properties": {
+          "played": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many have been played: games, weeks or events, as `unit` says."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many there are, cancelled ones left out."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "GAMES",
+              "WEEKS",
+              "EVENTS"
+            ],
+            "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+          }
+        },
+        "required": [
+          "played",
+          "total",
+          "unit"
+        ],
+        "additionalProperties": false,
+        "description": "How far a live contest has got (#1782): \"9 of 14 games played\", \"11 of 18 weeks played\"."
       },
       "ContestEntryDto": {
         "type": "object",
@@ -29586,7 +29655,7 @@
                 "maximum": 9007199254740991
               },
               "allEntryCount": {
-                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
@@ -29597,6 +29666,42 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "progress": {
+                "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "played": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "How many have been played: games, weeks or events, as `unit` says."
+                  },
+                  "total": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many there are, cancelled ones left out."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "GAMES",
+                      "WEEKS",
+                      "EVENTS"
+                    ],
+                    "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+                  }
+                },
+                "required": [
+                  "played",
+                  "total",
+                  "unit"
+                ],
+                "additionalProperties": false
               },
               "entriesPerContest": {
                 "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29821,7 +29926,7 @@
                   "maximum": 9007199254740991
                 },
                 "allEntryCount": {
-                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
@@ -29832,6 +29937,42 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "progress": {
+                  "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "played": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "How many have been played: games, weeks or events, as `unit` says."
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many there are, cancelled ones left out."
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "GAMES",
+                        "WEEKS",
+                        "EVENTS"
+                      ],
+                      "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+                    }
+                  },
+                  "required": [
+                    "played",
+                    "total",
+                    "unit"
+                  ],
+                  "additionalProperties": false
                 },
                 "entriesPerContest": {
                   "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -31575,13 +31716,102 @@
                           "string",
                           "null"
                         ]
+                      },
+                      "teamShortName": {
+                        "description": "The picked team's short name (\"KC\") when it has one, shown with the team; else null.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "game": {
+                        "description": "The picked team's game, shown with the team: null whenever the team is.",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "opponent": {
+                            "type": "string",
+                            "description": "The team the picked team played."
+                          },
+                          "opponentShortName": {
+                            "description": "The opponent's short name (\"BUF\") when it has one.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "side": {
+                            "type": "string",
+                            "enum": [
+                              "HOME",
+                              "AWAY"
+                            ],
+                            "description": "Whether the picked team was HOME or AWAY: \"KC v BUF\" at home, \"KC at BUF\" away."
+                          },
+                          "isNeutralSite": {
+                            "type": "boolean",
+                            "description": "The game is at neither team's home ground: \"KC v BUF\" either way."
+                          },
+                          "scheduledDate": {
+                            "description": "Kickoff, when known.",
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "CANCELLED",
+                              "POSTPONED"
+                            ],
+                            "description": "The game's status: COMPLETED once its result is in."
+                          },
+                          "teamScore": {
+                            "description": "The picked team's score, once there is one.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "opponentScore": {
+                            "description": "The opponent's score, once there is one.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "opponent",
+                          "opponentShortName",
+                          "side",
+                          "isNeutralSite",
+                          "scheduledDate",
+                          "status",
+                          "teamScore",
+                          "opponentScore"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
                       "sportEventId",
                       "roundNumber",
                       "outcome",
-                      "team"
+                      "team",
+                      "teamShortName",
+                      "game"
                     ],
                     "additionalProperties": false,
                     "description": "One entry's week of a survivor contest."
@@ -32156,21 +32386,65 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               },
-              "usedParticipantIds": {
-                "description": "The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team's entry, as they could show picks not yet revealed.",
+              "usedTeams": {
+                "description": "The teams the entry picked in its other submitted weeks, a lost week's included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team's entry, as they could show picks not yet revealed.",
                 "type": [
                   "array",
                   "null"
                 ],
                 "items": {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "object",
+                  "properties": {
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team, by participant: the same team in every week's field."
+                    },
+                    "weekNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The week the entry picked it in, 1 for the contest's first week."
+                    }
+                  },
+                  "required": [
+                    "participantId",
+                    "weekNumber"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A team a survivor entry has already used (#1757)."
                 }
+              },
+              "roundWeeks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "roundNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "weekNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "1 for the contest's first week."
+                    }
+                  },
+                  "required": [
+                    "roundNumber",
+                    "weekNumber"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "The week number each of this event's rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week."
               }
             },
             "required": [
               "eliminatedInWeek",
-              "usedParticipantIds"
+              "usedTeams",
+              "roundWeeks"
             ],
             "additionalProperties": false
           },
@@ -57633,6 +57907,11 @@
             "minimum": 1,
             "maximum": 10
           },
+          "finishedSince": {
+            "description": "Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year.",
+            "type": "string",
+            "format": "date-time"
+          },
           "finishOf": {
             "description": "The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.",
             "type": "string",
@@ -74624,7 +74903,7 @@
         "tags": [
           "History"
         ],
-        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -74657,6 +74936,16 @@
             "name": "place",
             "required": false,
             "description": "With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED)."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "finishedSince",
+            "required": false,
+            "description": "Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year."
           },
           {
             "schema": {
