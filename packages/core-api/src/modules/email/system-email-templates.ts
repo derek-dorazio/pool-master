@@ -2725,17 +2725,18 @@ function placeCallout(line: StandingsLine, note: string | null): string {
     <tr>
       <td width="1" style="padding:16px 0 16px 18px;font-family:Archivo,Arial,sans-serif;font-size:40px;font-weight:800;line-height:1;color:${EMAIL_THEME.navy};white-space:nowrap;vertical-align:middle;">${escapeHtml(ordinalPlace(line.place ?? ''))}</td>
       <td style="padding:16px 18px;font-size:15px;line-height:1.45;color:${EMAIL_THEME.navy};vertical-align:middle;">
-        <strong>${escapeHtml(line.entryName)}${line.score === null ? '' : ` · ${escapeHtml(line.score)}`}</strong>
+        <strong>${line.entryUrl ? entryLink(line.entryName, line.entryUrl) : escapeHtml(line.entryName)}${line.score === null ? '' : ` · ${escapeHtml(line.score)}`}</strong>
         ${note === null ? '' : `<br><span style="color:${EMAIL_THEME.ink};">${escapeHtml(note)}</span>`}
       </td>
     </tr>
   </table>`;
 }
 
-/** The callout's plain-text twin: "Your place: 3rd, Fairway Bandits, -8". */
+/** The callout's plain-text twin: "Your place: 3rd, Fairway Bandits, -8", then the entry's link when it has one. */
 function placeCalloutLine(line: StandingsLine, note: string | null): string {
   const place = `Your place: ${ordinalPlace(line.place ?? '')}, ${line.entryName}${line.score === null ? '' : `, ${line.score}`}`;
-  return note === null ? place : `${place}. ${note}`;
+  const sentence = note === null ? place : `${place}. ${note}`;
+  return line.entryUrl ? `${sentence} <${line.entryUrl}>` : sentence;
 }
 
 /** The header's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */

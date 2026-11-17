@@ -615,7 +615,7 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.subject).toBe('After Week 1: NFL Pick\'em');
     expect(toBen.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${week1.id}:week:${ben.user.id}`);
     expect(toBen.textBody).toContain('Week 1 is done. Entry e1 won the week.');
-    expect(toBen.textBody).toContain('Week 1, everyone:\n1. Entry e1, 12\n2. Entry e2, yours, 9\n');
+    expect(toBen.textBody).toContain(`Week 1, everyone:\n1. Entry e1, 12\n2. Entry e2, yours, 9 <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>\n`);
     expect(toBen.textBody).toContain(`Season standings, by points:\n1. Entry e1, 12\n2. Entry e2, yours, 9 <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>\n3. Entry e3, yours, 0`);
     expect(toBen.textBody).toContain('Next week: Week 2, first kickoff');
     expect(toBen.textBody).toContain(`Make picks for next week: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);

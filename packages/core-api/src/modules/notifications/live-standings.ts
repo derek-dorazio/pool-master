@@ -136,7 +136,7 @@ interface StandingsBoardRow {
 /** A standings email's board: the moment, the contest's entries best first, and each reader's own news. */
 interface StandingsBoard {
   /** The moment as one reader sees it: a pick'em week's leaders mark the reader's entries. */
-  momentFor: (ownsSquad: (squadId: string) => boolean) => StandingsMoment;
+  momentFor: (ownsSquad: (squadId: string) => boolean, entryUrlOf: (entryId: string) => string) => StandingsMoment;
   rows: StandingsBoardRow[];
   /** The reader's own news; `entryUrlOf` links one of their entries opened on the contest page. */
   personal: (
@@ -404,7 +404,7 @@ export class LiveStandings implements DueNotifications {
       .sort((left, right) => left.position - right.position);
     const weekLeaders = weekRows.slice(0, leaderCount(weekRows));
     return {
-      momentFor: (ownsSquad) => ({
+      momentFor: (ownsSquad, entryUrlOf) => ({
         kind: StandingsMomentKind.PICK_EM_WEEK,
         eventName: sportEvent.name,
         winners: leaderboard.entries
@@ -416,6 +416,7 @@ export class LiveStandings implements DueNotifications {
           score: week.points === null ? null : String(week.points),
           movement: null,
           isYours: ownsSquad(entry.squadId),
+          ...(ownsSquad(entry.squadId) && { entryUrl: entryUrlOf(entry.entryId) }),
         })),
         weekEntryCount: weekRows.length,
         nextWeek,
@@ -571,7 +572,7 @@ export class LiveStandings implements DueNotifications {
             leagueName: league.name,
             contestName: contest.name,
             event,
-            moment: board.momentFor(ownsSquad),
+            moment: board.momentFor(ownsSquad, entryUrlOf),
             top: lines.slice(0, leaders),
             yours: lines.slice(leaders).filter((line) => line.isYours),
             entryCount: lines.length,

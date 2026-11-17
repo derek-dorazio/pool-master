@@ -1047,6 +1047,26 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.html).toContain('>T2</td>');
   });
 
+  it('links the entry named in the reader\'s place callout to that entry opened on the contest page, in HTML and text', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
+    const final = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
+    const greenUrl = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
+
+    expect(message.text).toContain(`Your place: T2, Green Jackets, -9. Same place as the last update. <${greenUrl}>`);
+    expect(message.html).toMatch(new RegExp(`<a href="${greenUrl.replace(/[.?]/g, '\\$&')}"[^>]*>Green Jackets</a> · -9`));
+    expect(final.text).toContain(`Your place: 1st, Green Jackets, -14. Your final place. <${greenUrl}>`);
+  });
+
+  it('leaves the place callout unlinked when the reader\'s line carries no entry link', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+      ...standings,
+      top: standings.top.map((line) => ({ ...line, entryUrl: undefined })),
+      yours: standings.yours.map((line) => ({ ...line, entryUrl: undefined })),
+    }, UTC);
+
+    expect(message.text).toMatch(/Your place: T2, Green Jackets, -9\. Same place as the last update\.\n/);
+  });
+
   it('marks the reader\'s rows "YOU" on a gold tint and leaves everyone else\'s plain', () => {
     const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
 
@@ -1079,11 +1099,11 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.html).toContain('Morgan Member · -14');
   });
 
-  it('links the reader\'s entries in the final results, the congratulations included, to each entry opened on the contest page', () => {
+  it('links the reader\'s entries in the final results, the congratulations and their place callout included, to each entry opened on the contest page', () => {
     const message = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
     const green = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
 
-    expect(message.html.match(new RegExp(`<a href="${green.replace(/[?.]/g, '\\$&')}"`, 'g'))).toHaveLength(2);
+    expect(message.html.match(new RegExp(`<a href="${green.replace(/[?.]/g, '\\$&')}"`, 'g'))).toHaveLength(3);
     expect(message.html).toContain('?entry=entry-long');
     expect(message.text).toContain(`Congratulations, Morgan Member won Masters Pick 6 with Green Jackets! <${green}>`);
   });
