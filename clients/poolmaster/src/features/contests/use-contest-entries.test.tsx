@@ -97,6 +97,8 @@ describe('useMyContestEntries', () => {
       'contest-a': { entryId: 'a-2', position: 3, displayPosition: 'T3' },
       'contest-b': { entryId: 'b-1', position: 1, displayPosition: '1' },
     });
+    expect(result.current.placeByEntryId.get('a-1')).toEqual({ entryId: 'a-1', position: 7, displayPosition: '7' });
+    expect(result.current.placeByEntryId.get('a-2')?.displayPosition).toBe('T3');
   });
 
   it('has no places before the entries are read', () => {

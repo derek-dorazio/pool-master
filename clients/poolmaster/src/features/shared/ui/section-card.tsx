@@ -229,6 +229,7 @@ export function SectionRow({
 }) {
   const linkRef = useRef<HTMLAnchorElement>(null);
   const rowRef = useRef<HTMLElement>(null);
+  const nameId = useId();
   useEffect(() => {
     if (isHighlighted) {
       (linkRef.current ?? rowRef.current)?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -273,7 +274,7 @@ export function SectionRow({
       {picture ? <span className="block aspect-[16/10] w-16 flex-none self-start overflow-hidden rounded-md sm:w-24 sm:self-center" data-testid={testId ? `${testId}-picture` : undefined}>{picture}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-semibold text-foreground">{name}</span>
+          <span className="truncate font-semibold text-foreground" id={nameId}>{name}</span>
           {nameAddon}
         </span>
         {facts ? <span className="block text-sm text-muted-foreground">{facts}</span> : null}
@@ -300,9 +301,7 @@ export function SectionRow({
           ref={rowRef as RefObject<HTMLDivElement>}
         >
           {to ? (
-            <Link aria-current={ariaCurrent} className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" data-testid={testId ? `${testId}-link` : undefined} ref={linkRef} to={to}>
-              <span className="sr-only">{typeof name === "string" ? name : "Open"}</span>
-            </Link>
+            <Link aria-current={ariaCurrent} aria-labelledby={nameId} className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" data-testid={testId ? `${testId}-link` : undefined} ref={linkRef} to={to} />
           ) : null}
           {content}
           <span className="relative flex w-full flex-wrap items-center gap-2 sm:w-auto" data-testid={testId ? `${testId}-actions` : undefined}>{actions}</span>

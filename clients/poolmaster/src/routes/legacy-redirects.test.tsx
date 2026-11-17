@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import {
   LegacyContestCreateRedirect,
+  LegacyContestHistoryRedirect,
   LegacyContestManageRedirect,
   LegacyContestTypesRedirect,
   LegacyGolfManageRedirect,
+  LegacyLeagueContestsRedirect,
   LegacyManageContestsRedirect,
 } from './legacy-redirects';
 
@@ -39,6 +41,50 @@ function renderAt(path: string) {
     </MemoryRouter>,
   );
 }
+
+function FullLocationProbe() {
+  const location = useLocation();
+  return <div data-testid="full-location">{`${location.pathname}${location.search}`}</div>;
+}
+
+function renderContestsLinkAt(path: string) {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route element={<LegacyLeagueContestsRedirect />} path="/league/:leagueCode/contests" />
+        <Route element={<LegacyContestHistoryRedirect />} path="/league/:leagueCode/contests/history" />
+        <Route element={<FullLocationProbe />} path="/league/:leagueCode" />
+        <Route element={<FullLocationProbe />} path="/league/:leagueCode/team" />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('Links to the Contests tab, which folded into Home and My team', () => {
+  it('sends the old Contests list to League Home', () => {
+    renderContestsLinkAt('/league/BIGDAWGS/contests');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent(/^\/league\/BIGDAWGS$/);
+  });
+
+  it('keeps the contest an old Contests link focused on, so Home tints it', () => {
+    renderContestsLinkAt('/league/BIGDAWGS/contests?focus=contest-9');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent('/league/BIGDAWGS?focus=contest-9');
+  });
+
+  it('sends the old Past view to My team\'s full Past contests at the year and contest it named', () => {
+    renderContestsLinkAt('/league/BIGDAWGS/contests/history?year=2025&focus=contest-9');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent('/league/BIGDAWGS/team?past=all&pastYear=2025&focus=contest-9');
+  });
+
+  it('opens Past contests on its newest year when the old link named none, or a year that is not one', () => {
+    renderContestsLinkAt('/league/BIGDAWGS/contests/history?year=soon');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent(/^\/league\/BIGDAWGS\/team\?past=all$/);
+  });
+});
 
 describe('Contest setup links from before Commissioner tools', () => {
   it('sends the old Manage Contests link to the Commissioner tools contest list', () => {

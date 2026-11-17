@@ -354,7 +354,7 @@ export default tseslint.config(
       'clients/poolmaster/src/features/event-pages/event-page.tsx',
       'clients/poolmaster/src/features/event-pages/components/next-up-card.tsx',
       'clients/poolmaster/src/features/auth/auth-home-page.tsx',
-      'clients/poolmaster/src/features/leagues/league-home-cards.tsx',
+      'clients/poolmaster/src/features/leagues/league-home-heroes.tsx',
       'clients/poolmaster/src/features/contests/lifecycle-panel.tsx',
       'clients/poolmaster/src/features/shared/ui/page-templates.tsx',
     ],

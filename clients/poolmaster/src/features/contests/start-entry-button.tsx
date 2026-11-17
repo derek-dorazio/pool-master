@@ -28,8 +28,8 @@ export function StartEntryButton({
   leagueCode: string;
   size?: 'sm';
   testId: string;
-  /** `secondary` beside another action, such as Add entry beside Edit picks on League Home. */
-  variant?: 'secondary';
+  /** `secondary` beside another action, such as Add entry beside Edit picks on League Home; `inverse` beside it on a navy hero. */
+  variant?: 'inverse' | 'secondary';
 }) {
   const navigate = useNavigate();
   const startEntry = useInvalidatingMutation({

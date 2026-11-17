@@ -15,15 +15,14 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { CONTEST_STATUS_LABELS } from './contest-status';
-import { orderCurrentContests } from './current-contests';
 import { describeContestNextStep, type ContestNextStep } from './my-contest-entry';
 import { StartEntryButton } from './start-entry-button';
 import type { MyContestEntries } from './use-contest-entries';
 import { listedContestStartsAt } from './use-contest-schedule';
 
 /**
- * League Home's contests (#1763): every current contest in the league, entered or not, Open
- * (soonest closing first), then Live, then Set up for commissioners. Each row is the contest's
+ * League Home's More contests (#1763): current contests, entered or not, one row shape for every
+ * state, in the order given (Open, Live, then Set up for commissioners). Each row is the contest's
  * name, a muted status line, and the viewer's next step as a button: Make your picks, Edit picks
  * and Add entry, or Full. A tap anywhere else on the row opens the contest page. Drawn as a
  * section card's body; `focusContestId` tints and scrolls to the contest the viewer came from.
@@ -37,11 +36,11 @@ export function CurrentContestList({
   leagueCode,
   myEntries,
   now,
-  showDrafts,
   testIdPrefix,
 }: {
   /** Whether the viewer commissions the league, so a full contest offers Expand. */
   canExpand: boolean;
+  /** The contests in the order they show, as `splitHomeContests` lists them. */
   contests: readonly ContestDto[];
   emptyBody: string;
   focusContestId?: string | null;
@@ -49,18 +48,15 @@ export function CurrentContestList({
   leagueCode: string;
   myEntries: Pick<MyContestEntries, 'bestPlaceByContestId' | 'entriesByContestId' | 'state'>;
   now: Date;
-  /** Whether the viewer commissions the league or is a root admin, the only people who see a set-up contest. */
-  showDrafts: boolean;
   testIdPrefix: string;
 }) {
-  const ordered = orderCurrentContests(contests, { showDrafts });
-  if (!ordered.length) {
+  if (!contests.length) {
     return <SectionEmpty testId={`${testIdPrefix}-empty`}>{emptyBody}</SectionEmpty>;
   }
 
   return (
     <SectionRows testId={`${testIdPrefix}-list`}>
-      {ordered.map((contest) => {
+      {contests.map((contest) => {
         const testId = `${testIdPrefix}-${contest.id}`;
         const entries = myEntries.entriesByContestId.get(contest.id);
         const step = describeContestNextStep({

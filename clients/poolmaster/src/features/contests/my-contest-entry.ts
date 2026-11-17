@@ -45,9 +45,12 @@ export function isContestFull(contest: Pick<ContestDto, 'entriesPerContest'>, en
   return contest.entriesPerContest !== null && entryCount >= contest.entriesPerContest;
 }
 
-/** The count a contest's cap is checked against: every entry when the read carries it, else the submitted ones. */
+/**
+ * The count a contest's cap is checked against: every entry when the read carries it (a single
+ * contest's read), else the submitted ones (a list row), whichever is more.
+ */
 export function contestCapacityCount(contest: Pick<ContestDto, 'allEntryCount' | 'entryCount'>): number {
-  return contest.allEntryCount ?? contest.entryCount ?? 0;
+  return Math.max(contest.allEntryCount ?? 0, contest.entryCount ?? 0);
 }
 
 /**

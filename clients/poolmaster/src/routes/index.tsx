@@ -24,8 +24,6 @@ import { CreateContestPage } from '@/features/contests/create-contest/create-con
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ContestEntryLeagueRedirect } from '@/features/contests/contest-entry-league-redirect';
 import { ContestLeaderboardRedirect, ContestPage } from '@/features/contests/contest-page';
-import { LeagueContestHistoryPage } from '@/features/contests/league-contest-history-page';
-import { LeagueContestsPage } from '@/features/contests/league-contests-page';
 import { ContestEventsPage } from '@/features/contests/contest-events-page';
 import { EditContestPage } from '@/features/contests/edit-contest-page';
 import { ManageContestPage } from '@/features/contests/manage-contest-page';
@@ -86,11 +84,13 @@ import { ManageTeamPage } from '@/features/teams/manage-team-page';
 import { ManageTeamsPage } from '@/features/teams/manage-teams-page';
 import {
   LegacyContestCreateRedirect,
+  LegacyContestHistoryRedirect,
   LegacyContestManageRedirect,
   LegacyContestTypesRedirect,
   LegacyEditLeagueRedirect,
   LegacyGolfManageRedirect,
   LegacyJoinInviteRedirect,
+  LegacyLeagueContestsRedirect,
   LegacyLeagueEntriesRedirect,
   LegacyManageContestsRedirect,
 } from './legacy-redirects';
@@ -328,8 +328,9 @@ export const router = createBrowserRouter([
             element: <LegacyContestTypesRedirect />,
           },
           {
+            // The Contests tab folded into Home, its Past view into My team (#1763).
             path: 'league/:leagueCode/contests',
-            element: <LeagueContestsPage />,
+            element: <LegacyLeagueContestsRedirect />,
           },
           {
             path: 'league/:leagueCode/contests/manage',
@@ -337,7 +338,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/contests/history',
-            element: <LeagueContestHistoryPage />,
+            element: <LegacyContestHistoryRedirect />,
           },
           {
             path: 'league/:leagueCode/contests/:contestId',

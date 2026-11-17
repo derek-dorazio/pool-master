@@ -16,6 +16,8 @@ import {
   buildLeagueAdminContestsPath,
   buildLeagueAdminEditPath,
   buildLeagueContestTypesPath,
+  buildLeaguePath,
+  buildLeagueTeamPastContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { buildSportPath } from '@/features/root-admin/manage-navigation';
@@ -23,6 +25,38 @@ import { buildSportPath } from '@/features/root-admin/manage-navigation';
 export function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   return <Navigate replace to={`/invite/${inviteCode}`} />;
+}
+
+/**
+ * The Contests tab folded into League Home (#1763): an old link to its list opens Home, keeping
+ * `?focus` so the contest it named is still tinted there.
+ */
+export function LegacyLeagueContestsRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const { search } = useLocation();
+  const focus = new URLSearchParams(search).get('focus');
+  const query = focus ? `?${new URLSearchParams({ focus }).toString()}` : '';
+  return <Navigate replace to={`${buildLeaguePath(leagueCode)}${query}`} />;
+}
+
+/**
+ * Contests › Past moved to My team's Past contests (#1763): an old link opens its full list at
+ * the year and contest it named.
+ */
+export function LegacyContestHistoryRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const year = Number(params.get('year'));
+  return (
+    <Navigate
+      replace
+      to={buildLeagueTeamPastContestsPath(leagueCode, {
+        focusContestId: params.get('focus'),
+        year: Number.isInteger(year) && year > 0 ? year : null,
+      })}
+    />
+  );
 }
 
 export function LegacyLeagueEntriesRedirect() {

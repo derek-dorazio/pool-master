@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { championshipYear, ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
+import { championshipYear, PlanFeature } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
@@ -14,7 +14,9 @@ import { getLogger } from '@/lib/logger';
 import { plural } from '@/lib/plural';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
-import { ContestsCard, CupsCard, LiveStandingsCard } from './league-home-cards';
+import { splitHomeContests } from './league-home';
+import { CupsCard, MoreContestsCard } from './league-home-cards';
+import { ContestHeroes } from './league-home-heroes';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -73,11 +75,6 @@ export function LeagueHomePage() {
     }
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const liveContests = useMemo(
-    // poolmaster-allow-list-lookup: Live standings' tabs, the league's live contests among its current ones (#1763)
-    () => (contestsQuery.data ?? []).filter((contest) => contest.status === ContestStatus.ACTIVE),
-    [contestsQuery.data],
-  );
   const myEntries = useMyContestEntries(leagueId, viewer.mySquadId !== null);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading league...' });
@@ -85,7 +82,10 @@ export function LeagueHomePage() {
     return leagueContext.element;
   }
 
-  const myContestIds = new Set(myEntries.entriesByContestId.keys());
+  const showDrafts = viewer.isCommissioner || viewer.isRootAdmin;
+  const { heroes, more } = splitHomeContests(contestsQuery.data ?? [], { now, showDrafts });
+  const focusContestId = searchParams.get('focus');
+  const hasTeam = viewer.mySquadId !== null;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -124,24 +124,29 @@ export function LeagueHomePage() {
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load this league's contests." onRetry={() => void contestsQuery.refetch()} />
       ) : (
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <ContestsCard
-            canExpand={viewer.isCommissioner}
-            contests={contestsQuery.data ?? []}
-            focusContestId={searchParams.get('focus')}
-            hasTeam={viewer.mySquadId !== null}
-            leagueCode={leagueCode}
-            myEntries={myEntries}
-            now={now}
-            showDrafts={viewer.isCommissioner || viewer.isRootAdmin}
-          />
-          <div className="grid gap-5">
-            {liveContests.length ? (
-              <LiveStandingsCard
-                contests={liveContests}
+        <div className="space-y-5">
+          {heroes.length ? (
+            <ContestHeroes
+              contests={heroes}
+              focusContestId={focusContestId}
+              hasTeam={hasTeam}
+              leagueCode={leagueCode}
+              myEntries={myEntries}
+              mySquadId={viewer.mySquadId}
+              now={now}
+            />
+          ) : null}
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            {more.length || !heroes.length ? (
+              <MoreContestsCard
+                canExpand={viewer.isCommissioner}
+                contests={more}
+                focusContestId={focusContestId}
+                hasHeroes={heroes.length > 0}
+                hasTeam={hasTeam}
                 leagueCode={leagueCode}
-                myContestIds={myContestIds}
-                mySquadId={viewer.mySquadId}
+                myEntries={myEntries}
+                now={now}
               />
             ) : null}
             {hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? (
