@@ -457,6 +457,65 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     });
   });
 
+  describe("land on a row", () => {
+    const data = Array.from({ length: 5 }, (_, index) => ({
+      id: `row-${index + 1}`,
+      lifecycle: "Active",
+      name: `Name ${index + 1}`,
+    }));
+    const grid = (landOnRowId: string | null, rows: TestRow[] = data) => (
+      <DataGrid
+        columns={columns}
+        data={rows}
+        emptyMessage="No rows matched."
+        getRowId={(row) => row.id}
+        landOnRowId={landOnRowId}
+        pageSize={2}
+        rowTestId={(row) => `test-row-${row.id}`}
+      />
+    );
+
+    it("opens on the row's page with it highlighted and scrolled into view", () => {
+      const scrolled: Element[] = [];
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
+        scrolled.push(this);
+      });
+
+      render(grid("row-3"));
+
+      expect(screen.getByTestId("test-row-row-3")).toHaveAttribute("aria-current", "true");
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+      expect(scrolled).toEqual([screen.getByTestId("test-row-row-3")]);
+      scroll.mockRestore();
+    });
+
+    it("lands once the row arrives, and only once: a later page turn or new data stays where the viewer is", () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
+      const { rerender } = render(grid("row-5", []));
+      expect(scroll).not.toHaveBeenCalled();
+
+      rerender(grid("row-5"));
+      expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
+      fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+      rerender(grid("row-5", [...data]));
+
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+      expect(scroll).toHaveBeenCalledTimes(1);
+      scroll.mockRestore();
+    });
+
+    it("ignores a row it doesn't hold, staying on the first page with nothing highlighted", () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
+
+      render(grid("row-9"));
+
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+      expect(screen.getByTestId("test-row-row-1")).not.toHaveAttribute("aria-current");
+      expect(scroll).not.toHaveBeenCalled();
+      scroll.mockRestore();
+    });
+  });
+
   it("puts the views and the search in one header inside the grid's card, above the table", () => {
     const onChange = vi.fn();
     render(

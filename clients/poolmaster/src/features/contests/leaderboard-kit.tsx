@@ -7,6 +7,7 @@ import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
+import { useLinkedEntry } from './use-linked-entry';
 import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 
 /**
@@ -33,7 +34,8 @@ export function LeaderboardSection({ children, trailing }: { children: ReactNode
 /**
  * A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a
  * page at a time, with the "My entries" switch (#1750) while the viewer has an entry on it. With
- * the switch on, the rows are the viewer's alone, each still at its real place.
+ * the switch on, the rows are the viewer's alone, each still at its real place. An entry a link
+ * names (`?entry=`, #1762) is turned to, highlighted and scrolled into view when the board shows it.
  */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
@@ -56,6 +58,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
 }) {
   const myEntriesFilter = useMyEntriesFilter();
   const myEntries = narrowToMyEntries(data, isMine, myEntriesFilter.isOn);
+  const linkedEntry = useLinkedEntry();
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
@@ -64,6 +67,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
         data={myEntries.rows}
         emptyMessage={emptyMessage}
         getRowId={(row) => row.entryId}
+        landOnRowId={linkedEntry.entryId}
         pageSize={LEADERBOARD_PAGE_SIZE}
         rowTestId={(row) => `${rowTestIdPrefix}-${row.entryId}`}
         search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}

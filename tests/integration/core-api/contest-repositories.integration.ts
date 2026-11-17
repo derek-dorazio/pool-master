@@ -1999,7 +1999,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     const textTo = (to: string) => send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
     expect(textTo(member.user.email)).toContain('Good luck, everyone.');
     expect(textTo(member.user.email)).toContain('Entries: 1');
-    expect(textTo(member.user.email)).toContain(`Watch the leaderboard: https://app.example.test/league/${league.leagueCode}/contests/${open.id}/leaderboard`);
+    expect(textTo(member.user.email)).toContain(`Watch the leaderboard: https://app.example.test/league/${league.leagueCode}/contests/${open.id}`);
     expect(textTo(member.user.email)).not.toContain('You didn\'t enter this one');
     expect(textTo(onlooker.user.email)).toContain('You didn\'t enter this one');
 

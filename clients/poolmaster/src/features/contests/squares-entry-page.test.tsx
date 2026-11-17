@@ -348,6 +348,33 @@ describe('Squares contest leaderboard', () => {
     expect(await screen.findByTestId('squares-winners')).toHaveTextContent('Q1Chiefs 7, Eagles 3');
   });
 
+  it('shades the boxes of the entry a link names (?entry=) as the viewer\'s own are, and scrolls to the board', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
+
+    await screen.findByTestId('squares-grid');
+    expect(box(1, 1)).toHaveAttribute('data-linked', 'true');
+    expect(box(1, 1)).not.toHaveAttribute('data-mine');
+    expect(box(0, 0)).not.toHaveAttribute('data-linked');
+    expect(scrolled).toEqual([screen.getByTestId('squares-grid')]);
+    scroll.mockRestore();
+  });
+
+  it('shades no boxes and scrolls nowhere for an entry id the board doesn\'t hold', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-9');
+
+    await screen.findByTestId('squares-grid');
+    expect(screen.queryAllByTestId(/^squares-box-/).some((each) => each.hasAttribute('data-linked'))).toBe(false);
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
+  });
+
   it('shows a box\'s full entry name and its numbers on a tap once the numbers are drawn', async () => {
     primeMocks({
       board: squaresBoardFixture({ claimsOpen: false, drawOpen: false, digits: DRAWN_DIGITS }),
