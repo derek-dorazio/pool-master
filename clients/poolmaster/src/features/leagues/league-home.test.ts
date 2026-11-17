@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import { buildBracketTopStandings, buildTopStandings, pickUpNextContest } from './league-home';
+import { MatchStatus } from '@poolmaster/shared/domain';
+import { buildBracketTopStandings, buildTopStandings, countsEventGames, describeLiveProgress, splitHomeContests } from './league-home';
 import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixtures';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
-
-const NOW = new Date('2026-05-01T12:00:00.000Z');
 
 function contestFixture(overrides: Partial<ContestDto> & { id: string }): ContestDto {
   return {
@@ -67,85 +66,95 @@ function entries(count: number): LeaderboardEntry[] {
   return Array.from({ length: count }, (_, offset) => entryFixture(offset + 1));
 }
 
-describe('pickUpNextContest', () => {
-  it('picks the open contest whose entries close soonest', () => {
-    const later = onEvent('later', '2026-05-10T12:00:00.000Z');
-    const sooner = onEvent('sooner', '2026-05-03T12:00:00.000Z');
+const NOW = new Date('2026-04-15T12:00:00.000Z');
 
-    const result = pickUpNextContest([later, sooner], NOW);
+describe('splitHomeContests', () => {
+  const live = onEvent('live', '2026-04-10T12:00:00.000Z', { status: 'ACTIVE' });
+  const openLater = onEvent('open-later', '2026-05-20T12:00:00.000Z');
+  const openSoon = onEvent('open-soon', '2026-04-20T12:00:00.000Z');
+  const openThird = onEvent('open-third', '2026-04-25T12:00:00.000Z');
+  const full = onEvent('full', '2026-04-18T12:00:00.000Z', { entriesPerContest: 4, entryCount: 4 });
+  const draft = onEvent('draft', '2026-06-01T12:00:00.000Z', { status: 'DRAFT' });
 
-    expect(result).toEqual({ contest: sooner, closesAt: '2026-05-03T12:00:00.000Z' });
+  it('draws live contests first, then open ones soonest closing, at most three, and lists the rest under More contests', () => {
+    const { heroes, more } = splitHomeContests([openLater, draft, openSoon, live, openThird], { now: NOW, showDrafts: true });
+
+    expect(heroes.map((contest) => contest.id)).toEqual(['live', 'open-soon', 'open-third']);
+    expect(more.map((contest) => contest.id)).toEqual(['open-later', 'draft']);
   });
 
-  it('closes entries at the contest\'s own start once it is set, ahead of its event\'s scheduled start', () => {
-    const restamped = { ...onEvent('restamped', '2026-05-03T12:00:00.000Z'), startsAt: '2026-05-08T12:00:00.000Z' };
-    const other = onEvent('other', '2026-05-05T12:00:00.000Z');
+  it('leaves a full contest out of the heroes, so it shows as Full in More contests', () => {
+    const { heroes, more } = splitHomeContests([full, openSoon], { now: NOW, showDrafts: false });
 
-    const result = pickUpNextContest([restamped, other], NOW);
-
-    expect(result).toEqual({ contest: other, closesAt: '2026-05-05T12:00:00.000Z' });
+    expect(heroes.map((contest) => contest.id)).toEqual(['open-soon']);
+    expect(more.map((contest) => contest.id)).toEqual(['full']);
   });
 
-  it('skips an open contest whose entry cutoff has already passed', () => {
-    const closed = onEvent('closed', '2026-04-30T12:00:00.000Z');
-    const upcoming = onEvent('upcoming', '2026-05-05T12:00:00.000Z');
+  it('makes no hero of an open contest whose entries have closed before it went live', () => {
+    const closed = onEvent('closed', '2026-04-14T12:00:00.000Z');
 
-    const result = pickUpNextContest([closed, upcoming], NOW);
-
-    expect(result?.contest.id).toBe('upcoming');
+    expect(splitHomeContests([closed], { now: NOW, showDrafts: false }).heroes).toEqual([]);
   });
 
-  it('skips contests that are not open, even when their cutoff is soonest', () => {
-    const result = pickUpNextContest(
-      [
-        onEvent('draft', '2026-05-02T12:00:00.000Z', { status: 'DRAFT' }),
-        onEvent('active', '2026-05-02T12:00:00.000Z', { status: 'ACTIVE' }),
-        onEvent('completed', '2026-05-02T12:00:00.000Z', { status: 'COMPLETED' }),
-        onEvent('open', '2026-05-09T12:00:00.000Z'),
-      ],
-      NOW,
-    );
+  it('keeps set-up contests out of More contests for a member', () => {
+    expect(splitHomeContests([draft], { now: NOW, showDrafts: false }).more).toEqual([]);
+  });
+});
 
-    expect(result?.contest.id).toBe('open');
+describe('describeLiveProgress', () => {
+  function event(id: string, status: 'COMPLETED' | 'IN_PROGRESS' | 'SCHEDULED') {
+    return { sportEventId: id, sequence: 1, name: id, startDate: '2026-04-10T12:00:00.000Z', endDate: null, status, participantType: null, scoringFamily: null };
+  }
+
+  it("counts a season pick'em or survivor in weeks played, never calling a week a game", () => {
+    const contest = contestFixture({
+      id: 'pickem',
+      contestFormat: 'PREDICTION',
+      sportEvents: [event('a', 'COMPLETED'), event('b', 'COMPLETED'), event('c', 'IN_PROGRESS')],
+    });
+
+    expect(describeLiveProgress(contest)).toBe('2 of 3 weeks played');
+    expect(countsEventGames(contest)).toBe(false);
   });
 
-  it('skips an open contest with no known cutoff', () => {
-    const unscheduled = contestFixture({ id: 'unscheduled', sportEvents: [] });
-    const scheduled = onEvent('scheduled', '2026-05-09T12:00:00.000Z');
+  it("counts a one-week pick'em's games played, leaving cancelled games out", () => {
+    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
+    const games = [
+      ...Array.from({ length: 9 }, () => ({ status: MatchStatus.COMPLETED })),
+      ...Array.from({ length: 5 }, () => ({ status: MatchStatus.SCHEDULED })),
+      { status: MatchStatus.CANCELLED },
+    ];
 
-    const result = pickUpNextContest([unscheduled, scheduled], NOW);
-
-    expect(result?.contest.id).toBe('scheduled');
+    expect(countsEventGames(contest)).toBe(true);
+    expect(describeLiveProgress(contest, games)).toBe('9 of 14 games played');
   });
 
-  it('returns null when no contest is open with a future cutoff', () => {
-    const result = pickUpNextContest(
-      [
-        contestFixture({ id: 'unscheduled', sportEvents: [] }),
-        onEvent('past', '2026-04-01T12:00:00.000Z'),
-        onEvent('live', '2026-05-09T12:00:00.000Z', { status: 'ACTIVE' }),
-      ],
-      NOW,
-    );
+  it("says nothing for a one-event prediction contest until its games are read, or when it is a single game", () => {
+    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
 
-    expect(result).toBeNull();
+    expect(describeLiveProgress(contest)).toBeNull();
+    expect(describeLiveProgress(contest, [{ status: MatchStatus.IN_PROGRESS }])).toBeNull();
   });
 
-  it('returns null when there are no contests', () => {
-    expect(pickUpNextContest([], NOW)).toBeNull();
+  it('counts events played for a contest of several events that are not games', () => {
+    const contest = contestFixture({ id: 'season', sportEvents: [event('a', 'COMPLETED'), event('b', 'SCHEDULED')] });
+
+    expect(describeLiveProgress(contest)).toBe('1 of 2 events played');
+  });
+
+  it('says nothing for a contest of one event, whose progress is its leaderboard', () => {
+    expect(describeLiveProgress(contestFixture({ id: 'one', sportEvents: [event('a', 'IN_PROGRESS')] }))).toBeNull();
   });
 });
 
 describe('buildTopStandings', () => {
-  it('returns the top five entries in the server order with formatted totals', () => {
+  it('returns the top three entries in the server order with formatted totals, as a live hero shows them', () => {
     const result = buildTopStandings(leaderboardFixture(entries(7)), null);
 
     expect(result.rows.map((row) => row.entryId)).toEqual([
       'entry-1',
       'entry-2',
       'entry-3',
-      'entry-4',
-      'entry-5',
     ]);
     expect(result.rows[0]).toEqual({
       entryId: 'entry-1',
@@ -155,7 +164,7 @@ describe('buildTopStandings', () => {
       squadId: 'squad-1',
       total: '-5',
     });
-    expect(result.rows[4]?.total).toBe('-1');
+    expect(result.rows[2]?.total).toBe('-3');
   });
 
   it('labels each row with its entry name, so two entries from one team stay distinct', () => {
@@ -177,39 +186,52 @@ describe('buildTopStandings', () => {
     expect(result.rows.map((row) => row.entryId)).toEqual(['entry-2', 'entry-1', 'entry-3']);
   });
 
-  it("marks the viewer's squad in the top rows and returns no row below", () => {
+  it("marks the viewer's squad in the top rows and returns no rows below", () => {
     const result = buildTopStandings(leaderboardFixture(entries(7)), 'squad-3');
 
     expect(result.rows.filter((row) => row.isMine).map((row) => row.entryId)).toEqual(['entry-3']);
-    expect(result.myRowBelow).toBeNull();
+    expect(result.myRowsBelow).toEqual([]);
   });
 
-  it("returns the viewer's entry as myRowBelow when it ranks below the top rows", () => {
+  it("returns the viewer's entry in myRowsBelow when it ranks below the top rows", () => {
     const result = buildTopStandings(leaderboardFixture(entries(8)), 'squad-7');
 
     expect(result.rows.some((row) => row.isMine)).toBe(false);
-    expect(result.myRowBelow).toEqual({
+    expect(result.myRowsBelow).toEqual([{
       entryId: 'entry-7',
       isMine: true,
       name: 'Entry 7',
       position: '7',
       squadId: 'squad-7',
       total: '+1',
-    });
+    }]);
+  });
+
+  it("returns every one of the viewer's entries below the top rows, so two entries both show", () => {
+    const mine = [
+      ...entries(5),
+      entryFixture(6, { squadId: 'squad-mine' }),
+      entryFixture(7),
+      entryFixture(8, { squadId: 'squad-mine' }),
+    ];
+
+    const result = buildTopStandings(leaderboardFixture(mine), 'squad-mine');
+
+    expect(result.myRowsBelow.map((row) => row.entryId)).toEqual(['entry-6', 'entry-8']);
   });
 
   it('returns no row below when the viewer has no entry on the leaderboard', () => {
     const result = buildTopStandings(leaderboardFixture(entries(7)), 'squad-unknown');
 
     expect(result.rows.some((row) => row.isMine)).toBe(false);
-    expect(result.myRowBelow).toBeNull();
+    expect(result.myRowsBelow).toEqual([]);
   });
 
   it('marks nothing as mine when the viewer has no squad', () => {
     const result = buildTopStandings(leaderboardFixture(entries(7)), null);
 
     expect(result.rows.some((row) => row.isMine)).toBe(false);
-    expect(result.myRowBelow).toBeNull();
+    expect(result.myRowsBelow).toEqual([]);
   });
 
   it('places every entry tied 1st at even par (E) before the first score, as the contest board does', () => {
@@ -234,10 +256,10 @@ describe('buildTopStandings', () => {
   });
 
   it('honours a custom limit', () => {
-    const result = buildTopStandings(leaderboardFixture(entries(7)), 'squad-4', 3);
+    const result = buildTopStandings(leaderboardFixture(entries(7)), 'squad-6', 5);
 
-    expect(result.rows).toHaveLength(3);
-    expect(result.myRowBelow?.entryId).toBe('entry-4');
+    expect(result.rows).toHaveLength(5);
+    expect(result.myRowsBelow.map((row) => row.entryId)).toEqual(['entry-6']);
   });
 });
 
@@ -249,6 +271,6 @@ describe('buildBracketTopStandings', () => {
       { entryId: 'entry-2', isMine: false, name: 'Chalk All The Way', position: '1', squadId: 'squad-2', total: '12' },
       { entryId: 'entry-1', isMine: true, name: 'Derek’s Bracket', position: '2', squadId: 'squad-1', total: '8' },
     ]);
-    expect(result.myRowBelow).toBeNull();
+    expect(result.myRowsBelow).toEqual([]);
   });
 });

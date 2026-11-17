@@ -44,6 +44,17 @@ export const nbaTeamListSchema = z.object({
   data: z.array(nbaTeamSchema),
 });
 
+/** `NBAStandings` from `/nba/v1/standings`: a team's rank in its conference, which seeds the bracket. */
+export const nbaStandingSchema = z.object({
+  team: nbaTeamSchema.optional(),
+  conference_rank: z.number().int().optional(),
+});
+export type NbaStanding = z.infer<typeof nbaStandingSchema>;
+
+export const nbaStandingListSchema = z.object({
+  data: z.array(nbaStandingSchema),
+});
+
 /** `NBAGame` from `/nba/v1/games`. */
 export const nbaGameSchema = z.object({
   id: z.number().int().optional(),

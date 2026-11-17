@@ -1,7 +1,6 @@
 import type { NavMenuItem } from '@/features/shared/ui';
 import {
   buildLeagueChampionshipsPath,
-  buildLeagueContestsPath,
   buildLeagueHistoryPath,
   buildLeaguePath,
   buildLeagueTeamPath,
@@ -9,9 +8,10 @@ import {
 } from './league-routing';
 
 /**
- * The member pages' menu for one league: Home, Contests, Championships, My team, Members.
- * Contest types lives in Commissioner tools (#1392). Each item is active on its own page and on
- * the pages under it, so a contest's leaderboard keeps Contests lit. The viewer's own squad is
+ * The member pages' menu for one league: Home, Championships, My team, Members. Home is the
+ * league's one list of current contests and My team holds Past contests (#1763), so there is no
+ * Contests item. Contest types lives in Commissioner tools (#1392). Each item is active on its own
+ * page and on the pages under it. The viewer's own squad is
  * "My team" (rules/poolmaster-webapp-rules.md §1 *A Squad Is a Team On Screen*), a fixed label
  * whatever the team is called; while the league is loading, or when the viewer has no squad in
  * the league, the entry reads "Yours".
@@ -22,14 +22,13 @@ export function buildLeagueMenuItems(
   hasSquad = false,
 ): NavMenuItem[] {
   const homePath = buildLeaguePath(leagueCode);
-  const contestsPath = buildLeagueContestsPath(leagueCode);
   const myTeamPath = buildLeagueTeamPath(leagueCode);
   const teamsPath = buildLeagueTeamsPath(leagueCode);
   const isUnder = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
   return [
-    { isActive: pathname === homePath, label: 'Home', testId: 'league-menu-home', to: homePath },
-    { isActive: isUnder(contestsPath), label: 'Contests', testId: 'league-menu-contests', to: contestsPath },
+    // A contest's pages sit under Home, the one list of contests, so they keep Home lit.
+    { isActive: pathname === homePath || isUnder(`${homePath}/contests`), label: 'Home', testId: 'league-menu-home', to: homePath },
     {
       isActive: isUnder(buildLeagueChampionshipsPath(leagueCode)) || isUnder(buildLeagueHistoryPath(leagueCode)),
       label: 'Championships',

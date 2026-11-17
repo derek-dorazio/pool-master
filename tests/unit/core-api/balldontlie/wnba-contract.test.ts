@@ -3,6 +3,8 @@ import { balldontliePaginationSchema } from '../../../../packages/core-api/src/m
 import {
   wnbaGameListSchema,
   wnbaGameSchema,
+  wnbaStandingListSchema,
+  wnbaStandingSchema,
   wnbaTeamListSchema,
   wnbaTeamSchema,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-contract';
@@ -27,6 +29,7 @@ describe('BALLDONTLIE WNBA fixtures', () => {
     ['teams.json', '/wnba/v1/teams', wnbaTeamListSchema],
     ['games-2025.json', '/wnba/v1/games', wnbaGameListSchema],
     ['games-2026-partial.json', '/wnba/v1/games', wnbaGameListSchema],
+    ['standings-2025.json', '/wnba/v1/standings', wnbaStandingListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -46,6 +49,7 @@ describe('BALLDONTLIE WNBA fields the adapter reads', () => {
   const pairs: Array<[component: string, adapterSchema: z.ZodType]> = [
     ['WNBAGame', wnbaGameSchema],
     ['WNBATeam', wnbaTeamSchema],
+    ['WNBAStanding', wnbaStandingSchema],
     ['Pagination', balldontliePaginationSchema],
   ];
 

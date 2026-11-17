@@ -121,26 +121,26 @@ describe('ContestPageFrame', () => {
 });
 
 describe('The contest breadcrumb', () => {
-  it('trails Contests then the contest\'s name on a contest page, Contests opening the Current tab on a live contest', () => {
+  it('trails Home then the contest\'s name on a live contest\'s page, Home focused on the contest', () => {
     renderFrame();
 
-    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(breadcrumbs().getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/league/BIGDAWGS?focus=contest-1');
     expect(breadcrumbs().getByText('Masters Pool')).toHaveAttribute('aria-current', 'page');
   });
 
-  it('opens the Past tab at the year the contest ended, focused on it, from a final contest', () => {
+  it('trails My team from a final contest, opening its Past contests at the year the contest ended, focused on it', () => {
     renderFrame({ contestOverrides: { status: ContestStatus.COMPLETED } });
 
-    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute(
+    expect(breadcrumbs().getByRole('link', { name: 'My team' })).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/contests/history?year=2026&focus=contest-1',
+      '/league/BIGDAWGS/team?past=all&pastYear=2026&focus=contest-1',
     );
   });
 
-  it('trails Contests, the contest and the entry on an entry page, the contest opening its one page', () => {
+  it('trails Home, the contest and the entry on an entry page, the contest opening its one page', () => {
     renderFrame({ entryName: 'Birdie Hunters 2', url: '/league/BIGDAWGS/contests/contest-1/entries/entry-9' });
 
-    expect(breadcrumbs().getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(breadcrumbs().getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/league/BIGDAWGS?focus=contest-1');
     expect(breadcrumbs().getByRole('link', { name: 'Masters Pool' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
     expect(breadcrumbs().getByText('Birdie Hunters 2')).toHaveAttribute('aria-current', 'page');
   });

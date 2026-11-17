@@ -3,7 +3,7 @@ import type { ContestEntryStatus } from '@poolmaster/shared/domain';
 import { Navigate, useLocation } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
-  buildContestsFocusPath,
+  buildContestBreadcrumb,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
@@ -84,7 +84,7 @@ export function ContestPageFrame({
   }
   const isEntryPage = entryName !== undefined;
   const trail = [
-    { href: buildContestsFocusPath(leagueCode, contest), label: 'Contests' },
+    buildContestBreadcrumb(leagueCode, contest),
     isEntryPage
       ? { href: buildLeagueContestPath(leagueCode, contest.id), label: contest.name }
       : { label: contest.name },

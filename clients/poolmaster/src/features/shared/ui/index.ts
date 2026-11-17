@@ -117,6 +117,7 @@ export {
 } from "./modal-templates";
 export { PublicInviteJoinPage } from "./page-templates";
 export { Tile } from "./tile";
+export { HeroTile } from "./hero-tile";
 export { Countdown } from "./countdown";
 export { ExpandableRow } from "./expandable-row";
 export { ExpandableTile } from "./expandable-tile";

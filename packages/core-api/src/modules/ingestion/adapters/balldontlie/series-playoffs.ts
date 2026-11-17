@@ -40,6 +40,13 @@ export interface PlayoffsLeague {
   playoffYearOffset: 0 | 1;
   /** The month (0-based) from which the reader takes a new season as the one under way. */
   seasonRolloverMonth: number;
+  /**
+   * A bracket fixed by seed, which the provider's slate loads whole (#1728): the groups that each
+   * seed their own half, in bracket order and by the team's `metadata.conference` (the NBA's
+   * conferences), or null for a league seeded as one (the WNBA). Left out where the league's
+   * bracket is not built from its seeds yet.
+   */
+  bracket?: { groups: readonly string[] | null };
 }
 
 /** A team as a league's normalizer reads it. */
