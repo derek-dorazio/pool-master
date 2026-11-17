@@ -1,7 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  isContestPickingOver,
   areContestEntriesOpen,
   CONTEST_POLL_INTERVAL_MS,
   CONTEST_STATUS_LABELS,
@@ -82,5 +83,14 @@ describe('areContestEntriesOpen', () => {
 
   it('closes a random-draw contest\'s entries once its draw has run, though it is still open until tee-off', () => {
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: '2026-04-01T10:00:00.000Z' }, teeOff, now)).toBe(false);
+  });
+});
+
+describe('isContestPickingOver', () => {
+  const started = { sportEventId: 'event-1', sequence: 1, name: 'Event', startDate: '2026-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS' as const, participantType: null, scoringFamily: null };
+
+  it('calls a live lineup contest over once its events have started, and never one with no events at all', () => {
+    expect(isContestPickingOver({ selectionType: SelectionType.TIERED, status: ContestStatus.ACTIVE, sportEvents: [started] })).toBe(true);
+    expect(isContestPickingOver({ selectionType: SelectionType.TIERED, status: ContestStatus.ACTIVE, sportEvents: [] })).toBe(false);
   });
 });

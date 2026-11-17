@@ -50,6 +50,7 @@ export function isMySquadsEntry(mySquadId: string | null) {
 export function entryColumn<Row extends BoardRow>(
   testIdPrefix: string,
   {
+    className,
     contestId,
     isMine,
     leading,
@@ -57,6 +58,8 @@ export function entryColumn<Row extends BoardRow>(
     leagueId,
     truncateName = false,
   }: {
+    /** The cell's own classes, such as a fixed width for a pinned column. */
+    className?: string;
     contestId: string;
     isMine: (row: NoInfer<Row>) => boolean;
     /** Something before the name, such as the button that opens a bracket (#1753). */
@@ -74,32 +77,53 @@ export function entryColumn<Row extends BoardRow>(
     id: 'entry',
     header: 'Entry',
     accessorFn: (row) => [row.entryName, row.squadName].filter(Boolean).join(' '),
-    cell: ({ row }) => (
-      <span className={cn('flex min-w-0 items-center gap-x-1 gap-y-2', !truncateName && 'flex-wrap')}>
-        {leading?.(row.original)}
-        <Text asChild size="inherit" variant="strong">
-          <Link
-            className={cn('hover:underline', truncateName && 'min-w-0 truncate')}
-            data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
-            title={truncateName ? row.original.entryName : undefined}
-            to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
-          >
-            {row.original.entryName}
-          </Link>
-        </Text>
-        {row.original.squadId ? (
-          <EntryDetailsPeek
-            className="-my-2"
-            entryName={row.original.entryName}
-            leagueCode={leagueCode}
-            leagueId={leagueId}
-            squadId={row.original.squadId}
-            testId={`${testIdPrefix}-entry-peek-${row.original.entryId}`}
-          />
-        ) : null}
-        {isMine(row.original) ? <span className="ml-1"><MineMarker /></span> : null}
-      </span>
-    ),
+    cell: ({ row }) => {
+      const name = (
+        <>
+          <Text asChild size="inherit" variant="strong">
+            <Link
+              className={cn('hover:underline', truncateName && 'min-w-0 truncate')}
+              data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
+              title={truncateName ? row.original.entryName : undefined}
+              to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
+            >
+              {row.original.entryName}
+            </Link>
+          </Text>
+          {row.original.squadId ? (
+            <EntryDetailsPeek
+              className="-my-2"
+              entryName={row.original.entryName}
+              leagueCode={leagueCode}
+              leagueId={leagueId}
+              squadId={row.original.squadId}
+              testId={`${testIdPrefix}-entry-peek-${row.original.entryId}`}
+            />
+          ) : null}
+        </>
+      );
+      const mine = isMine(row.original) ? <span className={truncateName ? 'flex-none sm:ml-1' : 'ml-1'}><MineMarker /></span> : null;
+      if (!truncateName) {
+        return (
+          <span className={cn('flex min-w-0 flex-wrap items-center gap-x-1 gap-y-2', className)}>
+            {leading?.(row.original)}
+            {name}
+            {mine}
+          </span>
+        );
+      }
+      // A fixed width: the name is cut short to keep its line with the (i), and "Yours" drops
+      // under it on a phone.
+      return (
+        <span className={cn('flex min-w-0 items-center gap-x-1', className)}>
+          {leading?.(row.original)}
+          <span className="flex min-w-0 flex-1 flex-col items-start gap-1 sm:flex-row sm:items-center">
+            <span className="flex min-w-0 max-w-full items-center gap-x-1">{name}</span>
+            {mine}
+          </span>
+        </span>
+      );
+    },
   };
 }
 

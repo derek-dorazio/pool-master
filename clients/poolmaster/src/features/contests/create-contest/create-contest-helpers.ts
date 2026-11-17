@@ -55,7 +55,7 @@ export const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (partici
   },
   [SelectionType.SQUARES]: {
     icon: SELECTION_TYPE_ICONS.SQUARES,
-    describe: () => 'A 10x10 grid on one game. Members claim boxes, you draw the numbers, and the box matching each team\'s last digit wins each quarter and the final score.',
+    describe: () => 'A 10x10 grid on one game. Members claim boxes, the numbers are drawn when the grid fills or 5 minutes before kickoff, and the box matching each team\'s last digit wins each quarter and the final score.',
   },
 };
 

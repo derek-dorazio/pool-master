@@ -5,6 +5,7 @@ import {
   buildContestBreadcrumb,
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
+  buildLeagueContestEntryLinkPath,
   buildLeagueAdminContestsPath,
   buildLeagueTeamPastContestsPath,
   buildLeagueHistoryPath,
@@ -108,6 +109,12 @@ describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
 describe('buildLeagueContestPath', () => {
   it('gives a contest one address whatever its status, with no separate leaderboard address', () => {
     expect(buildLeagueContestPath('BIGDAWGS', 'c1')).toBe('/league/BIGDAWGS/contests/c1');
+  });
+});
+
+describe('buildLeagueContestEntryLinkPath', () => {
+  it('opens one entry on its contest\'s page with ?entry=, the id encoded', () => {
+    expect(buildLeagueContestEntryLinkPath('BIGDAWGS', 'c1', 'entry 7')).toBe('/league/BIGDAWGS/contests/c1?entry=entry%207');
   });
 });
 

@@ -149,6 +149,11 @@ export const PickEmLeaderboardWeekDtoSchema = z.object({
 }).describe('One week of a pick\'em contest.');
 export type PickEmLeaderboardWeekDto = z.infer<typeof PickEmLeaderboardWeekDtoSchema>;
 
+export const PickEmLeaderboardMissedPickDtoSchema = z.object({
+  teamName: z.string().nullable().describe('The team picked, by its short name where it has one; null for a tie pick.'),
+}).describe('One pick of an entry\'s that did not come true.');
+export type PickEmLeaderboardMissedPickDto = z.infer<typeof PickEmLeaderboardMissedPickDtoSchema>;
+
 export const PickEmLeaderboardEntryWeekDtoSchema = z.object({
   sportEventId: z.uuid(),
   submitted: z.boolean().describe('Whether the entry submitted the week. A week still in draft at its first kickoff scores nothing.'),
@@ -156,8 +161,17 @@ export const PickEmLeaderboardEntryWeekDtoSchema = z.object({
   position: z.number().int().nullable().describe('The entry\'s place in the week: by points, then, once the week\'s last game is played, by how close its tiebreaker was to that game\'s total points. Null where points is.'),
   displayPosition: z.string().nullable().describe('The place as shown, "T2" when shared.'),
   weeklyWinner: z.boolean().describe('Whether the entry won the week: first place once the week has settled.'),
+  correctPickCount: z.number().int().nullable().describe('How many of the entry\'s picks for the week have come true so far: its games played and picked right (covered, against the spread). Null until the week starts, and for a week it did not submit or that was cancelled.'),
+  missedPicks: z.array(PickEmLeaderboardMissedPickDtoSchema).describe('The entry\'s picks for the week\'s played games that did not come true, in game order. Empty until the week starts.'),
 }).describe('One entry\'s result for one week of a pick\'em contest.');
 export type PickEmLeaderboardEntryWeekDto = z.infer<typeof PickEmLeaderboardEntryWeekDtoSchema>;
+
+export const PickEmLeaderboardEntryPickDtoSchema = z.object({
+  sportEventMatchId: z.uuid(),
+  sportEventParticipantId: z.uuid().nullable().describe('The field row of the team picked; null for a tie pick.'),
+  outcome: z.enum(PickOutcome).describe('How the pick stands: CORRECT or BUSTED once its game is played, PUSH for a game that landed on the spread, PENDING until then.'),
+}).describe('One entry\'s pick on one game of the current week, shown once the game has kicked off.');
+export type PickEmLeaderboardEntryPickDto = z.infer<typeof PickEmLeaderboardEntryPickDtoSchema>;
 
 export const PickEmLeaderboardEntryDtoSchema = z.object({
   entryId: z.uuid(),
@@ -169,11 +183,13 @@ export const PickEmLeaderboardEntryDtoSchema = z.object({
   displayPosition: z.string().nullable().describe('The place as shown, "T2" when shared.'),
   totalPoints: z.number().int().describe('The season total so far: the sum of the entry\'s points over the weeks that have started.'),
   weeks: z.array(PickEmLeaderboardEntryWeekDtoSchema).describe('The entry\'s result for each of the contest\'s weeks, in the contest\'s week order.'),
+  currentWeekPicks: z.array(PickEmLeaderboardEntryPickDtoSchema).describe('The entry\'s picks on the current week\'s games, in game order: only games that have kicked off, so no entry sees a pick it could still copy.'),
 }).describe('One entry\'s standing in a pick\'em contest.');
 export type PickEmLeaderboardEntryDto = z.infer<typeof PickEmLeaderboardEntryDtoSchema>;
 
 export const PickEmLeaderboardResponseSchema = z.object({
   contestId: z.uuid(),
+  currentWeekId: z.uuid().nullable().describe('The week the board opens on and whose picks each entry carries: the latest week that has started, else the first. Null for a contest with no weeks.'),
   mode: z.enum(PickEmMode),
   againstTheSpread: z.boolean().describe('Whether picks are scored against each game\'s spread.'),
   weeks: z.array(PickEmLeaderboardWeekDtoSchema).describe('The contest\'s weeks in its week order.'),

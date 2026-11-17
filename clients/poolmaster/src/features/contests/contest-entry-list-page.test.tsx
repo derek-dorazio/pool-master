@@ -1,16 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { ContestEntryListPage } from './contest-entry-list-page';
+import { NFL_TEAMS, pickEmEventFieldFixture, pickEmWeekFixture, week1Games, week2EventGamesFixture, weekPick } from './test/pick-em-fixtures';
 import { squaresBoardFixture } from './test/squares-fixtures';
 
 const {
   enterContestMock,
   getContestMock,
   getEventMock,
+  getEventBracketMock,
+  getGamePicksMock,
   listContestEntriesMock,
   getLeagueMock,
   getSquaresBoardMock,
@@ -34,6 +37,8 @@ const {
     enterContestMock: vi.fn(),
     getContestMock: vi.fn(),
     getEventMock: vi.fn(),
+    getEventBracketMock: vi.fn(),
+    getGamePicksMock: vi.fn(),
     getLeagueMock: vi.fn(),
     getSquaresBoardMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
@@ -48,6 +53,9 @@ bindApiMocks({
   enterContest: enterContestMock,
   getContest: getContestMock,
   getEvent: getEventMock,
+  // #1751 — the viewer's pick'em entry opens to the week's games and its picks on them.
+  getEventBracket: getEventBracketMock,
+  getGamePicks: getGamePicksMock,
   // #202 — the contest board reads the league BY ID for the viewer's own squad membership. It
   // used to list every squad in the league and scan each one's members for the signed-in user.
   getLeague: getLeagueMock,
@@ -96,7 +104,13 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderContestBoard() {
+/** The page's address and how it last moved, so a test can tell a replace from a push. */
+function AddressProbe() {
+  const location = useLocation();
+  return <div data-testid="address">{`${location.search}|${useNavigationType()}`}</div>;
+}
+
+function renderContestBoard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -108,10 +122,10 @@ function renderContestBoard() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={['/league/BIGDAWGS/contests/contest-1']}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
-          <Route element={<ContestEntryListPage />} path="/league/:leagueCode/contests/:contestId" />
+          <Route element={<><ContestEntryListPage /><AddressProbe /></>} path="/league/:leagueCode/contests/:contestId" />
           <Route
             element={<div data-testid="contest-entry-page" />}
             path="/league/:leagueCode/contests/:contestId/entries/:entryId"
@@ -320,6 +334,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     enterContestMock.mockReset();
     getContestMock.mockReset();
     getEventMock.mockReset();
+    getEventBracketMock.mockReset();
+    getGamePicksMock.mockReset();
     listContestEntriesMock.mockReset();
     listEventParticipantsMock.mockReset();
     listEventTiersMock.mockReset();
@@ -429,6 +445,40 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(theirs).not.toHaveTextContent('6 picks');
   });
 
+  it('opens the viewer\'s own entry a link names (?entry=) and scrolls to it, and closing it drops ?entry= by replace', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ entries: [MINE, MY_DRAFT, THEIRS] });
+
+    renderContestBoard('?entry=entry-2');
+
+    const toggle = await screen.findByTestId('contest-board-toggle-entry-2');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(scrolled).toEqual([screen.getByTestId('contest-board-entry-entry-2')]);
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\|REPLACE$/);
+    scroll.mockRestore();
+  });
+
+  it('does nothing for another team\'s entry a link names before the contest locks: nothing opens, scrolls or shows its picks', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ entries: [MINE, THEIRS] });
+
+    renderContestBoard('?entry=entry-3');
+
+    const theirs = await screen.findByTestId('contest-board-entry-entry-3');
+    expect(screen.queryByTestId('contest-board-toggle-entry-3')).not.toBeInTheDocument();
+    expect(theirs).not.toHaveTextContent('6 picks');
+    expect(scroll).not.toHaveBeenCalled();
+    expect(screen.getByTestId('address')).toHaveTextContent('?entry=entry-3|POP');
+    scroll.mockRestore();
+  });
+
   it('opens the viewer\'s tiered entry to its picks, tier 1 first, each with its tier and team, and closes it again', async () => {
     primeMocks({ entries: [MINE], field: { 'sep-1': { tierId: 'tier-b' }, 'sep-2': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1, 'tier-b': 2 } });
 
@@ -532,14 +582,27 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByTestId('contest-board-toggle-all')).not.toBeInTheDocument();
   });
 
-  it('gives a pick\'em entry of the viewer\'s ✎ but no open button, its rows being still in design', async () => {
+  it('opens the viewer\'s pick\'em entry to every game of the week, each with its kickoff and the entry\'s pick, with ✎ to its pick screen', async () => {
     primeMocks({ selectionType: 'PICK_EM', entries: [MINE] });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: pickEmEventFieldFixture('event-1') } });
+    getEventBracketMock.mockResolvedValue({ data: { matches: week2EventGamesFixture() } });
+    getGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({
+      games: week1Games({
+        1: { sportEventMatchId: 'week2-game-3', pick: weekPick(NFL_TEAMS.packers) },
+        2: { sportEventMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) },
+      }),
+    }) });
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-board-toggle-entry-1')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-board-toggle-all')).not.toBeInTheDocument();
+    const picks = await screen.findByTestId('contest-entry-picks-entry-1');
+    await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-value-entry-1-/).map((cell) => cell.textContent)).toEqual(['KC', '—', 'GB']));
+    expect(within(picks).getByTestId('contest-entry-pick-entry-1-week2-game-1')).toHaveTextContent('BUF at KC');
+    expect(getGamePicksMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' } }));
+    expect(screen.getByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-board-toggle-entry-1'));
+    expect(screen.queryByTestId('contest-entry-picks-entry-1')).not.toBeInTheDocument();
   });
 
   it('shows a squares contest\'s board as its entry list, with no Entries section below it, since every entry is on the board by its boxes', async () => {
@@ -551,6 +614,36 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(await screen.findByTestId('squares-grid')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entries-section')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entries')).not.toBeInTheDocument();
+  });
+
+  it('shades the viewer\'s own squares entry a link names (?entry=) on the board and scrolls to it', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, THEIRS] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-1');
+
+    const grid = await screen.findByTestId('squares-grid');
+    await waitFor(() => expect(screen.getByTestId('squares-box-0-0')).toHaveAttribute('data-linked', 'true'));
+    expect(scrolled).toEqual([grid]);
+    scroll.mockRestore();
+  });
+
+  it('shades nothing for another team\'s squares entry a link names before lock', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, buildEntry({ id: 'entry-2', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team 1' })] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-2');
+
+    await screen.findByTestId('squares-grid');
+    await screen.findByTestId('squares-box-1-1');
+    expect(screen.getByTestId('squares-box-1-1')).not.toHaveAttribute('data-linked');
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
   });
 
   it('gives a bracket entry of the viewer\'s a bracket icon before its name, "Edit bracket" to its pick page, in place of ✎, and another team\'s entry none', async () => {

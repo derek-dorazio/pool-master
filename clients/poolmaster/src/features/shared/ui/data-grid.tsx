@@ -4,6 +4,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
@@ -11,7 +12,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { Link } from "react-router";
 import { Button } from "./button";
@@ -70,6 +71,22 @@ export type DataGridViews = {
   status?: ReactNode;
 };
 
+/**
+ * A row drawn under a grid row while it is open, such as a leaderboard entry's games: one cell
+ * per column, keyed by column id, so each piece of detail sits under the column it belongs to.
+ * A column the row leaves out stays empty.
+ */
+export type DataGridDetailRow = {
+  id: string;
+  cells: Partial<Record<string, ReactNode>>;
+  /**
+   * One cell across every column from `fromColumnId` to the end, in place of their own: for a
+   * line that reads across the row rather than under one column.
+   */
+  span?: { fromColumnId: string; content: ReactNode };
+  testId?: string;
+};
+
 export type DataGridProps<TData> = {
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
   // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
@@ -121,6 +138,17 @@ export type DataGridProps<TData> = {
    * changes, the grid starts again from its first page, as it does for its own search.
    */
   pageResetKey?: string;
+  /**
+   * The rows drawn under a row, such as an opened leaderboard entry's games; none while it is
+   * closed. The caller decides which rows are open.
+   */
+  detailRows?: (row: TData) => readonly DataGridDetailRow[];
+  /**
+   * A row to open the grid on, such as the entry a link names: once it is among the rows, the
+   * grid turns to its page, highlights it as a jump does and scrolls it into view, once per id.
+   * An id the grid doesn't hold is ignored.
+   */
+  landOnRowId?: string | null;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -162,6 +190,20 @@ const PINNED_END_CELL = "sticky right-0 z-[1] text-right";
 /** The header's tint laid over the card, so the pinned header cell is solid in both themes. */
 const PINNED_PLAIN_HEADER_SURFACE =
   "bg-card [background-image:linear-gradient(var(--table-header-surface),var(--table-header-surface))]";
+
+/**
+ * A detail row's cells, one per column up to its span, then the span as one cell across the rest.
+ */
+function detailCells<TData>(columns: Column<TData>[], detail: DataGridDetailRow): Array<{ column: Column<TData>; colSpan: number }> {
+  const spanStart = detail.span ? columns.findIndex((column) => column.id === detail.span?.fromColumnId) : -1;
+  if (spanStart < 0) {
+    return columns.map((column) => ({ column, colSpan: 1 }));
+  }
+  return [
+    ...columns.slice(0, spanStart).map((column) => ({ column, colSpan: 1 })),
+    { column: columns[spanStart], colSpan: columns.length - spanStart },
+  ];
+}
 
 /** Something in a row that takes its own click, so a click on it never opens the row. */
 const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='menuitem']";
@@ -216,6 +258,8 @@ export function DataGrid<TData>({
   views,
   toolbarEnd,
   pageResetKey,
+  detailRows,
+  landOnRowId = null,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
@@ -229,6 +273,16 @@ export function DataGrid<TData>({
   // The last row jumped to: it stays highlighted until the next jump.
   const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's page alone.
+  const [landedRowId, setLandedRowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (landedRowId === null) {
+      return;
+    }
+    tableRef.current
+      ?.querySelector(`[data-row-id="${CSS.escape(landedRowId)}"]`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [landedRowId]);
 
   const resetPageIndex = () =>
     setPagination((current) => ({ ...current, pageIndex: 0 }));
@@ -316,6 +370,15 @@ export function DataGrid<TData>({
       ?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
+
+  if (landOnRowId !== null && landOnRowId !== landedRowId) {
+    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === landOnRowId);
+    if (index >= 0) {
+      setLandedRowId(landOnRowId);
+      setJumpedRowId(landOnRowId);
+      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
+    }
+  }
 
   const matchingRowCount = table.getFilteredRowModel().rows.length;
   const pageCount = table.getPageCount();
@@ -482,56 +545,78 @@ export function DataGrid<TData>({
                   );
 
                   return (
-                    <tr
-                      aria-current={row.id === jumpedRowId ? "true" : undefined}
-                      className={cn(
-                        "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
-                        link && "cursor-pointer",
-                        row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
-                      )}
-                      data-row-id={row.id}
-                      data-testid={rowTestId?.(row.original, index)}
-                      key={row.id}
-                      onClick={link ? openRowFromClick : undefined}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          className={cn(
-                            "px-4 py-4",
-                            cell.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, PINNED_BODY_SURFACE],
-                          )}
-                          key={cell.id}
+                    <Fragment key={row.id}>
+                      <tr
+                        aria-current={row.id === jumpedRowId ? "true" : undefined}
+                        className={cn(
+                          "group border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                          link && "cursor-pointer",
+                          row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
+                        )}
+                        data-row-id={row.id}
+                        data-testid={rowTestId?.(row.original, index)}
+                        onClick={link ? openRowFromClick : undefined}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td
+                            className={cn(
+                              "px-4 py-4",
+                              cell.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, PINNED_BODY_SURFACE],
+                            )}
+                            key={cell.id}
+                          >
+                            {link &&
+                            cell.column.id === row.getVisibleCells()[0]?.column.id ? (
+                              <Link
+                                {...linkProps}
+                                className={linkClassName}
+                                data-row-link=""
+                                to={link}
+                              >
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
+                              </Link>
+                            ) : (
+                              flexRender(cell.column.columnDef.cell, cell.getContext())
+                            )}
+                          </td>
+                        ))}
+                        {rowActions ? (
+                          <td
+                            className={cn(
+                              PINNED_END_CELL,
+                              "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
+                            )}
+                            data-testid="data-grid-row-actions"
+                          >
+                            {rowActions(row.original)}
+                          </td>
+                        ) : null}
+                      </tr>
+                      {detailRows?.(row.original).map((detail) => (
+                        <tr
+                          className="border-b border-border/40 align-top text-sm text-foreground"
+                          data-testid={detail.testId}
+                          key={`${row.id}-${detail.id}`}
                         >
-                          {link &&
-                          cell.column.id === row.getVisibleCells()[0]?.column.id ? (
-                            <Link
-                              {...linkProps}
-                              className={linkClassName}
-                              data-row-link=""
-                              to={link}
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
+                          {detailCells(row.getVisibleCells().map((cell) => cell.column), detail).map(({ column, colSpan }) => (
+                            <td
+                              className={cn(
+                                "px-4 py-2",
+                                column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, "bg-card"],
                               )}
-                            </Link>
-                          ) : (
-                            flexRender(cell.column.columnDef.cell, cell.getContext())
-                          )}
-                        </td>
+                              colSpan={colSpan}
+                              key={column.id}
+                            >
+                              {detail.span?.fromColumnId === column.id ? detail.span.content : detail.cells[column.id]}
+                            </td>
+                          ))}
+                          {rowActions ? <td className={cn(PINNED_END_CELL, "bg-card")} /> : null}
+                        </tr>
                       ))}
-                      {rowActions ? (
-                        <td
-                          className={cn(
-                            PINNED_END_CELL,
-                            "w-px bg-card px-2 py-3 group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]",
-                          )}
-                          data-testid="data-grid-row-actions"
-                        >
-                          {rowActions(row.original)}
-                        </td>
-                      ) : null}
-                    </tr>
+                    </Fragment>
                   );
                 })
               ) : (

@@ -218,7 +218,7 @@ provider-synced (`isProviderSyncedEvent`):
 
 | Event status | What the provider's games do |
 |---|---|
-| `DRAFT` | When the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
+| `DRAFT` | On a one-round event (a game week), when the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
 | Released, not finished | Pairings and sides stay fixed. A match not yet started takes the provider's moved kickoff (`updateMatch`). A pairing no match holds, or a home and away swap, is logged for an admin. |
 | `COMPLETED`, `CANCELLED` | Nothing. |
 
@@ -244,7 +244,31 @@ earliest of them (`SportEventRoundService.reschedule`); a round with none yet ke
 | Event status | What the bracket and games do |
 |---|---|
 | `DRAFT` | When the stored bracket's shape or teams differ from the provider's, match by match (or none is stored), the provider's bracket is loaded through `loadBracket`. Otherwise it is kept and its matches take the games' kickoffs, as for a week. |
-| Released, not finished | A reseeded round still open, whose every game the provider lists with both teams once the round before is played, is placed by the server's own reseed (`proposeRoundMatchups`, then `setRoundMatchups`) when the provider pairs the same teams; a different pairing is logged for an admin. A placed match then takes its game's kickoff. |
+| Released, not finished | A reseeded round still open, whose every game the provider lists with both teams once the round before is played, is placed by the server's own reseed (`proposeRoundMatchups`, then `setRoundMatchups`) when the provider pairs the same teams; a different pairing is logged for an admin. A placed match then takes its game's kickoff. The bracket is not read: a side it names may have left the field (a filled play-in place). |
+
+**The NCAA men's tournament** carries its whole bracket too, built from the vendor's
+`/ncaab/v1/bracket` (`ncaa-tournament-mapping.ts`). Each First Four pairing is a play-in place in
+the field (`toNcaaPlayInPlaces`): a participant named for its two teams
+(`ncaab-2025-east-11-seed-play-in`), with the pairing's seed and `metadata.playInPlace`, whose row
+the field load marks `is_play_in_place` when it makes it. A place is listed only while its game is
+unplayed, so a load after the First Four never writes the pairing a row again, and the winner
+fills the place through the live-score fill (#1571). The bracket (`toNcaaBracket`) puts each
+region's round of 64 in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 v 14, 7 v 10,
+2 v 15), the better seed home, the regions in `region_id` order as matches 1 to 32, each pair of
+games linked into the next round, the first two regions' champions meeting in semifinal 61 and the
+last two in 62, the championship 63, all at neutral sites. **Which regions meet in the
+semifinals is read from `region_id` order, which the vendor's document does not promise; check it
+against a real bracket before a live tournament.** Each bracket load logs the regions it pairs
+(`crossRegionPairings`), and the release checklist in `EVENT-SETUP-PROCEDURES.md` *Knockout
+brackets* has an admin check them. The games are those from the round of 64 on
+with both teams, a First Four team's round of 64 game left out until its place is filled
+(`toNcaaScheduledGames`). The women's bracket names no region (`NCAAWBracket` has no
+`region_id`), so it carries games but no bracket, and an admin builds it. Games without a bracket
+never load into an event of more than one round: they would replace the admin's bracket with one
+round's games, so a draft only takes their kickoffs (the same holds for the NFL postseason before
+the standings seed anyone). A draft still unreleased when its First Four games end keeps its bracket as
+last loaded, and its places stay empty: the live-score fill that puts each winner in its place
+runs only on a released event, so an admin releases the tournament before the First Four ends.
 
 ## 3. Triggers
 
@@ -608,8 +632,9 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks) and the NFL postseason: see *2d*. Still to come are the other fixed-shape
-  playoffs (NBA, NHL, MLB, WNBA, CFP, World Cup) and the NCAA tournaments from the vendor's bracket. For those an admin
+  League matchweeks), the NFL postseason and the NCAA men's tournament: see *2d*. Still to come
+  are the other fixed-shape playoffs (NBA, NHL, MLB, WNBA, World Cup). The CFP has no committee
+  seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).
 - **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its

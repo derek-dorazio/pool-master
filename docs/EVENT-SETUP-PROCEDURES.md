@@ -227,6 +227,13 @@ on the Bracket tab:
   are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
   cannot be edited. Under *Play-in places*, mark each field row that stands for a First Four
   pairing ("Texas / Xavier").
+- **Before releasing a provider-synced NCAA men's tournament**, check which regions meet in
+  national semifinals 61 and 62 against the official bracket's Final Four pairing. The provider's
+  bracket pairs them by its region order, which the provider does not promise; the sync logs the
+  pairing it loaded ("check them against the official bracket before release",
+  `crossRegionPairings`). If it is wrong, hold the release: the links come from the code
+  (`toNcaaBracket`), not the Bracket tab, so it needs a fix there. Release before the
+  First Four games end, too: a play-in place takes its winner only once the event is released.
 - **After release**, choose the team that won each game; the winner moves to its next game and
   the standings update. A wrong winner can be switched, or the result cleared, until the next
   game has a result. Each play-in place takes its winner once, from the active teams on the

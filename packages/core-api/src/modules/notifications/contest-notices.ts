@@ -36,7 +36,7 @@ import {
   buildContestUrl,
   buildEmailContestFormat,
   buildEmailEventHeader,
-  buildLeaderboardUrl,
+  buildContestEntryUrl,
   formatUserName,
   type ContestEmailEvent,
   type ContestEventChange,
@@ -157,7 +157,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
       .map((owner) => owner.userId));
     const eventFormat = await describeEventFormat(shared, sportEvent);
-    const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const leaderboardUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     await this.queueEach('CONTEST_STARTED_SUMMARY', await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about: `${contest.id}:${sportEvent.id}`,
@@ -194,7 +194,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       this.skipped('email.contestSettled.skipped', contest, 'Skipped the final results email because its league is gone');
       return;
     }
-    const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const leaderboardUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const resultsFor = (user: User, outcome: ContestResultsOutcome): EmailSendInput<'CONTEST_RESULTS'> => ({
       to: emailRecipientOf(user),
       about: contest.id,
@@ -226,6 +226,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       squadsByOwner.set(owner.userId, (squadsByOwner.get(owner.userId) ?? new Set<string>()).add(owner.squadId));
     }
     const leaders = leaderCount(final.entries);
+    const entryUrlOf = (entryId: string): string => buildContestEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entryId);
     const winners = final.entries.filter((entry) => entry.position === 1);
     await this.queueEach('CONTEST_RESULTS', members.map(({ user }) => user), (user) => {
       const squadIds = squadsByOwner.get(user.id) ?? new Set<string>();
@@ -235,6 +236,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
         score: entry.score === null ? null : format(entry.score),
         movement: null,
         isYours: squadIds.has(entry.squadId),
+        ...(squadIds.has(entry.squadId) && { entryUrl: entryUrlOf(entry.entryId) }),
       }));
       return resultsFor(user, {
         kind: ContestResultsKind.SCORED,
@@ -244,7 +246,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
         entryCount: lines.length,
         yourWins: winners
           .filter((entry) => squadIds.has(entry.squadId))
-          .map((entry) => ({ entryName: entry.entryName, squadName: entry.squadName })),
+          .map((entry) => ({ entryName: entry.entryName, squadName: entry.squadName, entryUrl: entryUrlOf(entry.entryId) })),
       });
     });
   }
