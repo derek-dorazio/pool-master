@@ -152,6 +152,11 @@ export interface ContestLeaderboardSnapshot<Board> {
   shownEvent: string;
   /** Up by one on every write. */
   version: number;
+  /**
+   * The board format it was written under (`LEADERBOARD_BOARD_FORMAT` when written, #1761): one
+   * written under an older format may lack a field the response now requires, so it is never served.
+   */
+  boardFormat: number;
   /** When the rebuild that wrote it began reading. */
   computedFrom: Date;
   /** The contest's `updatedAt` it was computed under. */

@@ -66,6 +66,17 @@ export function nextKickoffAfter(
 export const DEFAULT_SHOWN_EVENT = '';
 
 /**
+ * The format of the boards stored now (#1761). A board stored under an older format is never
+ * served: the read computes it again and stores it under this one. The response schema refuses a
+ * board missing a field it requires, so a board stored before a deploy that added one would
+ * otherwise answer 500 until it aged out.
+ *
+ * BUMP THIS whenever any leaderboard response shape changes (the roster, bracket, pick'em or
+ * survivor board, or a row or week on one), in the same change.
+ */
+export const LEADERBOARD_BOARD_FORMAT = 1;
+
+/**
  * How old a stored board may be before a read computes it again: the bound on the changes no
  * write signals, such as a participant's or a squad's new name.
  */
@@ -77,17 +88,21 @@ export function readLeaderboardSnapshotMaxAgeMs(env: NodeJS.ProcessEnv): number 
 }
 
 /**
- * Whether a stored board still answers a read at `now`: it is younger than `maxAgeMs`, no event
- * it does not show has started since, and the contest has not changed since (its status, its
- * name, its draw).
+ * Whether a stored board still answers a read at `now`: it was stored under the current board
+ * format or a newer one, it is younger than `maxAgeMs`, no event it does not show has started since, and the
+ * contest has not changed since (its status, its name, its draw).
  */
 export function isSnapshotCurrent(
-  snapshot: Pick<ContestLeaderboardSnapshot<unknown>, 'computedFrom' | 'validUntil' | 'contestUpdatedAt'>,
+  snapshot: Pick<ContestLeaderboardSnapshot<unknown>, 'boardFormat' | 'computedFrom' | 'validUntil' | 'contestUpdatedAt'>,
   contest: Pick<Contest, 'updatedAt'>,
   now: Date,
   maxAgeMs: number,
 ): boolean {
-  return now.getTime() - snapshot.computedFrom.getTime() < maxAgeMs
+  // A newer format is current too: during a rolling deploy a task still on the older code serves
+  // the newer board (the response drops a field its schema does not name) rather than rebuilding
+  // it under its own format and taking turns with the newer tasks.
+  return snapshot.boardFormat >= LEADERBOARD_BOARD_FORMAT
+    && now.getTime() - snapshot.computedFrom.getTime() < maxAgeMs
     && (snapshot.validUntil === null || now < snapshot.validUntil)
     && snapshot.contestUpdatedAt.getTime() === contest.updatedAt.getTime();
 }

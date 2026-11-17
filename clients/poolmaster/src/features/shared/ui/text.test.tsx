@@ -69,6 +69,13 @@ describe('Text', () => {
     expect(screen.getByText('Quiet line')).not.toHaveClass('text-foreground');
   });
 
+  it('mutes a line on a navy panel in the panel\'s own muted light, not the page\'s grey', () => {
+    render(<Text tone="onInverseMuted">11 entries so far</Text>);
+
+    expect(screen.getByText('11 entries so far')).toHaveClass('text-on-inverse-muted');
+    expect(screen.getByText('11 entries so far')).not.toHaveClass('text-muted-foreground');
+  });
+
   it.each(['semibold', 'bold', 'normal'] as const)('sets a %s weight in place of the variant\'s own, for names and points that stand out', (weight) => {
     render(<Text variant="strong" weight={weight}>Casey Crushers</Text>);
 

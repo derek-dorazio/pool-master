@@ -15,13 +15,16 @@ import {
   NBA_PLAYOFFS_SEASON_TYPE,
   nbaGameListSchema,
   nbaPlayerListSchema,
+  nbaStandingListSchema,
   nbaStatsListSchema,
   nbaTeamListSchema,
+  type NbaStanding,
   type NbaGame,
   type NbaPlayer,
   type NbaStats,
   type NbaTeam,
 } from './nba-contract';
+import type { PlayoffSeedRanks } from './series-playoff-bracket';
 import type { PlayoffPlayer, PlayoffStatLine } from './series-playoff-rounds';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
 import type { PlayoffRoundsSource } from './series-playoffs-reader';
@@ -41,11 +44,14 @@ export const NBA_PLAYOFFS: PlayoffsLeague = {
   playoffYearOffset: 1,
   // September, ahead of October's opening night.
   seasonRolloverMonth: 8,
+  // Each conference seeds its own half; the West's is listed first, as an admin loads it.
+  bracket: { groups: ['West', 'East'] },
 };
 
 const GAMES_PATH = '/nba/v1/games';
 const TEAMS_PATH = '/nba/v1/teams';
 const STATS_PATH = '/nba/v1/stats';
+const STANDINGS_PATH = '/nba/v1/standings';
 const ACTIVE_PLAYERS_PATH = '/nba/v1/players/active';
 
 /** A field the document leaves optional but without which a row cannot be placed or scored. */
@@ -124,6 +130,18 @@ export function toNbaPlayoffPlayer(player: NbaPlayer): PlayoffPlayer {
 }
 
 /**
+ * Each team's rank in its conference, the seed of the 1 to 6 seeds; the 7 and 8 seeds come from
+ * the play-in, so their ranks are not their seeds, and the bracket reads them from who they meet.
+ */
+export function toNbaSeedRanks(standings: readonly NbaStanding[]): PlayoffSeedRanks {
+  return new Map(standings.flatMap((standing) => {
+    const id = standing.team?.id;
+    const rank = standing.conference_rank;
+    return id === undefined || rank === undefined ? [] : [[id, rank] as const];
+  }));
+}
+
+/**
  * The NBA's reads: a season's playoff games (never the play-in), every team, the stat rows of some
  * games, and some teams' active rosters.
  */
@@ -137,6 +155,10 @@ export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffRoundsSourc
     async teams() {
       const page = await client.get(TEAMS_PATH, {}, nbaTeamListSchema);
       return toNbaPlayoffTeams(page.data);
+    },
+    async seedRanks(season) {
+      const page = await client.get(STANDINGS_PATH, { season }, nbaStandingListSchema);
+      return toNbaSeedRanks(page.data);
     },
     async statLines(gameIds) {
       if (gameIds.length === 0) return [];

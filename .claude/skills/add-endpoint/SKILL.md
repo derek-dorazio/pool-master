@@ -46,6 +46,9 @@ Contract Documentation Checklist you run before calling the work done.
   generated SDK and OpenAPI descriptions are the frontend's spec. If a frontend question
   exposes a documentation gap, the fix is in the contract source — route summary,
   description, tags, DTO field and enum descriptions — not an answer in chat.
+- **Changing a leaderboard response without bumping its board format.** Stored boards written
+  before the deploy then lack the new field and answer 500. See `rules/service-rules.md` §4
+  *DTOs, Mappers, and OpenAPI* (*Response Rules*).
 - **Leaving generated artifacts drifted.** The regenerate step is part of the slice. The
   frontend cannot start against a contract that has not been exported.
 

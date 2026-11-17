@@ -40,6 +40,19 @@ export const WithRows: Story = {
   },
 };
 
+/** Rows with their own buttons (#1763): the buttons are their own targets, the rest of the row opens it. */
+export const WithRowActions: Story = {
+  args: {
+    title: "More contests",
+    children: (
+      <SectionRows>
+        <SectionRow actions={<Button size="sm">Make your picks</Button>} facts="Open · closes Feb 15 · 4 entries" name="Daytona 500 Budget" to="/c/1" />
+        <SectionRow actions={<><Button size="sm">Edit picks</Button><Button size="sm" variant="secondary">Add entry</Button></>} facts="Open · closes Jan 1 · 2 entries" name="Rose Bowl Pick'em" to="/c/2" />
+      </SectionRows>
+    ),
+  },
+};
+
 export const Empty: Story = {
   args: { title: "Contests", children: <SectionEmpty>No contests yet.</SectionEmpty> },
 };

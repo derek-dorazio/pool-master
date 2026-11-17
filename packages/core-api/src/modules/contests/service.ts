@@ -92,6 +92,7 @@ import {
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   LeaderboardKind,
   isSnapshotCurrent,
+  LEADERBOARD_BOARD_FORMAT,
   leaderboardKindOf,
   nextKickoffAfter,
   type LeaderboardChanges,
@@ -704,6 +705,7 @@ export class ContestService {
       const write = {
         contestId: contest.id,
         shownEvent,
+        boardFormat: LEADERBOARD_BOARD_FORMAT,
         computedFrom,
         contestUpdatedAt: contest.updatedAt,
         validUntil,

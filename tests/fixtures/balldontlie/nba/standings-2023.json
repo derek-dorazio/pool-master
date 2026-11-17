@@ -1,0 +1,244 @@
+{
+  "data": [
+    {
+      "team": {
+        "id": 2,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Boston",
+        "name": "Celtics",
+        "full_name": "Boston Celtics",
+        "abbreviation": "BOS"
+      },
+      "conference_rank": 1,
+      "wins": 64,
+      "losses": 18,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 20,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "New York",
+        "name": "Knicks",
+        "full_name": "New York Knicks",
+        "abbreviation": "NYK"
+      },
+      "conference_rank": 2,
+      "wins": 50,
+      "losses": 32,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 17,
+        "conference": "East",
+        "division": "Central",
+        "city": "Milwaukee",
+        "name": "Bucks",
+        "full_name": "Milwaukee Bucks",
+        "abbreviation": "MIL"
+      },
+      "conference_rank": 3,
+      "wins": 49,
+      "losses": 33,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 6,
+        "conference": "East",
+        "division": "Central",
+        "city": "Cleveland",
+        "name": "Cavaliers",
+        "full_name": "Cleveland Cavaliers",
+        "abbreviation": "CLE"
+      },
+      "conference_rank": 4,
+      "wins": 48,
+      "losses": 34,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 22,
+        "conference": "East",
+        "division": "Southeast",
+        "city": "Orlando",
+        "name": "Magic",
+        "full_name": "Orlando Magic",
+        "abbreviation": "ORL"
+      },
+      "conference_rank": 5,
+      "wins": 47,
+      "losses": 35,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 12,
+        "conference": "East",
+        "division": "Central",
+        "city": "Indiana",
+        "name": "Pacers",
+        "full_name": "Indiana Pacers",
+        "abbreviation": "IND"
+      },
+      "conference_rank": 6,
+      "wins": 47,
+      "losses": 35,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 23,
+        "conference": "East",
+        "division": "Atlantic",
+        "city": "Philadelphia",
+        "name": "76ers",
+        "full_name": "Philadelphia 76ers",
+        "abbreviation": "PHI"
+      },
+      "conference_rank": 7,
+      "wins": 47,
+      "losses": 35,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 16,
+        "conference": "East",
+        "division": "Southeast",
+        "city": "Miami",
+        "name": "Heat",
+        "full_name": "Miami Heat",
+        "abbreviation": "MIA"
+      },
+      "conference_rank": 8,
+      "wins": 46,
+      "losses": 36,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 21,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Oklahoma City",
+        "name": "Thunder",
+        "full_name": "Oklahoma City Thunder",
+        "abbreviation": "OKC"
+      },
+      "conference_rank": 1,
+      "wins": 57,
+      "losses": 25,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 8,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Denver",
+        "name": "Nuggets",
+        "full_name": "Denver Nuggets",
+        "abbreviation": "DEN"
+      },
+      "conference_rank": 2,
+      "wins": 57,
+      "losses": 25,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 18,
+        "conference": "West",
+        "division": "Northwest",
+        "city": "Minnesota",
+        "name": "Timberwolves",
+        "full_name": "Minnesota Timberwolves",
+        "abbreviation": "MIN"
+      },
+      "conference_rank": 3,
+      "wins": 56,
+      "losses": 26,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 13,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "LA",
+        "name": "Clippers",
+        "full_name": "LA Clippers",
+        "abbreviation": "LAC"
+      },
+      "conference_rank": 4,
+      "wins": 51,
+      "losses": 31,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 7,
+        "conference": "West",
+        "division": "Southwest",
+        "city": "Dallas",
+        "name": "Mavericks",
+        "full_name": "Dallas Mavericks",
+        "abbreviation": "DAL"
+      },
+      "conference_rank": 5,
+      "wins": 50,
+      "losses": 32,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 24,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Phoenix",
+        "name": "Suns",
+        "full_name": "Phoenix Suns",
+        "abbreviation": "PHX"
+      },
+      "conference_rank": 6,
+      "wins": 49,
+      "losses": 33,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 19,
+        "conference": "West",
+        "division": "Southwest",
+        "city": "New Orleans",
+        "name": "Pelicans",
+        "full_name": "New Orleans Pelicans",
+        "abbreviation": "NOP"
+      },
+      "conference_rank": 7,
+      "wins": 49,
+      "losses": 33,
+      "season": 2023
+    },
+    {
+      "team": {
+        "id": 14,
+        "conference": "West",
+        "division": "Pacific",
+        "city": "Los Angeles",
+        "name": "Lakers",
+        "full_name": "Los Angeles Lakers",
+        "abbreviation": "LAL"
+      },
+      "conference_rank": 8,
+      "wins": 47,
+      "losses": 35,
+      "season": 2023
+    }
+  ]
+}

@@ -4,6 +4,8 @@ import { countdownUntil } from "./countdown-parts";
 const toneClassNames = {
   default: { box: "border-border bg-background", label: "text-muted-foreground" },
   inverse: { box: "border-inverse-border bg-on-inverse-subtle", label: "text-on-inverse-muted" },
+  /** On a navy hero taking entries (#1763): gold-tinted boxes, the open hero's accent. */
+  inverseAccent: { box: "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)]", label: "text-on-inverse-muted" },
 };
 
 type CountdownTone = keyof typeof toneClassNames;
@@ -39,7 +41,7 @@ export function Countdown({
       role="timer"
     >
       {parts.map((part) => (
-        <div className={cn("min-w-16 rounded-xl border px-3 py-2 text-center", toneClassNames[tone].box)} key={part.label}>
+        <div className={cn("min-w-16 rounded-xl border px-3 py-2 text-center", toneClassNames[tone].box)} data-testid={testId ? `${testId}-${part.label.toLowerCase()}` : undefined} key={part.label}>
           <b className="block font-display text-xl tabular-nums">{String(part.value).padStart(2, "0")}</b>
           <span className={cn("text-xs uppercase tracking-label", toneClassNames[tone].label)}>{part.label}</span>
         </div>

@@ -73,6 +73,8 @@ export type MyContestEntries = {
   bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
   /** The viewer's team's entries in each of the league's open and live contests, by contest id. */
   entriesByContestId: ReadonlyMap<string, ContestEntryDto[]>;
+  /** Each of the viewer's live entries' place, by entry id, for My team's Your entries (#1763). */
+  placeByEntryId: ReadonlyMap<string, ContestEntryPlaceDto>;
   isError: boolean;
   isLoading: boolean;
   /** Whether the entries are known yet, as the rows that describe them read it. */
@@ -102,6 +104,7 @@ export function useMyContestEntries(leagueId: string, enabled: boolean): MyConte
   return {
     bestPlaceByContestId: query.data?.bestPlaceByContestId ?? NO_PLACES,
     entriesByContestId: query.data?.entriesByContestId ?? EMPTY,
+    placeByEntryId: query.data?.placeByEntryId ?? NO_PLACES,
     isError: query.isError,
     isLoading: query.isLoading,
     state: query.isError ? 'failed' : query.isLoading ? 'loading' : 'ready',
@@ -125,5 +128,5 @@ function groupByContest({ entries, places }: MyContestEntriesResponse) {
       bestPlaceByContestId.set(contestId, place);
     }
   }
-  return { bestPlaceByContestId, entriesByContestId };
+  return { bestPlaceByContestId, entriesByContestId, placeByEntryId: new Map(places.map((place) => [place.entryId, place])) };
 }

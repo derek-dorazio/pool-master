@@ -1,9 +1,10 @@
 import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaContestLeaderboardSnapshotRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import {
   cleanupTestData,
   createTestUser,
@@ -609,7 +610,7 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
     const at = (ms: number) => new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms));
     const write = (label: string, computedFrom: Date) => snapshots.save({
-      contestId: contest.id, shownEvent: '', computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+      contestId: contest.id, shownEvent: '', boardFormat: LEADERBOARD_BOARD_FORMAT, computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
     });
 
     expect(await write('first', at(100))).toMatchObject({ version: 1, board: { label: 'first' } });
@@ -626,7 +627,7 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     const appPrisma = getAppPrisma();
     const older = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(appPrisma);
     const write = (label: string, ms: number) => ({
-      contestId: contest.id, shownEvent: '', computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+      contestId: contest.id, shownEvent: '', boardFormat: LEADERBOARD_BOARD_FORMAT, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
     });
     // The newer build finds no row to overwrite; the older build's insert lands before its own.
     let olderInserted = false;
@@ -677,6 +678,43 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
   });
 
+  it('computes the board again on the next read, and stores it under the current format, when the stored one was written under an older board format (#1761)', async () => {
+    const { contest, viewerId } = await liveContest();
+    const service = serviceOn(getAppPrisma());
+    await service.getLeaderboard(contest.id, viewerId);
+    await getPrisma().contestLeaderboardSnapshot.updateMany({ where: { contestId: contest.id }, data: { boardFormat: LEADERBOARD_BOARD_FORMAT - 1 } });
+
+    const { statements } = await recordStatements(() => service.getLeaderboard(contest.id, viewerId));
+
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2, boardFormat: LEADERBOARD_BOARD_FORMAT }]);
+  });
+
+  it('overwrites a board stored under an older format even when it began computing later, so it is never kept in place of a current one', async () => {
+    const { contest } = await liveContest();
+    const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
+    const write = (label: string, boardFormat: number, ms: number) => snapshots.save({
+      contestId: contest.id, shownEvent: '', boardFormat, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+
+    await write('older format', LEADERBOARD_BOARD_FORMAT - 1, 200);
+
+    expect(await write('current format', LEADERBOARD_BOARD_FORMAT, 100)).toMatchObject({ version: 2, boardFormat: LEADERBOARD_BOARD_FORMAT, board: { label: 'current format' } });
+  });
+
+  it('never overwrites a board stored under a newer format, even from a rebuild that began later, so a task still on older code mid-deploy cannot replace it', async () => {
+    const { contest } = await liveContest();
+    const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
+    const write = (label: string, boardFormat: number, ms: number) => snapshots.save({
+      contestId: contest.id, shownEvent: '', boardFormat, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+
+    await write('newer format', LEADERBOARD_BOARD_FORMAT + 1, 100);
+
+    expect(await write('current format', LEADERBOARD_BOARD_FORMAT, 200)).toBeNull();
+    expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 1, boardFormat: LEADERBOARD_BOARD_FORMAT + 1, board: { label: 'newer format' } });
+  });
+
   it('keeps one stored board per shown event, and deletes them with their contest', async () => {
     const settled = await createEvent('Masters', 200, SportEventStatus.COMPLETED, [-1, -2, -3, -4]);
     const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
@@ -712,6 +750,28 @@ describe('Contest leaderboard snapshots (#1435)', () => {
       expect(second.headers['cache-control']).toBe(first.headers['cache-control']);
       expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
       expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toEqual([]);
+    });
+
+    it('answers 200 with a board computed again when the stored board predates a response field, rather than failing to send the stored one (#1761)', async () => {
+      const { contest, viewerHeaders } = await liveContest();
+      expect((await poll(contest.id, viewerHeaders)).statusCode).toBe(200);
+      const [row] = await snapshotRows(contest.id);
+      const stored = expectDefined(row).board as { board: { entries: Record<string, unknown>[] } };
+      // As a board written before a deploy that added `totalScore` to each entry would be stored.
+      const withoutField = { ...stored, board: { ...stored.board, entries: stored.board.entries.map(({ totalScore: _dropped, ...entry }) => entry) } };
+      const storeOldBoard = (boardFormat: number) => getPrisma().contestLeaderboardSnapshot.updateMany({ where: { contestId: contest.id }, data: { boardFormat, board: withoutField as Prisma.InputJsonValue } });
+
+      // Served as stored, such a board cannot be sent: the response requires the field.
+      await storeOldBoard(LEADERBOARD_BOARD_FORMAT);
+      expect((await poll(contest.id, viewerHeaders)).statusCode).toBe(500);
+
+      // Stored before formats were counted, as every board stored before #1761 is (the column's 0).
+      await storeOldBoard(0);
+      const read = await poll(contest.id, viewerHeaders);
+
+      expect(read.statusCode).toBe(200);
+      expect(read.json<{ entries: { totalScore: number }[] }>().entries.map((entry) => entry.totalScore)).toEqual([-8]);
+      expect(await snapshotRows(contest.id)).toMatchObject([{ boardFormat: LEADERBOARD_BOARD_FORMAT }]);
     });
 
     it('sends the board again with a new tag once a rebuild stored newer scores', async () => {
