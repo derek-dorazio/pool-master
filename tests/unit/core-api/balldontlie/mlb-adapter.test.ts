@@ -13,7 +13,7 @@ import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec
 const API_KEY = 'test-api-key';
 const NOW = Date.UTC(2026, 10, 10);
 
-const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean() });
+const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean(), date: z.string() });
 const gamesIn = (file: string) => z.object({ data: z.array(gameRow) }).parse(readBalldontlieFixture('mlb', file)).data;
 const games = [...gamesIn('games-2025-postseason.json'), ...gamesIn('games-2026-postseason-partial.json')];
 

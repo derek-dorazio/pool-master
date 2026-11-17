@@ -304,6 +304,20 @@ American League's champion is home in the World Series, display only. The two to
 first-round game, so the read also takes the league's teams (`/mlb/v1/teams`) and adds them to the
 field, since the slate loads nothing while a bracket team is missing from it.
 
+**The World Cup's knockout bracket** is single games, built from the edition's
+`/fifa/worldcup/v1/matches` (`fifa-world-cup-mapping.ts`). The play-off for third place fits no
+match of the site's bracket and is left out (`bracketMatchesOf`). The rounds are the knockout
+stages in the vendor's stage order, the first one round 1: five from 2026, the round of 32 on, and
+four before; a listing that skips a stage or is not a whole bracket's worth tells no rounds, and
+gives no games or bracket. Each later match names the matches its sides come from
+(`home_team_source`, "Winner of Match 74") until a side is decided, when the team stands there
+instead, so the bracket (`toWorldCupBracket`) reads the order back from the final: each match puts
+the match its home side comes from (by source, or the one its team won) before its away side's,
+the round of 32 numbered 1 to 16 in that order and each later round below it, each side the
+vendor's home or away, every match at a neutral site with no region. It loads once every round of
+32 team is decided. The games are the bracket's matches with both teams decided
+(`toWorldCupScheduledGames`).
+
 ## 3. Triggers
 
 All three record a `provider_sync_runs` row through `ProviderSyncRunLedger`
@@ -646,13 +660,15 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   `toPlayoffRoundEvent`, `toPlayoffRoundBoxScores`, `toPlayoffPlayerParticipant`;
   `nba-mapping.ts` `toNbaStatLine`, `toNbaPlayoffPlayer`.
 
-### Premier League (#1496 part 4c) and World Cup (#1496 part 4d)
+### Premier League (#1496 part 4c) and World Cup (#1496 part 4d, #1728)
 
 - **Registration.** Keywords `EPL` / `FIFAWC` by migration. A Premier League matchweek is the
   season's matches grouped by round number and forms no bracket, so a draw is a result. A World
   Cup edition's knockout bracket is one event.
 - **Sync.** `EplReader.liveScores` / `WorldCupReader.liveScores`. World Cup games level after
   extra time carry shoot-out scores, which the writer uses to name the winner.
+- **Bracket.** The World Cup's games and whole knockout bracket come from its matches' stages and
+  team sources: see *2d*.
 - **Key code.** `epl-mapping.ts`, `epl-reader.ts`, `fifa-world-cup-mapping.ts`,
   `fifa-world-cup-reader.ts`, shared `competition-status.ts` (the vendor's game states to ours).
 
@@ -675,7 +691,7 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
   League matchweeks), the NFL postseason, the NCAA men's tournament, the NBA's, WNBA's and NHL's
-  playoffs and MLB's postseason: see *2d*. Still to come is the World Cup. The
+  playoffs, MLB's postseason and the World Cup's knockout stage: see *2d*. The
   CFP has no committee seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).

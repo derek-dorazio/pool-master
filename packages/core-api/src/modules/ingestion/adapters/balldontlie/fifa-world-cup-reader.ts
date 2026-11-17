@@ -1,6 +1,7 @@
 /**
  * The BALLDONTLIE FIFA World Cup reads behind the adapter (#1496): each edition's knockout
- * bracket as an event, its teams decided so far, an edition's teams, and the bracket's scores.
+ * bracket as an event, its teams decided so far, its games and bracket (#1728), an edition's
+ * teams, and the bracket's scores.
  * The matches endpoint needs the GOAT tier; the teams endpoint names no paid tier.
  */
 
@@ -16,6 +17,8 @@ import {
   toWorldCupEvents,
   toWorldCupFieldParticipants,
   toWorldCupGameScoreUpdates,
+  toWorldCupBracket,
+  toWorldCupScheduledGames,
   toWorldCupTeamParticipant,
   worldCupScopeId,
   type WorldCupScope,
@@ -44,12 +47,21 @@ export class WorldCupReader {
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** The edition's knockout bracket with the teams decided so far; null when the vendor lists none. */
+  /**
+   * The edition's knockout bracket with the teams decided so far, its games, and its whole bracket
+   * once the first round's teams are decided (#1728); null when the vendor lists none.
+   */
   async eventDetails(scope: WorldCupScope): Promise<SportEventDetail | null> {
     const matches = await this.knockoutOf(scope);
     if (matches.length === 0) return null;
     const participants = toWorldCupFieldParticipants(matches);
-    return { ...toWorldCupEvent(scope, matches, participants.length), participants };
+    const bracket = toWorldCupBracket(matches);
+    return {
+      ...toWorldCupEvent(scope, matches, participants.length),
+      participants,
+      games: toWorldCupScheduledGames(matches),
+      ...(bracket !== null && { bracket }),
+    };
   }
 
   /** The current edition's teams. */

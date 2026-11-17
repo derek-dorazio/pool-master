@@ -4,7 +4,9 @@ import {
   fifaGroupSchema,
   fifaMatchListSchema,
   fifaMatchSchema,
+  fifaMatchTeamSourceSchema,
   fifaSeasonSchema,
+  fifaStageSchema,
   fifaTeamListSchema,
   fifaTeamSchema,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-contract';
@@ -28,6 +30,7 @@ const fixtures: Array<[file: string, path: string, adapterSchema: z.ZodType]> = 
   ['teams.json', '/fifa/worldcup/v1/teams', fifaTeamListSchema],
   ['matches-2022.json', '/fifa/worldcup/v1/matches', fifaMatchListSchema],
   ['matches-2026-partial.json', '/fifa/worldcup/v1/matches', fifaMatchListSchema],
+  ['matches-2026-knockout.json', '/fifa/worldcup/v1/matches', fifaMatchListSchema],
 ];
 
 describe('BALLDONTLIE FIFA World Cup contract', () => {
@@ -48,6 +51,8 @@ describe('BALLDONTLIE FIFA World Cup contract', () => {
     ['FIFATeam', fifaTeamSchema],
     ['FIFASeason', fifaSeasonSchema],
     ['FIFAGroup', fifaGroupSchema],
+    ['FIFAStage', fifaStageSchema],
+    ['FIFAMatchTeamSource', fifaMatchTeamSourceSchema],
     ['Pagination', balldontliePaginationSchema],
   ])('documents every field read from %s with a type, nullability and value set the adapter accepts', (component, adapterSchema) => {
     const ours = z.toJSONSchema(adapterSchema, { io: 'input' }) as Record<string, unknown>;
