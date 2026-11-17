@@ -246,6 +246,23 @@ earliest of them (`SportEventRoundService.reschedule`); a round with none yet ke
 | `DRAFT` | When the stored bracket's shape or teams differ from the provider's, match by match (or none is stored), the provider's bracket is loaded through `loadBracket`. Otherwise it is kept and its matches take the games' kickoffs, as for a week. |
 | Released, not finished | A reseeded round still open, whose every game the provider lists with both teams once the round before is played, is placed by the server's own reseed (`proposeRoundMatchups`, then `setRoundMatchups`) when the provider pairs the same teams; a different pairing is logged for an admin. A placed match then takes its game's kickoff. |
 
+**A best-of-series playoff whose bracket is fixed by seed** (the NBA's and the WNBA's) gives each
+series as one game, numbered by its Game 1's vendor id, in its round (`playoffSeries`), at Game 1's
+tip-off (`toPlayoffSeriesGames`, `series-playoff-bracket.ts`). Once the vendor lists the whole first
+round, the standings seed it (`/nba/v1/standings` `conference_rank`, `/wnba/v1/standings`
+`playoff_seed`; `PlayoffsSource.seedRanks`) and the playoffs carry their whole bracket
+(`toPlayoffsBracket`): in each first-round series the better-ranked team's rank is its seed `s` and
+its opponent's is `n + 1 - s`. That is right for the NBA, whose standings rank the play-in's 7 and
+8 seeds by record, not by the play-in, because only the 1 and 2 seeds meet them. Each group (an NBA
+conference, the West first as an admin loads it; the WNBA seeds as one) runs 1 v 8, 4 v 5, 3 v 6
+and 2 v 7 from the top, the winners of each two consecutive matches meeting next, each later
+match's home side the half holding the better seed (the West's in the NBA Finals), no game at a
+neutral site. The bracket is fixed, so the links advance every winner. A later round's series takes
+the bracket's sides, not Game 1's, so a lower seed with home court is no swap to the slate. The
+standings are read only once the whole first round is out, so an NBA playoffs is a draft with no
+matches until the play-in is played. The NHL's and MLB's postseasons give no games yet: an admin
+builds their brackets.
+
 ## 3. Triggers
 
 All three record a `provider_sync_runs` row through `ProviderSyncRunLedger`
@@ -515,6 +532,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   without box scores lists none it could not answer for. Either reader keeps only the games the
   vendor marks `postseason` for the asked `season`, whatever the query's filters did, so every
   normalizer must read the flag.
+- **Bracket.** `NBA_PLAYOFFS.bracket` seeds each conference's half from `/nba/v1/standings`
+  (`toNbaSeedRanks`) once the first round is out, and gives each series as a game (*2d*).
 - **Key code.** `nba-mapping.ts` `NBA_PLAYOFFS`, `nbaPlayoffsSource`, `toNbaPlayoffGame`;
   `series-playoffs.ts` `toPlayoffsEvent`, `toPlayoffsGameScoreUpdates`, `isComplete`;
   `series-playoffs-reader.ts` `PlayoffsReader`, `PlayoffRoundsReader`.
@@ -556,6 +575,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   so the whole season is read (about three pages) and the shared reader keeps the playoffs by each
   game's `postseason` flag. The event picker matches a keyword in an event's name only as whole
   words, so the NBA league, whose keyword "WNBA" contains, never lists WNBA events.
+- **Bracket.** `WNBA_PLAYOFFS.bracket` seeds the eight teams as one from `/wnba/v1/standings`
+  `playoff_seed` (`toWnbaSeedRanks`), as the NBA's (*2d*).
 - **Key code.** `wnba-contract.ts`; `wnba-mapping.ts` `WNBA_PLAYOFFS`, `wnbaPlayoffsSource`,
   `toWnbaPlayoffGame`, `isWnbaFranchise`; `isLeagueEvent` in `event-score-source-service.ts`.
 
@@ -608,8 +629,9 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks) and the NFL postseason: see *2d*. Still to come are the other fixed-shape
-  playoffs (NBA, NHL, MLB, WNBA, CFP, World Cup) and the NCAA tournaments from the vendor's bracket. For those an admin
+  League matchweeks), the NFL postseason and the NBA's and WNBA's playoffs: see *2d*. Still to come
+  are the other fixed-shape playoffs (NHL, MLB, CFP, World Cup) and the NCAA tournaments from the
+  vendor's bracket. For those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).
 - **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its

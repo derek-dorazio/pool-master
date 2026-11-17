@@ -29,6 +29,17 @@ export const wnbaTeamListSchema = z.object({
   data: z.array(wnbaTeamSchema),
 });
 
+/** `WNBAStanding` from `/wnba/v1/standings`: a team's playoff seed, one ranking across the league. */
+export const wnbaStandingSchema = z.object({
+  team: wnbaTeamSchema.optional(),
+  playoff_seed: z.number().int().optional(),
+});
+export type WnbaStanding = z.infer<typeof wnbaStandingSchema>;
+
+export const wnbaStandingListSchema = z.object({
+  data: z.array(wnbaStandingSchema),
+});
+
 /** `WNBAGame` from `/wnba/v1/games`. */
 export const wnbaGameSchema = z.object({
   id: z.number().int().optional(),

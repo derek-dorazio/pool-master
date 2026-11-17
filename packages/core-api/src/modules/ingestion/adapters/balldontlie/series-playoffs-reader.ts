@@ -22,6 +22,7 @@ import {
   type PlayoffsLeague,
   type PlayoffTeam,
 } from './series-playoffs';
+import { hasWholeFirstRound, toPlayoffsBracket, toPlayoffSeriesGames, type PlayoffSeedRanks } from './series-playoff-bracket';
 import {
   playoffRoundScopeId,
   playoffSeries,
@@ -44,6 +45,11 @@ export interface PlayoffsSource {
   games(season: number): Promise<PlayoffGame[]>;
   /** Every team of the league. */
   teams(): Promise<PlayoffTeam[]>;
+  /**
+   * Each team's seed rank within its group for a season (`series-playoff-bracket.ts`), for a league
+   * with a bracket shape; a team the standings do not rank is left out.
+   */
+  seedRanks?(season: number): Promise<PlayoffSeedRanks>;
 }
 
 /** A league whose playoff rounds are Clutch Card events (#1497): its box scores and rosters too. */
@@ -82,12 +88,28 @@ export class PlayoffsReader {
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
-  /** A season's playoffs with the teams in them; null when the vendor has no postseason game yet. */
+  /**
+   * A season's playoffs with the teams in them; null when the vendor has no postseason game yet. A
+   * league with a bracket shape also gives each series as one game, and its whole bracket once the
+   * seeds place the first round.
+   */
   async eventDetails(season: number): Promise<SportEventDetail | null> {
     const games = await this.postseasonGames(season);
     if (games.length === 0) return null;
-    const participants = toPlayoffsFieldParticipants(this.source.league, games);
-    return { ...toPlayoffsEvent(this.source.league, season, games, participants.length), participants };
+    const { league } = this.source;
+    const participants = toPlayoffsFieldParticipants(league, games);
+    const event = { ...toPlayoffsEvent(league, season, games, participants.length), participants };
+    // A league whose bracket is not built from its seeds yet (the NHL's, MLB's) gives no games: an
+    // admin builds its bracket, and series games alone would not keep one.
+    if (league.bracket === undefined || this.source.seedRanks === undefined) return event;
+    // The standings are read only once the whole first round is out, when they can seed it.
+    const bracket = hasWholeFirstRound(league, games) ? toPlayoffsBracket(league, games, await this.source.seedRanks(season)) : null;
+    return {
+      ...event,
+      rounds: league.rounds.length,
+      games: toPlayoffSeriesGames(league, games, bracket),
+      ...(bracket !== null && { bracket }),
+    };
   }
 
   /** Every team of the league. */

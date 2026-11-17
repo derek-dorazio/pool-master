@@ -269,8 +269,9 @@ What the code does **today**, while the follow-up tickets of #1723 land:
   admin loads or refreshes one event's field.
 - A sync writes scores, the field and the field size, and on a synced league the event's name,
   venue and dates, a synced game week's matches from the provider's games, and the NFL
-  postseason's whole bracket, placing its reseeded rounds from the provider's games (#1728). It
-  does not yet build another playoff's or a tournament's bracket. Manage shows a provider-synced
+  postseason's whole bracket, placing its reseeded rounds from the provider's games, and the NBA's
+  and WNBA's seeded brackets with each series as one game (#1728). It does not yet build another
+  playoff's or a tournament's bracket. Manage shows a provider-synced
   event's name, venue and dates read-only (`isProviderSyncedEvent`, #1729), since the provider
   wins over an edit.
 - Status moves by the date-driven lifecycle scheduler or by an admin, never by a provider feed.

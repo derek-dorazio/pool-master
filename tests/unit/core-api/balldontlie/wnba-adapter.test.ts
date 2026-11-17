@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
+import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
@@ -31,6 +31,7 @@ const emptyTeams: FakeRoute = () => ({ body: { data: [] } });
 const defaultRoutes: Record<string, FakeRoute> = {
   '/wnba/v1/games': gamesRoute,
   '/wnba/v1/teams': () => ({ body: readBalldontlieFixture('wnba', 'teams.json') }),
+  '/wnba/v1/standings': ({ query }) => ({ body: query.get('season') === '2025' ? readBalldontlieFixture('wnba', 'standings-2025.json') : { data: [] } }),
   '/nba/v1/games': emptyPage,
   '/nba/v1/teams': emptyTeams,
   '/ncaab/v1/bracket': emptyPage,
@@ -118,7 +119,33 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       expect(detail).toMatchObject({ externalId: 'wnba-2025-postseason', sport: Sport.BASKETBALL, status: 'COMPLETED', participantCount: 8, fieldLocked: true });
       expect(detail?.participants.map((team) => team.externalId)).not.toContain('wnba-team-3');
       expect(detail?.participants[0]).toMatchObject({ externalId: 'wnba-team-8', name: 'Minnesota Lynx', metadata: { tour: 'WNBA', abbreviation: 'MIN' } });
-      expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100']);
+      expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100', '/wnba/v1/standings?season=2025']);
+    });
+
+    it('gives the playoffs\' seeded bracket, 1 v 8, 4 v 5, 3 v 6 and 2 v 7 linked to the semifinals and the Finals, and each series as one game on the bracket\'s sides', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
+
+      const team = (id: number) => `wnba-team-${String(id)}`;
+      // Minnesota 1 v Golden State 8, Phoenix 4 v New York 5, Atlanta 3 v Indiana 6, Las Vegas 2 v Seattle 7.
+      expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
+        [1, 1, team(8), team(18), { matchNumber: 5, side: MatchSide.HOME }],
+        [2, 1, team(10), team(9), { matchNumber: 5, side: MatchSide.AWAY }],
+        [3, 1, team(1), team(5), { matchNumber: 6, side: MatchSide.AWAY }],
+        [4, 1, team(7), team(11), { matchNumber: 6, side: MatchSide.HOME }],
+        [5, 2, null, null, { matchNumber: 7, side: MatchSide.HOME }],
+        [6, 2, null, null, { matchNumber: 7, side: MatchSide.AWAY }],
+        [7, 3, null, null, null],
+      ]);
+      expect(detail?.rounds).toBe(3);
+      expect(detail?.games).toHaveLength(7);
+      // Las Vegas hosted Game 1 of the Finals, but Phoenix came up the 1 seed's half, the bracket's
+      // home side, so the series' game takes the bracket's sides and the slate reads no swap.
+      expect(detail?.games?.filter((game) => game.roundNumber === 3)).toEqual([
+        { externalGameId: '4252021', roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z'), isNeutralSite: false },
+      ]);
     });
 
     it('gives nothing for a season with no playoff game yet, however many regular season games it has', async () => {

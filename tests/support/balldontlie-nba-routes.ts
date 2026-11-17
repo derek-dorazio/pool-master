@@ -21,6 +21,9 @@ export const nbaStatRows = z.object({ data: z.array(statRow) }).parse(readBalldo
 const playerRow = z.looseObject({ id: z.number(), team: z.looseObject({ id: z.number() }) });
 const activePlayers = z.object({ data: z.array(playerRow) }).parse(readBalldontlieFixture('nba', 'players-active-finals-teams.json')).data;
 
+const standingRow = z.looseObject({ season: z.number() });
+const standings2023 = z.object({ data: z.array(standingRow) }).parse(readBalldontlieFixture('nba', 'standings-2023.json')).data;
+
 const emptyBracket: FakeRoute = () => ({ body: { data: [], meta: { per_page: 100 } } });
 const emptyTeams: FakeRoute = () => ({ body: { data: [] } });
 
@@ -31,6 +34,8 @@ export const nbaRoutes: Record<string, FakeRoute> = {
   }),
   '/nba/v1/teams': () => ({ body: readBalldontlieFixture('nba', 'teams.json') }),
   '/nba/v1/stats': pagedRoute(nbaStatRows, (row, query) => query.getAll('game_ids[]').map(Number).includes(row.game.id)),
+  // Only the made-up 2023 bracket's season is ranked; any other season's standings are empty.
+  '/nba/v1/standings': ({ query }) => ({ body: { data: standings2023.filter((row) => row.season === Number(query.get('season'))) } }),
   '/nba/v1/players/active': pagedRoute(activePlayers, (row, query) => query.getAll('team_ids[]').map(Number).includes(row.team.id)),
   '/ncaab/v1/bracket': emptyBracket,
   '/ncaab/v1/teams': emptyTeams,
@@ -38,4 +43,5 @@ export const nbaRoutes: Record<string, FakeRoute> = {
   '/ncaaw/v1/teams': emptyTeams,
   '/wnba/v1/games': emptyBracket,
   '/wnba/v1/teams': emptyTeams,
+  '/wnba/v1/standings': emptyTeams,
 };
