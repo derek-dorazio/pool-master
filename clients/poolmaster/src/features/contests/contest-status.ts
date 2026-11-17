@@ -1,7 +1,8 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
-import { type ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
+import { type ContestEntryStatus, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@poolmaster/shared/dto';
 import type { StatusBadgeProps } from '@/features/shared/ui';
+import { hasContestEventStarted } from './contest-events';
 import { contestSchedule } from './use-contest-schedule';
 
 /**
@@ -69,6 +70,28 @@ export function areContestEntriesOpen(
     return false;
   }
   return !startsAt || now.getTime() < new Date(startsAt).getTime();
+}
+
+/**
+ * Whether a contest has nothing left to pick (#1762), so no entry's picks can change again: it is
+ * final, or, for a contest picked once per event, live with every one of its events started.
+ * Pick'em and survivor are picked week by week, or round by round inside one playoff event, so
+ * they keep their pick screens until the contest is final.
+ */
+export function isContestPickingOver(
+  contest: Pick<ContestDto, 'selectionType' | 'status' | 'sportEvents'>,
+  now: Date = new Date(),
+) {
+  if (contest.status === ContestStatus.COMPLETED) {
+    return true;
+  }
+  if (contest.selectionType === SelectionType.PICK_EM || contest.selectionType === SelectionType.SURVIVOR) {
+    return false;
+  }
+  // A contest with no events has nothing started, so it is never over on that count (#1775).
+  return contest.status === ContestStatus.ACTIVE
+    && contest.sportEvents.length > 0
+    && contest.sportEvents.every((sportEvent) => hasContestEventStarted(sportEvent, now));
 }
 
 /** Whether an entry's name can still change (#1739): until entries close, as the server allows. */

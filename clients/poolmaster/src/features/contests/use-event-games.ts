@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import { getEventBracket, type SportEventMatchDto } from '@/lib/api';
+import { getEventBracket, listEventParticipants, type SportEventMatchDto, type SportEventParticipantDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
@@ -15,6 +15,25 @@ export function eventGamesQueryOptions(eventId: string) {
         throwApiError(response.error, 'Event games response is missing data.');
       }
       return response.data.matches;
+    },
+    enabled: eventId !== '',
+    retry: false,
+  };
+}
+
+/**
+ * One event's field, the shared read every page of the event uses: one cache entry per event,
+ * which each page narrows with `select` as it needs. An empty `eventId` reads nothing.
+ */
+export function eventFieldQueryOptions(eventId: string) {
+  return {
+    queryKey: QueryKeys.sportEvents.field(eventId),
+    queryFn: async (): Promise<SportEventParticipantDto[]> => {
+      const response = await listEventParticipants({ path: { eventId } });
+      if (!response.data?.participants) {
+        throwApiError(response.error, 'Event field response is missing data.');
+      }
+      return response.data.participants;
     },
     enabled: eventId !== '',
     retry: false,

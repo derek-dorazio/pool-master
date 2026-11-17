@@ -426,7 +426,33 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('T2. Azalea, -9, down 1');
       expect(message.html).toContain('▲2');
       expect(message.html).toContain('▼1');
-      expect(message.text).toContain('Full leaderboard: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1/leaderboard');
+      expect(message.text).toContain('Full leaderboard: https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1');
+    });
+
+    it('links each of the reader\'s entries it names, in the standings and in their own news, to that entry opened on the contest page', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
+      const green = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
+      const long = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-long';
+
+      expect(message.html).toContain(`<a href="${green}"`);
+      expect(message.html.split(`<a href="${long}"`)).toHaveLength(3);
+      expect(message.html).not.toContain('?entry=entry-amen');
+      expect(message.text).toContain(`T2. Green Jackets, yours, -9, no change <${green}>`);
+      expect(message.text).toContain(`Missed the cut from Long Shots: Danny Willett, Mike Weir. <${long}>`);
+    });
+
+    it('links a bracket entry\'s champion news and a survivor entry\'s elimination to that entry on the contest page', () => {
+      const url = (id: string) => `https://app.example.test/league/OFFICE24/contests/contest-1?entry=${id}`;
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        cut: [],
+        champions: [{ entryName: 'Blue Devils', entryUrl: url('entry-blue'), team: 'Duke', alive: true, maxPossiblePoints: 280 }],
+        out: [{ entryName: 'Bears Believer', entryUrl: url('entry-bears'), team: 'Chicago', roundNumber: null }],
+      }, UTC);
+
+      expect(message.html).toContain(`<a href="${url('entry-blue')}"`);
+      expect(message.html).toContain(`<a href="${url('entry-bears')}"`);
+      expect(message.text).toContain(`Blue Devils: your champion, Duke, is still alive, with 280 points possible. <${url('entry-blue')}>`);
     });
 
     it('lists the reader\'s entries placed below the leaders, and their golfers who missed the cut', () => {
@@ -528,8 +554,8 @@ describe('pool-master-98i system email templates', () => {
         entryCount: 3,
         cut: [],
         out: [
-          { entryName: 'Bears Believer', team: 'Chicago Bears', roundNumber: null },
-          { entryName: 'Sleepy', team: null, roundNumber: null },
+          { entryName: 'Bears Believer', entryUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1?entry=bears-believer', team: 'Chicago Bears', roundNumber: null },
+          { entryName: 'Sleepy', entryUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1?entry=sleepy', team: null, roundNumber: null },
         ],
       }, UTC);
 
@@ -552,8 +578,8 @@ describe('pool-master-98i system email templates', () => {
         entryCount: 1,
         cut: [],
         champions: [
-          { entryName: 'Blue Devils', team: 'Duke', alive: true, maxPossiblePoints: 280 },
-          { entryName: 'Long Shot', team: 'Saint Peter\'s', alive: false, maxPossiblePoints: 90 },
+          { entryName: 'Blue Devils', entryUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1?entry=blue-devils', team: 'Duke', alive: true, maxPossiblePoints: 280 },
+          { entryName: 'Long Shot', entryUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1?entry=long-shot', team: 'Saint Peter\'s', alive: false, maxPossiblePoints: 90 },
         ],
       }, { timeZone: 'America/New_York' });
 
@@ -571,7 +597,7 @@ describe('pool-master-98i system email templates', () => {
         ...standings,
         moment: { kind: StandingsMomentKind.SURVIVOR_WEEK, eventName: 'NFL Playoffs', stillIn: 4 },
         cut: [],
-        out: [{ entryName: 'Bears Believer', team: 'Chicago Bears', roundNumber: 2 }],
+        out: [{ entryName: 'Bears Believer', entryUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1?entry=bears-believer', team: 'Chicago Bears', roundNumber: 2 }],
       }, UTC);
 
       expect(message.text).toContain('Bears Believer is out: Chicago Bears didn\'t win in round 2 of NFL Playoffs.');
@@ -1021,6 +1047,27 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.html).toContain('>T2</td>');
   });
 
+  it('links the entry named in the reader\'s place callout to that entry opened on the contest page, in HTML and text', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
+    const final = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
+    const greenUrl = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
+
+    expect(message.text).toContain(`Your place: T2, Green Jackets, -9. Same place as the last update. <${greenUrl}>`);
+    const callout = message.html.slice(message.html.indexOf(`<a href="${greenUrl}"`));
+    expect(callout.slice(callout.indexOf('>') + 1)).toMatch(/^Green Jackets<\/a> · -9/);
+    expect(final.text).toContain(`Your place: 1st, Green Jackets, -14. Your final place. <${greenUrl}>`);
+  });
+
+  it('leaves the place callout unlinked when the reader\'s line carries no entry link', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+      ...standings,
+      top: standings.top.map((line) => ({ ...line, entryUrl: undefined })),
+      yours: standings.yours.map((line) => ({ ...line, entryUrl: undefined })),
+    }, UTC);
+
+    expect(message.text).toMatch(/Your place: T2, Green Jackets, -9\. Same place as the last update\.\n/);
+  });
+
   it('marks the reader\'s rows "YOU" on a gold tint and leaves everyone else\'s plain', () => {
     const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
 
@@ -1051,6 +1098,15 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.text).toContain('Your place: 1st, Green Jackets, -14. Your final place.');
     expect(message.html).toContain('Masters Pick 6 · Final results');
     expect(message.html).toContain('Morgan Member · -14');
+  });
+
+  it('links the reader\'s entries in the final results, the congratulations and their place callout included, to each entry opened on the contest page', () => {
+    const message = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
+    const green = 'https://qa.ultimateofficepoolmanager.com/league/OFFICE24/contests/contest-1?entry=entry-green';
+
+    expect(message.html.split(`<a href="${green}"`)).toHaveLength(4);
+    expect(message.html).toContain('?entry=entry-long');
+    expect(message.text).toContain(`Congratulations, Morgan Member won Masters Pick 6 with Green Jackets! <${green}>`);
   });
 
   it('links a results email that ended with no scores to the contest\'s final leaderboard, as a scored one does', () => {

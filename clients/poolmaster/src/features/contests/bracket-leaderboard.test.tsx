@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestLeaderboardPage } from './contest-leaderboard-page';
@@ -76,13 +76,19 @@ function EntryDestination() {
   return <div data-testid="entry-destination">{entryId}</div>;
 }
 
-function renderLeaderboard() {
+/** The page's address and how it last moved, so a test can tell a replace from a push. */
+function AddressProbe() {
+  const location = useLocation();
+  return <div data-testid="address">{`${location.search}|${useNavigationType()}`}</div>;
+}
+
+function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/contest-1/leaderboard']}>
+      <MemoryRouter initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1/leaderboard', search }]}>
         <Routes>
-          <Route element={<ContestLeaderboardPage />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
+          <Route element={<><ContestLeaderboardPage /><AddressProbe /></>} path="/league/:leagueCode/contests/:contestId/leaderboard" />
           <Route element={<EntryDestination />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
         </Routes>
       </MemoryRouter>
@@ -181,6 +187,36 @@ describe('Bracket contest leaderboard', () => {
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the bracket of the entry a link names (?entry=) in its dialog, and drops ?entry= by replace when it closes', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    getGamePicksMock.mockResolvedValue({
+      data: gamePicksFixture({ entryId: 'entry-2', entryName: 'Chalk All The Way', ownEntry: false, status: 'SUBMITTED', games: filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true })) }),
+    });
+    renderLeaderboard('?entry=entry-2');
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Chalk All The Way' })).toBeInTheDocument();
+    expect(screen.getByTestId('bracket-leaderboard-row-entry-2')).toHaveAttribute('aria-current', 'true');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\|REPLACE$/);
+  });
+
+  it('opens no dialog for a linked entry My entries hides, or one the board doesn\'t hold', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    renderLeaderboard('?mine=1&entry=entry-2');
+
+    // Once the viewer's league has loaded, My entries narrows the board to theirs.
+    expect(await screen.findByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.queryByTestId('bracket-leaderboard-row-entry-2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(getGamePicksMock).not.toHaveBeenCalled();
   });
 
   it('marks the viewer\'s own bracket as theirs in the dialog\'s title, with its champion as their champion', async () => {

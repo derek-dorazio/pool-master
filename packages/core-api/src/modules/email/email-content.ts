@@ -41,19 +41,26 @@ export function buildSquadOwnerInviteUrl(appBaseUrl: string, inviteCode: string)
   return `${appBaseUrl.replace(/\/+$/, '')}/team-invite/${encodeURIComponent(inviteCode)}`;
 }
 
-/** The contest's page in its league. */
+/**
+ * The contest's page in its league: who has entered while entries are open, and its leaderboard
+ * once it is live (#1739). Where every email about a contest sends its reader first.
+ */
 export function buildContestUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
   return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/contests/${encodeURIComponent(contestId)}`;
 }
 
-/** One entry's page in its contest. */
-export function buildEntryUrl(appBaseUrl: string, leagueCode: string, contestId: string, entryId: string): string {
-  return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/entries/${encodeURIComponent(entryId)}`;
+/**
+ * The contest's page opened at one entry (#1762): its row opened on the leaderboard, its bracket
+ * in its dialog, its boxes marked on a squares board. For an email line that names one of the
+ * reader's entries. Before the event starts the page opens only the viewer's own entries.
+ */
+export function buildContestEntryUrl(appBaseUrl: string, leagueCode: string, contestId: string, entryId: string): string {
+  return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}?entry=${encodeURIComponent(entryId)}`;
 }
 
-/** The contest's leaderboard. */
-export function buildLeaderboardUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
-  return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/leaderboard`;
+/** One entry's pick screen, where its owner changes it while picks are open. */
+export function buildEntryUrl(appBaseUrl: string, leagueCode: string, contestId: string, entryId: string): string {
+  return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
 
 /** The league's contests page for its commissioners. */

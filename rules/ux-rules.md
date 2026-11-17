@@ -375,7 +375,14 @@ administration area (root admin included), reusing the same shared components.
    entries marked where they fall, and offers a **My entries** switch while the viewer
    has an entry on it: on, the board lists only theirs, each at its real place, with
    search and paging within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
-   in `ScoreboardGrid` and the lineup board alike). Any other long ranked list offers a
+   in `ScoreboardGrid` and the lineup board alike). A link can name one entry as
+   `?entry=<id>`, as emails do: the page opens on it (a lineup row expands, a bracket's
+   dialog opens, a squares entry's boxes light up as the viewer's own do, a standings row is
+   highlighted on its page) and scrolls to it, and closing it drops `?entry=` from the address
+   by replace. An entry the board doesn't show (unknown, or hidden by `?mine=1`) is ignored;
+   before the contest locks only the viewer's own entries open. Once nothing is left to pick
+   (the contest is final, or every event of a contest picked once per event has started), an
+   entry's pick screen address lands there too, on `?entry=`. Any other long ranked list offers a
    way to jump to the viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
    clicks, its first cell is the link a keyboard reaches), with no per-row Manage
@@ -651,6 +658,11 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    row. Every other email has the brand bar only. The event's name sits in the band, never in
    the picture, so the email still reads when a mail client blocks images.
 3. **One gold button per email**, for the one thing it wants done. Other links are plain text.
+   A contest's leaderboard link goes to the contest page (`buildContestUrl`); each of the
+   reader's own entries an email names links to that entry opened there
+   (`buildContestEntryUrl`, `?entry=`; §12 *League Pages and Commissioner Tools* item 7), and
+   the entry receipt links the entry's pick screen, where its owner can
+   still change it (`buildEntryUrl`), and on the entry read-only once picks are over.
 4. **Shared pieces, not one-offs.** A default contest setup offered to a commissioner is a tile
    (its way to play's How to Play picture, the format, the setup and its description, the whole
    tile one link, one tile per row). On the email the commissioner acts on (Ready for contests)

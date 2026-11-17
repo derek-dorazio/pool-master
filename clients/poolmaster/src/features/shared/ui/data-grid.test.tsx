@@ -457,6 +457,65 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     });
   });
 
+  describe("land on a row", () => {
+    const data = Array.from({ length: 5 }, (_, index) => ({
+      id: `row-${index + 1}`,
+      lifecycle: "Active",
+      name: `Name ${index + 1}`,
+    }));
+    const grid = (landOnRowId: string | null, rows: TestRow[] = data) => (
+      <DataGrid
+        columns={columns}
+        data={rows}
+        emptyMessage="No rows matched."
+        getRowId={(row) => row.id}
+        landOnRowId={landOnRowId}
+        pageSize={2}
+        rowTestId={(row) => `test-row-${row.id}`}
+      />
+    );
+
+    it("opens on the row's page with it highlighted and scrolled into view", () => {
+      const scrolled: Element[] = [];
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
+        scrolled.push(this);
+      });
+
+      render(grid("row-3"));
+
+      expect(screen.getByTestId("test-row-row-3")).toHaveAttribute("aria-current", "true");
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+      expect(scrolled).toEqual([screen.getByTestId("test-row-row-3")]);
+      scroll.mockRestore();
+    });
+
+    it("lands once the row arrives, and only once: a later page turn or new data stays where the viewer is", () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
+      const { rerender } = render(grid("row-5", []));
+      expect(scroll).not.toHaveBeenCalled();
+
+      rerender(grid("row-5"));
+      expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
+      fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+      rerender(grid("row-5", [...data]));
+
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
+      expect(scroll).toHaveBeenCalledTimes(1);
+      scroll.mockRestore();
+    });
+
+    it("ignores a row it doesn't hold, staying on the first page with nothing highlighted", () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
+
+      render(grid("row-9"));
+
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+      expect(screen.getByTestId("test-row-row-1")).not.toHaveAttribute("aria-current");
+      expect(scroll).not.toHaveBeenCalled();
+      scroll.mockRestore();
+    });
+  });
+
   it("puts the views and the search in one header inside the grid's card, above the table", () => {
     const onChange = vi.fn();
     render(
@@ -642,5 +701,48 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByRole("cell", { name: "Alpha" })).toHaveClass("sticky", "left-0", "bg-card");
     expect(screen.getByRole("columnheader", { name: /Lifecycle/ })).not.toHaveClass("sticky");
     expect(screen.getByRole("cell", { name: "Active" })).not.toHaveClass("sticky");
+  });
+
+  it("draws a row's detail rows under it, each cell under the column it is keyed to and the pinned column still pinned", () => {
+    const pinnedColumns = [
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+    ];
+    render(
+      <DataGrid
+        columns={pinnedColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }, { id: "row-2", lifecycle: "Inactive", name: "Beta" }]}
+        detailRows={(row) => (row.id === "row-1" ? [{ id: "d1", testId: "detail-1", cells: { name: "First game", lifecycle: "Won" } }] : [])}
+        emptyMessage="No rows."
+        getRowId={(row) => row.id}
+        rowTestId={(row) => `row-${row.id}`}
+      />,
+    );
+
+    const detail = screen.getByTestId("detail-1");
+    expect(within(detail).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["First game", "Won"]);
+    expect(within(detail).getByRole("cell", { name: "First game" })).toHaveClass("sticky", "left-0");
+    // Under its own row, before the next one.
+    expect(screen.getAllByRole("row").map((row) => row.getAttribute("data-testid")).filter(Boolean)).toEqual(["row-row-1", "detail-1", "row-row-2"]);
+  });
+
+  it("spans a detail row's line across every column from the one it names to the end", () => {
+    const threeColumns = [
+      ...columns,
+      columnHelper.accessor("id", { header: "Id", cell: ({ getValue }) => getValue() }),
+    ];
+    render(
+      <DataGrid
+        columns={threeColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        detailRows={() => [{ id: "d1", testId: "detail-1", cells: { name: "Week 3" }, span: { fromColumnId: "lifecycle", content: "KC v BUF · Won" } }]}
+        emptyMessage="No rows."
+        getRowId={(row) => row.id}
+        rowActions={() => <button type="button">More</button>}
+      />,
+    );
+
+    const cells = within(screen.getByTestId("detail-1")).getAllByRole("cell");
+    expect(cells.map((cell) => [cell.textContent, cell.getAttribute("colspan")])).toEqual([["Week 3", "1"], ["KC v BUF · Won", "2"], ["", null]]);
   });
 });

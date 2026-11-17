@@ -324,8 +324,22 @@ describe('LiveStandings.queueDue', () => {
     expect(toAna.subject).toBe('After round 1: Masters Pick 6');
     expect(toAna.textBody).toContain('Round 1 standings\nThe Masters (PGA Tour), Masters Pick 6 · 2 entries');
     expect(toAna.textBody).toContain('1. Entry e1, yours, -6');
-    expect(toAna.textBody).toContain('2. Entry e2, -3');
-    expect(toAna.textBody).toContain(`Full leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+    expect(toAna.textBody).toContain('2. Entry e2, -3\n');
+    expect(toAna.textBody).toContain(`Full leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);
+  });
+
+  it('links each of the reader\'s own entries to that entry opened on the contest page, and nobody else\'s', async () => {
+    const { league, contest } = liveMasters();
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    boards.set(contest.id, [row('e1', ana.squad, 1, -6), row('e2', ben.squad, 2, -3)]);
+
+    await standings().queueDue(after(ROUND_1_DONE, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).toContain(`1. Entry e1, yours, -6 <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e1>`);
+    expect(toAna.htmlBody).toContain(`href="https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e1"`);
+    expect(toAna.htmlBody).not.toContain('?entry=e2');
   });
 
   it('queues each round\'s standings once however many sweeps run in its hour, and none more than an hour late', async () => {
@@ -450,7 +464,7 @@ describe('LiveStandings.queueDue', () => {
 
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.subject).toBe('After round 2: Masters Pick 6');
-    expect(toAna.textBody).toContain('Missed the cut from Entry e1: Golfer g2.');
+    expect(toAna.textBody).toContain(`Missed the cut from Entry e1: Golfer g2. <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e1>`);
   });
 
   it('sends a season contest\'s result for an event once it settles, with each entry\'s result in it and the next event, but not after the last event', async () => {
@@ -605,8 +619,8 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.subject).toBe('After Week 1: NFL Pick\'em');
     expect(toBen.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${week1.id}:week:${ben.user.id}`);
     expect(toBen.textBody).toContain('Week 1 is done. Entry e1 won the week.');
-    expect(toBen.textBody).toContain('Week 1, everyone:\n1. Entry e1, 12\n2. Entry e2, yours, 9\n');
-    expect(toBen.textBody).toContain('Season standings, by points:\n1. Entry e1, 12\n2. Entry e2, yours, 9\n3. Entry e3, yours, 0');
+    expect(toBen.textBody).toContain(`Week 1, everyone:\n1. Entry e1, 12\n2. Entry e2, yours, 9 <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>\n`);
+    expect(toBen.textBody).toContain(`Season standings, by points:\n1. Entry e1, 12\n2. Entry e2, yours, 9 <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>\n3. Entry e3, yours, 0`);
     expect(toBen.textBody).toContain('Next week: Week 2, first kickoff');
     expect(toBen.textBody).toContain(`Make picks for next week: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);
     const [toCasey] = emailsTo(casey.user.id);
@@ -697,7 +711,7 @@ describe('LiveStandings.queueDue', () => {
     const [toBen] = emailsTo(ben.user.id);
     expect(toBen.subject).toBe('After Week 1: Last One Standing');
     expect(toBen.textBody).toContain('Week 1 is done. 1 of 3 entries is still in Last One Standing.');
-    expect(toBen.textBody).toContain('Entry e2 is out: Chicago Bears didn\'t win in Week 1.');
+    expect(toBen.textBody).toContain(`Entry e2 is out: Chicago Bears didn't win in Week 1. <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>`);
     expect(toBen.textBody).toContain('Entry e3 is out: it had no pick in Week 1.');
     expect(toBen.textBody).toContain('Standings, by weeks survived:\n1. Entry e1, 1\nT2. Entry e2, yours, 0, out');
     expect(toBen.textBody).not.toContain('Make picks for next week');
@@ -813,7 +827,7 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.subject).toBe('After First Round: March Madness');
     expect(toBen.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${tournament.id}:bracket-round-1:${ben.user.id}`);
     expect(toBen.textBody).toContain('First Round of NCAA Tournament is done.');
-    expect(toBen.textBody).toContain('Entry e2: your champion, Kansas, is out, with 120 points possible.');
+    expect(toBen.textBody).toContain(`Entry e2: your champion, Kansas, is out, with 120 points possible. <https://app.example.test/league/OFFICE24/contests/${contest.id}?entry=e2>`);
     expect(toBen.textBody).not.toContain('Duke');
     expect(toBen.textBody).toContain('Standings, by points:\n1. Entry e1, 30\n2. Entry e2, yours, 20');
     expect(toBen.textBody).toContain('Next round: Second Round, Sat, Mar 21, 2026');
