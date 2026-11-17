@@ -11,12 +11,13 @@ import {
 } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { Button, ErrorState, HelpTip, LoadingState, Notice, ReadOnlyDetailModal } from '@/features/shared/ui';
+import { Button, ErrorState, HelpTip, LoadingState, Notice, ReadOnlyDetailModal, StatStrip } from '@/features/shared/ui';
+import { TiebreakerNumberField } from './tiebreaker-number-field';
 import { parseBracketTiebreaker } from './bracket-layout';
 import { BracketView } from './bracket-view';
 import { drawBracket } from './bracket-view-model';
-import { getCompletionStats, getNextIncompleteGroupId } from './contest-entry-helpers';
-import { contestTieLabel } from './contest-sport';
+import { getNextIncompleteGroupId, rosterProgressItems } from './contest-entry-helpers';
+import { contestScoreUnit, contestTieLabel } from './contest-sport';
 import { PickEmGames } from './pick-em-games';
 import {
   nextTrialIds,
@@ -28,6 +29,7 @@ import {
   toPreviewWeek,
   trialPickedAtById,
 } from './pick-preview';
+import { tiebreakerLabel } from './pick-em-week';
 import { RosterContestEntryLineupSection } from './roster-contest-entry-lineup-section';
 import { useSportLeagueRoundLabel } from './use-bracket-round-label';
 
@@ -88,13 +90,10 @@ function RosterPickPreview({
   }
   const { selectionGroups } = preview;
   const isBudget = preview.selectionType === SelectionType.BUDGET_PICK;
-  const stats = getCompletionStats(selectionGroups);
   const expandedGroupId = chosenGroupId !== undefined ? chosenGroupId : getNextIncompleteGroupId(selectionGroups);
-  const progressNote = [
-    `${stats.totalSelections} of ${stats.requiredSelections} picked`,
-    isBudget ? null : `${stats.completedTiers} of ${selectionGroups.length} tiers complete`,
-  ].filter((part) => part !== null).join(' · ');
   return (
+    <div className="space-y-4">
+    <StatStrip items={rosterProgressItems({ isBudget, isEditable: true, lineupSummary: preview.lineupSummary, selectionGroups })} testId="pick-preview-progress" />
     <RosterContestEntryLineupSection
       drawState={null}
       expandedGroupId={expandedGroupId}
@@ -120,10 +119,10 @@ function RosterPickPreview({
       pickError={previewQuery.isError ? extractErrorMessage(previewQuery.error, { fallback: PREVIEW_ERROR }) : null}
       pickedAtById={trialPickedAtById(trialIds)}
       picksHidden={false}
-      progressNote={progressNote}
       selectionGroups={selectionGroups}
       sport={sport}
     />
+    </div>
   );
 }
 
@@ -157,6 +156,7 @@ function GamePickPreview({
   }
   const week = toPreviewWeek(preview, tiebreakerValue);
   const isBusy = previewQuery.isFetching;
+  const tiebreaker = tiebreakerLabel(week, contestScoreUnit(event.sport));
   const error = previewQuery.isError
     ? <Notice tone="danger">{extractErrorMessage(previewQuery.error, { fallback: PREVIEW_ERROR })}</Notice>
     : null;
@@ -182,18 +182,18 @@ function GamePickPreview({
         onConfidence={(game, value) => setPicks(previewConfidence(week, game, value))}
         onPick={(game, team) => setPicks(previewTeamPick(week, game, team))}
         tie={{ label: contestTieLabel(event.sport), onPick: (game) => setPicks(previewTiePick(week, game)) }}
-        tiebreaker={{
-          isSaving: false,
-          isTrial: true,
-          onChange: (text) => {
+      />
+      {tiebreaker ? (
+        <TiebreakerNumberField
+          label={tiebreaker}
+          onChange={(text) => {
             setTiebreakerText(text);
             setTiebreakerValue(parseBracketTiebreaker(text));
-          },
-          onSave: setTiebreakerValue,
-          saveError: null,
-          text: tiebreakerText,
-        }}
-      />
+          }}
+          testId="pick-em-tiebreaker-input"
+          text={tiebreakerText}
+        />
+      ) : null}
     </div>
   );
 }

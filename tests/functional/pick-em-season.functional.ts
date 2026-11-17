@@ -270,7 +270,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       entry.weeks.map((week) => [week.points, week.displayPosition, week.weeklyWinner]),
     ]]));
     /** Each week's started and settled flags, its tiebreaker game's total and its winners. */
-    const weeks = async () => (await leaderboard()).weeks.map((week) => [week.sportEventId, week.started, week.settled, week.tiebreakerTotalPoints, week.winnerEntryIds]);
+    const weeks = async () => (await leaderboard()).weeks.map((week) => [week.sportEventId, week.started, week.settled, week.tiebreakerTotalPoints, week.winnerEntryIds, week.placedEntryCount]);
 
     // --- Week 1: each team picks all four games and gives its tiebreaker ------------------------
     // Alice: Duke 4, Houston 3, Purdue 2, Colgate 1; tiebreaker 140.
@@ -300,7 +300,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     expect((await submitGamePicks({ client: cara.client, path: path(week1, entries.cara) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
 
     // Before kickoff no week has started: nobody has points or a place.
-    expect(await weeks()).toEqual([[week1.eventId, false, false, null, []], [week2.eventId, false, false, null, []]]);
+    expect(await weeks()).toEqual([[week1.eventId, false, false, null, [], 0], [week2.eventId, false, false, null, [], 0]]);
     expect(await board()).toEqual({
       [entries.alice]: [null, 0, [[null, null, false], [null, null, false]]],
       [entries.bob]: [null, 0, [[null, null, false], [null, null, false]]],
@@ -321,7 +321,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     await week1.result(2, 'home');
     await week1.result(3, 'away');
     // Live, unsettled and with no winner: Alice 4 + 3, Bob 3 + 4, Cara 1 + 3; nobody has scored game 4 yet.
-    expect(await weeks()).toEqual([[week1.eventId, true, false, null, []], [week2.eventId, false, false, null, []]]);
+    expect(await weeks()).toEqual([[week1.eventId, true, false, null, [], 3], [week2.eventId, false, false, null, [], 0]]);
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 7, [[7, 'T1', false], [null, null, false]]],
       [entries.bob]: ['T1', 7, [[7, 'T1', false], [null, null, false]]],
@@ -341,7 +341,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       { status: 409, code: 'CONTEST_ENTRY_LOCKED' },
     );
     // Alice and Bob are level on 7; Alice's 140 is 4 away from 136, Bob's 120 is 16 away. Cara adds Baylor's 2.
-    expect(await weeks()).toEqual([[week1.eventId, true, false, 136, []], [week2.eventId, false, false, null, []]]);
+    expect(await weeks()).toEqual([[week1.eventId, true, false, 136, [], 3], [week2.eventId, false, false, null, [], 0]]);
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 7, [[7, '1', false], [null, null, false]]],
       [entries.bob]: ['T1', 7, [[7, '2', false], [null, null, false]]],
@@ -351,7 +351,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     // --- Week 1 completes and settles; the contest goes on --------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId: week1.eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(await contestStatus()).toBe(ContestStatus.ACTIVE);
-    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice]], [week2.eventId, false, false, null, []]]);
+    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice], 3], [week2.eventId, false, false, null, [], 0]]);
     // The season places are by total points only: the week's tiebreaker does not split Alice and Bob there.
     expect(await board()).toEqual({
       [entries.alice]: ['T1', 7, [[7, '1', true], [null, null, false]]],
@@ -404,7 +404,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     await week2.result(3, 'home');
     await week2.result(4, 'away', 60, 50);
     // Alice: Duke 1 + Purdue 3. Bob: Duke 4 + Colgate 2. Cara's draft week scores nothing.
-    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice]], [week2.eventId, true, false, 110, []]]);
+    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice], 3], [week2.eventId, true, false, 110, [], 2]]);
     expect(await board()).toEqual({
       [entries.bob]: ['1', 13, [[7, '2', false], [6, '1', false]]],
       [entries.alice]: ['2', 11, [[7, '1', true], [4, '2', false]]],
@@ -435,7 +435,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       [entries.alice]: ['2', 11, [[7, '1', true], [4, '2', false]]],
       [entries.cara]: ['3', 6, [[6, '3', false], [null, null, false]]],
     };
-    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice]], [week2.eventId, true, true, 110, [entries.bob]]]);
+    expect(await weeks()).toEqual([[week1.eventId, true, true, 136, [entries.alice], 3], [week2.eventId, true, true, 110, [entries.bob], 2]]);
     expect(await board()).toEqual(finalBoard);
     const settled = await leaderboard();
     expect(settled.entries.map((entry) => [entry.entryId, entry.position, entry.weeks.map((week) => week.submitted)])).toEqual([

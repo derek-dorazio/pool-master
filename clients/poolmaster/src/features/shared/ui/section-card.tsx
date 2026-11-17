@@ -23,6 +23,7 @@ type SectionFooter = { label: string; testId: string; to: string };
  */
 export function SectionTitle({
   help,
+  helpLink,
   helpTestId,
   id,
   level = 2,
@@ -33,6 +34,8 @@ export function SectionTitle({
 }: {
   /** How the section works, in one to three sentences, shown by the title's (?). */
   help?: ReactNode;
+  /** The (?)'s one link on, such as How to Play. */
+  helpLink?: { label: string; to: string };
   /** The (?)'s test id, when the title has none to derive it from. */
   helpTestId?: string;
   id?: string;
@@ -61,6 +64,7 @@ export function SectionTitle({
           <HelpTip
             className="-my-2 shrink-0"
             label="How this section works"
+            learnMore={helpLink}
             testId={helpTestId ?? (testId ? `${testId}-help` : "section-help")}
           >
             {help}
@@ -88,6 +92,8 @@ type SectionCardBaseProps = {
   headingLevel?: 2 | 3 | 4;
   /** How the section works, behind the title's (?). */
   help?: ReactNode;
+  /** The (?)'s one link on, such as How to Play. */
+  helpLink?: { label: string; to: string };
   padded?: boolean;
   testId?: string;
   titleTestId?: string;
@@ -122,6 +128,7 @@ export function SectionCard(props: SectionCardProps) {
     edit,
     footer,
     headingLevel = 2,
+    helpLink,
     padded = false,
     testId,
     titleTestId,
@@ -148,7 +155,7 @@ export function SectionCard(props: SectionCardProps) {
       data-testid={testId}
     >
       <div className={cn("border-b", tone === "danger" ? "border-destructive/40" : "border-border", bare ? "pb-1" : "px-4 py-1")}>
-        <SectionTitle help={help} helpTestId={!titleTestId && testId ? `${testId}-help` : undefined} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
+        <SectionTitle help={help} helpLink={helpLink} helpTestId={!titleTestId && testId ? `${testId}-help` : undefined} id={titleId} level={headingLevel} testId={titleTestId} title={title} tone={tone} trailing={trailing} />
       </div>
       {padded && !bare ? <SectionBody testId={testId ? `${testId}-body` : undefined}>{children}</SectionBody> : children}
       {footer ? <SectionFooterLink label={footer.label} testId={footer.testId} to={footer.to} /> : null}

@@ -13509,6 +13509,10 @@ export type PickEmLeaderboardResponse = {
          */
         tiebreakerTotalPoints: number | null;
         /**
+         * How many of the board's entries the week has placed: the "of N" of an entry's place in it. None until the week starts.
+         */
+        placedEntryCount: number;
+        /**
          * The week's winners, the entries in first place once the week has settled; more than one when they are still level after the tiebreaker. Empty until it settles.
          */
         winnerEntryIds: Array<string>;

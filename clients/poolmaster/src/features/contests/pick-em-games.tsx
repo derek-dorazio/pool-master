@@ -1,23 +1,19 @@
 import { Lock } from 'lucide-react';
 import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
-import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import {
-  Button,
   Chip,
   cn,
   formatDateTimeDisplay,
   FormField,
-  InlineError,
-  Input,
   Select,
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
+import { describePickOutcome } from './bracket-layout';
 import { EmptyPickSlot } from './empty-pick-slot';
 import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
-import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
+import { confidenceOptions, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
 const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
@@ -41,18 +37,6 @@ export interface PickEmTie {
   /** "Draw" in soccer, "Tie" elsewhere. */
   label: string;
   onPick: (game: PickEmGame) => void;
-}
-
-/** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
-export interface PickEmTiebreaker {
-  isSaving: boolean;
-  /** A preview's trial tiebreaker: typing is the whole of it, so there is no Save and nothing reads "saved". */
-  isTrial?: boolean;
-  onChange: (text: string) => void;
-  onSave: (value: number) => void;
-  /** Why the last tiebreaker save was refused, or null. */
-  saveError: string | null;
-  text: string;
 }
 
 /** The team's name, with its spread beside it when the pool is scored against the spread (#720). */
@@ -140,63 +124,6 @@ function ConfidenceValue({
   );
 }
 
-/** The week's tiebreaker, on its game's card: typed and saved until that game kicks off. */
-function TiebreakerField({ game, gamePicks, tiebreaker }: { game: PickEmGame; gamePicks: PickEmWeek; tiebreaker: PickEmTiebreaker }) {
-  const parsed = parseBracketTiebreaker(tiebreaker.text);
-  const isTyped = tiebreaker.text.trim() !== '';
-  const isUnchanged = parsed !== null && parsed === gamePicks.tiebreakerValue;
-  return (
-    <form
-      className="space-y-2"
-      data-testid="pick-em-tiebreaker"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (parsed !== null && !isUnchanged) {
-          tiebreaker.onSave(parsed);
-        }
-      }}
-    >
-      <div className="flex flex-wrap items-end gap-2">
-        <FormField
-          className="min-w-[10rem] flex-1"
-          error={isTyped && parsed === null ? `Enter a whole number from 0 to ${GAME_PICKS_TIEBREAKER_MAX}.` : undefined}
-          helperText={`Total points in ${describeMatchup(game)}, both teams together. It only breaks a tie on points.`}
-          label="Tiebreaker"
-        >
-          <Input
-            data-testid="pick-em-tiebreaker-input"
-            disabled={tiebreaker.isSaving}
-            inputMode="numeric"
-            max={GAME_PICKS_TIEBREAKER_MAX}
-            min={0}
-            onChange={(event) => tiebreaker.onChange(event.target.value)}
-            type="number"
-            value={tiebreaker.text}
-          />
-        </FormField>
-        {tiebreaker.isTrial ? null : (
-          <Button
-            data-testid="pick-em-tiebreaker-save"
-            disabled={parsed === null || isUnchanged || tiebreaker.isSaving}
-            type="submit"
-            variant="secondary"
-          >
-            {tiebreaker.isSaving ? 'Saving...' : 'Save tiebreaker'}
-          </Button>
-        )}
-      </div>
-      {gamePicks.tiebreakerValue !== null && !tiebreaker.isTrial ? (
-        <Text as="p" data-testid="pick-em-tiebreaker-saved" variant="meta">
-          {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total points.`}
-        </Text>
-      ) : null}
-      {tiebreaker.saveError ? (
-        <InlineError testId="pick-em-tiebreaker-error">{tiebreaker.saveError}</InlineError>
-      ) : null}
-    </form>
-  );
-}
-
 function PickEmGameCard({
   canChange,
   game,
@@ -205,7 +132,6 @@ function PickEmGameCard({
   onConfidence,
   onPick,
   tie,
-  tiebreaker,
 }: {
   canChange: boolean;
   game: PickEmGame;
@@ -214,7 +140,6 @@ function PickEmGameCard({
   onConfidence: (game: PickEmGame, value: number | null) => void;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
   tie: PickEmTie;
-  tiebreaker: PickEmTiebreaker;
 }) {
   const displayPreferences = useDisplayPreferences();
   const choosable = canChange && !game.locked;
@@ -290,9 +215,8 @@ function PickEmGameCard({
       {gamePicks.mode === PickEmMode.CONFIDENCE && !isHidden ? (
         <ConfidenceValue canChange={choosable} game={game} gamePicks={gamePicks} isBusy={isBusy} onChange={onConfidence} />
       ) : null}
-      {isTiebreakerGame && choosable ? (
-        <TiebreakerField game={game} gamePicks={gamePicks} tiebreaker={tiebreaker} />
-      ) : isTiebreakerGame && (gamePicks.ownEntry || tiebreakerShown) ? (
+      {/* While the game can be picked, its tiebreaker is typed in the Name and submit card (#1769). */}
+      {isTiebreakerGame && !choosable && (gamePicks.ownEntry || tiebreakerShown) ? (
         <Text as="p" data-testid="pick-em-tiebreaker-summary">
           {tiebreakerShown ? `Tiebreaker: ${gamePicks.tiebreakerValue} total points.` : 'No tiebreaker was saved.'}
         </Text>
@@ -303,7 +227,7 @@ function PickEmGameCard({
 
 /**
  * A pick'em week's games in kickoff order (#718): a tap on a team picks it, a confidence pool
- * ranks each pick, and the tiebreaker is typed on its game. A pool that takes tie picks (#792)
+ * ranks each pick, and the tiebreaker game is marked (its number is typed in the Name and submit card). A pool that takes tie picks (#792)
  * offers the tie between the two teams. In a survivor week (#719) the tap
  * replaces the entry's one pick, and a team it used in another week can't be tapped. A game that has kicked off is locked
  * and marked against its result; on another entry each pick shows from its game's kickoff.
@@ -315,7 +239,6 @@ export function PickEmGames({
   onConfidence,
   onPick,
   tie,
-  tiebreaker,
 }: {
   /** Whether the viewer may change this week now: their own entry, before its games lock. */
   canChange: boolean;
@@ -326,7 +249,6 @@ export function PickEmGames({
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
   /** The tie choice, shown on each game when the pool takes tie picks (`tiePicksOffered`). */
   tie: PickEmTie;
-  tiebreaker: PickEmTiebreaker;
 }) {
   const games = [...gamePicks.games].sort(
     (left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff) || left.matchNumber - right.matchNumber,
@@ -346,7 +268,6 @@ export function PickEmGames({
           onConfidence={onConfidence}
           onPick={onPick}
           tie={tie}
-          tiebreaker={tiebreaker}
         />
       ))}
     </ul>
