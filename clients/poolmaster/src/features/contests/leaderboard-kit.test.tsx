@@ -3,7 +3,7 @@ import { fireEvent, render, renderHook, screen, within } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MemoryRouter } from 'react-router';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { ApiError } from '@/lib/errors';
@@ -198,6 +198,32 @@ describe('LeaderboardFrame', () => {
     expect(screen.queryByTestId('contest-menu-leaderboard')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('Your best: T1');
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('The board');
+  });
+
+  const scheduled = { ...contest, endsAt: null, sportEvents: [], startsAt: '2026-11-20T01:15:00.000Z' };
+
+  it('says when the first game starts while a live prediction contest has nothing scored', () => {
+    renderFrame({ contest: { ...scheduled, contestFormat: ContestFormat.PREDICTION }, isUnscored: true });
+
+    expect(screen.getByTestId('contest-leaderboard-first-start')).toHaveTextContent(/^First game /);
+  });
+
+  it('says when scoring starts on any other live contest with nothing scored', () => {
+    renderFrame({ contest: { ...scheduled, contestFormat: ContestFormat.ROSTER }, isUnscored: true });
+
+    expect(screen.getByTestId('contest-leaderboard-first-start')).toHaveTextContent(/^Scoring starts /);
+  });
+
+  it('drops the first-start chip once anything is scored', () => {
+    renderFrame({ contest: scheduled });
+
+    expect(screen.queryByTestId('contest-leaderboard-first-start')).not.toBeInTheDocument();
+  });
+
+  it('never shows the first-start chip on a final contest', () => {
+    renderFrame({ contest: { ...scheduled, status: ContestStatus.COMPLETED }, isUnscored: true });
+
+    expect(screen.queryByTestId('contest-leaderboard-first-start')).not.toBeInTheDocument();
   });
 
   it('says nothing about settlement while the contest is live', () => {

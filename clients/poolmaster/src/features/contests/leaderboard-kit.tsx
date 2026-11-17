@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { DataGrid, DetailsPeek, PeekCard, SectionCard, Text, WinnersBanner, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, DataGrid, DetailsPeek, PeekCard, SectionCard, Text, WinnersBanner, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { describeFinalStandings, type FinalRow } from './final-standings';
+import { contestSchedule } from './use-contest-schedule';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
 import { useLinkedEntry } from './use-linked-entry';
@@ -93,6 +94,7 @@ export function LeaderboardFrame({
   children,
   contest,
   finalRows,
+  isUnscored = false,
   leagueCode,
   notes,
   settledNote = SETTLED_NOTE,
@@ -102,6 +104,8 @@ export function LeaderboardFrame({
   contest: ContestDto;
   /** The board's entries as the winners banner reads them; squares, with a winner per quarter, has none. */
   finalRows?: readonly FinalRow[];
+  /** Whether nothing has been scored yet: the board lists every entry level at 0. */
+  isUnscored?: boolean;
   leagueCode: string;
   /** The board's own lines under the title, such as the viewer's best place. */
   notes?: ReactNode;
@@ -109,15 +113,22 @@ export function LeaderboardFrame({
   settledNote?: ReactNode;
   summary?: ReactNode;
 }) {
-  const { locale } = useDisplayPreferences();
+  const displayPreferences = useDisplayPreferences();
   const isFinal = contest.status === ContestStatus.COMPLETED;
-  const winners = isFinal && finalRows ? describeFinalStandings(finalRows, locale) : null;
+  const winners = isFinal && finalRows ? describeFinalStandings(finalRows, displayPreferences.locale) : null;
+  // #1768 — live before the first score, the board says when scoring starts rather than look broken.
+  const firstStart = contest.status === ContestStatus.ACTIVE && isUnscored ? contestSchedule(contest)?.startsAt : undefined;
+  const firstStartChip = firstStart ? (
+    <Chip data-testid="contest-leaderboard-first-start" tone="info">
+      {`${contest.contestFormat === ContestFormat.PREDICTION ? 'First game' : 'Scoring starts'} ${formatDateTimeDisplay(firstStart, displayPreferences)}`}
+    </Chip>
+  ) : null;
   return (
     <ContestPageFrame
       contest={contest}
       headerTestId="contest-leaderboard-header"
       leagueCode={leagueCode}
-      notes={notes || undefined}
+      notes={firstStartChip || notes ? <>{firstStartChip}{notes}</> : undefined}
       status={isFinal && settledNote ? (
         <span className="inline-flex items-center gap-1">
           <ContestStatusBadge status={contest.status} />

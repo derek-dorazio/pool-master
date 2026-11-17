@@ -456,6 +456,7 @@ export function ContestLeaderboardPage() {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={view.isUnscored}
       finalRows={view.entries.map((entry) => ({
         entryName: entry.entryName,
         isMine: isMySquadsEntry(mySquadId)(entry),
@@ -557,7 +558,7 @@ export function ContestLeaderboardPage() {
 
             <div className="space-y-3" data-testid="contest-leaderboard-entries">
               {view.entries.length === 0 ? (
-                <EmptyState body="No entries have been scored in this contest yet." />
+                <EmptyState body="No entries." />
               ) : matchingEntries.length === 0 ? (
                 <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
               ) : (

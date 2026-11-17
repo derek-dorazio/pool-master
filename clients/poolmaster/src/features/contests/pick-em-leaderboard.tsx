@@ -87,6 +87,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={board.entries.length > 0 && board.entries.every((entry) => entry.weeks.every((week) => !week.correctPickCount))}
       finalRows={board.entries.map((entry) => ({
         entryName: entry.entryName,
         isMine: isMySquadsEntry(mySquadId)(entry),

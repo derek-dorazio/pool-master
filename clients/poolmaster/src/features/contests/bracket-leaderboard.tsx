@@ -135,6 +135,7 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={board.entries.length > 0 && board.entries.every((entry) => entry.points === 0 && entry.correctPickCount === 0)}
       // A cancelled event scored nobody, so there are no winners to name.
       finalRows={board.eventCancelled ? undefined : board.entries.map((entry) => ({
         entryName: entry.entryName,

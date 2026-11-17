@@ -142,6 +142,7 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={board.entries.length > 0 && board.entries.every((entry) => entry.weeks.every((week) => week.outcome === null || week.outcome === SurvivorWeekOutcome.PENDING))}
       finalRows={board.entries.map((entry) => ({
         entryName: entry.entryName,
         isMine: isMySquadsEntry(viewer.mySquadId)(entry),

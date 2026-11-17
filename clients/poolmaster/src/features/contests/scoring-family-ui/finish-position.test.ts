@@ -117,7 +117,8 @@ describe('finish-position leaderboard', () => {
 
   it('shows the entry total and the pick\'s points as plain points, and a dash while unscored', () => {
     const board = finishPositionUi.leaderboard(raceLeaderboard([runner({})]), horseRacing);
-    const unscored = { ...raceLeaderboard([runner({})]), entries: [{ ...entry, totalScore: null }] };
+    // One entry unscored beside a scored one: a board where nobody is scored ties everyone at 0.
+    const unscored = { ...raceLeaderboard([runner({})]), entries: [{ ...entry, totalScore: null }, { ...entry, entryId: 'entry-2', totalScore: 8 }] };
 
     expect(buildLeaderboardView(raceLeaderboard([runner({})])).entries[0].total).toBe('8');
     expect(board.pickDetail('entry-1', pick, runner({})).total).toBe('5');

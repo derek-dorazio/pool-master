@@ -968,7 +968,7 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-round-cue')).not.toBeInTheDocument();
   });
 
-  it('says the contest has no scored entries rather than rendering an empty table', async () => {
+  it('says No entries in one line rather than rendering an empty table when nobody entered', async () => {
     primeMocks({
       leaderboard: {
         contestId: 'contest-1',
@@ -985,8 +985,7 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    expect(await screen.findByText('No entries have been scored in this contest yet.'))
-      .toBeInTheDocument();
+    expect(await screen.findByText('No entries.')).toBeInTheDocument();
   });
 
   it('explains that picks are not revealed yet instead of showing a bare failure', async () => {
