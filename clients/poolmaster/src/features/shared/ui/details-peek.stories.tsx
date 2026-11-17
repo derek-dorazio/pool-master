@@ -30,3 +30,22 @@ type Story = StoryObj<typeof meta>;
 /** (i) About a thing: an entry, event or team. Hover on a desktop, tap on a phone. */
 export const Entry: Story = {};
 export const Loading: Story = { args: { children: <LoadingState body="Loading team..." size="inline" /> } };
+
+/** A value that opens (#1747): a game's score on a stat pool leaderboard, that game's stats in the card. */
+export const OnAValue: Story = {
+  args: {
+    children: (
+      <PeekCard
+        facts={[
+          { label: "Points", value: "19" },
+          { label: "Rebounds", value: "7" },
+          { label: "Assists", value: "5" },
+        ]}
+        title="G2 · Jayson Tatum"
+      />
+    ),
+    icon: "22",
+    label: "G2 stats for Jayson Tatum",
+    trigger: "text",
+  },
+};

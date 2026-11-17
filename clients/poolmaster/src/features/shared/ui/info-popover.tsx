@@ -24,6 +24,7 @@ export function InfoPopover({
   onHoverStart,
   padding = "sm",
   testId,
+  trigger = "icon",
 }: {
   /** The callout's content. */
   children: ReactNode;
@@ -41,6 +42,11 @@ export function InfoPopover({
   /** The callout's padding: `none` for content that draws its own sections. */
   padding?: "none" | "sm";
   testId: string;
+  /**
+   * `icon` is a round icon button; `text` is a value in a line of text, such as a score in a
+   * table cell, dotted underneath to say it opens, and no taller than the text around it.
+   */
+  trigger?: "icon" | "text";
 }) {
   // Hover opens it while the mouse is over it; a tap or click pins it open until tapped again.
   // Only a mouse hovers: a phone's tap also fires enter, which would fight the tap's toggle.
@@ -140,7 +146,13 @@ export function InfoPopover({
         aria-controls={panelId}
         aria-expanded={isOpen}
         aria-label={label}
-        className="inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          trigger === "icon"
+            ? "inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50"
+            // Padding with a matching negative margin: a bigger target to tap, no taller a row.
+            : "-mx-1 -my-2 rounded-sm px-1 py-2 underline decoration-dotted underline-offset-2",
+        )}
         data-testid={testId}
         onBlur={(event) => {
           // Focus moving into the callout, to its link say, keeps it open.
@@ -165,7 +177,7 @@ export function InfoPopover({
         // The gap above the card is padding on this wrapper, not margin, so it belongs to the
         // callout's hit area and a mouse crossing it never leaves.
         <span
-          className="pointer-events-auto fixed z-40 block pt-2"
+          className="pointer-events-auto fixed z-40 block pt-2 text-left"
           data-testid={`${testId}-callout`}
           id={panelId}
           style={{ left: place.left, top: place.top, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}

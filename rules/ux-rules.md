@@ -403,7 +403,13 @@ administration area (root admin included), reusing the same shared components.
    what the picks cost of the cap), or nothing for a random draw. Once live or final it
    is the leaderboard: the counting rule ("Best 4 of 6 golfers count") shows once
    in the header, never on each entry, and an opened entry lists every pick, the
-   ones outside the count struck through and in italics. Rows open and close with the shared `ExpandableRow`, the
+   ones outside the count struck through and in italics. A Clutch Card's entry bar
+   carries one Stats switch (the viewer's own start on, "Show all stats" turns it on
+   for every opened entry): it adds each player's line for the current or latest
+   game under their name ("G4: 15 pts · 6 reb · 4 ast", struck through too when the
+   pick does not count). A series has one column of scores per game, each score a
+   `DetailsPeek` on that game's stats, and DNP for a game missed; a single game has
+   Tot only. No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
    viewer's own start open, and "Show all details" / "Hide all details" above the
    list opens or closes every row that has details. The old `/leaderboard`
    address redirects to it. **Buttons never land on the contest page**: Make
@@ -680,7 +686,7 @@ extra text answers:
 | Question | Component | Icon and place | Opens on |
 |---|---|---|---|
 | "How does this work?" | `HelpTip` | **?** right after a page title, section title or form label | Mouse hover, or Enter on its button; tap on a phone |
-| "Who or what is this?" | `DetailsPeek` | **i** right after one thing's name (entry, event, golfer, team, contest), or its status glyph | Mouse hover after a short delay, Enter on its button, or a tap |
+| "Who or what is this?" | `DetailsPeek` | **i** right after one thing's name (entry, event, golfer, team, contest), or its status glyph; or a value itself, dotted underneath, such as a game's score opening that game's stats | Mouse hover after a short delay, Enter on its button, or a tap |
 | "Show me the breakdown." | `ExpandableRow` | Chevron at the row's right end | Click or tap only; stays open |
 | "You must know this now." | `Notice` | **!** with its tone, right above what it affects | Always visible |
 

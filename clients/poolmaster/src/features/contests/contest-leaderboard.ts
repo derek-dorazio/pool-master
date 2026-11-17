@@ -23,7 +23,6 @@ import {
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type {
   LeaderboardDetailCell,
-  LeaderboardPickBreakdown,
   LeaderboardDetailColumn,
   LeaderboardFootnote,
 } from './scoring-family-ui/types';
@@ -40,8 +39,8 @@ export interface LeaderboardPickRow {
   total: string | null;
   /** One cell per entry of the view's `detailColumns`, in that order. */
   detailCells: LeaderboardDetailCell[];
-  /** What the row opens to: a stat pool player's stats in each game. Absent where the family has none. */
-  breakdown?: LeaderboardPickBreakdown;
+  /** The line under the name while the entry's Stats switch is on. Absent where the family has none. */
+  statLine?: string;
 }
 
 /** One event's result for an entry in a contest of several events (#713). */

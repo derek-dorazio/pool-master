@@ -100,6 +100,20 @@ describe("InfoPopover", () => {
     expect(screen.queryByTestId("status-callout")).not.toBeInTheDocument();
   });
 
+  it("draws a text trigger as the value itself, no taller than its line, and opens it on a tap like the icon", () => {
+    render(
+      <InfoPopover icon="22" label="Game 2 stats for Jayson Tatum" testId="score" trigger="text">
+        <p>19 pts · 7 reb · 5 ast</p>
+      </InfoPopover>,
+    );
+    const button = screen.getByTestId("score");
+
+    expect(button).toHaveTextContent("22");
+    expect(button).not.toHaveClass("size-9");
+    fireEvent.click(button);
+    expect(screen.getByTestId("score-callout")).toHaveTextContent("19 pts · 7 reb · 5 ast");
+  });
+
   it("closes on Escape and when focus moves elsewhere", () => {
     const button = drawPopover();
 

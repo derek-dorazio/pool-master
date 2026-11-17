@@ -23,6 +23,8 @@ export interface LeaderboardDetailColumn {
   testId?: string;
   /** The CSS grid track the column takes. */
   width: string;
+  /** Set on the column of a game being played right now: its head carries a Live marker. */
+  isLive?: boolean;
 }
 
 /** One cell under a detail column, in the same order as the columns. */
@@ -37,6 +39,11 @@ export interface LeaderboardDetailCell {
    * The board's footnote explains it on screen.
    */
   unplayed?: { ariaLabel: string };
+  /**
+   * What the cell's score was made of (a stat pool player's line in that game), shown in a small
+   * popover when the score is hovered, tapped or pressed. Absent where the cell has none.
+   */
+  peek?: { title: string; facts: Array<{ label: string; value: string }> };
 }
 
 /** A note under the board that explains something the family's cells show. */
@@ -45,19 +52,17 @@ export interface LeaderboardFootnote {
   text: string;
 }
 
-/** How a pick's score was made, one line per part (a stat pool player's games), opened from the row. */
-export interface LeaderboardPickBreakdown {
-  testId: string;
-  lines: Array<{ key: string; label: string; text: string }>;
-}
-
 /** The family's part of one pick's row. */
 export interface LeaderboardPickDetail {
   /** The pick's score in this contest, formatted; what the entry's total sums. Null while unscored. */
   total: string | null;
   detailCells: LeaderboardDetailCell[];
-  /** What the row opens to, for a family whose cells are made of parts; absent for every other. */
-  breakdown?: LeaderboardPickBreakdown;
+  /**
+   * A line under the participant's name, shown while the entry's Stats switch is on: a stat pool
+   * player's line in the current or latest game. Absent for a family whose cells are not made
+   * of stats, and before the player's event has any.
+   */
+  statLine?: string;
 }
 
 /** The family's part of one leaderboard, resolved against that leaderboard's response. */
