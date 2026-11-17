@@ -1,154 +1,172 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
 import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import { buildContest, buildContestEntry } from './test/contest-admin-fixtures';
+import type { ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
+import { buildContest, buildContestEntry, buildContestSportEvent } from './test/contest-admin-fixtures';
 import { CurrentContestList } from './current-contest-list';
 
-const live = buildContest({ id: 'live', name: 'NBA Finals Stars', status: ContestStatus.ACTIVE, entryCount: 24 });
-const submitted = buildContest({ id: 'submitted', name: 'Masters Pick 6', status: ContestStatus.OPEN, entryCount: 1 });
-const unsubmitted = buildContest({ id: 'unsubmitted', name: 'PGA Budget', status: ContestStatus.OPEN });
-const draft = buildContest({ id: 'draft', name: 'US Open Tiers', status: ContestStatus.DRAFT });
+const NOW = new Date('2026-04-01T12:00:00.000Z');
+const CLOSES = '2026-04-10T12:00:00.000Z';
+const onEvent = { sportEvents: [buildContestSportEvent({ startDate: CLOSES })] };
 
-const entries = new Map([
-  [submitted.id, [buildContestEntry({ contestId: submitted.id })]],
-  [unsubmitted.id, [buildContestEntry({
-    contestId: unsubmitted.id,
-    events: [{ sportEventId: 'event-1', status: ContestEntryStatus.DRAFT, submittedAt: null }],
-  })]],
+const notEntered = buildContest({ id: 'not-entered', name: 'NBA Finals Stars', status: ContestStatus.OPEN, entryCount: 11, ...onEvent });
+const entered = buildContest({ id: 'entered', name: 'CFP Championship Stars', status: ContestStatus.OPEN, entryCount: 2, ...onEvent });
+const enteredTwice = buildContest({ id: 'entered-twice', name: 'Rose Bowl Pick\'em', status: ContestStatus.OPEN, entryCount: 4, ...onEvent });
+const draftEntry = buildContest({ id: 'draft-entry', name: 'PGA Budget', status: ContestStatus.OPEN, ...onEvent });
+const full = buildContest({ id: 'full', name: 'Masters Tiered', status: ContestStatus.OPEN, entriesPerContest: 100, entryCount: 100, ...onEvent });
+const fullAndIn = buildContest({ id: 'full-in', name: 'Daytona Budget', status: ContestStatus.OPEN, entriesPerContest: 2, entryCount: 2, ...onEvent });
+const live = buildContest({ id: 'live', name: 'Week 12 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 14 });
+const liveNotIn = buildContest({ id: 'live-not-in', name: 'NHL Clutch Card', status: ContestStatus.ACTIVE, entryCount: 9 });
+const setUp = buildContest({ id: 'set-up', name: 'Super Bowl Squares', status: ContestStatus.DRAFT, sportEvents: [buildContestSportEvent({ startDate: '2027-01-20T12:00:00.000Z' })] });
+
+function entry(contestId: string, id = `${contestId}-1`, status: ContestEntryStatus = ContestEntryStatus.SUBMITTED): ContestEntryDto {
+  return buildContestEntry({ contestId, id, events: [{ sportEventId: 'event-1', status, submittedAt: null }] });
+}
+
+const entriesByContestId = new Map<string, ContestEntryDto[]>([
+  [entered.id, [entry(entered.id)]],
+  [enteredTwice.id, [entry(enteredTwice.id, 'twice-1'), entry(enteredTwice.id, 'twice-2')]],
+  [draftEntry.id, [entry(draftEntry.id, 'draft-1', ContestEntryStatus.DRAFT)]],
+  [fullAndIn.id, [entry(fullAndIn.id)]],
+  [live.id, [entry(live.id)]],
 ]);
+const bestPlaceByContestId = new Map<string, ContestEntryPlaceDto>([[live.id, { entryId: 'live-1', position: 3, displayPosition: '3' }]]);
 
 function drawList(props: Partial<ComponentProps<typeof CurrentContestList>> = {}) {
   render(
-    <MemoryRouter>
-      <CurrentContestList
-        bestPlaceByContestId={new Map()}
-        contests={[draft, unsubmitted, live, submitted]}
-        emptyBody="Nothing current."
-        entriesByContestId={entries}
-        entriesState="ready"
-        hasTeam
-        leagueCode="BIGDAWGS"
-        showDrafts={false}
-        testIdPrefix="list"
-        {...props}
-      />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <CurrentContestList
+          canExpand={false}
+          contests={[notEntered, entered, enteredTwice, draftEntry, full, fullAndIn, live, liveNotIn, setUp]}
+          emptyBody="Nothing current."
+          hasTeam
+          leagueCode="BIGDAWGS"
+          myEntries={{ bestPlaceByContestId, entriesByContestId, state: 'ready' }}
+          now={NOW}
+          testIdPrefix="list"
+          {...props}
+        />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
-function rowNote(contestId: string) {
-  return screen.getByTestId(`list-${contestId}`).textContent;
+function row(contestId: string) {
+  return within(screen.getByTestId(`list-${contestId}`));
 }
 
 describe('CurrentContestList', () => {
-  it('heads its groups Live then Open, each row in its group', () => {
-    drawList();
+  it('lists the contests in the order it is given', () => {
+    drawList({ contests: [live, notEntered, setUp] });
 
-    const groups = screen.getAllByRole('region').map((region) => region.getAttribute('aria-label'));
-    expect(groups).toEqual(['Live', 'Open']);
-    expect(within(screen.getByTestId('list-group-live')).getByTestId('list-live')).toBeInTheDocument();
-    expect(within(screen.getByTestId('list-group-open')).getByTestId('list-submitted')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Week 12 Pick\'em'),
+      expect.stringContaining('NBA Finals Stars'),
+      expect.stringContaining('Super Bowl Squares'),
+    ]);
   });
 
-  it('shows drafts under their own heading to a commissioner', () => {
-    drawList({ showDrafts: true });
-
-    expect(within(screen.getByTestId('list-group-draft')).getByTestId('list-draft')).toHaveAttribute('href', '/league/BIGDAWGS/contests/draft');
-  });
-
-  it('hides drafts from a member', () => {
+  it('opens every row\'s contest page from the row itself: beside its buttons, or the whole row when it has none', () => {
     drawList();
 
-    expect(screen.queryByTestId('list-draft')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('list-group-draft')).not.toBeInTheDocument();
-  });
-
-  it('opens a live contest and an open one at the same contest page address, with no /leaderboard', () => {
-    drawList();
-
+    expect(screen.getByTestId('list-not-entered-link')).toHaveAttribute('href', '/league/BIGDAWGS/contests/not-entered');
     expect(screen.getByTestId('list-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live');
-    expect(screen.getByTestId('list-submitted')).toHaveAttribute('href', '/league/BIGDAWGS/contests/submitted');
   });
 
-  it('says the entry is submitted, not submitted yet, or not made', () => {
+  it('offers Make your picks on an open contest the viewer is not in, with when it closes and how many entered', () => {
     drawList();
 
-    expect(rowNote('submitted')).toContain('Your entry is submitted.');
-    expect(rowNote('unsubmitted')).toContain('Your entry is not submitted yet.');
-    expect(rowNote('live')).toContain('You have not entered yet.');
+    expect(row('not-entered').getByRole('button', { name: 'Make your picks' })).toBeInTheDocument();
+    expect(screen.getByTestId('list-not-entered-status')).toHaveTextContent(/^Open·closes .*Apr 10, 2026.*·11 entries$/);
   });
 
-  it('asks a viewer without a team to choose their name before entering', () => {
+  it('offers Edit picks to the one entry\'s pick screen and Add entry once the viewer is in', () => {
+    drawList();
+
+    expect(row('entered').getByRole('link', { name: 'Edit picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/entered/entries/entered-1');
+    expect(row('entered').getByRole('button', { name: 'Add entry' })).toBeInTheDocument();
+  });
+
+  it('sends Edit picks to the contest page, and counts the entries, when the viewer has more than one', () => {
+    drawList();
+
+    expect(row('entered-twice').getByRole('link', { name: 'Edit picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/entered-twice');
+    expect(screen.getByTestId('list-entered-twice-status')).toHaveTextContent('Your 2 entries');
+  });
+
+  it('offers Finish your picks while the viewer\'s entry is not submitted', () => {
+    drawList();
+
+    expect(row('draft-entry').getByRole('link', { name: 'Finish your picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/draft-entry/entries/draft-1');
+  });
+
+  it('says Full on a full contest the viewer is not in, with Expand only for a commissioner', () => {
+    drawList();
+    expect(screen.getByTestId('list-full-full')).toHaveTextContent('Full');
+    expect(screen.queryByTestId('list-full-expand')).not.toBeInTheDocument();
+    expect(row('full').queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('gives a commissioner Expand on a full contest, to its setup page', () => {
+    drawList({ canExpand: true });
+
+    expect(screen.getByTestId('list-full-expand')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/full');
+  });
+
+  it('keeps Edit picks but drops Add entry on a full contest the viewer is in', () => {
+    drawList();
+
+    expect(row('full-in').getByRole('link', { name: 'Edit picks' })).toBeInTheDocument();
+    expect(row('full-in').queryByRole('button', { name: 'Add entry' })).not.toBeInTheDocument();
+  });
+
+  it('shows the viewer\'s place of how many on a live contest, and no button', () => {
+    drawList();
+
+    expect(screen.getByTestId('list-live-status')).toHaveTextContent('Live·you\'re 3rd of 14');
+    expect(row('live').queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('shows how many entries a live contest has when the viewer is not in it', () => {
+    drawList();
+
+    expect(screen.getByTestId('list-live-not-in-status')).toHaveTextContent('Live·9 entries');
+  });
+
+  it('says Set up and when it starts on a set-up contest, with no action', () => {
+    drawList();
+
+    expect(screen.getByTestId('list-set-up-status')).toHaveTextContent(/^Set up·starts .*Jan 20, 2027/);
+    expect(screen.queryByTestId('list-set-up-actions')).not.toBeInTheDocument();
+  });
+
+  it('asks a viewer without a team to create one instead of offering picks', () => {
     drawList({ hasTeam: false });
 
-    expect(rowNote('submitted')).toContain('Create your team to enter.');
+    expect(screen.getByTestId('list-not-entered-note')).toHaveTextContent('Create your team to enter.');
+    expect(row('not-entered').queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('says it is checking while the entries load', () => {
-    drawList({ entriesState: 'loading' });
-    expect(rowNote('submitted')).toContain('Checking your entry...');
+  it('offers no picks while the viewer\'s entries are still loading, so it never starts a second entry', () => {
+    drawList({ myEntries: { bestPlaceByContestId, entriesByContestId: new Map(), state: 'loading' } });
+
+    expect(screen.getByTestId('list-entered-note')).toHaveTextContent('Checking your entry...');
+    expect(row('entered').queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('says it could not check the entry when the read failed', () => {
-    drawList({ entriesState: 'failed' });
-    expect(rowNote('submitted')).toContain("We couldn't check your entry.");
+  it('tints and scrolls to the contest the viewer came from', () => {
+    drawList({ focusContestId: 'live' });
+
+    expect(screen.getByTestId('list-live')).toHaveAttribute('data-highlighted', 'true');
   });
 
-  it('shows each row\'s entry count after its kind only when asked to', () => {
-    drawList({ showEntryCount: true });
-    expect(screen.getByTestId('list-live')).toHaveTextContent(/Tiered\s*·\s*24 entries/);
-    expect(screen.getByTestId('list-submitted')).toHaveTextContent(/Tiered\s*·\s*1 entry(?!\w*ies)/);
-  });
-
-  it('shows no entry count on a summary list', () => {
-    drawList();
-    expect(screen.getByTestId('list-live')).not.toHaveTextContent('entries');
-  });
-
-  it('puts no status badge on a row, because the group heading names the status', () => {
-    drawList();
-    expect(within(screen.getByTestId('list-live')).queryByText('Live')).not.toBeInTheDocument();
-  });
-
-  it('tints only the focused contest', () => {
-    drawList({ focusContestId: 'submitted' });
-
-    expect(screen.getByTestId('list-submitted')).toHaveAttribute('data-highlighted', 'true');
-    expect(screen.getByTestId('list-live')).not.toHaveAttribute('data-highlighted');
-  });
-
-  it('shows the empty message when nothing is current', () => {
+  it('says so in one italic line when there is nothing to list', () => {
     drawList({ contests: [] });
 
     expect(screen.getByTestId('list-empty')).toHaveTextContent('Nothing current.');
-  });
-
-  it('shows the viewer\'s best place on a live row, the place as its leaderboard reads it', () => {
-    drawList({ bestPlaceByContestId: new Map([[live.id, { entryId: 'mine-1', position: 3, displayPosition: '3' }]]) });
-
-    expect(screen.getByTestId('list-live-trailing')).toHaveTextContent(/^3rd$/);
-  });
-
-  it('shows a shared place as the leaderboard does, "T2"', () => {
-    drawList({ bestPlaceByContestId: new Map([[live.id, { entryId: 'mine-1', position: 2, displayPosition: 'T2' }]]) });
-
-    expect(screen.getByTestId('list-live-trailing')).toHaveTextContent(/^T2$/);
-  });
-
-  it('shows no place on a row the viewer has no ranked entry in', () => {
-    drawList();
-
-    expect(screen.queryByTestId('list-live-trailing')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('list-submitted-trailing')).not.toBeInTheDocument();
-  });
-
-  it('says how many entries the viewer has in its fact line when they have more than one, after the contest\'s count', () => {
-    const two = new Map([...entries, [live.id, [buildContestEntry({ contestId: live.id, id: 'mine-1' }), buildContestEntry({ contestId: live.id, id: 'mine-2', entryNumber: 2 })]]]);
-    drawList({ entriesByContestId: two, showEntryCount: true });
-
-    expect(screen.getByTestId('list-live')).toHaveTextContent(/Tiered\s*·\s*24 entries\s*·\s*Your 2 entries/);
-    expect(screen.getByTestId('list-submitted')).not.toHaveTextContent(/Your \d+ entries/);
   });
 });

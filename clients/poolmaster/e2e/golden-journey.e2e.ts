@@ -495,7 +495,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       expect(refused.errorCode).toBe('CONTEST_CONFIGURATION_LOCKED');
     });
 
-    await test.step('the contest is on the board with no entries, and on the league\'s contest list', async () => {
+    await test.step('the contest is on the board with no entries, and on League Home, where the old Contests link now lands', async () => {
       await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId('contest-page-header-name')).toHaveText(run.contestName);
@@ -504,8 +504,12 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // 100 entries per contest the board shows beside the count.
       await expect(page.getByTestId('contest-board-total-count')).toHaveText(/\b0 of 100 entered$/);
       await page.goto(`/league/${run.leagueCode}/contests`);
-      await expect(page.getByTestId('league-contests-page')).toBeVisible();
-      await expect(page.getByTestId(`league-contest-${state.contestId}`)).toContainText(run.contestName);
+      await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}$`));
+      await expect(page.getByTestId('league-home')).toBeVisible();
+      // Open for entries, it is a hero; were three others ahead of it, a More contests row.
+      await expect(
+        page.getByTestId(`league-home-hero-${state.contestId}-name`).or(page.getByTestId(`league-home-contest-${state.contestId}`)),
+      ).toContainText(run.contestName);
     });
 
     await test.step('create a budget contest on the same tournament, three golfers under its $50,000 cap, and open it', async () => {

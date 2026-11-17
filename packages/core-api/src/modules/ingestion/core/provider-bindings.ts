@@ -21,7 +21,7 @@ interface ProviderBindingsEnvelope {
   readonly providers?: Record<string, ProviderBinding>;
 }
 
-type ProviderFactory = (binding: ProviderBinding, env: NodeJS.ProcessEnv) => SportDataProvider;
+type ProviderFactory = (binding: ProviderBinding, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger) => SportDataProvider;
 
 const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
   'mock-contest-feed': (binding) => {
@@ -31,7 +31,7 @@ const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
     return new MockContestFeedAdapter(binding.baseUrl);
   },
   // The key comes from Secrets Manager through the task definition, never from the binding JSON.
-  [BALLDONTLIE_PROVIDER_ID]: (binding, env) => {
+  [BALLDONTLIE_PROVIDER_ID]: (binding, env, logger) => {
     if (!binding.baseUrl) {
       throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires a baseUrl binding.`);
     }
@@ -42,7 +42,7 @@ const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
     if (!apiKey) {
       throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires the BALLDONTLIE_API_KEY environment variable.`);
     }
-    return new BalldontlieAdapter({ baseUrl: binding.baseUrl, apiKey, requestsPerMinute: binding.requestsPerMinute });
+    return new BalldontlieAdapter({ baseUrl: binding.baseUrl, apiKey, requestsPerMinute: binding.requestsPerMinute, ...(logger && { logger }) });
   },
 };
 
@@ -227,5 +227,5 @@ function buildProvider(
 
   requireMockProviderAllowed(providerId, env, logger);
 
-  return providerFactory(binding, env);
+  return providerFactory(binding, env, logger);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation, useParams } from 'react-router';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLastSignedInUserId } from '@/features/auth/signed-in-user';
@@ -21,6 +21,14 @@ export function MemberRouteGuard() {
   const logger = useMemo(() => getLogger().child({
     feature: 'member-route-guard',
   }), []);
+  // The account this guard last let in. Sign-out forgets the remembered account before the
+  // guard sees the session end, so without this the page signed out of went to sign-in as
+  // anyone's, and the next account to sign in (a root admin with no leagues) landed on it.
+  const [admittedUserId, setAdmittedUserId] = useState<string | null>(null);
+  const currentUserId = auth.user?.id ?? null;
+  if (currentUserId !== null && currentUserId !== admittedUserId) {
+    setAdmittedUserId(currentUserId);
+  }
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -68,7 +76,10 @@ export function MemberRouteGuard() {
   }
 
   if (!auth.isAuthenticated) {
-    const fromUserId = getLastSignedInUserId();
+    // With nobody let in and nobody remembered (a fresh tab opening an email's entry link or a
+    // shared league link), the return path goes unstamped on purpose: it is a deep link, not
+    // anyone's page, and sign-in follows it for whoever signs in.
+    const fromUserId = admittedUserId ?? getLastSignedInUserId();
     return (
       <Navigate
         replace

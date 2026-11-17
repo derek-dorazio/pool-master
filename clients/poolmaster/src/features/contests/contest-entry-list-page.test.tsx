@@ -379,15 +379,15 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByText('My entries only')).not.toBeInTheDocument();
   });
 
-  it('has no Back to league button, the Contests breadcrumb being the way back', async () => {
+  it('has no Back to league button, the Home breadcrumb being the way back', async () => {
     primeMocks();
 
     renderContestBoard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
     expect(screen.queryByRole('link', { name: 'Back to league' })).not.toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' })).getByRole('link', { name: 'Contests' }))
-      .toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' })).getByRole('link', { name: 'Home' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS?focus=contest-1');
   });
 
   it('shows when the contest starts and ends from the events the contest read carries, reading no event', async () => {

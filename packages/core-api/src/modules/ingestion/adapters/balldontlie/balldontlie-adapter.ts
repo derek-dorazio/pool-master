@@ -54,6 +54,7 @@
  * daily synced event creation sweep (ADR 0011); every other league's, by an admin.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { errorMessage } from '../../../../core/error-message';
@@ -113,6 +114,8 @@ export interface BalldontlieAdapterOptions {
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /** Where a read the adapter can do without (a series playoffs' standings) logs that it was refused. */
+  logger?: FastifyBaseLogger;
 }
 
 /**
@@ -163,10 +166,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now);
-    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now);
-    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now);
-    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now);
+    this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
+    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
+    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now, options.logger);
+    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
     this.worldCup = new WorldCupReader(this.client);
     this.ncaa = {

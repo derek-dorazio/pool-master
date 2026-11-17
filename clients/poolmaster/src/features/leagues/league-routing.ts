@@ -67,12 +67,25 @@ export function buildLeagueContestTypesPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/contest-types`;
 }
 
-export function buildLeagueContestsPath(leagueCode: string) {
-  return `/league/${leagueCode}/contests`;
-}
+/** The query keys My team's Past contests reads (#1763): its full list, its year, the contest in focus. */
+export const PAST_CONTESTS_PARAMS = { all: 'past', focus: 'focus', year: 'pastYear' } as const;
 
-export function buildLeagueContestHistoryPath(leagueCode: string) {
-  return `/league/${leagueCode}/contests/history`;
+/**
+ * My team's Past contests (#1763), where the old Contests > Past view moved: its full list,
+ * at `year` when given (else its newest), with `focusContestId` tinted and scrolled to.
+ */
+export function buildLeagueTeamPastContestsPath(
+  leagueCode: string,
+  { focusContestId = null, year = null }: { focusContestId?: string | null; year?: number | null } = {},
+) {
+  const query = new URLSearchParams({ [PAST_CONTESTS_PARAMS.all]: 'all' });
+  if (year !== null) {
+    query.set(PAST_CONTESTS_PARAMS.year, String(year));
+  }
+  if (focusContestId !== null) {
+    query.set(PAST_CONTESTS_PARAMS.focus, focusContestId);
+  }
+  return `${buildLeagueTeamPath(leagueCode)}?${query.toString()}`;
 }
 
 /**
@@ -89,17 +102,19 @@ export function buildLeagueContestEntryLinkPath(leagueCode: string, contestId: s
 }
 
 /**
- * A contest page's way back to the Contests page (#1392): the tab the contest is listed on, Past
- * at the year it went final once it is final and Current before, with the contest in focus, so
- * its row is scrolled to and tinted.
+ * A contest page's way back (#1392, #1763): League Home, where a current contest is listed, or
+ * My team's Past contests at the year it went final, with the contest in focus, so its row is
+ * scrolled to and tinted.
  */
-export function buildContestsFocusPath(leagueCode: string, contest: Pick<ContestDto, 'endsAt' | 'id' | 'status'>) {
-  const focus = `focus=${encodeURIComponent(contest.id)}`;
+export function buildContestBreadcrumb(
+  leagueCode: string,
+  contest: Pick<ContestDto, 'endsAt' | 'id' | 'status'>,
+): { href: string; label: string } {
   if (contest.status !== ContestStatus.COMPLETED) {
-    return `${buildLeagueContestsPath(leagueCode)}?${focus}`;
+    return { href: `${buildLeaguePath(leagueCode)}?focus=${encodeURIComponent(contest.id)}`, label: 'Home' };
   }
-  const year = contest.endsAt ? `year=${String(championshipYear(new Date(contest.endsAt)))}&` : '';
-  return `${buildLeagueContestHistoryPath(leagueCode)}?${year}${focus}`;
+  const year = contest.endsAt ? championshipYear(new Date(contest.endsAt)) : null;
+  return { href: buildLeagueTeamPastContestsPath(leagueCode, { focusContestId: contest.id, year }), label: 'My team' };
 }
 
 export function buildLeagueContestEntryPath(leagueCode: string, contestId: string, entryId: string) {
