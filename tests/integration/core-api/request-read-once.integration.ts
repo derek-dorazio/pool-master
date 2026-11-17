@@ -706,8 +706,9 @@ const moveByADay: EventChangeRequest = ({ admin, eventId, startDate }) => ({
 /**
  * What an admin's postponement sends (#1458): the event and its answer, then one read of the
  * contests told and one insert of their email jobs and the event's leaderboard rebuild job, written
- * with the status (#1466). No league, member or entry is read, so the count is the same however many
- * contests, in however many leagues, the event holds.
+ * with the status (#1466). One more read of its live contests, which go back to OPEN while its start
+ * is ahead (#1792); these are all open, so nothing more is read. No league, member or entry is read,
+ * so the count is the same however many contests, in however many leagues, the event holds.
  */
 const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
@@ -715,7 +716,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_sport_events', 2],
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
-  ['SELECT contests', 1],
+  ['SELECT contests', 2],
   ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_tiers', 2],
