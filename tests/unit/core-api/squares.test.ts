@@ -94,7 +94,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     field: games.fieldRepo(),
     squares: squares.repo(),
   };
-  const service = new SquaresService({
+  const serviceDeps: ConstructorParameters<typeof SquaresService>[0] = {
     contests: repos.contests,
     configurations: world.configurationRepo(),
     entries: repos.entries,
@@ -109,7 +109,8 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     receipts: { squaresDrawn: async (drawn) => { receipts.push(drawn); } },
     now: () => now,
     drawSeed: () => 'seed',
-  });
+  };
+  const service = new SquaresService(serviceDeps);
   const deps = world.contestServiceDeps({ matches: games.matchRepo(), participants: games.participantRepo(), eventParticipants: games.fieldService() });
   const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
 
@@ -122,7 +123,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     squares.draws.set(contest.id, { contestId: contest.id, seed: 'seed', rowDigits: IN_ORDER, columnDigits: IN_ORDER, drawnByUserId: null, drawnAt: T0 });
   };
   return {
-    world, games, squares, contest, superBowl, game, alice, bob, service, deps, settlement, actor, updateGame, drawInOrder, receipts, repos,
+    world, games, squares, contest, superBowl, game, alice, bob, service, serviceDeps, deps, settlement, actor, updateGame, drawInOrder, receipts, repos,
     setNow: (when: Date) => { now = when; },
     contestStatus: () => expectDefined(world.contests.get(contest.id)).status,
     entryStatus: (entry: ContestEntry) => expectDefined(world.entries.get(entry.id)).events[0]?.status,
@@ -438,6 +439,45 @@ describe('SquaresService drawing the numbers automatically', () => {
     expect(context.receipts.map((drawn) => drawn.board)).toEqual([board]);
   });
 
+  it('keeps a claim that filled the board when its draw then fails, and the next sweep draws the full board long before kickoff', async () => {
+    const context = setup({ maxSquaresPerEntry: 100 });
+    fillAllButLast(context);
+    const recordDraw = context.repos.squares.recordDraw.bind(context.repos.squares);
+    const failing = jest.spyOn(context.repos.squares, 'recordDraw').mockRejectedValueOnce(new Error('database went away'));
+
+    const board = await context.service.claim(context.contest.id, 9, 9, context.alice.id, context.actor('Alice'));
+
+    expect(board.boxes).toHaveLength(100);
+    expect(board.digits).toBeNull();
+    expect(context.receipts).toEqual([]);
+
+    failing.mockImplementation(recordDraw);
+    const scheduler = new SquaresAutoDrawScheduler({
+      squares: context.repos.squares,
+      service: context.service,
+      jobLock: { runExclusive: async (_key, work) => { await work(); return true; } },
+      now: () => later(KICKOFF, -24),
+    });
+    await scheduler.runSweep();
+
+    expect(context.squares.draws.get(context.contest.id)).toMatchObject({ drawnByUserId: null });
+    expect(context.receipts).toHaveLength(1);
+  });
+
+  it('answers the filling claim with the drawn board when the draw is recorded but its receipts fail', async () => {
+    const context = setup({ maxSquaresPerEntry: 100 });
+    fillAllButLast(context);
+    const service = new SquaresService({
+      ...context.serviceDeps,
+      receipts: { squaresDrawn: async () => { throw new Error('mail queue down'); } },
+    });
+
+    const board = await service.claim(context.contest.id, 9, 9, context.alice.id, context.actor('Alice'));
+
+    expect(board.digits).toMatchObject({ contestId: context.contest.id, drawnByUserId: null });
+    expect(board.claimsOpen).toBe(false);
+  });
+
   it('leaves the numbers undrawn after a claim while any box is still empty', async () => {
     const context = setup();
     const board = await context.service.claim(context.contest.id, 0, 0, context.alice.id, context.actor('Alice'));
@@ -652,6 +692,10 @@ describe('SquaresAutoDrawScheduler', () => {
     context.games.putMatches([{ ...underWayGame, status: MatchStatus.IN_PROGRESS }]);
 
     await expect(context.repos.squares.findDueForAutoDraw(new Date(KICKOFF.getTime() - 1))).resolves.toEqual([underWay.id]);
+    const full = addSquaresContest(context, later(KICKOFF, 24), 5);
+    for (let cell = 0; cell < 100; cell += 1) context.squares.addBox(full.id, context.alice.id, Math.floor(cell / 10), cell % 10);
+    await expect(context.repos.squares.findDueForAutoDraw(new Date(KICKOFF.getTime() - 1))).resolves.toEqual([underWay.id, full.id]);
+    for (let cell = 0; cell < 100; cell += 1) context.squares.boxes.delete(`${full.id}:${Math.floor(cell / 10)}:${cell % 10}`);
     await expect(context.repos.squares.findDueForAutoDraw(KICKOFF)).resolves.toEqual([context.contest.id, underWay.id]);
   });
 });

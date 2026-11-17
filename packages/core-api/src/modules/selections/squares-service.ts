@@ -9,7 +9,8 @@
  * its digits.
  *
  * The digits are drawn automatically (#1760, Derek 2026-11-17) at the first of two moments: the
- * claim that fills the board, or five minutes before kickoff (`SquaresAutoDrawScheduler`). The
+ * claim that fills the board, or five minutes before kickoff (`SquaresAutoDrawScheduler`, whose
+ * sweep also draws a full board whose draw at the filling claim failed). The
  * commissioner may draw earlier by hand. Either way it is the one draw path below, so a draw is
  * recorded once, under the contest lock, and its receipts go out once.
  */
@@ -49,11 +50,14 @@ import {
   type SportEventMatch,
   type SquaresWinner,
 } from '@poolmaster/shared/domain';
+import { errorMessage } from '../../core/error-message';
 import { hasMatchStarted } from '../contests/entry-window';
 import { seededShuffle } from './selection-engines/random-draw';
 import { SelectionError, selectionErrors } from './selection-errors';
 import { isCommissionerRole } from './selection-rules';
 import type { SquaresDrawnNotice } from '../notifications/entry-receipts';
+
+const SQUARES_BOX_COUNT = SQUARES_GRID_SIZE * SQUARES_GRID_SIZE;
 
 /** How long before kickoff the numbers are drawn on a board nobody has drawn (#1760). */
 export const SQUARES_AUTO_DRAW_LEAD_MS = 5 * 60 * 1000;
@@ -211,10 +215,26 @@ export class SquaresService {
     );
     const claimed = await this.withBoxesReread(context);
     // The claim that fills the board draws the numbers (#1760).
-    if (claimed.squares.length === SQUARES_GRID_SIZE * SQUARES_GRID_SIZE && isDrawOpen(claimed)) {
-      return (await this.recordDraw(claimed, null)).board;
-    }
+    if (isBoardFull(claimed) && isDrawOpen(claimed)) return this.drawFilledBoard(claimed);
     return this.buildBoard(claimed);
+  }
+
+  /**
+   * The draw the claim filling the board starts. The claim has landed, so a draw that fails here
+   * does not fail it: the failure is logged and the board answered as it stands, drawn if the draw
+   * was recorded before the failure; an undrawn full board is drawn by the next sweep.
+   */
+  private async drawFilledBoard(claimed: SquaresContext): Promise<SquaresBoard> {
+    try {
+      return (await this.recordDraw(claimed, null)).board;
+    } catch (error) {
+      this.deps.logger?.error(
+        { action: 'squares.autoDraw.failed', data: { contestId: claimed.contest.id, trigger: 'boardFilled', error: errorMessage(error) } },
+        'Drawing a squares board\'s numbers after the claim that filled it failed',
+      );
+      const draw = await this.deps.squares.findDraw(claimed.contest.id);
+      return this.buildBoard({ ...claimed, draw });
+    }
   }
 
   /** Clears a claimed box: its holder's own, or any box for the commissioner. */
@@ -253,16 +273,18 @@ export class SquaresService {
   }
 
   /**
-   * The automatic draw at kickoff (#1760): draws the board's numbers once its game kicks off
-   * within five minutes, or is under way, unless they are drawn already. The scheduler calls it
-   * for each board its read finds; the board is read again here, so a kickoff moved since, a
-   * commissioner's draw or a first quarter already scored draws nothing.
+   * The automatic draw (#1760): draws the board's numbers once its game kicks off within five
+   * minutes or is under way, or once every box is claimed (a full board whose draw at the filling
+   * claim failed), unless they are drawn already. The scheduler calls it for each board its read
+   * finds; the board is read again here, so a kickoff moved since, a commissioner's draw or a
+   * first quarter already scored draws nothing.
    */
   async drawWhenDue(contestId: string): Promise<SquaresAutoDrawOutcome> {
     const context = await this.loadContext(contestId, AUTOMATIC_DRAW);
     if (context.draw) return 'alreadyDrawn';
     if (!isDrawOpen(context)) return 'closed';
-    if (!hasMatchStarted(context.game, context.sportEvent, new Date(this.now().getTime() + SQUARES_AUTO_DRAW_LEAD_MS))) return 'notDue';
+    const kickoffDue = hasMatchStarted(context.game, context.sportEvent, new Date(this.now().getTime() + SQUARES_AUTO_DRAW_LEAD_MS));
+    if (!kickoffDue && !isBoardFull(context)) return 'notDue';
     return (await this.recordDraw(context, null)).outcome;
   }
 
@@ -432,6 +454,11 @@ export class SquaresService {
   private now(): Date {
     return this.deps.now?.() ?? new Date();
   }
+}
+
+/** Whether every box of the grid is claimed. */
+function isBoardFull(context: Pick<SquaresContext, 'squares'>): boolean {
+  return context.squares.length === SQUARES_BOX_COUNT;
 }
 
 /**

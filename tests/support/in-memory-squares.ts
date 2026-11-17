@@ -67,7 +67,7 @@ export class InMemorySquares {
     };
   }
 
-  /** As the Prisma read: open or live squares contests with no digits whose game is under way or kicks off by `kickoffBy`. */
+  /** As the Prisma read: open or live squares contests with no digits whose game is under way or kicks off by `kickoffBy`, or whose board is full. */
   private findDueForAutoDraw(kickoffBy: Date): string[] {
     return [...this.world.contests.values()]
       .filter((contest) => contest.selectionType === SelectionType.SQUARES
@@ -76,7 +76,7 @@ export class InMemorySquares {
       .filter((contest) => {
         const game = contest.squaresGameMatchId === undefined ? undefined : this.games.matches.get(contest.squaresGameMatchId);
         if (!game) return false;
-        if (game.status === MatchStatus.IN_PROGRESS) return true;
+        if (game.status === MatchStatus.IN_PROGRESS || this.boxesOf(contest.id).length === 100) return true;
         const kickoff = game.scheduledDate ?? this.world.sportEvents.get(game.sportEventId)?.startDate;
         return game.status === MatchStatus.SCHEDULED && kickoff !== undefined && kickoff <= kickoffBy;
       })

@@ -293,14 +293,27 @@ describe('PrismaSquaresRepository finding the boards the automatic draw is due o
     expect(due).not.toContain(draft.contestId);
   });
 
-  it('reads every due board in one statement, however many there are', async () => {
+  it('finds a full board long before kickoff, for a draw that failed at the claim that filled it, and not one box short', async () => {
+    const [full, oneShort] = await Promise.all([seedSquaresContest(), seedSquaresContest()]);
+    const cells = Array.from({ length: 100 }, (_, cell) => ({ rowIndex: Math.floor(cell / 10), columnIndex: cell % 10 }));
+    await getPrisma().contestEntrySquare.createMany({ data: cells.map((cell) => ({ ...cell, contestId: full.contestId, contestEntryId: full.entryIds[0] })) });
+    await getPrisma().contestEntrySquare.createMany({ data: cells.slice(1).map((cell) => ({ ...cell, contestId: oneShort.contestId, contestEntryId: oneShort.entryIds[0] })) });
+
+    const due = await new PrismaSquaresRepository(getAppPrisma()).findDueForAutoDraw(justBefore);
+
+    expect(due).toContain(full.contestId);
+    expect(due).not.toContain(oneShort.contestId);
+  });
+
+  it('reads every due board in two statements, however many there are', async () => {
     const fixtures = await Promise.all([seedSquaresContest(), seedSquaresContest(), seedSquaresContest()]);
     const squares = new PrismaSquaresRepository(getAppPrisma());
 
     const { result, statements } = await recordStatements(() => squares.findDueForAutoDraw(KICKOFF));
 
     expect(result).toEqual(expect.arrayContaining(fixtures.map((fixture) => fixture.contestId)));
-    expect(statements).toHaveLength(1);
+    // One for the boards due by kickoff, one for the full boards.
+    expect(statements).toHaveLength(2);
   });
 });
 

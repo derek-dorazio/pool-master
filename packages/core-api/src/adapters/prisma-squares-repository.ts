@@ -11,7 +11,7 @@ import type {
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, SQUARES_GRID_SIZE, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
 import { forgettingReads, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
@@ -114,11 +114,14 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
   }
 
   async findDueForAutoDraw(kickoffBy: Date): Promise<string[]> {
-    const rows = await this.prisma.contest.findMany({
+    const undrawn = {
+      selectionType: SelectionType.SQUARES,
+      status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
+      squaresDraw: { is: null },
+    } satisfies Prisma.ContestWhereInput;
+    const [kickoffDue, full] = await Promise.all([this.prisma.contest.findMany({
       where: {
-        selectionType: SelectionType.SQUARES,
-        status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
-        squaresDraw: { is: null },
+        ...undrawn,
         squaresGame: {
           is: {
             sportEventMatch: {
@@ -132,9 +135,14 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
         },
       },
       select: { id: true },
-      orderBy: { id: 'asc' },
-    });
-    return rows.map((row) => row.id);
+    }),
+    // A full board whose draw at the claim that filled it failed (#1760).
+    this.prisma.contestEntrySquare.groupBy({
+      by: ['contestId'],
+      where: { contest: undrawn },
+      having: { contestId: { _count: { equals: SQUARES_GRID_SIZE * SQUARES_GRID_SIZE } } },
+    })]);
+    return [...new Set([...kickoffDue.map((row) => row.id), ...full.map((row) => row.contestId)])].sort();
   }
 
   async findWinners(contestId: string): Promise<ContestSquaresWinner[]> {
