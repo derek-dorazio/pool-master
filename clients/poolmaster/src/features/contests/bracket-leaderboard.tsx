@@ -64,13 +64,14 @@ function bracketColumns({
     ),
     leagueCode,
     leagueId,
+    truncateName: true,
   });
   return [
     placeColumn(TEST_ID),
     {
       ...entry,
       // Wide enough to keep the icon, the name and its (i) on a line while the rest scroll under it.
-      cell: (context) => <span className="block w-48">{typeof entry.cell === 'function' ? entry.cell(context) : null}</span>,
+      cell: (context) => <span className="block w-56">{typeof entry.cell === 'function' ? entry.cell(context) : null}</span>,
       meta: { pinned: 'start' },
     },
     {

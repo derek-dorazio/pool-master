@@ -141,7 +141,7 @@ describe('Bracket contest leaderboard', () => {
     expect(within(champion).getByLabelText('Wrong')).toBeInTheDocument();
   });
 
-  it('keeps the Entry column pinned while the board scrolls sideways', async () => {
+  it('keeps the Entry column pinned while the board scrolls sideways, a long name cut short (whole on hover) so its (i) stays beside it', async () => {
     primeMocks();
     getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
     renderLeaderboard();
@@ -150,6 +150,9 @@ describe('Bracket contest leaderboard', () => {
     expect(header).toHaveClass('sticky', 'left-0');
     expect(within(screen.getByTestId('bracket-leaderboard-row-entry-2')).getAllByRole('cell')[1]).toHaveClass('sticky', 'left-0');
     expect(screen.getByRole('columnheader', { name: 'Champion' })).not.toHaveClass('sticky');
+    const name = screen.getByTestId('bracket-leaderboard-entry-link-entry-2');
+    expect(name).toHaveClass('truncate');
+    expect(name).toHaveAttribute('title', 'Chalk All The Way');
   });
 
   it('opens an entry\'s whole bracket read-only in a dialog from its bracket icon, titled with the entry and its standing, and closes it from Close', async () => {

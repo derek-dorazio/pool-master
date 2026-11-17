@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
-import { Text } from '@/features/shared/ui';
+import { Text, cn } from '@/features/shared/ui';
 
 /** The columns every contest leaderboard shares (#1277), each test id under the board's prefix. */
 
@@ -55,6 +55,7 @@ export function entryColumn<Row extends BoardRow>(
     leading,
     leagueCode,
     leagueId,
+    truncateName = false,
   }: {
     contestId: string;
     isMine: (row: NoInfer<Row>) => boolean;
@@ -62,6 +63,11 @@ export function entryColumn<Row extends BoardRow>(
     leading?: (row: NoInfer<Row>) => ReactNode;
     leagueCode: string;
     leagueId: string;
+    /**
+     * Cut a long name short, whole on hover, so it keeps its line with the (i): for a column of
+     * fixed width, such as one pinned while the rest scroll (#1753).
+     */
+    truncateName?: boolean;
   },
 ): ColumnDef<Row> {
   return {
@@ -69,12 +75,13 @@ export function entryColumn<Row extends BoardRow>(
     header: 'Entry',
     accessorFn: (row) => [row.entryName, row.squadName].filter(Boolean).join(' '),
     cell: ({ row }) => (
-      <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-2">
+      <span className={cn('flex min-w-0 items-center gap-x-1 gap-y-2', !truncateName && 'flex-wrap')}>
         {leading?.(row.original)}
         <Text asChild size="inherit" variant="strong">
           <Link
-            className="hover:underline"
+            className={cn('hover:underline', truncateName && 'min-w-0 truncate')}
             data-testid={`${testIdPrefix}-entry-link-${row.original.entryId}`}
+            title={truncateName ? row.original.entryName : undefined}
             to={buildLeagueContestEntryPath(leagueCode, contestId, row.original.entryId)}
           >
             {row.original.entryName}

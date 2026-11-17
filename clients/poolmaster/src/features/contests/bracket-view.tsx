@@ -69,7 +69,8 @@ function DesktopBracket({ drawing, isOwnEntry, picking, tiebreaker }: BracketVie
 /**
  * One region on a phone: two rounds side by side plus the region's winner once the last round is
  * on screen, under a row of round names. The rounds on screen read as plain names; the round just
- * off screen on either side is a link that moves to it, as a swipe does.
+ * off screen on either side is a link that moves to it, as a swipe does. A link names its round
+ * in full; where the row is tight, the names on screen wrap onto a second line instead.
  */
 function PhoneRegion({ group, picking }: { group: BracketGroup; picking: BracketPicking | null }) {
   const [start, setStart] = useState(() => openingRoundIndex(group));
@@ -82,21 +83,21 @@ function PhoneRegion({ group, picking }: { group: BracketGroup; picking: Bracket
   const move = (step: number) => setStart((current) => Math.min(Math.max(current + step, 0), lastStart));
   return (
     <div className="flex flex-col gap-2">
-      <nav aria-label={`${group.label} rounds`} className="flex items-center gap-3" data-testid="bracket-round-nav">
+      <nav aria-label={`${group.label} rounds`} className="flex items-center gap-2" data-testid="bracket-round-nav">
         {before ? (
-          <Button className="min-w-0 shrink" data-testid="bracket-round-nav-back" onClick={() => move(-1)} size="xs" type="button" variant="link">
-            <ChevronLeft aria-hidden className="shrink-0" size={14} />
-            <span className="truncate">{before.label}</span>
+          <Button className="shrink-0" data-testid="bracket-round-nav-back" onClick={() => move(-1)} size="xs" type="button" variant="link">
+            <ChevronLeft aria-hidden size={14} />
+            {before.label}
           </Button>
         ) : null}
         {shown.map((round) => (
-          <Text className="shrink-0" data-testid="bracket-round-nav-shown" key={round.roundNumber} variant="label">{round.label}</Text>
+          <Text data-testid="bracket-round-nav-shown" key={round.roundNumber} variant="label">{round.label}</Text>
         ))}
-        {showsWinner ? <Text className="shrink-0" variant="label">Winner</Text> : null}
+        {showsWinner ? <Text variant="label">Winner</Text> : null}
         {after ? (
-          <Button className="ml-auto min-w-0 shrink" data-testid="bracket-round-nav-next" onClick={() => move(1)} size="xs" type="button" variant="link">
-            <span className="truncate">{after.label}</span>
-            <ChevronRight aria-hidden className="shrink-0" size={14} />
+          <Button className="ml-auto shrink-0" data-testid="bracket-round-nav-next" onClick={() => move(1)} size="xs" type="button" variant="link">
+            {after.label}
+            <ChevronRight aria-hidden size={14} />
           </Button>
         ) : null}
       </nav>
