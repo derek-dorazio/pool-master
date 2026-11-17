@@ -37,7 +37,7 @@ import {
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
 import { mapSportEventMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
 import { toSquaresBoardResponse } from '../../../packages/core-api/src/mappers/squares.mapper';
-import { toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
+import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { RaceResultPreviewRow } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
@@ -350,6 +350,31 @@ describe('the stored leaderboards answer with the board they hold', () => {
     const board = { contestId: 'c1' } as never;
 
     expect((map as (snapshot: { board: never }) => unknown)({ board })).toBe(board);
+  });
+});
+
+describe('toSurvivorLeaderboardResponse', () => {
+  it('sends each shown pick\'s game with its kickoff as an ISO time, a game with no kickoff as null, and a week with no shown pick as no game', () => {
+    const game = {
+      opponent: 'Raiders', opponentShortName: 'LV', side: 'HOME' as const, isNeutralSite: false,
+      status: 'SCHEDULED' as const, teamScore: null, opponentScore: null,
+    };
+    const week = { sportEventId: 'e1', roundNumber: 1, outcome: null, team: 'Chiefs', teamShortName: 'KC' };
+    const response = toSurvivorLeaderboardResponse({
+      contestId: 'c1',
+      weeks: [],
+      entries: [{
+        entryId: 'n1', entryName: 'Sharks 1', entryNumber: 1, squadId: 's1', squadName: 'Sharks', alive: true,
+        eliminatedInWeek: null, weeksSurvived: 0, livesLeft: 1, livesLost: 0, position: 1, displayPosition: '1',
+        weeks: [
+          { ...week, game: { ...game, scheduledDate: AT } },
+          { ...week, game: { ...game, scheduledDate: null } },
+          { ...week, team: null, teamShortName: null, game: null },
+        ],
+      }],
+    });
+
+    expect(response.entries[0]?.weeks.map((shown) => (shown.game === null ? 'no game' : shown.game.scheduledDate))).toEqual([ISO, null, 'no game']);
   });
 });
 

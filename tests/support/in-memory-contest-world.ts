@@ -914,6 +914,7 @@ export class InMemoryContestWorld {
         })),
       },
       participants: { findByIds: async () => [] },
+      fieldRows: { findByIds: async () => [] },
       matches: { findBySportEvent: async () => [], findBySportEvents: async () => [] },
       leaderboardSnapshots: this.leaderboardSnapshots,
       leaderboardRebuilds: {

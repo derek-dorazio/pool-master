@@ -12,6 +12,7 @@
  * - Cara picks the Jets: out in week 1.
  * - Dan picks the Bills, then leaves week 2 in draft: out in week 2.
  */
+import { fakeLogger } from '../../support/fake-logger';
 import { expect, jest } from '@jest/globals';
 import {
   MatchEnding,
@@ -70,8 +71,10 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     Chiefs: participantOf(g2, 'home'),
     Raiders: participantOf(g2, 'away'),
   };
+  const shortNames: Partial<Record<TeamName, string>> = { Bills: 'BUF', Chiefs: 'KC', Raiders: 'LV' };
   for (const [name, participantId] of Object.entries(team)) {
-    games.participants.set(participantId, { ...expectDefined(games.participants.get(participantId)), name });
+    const shortName = shortNames[name as TeamName];
+    games.participants.set(participantId, { ...expectDefined(games.participants.get(participantId)), name, ...(shortName === undefined ? {} : { shortName }) });
   }
   const g3 = games.addGame(week2.id, 3, WEEK_2, MatchStatus.SCHEDULED, { home: team.Bills, away: team.Jets });
   const g4 = games.addGame(week2.id, 4, later(WEEK_2, 24), MatchStatus.SCHEDULED, { home: team.Chiefs, away: team.Raiders });
@@ -142,6 +145,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     predictions: games.predictionRepo(),
     matches: games.matchRepo(),
     participants: games.participantRepo(),
+    fieldRows: games.fieldRepo(),
     eventParticipants: games.fieldService(),
     now: () => now,
   });
@@ -305,23 +309,23 @@ describe('survivorRun', () => {
 
 describe('survivorTeamsUsedInCycle', () => {
   it('counts every other week\'s pick when each team is used once all season', () => {
-    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null, 'd'], 3, null)]).toEqual(['a', 'b', 'c', 'd']);
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null, 'd'], 3, null).keys()]).toEqual(['a', 'b', 'c', 'd']);
   });
 
   it('starts a new cycle once the entry has used every team, so the first cycle\'s teams can be picked again', () => {
     // Three teams: weeks 1-3 use all of them, so week 4 starts the second cycle.
-    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null], 3, 3)]).toEqual([]);
-    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', 'a', null], 4, 3)]).toEqual(['a']);
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null], 3, 3).keys()]).toEqual([]);
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', 'a', null], 4, 3).keys()]).toEqual(['a']);
   });
 
   it('keeps the week in its own cycle, counting a pick made ahead in a later week of that cycle', () => {
-    expect([...survivorTeamsUsedInCycle(['a', null, 'b'], 1, 3)]).toEqual(['a', 'b']);
+    expect([...survivorTeamsUsedInCycle(['a', null, 'b'], 1, 3).keys()]).toEqual(['a', 'b']);
     // Week 2 closes the first cycle, so week 4's pick ahead belongs to the second one.
-    expect([...survivorTeamsUsedInCycle(['a', 'b', null, 'c'], 1, 2)]).toEqual(['a']);
+    expect([...survivorTeamsUsedInCycle(['a', 'b', null, 'c'], 1, 2).keys()]).toEqual(['a']);
   });
 
   it('skips weeks with no counted pick, so a cycle closes only on teams actually used', () => {
-    expect([...survivorTeamsUsedInCycle(['a', null, 'b', null], 3, 3)]).toEqual(['a', 'b']);
+    expect([...survivorTeamsUsedInCycle(['a', null, 'b', null], 3, 3).keys()]).toEqual(['a', 'b']);
   });
 });
 
@@ -339,7 +343,7 @@ describe('survivorPredictionEngine', () => {
   it('refuses a week with no pick or two, a team used in another week, and any week of an entry that is out', () => {
     // The week under test is week 3 of the contest, one round of games a and b.
     const season = {
-      usedParticipantIds: new Set(['bills']),
+      usedTeamWeeks: new Map([['bills', 1]]),
       eliminatedInWeek: null,
       participantIdOf: new Map([['a-home', 'bills'], ['b-home', 'chiefs']]),
       roundOf: new Map([['a', 1], ['b', 1]]),
@@ -396,7 +400,7 @@ describe('PredictionService — a survivor week', () => {
     const seasonMatchReads = jest.spyOn(context.seasonReads.matches, 'findBySportEvents');
     const view = await context.predictions.getGamePicks(context.input('Alice'));
 
-    expect(view.survivor?.usedParticipantIds).toHaveLength(2);
+    expect(view.survivor?.usedTeams).toHaveLength(2);
     expect(eventReads.mock.calls).toEqual([[[context.week3.id]], [[context.week1.id, context.week2.id]]]);
     expect(weekMatchReads.mock.calls).toEqual([[context.week3.id]]);
     expect(seasonMatchReads.mock.calls).toEqual([[[context.week1.id, context.week2.id]]]);
@@ -416,8 +420,8 @@ describe('PredictionService — a survivor week', () => {
     const context = beforeWeek3();
     const { g5 } = context.gamesByNumber;
     const view = await context.predictions.getGamePicks(context.input('Alice'));
-    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedParticipantIds: expect.arrayContaining([context.team.Bills, context.team.Chiefs]) });
-    expect(view.survivor?.usedParticipantIds).toHaveLength(2);
+    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedTeams: expect.arrayContaining([{ participantId: context.team.Bills, weekNumber: 1 }, { participantId: context.team.Chiefs, weekNumber: 2 }]), roundWeeks: [{ roundNumber: 1, weekNumber: 3 }] });
+    expect(view.survivor?.usedTeams).toHaveLength(2);
 
     await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
     expect(context.storedPicks('entry-alice')).not.toContain(g5.id);
@@ -454,7 +458,7 @@ describe('PredictionService — a survivor week', () => {
     twoTeamLeague(context);
     const { g5 } = context.gamesByNumber;
     const view = await context.predictions.getGamePicks(context.input('Alice'));
-    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedParticipantIds: [] });
+    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 3 }] });
 
     await context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] });
     expect(context.storedPicks('entry-alice')).toContain(g5.id);
@@ -465,7 +469,7 @@ describe('PredictionService — a survivor week', () => {
     twoTeamWeek3(context);
     const { g5 } = context.gamesByNumber;
     const view = await context.predictions.getGamePicks(context.input('Alice'));
-    expect([...(view.survivor?.usedParticipantIds ?? [])].sort()).toEqual([context.team.Bills, context.team.Chiefs].sort());
+    expect((view.survivor?.usedTeams ?? []).map((used) => used.participantId).sort()).toEqual([context.team.Bills, context.team.Chiefs].sort());
 
     await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
   });
@@ -539,7 +543,7 @@ describe('PredictionService — a survivor week', () => {
   it('hides the teams an entry has used from another team\'s members, as they could show picks not yet revealed', async () => {
     const context = beforeWeek3();
     const view = await context.predictions.getGamePicks({ ...context.input('Alice'), actorUserId: context.userOf('Bob') });
-    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedParticipantIds: null });
+    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedTeams: null, roundWeeks: [{ roundNumber: 1, weekNumber: 3 }] });
   });
 });
 
@@ -613,6 +617,47 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     expect(weeksOf('Alice')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Bills'], [SurvivorWeekOutcome.PENDING, null], [null, null]]);
     expect(weeksOf('Bob')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Chiefs'], [SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null]]);
     expect(weeksOf('Cara')).toEqual([[SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null], [null, null]]);
+  });
+
+  it('gives each shown pick its game: the opponent, home or away, kickoff, status and both scores, and the team\'s short name', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    const board = await context.leaderboard();
+    const weekOf = (name: string, index: number) => expectDefined(expectDefined(board.entries.find((entry) => entry.entryName === name)).weeks[index]);
+
+    // Bob's Chiefs beat the Raiders at home, 20-10.
+    expect(weekOf('Bob', 0)).toMatchObject({
+      team: 'Chiefs',
+      teamShortName: 'KC',
+      game: {
+        opponent: 'Raiders', opponentShortName: 'LV', side: MatchSide.HOME, isNeutralSite: false,
+        scheduledDate: later(WEEK_1, 24).toISOString(), status: MatchStatus.COMPLETED, teamScore: 20, opponentScore: 10,
+      },
+    });
+    // Cara's Jets lost away to the Bills, 10-20; the Jets have no short name.
+    expect(weekOf('Cara', 0)).toMatchObject({
+      team: 'Jets',
+      teamShortName: null,
+      game: { opponent: 'Bills', opponentShortName: 'BUF', side: MatchSide.AWAY, teamScore: 10, opponentScore: 20 },
+    });
+    // A pick not yet kicked off shows neither its team nor its game.
+    expect(weekOf('Alice', 1)).toMatchObject({ team: null, teamShortName: null, game: null });
+  });
+
+  it('shows a pick\'s team without its game, and warns, when the opponent\'s team is missing from the participants', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    context.games.participants.delete(context.team.Raiders);
+    const logger = fakeLogger();
+    const read = await new ContestService({ ...context.deps, logger }).getSurvivorLeaderboard(context.contest.id, context.userOf('Bob'));
+
+    expect(expectDefined(read.board.entries.find((entry) => entry.entryName === 'Bob')).weeks[0]).toMatchObject({ team: 'Chiefs', game: null });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ contestId: context.contest.id, participantId: context.team.Raiders }),
+      'survivor leaderboard pick game opponent missing',
+    );
   });
 
   it('keeps the stored board only until the next game kicks off, then shows the team picked for it (#1435)', async () => {
@@ -867,6 +912,21 @@ describe('A survivor contest with two lives', () => {
       ['Bob', 'T2', 0, 1],
       ['Dan', 'T2', 0, 1],
       ['Cara', '4', 0, 1],
+    ]);
+  });
+
+  it('tells the pick screen the week each used team was picked in, the lost week\'s team included', async () => {
+    const context = setup(twoLives);
+    context.playWeek1();
+    context.playWeek2();
+    context.setEventStatus(context.week1.id, SportEventStatus.COMPLETED);
+    context.setEventStatus(context.week2.id, SportEventStatus.COMPLETED);
+    context.setNow(later(WEEK_3, -2));
+    const view = await context.predictions.getGamePicks({ contestId: context.contest.id, entryId: 'entry-bob', sportEventId: context.week3.id, actorUserId: context.userOf('Bob') });
+
+    expect(view.survivor?.usedTeams).toEqual([
+      { participantId: context.team.Chiefs, weekNumber: 1 },
+      { participantId: context.team.Jets, weekNumber: 2 },
     ]);
   });
 
