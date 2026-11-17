@@ -195,8 +195,8 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     expect(reads('sport_event_matches')).toBe(2);
     // The contest's entries once for the board, once for the live week's submitted entries.
     expect(reads('contest_entries')).toBe(2);
-    // Once for the live week's standings, once for every started week's picks (#1751): right counts, misses and the revealed picks.
-    expect(reads('contest_entry_match_predictions')).toBe(2);
+    // Every started week's picks in one read (#1751), which the live week's standings score from too.
+    expect(reads('contest_entry_match_predictions')).toBe(1);
     expect(leaderboard.weeks.map((week) => [week.started, week.settled])).toEqual([
       [true, true], [true, true], [true, true], [true, true], [true, false], [false, false],
     ]);

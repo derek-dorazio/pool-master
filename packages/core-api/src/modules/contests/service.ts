@@ -1147,6 +1147,22 @@ export class ContestService {
       else matchesByEvent.set(match.sportEventId, [match]);
     }
 
+    // #1751 — every started week's picks in one read, for how many each entry got right, the teams
+    // it missed and the current week's picks game by game; the week under way scores from it too.
+    const seasonPicks = await this.deps.predictions.findByEntriesAndEvents(
+      counted.map((entry) => entry.id),
+      events.filter((event) => event.status !== SportEventStatus.CANCELLED && areEventPicksRevealed(contest, event, now)).map((event) => event.id),
+    );
+    const picksOf = new Map<string, typeof seasonPicks>();
+    const weekPicksOf = new Map<string, typeof seasonPicks>();
+    for (const pick of seasonPicks) {
+      for (const [map, key] of [[picksOf, entryWeekKey(pick.contestEntryId, pick.sportEventId)], [weekPicksOf, pick.sportEventId]] as const) {
+        const picks = map.get(key);
+        if (picks) picks.push(pick);
+        else map.set(key, [pick]);
+      }
+    }
+
     const weeks = await Promise.all(events.map(async (event) => {
       const weekMatches = matchesByEvent.get(event.id) ?? [];
       const games = pickEmWeekGames(event, weekMatches);
@@ -1160,7 +1176,9 @@ export class ContestService {
           && !entries.some((entry) => contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED));
       // Only a week under way is scored live: a settled week answers from its frozen standings,
       // and one not started shows no points (#762).
-      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, scoring, weekMatches) : null;
+      const live = started && !settled
+        ? await loadPickEmWeekStandings(this.deps, contestId, event, scoring, weekMatches, weekPicksOf.get(event.id) ?? [])
+        : null;
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {
@@ -1175,27 +1193,17 @@ export class ContestService {
           }]),
       );
       const winnerEntryIds = settled ? frozen.filter((standing) => standing.position === 1).map((standing) => standing.contestEntryId) : [];
-      return { event, games, started, settled, cells, winnerEntryIds };
+      return { event, games, started, settled, cells, winnerEntryIds, live };
     }));
 
-    // #1751 — every started week's picks in one read: how many each entry got right, the teams it
-    // missed, and the current week's picks game by game, each once its game has kicked off.
-    const scoredWeeks = weeks.filter((week) => week.started && !week.games.eventCancelled);
-    const seasonPicks = await this.deps.predictions.findByEntriesAndEvents(
-      counted.map((entry) => entry.id),
-      scoredWeeks.map((week) => week.event.id),
-    );
-    const picksOf = new Map<string, typeof seasonPicks>();
-    for (const pick of seasonPicks) {
-      const key = entryWeekKey(pick.contestEntryId, pick.sportEventId);
-      const picks = picksOf.get(key);
-      if (picks) picks.push(pick);
-      else picksOf.set(key, [pick]);
-    }
-    const scoresOf = new Map(scoredWeeks.flatMap(({ event, games }) => counted.map((entry) => {
-      const key = entryWeekKey(entry.id, event.id);
-      return [key, scoreGamePicks(games.games, picksOf.get(key) ?? [], scoring)] as const;
-    })));
+    // Each entry's picks scored once a week: the week under way from its live standings, a settled
+    // week against its games here.
+    const scoresOf = new Map<string, BracketScore>(weeks.filter((week) => week.started && !week.games.eventCancelled).flatMap(({ event, games, live }) => (live
+      ? live.entries.map((standing) => [entryWeekKey(standing.entry.id, event.id), standing.score] as const)
+      : counted.map((entry) => {
+        const key = entryWeekKey(entry.id, event.id);
+        return [key, scoreGamePicks(games.games, picksOf.get(key) ?? [], scoring)] as const;
+      }))));
     const missedParticipantIds = new Set(seasonPicks.flatMap((pick) => (
       pick.participantId !== null
         && scoresOf.get(entryWeekKey(pick.contestEntryId, pick.sportEventId))?.picks.get(pick.sportEventMatchId)?.outcome === PickOutcome.BUSTED
