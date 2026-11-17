@@ -7,6 +7,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
+  type RowData,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -138,6 +139,23 @@ export type DataGridProps<TData> = {
       jumpToRow?: never;
     }
 );
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the generics must match TanStack's own declaration to merge with it.
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /**
+     * `start`: the column stays pinned to the grid's left edge while the rest scroll sideways
+     * under it, such as a leaderboard's Entry column on a phone.
+     */
+    pinned?: "start";
+  }
+}
+
+/** A column pinned at the start: stuck to the left edge, over the cells scrolling under it. */
+const PINNED_START_CELL = "sticky left-0 z-[1]";
+/** A pinned body cell's solid fill, with the row's hover laid over it like the cells around it. */
+const PINNED_BODY_SURFACE =
+  "bg-card group-hover:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]";
 
 /** The row actions' column: pinned to the right edge, over the cells scrolling under it. */
 const PINNED_END_CELL = "sticky right-0 z-[1] text-right";
@@ -383,7 +401,13 @@ export function DataGrid<TData>({
                     const canSort = header.column.getCanSort();
 
                     return (
-                      <th className="px-4 py-3 font-medium" key={header.id}>
+                      <th
+                        className={cn(
+                          "px-4 py-3 font-medium",
+                          header.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, pinnedHeaderSurface],
+                        )}
+                        key={header.id}
+                      >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
                             className={cn(
@@ -471,7 +495,13 @@ export function DataGrid<TData>({
                       onClick={link ? openRowFromClick : undefined}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <td className="px-4 py-4" key={cell.id}>
+                        <td
+                          className={cn(
+                            "px-4 py-4",
+                            cell.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, PINNED_BODY_SURFACE],
+                          )}
+                          key={cell.id}
+                        >
                           {link &&
                           cell.column.id === row.getVisibleCells()[0]?.column.id ? (
                             <Link

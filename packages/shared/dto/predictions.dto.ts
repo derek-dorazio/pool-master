@@ -38,6 +38,7 @@ export const GamePickTeamDtoSchema = z.object({
   sportEventParticipantId: z.uuid().describe('The team\'s field row in the event: what a pick names.'),
   participantId: z.uuid(),
   name: z.string(),
+  seedNumber: z.number().int().nullable().describe('The team\'s seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.'),
 }).describe('One team of a game.');
 export type GamePickTeamDto = z.infer<typeof GamePickTeamDtoSchema>;
 
@@ -100,6 +101,14 @@ export const GamePicksResponseSchema = z.object({
 }).describe('A prediction contest entry\'s picks on one event\'s games.');
 export type GamePicksResponse = z.infer<typeof GamePicksResponseSchema>;
 
+export const BracketLeaderboardChampionDtoSchema = z.object({
+  sportEventParticipantId: z.uuid().describe('The team\'s field row in the event.'),
+  name: z.string(),
+  seedNumber: z.number().int().nullable().describe('The team\'s seed in the event; null where the event seeds no field, or this team.'),
+  outcome: z.enum(PickOutcome).describe('How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING.'),
+}).describe('An entry\'s pick to win a bracket\'s final (#1753).');
+export type BracketLeaderboardChampionDto = z.infer<typeof BracketLeaderboardChampionDtoSchema>;
+
 export const BracketLeaderboardEntryDtoSchema = z.object({
   entryId: z.uuid(),
   entryName: z.string(),
@@ -112,6 +121,7 @@ export const BracketLeaderboardEntryDtoSchema = z.object({
   maxPossiblePoints: z.number().int().describe('Points so far plus the round value of every pick whose team is still in: the most the entry can still reach.'),
   correctPickCount: z.number().int(),
   tiebreakerValue: z.number().int().nullable().describe('The entry\'s guess of the final\'s total points.'),
+  champion: BracketLeaderboardChampionDtoSchema.nullable().describe('The team the entry picks to win the final; null with no final pick standing.'),
 }).describe('One entry\'s standing in a bracket contest.');
 export type BracketLeaderboardEntryDto = z.infer<typeof BracketLeaderboardEntryDtoSchema>;
 

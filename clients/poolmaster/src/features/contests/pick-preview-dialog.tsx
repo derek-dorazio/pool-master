@@ -12,8 +12,9 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { Button, ErrorState, HelpTip, LoadingState, Notice, ReadOnlyDetailModal } from '@/features/shared/ui';
-import { BracketBoard } from './bracket-board';
-import { buildBracketRounds, parseBracketTiebreaker } from './bracket-layout';
+import { parseBracketTiebreaker } from './bracket-layout';
+import { BracketView } from './bracket-view';
+import { drawBracket } from './bracket-view-model';
 import { getCompletionStats, getNextIncompleteGroupId } from './contest-entry-helpers';
 import { contestTieLabel } from './contest-sport';
 import { PickEmGames } from './pick-em-games';
@@ -163,11 +164,10 @@ function GamePickPreview({
     return (
       <div className="space-y-4">
         {error}
-        <BracketBoard
-          canPick
-          isBusy={isBusy}
-          onPick={(game, team) => setPicks(previewTeamPick(week, game, team))}
-          rounds={buildBracketRounds(week.games, roundLabel)}
+        <BracketView
+          drawing={drawBracket(week.games, roundLabel)}
+          isOwnEntry
+          picking={{ isBusy, onPick: (game, team) => setPicks(previewTeamPick(week, game, team)) }}
         />
       </div>
     );

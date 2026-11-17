@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setDeviceWidth } from '@/test/device-color-scheme';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
 import {
@@ -127,23 +128,25 @@ describe('Bracket contest entry page', () => {
     expect(rename.compareDocumentPosition(screen.getByTestId('bracket-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('lays a bracket contest\'s games out by round, each region\'s games under its name, with the final where the regions meet last, and never reads the roster selection room', async () => {
+  it('draws the whole bracket on a desktop: the first region on the left, the second mirrored on the right and the final where they meet, each round named over its column, and never reads the roster selection room', async () => {
+    setDeviceWidth(1280);
     primeMocks();
     renderBracketEntry();
 
-    await screen.findByTestId('bracket-board');
-    const rounds = screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent);
-    expect(rounds).toEqual(expect.arrayContaining(['Elite Eight', 'Final Four', 'National Championship']));
-    expect(rounds.indexOf('Elite Eight')).toBeLessThan(rounds.indexOf('National Championship'));
-
-    const opening = screen.getByTestId('bracket-round-1');
-    expect(within(opening).getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent)).toEqual(['East', 'West']);
-    expect(within(screen.getByTestId('bracket-round-3')).queryAllByRole('heading', { level: 4 })).toHaveLength(0);
-    expect(within(screen.getByTestId('bracket-round-3')).getByTestId('bracket-game-7')).toBeInTheDocument();
+    const board = await screen.findByTestId('bracket-board');
+    expect(board).toHaveAttribute('data-layout', 'desktop');
+    const east = screen.getByTestId('bracket-region-East');
+    expect(within(east).getByTestId('bracket-game-1')).toBeInTheDocument();
+    expect(within(east).getByTestId('bracket-round-2')).toHaveTextContent('Final Four');
+    expect(within(east).getByTestId('bracket-round-1')).toHaveTextContent('Elite Eight');
+    expect(within(screen.getByTestId('bracket-region-West')).getByTestId('bracket-game-3')).toBeInTheDocument();
+    expect(within(screen.getByTestId('bracket-middle')).getByTestId('bracket-game-7')).toBeInTheDocument();
+    expect(east.compareDocumentPosition(screen.getByTestId('bracket-middle')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(getSelectionStateMock).not.toHaveBeenCalled();
   });
 
   it('offers each first-round game\'s two teams and shows a later side waiting on the earlier round\'s winner until the entry picks it', async () => {
+    setDeviceWidth(1280);
     primeMocks();
     renderBracketEntry();
 
@@ -278,7 +281,8 @@ describe('Bracket contest entry page', () => {
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
 
-  it('shows a started bracket read-only, each pick marked correct with its points, busted or pending, with the entry\'s points and max possible', async () => {
+  it('shows a started bracket read-only, each line marked by the pick that put its team there: right, wrong, or not played yet, with the tiebreaker under the middle', async () => {
+    setDeviceWidth(1280);
     const started = filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true }));
     const marked = started.map((game) => {
       switch (game.matchNumber) {
@@ -286,6 +290,8 @@ describe('Bracket contest entry page', () => {
           return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.duke, { outcome: 'CORRECT', points: 1 }) };
         case 2:
           return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.houston, { outcome: 'BUSTED', points: 0 }) };
+        case 5:
+          return { ...game, home: TEAMS.duke, away: TEAMS.texas };
         default:
           return game;
       }
@@ -297,15 +303,17 @@ describe('Bracket contest entry page', () => {
     renderBracketEntry();
 
     await screen.findByTestId('bracket-board');
-    expect(screen.getByTestId('bracket-game-1-outcome')).toHaveTextContent('Correct · 1 pt');
-    expect(screen.getByTestId('bracket-game-2-outcome')).toHaveTextContent('Busted');
-    expect(screen.getByTestId('bracket-game-7-outcome')).toHaveTextContent('Pending');
-    expect(team(1, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
+    expect(team(5, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'right');
+    const houston = team(5, TEAMS.houston.sportEventParticipantId);
+    expect(houston).toHaveAttribute('data-mark', 'wrong');
+    expect(houston).toHaveTextContent('Texas');
+    expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-mark', 'none');
     expect(screen.queryByRole('button', { name: /Duke/ })).not.toBeInTheDocument();
+    expect(screen.getByTestId('bracket-champion-name')).toHaveTextContent('Duke');
     expect(screen.getByTestId('bracket-points')).toHaveTextContent('1 pt');
     expect(screen.getByTestId('bracket-max-possible')).toHaveTextContent('9 pts');
     expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();
-    expect(screen.getByTestId('bracket-tiebreaker-summary')).toHaveTextContent('Tiebreaker: 141 total points in the final.');
+    expect(screen.getByTestId('bracket-view-tiebreaker')).toHaveTextContent('Tiebreaker: 141 total points in the final.');
   });
 
   it('keeps another member\'s bracket hidden before the opening tip-off, under its entry name only', async () => {
@@ -318,7 +326,8 @@ describe('Bracket contest entry page', () => {
     expect(screen.queryByTestId('bracket-board')).not.toBeInTheDocument();
   });
 
-  it('opens another member\'s filled bracket read-only once its games are revealed', async () => {
+  it('opens another member\'s filled bracket read-only once its games are revealed, its champion named as theirs, not yours', async () => {
+    setDeviceWidth(1280);
     const revealed = filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true }));
     primeMocks({
       contest: bracketContestFixture({ status: 'ACTIVE' }),
@@ -328,7 +337,9 @@ describe('Bracket contest entry page', () => {
 
     expect(await screen.findByTestId('contest-entry-header-name')).toHaveTextContent('Chalk All The Way');
     expect(screen.getByTestId('contest-entry-summary')).not.toHaveTextContent('Derek’s Great Golf Guys');
-    expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
+    expect(team(7, TEAMS.duke.sportEventParticipantId)).not.toHaveRole('button');
+    expect(screen.getByTestId('bracket-champion')).toHaveTextContent('Champion');
+    expect(screen.getByTestId('bracket-champion')).not.toHaveTextContent('Your champion');
     expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();
     expect(saveGamePicksMock).not.toHaveBeenCalled();
   });
@@ -344,20 +355,23 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
     }
   });
 
-  it('lays out a bracket starting at the Elite Eight from that round, by region, with each round named for where it falls in the six', async () => {
+  it('draws a bracket starting at the Elite Eight from that round, by region, with each round named for where it falls in the six', async () => {
+    setDeviceWidth(1280);
     primeMocks({ gamePicks: gamePicksFixture({ games: secondChanceBracketGames() }) });
     renderBracketEntry();
 
-    const board = await screen.findByTestId('bracket-board');
-    expect(within(board).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent))
-      .toEqual(['Elite Eight', 'Final Four', 'National Championship']);
-    const opening = screen.getByTestId('bracket-round-4');
-    expect(within(opening).getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent)).toEqual(['East', 'West']);
+    await screen.findByTestId('bracket-board');
+    const east = screen.getByTestId('bracket-region-East');
+    expect(within(east).getByTestId('bracket-round-4')).toHaveTextContent('Elite Eight');
+    const middle = screen.getByTestId('bracket-middle');
+    expect(within(middle).getAllByTestId('bracket-round-5')[0]).toHaveTextContent('Final Four');
+    expect(within(middle).getByTestId('bracket-round-6')).toHaveTextContent('National Championship');
     expect(screen.queryByTestId('bracket-round-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7 picked');
   });
 
   it('offers the starting round\'s decided teams as choices, and has a later side wait on that round\'s winner', async () => {
+    setDeviceWidth(1280);
     primeMocks({ gamePicks: gamePicksFixture({ games: secondChanceBracketGames() }) });
     renderBracketEntry();
 

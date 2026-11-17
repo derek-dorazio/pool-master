@@ -69,20 +69,6 @@ export function describeOpenSide(round: Pick<BracketRound, 'roundNumber'>, round
   return previous ? `${previous.label} winner` : 'To be decided';
 }
 
-/** The two teams a game offers the entry: the ones its own earlier picks sent there. */
-export function offeredTeams(game: BracketGame): [BracketTeam | null, BracketTeam | null] {
-  return [game.predictedHome, game.predictedAway];
-}
-
-/** The team the entry picked in a game, among the teams it offers, or null. */
-export function pickedTeam(game: BracketGame): BracketTeam | null {
-  const pickedId = game.pick?.sportEventParticipantId;
-  if (!pickedId) {
-    return null;
-  }
-  return offeredTeams(game).find((team) => team?.sportEventParticipantId === pickedId) ?? null;
-}
-
 const OUTCOME_LABELS: Record<PickOutcome, string> = {
   CORRECT: 'Correct',
   BUSTED: 'Busted',
@@ -111,6 +97,11 @@ export function describePickOutcome(pick: NonNullable<BracketGame['pick']>): { l
 /** "1 pt", "12 pts". */
 export function formatPoints(points: number): string {
   return `${points} ${points === 1 ? 'pt' : 'pts'}`;
+}
+
+/** A locked bracket's tiebreaker, under its middle: "Tiebreaker: 148 total points in the final." */
+export function describeBracketTiebreaker(value: number | null, scoreUnit: string): string {
+  return value === null ? 'No tiebreaker was saved.' : `Tiebreaker: ${value} total ${scoreUnit} in the final.`;
 }
 
 /** "41 of 63 picked". */
