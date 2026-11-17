@@ -77,6 +77,13 @@ describe('pool-master-za4 EventFieldGridCard', () => {
     expect(card).toContainElement(screen.getByTestId('root-admin-event-field-tiers-link'));
   });
 
+  it('names the participant column and its filter box with the sport\'s word for a participant, Team for baseball', () => {
+    renderCard({ sport: 'BASEBALL' });
+
+    expect(screen.getByRole('columnheader', { name: 'Team' })).toBeInTheDocument();
+    expect(screen.getByTestId('data-grid-filter-participantName')).toHaveAttribute('placeholder', 'Filter Team');
+  });
+
   it('pool-master-za4 renders an empty (not "null") input for a golfer with no derived price', () => {
     renderCard({ entries: [entry({ valuation: null })] });
     const priceInput = screen.getByTestId('root-admin-event-field-price-sep-1');

@@ -91,6 +91,7 @@ export type DataGridProps<TData> = {
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
   // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
   // TanStack's own documented shape for this position.
+  /** A filterable column needs a text header: its filter box is named by it, else by the raw column id. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   data: TData[];
@@ -177,6 +178,15 @@ declare module "@tanstack/react-table" {
      */
     pinned?: "start";
   }
+}
+
+/**
+ * The words a column's filter box names it by: its header when that is text, else its id. A header
+ * drawn by a function is rendered as a component, so it is never called or turned into a string
+ * here, which would print its source; a column that needs words of its own gives a text header.
+ */
+function filterLabel(header: unknown, columnId: string): string {
+  return typeof header === "string" ? header : columnId;
 }
 
 /** A column pinned at the start: stuck to the left edge, over the cells scrolling under it. */
@@ -520,10 +530,7 @@ export function DataGrid<TData>({
                           onChange={(event) =>
                             header.column.setFilterValue(event.target.value)
                           }
-                          placeholder={`Filter ${
-                            header.column.columnDef.header?.toString() ??
-                            header.column.id
-                          }`}
+                          placeholder={`Filter ${filterLabel(header.column.columnDef.header, header.column.id)}`}
                           type="search"
                           value={(header.column.getFilterValue() ?? "") as string}
                         />
