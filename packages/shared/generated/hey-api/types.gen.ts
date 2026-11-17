@@ -13391,6 +13391,10 @@ export type SurvivorLeaderboardResponse = {
  */
 export type PickEmLeaderboardResponse = {
     contestId: string;
+    /**
+     * The week the board opens on and whose picks each entry carries: the latest week that has started, else the first. Null for a contest with no weeks.
+     */
+    currentWeekId: string | null;
     mode: 'STRAIGHT_UP' | 'CONFIDENCE';
     /**
      * Whether picks are scored against each game's spread.
@@ -13474,6 +13478,33 @@ export type PickEmLeaderboardResponse = {
              * Whether the entry won the week: first place once the week has settled.
              */
             weeklyWinner: boolean;
+            /**
+             * How many of the entry's picks for the week have come true so far: its games played and picked right (covered, against the spread). Null until the week starts, and for a week it did not submit or that was cancelled.
+             */
+            correctPickCount: number | null;
+            /**
+             * The entry's picks for the week's played games that did not come true, in game order. Empty until the week starts.
+             */
+            missedPicks: Array<{
+                /**
+                 * The team picked, by its short name where it has one; null for a tie pick.
+                 */
+                teamName: string | null;
+            }>;
+        }>;
+        /**
+         * The entry's picks on the current week's games, in game order: only games that have kicked off, so no entry sees a pick it could still copy.
+         */
+        currentWeekPicks: Array<{
+            sportEventMatchId: string;
+            /**
+             * The field row of the team picked; null for a tie pick.
+             */
+            sportEventParticipantId: string | null;
+            /**
+             * How the pick stands: CORRECT or BUSTED once its game is played, PUSH for a game that landed on the spread, PENDING until then.
+             */
+            outcome: 'CORRECT' | 'BUSTED' | 'PUSH' | 'PENDING';
         }>;
     }>;
 };
