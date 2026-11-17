@@ -6,13 +6,13 @@ import { Button, cn, Text } from '@/features/shared/ui';
  * One choice on a pick screen (#1278): a team in a pick'em, survivor or bracket game, or a pick'em
  * game's tie. Pressed and marked "Your pick" once it is the entry's pick; tapping it again does
  * nothing, since the other side is how a pick changes. A survivor team the entry used in another
- * week says Used and cannot be picked.
+ * week says when ("Used · Week 11", #1757), greyed, and cannot be picked.
  */
 export function PickOption({
   children,
   isBusy,
   isPicked,
-  isUsed = false,
+  usedIn = null,
   onPick,
   testId,
 }: {
@@ -21,11 +21,12 @@ export function PickOption({
   /** A pick is saving, so no other can start. */
   isBusy: boolean;
   isPicked: boolean;
-  /** A survivor entry picked the team in another week, so cannot pick it again. */
-  isUsed?: boolean;
+  /** The week a survivor entry picked the team in, such as "Week 11", so cannot pick it again; null for a team not used. */
+  usedIn?: string | null;
   onPick: () => void;
   testId: string;
 }) {
+  const isUsed = usedIn !== null;
   return (
     <Button
       aria-pressed={isPicked}
@@ -44,7 +45,7 @@ export function PickOption({
     >
       {children}
       {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
-      {isUsed && !isPicked ? <Text variant="caption">Used</Text> : null}
+      {isUsed && !isPicked ? <Text tone="muted" variant="caption">{`Used · ${usedIn}`}</Text> : null}
     </Button>
   );
 }

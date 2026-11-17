@@ -37,8 +37,8 @@ export interface ChampionshipRepository {
   recordFinishes(finishes: readonly LeagueYearFinish[]): Promise<number>;
   /** Every finish of the league, of every year. */
   findByLeague(leagueId: string): Promise<LeagueYearFinish[]>;
-  /** The league's finishes of one year. */
-  findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]>;
+  /** The league's finishes of one year; with `settledSince`, only those settled at or after it (#1782). */
+  findByLeagueYear(leagueId: string, year: number, settledSince?: Date): Promise<LeagueYearFinish[]>;
   /** Whether the league has a counted finish in the year. */
   hasCountedFinish(leagueId: string, year: number): Promise<boolean>;
   /** The league's open and live contests that will count once final. */

@@ -60,6 +60,11 @@ export interface ContestResultFilter {
    * viewer's team on Contests > Past. Defaults to `squadId`.
    */
   finishOf?: string;
+  /**
+   * Only the contests that went final at or after this instant (#1782): League Home's last few
+   * days of finals, read without the rest of the year.
+   */
+  finishedSince?: Date;
 }
 
 export interface ContestResultSquadFinishView {
@@ -392,7 +397,10 @@ export class HistoryService {
       }
     }
 
-    const finishes = await this.deps.finishes.findByLeagueYear(leagueId, year);
+    const { finishedSince } = filter;
+    // A contest settles once it is final, so a finish settled before `finishedSince` belongs to a
+    // contest that went final before it too.
+    const finishes = await this.deps.finishes.findByLeagueYear(leagueId, year, finishedSince);
     const byContest = new Map<string, LeagueYearFinish[]>();
     for (const finish of finishes) {
       byContest.set(finish.contestId, [...(byContest.get(finish.contestId) ?? []), finish]);
@@ -404,7 +412,7 @@ export class HistoryService {
     // Finishes name their contests even where a contest's end time was never kept.
     const contestIds = squadId === undefined ? [...byContest.keys()] : [...squadRows.keys()];
     const [contests, squads] = await Promise.all([
-      this.deps.finishes.findFinalContests(leagueId, championshipYearStart(year), championshipYearStart(year + 1), contestIds),
+      this.deps.finishes.findFinalContests(leagueId, laterOf(championshipYearStart(year), finishedSince), championshipYearStart(year + 1), contestIds),
       this.deps.squads.findByLeague(leagueId, true),
     ]);
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));
@@ -421,7 +429,7 @@ export class HistoryService {
       if (squadId !== undefined && !squadRows.has(contest.id)) return [];
       const rows = byContest.get(contest.id) ?? [];
       const completedAt = contest.completedAt ?? rows.at(0)?.settledAt;
-      if (completedAt === undefined) return [];
+      if (completedAt === undefined || (finishedSince !== undefined && completedAt < finishedSince)) return [];
       const squadRow = finishRows.get(contest.id);
       return [{
         contestId: contest.id,
@@ -441,6 +449,11 @@ export class HistoryService {
     this.deps.logger?.debug({ action: 'history.contests', data: { leagueId, year, squadId, place, contestCount: views.length } }, 'Listed a year\'s final contests');
     return views;
   }
+}
+
+/** The later of a window's start and an optional lower bound. */
+function laterOf(start: Date, bound: Date | undefined): Date {
+  return bound !== undefined && bound > start ? bound : start;
 }
 
 function resultCount(rows: readonly LeagueYearFinish[]): ContestResultCount {

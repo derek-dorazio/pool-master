@@ -38,16 +38,17 @@ export type ContestNextStep =
 
 /**
  * Whether a contest has no room for another entry: its cap counts every team's entries, drafts
- * too (#947, #987). `entryCount` is the count the caller has; a list row has only the submitted
- * entries, which is enough to know a contest is full once they reach the cap.
+ * too (#947, #987). `entryCount` is the count the caller has: `contestCapacityCount`, every entry
+ * the contest holds, which both the list and the single-contest read carry (#1781).
  */
 export function isContestFull(contest: Pick<ContestDto, 'entriesPerContest'>, entryCount: number): boolean {
   return contest.entriesPerContest !== null && entryCount >= contest.entriesPerContest;
 }
 
 /**
- * The count a contest's cap is checked against: every entry when the read carries it (a single
- * contest's read), else the submitted ones (a list row), whichever is more.
+ * The count a contest's cap is checked against: every entry it holds, drafts included, which the
+ * list and single-contest reads carry (#1781); a contest write's echo, which omits it, falls back
+ * to the submitted count.
  */
 export function contestCapacityCount(contest: Pick<ContestDto, 'allEntryCount' | 'entryCount'>): number {
   return Math.max(contest.allEntryCount ?? 0, contest.entryCount ?? 0);

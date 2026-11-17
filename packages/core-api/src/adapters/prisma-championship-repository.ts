@@ -39,9 +39,9 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
     });
   }
 
-  async findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]> {
+  async findByLeagueYear(leagueId: string, year: number, settledSince?: Date): Promise<LeagueYearFinish[]> {
     return this.prisma.leagueYearFinish.findMany({
-      where: { leagueId, year },
+      where: { leagueId, year, ...(settledSince === undefined ? {} : { settledAt: { gte: settledSince } }) },
       orderBy: [{ settledAt: 'asc' }, { contestId: 'asc' }],
       select: FINISH_SELECT,
     });

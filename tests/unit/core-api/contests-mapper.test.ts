@@ -34,9 +34,8 @@ describe('toContestListResponse', () => {
   it('gives each listed contest its entry count and its event\'s id, sequence, name, start and status', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
-      new Map([['contest-1', 3]]),
+      { allEntryCounts: new Map(), entryCaps: new Map([['contest-1', 50]]), entryCounts: new Map([['contest-1', 3]]), progress: new Map() },
       new Map([['event-1', masters]]),
-      new Map([['contest-1', 50]]),
     );
 
     expect(response.contests[0]).toMatchObject({
@@ -55,9 +54,8 @@ describe('toContestListResponse', () => {
   it('carries each event\'s scheduled end, and null for an event with none, so a contest\'s schedule needs no event read (#1198)', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
-      new Map(),
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
       new Map<string, ContestSportEventRow>([['event-1', { ...masters, endDate: new Date('2026-04-12T23:00:00.000Z') }], ['event-2', pga]]),
-      new Map(),
     );
 
     expect(response.contests[0]?.sportEvents.map((event) => event.endDate)).toEqual(['2026-04-12T23:00:00.000Z', null]);
@@ -66,21 +64,39 @@ describe('toContestListResponse', () => {
   it('lists a multi-event contest\'s events in its sequence order, numbered from 1', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
-      new Map(),
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
       new Map([['event-2', pga], ['event-1', masters]]),
-      new Map(),
     );
 
     expect(response.contests[0]?.sportEvents.map((event) => [event.sequence, event.name]))
       .toEqual([[1, 'The Masters'], [2, 'PGA Championship']]);
   });
 
+  it('gives each listed contest every entry it holds, drafts included, so a list knows when its cap is reached (#1781)', () => {
+    const response = toContestListResponse(
+      [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
+      { allEntryCounts: new Map([['contest-1', 10]]), entryCaps: new Map([['contest-1', 10]]), entryCounts: new Map([['contest-1', 4]]), progress: new Map() },
+      new Map([['event-1', masters]]),
+    );
+
+    expect(response.contests[0]).toMatchObject({ allEntryCount: 10, entryCount: 4, entriesPerContest: 10 });
+  });
+
+  it('gives a live contest its progress and every other contest null (#1782)', () => {
+    const response = toContestListResponse(
+      [buildContest({ id: 'live', sportEventIds: ['event-1'] }), buildContest({ id: 'open', sportEventIds: ['event-1'] })],
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map([['live', { played: 9, total: 14, unit: 'GAMES' as const }]]) },
+      new Map([['event-1', masters]]),
+    );
+
+    expect(response.contests.map((contest) => contest.progress)).toEqual([{ played: 9, total: 14, unit: 'GAMES' }, null]);
+  });
+
   it('leaves an event that was not found out of the contest\'s events rather than inventing one', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'lost-event', sportEventIds: ['event-gone'] })],
-      new Map(),
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
       new Map([['event-1', masters]]),
-      new Map(),
     );
 
     expect(response.contests[0]?.sportEvents).toEqual([]);

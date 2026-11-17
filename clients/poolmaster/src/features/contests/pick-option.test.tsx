@@ -33,15 +33,15 @@ describe('PickOption', () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 
-  it('says Used and cannot be picked when a survivor entry used the team in another week', () => {
-    const { button } = drawOption({ isUsed: true });
+  it('says which week it was used in and cannot be picked when a survivor entry used the team in another week', () => {
+    const { button } = drawOption({ usedIn: 'Week 11' });
 
     expect(button).toBeDisabled();
-    expect(button).toHaveTextContent('Used');
+    expect(button).toHaveTextContent('Used · Week 11');
   });
 
   it('keeps the used team marked as the pick, not Used, in the week it was picked', () => {
-    const { button } = drawOption({ isPicked: true, isUsed: true });
+    const { button } = drawOption({ isPicked: true, usedIn: 'Week 11' });
 
     expect(button).not.toHaveTextContent('Used');
     expect(screen.getByLabelText('Your pick')).toBeInTheDocument();

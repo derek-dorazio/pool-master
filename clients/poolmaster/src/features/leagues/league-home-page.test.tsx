@@ -17,7 +17,6 @@ import {
   getLeagueSquadFrom,
 } from './test/fixtures';
 import type { ContestResultSummaryDto, CupDto } from '@/lib/api';
-import { week2EventGamesFixture } from '@/features/contests/test/pick-em-fixtures';
 import { buildContestResult, buildRunningCup } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
@@ -452,25 +451,23 @@ describe('League Home', () => {
     expect(listContestsMock).toHaveBeenCalledTimes(1);
     expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
     expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
-    // One results read, for the contests gone final lately; no games read for a roster contest.
+    // One results read, for the contests gone final lately; no games read: the list counts progress.
     expect(listContestResultsMock).toHaveBeenCalledTimes(1);
     expect(getEventBracketMock).not.toHaveBeenCalled();
   });
 
-  it('counts a one-week pick\'em hero\'s games played from its event\'s games', async () => {
-    const week = { ...contest('week-1', 'Week 12 Pick\'em', 'ACTIVE'), contestFormat: 'PREDICTION', selectionType: 'PICK_EM' };
+  it('shows a live hero\'s progress as the contest list counts it, reading no games for it', async () => {
+    const week = { ...contest('week-1', 'Week 12 Pick\'em', 'ACTIVE'), contestFormat: 'PREDICTION', selectionType: 'PICK_EM', progress: { played: 2, total: 3, unit: 'GAMES' } };
     primeMocks({ contests: [week] });
     getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('week-1', [standing(1, 'team-a', 'Bogey Men', 3)])));
-    getEventBracketMock.mockResolvedValue(apiSuccess({
-      matches: week2EventGamesFixture({ 1: { status: 'COMPLETED' }, 2: { status: 'COMPLETED' }, 3: { status: 'SCHEDULED' } }),
-    }));
 
     renderLeagueHome();
 
     expect(await screen.findByTestId('league-home-hero-week-1-progress')).toHaveTextContent('2 of 3 games played');
+    expect(getEventBracketMock).not.toHaveBeenCalled();
   });
 
-  it('keeps a contest gone final in the last few days in More contests with the team\'s finish', async () => {
+  it('keeps a contest gone final in the last few days in More contests with the team\'s finish, asking the server for only those days', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
       finals: [buildContestResult({ completedAt: '2026-04-09T12:00:00.000Z', contestId: 'week-11', name: 'Week 11 Pick\'em', rankedEntryCount: 14, squadFinish: { displayPlace: '5', place: 5, points: 0 } })],
@@ -479,6 +476,11 @@ describe('League Home', () => {
     renderLeagueHome();
 
     expect(await screen.findByTestId('league-home-final-week-11')).toHaveTextContent('Final · you were 5th of 14');
+    // The server narrows the year's results to the last few days, from a day boundary.
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      query: { finishOf: buildLeagueSquadMember().squadId, finishedSince: '2026-04-07T00:00:00.000Z', year: 2026 },
+    }));
   });
 
   it('shows no Up next, Live standings or Your team card any more', async () => {

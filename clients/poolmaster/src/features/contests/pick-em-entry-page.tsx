@@ -168,6 +168,11 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
   // A contest of one playoff event counts its weeks by the event's rounds.
   const eliminatedRound = isPlayoff && contest.sportEvents.length === 1 && eliminatedInWeek !== null ? rounds.at(eliminatedInWeek - 1) ?? null : null;
+  // A used team names the week it was picked in; a week that is one of this playoff's rounds, by the round's name.
+  const usedWeekName = (weekNumber: number) => {
+    const round = isPlayoff ? eventPicks.survivor?.roundWeeks.find((week) => week.weekNumber === weekNumber)?.roundNumber : undefined;
+    return round === undefined ? `Week ${weekNumber}` : roundLabel(round, roundCount);
+  };
   const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
@@ -300,6 +305,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           onConfidence={rank}
           onPick={pick}
           tie={{ label: tieLabel, onPick: pickTie }}
+          weekName={usedWeekName}
         />
       </SectionCard>
 

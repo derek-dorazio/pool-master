@@ -3,6 +3,7 @@
  */
 import type {
   ContestDto,
+  ContestProgressDto,
   ContestSportEventDto,
   ContestResponse,
   ContestFinishedYearsResponse,
@@ -172,7 +173,7 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
 export function toContestDto(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  opts: { entriesPerContest: number | null; entryCount?: number; detail?: ContestEntrySummaryRow },
+  opts: { entriesPerContest: number | null; entryCount?: number; allEntryCount?: number; progress?: ContestProgressDto | null; detail?: ContestEntrySummaryRow },
 ): ContestDto {
   return {
     id: contest.id,
@@ -188,8 +189,9 @@ export function toContestDto(
     sport: contest.sport ?? null,
     entryCount: opts.detail?.totals.submittedEntryCount ?? opts.entryCount,
     enteredSquadCount: opts.detail?.totals.enteredSquadCount,
-    allEntryCount: opts.detail?.totals.allEntryCount,
+    allEntryCount: opts.detail?.totals.allEntryCount ?? opts.allEntryCount,
     myEntryIds: opts.detail?.myEntryIds,
+    ...(opts.progress === undefined ? {} : { progress: opts.progress }),
     entriesPerContest: opts.entriesPerContest,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
@@ -215,17 +217,26 @@ export function toContestResponse(
   return { contest: toContestDto(contest, eventsById, { entriesPerContest, detail }) };
 }
 
-/** Each listed contest with its entry count, its entry cap (#987) and its events' names and starts (#577). */
+/**
+ * Each listed contest with its submitted and total entry counts (#1781), its entry cap (#987), its
+ * events' names and starts (#577), and a live contest's progress (#1782).
+ */
 export function toContestListResponse(
   contests: ContestRow[],
-  entryCounts: ReadonlyMap<string, number>,
+  counts: {
+    allEntryCounts: ReadonlyMap<string, number>;
+    entryCaps: ReadonlyMap<string, number | null>;
+    entryCounts: ReadonlyMap<string, number>;
+    progress: ReadonlyMap<string, ContestProgressDto>;
+  },
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  entryCaps: ReadonlyMap<string, number | null>,
 ): ContestListResponse {
   return {
     contests: contests.map((c) => toContestDto(c, eventsById, {
-      entryCount: entryCounts.get(c.id),
-      entriesPerContest: entryCaps.get(c.id) ?? null,
+      entryCount: counts.entryCounts.get(c.id),
+      allEntryCount: counts.allEntryCounts.get(c.id),
+      entriesPerContest: counts.entryCaps.get(c.id) ?? null,
+      progress: counts.progress.get(c.id) ?? null,
     })),
   };
 }

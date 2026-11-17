@@ -27494,7 +27494,7 @@
             "maximum": 9007199254740991
           },
           "allEntryCount": {
-            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
@@ -27505,6 +27505,42 @@
             "items": {
               "type": "string"
             }
+          },
+          "progress": {
+            "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "played": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "How many have been played: games, weeks or events, as `unit` says."
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "How many there are, cancelled ones left out."
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "GAMES",
+                  "WEEKS",
+                  "EVENTS"
+                ],
+                "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+              }
+            },
+            "required": [
+              "played",
+              "total",
+              "unit"
+            ],
+            "additionalProperties": false
           },
           "entriesPerContest": {
             "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -27558,6 +27594,39 @@
         ],
         "additionalProperties": false,
         "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
+      },
+      "ContestProgressDto": {
+        "type": "object",
+        "properties": {
+          "played": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many have been played: games, weeks or events, as `unit` says."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many there are, cancelled ones left out."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "GAMES",
+              "WEEKS",
+              "EVENTS"
+            ],
+            "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+          }
+        },
+        "required": [
+          "played",
+          "total",
+          "unit"
+        ],
+        "additionalProperties": false,
+        "description": "How far a live contest has got (#1782): \"9 of 14 games played\", \"11 of 18 weeks played\"."
       },
       "ContestEntryDto": {
         "type": "object",
@@ -29586,7 +29655,7 @@
                 "maximum": 9007199254740991
               },
               "allEntryCount": {
-                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
@@ -29597,6 +29666,42 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "progress": {
+                "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "played": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "How many have been played: games, weeks or events, as `unit` says."
+                  },
+                  "total": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "How many there are, cancelled ones left out."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "GAMES",
+                      "WEEKS",
+                      "EVENTS"
+                    ],
+                    "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+                  }
+                },
+                "required": [
+                  "played",
+                  "total",
+                  "unit"
+                ],
+                "additionalProperties": false
               },
               "entriesPerContest": {
                 "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29821,7 +29926,7 @@
                   "maximum": 9007199254740991
                 },
                 "allEntryCount": {
-                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. The contest is full once this reaches `entriesPerContest` (#1781). Present on the list and single-contest reads; omitted on the contest writes.",
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
@@ -29832,6 +29937,42 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "progress": {
+                  "description": "How far a live (ACTIVE) contest has got (#1782); null on any other status, on a one-event roster contest, and on a one-event prediction contest with fewer than two games. List read only.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "played": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "How many have been played: games, weeks or events, as `unit` says."
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many there are, cancelled ones left out."
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "GAMES",
+                        "WEEKS",
+                        "EVENTS"
+                      ],
+                      "description": "What is counted: GAMES, the one event's games of a one-event prediction contest; WEEKS, the events of a prediction season (pick'em, survivor); EVENTS, the events of a roster contest of several."
+                    }
+                  },
+                  "required": [
+                    "played",
+                    "total",
+                    "unit"
+                  ],
+                  "additionalProperties": false
                 },
                 "entriesPerContest": {
                   "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -57758,6 +57899,11 @@
             "minimum": 1,
             "maximum": 10
           },
+          "finishedSince": {
+            "description": "Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year.",
+            "type": "string",
+            "format": "date-time"
+          },
           "finishOf": {
             "description": "The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.",
             "type": "string",
@@ -74749,7 +74895,7 @@
         "tags": [
           "History"
         ],
-        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {
@@ -74782,6 +74928,16 @@
             "name": "place",
             "required": false,
             "description": "With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED)."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "finishedSince",
+            "required": false,
+            "description": "Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days' finals without reading the whole year."
           },
           {
             "schema": {

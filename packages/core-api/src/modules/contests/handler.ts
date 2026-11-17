@@ -87,10 +87,14 @@ export function createContestHandlers(contestService: ContestService) {
     const { finishedYear } = request.query;
     logger.debug({ leagueId: request.params.id, finishedYear }, 'contest list route start');
     const contests = await contestService.listByLeague(request.params.id, readContestViewer(request), finishedYear);
-    const [entryCounts, eventsById, entryCaps] = await Promise.all([
-      contestService.countEntriesByContest(contests.map((contest) => contest.id)),
-      contestService.findEventsForContests(contests),
+    const contestIds = contests.map((contest) => contest.id);
+    const eventsRead = contestService.findEventsForContests(contests);
+    const [entryCounts, allEntryCounts, eventsById, entryCaps, progress] = await Promise.all([
+      contestService.countEntriesByContest(contestIds),
+      contestService.countAllEntriesByContest(contestIds),
+      eventsRead,
       contestService.findEntryCaps(contests),
+      eventsRead.then((events) => contestService.findLiveProgress(contests, events)),
     ]);
     logger.info({
       leagueId: request.params.id,
@@ -98,7 +102,7 @@ export function createContestHandlers(contestService: ContestService) {
       contestCount: contests.length,
       entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
     }, 'contest list route completed');
-    return toContestListResponse(contests, entryCounts, eventsById, entryCaps);
+    return toContestListResponse(contests, { allEntryCounts, entryCaps, entryCounts, progress }, eventsById);
   }
 
   async function listFinishedYears(
