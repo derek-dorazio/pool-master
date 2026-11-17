@@ -31625,6 +31625,14 @@
             "type": "string",
             "format": "uuid"
           },
+          "currentWeekId": {
+            "description": "The week the board opens on and whose picks each entry carries: the latest week that has started, else the first. Null for a contest with no weeks.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "mode": {
             "type": "string",
             "enum": [
@@ -31799,6 +31807,36 @@
                       "weeklyWinner": {
                         "type": "boolean",
                         "description": "Whether the entry won the week: first place once the week has settled."
+                      },
+                      "correctPickCount": {
+                        "description": "How many of the entry's picks for the week have come true so far: its games played and picked right (covered, against the spread). Null until the week starts, and for a week it did not submit or that was cancelled.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "missedPicks": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "teamName": {
+                              "description": "The team picked, by its short name where it has one; null for a tie pick.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "teamName"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One pick of an entry's that did not come true."
+                        },
+                        "description": "The entry's picks for the week's played games that did not come true, in game order. Empty until the week starts."
                       }
                     },
                     "required": [
@@ -31807,12 +31845,52 @@
                       "points",
                       "position",
                       "displayPosition",
-                      "weeklyWinner"
+                      "weeklyWinner",
+                      "correctPickCount",
+                      "missedPicks"
                     ],
                     "additionalProperties": false,
                     "description": "One entry's result for one week of a pick'em contest."
                   },
                   "description": "The entry's result for each of the contest's weeks, in the contest's week order."
+                },
+                "currentWeekPicks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportEventMatchId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "sportEventParticipantId": {
+                        "description": "The field row of the team picked; null for a tie pick.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "CORRECT",
+                          "BUSTED",
+                          "PUSH",
+                          "PENDING"
+                        ],
+                        "description": "How the pick stands: CORRECT or BUSTED once its game is played, PUSH for a game that landed on the spread, PENDING until then."
+                      }
+                    },
+                    "required": [
+                      "sportEventMatchId",
+                      "sportEventParticipantId",
+                      "outcome"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One entry's pick on one game of the current week, shown once the game has kicked off."
+                  },
+                  "description": "The entry's picks on the current week's games, in game order: only games that have kicked off, so no entry sees a pick it could still copy."
                 }
               },
               "required": [
@@ -31824,7 +31902,8 @@
                 "position",
                 "displayPosition",
                 "totalPoints",
-                "weeks"
+                "weeks",
+                "currentWeekPicks"
               ],
               "additionalProperties": false,
               "description": "One entry's standing in a pick'em contest."
@@ -31834,6 +31913,7 @@
         },
         "required": [
           "contestId",
+          "currentWeekId",
           "mode",
           "againstTheSpread",
           "weeks",

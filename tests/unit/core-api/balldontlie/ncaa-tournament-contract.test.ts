@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { balldontliePaginationSchema } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import {
+  ncaabBracketGameSchema,
+  ncaabBracketListSchema,
   ncaaBracketGameSchema,
   ncaaBracketListSchema,
   ncaaBracketTeamSchema,
@@ -20,18 +22,19 @@ import { describeErrors, loadVendorSpec, readBalldontlieFixture } from '../../..
  * these paths, so every fixture is written to them.
  */
 
-const leagues: Array<[name: string, league: NcaaTournamentLeague, prefix: 'NCAAB' | 'NCAAW', brackets: string[]]> = [
-  ['men\'s', NCAA_MEN, 'NCAAB', ['bracket-2025.json', 'bracket-2026-partial.json']],
-  ['women\'s', NCAA_WOMEN, 'NCAAW', ['bracket-2025.json']],
+/** Each league's bracket schemas: the men's also reads each game's region, which only its document has. */
+const leagues: Array<[name: string, league: NcaaTournamentLeague, prefix: 'NCAAB' | 'NCAAW', brackets: string[], gameSchema: z.ZodType, listSchema: z.ZodType]> = [
+  ['men\'s', NCAA_MEN, 'NCAAB', ['bracket-2025.json', 'bracket-2026-partial.json'], ncaabBracketGameSchema, ncaabBracketListSchema],
+  ['women\'s', NCAA_WOMEN, 'NCAAW', ['bracket-2025.json'], ncaaBracketGameSchema, ncaaBracketListSchema],
 ];
 
-describe.each(leagues)('BALLDONTLIE NCAA %s tournament', (_name, league, prefix, brackets) => {
+describe.each(leagues)('BALLDONTLIE NCAA %s tournament', (_name, league, prefix, brackets, gameSchema, listSchema) => {
   const spec = loadVendorSpec(league.key);
   /** The documents require nothing on a team and only the state on a bracket game. */
   const contractGaps = contractGapsAgainst(spec, new Map());
   const fixtures: Array<[file: string, path: string, adapterSchema: z.ZodType]> = [
     ['teams.json', `/${league.key}/v1/teams`, ncaaTeamListSchema],
-    ...brackets.map((file): [string, string, z.ZodType] => [file, `/${league.key}/v1/bracket`, ncaaBracketListSchema]),
+    ...brackets.map((file): [string, string, z.ZodType] => [file, `/${league.key}/v1/bracket`, listSchema]),
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -47,7 +50,7 @@ describe.each(leagues)('BALLDONTLIE NCAA %s tournament', (_name, league, prefix,
   });
 
   it.each([
-    [`${prefix}Bracket`, ncaaBracketGameSchema],
+    [`${prefix}Bracket`, gameSchema],
     [`${prefix}BracketTeam`, ncaaBracketTeamSchema],
     [`${prefix}Team`, ncaaTeamSchema],
     ['Pagination', balldontliePaginationSchema],

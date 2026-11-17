@@ -39,12 +39,14 @@ export type SquaresGridBoard = Pick<
  * entry's full name and the box's numbers. The viewer's own boxes are shaded and outlined blue, as
  * their rows are on other boards; winning boxes are gold with the period they won on a tag ("Q1/F" for a box that won Q1 and the final), and while a period is played its score's row and column
  * are tinted and the box winning it now is outlined green with a Now tag. A box the viewer can
- * claim or clear is a button that does so instead.
+ * claim or clear is a button that does so instead. The boxes of an entry a link names (`?entry=`,
+ * #1762) look as the viewer's own do.
  */
 export function SquaresGrid({
   actionFor,
   board,
   isBusy,
+  linkedEntryId = null,
   myEntryIds,
   onBoxAction,
 }: {
@@ -52,6 +54,8 @@ export function SquaresGrid({
   actionFor: (box: SquaresBoxDto | null) => SquaresBoxAction;
   board: SquaresGridBoard;
   isBusy: boolean;
+  /** The entry a link names (`?entry=`), whose boxes are shaded and outlined as the viewer's own are. */
+  linkedEntryId?: string | null;
   myEntryIds: readonly string[];
   onBoxAction: (rowIndex: number, columnIndex: number, action: Exclude<SquaresBoxAction, null>) => void;
 }) {
@@ -69,7 +73,8 @@ export function SquaresGrid({
     : null);
 
   return (
-    <div className="space-y-1" data-testid="squares-grid">
+    // A linked entry is shown by its boxes, so landing on it scrolls to the board.
+    <div className="space-y-1" data-entry-id={linkedEntryId ?? undefined} data-testid="squares-grid">
       <SimpleTable className="table-fixed border-separate border-spacing-0.5" density="compact">
         <caption className="sr-only">{`${awayTeam} rows, ${homeTeam} columns`}</caption>
         <colgroup>
@@ -119,6 +124,7 @@ export function SquaresGrid({
                 const box = boxes.get(key) ?? null;
                 const action = actionFor(box);
                 const isMine = box !== null && myEntryIds.includes(box.contestEntryId);
+                const isLinked = box !== null && box.contestEntryId === linkedEntryId;
                 const won = winningPeriods.get(key) ?? [];
                 const isNow = live !== null && live.rowIndex === rowIndex && live.columnIndex === columnIndex;
                 const isLiveLine = live !== null && (live.rowIndex === rowIndex || live.columnIndex === columnIndex);
@@ -135,13 +141,14 @@ export function SquaresGrid({
                 const label = box
                   ? `${[`${place}: ${box.entryName}`, ...facts].join(', ')}${action === 'clear' ? '. Tap to clear.' : ''}`
                   : `${[`${place}: empty`, ...facts].join(', ')}${action === 'claim' ? '. Tap to claim.' : ''}`;
-                const look = boardCellClassName({ isEmpty: box === null, isMine, isWon: won.length > 0, isNow, isOnLiveLine: isLiveLine });
+                const look = boardCellClassName({ isEmpty: box === null, isMine: isMine || isLinked, isWon: won.length > 0, isNow, isOnLiveLine: isLiveLine });
                 const tag = tags.length > 0
                   // Two or more tags shorten Final to F ("Q1/F"), so the tag stays inside its box on a phone.
                   ? { label: tags.length > 1 ? tags.map((each) => (each === 'Final' ? 'F' : each)).join('/') : tags[0], tone: 'won' as const }
                   : isNow ? { label: 'Now', tone: 'now' as const } : undefined;
                 const content = <BoardCellContent code={box ? initials.get(box.contestEntryId) ?? '' : ''} tag={tag} />;
                 const marks = {
+                  'data-linked': isLinked || undefined,
                   'data-mine': isMine || undefined,
                   'data-now': isNow || undefined,
                   'data-testid': `squares-box-${rowIndex}-${columnIndex}`,

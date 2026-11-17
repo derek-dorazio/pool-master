@@ -410,6 +410,22 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       [entries.alice]: ['2', 11, [[7, '1', true], [4, '2', false]]],
       [entries.cara]: ['3', 6, [[6, '3', false], [null, null, false]]],
     });
+    // Each week's cell counts the picks that came true and names the ones that did not; the board
+    // opens on week 2, carrying each entry's picks on its games, all of them kicked off.
+    const liveBoard = await leaderboard();
+    expect(liveBoard.currentWeekId).toBe(week2.eventId);
+    const team = (name: string) => ({ teamName: `${name} ${RUN}` });
+    expect(Object.fromEntries(liveBoard.entries.map((entry) => [entry.entryId, entry.weeks.map((week) => [week.correctPickCount, week.missedPicks])]))).toEqual({
+      [entries.alice]: [[2, [team('Purdue'), team('Colgate')]], [2, [team('Houston'), team('Baylor')]]],
+      [entries.bob]: [[2, [team('Purdue'), team('Colgate')]], [2, [team('Texas'), team('Akron')]]],
+      [entries.cara]: [[3, [team('Vermont')]], [null, []]],
+    });
+    expect(Object.fromEntries(liveBoard.entries.map((entry) => [entry.entryId, entry.currentWeekPicks.map((pick) => [pick.sportEventMatchId, pick.outcome])]))).toEqual({
+      [entries.alice]: [[week2.gameId(1), 'CORRECT'], [week2.gameId(2), 'BUSTED'], [week2.gameId(3), 'CORRECT'], [week2.gameId(4), 'BUSTED']],
+      [entries.bob]: [[week2.gameId(1), 'CORRECT'], [week2.gameId(2), 'BUSTED'], [week2.gameId(3), 'BUSTED'], [week2.gameId(4), 'CORRECT']],
+      // Cara's week is still a draft, which counts for nothing, so none of its picks show.
+      [entries.cara]: [],
+    });
 
     // --- Week 2 completes: the last week, so the season settles and the contest completes ------
     expect((await transitionEvent({ client: a, path: { eventId: week2.eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');

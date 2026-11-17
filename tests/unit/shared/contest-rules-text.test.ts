@@ -72,6 +72,11 @@ describe('formatContestRules — the other selection types', () => {
     expect(formatContestRules(rules({ selectionType: SelectionType.SURVIVOR, lives: 2 }), 0, golfer)).toContain('You can lose once and stay in; a second loss puts you out.');
     expect(formatContestRules(rules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 1 }), 0, golfer)).toMatch(/^Claim up to 1 box on a 10x10 grid/);
   });
+
+  it('says a squares contest\'s numbers are drawn when the grid fills or 5 minutes before kickoff', () => {
+    expect(formatContestRules(rules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }), 0, golfer))
+      .toContain('The numbers are drawn when the grid fills or 5 minutes before kickoff');
+  });
 });
 
 describe('suggestContestName', () => {

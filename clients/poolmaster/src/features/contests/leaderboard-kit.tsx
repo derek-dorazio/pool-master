@@ -2,11 +2,12 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
+import { DataGrid, SectionCard, Text, type DataGridDetailRow } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
+import { useLinkedEntry } from './use-linked-entry';
 import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 
 /**
@@ -33,29 +34,37 @@ export function LeaderboardSection({ children, trailing }: { children: ReactNode
 /**
  * A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a
  * page at a time, with the "My entries" switch (#1750) while the viewer has an entry on it. With
- * the switch on, the rows are the viewer's alone, each still at its real place.
+ * the switch on, the rows are the viewer's alone, each still at its real place. An entry a link
+ * names (`?entry=`, #1762) is turned to, highlighted and scrolled into view when the board shows it.
  */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
   data,
+  detailRows,
   emptyMessage,
   isMine,
   rowTestIdPrefix,
   tableTestId,
+  toolbarActions,
   trailing,
 }: {
   columns: ColumnDef<Row>[];
   data: Row[];
+  /** The rows under each opened entry, such as its games (`DataGrid`'s `detailRows`). */
+  detailRows?: (row: Row) => readonly DataGridDetailRow[];
   emptyMessage: string;
   /** Whether a row is one of the viewer's entries, as the Entry column marks them. */
   isMine: (row: Row) => boolean;
   rowTestIdPrefix: string;
   tableTestId: string;
+  /** The board's own buttons at the toolbar's end, after the "My entries" switch, such as "Show all details". */
+  toolbarActions?: ReactNode;
   /** The title bar's trailing slot: the viewer's best place (`YourBestNote`). */
   trailing?: ReactNode;
 }) {
   const myEntriesFilter = useMyEntriesFilter();
   const myEntries = narrowToMyEntries(data, isMine, myEntriesFilter.isOn);
+  const linkedEntry = useLinkedEntry();
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
@@ -64,6 +73,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
         data={myEntries.rows}
         emptyMessage={emptyMessage}
         getRowId={(row) => row.entryId}
+        landOnRowId={linkedEntry.entryId}
         pageSize={LEADERBOARD_PAGE_SIZE}
         rowTestId={(row) => `${rowTestIdPrefix}-${row.entryId}`}
         search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
@@ -71,7 +81,13 @@ export function ScoreboardGrid<Row extends BoardRow>({
         // Flipping the filter starts the board again from its first page, as the lineup board does.
         pageResetKey={myEntries.showsMineOnly ? 'mine' : 'all'}
         tableTestId={tableTestId}
-        toolbarEnd={myEntries.hasMine ? <MyEntriesToggle checked={myEntries.showsMineOnly} onCheckedChange={myEntriesFilter.setOn} /> : undefined}
+        detailRows={detailRows}
+        toolbarEnd={myEntries.hasMine || toolbarActions ? (
+          <span className="flex flex-wrap items-center gap-3">
+            {myEntries.hasMine ? <MyEntriesToggle checked={myEntries.showsMineOnly} onCheckedChange={myEntriesFilter.setOn} /> : null}
+            {toolbarActions}
+          </span>
+        ) : undefined}
       />
     </LeaderboardSection>
   );

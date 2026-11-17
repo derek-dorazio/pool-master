@@ -326,6 +326,11 @@ export interface StandingsLine {
   movement: number | null;
   /** Whether a squad the reader owns holds the entry. */
   isYours: boolean;
+  /**
+   * On the reader's own line, the entry opened on the contest page (buildContestEntryUrl, #1762):
+   * its name links there. Absent on everyone else's.
+   */
+  entryUrl?: string;
   /** In a season contest, the entry's place and score in the event that just finished; null for either not decided. */
   eventResult?: { place: string | null; score: string | null };
   /** In a survivor contest, whether the entry is out. */
@@ -335,6 +340,8 @@ export interface StandingsLine {
 /** One of the reader's bracket entries' pick to win it all, and what the entry can still reach (E4). */
 export interface StandingsChampion {
   entryName: string;
+  /** The entry opened on the contest page (buildContestEntryUrl): its name links there. */
+  entryUrl: string;
   team: string;
   /** Whether the team is still playing. */
   alive: boolean;
@@ -344,6 +351,8 @@ export interface StandingsChampion {
 /** One of the reader's survivor entries that went out in the week (E5). */
 export interface StandingsElimination {
   entryName: string;
+  /** The entry opened on the contest page (buildContestEntryUrl): its name links there. */
+  entryUrl: string;
   /** The team it picked; null when it had no pick. */
   team: string | null;
   /** The round of a playoff event it went out in; null for an event of one round. */
@@ -353,6 +362,8 @@ export interface StandingsElimination {
 /** Which of an entry's picks went out in the round: golfers who missed the cut. */
 export interface StandingsCutNews {
   entryName: string;
+  /** The entry opened on the contest page (buildContestEntryUrl): its name links there. */
+  entryUrl: string;
   names: string[];
 }
 
@@ -398,8 +409,8 @@ export type ContestResultsOutcome =
     /** The reader's entries placed below the leaders. */
     yours: StandingsLine[];
     entryCount: number;
-    /** The reader's entries among the winners (F3). */
-    yourWins: StandingsEntryName[];
+    /** The reader's entries among the winners (F3), each with its entry opened on the contest page. */
+    yourWins: Array<StandingsEntryName & { entryUrl: string }>;
   }
   | {
     kind: typeof ContestResultsKind.NO_SCORES;
@@ -1785,7 +1796,7 @@ function standingsTextLine(line: StandingsLine): string {
     ...(line.isOut ? ['out'] : []),
     ...(line.eventResult ? [`this event ${formatEventResult(line.eventResult)}`] : []),
     ...(movement ? [movement] : []),
-  ].join(', ');
+  ].join(', ') + (line.entryUrl ? ` <${line.entryUrl}>` : '');
 }
 
 /** The colour of a movement mark: green up, red down, grey otherwise. */
@@ -1802,7 +1813,7 @@ function standingsTable(lines: StandingsLine[]): string {
     const you = line.isYours ? ` <span style="font-size:12px;font-weight:700;color:${EMAIL_THEME.goldInk};">YOU</span>` : '';
     return `<tr>
         <td style="${row}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
-        <td style="${row}">${strong(line.entryName)}${you}${line.eventResult ? `<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">This event ${escapeHtml(formatEventResult(line.eventResult))}</span>` : ''}</td>
+        <td style="${row}">${line.entryUrl ? entryLink(line.entryName, line.entryUrl) : strong(line.entryName)}${you}${line.eventResult ? `<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">This event ${escapeHtml(formatEventResult(line.eventResult))}</span>` : ''}</td>
         <td style="${row}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}${line.isOut ? `<br><span style="font-size:12px;font-weight:400;color:${EMAIL_THEME.muted};">out</span>` : ''}</td>
         <td style="${row}text-align:right;font-weight:700;color:${movementColor(line.movement)};">${escapeHtml(movementMark(line.movement))}</td>
       </tr>`;
@@ -1833,10 +1844,10 @@ function renderContestStandingsEmail(
     ? `${moment.eventName}, ${weekLeaders.length < moment.weekEntryCount ? `top ${String(weekLeaders.length)} of ${String(moment.weekEntryCount)}` : 'everyone'}`
     : '';
   const leadersTitle = standingsLeadersTitle(data);
-  const personalLines = [
-    ...data.out.map((out) => describeElimination(out, moment.eventName)),
-    ...data.champions.map(describeChampion),
-    ...data.cut.map((news) => `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.`),
+  const personalLines: EntryNews[] = [
+    ...data.out.map((out) => ({ ...out, sentence: describeElimination(out, moment.eventName) })),
+    ...data.champions.map((champion) => ({ ...champion, sentence: describeChampion(champion) })),
+    ...data.cut.map((news) => ({ ...news, sentence: `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.` })),
   ];
   const picksAction = 'Make picks for next week';
   const leaderboardAction = 'Full leaderboard';
@@ -1846,7 +1857,7 @@ function renderContestStandingsEmail(
     paragraph(`Hi ${escapeHtml(data.userName)},`),
     paragraph(escapeHtml(wording.lead)),
     ...(yourBest ? [placeCallout(yourBest, placeNote)] : []),
-    ...personalLines.map((line) => paragraph(escapeHtml(line))),
+    ...personalLines.map((line) => paragraph(entryNewsHtml(line))),
     ...(weekLeaders.length > 0 ? [sectionTitle(weekLeadersTitle), standingsTable(weekLeaders)] : []),
     sectionTitle(leadersTitle),
     standingsTable(data.top),
@@ -1860,7 +1871,7 @@ function renderContestStandingsEmail(
     '',
     wording.lead,
     ...(yourBest ? ['', placeCalloutLine(yourBest, placeNote)] : []),
-    ...(personalLines.length > 0 ? ['', ...personalLines] : []),
+    ...(personalLines.length > 0 ? ['', ...personalLines.map(entryNewsText)] : []),
     ...(weekLeaders.length > 0 ? ['', `${weekLeadersTitle}:`, ...weekLeaders.map(standingsTextLine)] : []),
     '',
     `${leadersTitle}:`,
@@ -1930,7 +1941,10 @@ function renderContestResultsEmail(
   }
   const lead = [`${data.contestName} is over.`, describeWinners(outcome.winners)].filter((sentence) => sentence !== null).join(' ');
   const tied = outcome.winners.length > 1;
-  const congratulations = outcome.yourWins.map((win) => `Congratulations, ${win.squadName}${tied ? ' tied for first in' : ' won'} ${data.contestName} with ${win.entryName}!`);
+  const congratulations: EntryNews[] = outcome.yourWins.map((win) => ({
+    ...win,
+    sentence: `Congratulations, ${win.squadName}${tied ? ' tied for first in' : ' won'} ${data.contestName} with ${win.entryName}!`,
+  }));
   const leadersTitle = outcome.top.length < outcome.entryCount
     ? `Final top ${String(outcome.top.length)} of ${String(outcome.entryCount)}`
     : 'Final standings';
@@ -1939,7 +1953,7 @@ function renderContestResultsEmail(
   const placeNote = 'Your final place.';
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
-    ...congratulations.map((line) => paragraph(strong(line))),
+    ...congratulations.map((line) => paragraph(`<strong style="color:${EMAIL_THEME.navy};">${entryNewsHtml(line)}</strong>`)),
     paragraph(escapeHtml(lead)),
     ...(yourBest ? [placeCallout(yourBest, placeNote)] : []),
     sectionTitle(leadersTitle),
@@ -1950,7 +1964,7 @@ function renderContestResultsEmail(
   const textLines = [
     `Hi ${data.userName},`,
     '',
-    ...(congratulations.length > 0 ? [...congratulations, ''] : []),
+    ...(congratulations.length > 0 ? [...congratulations.map(entryNewsText), ''] : []),
     lead,
     ...(yourBest ? ['', placeCalloutLine(yourBest, placeNote)] : []),
     '',
@@ -2711,17 +2725,18 @@ function placeCallout(line: StandingsLine, note: string | null): string {
     <tr>
       <td width="1" style="padding:16px 0 16px 18px;font-family:Archivo,Arial,sans-serif;font-size:40px;font-weight:800;line-height:1;color:${EMAIL_THEME.navy};white-space:nowrap;vertical-align:middle;">${escapeHtml(ordinalPlace(line.place ?? ''))}</td>
       <td style="padding:16px 18px;font-size:15px;line-height:1.45;color:${EMAIL_THEME.navy};vertical-align:middle;">
-        <strong>${escapeHtml(line.entryName)}${line.score === null ? '' : ` · ${escapeHtml(line.score)}`}</strong>
+        <strong>${line.entryUrl ? entryLink(line.entryName, line.entryUrl) : escapeHtml(line.entryName)}${line.score === null ? '' : ` · ${escapeHtml(line.score)}`}</strong>
         ${note === null ? '' : `<br><span style="color:${EMAIL_THEME.ink};">${escapeHtml(note)}</span>`}
       </td>
     </tr>
   </table>`;
 }
 
-/** The callout's plain-text twin: "Your place: 3rd, Fairway Bandits, -8". */
+/** The callout's plain-text twin: "Your place: 3rd, Fairway Bandits, -8", then the entry's link when it has one. */
 function placeCalloutLine(line: StandingsLine, note: string | null): string {
   const place = `Your place: ${ordinalPlace(line.place ?? '')}, ${line.entryName}${line.score === null ? '' : `, ${line.score}`}`;
-  return note === null ? place : `${place}. ${note}`;
+  const sentence = note === null ? place : `${place}. ${note}`;
+  return line.entryUrl ? `${sentence} <${line.entryUrl}>` : sentence;
 }
 
 /** The header's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */
@@ -2801,6 +2816,32 @@ function button(label: string, href: string): string {
       </td>
     </tr>
   </table>`;
+}
+
+/** An entry's name linking to it on the contest page, in the email's bold navy (#1762). */
+function entryLink(entryName: string, entryUrl: string): string {
+  return `<a href="${escapeAttribute(entryUrl)}" style="color:${EMAIL_THEME.navy};font-weight:700;">${escapeHtml(entryName)}</a>`;
+}
+
+/** A sentence of news about one of the reader's entries, which names it. */
+interface EntryNews {
+  sentence: string;
+  entryName: string;
+  entryUrl: string;
+}
+
+/** The sentence with the entry's name, where it first appears, linking to the entry (#1762). */
+function entryNewsHtml(news: EntryNews): string {
+  const at = news.sentence.indexOf(news.entryName);
+  if (at < 0) return escapeHtml(news.sentence);
+  return escapeHtml(news.sentence.slice(0, at))
+    + entryLink(news.entryName, news.entryUrl)
+    + escapeHtml(news.sentence.slice(at + news.entryName.length));
+}
+
+/** The sentence, then the entry's link in angle brackets, as a plain-text email gives a link. */
+function entryNewsText(news: EntryNews): string {
+  return `${news.sentence} <${news.entryUrl}>`;
 }
 
 function strong(value: string): string {

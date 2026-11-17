@@ -347,7 +347,7 @@ describe('SDK Functional: system emails', () => {
       const summaries = await awaitSentMailTo(recipient.email, 1, startedSubject);
       expect(summaries).toHaveLength(1);
       expect(summaries[0].to).toEqual([recipient.email]);
-      expect(linksIn(summaries[0])[0]).toBe(`${contestUrl}/leaderboard`);
+      expect(linksIn(summaries[0])[0]).toBe(contestUrl);
     }
     // The root admin is not in the league, so is told nothing.
     expect(await sentMailWithSubject(admin.email, startedSubject)).toHaveLength(0);

@@ -3,6 +3,8 @@ import type {
   ContestEntryDetailResponse,
   GamePicksResponse,
   PickEmLeaderboardResponse,
+  SportEventMatchDto,
+  SportEventParticipantDto,
   SurvivorLeaderboardResponse,
 } from '@/lib/api';
 
@@ -171,7 +173,8 @@ export function pickEmEntryFixture(entryId: string, overrides: Partial<ContestEn
 
 /**
  * The season board after week 1 settled and with week 2 under way: Chalk All The Way won week 1
- * on the tiebreaker and leads the season; Morgan's Picks missed week 1 and is second.
+ * on the tiebreaker and leads the season; Morgan's Picks (the viewer's) missed week 1 and is
+ * second. Week 2's Sunday games are played (`week2EventGamesFixture`), Monday's is still to come.
  */
 export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardResponse> = {}): PickEmLeaderboardResponse {
   return {
@@ -193,19 +196,26 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
         position: 1, displayPosition: '1', totalPoints: 3,
         weeks: [
-          { sportEventId: 'week-1', submitted: true, points: 2, position: 1, displayPosition: '1', weeklyWinner: true },
-          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false },
+          { sportEventId: 'week-1', submitted: true, points: 2, position: 1, displayPosition: '1', weeklyWinner: true, correctPickCount: 2, missedPicks: [{ teamName: 'BUF' }] },
+          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false, correctPickCount: 1, missedPicks: [{ teamName: 'DAL' }] },
+        ],
+        // Week 2's two Sunday games have kicked off, so their picks show: the Chiefs won, the Cowboys lost.
+        currentWeekPicks: [
+          { sportEventMatchId: 'week2-game-1', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId, outcome: 'CORRECT' },
+          { sportEventMatchId: 'week2-game-2', sportEventParticipantId: NFL_TEAMS.cowboys.sportEventParticipantId, outcome: 'BUSTED' },
         ],
       },
       {
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
         position: 2, displayPosition: '2', totalPoints: 1,
         weeks: [
-          { sportEventId: 'week-1', submitted: false, points: null, position: null, displayPosition: null, weeklyWinner: false },
-          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false },
+          { sportEventId: 'week-1', submitted: false, points: null, position: null, displayPosition: null, weeklyWinner: false, correctPickCount: null, missedPicks: [] },
+          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false, correctPickCount: 1, missedPicks: [] },
         ],
+        currentWeekPicks: [],
       },
     ],
+    currentWeekId: 'week-2',
     ...overrides,
   };
 }
@@ -321,4 +331,80 @@ export function playoffSurvivorLeaderboardFixture(): SurvivorLeaderboardResponse
       },
     ],
   });
+}
+
+/** The short names the teams go by on the leaderboard, as the field carries them. */
+const SHORT_NAMES: Readonly<Record<keyof typeof NFL_TEAMS, string>> = {
+  bills: 'BUF', chiefs: 'KC', cowboys: 'DAL', eagles: 'PHI', bears: 'CHI', packers: 'GB',
+};
+
+/** A week's field as the event's field read returns it: every team, by its short name too. */
+export function pickEmEventFieldFixture(sportEventId: string): SportEventParticipantDto[] {
+  return (Object.keys(NFL_TEAMS) as Array<keyof typeof NFL_TEAMS>).map((key) => ({
+    id: NFL_TEAMS[key].sportEventParticipantId,
+    sportEventId,
+    participantId: NFL_TEAMS[key].participantId,
+    isActive: true,
+    inactiveReason: null,
+    ranking: null,
+    oddsToWin: null,
+    seedNumber: null,
+    isPlayInPlace: false,
+    participant: {
+      id: NFL_TEAMS[key].participantId,
+      sportId: 'sport-nfl',
+      name: NFL_TEAMS[key].name,
+      shortName: SHORT_NAMES[key],
+      participantType: 'TEAM',
+      status: 'ACTIVE',
+      injuryStatus: { status: 'HEALTHY' },
+      externalIds: {},
+      createdAt: '2099-01-01T00:00:00.000Z',
+      updatedAt: '2099-01-01T00:00:00.000Z',
+    },
+    valuation: null,
+    standing: null,
+    rounds: [],
+    race: null,
+    affiliatedWithSportLeague: true,
+    createdAt: '2099-01-01T00:00:00.000Z',
+    updatedAt: '2099-01-01T00:00:00.000Z',
+  }));
+}
+
+/**
+ * Week 2's games as the event's games read returns them (`week2-game-1` to 3): the Bills at the
+ * Chiefs and the Cowboys at the Eagles on Sunday, the Bears at the Packers on Monday night.
+ * `overrides` are applied by game number.
+ */
+export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Partial<SportEventMatchDto>>> = {}): SportEventMatchDto[] {
+  const eventGame = (matchNumber: 1 | 2 | 3, kickoff: string, away: Team, home: Team): SportEventMatchDto => ({
+    id: `week2-game-${String(matchNumber)}`,
+    sportEventId: 'week-2',
+    roundNumber: 1,
+    matchNumber,
+    homeSportEventParticipantId: home.sportEventParticipantId,
+    awaySportEventParticipantId: away.sportEventParticipantId,
+    isNeutralSite: false,
+    scheduledDate: kickoff,
+    status: 'SCHEDULED',
+    winnerSide: null,
+    homeScore: null,
+    awayScore: null,
+    homeShootoutScore: null,
+    awayShootoutScore: null,
+    ending: 'PLAYED',
+    resultSource: null,
+    advancesToMatchId: null,
+    advancesToSide: null,
+    regionLabel: null,
+    homeSpread: null,
+    periodScores: [],
+    ...overrides[matchNumber],
+  });
+  return [
+    eventGame(3, '2099-09-22T00:15:00.000Z', NFL_TEAMS.bears, NFL_TEAMS.packers),
+    eventGame(1, WEEK_2_START, NFL_TEAMS.bills, NFL_TEAMS.chiefs),
+    eventGame(2, '2099-09-20T20:25:00.000Z', NFL_TEAMS.cowboys, NFL_TEAMS.eagles),
+  ];
 }

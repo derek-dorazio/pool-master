@@ -69,6 +69,7 @@ import {
   PrismaSportEventParticipantStatLineRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
+  PrismaSquaresRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
@@ -76,7 +77,7 @@ import { versionModule } from './modules/version/routes';
 // Draft module
 import { selectionsModule } from './modules/selections/routes';
 import { pickPreviewModule } from './modules/selections/preview-routes';
-import { createDrawReceipts } from './modules/selections/wiring';
+import { createDrawReceipts, createSquaresService } from './modules/selections/wiring';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
@@ -85,6 +86,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
+import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import {
@@ -192,6 +194,13 @@ export function buildApp() {
     rounds: new PrismaSportEventRoundRepository(prisma),
     statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
     eventLifecycleService,
+    jobLock,
+    logger: app.log,
+  });
+  // A squares board nobody has drawn draws its numbers five minutes before kickoff (#1760).
+  const squaresAutoDrawScheduler = new SquaresAutoDrawScheduler({
+    squares: new PrismaSquaresRepository(prisma),
+    service: createSquaresService(prisma, app.log.child({ module: 'squares.autoDraw' }), { email, appBaseUrl }),
     jobLock,
     logger: app.log,
   });
@@ -433,6 +442,9 @@ export function buildApp() {
     eventLifecycleScheduler.start();
     app.log.info('Event lifecycle scheduler started');
 
+    // The automatic squares draw always runs, like the lifecycle sweep: it follows game times, not a provider.
+    squaresAutoDrawScheduler.start();
+
     // The clock-driven emails always run, each on its own timer, as the lifecycle sweep does.
     for (const scheduler of dueNotificationsSchedulers) scheduler.start();
 
@@ -451,6 +463,7 @@ export function buildApp() {
     ingestionScheduler.stop();
     syncedEventCreationScheduler.stop();
     eventLifecycleScheduler.stop();
+    squaresAutoDrawScheduler.stop();
     for (const scheduler of dueNotificationsSchedulers) scheduler.stop();
     emailSender.stop();
     nightlyCleanupScheduler.stop();

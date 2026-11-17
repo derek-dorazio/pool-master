@@ -45,6 +45,7 @@ import { MyEntriesToggle } from './my-entries-toggle';
 import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
+import { useLandOnEntry, useLinkedEntry } from './use-linked-entry';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
@@ -238,6 +239,7 @@ function EntryBlock({
     <Tile
       // `clip`, not `hidden`: a hidden overflow would make the tile the scroll box its pinned parts stick to.
       className={cn('overflow-clip', isMine ? 'border-primary/40' : undefined)}
+      data-entry-id={entry.entryId}
       data-mine={isMine || undefined}
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
       padding="none"
@@ -332,6 +334,9 @@ export function ContestLeaderboardPage() {
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const myEntriesFilter = useMyEntriesFilter();
+  // #1762 — an entry a link names (`?entry=`) opens on its page and scrolls into view.
+  const linkedEntry = useLinkedEntry();
+  const landOn = useLandOnEntry();
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
 
@@ -438,6 +443,11 @@ export function ContestLeaderboardPage() {
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
   // A refetch or a narrower search can leave fewer pages than the one being shown.
   const currentPage = Math.min(pageIndex, pageCount - 1);
+  const linkedIndex = matchingEntries.findIndex((entry) => entry.entryId === linkedEntry.entryId);
+  landOn(linkedIndex >= 0 ? linkedEntry.entryId : null, () => {
+    openRows.open(matchingEntries[linkedIndex].entryId);
+    setPageIndex(Math.floor(linkedIndex / LEADERBOARD_PAGE_SIZE));
+  });
   const pageEntries = matchingEntries.slice(
     currentPage * LEADERBOARD_PAGE_SIZE,
     (currentPage + 1) * LEADERBOARD_PAGE_SIZE,
@@ -561,7 +571,13 @@ export function ContestLeaderboardPage() {
                         openRows.open(entry.entryId);
                       }
                     } : null}
-                    onToggle={() => openRows.toggle(entry.entryId)}
+                    onToggle={() => {
+                      // Closing the linked entry drops it from the address, so a reload doesn't open it again.
+                      if (entry.entryId === linkedEntry.entryId && openRows.isOpen(entry.entryId)) {
+                        linkedEntry.clear();
+                      }
+                      openRows.toggle(entry.entryId);
+                    }}
                     showStats={statsRows.isOpen(entry.entryId)}
                   />
                 ))

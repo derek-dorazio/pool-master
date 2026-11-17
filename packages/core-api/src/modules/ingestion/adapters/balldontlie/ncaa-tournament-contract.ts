@@ -53,9 +53,24 @@ export const ncaaBracketGameSchema = z.object({
   home_team: ncaaBracketTeamSchema.nullable().optional(),
   away_team: ncaaBracketTeamSchema.nullable().optional(),
 });
-export type NcaaBracketGame = z.infer<typeof ncaaBracketGameSchema>;
 
 export const ncaaBracketListSchema = z.object({
   data: z.array(ncaaBracketGameSchema),
+  meta: balldontliePaginationSchema.optional(),
+});
+
+/**
+ * `NCAABBracket`: the men's bracket also names each game's region (#1728), which the women's
+ * document (`NCAAWBracket`) does not, so the men's bracket is read with this schema.
+ */
+export const ncaabBracketGameSchema = ncaaBracketGameSchema.extend({
+  region_id: z.number().int().nullable().optional(),
+  region_label: z.string().nullable().optional(),
+});
+/** A bracket game of either league; a women's game never has a region. */
+export type NcaaBracketGame = z.infer<typeof ncaabBracketGameSchema>;
+
+export const ncaabBracketListSchema = z.object({
+  data: z.array(ncaabBracketGameSchema),
   meta: balldontliePaginationSchema.optional(),
 });
