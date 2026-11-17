@@ -1,6 +1,6 @@
 import { expect, jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaContestLeaderboardSnapshotRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
@@ -737,6 +737,28 @@ describe('Contest leaderboard snapshots (#1435)', () => {
       expect(second.headers['cache-control']).toBe(first.headers['cache-control']);
       expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
       expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toEqual([]);
+    });
+
+    it('answers 200 with a board computed again when the stored board predates a response field, rather than failing to send the stored one (#1761)', async () => {
+      const { contest, viewerHeaders } = await liveContest();
+      expect((await poll(contest.id, viewerHeaders)).statusCode).toBe(200);
+      const [row] = await snapshotRows(contest.id);
+      const stored = expectDefined(row).board as { board: { entries: Record<string, unknown>[] } };
+      // As a board written before a deploy that added `totalScore` to each entry would be stored.
+      const withoutField = { ...stored, board: { ...stored.board, entries: stored.board.entries.map(({ totalScore: _dropped, ...entry }) => entry) } };
+      const storeOldBoard = (boardFormat: number) => getPrisma().contestLeaderboardSnapshot.updateMany({ where: { contestId: contest.id }, data: { boardFormat, board: withoutField as Prisma.InputJsonValue } });
+
+      // Served as stored, such a board cannot be sent: the response requires the field.
+      await storeOldBoard(LEADERBOARD_BOARD_FORMAT);
+      expect((await poll(contest.id, viewerHeaders)).statusCode).toBe(500);
+
+      // Stored before formats were counted, as every board stored before #1761 is (the column's 0).
+      await storeOldBoard(0);
+      const read = await poll(contest.id, viewerHeaders);
+
+      expect(read.statusCode).toBe(200);
+      expect(read.json<{ entries: { totalScore: number }[] }>().entries.map((entry) => entry.totalScore)).toEqual([-8]);
+      expect(await snapshotRows(contest.id)).toMatchObject([{ boardFormat: LEADERBOARD_BOARD_FORMAT }]);
     });
 
     it('sends the board again with a new tag once a rebuild stored newer scores', async () => {
