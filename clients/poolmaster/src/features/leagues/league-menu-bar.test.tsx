@@ -69,16 +69,17 @@ describe('LeagueMenuBar', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('gives members Home, Contests, Championships, My team and Members, with Contest types left to Commissioner tools', async () => {
+  it('gives members Home, Championships, My team and Members, with no Contests item and Contest types left to Commissioner tools', async () => {
     renderMenu();
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
     expect(menu.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/league/BIGDAWGS');
-    expect(menu.getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
+    expect(menu.queryByRole('link', { name: 'Contests' })).not.toBeInTheDocument();
     expect(menu.getByRole('link', { name: 'Championships' })).toHaveAttribute('href', '/league/BIGDAWGS/championships');
     expect(menu.queryByRole('link', { name: 'Contest types' })).not.toBeInTheDocument();
     expect(await menu.findByRole('link', { name: 'My team' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
     expect(menu.getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+    expect(menu.getAllByRole('link').map((link) => link.textContent)).toEqual(['Home', 'Championships', 'My team', 'Members']);
   });
 
   it('labels the viewer\'s own tab "My team", never the team\'s name, reading no team list', async () => {
@@ -142,13 +143,14 @@ describe('buildLeagueMenuItems', () => {
     expect(activeLabel('/league/BIGDAWGS')).toEqual(['Home']);
   });
 
-  it('keeps Contests marked on a contest\'s own pages', () => {
-    expect(activeLabel('/league/BIGDAWGS/contests/contest-1/leaderboard')).toEqual(['Contests']);
+  it('keeps Home marked on a contest\'s own pages and its entries, Home being where contests are listed', () => {
+    expect(activeLabel('/league/BIGDAWGS/contests/contest-1')).toEqual(['Home']);
+    expect(activeLabel('/league/BIGDAWGS/contests/contest-1/entries/entry-2')).toEqual(['Home']);
   });
 
-  it('lists five items, Contest types not among them', () => {
+  it('lists four items, neither Contests nor Contest types among them', () => {
     expect(buildLeagueMenuItems('BIGDAWGS', '/league/BIGDAWGS').map((item) => item.label)).toEqual([
-      'Home', 'Contests', 'Championships', 'Yours', 'Members',
+      'Home', 'Championships', 'Yours', 'Members',
     ]);
   });
 

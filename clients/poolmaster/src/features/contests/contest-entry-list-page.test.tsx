@@ -379,15 +379,15 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByText('My entries only')).not.toBeInTheDocument();
   });
 
-  it('has no Back to league button, the Contests breadcrumb being the way back', async () => {
+  it('has no Back to league button, the Home breadcrumb being the way back', async () => {
     primeMocks();
 
     renderContestBoard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
     expect(screen.queryByRole('link', { name: 'Back to league' })).not.toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' })).getByRole('link', { name: 'Contests' }))
-      .toHaveAttribute('href', '/league/BIGDAWGS/contests?focus=contest-1');
+    expect(within(screen.getByRole('navigation', { name: 'Contest breadcrumbs' })).getByRole('link', { name: 'Home' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS?focus=contest-1');
   });
 
   it('shows when the contest starts and ends from the events the contest read carries, reading no event', async () => {
@@ -643,6 +643,18 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     await screen.findByTestId('squares-box-1-1');
     expect(screen.getByTestId('squares-box-1-1')).not.toHaveAttribute('data-linked');
     expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
+  });
+
+  it('opens another team\'s squares entry a commissioner\'s link names, shading its boxes and claiming for it until they choose another', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ role: 'COMMISSIONER', selectionType: 'SQUARES', entries: [MINE, buildEntry({ id: 'entry-2', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team 1' })] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-2');
+
+    expect(await screen.findByTestId('squares-claim-for')).toHaveValue('entry-2');
+    await waitFor(() => expect(screen.getByTestId('squares-box-1-1')).toHaveAttribute('data-linked', 'true'));
     scroll.mockRestore();
   });
 

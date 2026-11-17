@@ -43,6 +43,8 @@ const textVariants = cva("", {
       onInverse: "text-on-inverse",
       /** A caption on the dark band. */
       onInverseLabel: "text-label-on-inverse",
+      /** A secondary line on a navy panel, such as a hero's note. */
+      onInverseMuted: "text-on-inverse-muted",
     },
     /** The colour on hover, or on hover or focus of the enclosing `group` link. */
     hoverTone: {

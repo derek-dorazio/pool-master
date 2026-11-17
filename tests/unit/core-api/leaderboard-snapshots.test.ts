@@ -4,6 +4,7 @@ import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/backg
 import { leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import {
   JobLeaderboardRebuilds,
+  LEADERBOARD_BOARD_FORMAT,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   isSnapshotCurrent,
   leaderboardKindOf,
@@ -104,7 +105,7 @@ describe('isSnapshotCurrent', () => {
   const contestUpdatedAt = new Date('2026-11-07T20:00:00.000Z');
   const computedFrom = new Date('2026-11-07T21:00:00.000Z');
   const later = (ms: number) => new Date(computedFrom.getTime() + ms);
-  const stored = { computedFrom, validUntil: null, contestUpdatedAt };
+  const stored = { boardFormat: LEADERBOARD_BOARD_FORMAT, computedFrom, validUntil: null, contestUpdatedAt };
 
   it('answers a read with the stored board until it reaches the max age, then not', () => {
     expect(isSnapshotCurrent(stored, { updatedAt: contestUpdatedAt }, later(LEADERBOARD_SNAPSHOT_MAX_AGE_MS - 1), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(true);
@@ -120,6 +121,18 @@ describe('isSnapshotCurrent', () => {
 
   it('is no longer current once the contest itself changed, such as completing at settlement', () => {
     expect(isSnapshotCurrent(stored, { updatedAt: later(1) }, later(2), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(false);
+  });
+
+  it('is never current when it was stored under an older board format, such as before a deploy that added a field the response must carry', () => {
+    const olderFormat = { ...stored, boardFormat: LEADERBOARD_BOARD_FORMAT - 1 };
+
+    expect(isSnapshotCurrent(olderFormat, { updatedAt: contestUpdatedAt }, later(1), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(false);
+  });
+
+  it('stays current when stored under a newer board format, so a task still on older code mid-deploy serves it rather than rebuilding it under its own', () => {
+    const newerFormat = { ...stored, boardFormat: LEADERBOARD_BOARD_FORMAT + 1 };
+
+    expect(isSnapshotCurrent(newerFormat, { updatedAt: contestUpdatedAt }, later(1), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(true);
   });
 });
 

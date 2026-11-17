@@ -6,6 +6,8 @@ import {
   nbaGameSchema,
   nbaPlayerListSchema,
   nbaPlayerSchema,
+  nbaStandingListSchema,
+  nbaStandingSchema,
   nbaStatsListSchema,
   nbaStatsSchema,
   nbaTeamListSchema,
@@ -35,6 +37,7 @@ describe('BALLDONTLIE NBA fixtures', () => {
     ['games-2023-playoffs.json', '/nba/v1/games', nbaGameListSchema],
     ['stats-2023-finals.json', '/nba/v1/stats', nbaStatsListSchema],
     ['players-active-finals-teams.json', '/nba/v1/players/active', nbaPlayerListSchema],
+    ['standings-2023.json', '/nba/v1/standings', nbaStandingListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -56,6 +59,7 @@ describe('BALLDONTLIE NBA fields the adapter reads', () => {
     ['NBATeam', nbaTeamSchema],
     ['NBAPlayer', nbaPlayerSchema],
     ['NBAStats', nbaStatsSchema],
+    ['NBAStandings', nbaStandingSchema],
     ['Pagination', balldontliePaginationSchema],
   ];
 

@@ -33,7 +33,7 @@ import {
   ContestService,
   type StoredLeaderboard,
 } from '../../../packages/core-api/src/modules/contests/service';
-import { LeaderboardKind } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { LEADERBOARD_BOARD_FORMAT, LeaderboardKind } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import {
   EIGHT_SEEDS,
   eightTeamBracket,
@@ -42,7 +42,7 @@ import {
   type GameResult,
 } from '../../support/bracket-fixtures';
 import { expectDefined } from '../../support/expect-defined';
-import { placeOnStoredBoard } from '../../support/in-memory-leaderboard-snapshots';
+import { placeOnStoredBoard, storeUnderOlderBoardFormat } from '../../support/in-memory-leaderboard-snapshots';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo, fakeSquaresRepo } from '../../support/repo-fakes';
@@ -574,6 +574,18 @@ describe('ContestService.livePositionsOf', () => {
     placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 2);
 
     expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: squadOf(context, 'entry-cara'), position: 2 });
+  });
+
+  it('computes the bracket board again, rather than answering from the stored one, when that was stored under an older board format (#1761)', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+    const computed = (await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id)).board;
+    // A place only the stored board holds: a read answering from it would show it.
+    placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 2);
+    storeUnderOlderBoardFormat(context.world.leaderboardSnapshots, context.contest.id);
+
+    expect((await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id)).board).toEqual(computed);
+    expect([...context.world.leaderboardSnapshots.rows.values()].map((row) => row.boardFormat)).toEqual([LEADERBOARD_BOARD_FORMAT]);
   });
 
   it('ranks nobody while picks are hidden, rather than refusing, since a contest not under way has no places yet', async () => {

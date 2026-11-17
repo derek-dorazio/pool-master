@@ -44,4 +44,12 @@ describe("Countdown", () => {
     expect(screen.getByRole("timer")).toHaveAccessibleName("Picks close in 0 days 0 hours 0 minutes");
     expect(screen.getAllByText("00")).toHaveLength(3);
   });
+
+  it("draws gold-tinted boxes on an open hero, so the countdown carries the hero's accent", () => {
+    render(<Countdown label="Entries close in" now={NOW} testId="countdown" tone="inverseAccent" until="2026-05-03T15:04:00.000Z" />);
+
+    for (const part of ["days", "hours", "min"]) {
+      expect(screen.getByTestId(`countdown-${part}`)).toHaveClass("bg-[var(--status-active-surface)]");
+    }
+  });
 });

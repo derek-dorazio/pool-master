@@ -13,7 +13,8 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
-import { wnbaGameListSchema, wnbaTeamListSchema, type WnbaGame, type WnbaTeam } from './wnba-contract';
+import { wnbaGameListSchema, wnbaStandingListSchema, wnbaTeamListSchema, type WnbaGame, type WnbaStanding, type WnbaTeam } from './wnba-contract';
+import type { PlayoffSeedRanks } from './series-playoff-bracket';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
 
@@ -32,10 +33,13 @@ export const WNBA_PLAYOFFS: PlayoffsLeague = {
   playoffYearOffset: 0,
   // May, when the new season tips off.
   seasonRolloverMonth: 4,
+  // The eight best records are seeded 1 to 8 across the league, whatever their conference.
+  bracket: { groups: null },
 };
 
 const GAMES_PATH = '/wnba/v1/games';
 const TEAMS_PATH = '/wnba/v1/teams';
+const STANDINGS_PATH = '/wnba/v1/standings';
 
 /** A field the document leaves optional but without which a row cannot be placed or scored. */
 function required<Value>(value: Value | undefined, path: string, row: string, field: string): Value {
@@ -77,7 +81,16 @@ export function isWnbaFranchise(team: WnbaTeam): boolean {
   return Boolean(team.conference);
 }
 
-/** The WNBA's two reads: a season's games, of which the reader keeps the playoffs, and every current franchise. */
+/** Each playoff team's seed; a team the standings seed nowhere is left out. */
+export function toWnbaSeedRanks(standings: readonly WnbaStanding[]): PlayoffSeedRanks {
+  return new Map(standings.flatMap((standing) => {
+    const id = standing.team?.id;
+    const seed = standing.playoff_seed;
+    return id === undefined || seed === undefined ? [] : [[id, seed] as const];
+  }));
+}
+
+/** The WNBA's reads: a season's games, of which the reader keeps the playoffs, every current franchise, and the season's playoff seeds. */
 export function wnbaPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
   return {
     league: WNBA_PLAYOFFS,
@@ -88,6 +101,10 @@ export function wnbaPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
     async teams() {
       const page = await client.get(TEAMS_PATH, {}, wnbaTeamListSchema);
       return page.data.filter(isWnbaFranchise).map((team) => toWnbaPlayoffTeam(team, TEAMS_PATH));
+    },
+    async seedRanks(season) {
+      const page = await client.get(STANDINGS_PATH, { season }, wnbaStandingListSchema);
+      return toWnbaSeedRanks(page.data);
     },
   };
 }

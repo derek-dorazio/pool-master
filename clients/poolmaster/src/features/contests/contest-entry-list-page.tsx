@@ -46,6 +46,7 @@ import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
 import { useLandOnEntry, useLinkedEntry } from './use-linked-entry';
 import { MineMarker } from './mine-marker';
+import { isContestFull } from './my-contest-entry';
 import { areContestEntriesOpen } from './contest-status';
 import { SELECTION_TYPE_ICONS } from './selection-type-icons';
 import { SquaresBoardView } from './squares-board-view';
@@ -260,7 +261,7 @@ export function ContestEntryListPage() {
   // The cap counts every team's drafts too: its plan's (#947), or its expansion (#987).
   const entryCount = contest.allEntryCount ?? entries.length;
   const entryCap = contest.entriesPerContest;
-  const isFull = entryCap !== null && entryCount >= entryCap;
+  const isFull = isContestFull(contest, entryCount);
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
   const hasMine = myEntryIds.length > 0;
   const expandableIds = opensToPicks(contest) ? myEntryIds : [];
@@ -349,8 +350,9 @@ export function ContestEntryListPage() {
         <SquaresBoardView
           canManage={viewer.isCommissioner || viewer.isRootAdmin}
           contest={contest}
-          // Before lock only the viewer's own entry is linked: its boxes shade as theirs do anyway.
-          linkedEntryId={linkedMineId}
+          // Before lock a member's link opens only their own entry; a commissioner's opens any
+          // entry, which they then claim boxes for.
+          linkedEntryId={viewer.isCommissioner || viewer.isRootAdmin ? linkedEntry.entryId : linkedMineId}
           myEntryIds={contest.myEntryIds ?? []}
         />
       ) : (

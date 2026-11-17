@@ -37,7 +37,8 @@ import { survivorPredictionEngine } from '../../../packages/core-api/src/modules
 import { PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import { expectDefined } from '../../support/expect-defined';
-import { placeOnStoredBoard } from '../../support/in-memory-leaderboard-snapshots';
+import { placeOnStoredBoard, storeUnderOlderBoardFormat } from '../../support/in-memory-leaderboard-snapshots';
+import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
@@ -557,6 +558,19 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     const cara = expectDefined(context.world.entries.get('entry-cara')).squadId;
 
     expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: cara, position: 1 });
+  });
+
+  it('computes the survivor board again, rather than answering from the stored one, when that was stored under an older board format (#1761)', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    const computed = await context.leaderboard();
+    // A place only the stored board holds: a read answering from it would show it.
+    placeOnStoredBoard(context.world.leaderboardSnapshots, context.contest.id, 'entry-cara', 1);
+    storeUnderOlderBoardFormat(context.world.leaderboardSnapshots, context.contest.id);
+
+    expect(await context.leaderboard()).toEqual(computed);
+    expect([...context.world.leaderboardSnapshots.rows.values()].map((row) => row.boardFormat)).toEqual([LEADERBOARD_BOARD_FORMAT]);
   });
 
   it('ranks entries still in first, then by weeks survived, with entries out in the same week sharing a place', async () => {

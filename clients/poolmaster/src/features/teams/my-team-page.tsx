@@ -17,6 +17,8 @@ import {
 import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { CreateTeamForm } from './create-team-form';
+import { PastContestsSection } from './past-contests-section';
+import { YourEntriesSection } from './your-entries-section';
 import { TeamAvatar } from './team-avatar';
 import { TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
@@ -26,11 +28,10 @@ import { useMyTeamOwners } from './use-my-team-owners';
 
 /**
  * Yours: the viewer's own team in this league, and nothing else: its name and icon with Edit team,
- * then its year in the championship and cups (#872) first, since how the team is doing is the
- * page's main job, then its owners, and Leave league as the member's one danger action. The
- * league's all-years view lives on Championships, not here (#1544). Contests and the team's
- * entries in them are on League Home and the Contests page (#1394). A member with no team yet
- * creates one here.
+ * then its entries in the current contests and the contests it has finished (#1763), then its
+ * year in the championship and cups (#872), then its owners, and Leave league as the member's one
+ * danger action. The league's all-years view lives on Championships, not here (#1544); every
+ * current contest, entered or not, is on League Home. A member with no team yet creates one here.
  */
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -124,6 +125,10 @@ export function MyTeamPage() {
           This league is inactive, so this page is read-only.
         </Notice>
       ) : null}
+
+      <YourEntriesSection leagueCode={leagueCode} leagueId={leagueId} now={new Date()} />
+
+      <PastContestsSection leagueCode={leagueCode} leagueId={leagueId} squadId={myTeam.id} />
 
       <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
 
