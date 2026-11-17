@@ -1,8 +1,10 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { fakeLogger } from '../../../support/fake-logger';
 
 /**
  * The adapter's WNBA playoffs reads against a fake BALLDONTLIE that checks every request it
@@ -40,7 +42,7 @@ const defaultRoutes: Record<string, FakeRoute> = {
   '/ncaaw/v1/teams': emptyTeams,
 };
 
-function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
+function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW, logger?: FastifyBaseLogger): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
   const api = createFakeBalldontlie({ league: ['wnba', 'nba', 'ncaab', 'ncaaw'], apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
@@ -51,6 +53,7 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
     requestsPerMinute: 600,
     now: () => clock,
     sleep: (ms) => { clock += ms; return Promise.resolve(); },
+    ...(logger && { logger }),
   });
   return {
     adapter,
@@ -146,6 +149,29 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       expect(detail?.games?.filter((game) => game.roundNumber === 3)).toEqual([
         { externalGameId: '4252021', roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z'), isNeutralSite: false },
       ]);
+    });
+
+    it('still gives the field and every series as a game, with no bracket, when the plan does not include the standings, and warns', async () => {
+      const logger = fakeLogger();
+      const harness = setup({ ...defaultRoutes, '/wnba/v1/standings': () => ({ status: 401, body: { error: 'Unauthorized' } }) }, NOW, logger);
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
+
+      expect(detail).toMatchObject({ participantCount: 8, rounds: 3 });
+      expect(detail?.games).toHaveLength(7);
+      expect(detail?.bracket).toBeUndefined();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'balldontlie.playoffs.standingsRefused', league: 'wnba', season: 2025, status: 401 }),
+        expect.any(String),
+      );
+    });
+
+    it('fails the read when the standings fail for any reason but the plan, so an outage still shows', async () => {
+      const harness = setup({ ...defaultRoutes, '/wnba/v1/standings': () => ({ status: 400, body: { error: 'Bad request' } }) });
+      restore = harness.restore;
+
+      await expect(harness.adapter.getEventDetails('wnba-2025-postseason')).rejects.toThrow('/wnba/v1/standings');
     });
 
     it('gives nothing for a season with no playoff game yet, however many regular season games it has', async () => {

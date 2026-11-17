@@ -8,7 +8,9 @@
  * writer counts a series' wins from the games it is handed (#1545).
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import { BalldontlieRequestError } from './balldontlie-client';
 import { GameProgress, PROGRESS_BY_STATE } from './competition-status';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import {
@@ -72,6 +74,7 @@ export class PlayoffsReader {
   constructor(
     protected readonly source: PlayoffsSource,
     private readonly now: () => number,
+    private readonly logger?: FastifyBaseLogger,
   ) {}
 
   /**
@@ -103,13 +106,32 @@ export class PlayoffsReader {
     // admin builds its bracket, and series games alone would not keep one.
     if (league.bracket === undefined || this.source.seedRanks === undefined) return event;
     // The standings are read only once the whole first round is out, when they can seed it.
-    const bracket = hasWholeFirstRound(league, games) ? toPlayoffsBracket(league, games, await this.source.seedRanks(season)) : null;
+    const ranks = hasWholeFirstRound(league, games) ? await this.seedRanks(this.source.seedRanks.bind(this.source), season) : null;
+    const bracket = ranks === null ? null : toPlayoffsBracket(league, games, ranks);
     return {
       ...event,
       rounds: league.rounds.length,
       games: toPlayoffSeriesGames(league, games, bracket),
       ...(bracket !== null && { bracket }),
     };
+  }
+
+  /**
+   * The season's seed ranks, or null when the plan does not include the standings (a 401 or 403):
+   * the bracket is the one thing that needs them, and an admin builds it without, so the field
+   * and the series games still load. Any other failure is thrown, so an outage still shows.
+   */
+  private async seedRanks(read: (season: number) => Promise<PlayoffSeedRanks>, season: number): Promise<PlayoffSeedRanks | null> {
+    try {
+      return await read(season);
+    } catch (error) {
+      if (!(error instanceof BalldontlieRequestError) || (error.status !== 401 && error.status !== 403)) throw error;
+      this.logger?.warn(
+        { action: 'balldontlie.playoffs.standingsRefused', league: this.source.league.key, season, path: error.path, status: error.status },
+        'Read a series playoffs without its standings, which the plan does not include; an admin builds its bracket',
+      );
+      return null;
+    }
   }
 
   /** Every team of the league. */
@@ -151,8 +173,9 @@ export class PlayoffRoundsReader extends PlayoffsReader {
   constructor(
     protected override readonly source: PlayoffRoundsSource,
     now: () => number,
+    logger?: FastifyBaseLogger,
   ) {
-    super(source, now);
+    super(source, now, logger);
   }
 
   /** Each season's rounds the games have reached. */

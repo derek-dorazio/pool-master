@@ -284,8 +284,11 @@ match's home side the half holding the better seed (the West's in the NBA Finals
 neutral site. The bracket is fixed, so the links advance every winner. A later round's series takes
 the bracket's sides, not Game 1's, so a lower seed with home court is no swap to the slate. The
 standings are read only once the whole first round is out, so an NBA playoffs is a draft with no
-matches until the play-in is played. The NHL's and MLB's postseasons give no games yet: an admin
-builds their brackets.
+matches until the play-in is played. The vendor documents no tier for the standings: where the
+plan refuses them (401 or 403), the read logs `balldontlie.playoffs.standingsRefused` and carries on
+with the field and the series games but no bracket, which an admin then builds; any other failure
+fails the read as before. The NHL's and MLB's postseasons give no games yet: an admin builds their
+brackets.
 
 ## 3. Triggers
 

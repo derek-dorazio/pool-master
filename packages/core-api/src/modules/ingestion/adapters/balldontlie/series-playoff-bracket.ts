@@ -126,6 +126,9 @@ export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly Playof
     const round: typeof previous = [];
     for (let index = 0; index + 1 < previous.length; index += 2) {
       const [left, right] = [previous[index], previous[index + 1]];
+      // Where the halves' best seeds tie (the Finals, two 1 seeds) the first half is home: home
+      // court there goes to the better record, which is not modelled, and a side is display only,
+      // since nothing in a series is neutral or scored by side.
       const homeIsLeft = left.bestSeed <= right.bestSeed;
       const matchNumber = bracket.length + 1;
       left.match.advancesTo = { matchNumber, side: homeIsLeft ? MatchSide.HOME : MatchSide.AWAY };
