@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import { ContestFormat, ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { Chip, DataGrid, DetailsPeek, PeekCard, SectionCard, Text, WinnersBanner, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { Chip, DataGrid, DetailsPeek, PeekCard, SectionCard, Text, WinnersBanner, formatDateTimeDisplay, useDisplayPreferences, type DataGridDetailRow } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
@@ -43,19 +43,25 @@ export function LeaderboardSection({ children, trailing }: { children: ReactNode
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
   data,
+  detailRows,
   emptyMessage,
   isMine,
   rowTestIdPrefix,
   tableTestId,
+  toolbarActions,
   trailing,
 }: {
   columns: ColumnDef<Row>[];
   data: Row[];
+  /** The rows under each opened entry, such as its games (`DataGrid`'s `detailRows`). */
+  detailRows?: (row: Row) => readonly DataGridDetailRow[];
   emptyMessage: string;
   /** Whether a row is one of the viewer's entries, as the Entry column marks them. */
   isMine: (row: Row) => boolean;
   rowTestIdPrefix: string;
   tableTestId: string;
+  /** The board's own buttons at the toolbar's end, after the "My entries" switch, such as "Show all details". */
+  toolbarActions?: ReactNode;
   /** The title bar's trailing slot: the viewer's best place (`YourBestNote`). */
   trailing?: ReactNode;
 }) {
@@ -78,7 +84,13 @@ export function ScoreboardGrid<Row extends BoardRow>({
         // Flipping the filter starts the board again from its first page, as the lineup board does.
         pageResetKey={myEntries.showsMineOnly ? 'mine' : 'all'}
         tableTestId={tableTestId}
-        toolbarEnd={myEntries.hasMine ? <MyEntriesToggle checked={myEntries.showsMineOnly} onCheckedChange={myEntriesFilter.setOn} /> : undefined}
+        detailRows={detailRows}
+        toolbarEnd={myEntries.hasMine || toolbarActions ? (
+          <span className="flex flex-wrap items-center gap-3">
+            {myEntries.hasMine ? <MyEntriesToggle checked={myEntries.showsMineOnly} onCheckedChange={myEntriesFilter.setOn} /> : null}
+            {toolbarActions}
+          </span>
+        ) : undefined}
       />
     </LeaderboardSection>
   );

@@ -57,16 +57,17 @@ import { contestSchedule } from './use-contest-schedule';
 import { useContestEntriesQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
+import { PickEmEntryPicks } from './pick-em-entry-picks';
 
 const BracketIcon = SELECTION_TYPE_ICONS[SelectionType.BRACKET];
 
 /**
- * Whether an entry row of this contest opens to its picks on the entry list. A lineup's does;
- * pick'em, survivor, bracket and squares rows are still in design (#1739), so the viewer's own
- * open their pick screen through ✎ instead.
+ * Whether an entry row of this contest opens to its picks on the entry list. A lineup's does, and
+ * a pick'em entry's opens to the week's games (#1751); survivor, bracket and squares rows are
+ * still in design (#1739), so the viewer's own open their pick screen through ✎ instead.
  */
-function opensToPicks(contest: Pick<ContestDto, 'contestFormat'>) {
-  return contest.contestFormat === ContestFormat.ROSTER;
+function opensToPicks(contest: Pick<ContestDto, 'contestFormat' | 'selectionType'>) {
+  return contest.contestFormat === ContestFormat.ROSTER || contest.selectionType === SelectionType.PICK_EM;
 }
 
 /**
@@ -197,7 +198,11 @@ function EntryRow({
           summary={summary}
           toggleTestId={`contest-board-toggle-${entry.id}`}
         >
-          <EntryLineupPicks entryId={entry.id} noun={contestRosterParticipantNoun(contest)} picks={picks} values={lineupValues} />
+          {contest.selectionType === SelectionType.PICK_EM ? (
+            currentEventId ? <PickEmEntryPicks contest={contest} entryId={entry.id} sportEventId={currentEventId} /> : null
+          ) : (
+            <EntryLineupPicks entryId={entry.id} noun={contestRosterParticipantNoun(contest)} picks={picks} values={lineupValues} />
+          )}
         </ExpandableRow>
       ) : (
         <div className="bg-muted px-4 py-3" data-testid={`contest-board-entry-bar-${entry.id}`}>{summary}</div>
@@ -394,8 +399,9 @@ export function ContestEntryListPage() {
         <SquaresBoardView
           canManage={viewer.isCommissioner || viewer.isRootAdmin}
           contest={contest}
-          // Before lock only the viewer's own entry is linked: its boxes shade as theirs do anyway.
-          linkedEntryId={linkedMineId}
+          // Before lock a member's link opens only their own entry; a commissioner's opens any
+          // entry, which they then claim boxes for.
+          linkedEntryId={viewer.isCommissioner || viewer.isRootAdmin ? linkedEntry.entryId : linkedMineId}
           myEntryIds={contest.myEntryIds ?? []}
         />
       ) : (

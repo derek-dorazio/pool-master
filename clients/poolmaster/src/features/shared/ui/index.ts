@@ -22,7 +22,7 @@ export { ChoiceChips, type ChoiceChip, type ClearableChoiceChip } from "./choice
 export { ChoiceList, type ChoiceListItem } from "./choice-list";
 export { cn } from "./class-names";
 export { ConfirmDialog, type ConfirmationInput, type ConfirmDialogProps } from "./confirm-dialog";
-export { DataGrid, type DataGridViews } from "./data-grid";
+export { DataGrid, type DataGridDetailRow, type DataGridViews } from "./data-grid";
 export { ViewFilter, type ViewFilterOption } from "./view-filter";
 export { Eyebrow } from "./eyebrow";
 export { FormSection } from "./form-section";
