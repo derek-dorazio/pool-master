@@ -112,75 +112,80 @@ function numericCell(key: EventFieldNumericKey) {
   });
 }
 
-const fieldColumns = [
-  columnHelper.accessor((entry) => entry.participant.name, {
-    id: 'participantName',
-    header: ({ table }) =>
-      upperFirst(getSportDefinition((table.options.meta as FieldGridMeta).sport).vocabulary.participant.one),
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span className="font-medium text-foreground">
-          {row.original.participant.name}
-        </span>
-        {row.original.affiliatedWithSportLeague ? null : (
-          <StatusBadge tone="warning">Guest</StatusBadge>
-        )}
-      </div>
-    ),
-  }),
-  columnHelper.display({
-    id: 'active',
-    header: 'In field',
-    cell: ({ row, table }) => {
-      const { draft, setDraft, sport } = table.options.meta as FieldGridMeta;
-      const entry = row.original;
-      const rowDraft = draft[entry.id];
-      const active = rowDraft?.isActive ?? entry.isActive;
-      const reason: EventFieldInactiveReason =
-        rowDraft?.inactiveReason ?? entry.inactiveReason ?? 'WITHDRAWN';
-      return (
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={active}
-              data-testid={`root-admin-event-field-active-${entry.id}`}
-              onChange={(event) =>
-                patchRowDraft(setDraft, entry.id, {
-                  isActive: event.target.checked,
-                })
-              }
-            />
-            <span>{active ? 'In field' : 'Out'}</span>
-          </label>
-          {active ? null : (
-            <Select
-              aria-label={`Withdrawal reason for ${entry.participant.name}`}
-              data-testid={`root-admin-event-field-reason-${entry.id}`}
-              onChange={(event) =>
-                patchRowDraft(setDraft, entry.id, {
-                  inactiveReason: event.target.value as EventFieldInactiveReason,
-                })
-              }
-              value={reason}
-            >
-              {inactiveReasonsFor(sport).map((value) => (
-                <option key={value} value={value}>
-                  {formatParticipantStatusLabel(value, sport)}
-                </option>
-              ))}
-            </Select>
+/**
+ * The field's columns for a sport: the participant column is named with the sport's word for one
+ * ("Team", "Golfer") as text, so its filter box is named the same.
+ */
+function fieldColumnsFor(sport: Sport) {
+  return [
+    columnHelper.accessor((entry) => entry.participant.name, {
+      id: 'participantName',
+      header: upperFirst(getSportDefinition(sport).vocabulary.participant.one),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground">
+            {row.original.participant.name}
+          </span>
+          {row.original.affiliatedWithSportLeague ? null : (
+            <StatusBadge tone="warning">Guest</StatusBadge>
           )}
         </div>
-      );
-    },
-    enableColumnFilter: false,
-    enableSorting: false,
-  }),
-  numericCell('ranking'),
-  numericCell('oddsToWin'),
-  numericCell('seedNumber'),
-  numericCell('price'),
-];
+      ),
+    }),
+    columnHelper.display({
+      id: 'active',
+      header: 'In field',
+      cell: ({ row, table }) => {
+        const { draft, setDraft, sport } = table.options.meta as FieldGridMeta;
+        const entry = row.original;
+        const rowDraft = draft[entry.id];
+        const active = rowDraft?.isActive ?? entry.isActive;
+        const reason: EventFieldInactiveReason =
+          rowDraft?.inactiveReason ?? entry.inactiveReason ?? 'WITHDRAWN';
+        return (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={active}
+                data-testid={`root-admin-event-field-active-${entry.id}`}
+                onChange={(event) =>
+                  patchRowDraft(setDraft, entry.id, {
+                    isActive: event.target.checked,
+                  })
+                }
+              />
+              <span>{active ? 'In field' : 'Out'}</span>
+            </label>
+            {active ? null : (
+              <Select
+                aria-label={`Withdrawal reason for ${entry.participant.name}`}
+                data-testid={`root-admin-event-field-reason-${entry.id}`}
+                onChange={(event) =>
+                  patchRowDraft(setDraft, entry.id, {
+                    inactiveReason: event.target.value as EventFieldInactiveReason,
+                  })
+                }
+                value={reason}
+              >
+                {inactiveReasonsFor(sport).map((value) => (
+                  <option key={value} value={value}>
+                    {formatParticipantStatusLabel(value, sport)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </div>
+        );
+      },
+      enableColumnFilter: false,
+      enableSorting: false,
+    }),
+    numericCell('ranking'),
+    numericCell('oddsToWin'),
+    numericCell('seedNumber'),
+    numericCell('price'),
+  ];
+}
 
 /**
  * plans/124 §6.3 — the Field editor grid: per-row draft editing of active state
@@ -250,6 +255,7 @@ export function EventFieldGridCard({
   );
   const invalidCount = useMemo(() => eventFieldInvalidCount(draft), [draft]);
 
+  const columns = useMemo(() => fieldColumnsFor(sport), [sport]);
   const meta = useMemo<FieldGridMeta>(
     () => ({ draft, setDraft, pricesLocked, sport }),
     [draft, pricesLocked, sport],
@@ -282,7 +288,7 @@ export function EventFieldGridCard({
       ) : null}
 
       <DataGrid
-        columns={fieldColumns}
+        columns={columns}
         data={entries}
         emptyMessage={
           fieldLoading

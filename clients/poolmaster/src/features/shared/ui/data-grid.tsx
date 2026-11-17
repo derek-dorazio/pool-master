@@ -179,6 +179,15 @@ declare module "@tanstack/react-table" {
   }
 }
 
+/**
+ * The words a column's filter box names it by: its header when that is text, else its id. A header
+ * drawn by a function is rendered as a component, so it is never called or turned into a string
+ * here, which would print its source; a column that needs words of its own gives a text header.
+ */
+function filterLabel(header: unknown, columnId: string): string {
+  return typeof header === "string" ? header : columnId;
+}
+
 /** A column pinned at the start: stuck to the left edge, over the cells scrolling under it. */
 const PINNED_START_CELL = "sticky left-0 z-[1]";
 /** A pinned body cell's solid fill, with the row's hover laid over it like the cells around it. */
@@ -520,10 +529,7 @@ export function DataGrid<TData>({
                           onChange={(event) =>
                             header.column.setFilterValue(event.target.value)
                           }
-                          placeholder={`Filter ${
-                            header.column.columnDef.header?.toString() ??
-                            header.column.id
-                          }`}
+                          placeholder={`Filter ${filterLabel(header.column.columnDef.header, header.column.id)}`}
                           type="search"
                           value={(header.column.getFilterValue() ?? "") as string}
                         />
