@@ -3,7 +3,7 @@
  * with a `PickEmLeaderboardModel`; the published `PickEmLeaderboardResponse` is shaped here.
  */
 
-import type { PickEmMode, SportEventStatus } from '@poolmaster/shared/domain';
+import type { PickEmMode, PickOutcome, SportEventStatus } from '@poolmaster/shared/domain';
 import type { PickEmLeaderboardResponse } from '@poolmaster/shared/dto';
 
 export interface PickEmLeaderboardWeekRow {
@@ -25,6 +25,19 @@ export interface PickEmLeaderboardEntryWeekRow {
   position: number | null;
   displayPosition: string | null;
   weeklyWinner: boolean;
+  correctPickCount: number | null;
+  missedPicks: PickEmLeaderboardMissedPickRow[];
+}
+
+export interface PickEmLeaderboardMissedPickRow {
+  /** Null for a tie pick. */
+  teamName: string | null;
+}
+
+export interface PickEmLeaderboardEntryPickRow {
+  sportEventMatchId: string;
+  sportEventParticipantId: string | null;
+  outcome: PickOutcome;
 }
 
 export interface PickEmLeaderboardEntryRow {
@@ -37,10 +50,12 @@ export interface PickEmLeaderboardEntryRow {
   displayPosition: string | null;
   totalPoints: number;
   weeks: PickEmLeaderboardEntryWeekRow[];
+  currentWeekPicks: PickEmLeaderboardEntryPickRow[];
 }
 
 export interface PickEmLeaderboardModel {
   contestId: string;
+  currentWeekId: string | null;
   mode: PickEmMode;
   againstTheSpread: boolean;
   weeks: PickEmLeaderboardWeekRow[];
@@ -55,6 +70,7 @@ export function toPickEmLeaderboardSnapshotResponse(snapshot: { board: PickEmLea
 export function toPickEmLeaderboardResponse(model: PickEmLeaderboardModel): PickEmLeaderboardResponse {
   return {
     contestId: model.contestId,
+    currentWeekId: model.currentWeekId,
     mode: model.mode,
     againstTheSpread: model.againstTheSpread,
     weeks: model.weeks.map((week) => ({
@@ -64,7 +80,8 @@ export function toPickEmLeaderboardResponse(model: PickEmLeaderboardModel): Pick
     })),
     entries: model.entries.map((entry) => ({
       ...entry,
-      weeks: entry.weeks.map((week) => ({ ...week })),
+      weeks: entry.weeks.map((week) => ({ ...week, missedPicks: week.missedPicks.map((miss) => ({ ...miss })) })),
+      currentWeekPicks: entry.currentWeekPicks.map((pick) => ({ ...pick })),
     })),
   };
 }

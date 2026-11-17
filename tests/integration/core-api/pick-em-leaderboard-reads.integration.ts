@@ -190,10 +190,12 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(season.contest.id, season.viewerId).then((read) => read.board));
 
     const reads = (table: string) => statementsOn(statements, StatementVerb.SELECT, table).length;
-    // One statement for every week's games; the live week is scored from those, not read again.
-    expect(reads('sport_event_matches')).toBe(1);
+    // One statement for every week's games; the live week is scored from those, not read again. The
+    // other is the season picks' read (#1751) loading which week each pick belongs to.
+    expect(reads('sport_event_matches')).toBe(2);
     // The contest's entries once for the board, once for the live week's submitted entries.
     expect(reads('contest_entries')).toBe(2);
+    // Every started week's picks in one read (#1751), which the live week's standings score from too.
     expect(reads('contest_entry_match_predictions')).toBe(1);
     expect(leaderboard.weeks.map((week) => [week.started, week.settled])).toEqual([
       [true, true], [true, true], [true, true], [true, true], [true, false], [false, false],
@@ -238,6 +240,75 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     expect(leaderboard.weeks.map((week) => [week.settled, week.gameCount, week.tiebreakerTotalPoints])).toEqual([[true, 0, null]]);
     expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_matches')).toHaveLength(1);
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entry_match_predictions')).toHaveLength(0);
+  });
+});
+
+describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)', () => {
+  const serviceOn = () => createContestService(getAppPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() });
+
+  /** A week whose first game kicked off half an hour ago and whose other two kick off later, the entry picking the home team in each. */
+  async function weekUnderWay() {
+    const now = Date.now();
+    const week = await createWeek('Week 1', new Date(now - 30 * 60 * 1000), SportEventStatus.IN_PROGRESS);
+    const { contest, entry, viewerId } = await createPickEmContest([week.event.id]);
+    await submitHomePicks(entry.id, week.event.id, week.games, new Date(now - HOUR));
+    return { week, contest, entry, viewerId };
+  }
+
+  it('counts the picks that came true and names the team of each pick that did not, by its name when it has no short name', async () => {
+    const season = await midSeason();
+    const [firstGame] = season.liveWeek.games;
+    // The live week's first game goes to the away team instead, busting the entry's home pick.
+    await getPrisma().sportEventMatch.update({ where: { id: expectDefined(firstGame).id }, data: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 24 } });
+    const homeTeam = await getPrisma().sportEventParticipant.findUniqueOrThrow({
+      where: { id: expectDefined(expectDefined(firstGame).homeSportEventParticipantId) },
+      include: { participant: true },
+    });
+
+    const leaderboard = (await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId)).board;
+
+    const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
+    const liveWeek = expectDefined(row.weeks.find((week) => week.sportEventId === season.liveWeek.event.id));
+    expect(liveWeek.correctPickCount).toBe(1);
+    expect(liveWeek.missedPicks).toEqual([{ teamName: homeTeam.participant.name }]);
+    // The weeks the entry did not submit, and the week to come, count nothing and miss nothing.
+    expect(row.weeks.filter((week) => week.sportEventId !== season.liveWeek.event.id).map((week) => [week.correctPickCount, week.missedPicks]))
+      .toEqual(Array.from({ length: 5 }, () => [null, []]));
+  });
+
+  it('opens on the latest week that has started, carrying each entry\'s picks on its games with how each stands', async () => {
+    const season = await midSeason();
+
+    const leaderboard = (await serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId)).board;
+
+    expect(leaderboard.currentWeekId).toBe(season.liveWeek.event.id);
+    const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
+    expect(row.currentWeekPicks).toEqual(season.liveWeek.games.map((game, index) => ({
+      sportEventMatchId: game.id,
+      sportEventParticipantId: game.homeSportEventParticipantId,
+      // The first two games are played and picked right; the third has kicked off but is not finished.
+      outcome: index < 2 ? 'CORRECT' : 'PENDING',
+    })));
+  });
+
+  it('never carries a pick on a game that has not kicked off yet, so no entry can copy it', async () => {
+    const { week, contest, entry, viewerId } = await weekUnderWay();
+
+    const leaderboard = (await serviceOn().getPickEmLeaderboard(contest.id, viewerId)).board;
+
+    const row = expectDefined(leaderboard.entries.find((candidate) => candidate.entryId === entry.id));
+    expect(row.currentWeekPicks.map((pick) => pick.sportEventMatchId)).toEqual([expectDefined(week.games[0]).id]);
+  });
+
+  it('opens on the first week, with no picks shown, before any week has started', async () => {
+    const week = await createWeek('Week 1', new Date(Date.now() + 7 * DAY), SportEventStatus.SCHEDULED);
+    const { contest, entry, viewerId } = await createPickEmContest([week.event.id]);
+    await submitHomePicks(entry.id, week.event.id, week.games, new Date());
+
+    const leaderboard = (await serviceOn().getPickEmLeaderboard(contest.id, viewerId)).board;
+
+    expect(leaderboard.currentWeekId).toBe(week.event.id);
+    expect(leaderboard.entries.map((row) => [row.currentWeekPicks, row.weeks.map((cell) => cell.correctPickCount)])).toEqual([[[], [null]]]);
   });
 });
 
