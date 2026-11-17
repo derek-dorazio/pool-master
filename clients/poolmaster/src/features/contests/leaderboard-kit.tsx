@@ -1,10 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
-import { DataGrid, SectionCard, Text, type DataGridDetailRow } from '@/features/shared/ui';
+import { Chip, DataGrid, DetailsPeek, PeekCard, SectionCard, Text, WinnersBanner, formatDateTimeDisplay, useDisplayPreferences, type DataGridDetailRow } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
+import { ContestStatusBadge } from './contest-status-badge';
+import { describeFinalStandings, type FinalRow } from './final-standings';
+import { contestSchedule } from './use-contest-schedule';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
 import { useLinkedEntry } from './use-linked-entry';
@@ -95,11 +98,15 @@ export function ScoreboardGrid<Row extends BoardRow>({
 
 /**
  * A contest's page once it is live or final (#1739): the contest's frame, the board's own notes
- * under the title, then the settled note once the contest is final, and the board underneath.
+ * under the title, and the board underneath. Once the contest is final its settled note sits in an
+ * (i) beside the Final chip, and a board that names its standings (`finalRows`) opens on the
+ * winners banner (#1768).
  */
 export function LeaderboardFrame({
   children,
   contest,
+  finalRows,
+  isUnscored = false,
   leagueCode,
   notes,
   settledNote = SETTLED_NOTE,
@@ -107,28 +114,45 @@ export function LeaderboardFrame({
 }: {
   children: ReactNode;
   contest: ContestDto;
+  /** The board's entries as the winners banner reads them; squares, with a winner per quarter, has none. */
+  finalRows?: readonly FinalRow[];
+  /** Whether nothing has been scored yet: the board lists every entry level at 0. */
+  isUnscored?: boolean;
   leagueCode: string;
   /** The board's own lines under the title, such as the viewer's best place. */
   notes?: ReactNode;
-  /** The settled line: `SETTLED_NOTE` unless the board has words of its own, or null where a note of its own stands instead. */
+  /** The settled words: `SETTLED_NOTE` unless the board has words of its own, or null where a note of its own stands instead. */
   settledNote?: ReactNode;
   summary?: ReactNode;
 }) {
-  const isSettled = contest.status === ContestStatus.COMPLETED && Boolean(settledNote);
+  const displayPreferences = useDisplayPreferences();
+  const isFinal = contest.status === ContestStatus.COMPLETED;
+  const winners = isFinal && finalRows ? describeFinalStandings(finalRows, displayPreferences.locale) : null;
+  // #1768 — live before the first score, the board says when scoring starts rather than look broken.
+  const firstStart = contest.status === ContestStatus.ACTIVE && isUnscored ? contestSchedule(contest)?.startsAt : undefined;
+  const firstStartChip = firstStart ? (
+    <Chip data-testid="contest-leaderboard-first-start" tone="info">
+      {`${contest.contestFormat === ContestFormat.PREDICTION ? 'First game' : 'Scoring starts'} ${formatDateTimeDisplay(firstStart, displayPreferences)}`}
+    </Chip>
+  ) : null;
   return (
     <ContestPageFrame
       contest={contest}
       headerTestId="contest-leaderboard-header"
       leagueCode={leagueCode}
-      notes={notes || isSettled ? (
-        <>
-          {notes}
-          {isSettled ? <p data-testid="contest-leaderboard-settled-note">{settledNote}</p> : null}
-        </>
+      notes={firstStartChip || notes ? <>{firstStartChip}{notes}</> : undefined}
+      status={isFinal && settledNote ? (
+        <span className="inline-flex items-center gap-1">
+          <ContestStatusBadge status={contest.status} />
+          <DetailsPeek label="About the final result" testId="contest-leaderboard-settled-note">
+            <PeekCard subtitle={settledNote} facts={[]} testId="contest-leaderboard-settled-note-card" title="Final result" />
+          </DetailsPeek>
+        </span>
       ) : undefined}
       summary={summary}
       testId="contest-leaderboard"
     >
+      {winners ? <WinnersBanner {...winners} testId="contest-winners" /> : null}
       {children}
     </ContestPageFrame>
   );

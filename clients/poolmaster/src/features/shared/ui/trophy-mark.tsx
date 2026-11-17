@@ -1,14 +1,32 @@
 import { cn } from "./class-names";
 
+/** A trophy's metal: gold for 1st, silver for 2nd, bronze for 3rd (#1768). */
+export type TrophyMetal = "bronze" | "gold" | "silver";
+
+const METAL_CLASSES: Record<TrophyMetal, string> = {
+  bronze: "text-[color:var(--trophy-bronze)]",
+  gold: "text-gold-500",
+  silver: "text-[color:var(--trophy-silver)]",
+};
+
 /**
  * A drawn trophy (#1753), ours rather than any league's logo: gold while the team it stands for
- * can still win, grey once it is out.
+ * can still win, grey once it is out. A final contest's 2nd and 3rd take silver and bronze.
  */
-export function TrophyMark({ className, isOut = false }: { className?: string; isOut?: boolean }) {
+export function TrophyMark({
+  className,
+  isOut = false,
+  metal = "gold",
+}: {
+  className?: string;
+  isOut?: boolean;
+  metal?: TrophyMetal;
+}) {
   return (
     <svg
       aria-hidden="true"
-      className={cn("h-10 w-10", isOut ? "text-muted-foreground opacity-40" : "text-gold-500", className)}
+      className={cn("h-10 w-10", isOut ? "text-muted-foreground opacity-40" : METAL_CLASSES[metal], className)}
+      data-metal={isOut ? undefined : metal}
       data-out={isOut || undefined}
       data-testid="trophy-mark"
       fill="none"

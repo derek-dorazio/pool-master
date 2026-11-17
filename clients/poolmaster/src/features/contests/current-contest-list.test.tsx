@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
-import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
 import { buildContest, buildContestEntry, buildContestSportEvent } from './test/contest-admin-fixtures';
@@ -135,6 +135,15 @@ describe('CurrentContestList', () => {
     drawList();
 
     expect(screen.getByTestId('list-live-not-in-status')).toHaveTextContent('Live·9 entries');
+  });
+
+  it('carries the gold Postponed chip after Live when one of the contest\'s events is postponed', () => {
+    const postponed = buildContest({ id: 'postponed', name: 'Week 13 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 6, sportEvents: [buildContestSportEvent({ status: SportEventStatus.POSTPONED })] });
+    drawList({ contests: [postponed, live] });
+
+    expect(screen.getByTestId('list-postponed-status-schedule')).toHaveTextContent('Postponed');
+    expect(screen.getByTestId('list-postponed-status')).toHaveTextContent(/^Live·Postponed·6 entries$/);
+    expect(screen.queryByTestId('list-live-status-schedule')).not.toBeInTheDocument();
   });
 
   it('says Set up and when it starts on a set-up contest, with no action', () => {

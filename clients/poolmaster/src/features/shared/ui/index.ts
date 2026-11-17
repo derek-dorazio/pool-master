@@ -50,6 +50,7 @@ export {
   formatMoneyCents,
   formatNumber,
   formatNumberList,
+  formatAndList,
   formatOrdinal,
   formatPlace,
   type InitialsEntry,
@@ -132,5 +133,7 @@ export { Text, type TextProps } from "./text";
 export { Icon, type IconProps } from "./icon";
 export { SeedChip } from "./seed-chip";
 export { TeamLine, type TeamLineMark, type TeamLineProps } from "./team-line";
-export { TrophyMark } from "./trophy-mark";
+export { TrophyMark, type TrophyMetal } from "./trophy-mark";
+export { WinnersBanner, type WinnersPlace } from "./winners-banner";
 export { WIDE_SCREEN_QUERY, useMediaQuery } from "./use-media-query";
+export { useMinuteClock } from "./use-minute-clock";

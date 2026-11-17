@@ -413,7 +413,7 @@ export function ContestLeaderboardPage() {
     games: gamesQuery.data,
     roundName,
     formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
-  } : undefined);
+  } : undefined, { isLive: contestQuery.data.status === ContestStatus.ACTIVE });
   const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));
@@ -456,6 +456,13 @@ export function ContestLeaderboardPage() {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={view.isUnscored}
+      finalRows={view.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position ?? null,
+        score: entry.total ?? '',
+      }))}
       leagueCode={leagueCode}
       notes={view.currentRoundLabel ? (
         <Chip data-testid="contest-leaderboard-round-cue" tone="info">
@@ -551,7 +558,7 @@ export function ContestLeaderboardPage() {
 
             <div className="space-y-3" data-testid="contest-leaderboard-entries">
               {view.entries.length === 0 ? (
-                <EmptyState body="No entries have been scored in this contest yet." />
+                <EmptyState body="No entries." />
               ) : matchingEntries.length === 0 ? (
                 <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
               ) : (

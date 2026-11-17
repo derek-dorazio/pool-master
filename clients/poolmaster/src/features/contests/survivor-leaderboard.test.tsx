@@ -94,6 +94,15 @@ describe('Survivor contest leaderboard', () => {
     }
   });
 
+  it('marks a cancelled week with the shared Cancelled chip rather than words in its heading', async () => {
+    const board = survivorLeaderboardFixture();
+    primeMocks({ ...board, weeks: [{ ...board.weeks[0], status: 'CANCELLED' }, ...board.weeks.slice(1)] });
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('survivor-leaderboard-week-week-1-schedule')).toHaveTextContent('Cancelled');
+    expect(screen.queryByText(/\(cancelled\)/)).not.toBeInTheDocument();
+  });
+
   it('highlights the row of the entry a link names (?entry=) as the one to look at', async () => {
     primeMocks();
     renderLeaderboard('?entry=entry-1');

@@ -13,3 +13,7 @@ type Story = StoryObj<typeof meta>;
 export const StillIn: Story = {};
 /** Grey: the team is out. */
 export const Out: Story = { args: { isOut: true } };
+/** Silver: a final contest's 2nd place. */
+export const Silver: Story = { args: { metal: "silver" } };
+/** Bronze: a final contest's 3rd place. */
+export const Bronze: Story = { args: { metal: "bronze" } };

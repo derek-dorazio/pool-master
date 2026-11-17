@@ -1,9 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { PickOutcome, SportEventStatus, formatPickEmRulesName } from '@poolmaster/shared/domain';
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
 import { DetailsPeek, PeekCard, Text, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
+import { EventScheduleChip } from './event-schedule-chip';
 import { isMySquadsEntry, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, YourBestNote } from './leaderboard-kit';
 import { pickEmBoardGames, pickEmShownWeeks, pickEmWeekCell, pickLabel, reportMissingTeam, teamNameIn, teamNamesOf, type PickEmBoardPick } from './pick-em-board';
@@ -20,9 +22,17 @@ type PickEmWeek = PickEmLeaderboardResponse['weeks'][number];
 /** The prefix of the board's test ids. */
 const TEST_ID = 'pick-em-leaderboard';
 
-/** A week's column name, and "(cancelled)" for a week that counts for nothing. */
-function weekHeading(week: PickEmWeek): string {
-  return week.status === SportEventStatus.CANCELLED ? `${week.name} (cancelled)` : week.name;
+/** A week's column name, with the shared Postponed or Cancelled chip (#1768) when it is not going ahead as scheduled. */
+function weekHeading(week: PickEmWeek): ReactNode {
+  if (week.status !== SportEventStatus.CANCELLED && week.status !== SportEventStatus.POSTPONED) {
+    return week.name;
+  }
+  return (
+    <>
+      {week.name}
+      <EventScheduleChip status={week.status} testId={`${TEST_ID}-week-${week.sportEventId}-schedule`} />
+    </>
+  );
 }
 
 /** One entry's cell for one week: its picks right so far, a medal for the week's top three, and a peek on how the week went. */
@@ -136,6 +146,13 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      finalRows={board.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position,
+        score: formatPoints(entry.totalPoints),
+      }))}
+      isUnscored={board.entries.length > 0 && board.entries.every((entry) => entry.weeks.every((week) => !week.correctPickCount))}
       leagueCode={leagueCode}
       notes={isUnderWay ? null : (
         <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>

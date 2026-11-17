@@ -935,10 +935,11 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByTestId('contest-leaderboard-position-entry-1');
-    // A golf board reads no games, so it passes no games context.
+    // A golf board reads no games, so it passes no games context; the contest's status says whether it is live.
     expect(buildLeaderboardView).toHaveBeenCalledWith(
       expect.objectContaining({ contestId: 'contest-1', scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' }),
       undefined,
+      { isLive: true },
     );
     buildLeaderboardView.mockRestore();
   });
@@ -968,7 +969,7 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-round-cue')).not.toBeInTheDocument();
   });
 
-  it('says the contest has no scored entries rather than rendering an empty table', async () => {
+  it('says No entries in one line rather than rendering an empty table when nobody entered', async () => {
     primeMocks({
       leaderboard: {
         contestId: 'contest-1',
@@ -985,8 +986,7 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    expect(await screen.findByText('No entries have been scored in this contest yet.'))
-      .toBeInTheDocument();
+    expect(await screen.findByText('No entries.')).toBeInTheDocument();
   });
 
   it('explains that picks are not revealed yet instead of showing a bare failure', async () => {
@@ -1020,7 +1020,8 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    expect(await screen.findByTestId('contest-leaderboard-settled-note')).toHaveTextContent(
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-settled-note'));
+    expect(await screen.findByTestId('contest-leaderboard-settled-note-card')).toHaveTextContent(
       'Entry standings are frozen at settlement',
     );
   });
@@ -1030,9 +1031,27 @@ describe('ContestLeaderboardPage', () => {
 
     renderLeaderboard();
 
-    const note = await screen.findByTestId('contest-leaderboard-settled-note');
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-settled-note'));
+    const note = await screen.findByTestId('contest-leaderboard-settled-note-card');
     expect(note).toHaveTextContent("each pick's score shows current event data and can differ after a late score correction.");
     expect(note).not.toHaveTextContent(/team/i);
+  });
+
+  it('opens a settled contest on its winners banner, the leader named with their total', async () => {
+    primeMocks({ contestStatus: 'COMPLETED' });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-winners-winner-names')).toHaveTextContent('Birdie Hunters Entry 1');
+  });
+
+  it('shows no winners banner while the contest is live', async () => {
+    primeMocks({ contestStatus: 'ACTIVE' });
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-position-entry-1');
+    expect(screen.queryByTestId('contest-winners')).not.toBeInTheDocument();
   });
 
   it('labels a live contest "Live" in the live colour beside its name', async () => {
@@ -1143,10 +1162,10 @@ describe('ContestLeaderboardPage', () => {
       getContestMock.mockResolvedValueOnce(contestResponse('ACTIVE'));
       renderLeaderboard();
       await screen.findByText('Birdie Hunters Entry 1');
-      expect(screen.queryByText(/Entry standings are frozen at settlement/)).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(await screen.findByText(/Entry standings are frozen at settlement/)).toBeInTheDocument();
+      expect(await screen.findByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
 
       const leaderboardCallsOnceSettled = getContestLeaderboardMock.mock.calls.length;
       const contestCallsOnceSettled = getContestMock.mock.calls.length;
@@ -1176,8 +1195,8 @@ describe('ContestLeaderboardPage', () => {
       expect(screen.getByText('-4')).toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(90_000);
-      expect(await screen.findByText(/Entry standings are frozen at settlement/)).toBeInTheDocument();
-      expect(await screen.findByText('-12')).toBeInTheDocument();
+      expect(await screen.findByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
+      expect(await screen.findByTestId('contest-leaderboard-total-entry-1')).toHaveTextContent('-12');
       expect(screen.queryByText('-4')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();

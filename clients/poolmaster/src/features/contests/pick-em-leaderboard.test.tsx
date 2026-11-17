@@ -131,6 +131,22 @@ describe('Pick\'em contest leaderboard', () => {
     }
   });
 
+  it('marks a cancelled week with the grey Cancelled chip and a postponed one with the gold Postponed chip, in place of words in the heading', async () => {
+    const board = pickEmLeaderboardFixture();
+    primeMocks({
+      ...board,
+      weeks: [
+        { ...board.weeks[0], status: 'CANCELLED', settled: true },
+        { ...board.weeks[1], status: 'POSTPONED', started: false },
+      ],
+    });
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('pick-em-leaderboard-week-week-1-schedule')).toHaveTextContent('Cancelled');
+    expect(screen.getByTestId('pick-em-leaderboard-week-week-2-schedule')).toHaveTextContent('Postponed');
+    expect(screen.queryByText(/\(cancelled\)/)).not.toBeInTheDocument();
+  });
+
   it('heads the board Entry, Season, then the weeks newest first with the current one live, and never reads the roster leaderboard', async () => {
     primeMocks();
     renderLeaderboard();

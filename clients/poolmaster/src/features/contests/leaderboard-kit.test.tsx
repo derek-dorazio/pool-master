@@ -3,7 +3,7 @@ import { fireEvent, render, renderHook, screen, within } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MemoryRouter } from 'react-router';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import type { ContestDto } from '@/lib/api';
 import { ApiError } from '@/lib/errors';
@@ -175,7 +175,7 @@ describe('ScoreboardGrid', () => {
   });
 });
 
-const contest = { id: 'contest-1', myEntryIds: [], name: 'Masters Pool', status: ContestStatus.ACTIVE } as unknown as ContestDto;
+const contest = { id: 'contest-1', myEntryIds: [], name: 'Masters Pool', sportEvents: [], status: ContestStatus.ACTIVE } as unknown as ContestDto;
 
 function renderFrame(props: Partial<Parameters<typeof LeaderboardFrame>[0]> = {}) {
   // The frame reads the contest's league to check the URL names it (#1412); this contest names none.
@@ -200,21 +200,74 @@ describe('LeaderboardFrame', () => {
     expect(screen.getByTestId('contest-leaderboard')).toHaveTextContent('The board');
   });
 
+  const scheduled = { ...contest, endsAt: null, sportEvents: [], startsAt: '2026-11-20T01:15:00.000Z' };
+
+  it('says when the first game starts while a live prediction contest has nothing scored', () => {
+    renderFrame({ contest: { ...scheduled, contestFormat: ContestFormat.PREDICTION }, isUnscored: true });
+
+    expect(screen.getByTestId('contest-leaderboard-first-start')).toHaveTextContent(/^First game /);
+  });
+
+  it('says when scoring starts on any other live contest with nothing scored', () => {
+    renderFrame({ contest: { ...scheduled, contestFormat: ContestFormat.ROSTER }, isUnscored: true });
+
+    expect(screen.getByTestId('contest-leaderboard-first-start')).toHaveTextContent(/^Scoring starts /);
+  });
+
+  it('drops the first-start chip once anything is scored', () => {
+    renderFrame({ contest: scheduled });
+
+    expect(screen.queryByTestId('contest-leaderboard-first-start')).not.toBeInTheDocument();
+  });
+
+  it('never shows the first-start chip on a final contest', () => {
+    renderFrame({ contest: { ...scheduled, status: ContestStatus.COMPLETED }, isUnscored: true });
+
+    expect(screen.queryByTestId('contest-leaderboard-first-start')).not.toBeInTheDocument();
+  });
+
   it('says nothing about settlement while the contest is live', () => {
     renderFrame();
 
     expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
   });
 
-  it('says the standings are frozen once the contest is final', () => {
+  it('says the standings are frozen once the contest is final, in an (i) beside the Final chip rather than under the title', async () => {
     renderFrame({ contest: { ...contest, status: ContestStatus.COMPLETED } });
 
-    expect(screen.getByTestId('contest-leaderboard-settled-note')).toHaveTextContent('Final result: these standings are frozen at settlement.');
+    const header = within(screen.getByTestId('contest-leaderboard-header'));
+    expect(header.getByText('Final')).toBeInTheDocument();
+    expect(screen.queryByText('Final result: these standings are frozen at settlement.')).not.toBeInTheDocument();
+    fireEvent.click(header.getByTestId('contest-leaderboard-settled-note'));
+    expect(await screen.findByTestId('contest-leaderboard-settled-note-card')).toHaveTextContent('Final result: these standings are frozen at settlement.');
   });
 
-  it('says it in the board\'s own words, or not at all where the board has a note of its own', () => {
+  it('says it in the board\'s own words', async () => {
     renderFrame({ contest: { ...contest, status: ContestStatus.COMPLETED }, settledNote: 'The winners are frozen.' });
-    expect(screen.getByTestId('contest-leaderboard-settled-note')).toHaveTextContent('The winners are frozen.');
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-settled-note'));
+    expect(await screen.findByTestId('contest-leaderboard-settled-note-card')).toHaveTextContent('The winners are frozen.');
+  });
+
+  it('opens a final board on its winners banner, with the viewer\'s finish', () => {
+    renderFrame({
+      contest: { ...contest, status: ContestStatus.COMPLETED },
+      finalRows: [
+        { entryName: 'Big Hitters', isMine: false, position: 1, score: '11 pts' },
+        { entryName: 'Lakers 2', isMine: false, position: 2, score: '10 pts' },
+        { entryName: 'Sharks 1', isMine: true, position: 3, score: '9 pts' },
+      ],
+    });
+
+    expect(screen.getByTestId('contest-winners-winner-names')).toHaveTextContent('Big Hitters');
+    expect(screen.getByTestId('contest-winners-silver')).toHaveTextContent('Lakers 2 · 10 pts');
+    expect(screen.getByTestId('contest-winners-bronze')).toHaveTextContent('Sharks 1 · 9 pts');
+    expect(screen.getByTestId('contest-winners-yours')).toHaveTextContent('You finished 3rd of 3');
+  });
+
+  it('shows no winners banner while the contest is live, or for a board that names no standings', () => {
+    renderFrame({ finalRows: [{ entryName: 'Big Hitters', isMine: false, position: 1, score: '11 pts' }] });
+    expect(screen.queryByTestId('contest-winners')).not.toBeInTheDocument();
   });
 
   it('leaves the settled note out when the board says null', () => {

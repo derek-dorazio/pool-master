@@ -41,6 +41,8 @@ const SAME_IN_BOTH_MODES = new Set([
   '--podium-2-text',
   '--podium-3-surface',
   '--podium-3-text',
+  '--trophy-silver',
+  '--trophy-bronze',
   '--shadow-xl',
   '--shadow-2xl',
   '--illustration-orange',

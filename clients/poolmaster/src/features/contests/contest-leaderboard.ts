@@ -59,6 +59,8 @@ export interface LeaderboardEntryRow {
   entryName: string;
   squadId: string;
   squadName: string;
+  /** The entry's rank, 1 best; null while unscored. */
+  position: number | null;
   displayPosition: string | null;
   total: string | null;
   /** The entry's result in each event it submitted and that has been revealed, in contest order. */
@@ -73,6 +75,8 @@ export interface LeaderboardView {
   footnote: LeaderboardFootnote | null;
   currentRoundLabel: string | null;
   entries: LeaderboardEntryRow[];
+  /** Whether the board has entries and none is scored yet: each shows tied 1st at 0 (#1768). */
+  isUnscored: boolean;
 }
 
 /**
@@ -80,7 +84,11 @@ export interface LeaderboardView {
  * never re-sorted here, because position and its tie-aware `displayPosition` were decided
  * server-side against the scoring definition's direction.
  */
-export function buildLeaderboardView(response: ContestLeaderboardResponse, context?: LeaderboardContext): LeaderboardView {
+export function buildLeaderboardView(
+  response: ContestLeaderboardResponse,
+  context?: LeaderboardContext,
+  { isLive = false }: { /** The contest is live (ACTIVE): only then does an unscored board stand level at 0. */ isLive?: boolean } = {},
+): LeaderboardView {
   // The shown event's definition: a stat pool plays its sport's composite, not its bracket.
   const sport = eventSportDefinition(response);
   const family = getScoringFamilyUi(sport).leaderboard(response, sport, context);
@@ -89,13 +97,19 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse, conte
     response.participants.map((participant) => [participant.id, participant]),
   );
 
+  // #1768 — live before the first score, every entry stands level at 0 rather than unplaced. A
+  // final board with nothing scored (every event cancelled) keeps its entries unplaced instead,
+  // so it never crowns everyone tied for 1st.
+  const isUnscored = isLive && response.entries.length > 0 && response.entries.every((entry) => entry.totalScore === null);
+  const unscoredPlace = response.entries.length > 1 ? 'T1' : '1';
   const entries = response.entries.map((entry) => ({
     entryId: entry.entryId,
     entryName: entry.entryName,
     squadId: entry.squadId,
     squadName: entry.squadName,
-    displayPosition: entry.displayPosition,
-    total: entry.totalScore === null ? null : scoringDefinition.format(entry.totalScore),
+    position: isUnscored ? 1 : entry.position,
+    displayPosition: isUnscored ? unscoredPlace : entry.displayPosition,
+    total: isUnscored ? scoringDefinition.format(0) : entry.totalScore === null ? null : scoringDefinition.format(entry.totalScore),
     events: entry.events.map((event) => ({
       sportEventId: event.sportEventId,
       position: event.position,
@@ -128,6 +142,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse, conte
       resolveRoundNumbers(response.participants).length,
     ),
     entries,
+    isUnscored,
   };
 }
 

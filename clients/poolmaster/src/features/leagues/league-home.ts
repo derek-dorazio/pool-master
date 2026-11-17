@@ -101,12 +101,13 @@ export function buildTopStandings(
   mySquadId: string | null,
   limit = HERO_STANDINGS,
 ): TopStandings {
-  const view = buildLeaderboardView(response);
+  // Home shows standings only on its live heroes.
+  const view = buildLeaderboardView(response, undefined, { isLive: true });
   return topOf(response.entries.map((entry, index): StandingRow => ({
     entryId: entry.entryId,
     isMine: mySquadId !== null && entry.squadId === mySquadId,
     name: entry.entryName,
-    position: entry.displayPosition,
+    position: view.entries[index]?.displayPosition ?? null,
     squadId: entry.squadId,
     total: view.entries[index]?.total ?? null,
   })), limit);

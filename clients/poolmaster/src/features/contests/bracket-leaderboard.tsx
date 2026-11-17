@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ContestDto } from '@/lib/api';
 import { Button, TeamLine } from '@/features/shared/ui';
 import { BracketEntryDialog, type BracketBoardRow } from './bracket-entry-dialog';
+import { formatPoints } from './bracket-layout';
 import { contestScoreUnit } from './contest-sport';
 import { SETTLED_NOTE, entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
@@ -134,6 +135,14 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      isUnscored={board.entries.length > 0 && board.entries.every((entry) => entry.points === 0 && entry.correctPickCount === 0)}
+      // A cancelled event scored nobody, so there are no winners to name.
+      finalRows={board.eventCancelled ? undefined : board.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position,
+        score: formatPoints(entry.points),
+      }))}
       leagueCode={leagueCode}
       notes={(
         <>
@@ -142,9 +151,7 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
               {`The final scored ${board.finalTotalPoints} total ${contestScoreUnit(contest.sport)}: tiebreakers are measured against it.`}
             </p>
           ) : null}
-          {board.eventCancelled ? (
-            <p data-testid="bracket-leaderboard-cancelled-note">This event was cancelled, so no bracket scores any points.</p>
-          ) : null}
+          {/* A cancelled event is the contest page's shared schedule notice (#1768). */}
         </>
       )}
       // A cancelled event's note stands in for the settled one: nothing was scored to freeze.

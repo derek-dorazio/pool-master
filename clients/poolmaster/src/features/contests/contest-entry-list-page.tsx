@@ -20,6 +20,7 @@ import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   Button,
+  Countdown,
   DateDisplay,
   EmptyState,
   ErrorState,
@@ -34,9 +35,11 @@ import {
   cn,
   formatNumber,
   useDisplayPreferences,
+  useMinuteClock,
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
+import { ContestEntryListSquaresPendingSection } from './contest-entry-list-squares-pending-section';
 import { ContestPagePending } from './contest-page-pending';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { EntryLineupPicks } from './entry-lineup-picks';
@@ -210,6 +213,43 @@ function EntryRow({
 }
 
 /**
+ * The Entries list before anyone has entered (#1768): "No entries yet", and while entries are
+ * open the Home hero's countdown to their close with its own Make your picks, so the first to
+ * arrive has a next step in the middle of the page.
+ */
+function NoEntriesYet({
+  canCreateEntry,
+  closesAt,
+  contestId,
+  leagueCode,
+}: {
+  canCreateEntry: boolean;
+  /** When entries close; null once they have, or for a contest with no start yet. */
+  closesAt: string | null;
+  contestId: string;
+  leagueCode: string;
+}) {
+  const now = useMinuteClock();
+  return (
+    <EmptyState
+      action={closesAt ? (
+        <div className="flex flex-col items-start gap-3">
+          <div className="space-y-1">
+            <Countdown label="Entries close in" now={now} testId="contest-board-countdown" until={closesAt} />
+            <Text tone="muted" variant="caption">until entries close</Text>
+          </div>
+          {canCreateEntry ? (
+            <StartEntryButton contestId={contestId} label="Make your picks" leagueCode={leagueCode} testId="contest-board-empty-make-picks" />
+          ) : null}
+        </div>
+      ) : undefined}
+      testId="contest-board-no-entries"
+      title="No entries yet"
+    />
+  );
+}
+
+/**
  * A contest's page while entries are open (#1739): the entries laid out like the leaderboard,
  * names only. Other teams' entries are listed once submitted (the server leaves their drafts
  * out); the viewer's own come first, highlighted, open to their picks, with ✎ to the pick screen.
@@ -272,13 +312,19 @@ export function ContestEntryListPage() {
       openRows.open(linkedMineId);
     }
   });
+  const isSetUp = contest.status === ContestStatus.DRAFT;
+  const canManage = viewer.isCommissioner || viewer.isRootAdmin;
   const countFigure = entryCap === null
     ? formatNumber(entryCount, locale)
     : `${formatNumber(entryCount, locale)} of ${formatPlanLimit(entryCap, locale)}`;
 
   return (
     <ContestPageFrame
-      actions={canCreateEntry ? (
+      actions={isSetUp && canManage ? (
+        <LinkButton data-testid="contest-board-manage" size="sm" to={buildLeagueAdminContestPath(leagueCode, contest.id)}>
+          Manage contest
+        </LinkButton>
+      ) : canCreateEntry ? (
         <StartEntryButton
           contestId={contest.id}
           label={hasMine ? 'Create another entry' : 'Make your picks'}
@@ -314,16 +360,14 @@ export function ContestEntryListPage() {
               ) : null}
             </span>
           ) : null}
-          <span data-testid="contest-board-total-count">{`${countFigure} entered`}</span>
+          {/* Nobody can enter a contest being set up, so it has no count to give. */}
+          {isSetUp ? null : <span data-testid="contest-board-total-count">{`${countFigure} entered`}</span>}
         </>
       )}
       testId="contest-board"
     >
-      {contest.status === ContestStatus.DRAFT ? (
-        <Notice data-testid="contest-draft-note">
-          This contest is a draft. Only commissioners can see it, and nobody can enter until it is
-          opened to the league.
-        </Notice>
+      {isSetUp ? (
+        <Notice data-testid="contest-draft-note">Only commissioners can see this contest.</Notice>
       ) : null}
 
       {entriesOpen && isFull ? (
@@ -345,8 +389,12 @@ export function ContestEntryListPage() {
         </Notice>
       ) : null}
 
-      {/* A squares contest's board is its entry list (#1758): every entry is on it by its boxes. */}
-      {contest.selectionType === SelectionType.SQUARES ? (
+      {/* A contest being set up has nobody to list (#1768); a squares board waits for it to open. */}
+      {isSetUp ? (
+        contest.selectionType === SelectionType.SQUARES ? (
+          <ContestEntryListSquaresPendingSection />
+        ) : null
+      ) : contest.selectionType === SelectionType.SQUARES ? (
         <SquaresBoardView
           canManage={viewer.isCommissioner || viewer.isRootAdmin}
           contest={contest}
@@ -372,7 +420,12 @@ export function ContestEntryListPage() {
           ) : contestEntriesQuery.isError ? (
             <ErrorState body="We couldn't load the current contest entries." onRetry={() => void contestEntriesQuery.refetch()} />
           ) : entries.length === 0 ? (
-            <EmptyState body="Nobody has entered yet." />
+            <NoEntriesYet
+              canCreateEntry={canCreateEntry}
+              closesAt={entriesOpen && schedule ? schedule.startsAt : null}
+              contestId={contest.id}
+              leagueCode={leagueCode}
+            />
           ) : (
             entries.map((entry) => (
               <EntryRow

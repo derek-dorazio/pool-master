@@ -673,12 +673,27 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByTestId('contest-board-edit-entry-entry-3')).not.toBeInTheDocument();
   });
 
-  it('says nobody has entered yet when the list is empty', async () => {
+  it('gives an open contest nobody has entered the Home hero\'s countdown to the close and its own Make your picks', async () => {
     primeMocks({ entries: [] });
 
     renderContestBoard();
 
-    expect(await screen.findByText('Nobody has entered yet.')).toBeInTheDocument();
+    const empty = within(await screen.findByTestId('contest-board-no-entries'));
+    expect(empty.getByRole('heading', { name: 'No entries yet' })).toBeInTheDocument();
+    expect(empty.getByTestId('contest-board-countdown')).toHaveAccessibleName(/^Entries close in \d+ days/);
+    expect(empty.getByText('until entries close')).toBeInTheDocument();
+    expect(await empty.findByRole('button', { name: 'Make your picks' })).toBeInTheDocument();
+  });
+
+  it('says only No entries yet, with no countdown or button, once entries have closed', async () => {
+    primeMocks({ entries: [], eventStartDate: '2020-04-09T12:40:00.000Z' });
+
+    renderContestBoard();
+
+    const empty = within(await screen.findByTestId('contest-board-no-entries'));
+    expect(empty.getByRole('heading', { name: 'No entries yet' })).toBeInTheDocument();
+    expect(empty.queryByTestId('contest-board-countdown')).not.toBeInTheDocument();
+    expect(empty.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('heads the page with Make your picks when the viewer has no entry, and Create another entry once they have one', async () => {
@@ -735,14 +750,25 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByTestId('contest-board-edit-entry-entry-1')).not.toBeInTheDocument();
   });
 
-  it('shows a commissioner previewing a draft the draft note and no way to enter', async () => {
+  it('shows a commissioner a contest being set up with its Set up chip, a one-line note, Manage contest and no entry list or count', async () => {
     primeMocks({ contestStatus: 'DRAFT', role: 'COMMISSIONER' });
 
     renderContestBoard();
 
-    expect(await screen.findByTestId('contest-draft-note')).toHaveTextContent(/only commissioners can see it/i);
-    await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
+    expect(await screen.findByTestId('contest-draft-note')).toHaveTextContent(/^Only commissioners can see this contest\.$/);
+    expect(within(screen.getByTestId('contest-page-header')).getByText('Set up')).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-board-manage')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1');
     expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entries-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-total-count')).not.toBeInTheDocument();
+  });
+
+  it('tells a commissioner a squares board appears once the contest opens', async () => {
+    primeMocks({ contestStatus: 'DRAFT', role: 'COMMISSIONER', selectionType: 'SQUARES' });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-board-squares-pending-note')).toHaveTextContent('The board appears when the contest opens.');
   });
 
   // #947 — the league's plan caps how many entries a contest takes, every squad's drafts included.

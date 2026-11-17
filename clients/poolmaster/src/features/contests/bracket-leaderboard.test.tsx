@@ -265,14 +265,16 @@ describe('Bracket contest leaderboard', () => {
     expect(await screen.findByTestId('bracket-leaderboard-final-total')).toHaveTextContent('The final scored 138 total points');
   });
 
-  it('says a cancelled event scores nothing in place of the frozen-standings note once the contest is Final', async () => {
+  it('says a cancelled event scores nothing in the shared schedule notice, with no settled note and no winners, once the contest is Final', async () => {
     primeMocks();
-    getContestMock.mockResolvedValue({ data: { contest: bracketContestFixture({ status: 'COMPLETED' }) } });
+    const contest = bracketContestFixture({ status: 'COMPLETED' });
+    getContestMock.mockResolvedValue({ data: { contest: { ...contest, sportEvents: contest.sportEvents.map((event) => ({ ...event, status: 'CANCELLED' as const })) } } });
     getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture({ eventCancelled: true, gameCount: 0 }) });
     renderLeaderboard();
 
-    expect(await screen.findByTestId('bracket-leaderboard-cancelled-note')).toHaveTextContent('This event was cancelled, so no bracket scores any points.');
+    expect(await screen.findByTestId('contest-schedule-notice')).toHaveTextContent('March Madness cancelled: no points.');
     expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-winners')).not.toBeInTheDocument();
   });
 
   it('shows the picks-not-revealed state when the server refuses the board before the event starts', async () => {
