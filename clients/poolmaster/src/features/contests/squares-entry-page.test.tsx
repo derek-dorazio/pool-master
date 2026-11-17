@@ -10,6 +10,7 @@ import {
   squaresBoardFixture,
   squaresContestFixture,
   squaresEntryFixture,
+  squaresGameFixture,
   squaresLeagueContextFixture,
 } from './test/squares-fixtures';
 
@@ -102,6 +103,8 @@ function primeMocks({
 }
 
 const box = (rowIndex: number, columnIndex: number) => screen.getByTestId(`squares-box-${rowIndex}-${columnIndex}`);
+/** What a screen reader reaches for a box: its peek's button once it opens a peek, else the box itself. */
+const boxControl = (rowIndex: number, columnIndex: number) => screen.queryByTestId(`squares-box-${rowIndex}-${columnIndex}-peek`) ?? box(rowIndex, columnIndex);
 
 describe('Squares contest entry page', () => {
   afterEach(() => {
@@ -120,21 +123,42 @@ describe('Squares contest entry page', () => {
     expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
   });
 
-  it('shows the grid with each claimed box under its entry\'s name, the viewer\'s own highlighted, the team names on the edges, no digits before the draw, and the viewer\'s claimed count', async () => {
+  it('shows each claimed box by its entry\'s initials with the full name kept for screen readers, the viewer\'s own marked, the team bands, "?" digits and no tabs before the draw, and a line per entry of the viewer\'s with its count', async () => {
     primeMocks();
     renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
 
     await screen.findByTestId('squares-grid');
-    expect(box(0, 0)).toHaveTextContent('Morgan’s Madness');
+    expect(box(0, 0)).toHaveTextContent('MM');
+    expect(boxControl(0, 0)).toHaveAccessibleName(/Morgan’s Madness/);
     expect(box(0, 0)).toHaveAttribute('data-mine', 'true');
-    expect(box(1, 1)).toHaveTextContent('Derek’s Great Golf Guys');
+    expect(box(1, 1)).toHaveTextContent('DG');
+    expect(boxControl(1, 1)).toHaveAccessibleName(/Derek’s Great Golf Guys/);
     expect(box(1, 1)).not.toHaveAttribute('data-mine');
     expect(screen.getByTestId('squares-home-team')).toHaveTextContent('Eagles');
     expect(screen.getByTestId('squares-away-team')).toHaveTextContent('Chiefs');
-    expect(screen.getByTestId('squares-row-digit-0')).toHaveTextContent('');
-    expect(screen.getByTestId('squares-claimed-count')).toHaveTextContent('1 of 2 boxes claimed');
+    expect(screen.getByTestId('squares-row-digit-0')).toHaveTextContent('?');
+    expect(screen.getByTestId('squares-column-digit-9')).toHaveTextContent('?');
+    expect(screen.queryByTestId('squares-tabs')).not.toBeInTheDocument();
+    expect(screen.getByTestId('squares-entry-line-entry-1')).toHaveTextContent('Morgan’s MadnessYours1 of 2 boxes');
+    expect(screen.queryByTestId('squares-entry-line-entry-2')).not.toBeInTheDocument();
     expect(screen.queryByTestId('squares-draw')).not.toBeInTheDocument();
     expect(screen.queryByTestId('squares-claim-for')).not.toBeInTheDocument();
+  });
+
+  it('codes a box from every entry of the contest, so a code does not change when another entry sharing it claims its first box', async () => {
+    primeMocks({
+      board: squaresBoardFixture({
+        boxes: [{ rowIndex: 1, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Big Hitters' }],
+        entries: [
+          { contestEntryId: 'entry-1', entryName: 'Bay Hawks', squadId: 'squad-1', boxCount: 0, periodsWon: 0, displayPosition: null },
+          { contestEntryId: 'entry-2', entryName: 'Big Hitters', squadId: 'squad-2', boxCount: 1, periodsWon: 0, displayPosition: null },
+        ],
+      }),
+    });
+    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+
+    await screen.findByTestId('squares-grid');
+    expect(box(1, 1)).toHaveTextContent('BHI');
   });
 
   it('claims an empty box for the viewer\'s own entry on a tap and shows the board the server answers with', async () => {
@@ -147,12 +171,12 @@ describe('Squares contest entry page', () => {
 
     fireEvent.click(await screen.findByTestId('squares-box-4-7'));
 
-    await waitFor(() => expect(box(4, 7)).toHaveTextContent('Morgan’s Madness'));
+    await waitFor(() => expect(box(4, 7)).toHaveTextContent('MM'));
     expect(claimSquaresBoxMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { contestId: 'contest-1', rowIndex: '4', columnIndex: '7' },
       body: { contestEntryId: 'entry-1' },
     }));
-    expect(screen.getByTestId('squares-claimed-count')).toHaveTextContent('2 of 2 boxes claimed');
+    expect(screen.getByTestId('squares-entry-line-entry-1-count')).toHaveTextContent('2 of 2 boxes');
   });
 
   it('clears the viewer\'s own box on a tap, and leaves another entry\'s box and every empty box untappable once the box limit is reached', async () => {
@@ -193,7 +217,8 @@ describe('Squares contest entry page', () => {
     renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-2');
 
     expect(await screen.findByTestId('squares-claim-for')).toHaveValue('entry-2');
-    expect(screen.getByTestId('squares-claimed-count')).toHaveTextContent('Derek’s Great Golf Guys: 1 of 2 boxes claimed');
+    expect(screen.getByTestId('squares-entry-line-entry-2')).toHaveTextContent('Derek’s Great Golf Guys1 of 2 boxes');
+    expect(screen.getByTestId('squares-entry-line-entry-2')).not.toHaveTextContent('Yours');
     fireEvent.click(box(6, 3));
     await waitFor(() => expect(claimSquaresBoxMock).toHaveBeenCalledWith(expect.objectContaining({ body: { contestEntryId: 'entry-2' } })));
   });
@@ -206,7 +231,7 @@ describe('Squares contest entry page', () => {
     renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
 
     fireEvent.change(await screen.findByTestId('squares-claim-for'), { target: { value: 'entry-2' } });
-    expect(screen.getByTestId('squares-claimed-count')).toHaveTextContent('Derek’s Great Golf Guys: 1 of 2 boxes claimed');
+    expect(screen.getByTestId('squares-entry-line-entry-2-count')).toHaveTextContent('1 of 2 boxes');
     fireEvent.click(box(6, 3));
     await waitFor(() => expect(claimSquaresBoxMock).toHaveBeenCalledWith(expect.objectContaining({ body: { contestEntryId: 'entry-2' } })));
 
@@ -220,6 +245,7 @@ describe('Squares contest entry page', () => {
     expect(drawSquaresNumbersMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1' } }));
     expect(box(5, 5).tagName).not.toBe('BUTTON');
     expect(screen.queryByTestId('squares-draw')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('squares-entry-lines')).not.toBeInTheDocument();
   });
 });
 
@@ -230,7 +256,7 @@ describe('Squares contest leaderboard', () => {
     }
   });
 
-  it('lists Q1, Halftime, Q3 and Final with each winner and its (i) or No winner, outlines the winning boxes, and places the entries once Final', async () => {
+  it('opens on the Winners tab once Final, listing Q1, Q2, Q3 and Final with the score, the box, and the winner with its (i), Yours and a tick on the viewer\'s, and tags a box that won twice Q1/Final', async () => {
     primeMocks({
       contest: squaresContestFixture({ status: 'COMPLETED' }),
       board: squaresBoardFixture({
@@ -238,64 +264,126 @@ describe('Squares contest leaderboard', () => {
         claimsOpen: false,
         drawOpen: false,
         digits: DRAWN_DIGITS,
+        game: squaresGameFixture({
+          status: 'COMPLETED',
+          homeScore: 23,
+          awayScore: 10,
+          periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 0 }, { periodNumber: 2, homeScore: 10, awayScore: 1 }, { periodNumber: 3, homeScore: 17, awayScore: 7 }],
+        }),
         winners: [
           { periodNumber: 1, homeScore: 3, awayScore: 0, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
           { periodNumber: 2, homeScore: 10, awayScore: 1, rowIndex: 1, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys' },
           { periodNumber: 3, homeScore: 17, awayScore: 7, rowIndex: 7, columnIndex: 9, contestEntryId: null, entryName: null },
           { periodNumber: 4, homeScore: 23, awayScore: 10, rowIndex: 0, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
         ],
-        entries: [
-          { contestEntryId: 'entry-1', entryName: 'Morgan’s Madness', squadId: 'squad-1', boxCount: 1, periodsWon: 2, displayPosition: '1' },
-          { contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys', squadId: 'squad-2', boxCount: 1, periodsWon: 1, displayPosition: '2' },
-        ],
       }),
     });
     renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     const winners = await screen.findByTestId('squares-winners');
-    expect(within(winners).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Q1Morgan’s MadnessChiefs 0, Eagles 3',
-      'HalftimeDerek’s Great Golf GuysChiefs 1, Eagles 10',
-      'Q3No winnerChiefs 7, Eagles 17',
-      'FinalMorgan’s MadnessChiefs 10, Eagles 23',
+    expect(['squares-winner-1', 'squares-winner-2', 'squares-winner-3', 'squares-winner-4'].map((id) => within(winners).getByTestId(id).textContent)).toEqual([
+      'Q1Chiefs 0, Eagles 3Chiefs 0 · Eagles 3Morgan’s MadnessYoursWon',
+      'Q2Chiefs 1, Eagles 10Chiefs 1 · Eagles 0Derek’s Great Golf Guys',
+      'Q3Chiefs 7, Eagles 17Chiefs 7 · Eagles 7No winner',
+      'FinalChiefs 10, Eagles 23Chiefs 0 · Eagles 3Morgan’s MadnessYoursWon',
     ]);
+    expect(screen.getByTestId('squares-winner-1-won')).toBeInTheDocument();
+    expect(screen.queryByTestId('squares-winner-2-won')).not.toBeInTheDocument();
     // Each winner has its (i) for its team; a box nobody held has none.
     expect(within(screen.getByTestId('squares-winner-1')).getByRole('button', { name: 'About Morgan’s Madness' })).toBeInTheDocument();
     expect(within(screen.getByTestId('squares-winner-3')).queryByRole('button')).not.toBeInTheDocument();
     expect(box(0, 0)).toHaveAttribute('data-winner', 'true');
+    expect(box(0, 0)).toHaveTextContent('MMQ1/F');
+    expect(boxControl(0, 0)).toHaveAccessibleName(/won Q1, Final/);
     expect(box(7, 9)).toHaveAttribute('data-winner', 'true');
+    expect(box(7, 9)).toHaveTextContent('Q3');
     expect(box(5, 5)).not.toHaveAttribute('data-winner');
-    expect(screen.getByTestId('squares-standing-place-entry-1')).toHaveTextContent('1');
-    expect(screen.getByTestId('squares-standing-won-entry-1')).toHaveTextContent('2');
+    expect(screen.queryByTestId('squares-standings-table')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
   });
-  it('highlights the boxes of the entry a link names (?entry=) as the viewer\'s own are, and turns the standings to its row', async () => {
-    primeMocks({ contest: squaresContestFixture({ myEntryIds: ['entry-1'] }) });
-    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
 
-    expect(await screen.findByTestId('squares-standing-row-entry-2')).toHaveAttribute('aria-current', 'true');
-    expect(box(1, 1)).toHaveAttribute('data-linked', 'true');
-    expect(box(1, 1)).toHaveClass('border-primary', 'bg-primary/15');
-    expect(box(1, 1)).not.toHaveAttribute('data-mine');
-    expect(box(0, 0)).not.toHaveAttribute('data-linked');
-  });
-
-  it('lights no boxes for a linked entry My entries hides', async () => {
-    primeMocks({ contest: squaresContestFixture({ myEntryIds: ['entry-1'] }) });
-    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?mine=1&entry=entry-2');
-
-    expect(await screen.findByTestId('squares-standing-row-entry-1')).toBeInTheDocument();
-    expect(box(1, 1)).not.toHaveAttribute('data-linked');
-  });
-
-  it('marks the viewer\'s own entry Yours in the standings, and no one else\'s', async () => {
+  it('opens on the Score tab while the game is played, with each quarter\'s points and the live one tinted, and marks the box winning now and its row and column', async () => {
     primeMocks({
-      contest: squaresContestFixture({ myEntryIds: ['entry-1'] }),
-      board: squaresBoardFixture(),
+      contest: squaresContestFixture({ status: 'ACTIVE' }),
+      board: squaresBoardFixture({
+        contestStatus: 'ACTIVE',
+        claimsOpen: false,
+        drawOpen: false,
+        digits: DRAWN_DIGITS,
+        game: squaresGameFixture({
+          status: 'IN_PROGRESS',
+          homeScore: 10,
+          awayScore: 17,
+          periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }, { periodNumber: 2, homeScore: 10, awayScore: 14 }],
+        }),
+        boxes: [
+          { rowIndex: 7, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Derek’s Great Golf Guys' },
+          { rowIndex: 7, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
+        ],
+        winners: [
+          { periodNumber: 1, homeScore: 3, awayScore: 7, rowIndex: 7, columnIndex: 0, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' },
+          { periodNumber: 2, homeScore: 10, awayScore: 14, rowIndex: 4, columnIndex: 1, contestEntryId: null, entryName: null },
+        ],
+      }),
     });
     renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
-    expect(within(await screen.findByTestId('squares-standing-row-entry-1')).getByText('Yours')).toBeInTheDocument();
-    expect(within(screen.getByTestId('squares-standing-row-entry-2')).queryByText('Yours')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('squares-score-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('squares-winners')).not.toBeInTheDocument();
+    expect(screen.getByTestId('squares-score-away')).toHaveTextContent(/^Chiefs773–17$/);
+    expect(screen.getByTestId('squares-score-home')).toHaveTextContent(/^Eagles370–10$/);
+    expect(screen.getByTestId('squares-score-head-3')).toHaveAttribute('data-live', 'true');
+    expect(screen.getByTestId('squares-score-head-2')).not.toHaveAttribute('data-live');
+    expect(box(7, 1)).toHaveAttribute('data-now', 'true');
+    expect(box(7, 1)).toHaveTextContent('DGNow');
+    expect(boxControl(7, 1)).toHaveAccessibleName(/winning now/);
+    expect(box(7, 0)).toHaveTextContent('MMQ1');
+    expect(box(7, 0)).not.toHaveAttribute('data-now');
+    expect(screen.getByTestId('squares-row-digit-7')).toHaveClass('bg-done/20');
+    expect(screen.getByTestId('squares-column-digit-1')).toHaveClass('bg-done/20');
+    expect(screen.getByTestId('squares-row-digit-6')).not.toHaveClass('bg-done/20');
+
+    fireEvent.mouseDown(screen.getByTestId('squares-tab-winners'));
+    fireEvent.click(screen.getByTestId('squares-tab-winners'));
+    expect(await screen.findByTestId('squares-winners')).toHaveTextContent('Q1Chiefs 7, Eagles 3');
+  });
+
+  it('shades the boxes of the entry a link names (?entry=) as the viewer\'s own are, and scrolls to the board', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
+
+    await screen.findByTestId('squares-grid');
+    expect(box(1, 1)).toHaveAttribute('data-linked', 'true');
+    expect(box(1, 1)).not.toHaveAttribute('data-mine');
+    expect(box(0, 0)).not.toHaveAttribute('data-linked');
+    expect(scrolled).toEqual([screen.getByTestId('squares-grid')]);
+    scroll.mockRestore();
+  });
+
+  it('shades no boxes and scrolls nowhere for an entry id the board doesn\'t hold', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-9');
+
+    await screen.findByTestId('squares-grid');
+    expect(screen.queryAllByTestId(/^squares-box-/).some((each) => each.hasAttribute('data-linked'))).toBe(false);
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
+  });
+
+  it('shows a box\'s full entry name and its numbers on a tap once the numbers are drawn', async () => {
+    primeMocks({
+      board: squaresBoardFixture({ claimsOpen: false, drawOpen: false, digits: DRAWN_DIGITS }),
+    });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
+
+    fireEvent.click(await screen.findByTestId('squares-box-1-1-peek'));
+    const callout = await screen.findByTestId('squares-box-1-1-peek-callout');
+    expect(callout).toHaveTextContent('Derek’s Great Golf Guys');
+    expect(callout).toHaveTextContent('Chiefs 1 · Eagles 0');
   });
 });

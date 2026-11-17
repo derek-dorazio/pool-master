@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { ContestEntryListPage } from './contest-entry-list-page';
+import { squaresBoardFixture } from './test/squares-fixtures';
 
 const {
   enterContestMock,
@@ -12,6 +13,7 @@ const {
   getEventMock,
   listContestEntriesMock,
   getLeagueMock,
+  getSquaresBoardMock,
   listEventParticipantsMock,
   listEventTiersMock,
   mockLogger,
@@ -33,6 +35,7 @@ const {
     getContestMock: vi.fn(),
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
+    getSquaresBoardMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventTiersMock: vi.fn(),
@@ -48,6 +51,8 @@ bindApiMocks({
   // #202 — the contest board reads the league BY ID for the viewer's own squad membership. It
   // used to list every squad in the league and scan each one's members for the signed-in user.
   getLeague: getLeagueMock,
+  // #1758 — a squares contest's page is its board, read whole.
+  getSquaresBoard: getSquaresBoardMock,
   listContestEntries: listContestEntriesMock,
   // #1740 — a lineup pick's tier or price is its field row's: the event's field and tiers.
   listEventParticipants: listEventParticipantsMock,
@@ -179,7 +184,7 @@ function primeMocks(opts?: {
   entriesPerContest?: number;
   /** The league plan's entries per contest; the contest's own cap unless given. */
   planEntriesPerContest?: number;
-  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET';
+  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SQUARES';
   allEntryCount?: number;
   /** The event's field rows' tier ids and prices, by field row id; none unless given. */
   field?: Record<string, { tierId?: string; price?: number }>;
@@ -325,6 +330,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     listEventParticipantsMock.mockReset();
     listEventTiersMock.mockReset();
     getLeagueMock.mockReset();
+    getSquaresBoardMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.child.mockClear();
@@ -574,6 +580,47 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(await screen.findByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-toggle-entry-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-toggle-all')).not.toBeInTheDocument();
+  });
+
+  it('shows a squares contest\'s board as its entry list, with no Entries section below it, since every entry is on the board by its boxes', async () => {
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, THEIRS] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('squares-grid')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entries-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entries')).not.toBeInTheDocument();
+  });
+
+  it('shades the viewer\'s own squares entry a link names (?entry=) on the board and scrolls to it', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, THEIRS] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-1');
+
+    const grid = await screen.findByTestId('squares-grid');
+    await waitFor(() => expect(screen.getByTestId('squares-box-0-0')).toHaveAttribute('data-linked', 'true'));
+    expect(scrolled).toEqual([grid]);
+    scroll.mockRestore();
+  });
+
+  it('shades nothing for another team\'s squares entry a link names before lock', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, buildEntry({ id: 'entry-2', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team 1' })] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard('?entry=entry-2');
+
+    await screen.findByTestId('squares-grid');
+    await screen.findByTestId('squares-box-1-1');
+    expect(screen.getByTestId('squares-box-1-1')).not.toHaveAttribute('data-linked');
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
   });
 
   it('gives a bracket entry of the viewer\'s a bracket icon before its name, "Edit bracket" to its pick page, in place of ✎, and another team\'s entry none', async () => {

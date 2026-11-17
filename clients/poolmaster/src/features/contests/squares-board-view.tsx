@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, MatchStatus } from '@poolmaster/shared/domain';
 import {
   claimSquaresBox,
   clearSquaresBox,
@@ -18,18 +18,25 @@ import {
   LoadingState,
   SectionCard,
   Select,
+  TabbedCard,
   Text,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { formatClaimedCount, formatGridTaken, squaresMomentRows } from './squares-board';
+import { MineMarker } from './mine-marker';
+import { formatClaimedCount, formatGridTaken, squaresMomentRows, squaresScoreByPeriod } from './squares-board';
+import { SquaresScoreTable } from './squares-score-table';
 import { SquaresGrid, type SquaresBoxAction } from './squares-grid';
 import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestLeagueCode } from './use-contest-league';
 import { SquaresWinners } from './squares-winners';
 import { entryWriteKeys } from './use-contest-entries';
+import { useLandOnEntry } from './use-linked-entry';
+
+/** The tabs above a drawn board. */
+type SquaresTab = 'score' | 'winners';
 
 /** Copy for the refusals a claim, a clear and the draw can meet (#711). The codes are the contract. */
 const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
@@ -58,7 +65,10 @@ export function SquaresBoardView({
   /** Whether the viewer is a commissioner of the league (or a root admin). */
   canManage: boolean;
   contest: ContestDto;
-  /** The entry a link names (`?entry=`, #1762), whose boxes are highlighted as the viewer's own are. */
+  /**
+   * The entry a link names (`?entry=`, #1762): once the board holds it, its boxes are shaded as
+   * the viewer's own are and the page scrolls to the board, once. An id the board doesn't hold is ignored.
+   */
   linkedEntryId?: string | null;
   /** The viewer's own entries in the contest: one, or none before they enter. */
   myEntryIds: readonly string[];
@@ -74,6 +84,9 @@ export function SquaresBoardView({
   // The entry a commissioner claims for; null is the entry on screen, else their own, else the first entry.
   const [claimForEntryId, setClaimForEntryId] = useState<string | null>(null);
   const [isDrawConfirmOpen, setIsDrawConfirmOpen] = useState(false);
+  const landOn = useLandOnEntry();
+  // The tab the viewer chose; until they choose, Score while the game is played and Winners once it is over.
+  const [chosenTab, setChosenTab] = useState<SquaresTab | null>(null);
 
   const logRefusal = (action: string, error: Error) => {
     const payload = { action, data: { contestId }, err: error };
@@ -140,6 +153,8 @@ export function SquaresBoardView({
   }
 
   const board = boardQuery.data;
+  const shownLinkedEntryId = board.entries.some((entry) => entry.contestEntryId === linkedEntryId) ? linkedEntryId : null;
+  landOn(shownLinkedEntryId);
   const myEntryId = myEntryIds.at(0) ?? null;
   const claimingEntryId = canManage
     ? claimForEntryId
@@ -148,13 +163,16 @@ export function SquaresBoardView({
       ?? board.entries.at(0)?.contestEntryId
       ?? null
     : myEntryId;
-  const myBoxCount = board.boxes.filter((box) => box.contestEntryId === claimingEntryId).length;
-  const claimingEntry = board.entries.find((entry) => entry.contestEntryId === claimingEntryId) ?? null;
-  const isFinal = board.contestStatus === ContestStatus.COMPLETED;
-  const moments = squaresMomentRows(board);
+  const boxCountOf = (contestEntryId: string) => board.boxes.filter((box) => box.contestEntryId === contestEntryId).length;
+  const myBoxCount = claimingEntryId === null ? 0 : boxCountOf(claimingEntryId);
+  const isOver = board.contestStatus === ContestStatus.COMPLETED || board.game.status === MatchStatus.COMPLETED;
+  const homeTeam = board.homeTeamName ?? 'Home team';
+  const awayTeam = board.awayTeamName ?? 'Away team';
   // A winning box's entry's team, for the winner's (i) (#1564).
   const squadIdByEntryId = new Map(board.entries.map((entry) => [entry.contestEntryId, entry.squadId]));
   const winnerSquadId = (contestEntryId: string | null) => (contestEntryId === null ? undefined : squadIdByEntryId.get(contestEntryId));
+  // Before the draw, a line per entry of the viewer's, and the one a commissioner claims for.
+  const lineEntries = board.entries.filter((entry) => myEntryIds.includes(entry.contestEntryId) || (canManage && entry.contestEntryId === claimingEntryId));
 
   const actionFor = (box: SquaresBoxDto | null): SquaresBoxAction => {
     if (!board.claimsOpen) {
@@ -176,14 +194,35 @@ export function SquaresBoardView({
   return (
     <div className="space-y-6" data-testid="squares-board">
       {board.digits ? (
-        <SquaresWinners
-          awayTeamName={board.awayTeamName}
-          homeTeamName={board.homeTeamName}
-          isFinal={isFinal}
-          leagueCode={leagueCode}
-          leagueId={contest.leagueId}
-          moments={moments}
-          squadIdOf={winnerSquadId}
+        <TabbedCard
+          aria-label="Score and winners"
+          onValueChange={(value) => setChosenTab(value === 'winners' ? 'winners' : 'score')}
+          tabs={[
+            {
+              label: 'Score',
+              value: 'score',
+              testId: 'squares-tab-score',
+              content: <SquaresScoreTable awayTeamName={awayTeam} homeTeamName={homeTeam} score={squaresScoreByPeriod(board.game, board.periodLayout)} />,
+            },
+            {
+              label: 'Winners',
+              value: 'winners',
+              testId: 'squares-tab-winners',
+              content: (
+                <SquaresWinners
+                  awayTeamName={awayTeam}
+                  homeTeamName={homeTeam}
+                  leagueCode={leagueCode}
+                  leagueId={contest.leagueId}
+                  moments={squaresMomentRows(board)}
+                  myEntryIds={myEntryIds}
+                  squadIdOf={winnerSquadId}
+                />
+              ),
+            },
+          ]}
+          testId="squares-tabs"
+          value={chosenTab ?? (isOver ? 'winners' : 'score')}
         />
       ) : null}
 
@@ -191,24 +230,21 @@ export function SquaresBoardView({
         headingLevel={3}
         padded
         testId="squares-grid-section"
-        title={board.claimsOpen ? 'Claim your boxes' : 'The grid'}
+        help={board.claimsOpen
+          ? 'Tap an open box to claim it, or one of yours to give it back. Once the numbers are drawn, boxes can no longer change.'
+          : 'Each period is won by the box at the last digit of each team\'s score at its end.'}
+        title={board.claimsOpen ? 'Claim your boxes' : 'The board'}
         trailing={board.drawOpen && canManage ? (
           <Button data-testid="squares-draw" onClick={() => setIsDrawConfirmOpen(true)} size="sm">
             Draw numbers
           </Button>
         ) : undefined}
       >
-            <Text as="p" data-testid="squares-claim-help" variant="meta">
-              {board.claimsOpen
-                ? claimingEntryId === null
-                  ? 'Enter the contest to claim boxes.'
-                  : 'Tap an empty box to claim it, or one of yours to clear it. The numbers are drawn once the boxes are claimed.'
-                : board.digits
-                  ? 'The numbers are drawn. Each quarter is won by the box matching the last digit of each team\'s score.'
-                  : 'Boxes can no longer be claimed.'}
-            </Text>
+        {board.claimsOpen && claimingEntryId === null ? (
+          <Text as="p" data-testid="squares-claim-help" variant="meta">Enter the contest to claim boxes.</Text>
+        ) : null}
 
-        <div className="flex flex-wrap items-end gap-4">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
           {canManage && board.claimsOpen && board.entries.length > 0 ? (
             <FormField label="Claim for">
               <Select
@@ -222,13 +258,22 @@ export function SquaresBoardView({
               </Select>
             </FormField>
           ) : null}
-          {claimingEntry ? (
-            <Text data-testid="squares-claimed-count" weight="semibold">
-              {`${canManage && claimingEntry.contestEntryId !== myEntryId ? `${claimingEntry.entryName}: ` : ''}${formatClaimedCount(myBoxCount, board.maxSquaresPerEntry)}`}
-            </Text>
-          ) : null}
           <Text data-testid="squares-grid-taken" variant="meta">{formatGridTaken(board.boxes.length)}</Text>
         </div>
+
+        {board.claimsOpen && lineEntries.length > 0 ? (
+          <ul className="space-y-1" data-testid="squares-entry-lines">
+            {lineEntries.map((entry) => (
+              <li className="flex flex-wrap items-center gap-x-2" data-testid={`squares-entry-line-${entry.contestEntryId}`} key={entry.contestEntryId}>
+                <Text variant="strong" weight="semibold">{entry.entryName}</Text>
+                {myEntryIds.includes(entry.contestEntryId) ? <MineMarker /> : null}
+                <Text data-testid={`squares-entry-line-${entry.contestEntryId}-count`} variant="meta">
+                  {formatClaimedCount(boxCountOf(entry.contestEntryId), board.maxSquaresPerEntry)}
+                </Text>
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         {boxError ? <Notice data-testid="squares-box-error" tone="danger">{boxError}</Notice> : null}
 
@@ -236,7 +281,7 @@ export function SquaresBoardView({
           actionFor={actionFor}
           board={board}
           isBusy={boxMutation.isPending}
-          linkedEntryId={linkedEntryId}
+          linkedEntryId={shownLinkedEntryId}
           myEntryIds={myEntryIds}
           onBoxAction={changeBox}
         />

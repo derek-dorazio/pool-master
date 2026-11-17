@@ -49,3 +49,14 @@ export const OnAValue: Story = {
     trigger: "text",
   },
 };
+
+/** A board cell that opens (#1758): a squares box's initials, its holder's full name in the card. */
+export const OnACell: Story = {
+  args: {
+    children: <PeekCard facts={[{ label: "Numbers", value: "Chiefs 7 · Eagles 3" }, { label: "Won", value: "Q1" }]} title="Big Hitters" />,
+    className: "flex size-8 rounded-sm border border-border bg-card text-xs font-semibold",
+    icon: <span className="flex size-full items-center justify-center">BH</span>,
+    label: "Row 1, column 1: Big Hitters",
+    trigger: "cell",
+  },
+};

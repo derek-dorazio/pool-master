@@ -1,20 +1,46 @@
 import type { SquaresBoardResponse, SquaresBoxDto } from '@/lib/api';
-import { Button, cn, SimpleTable, TableBody, TableCell, TableHead, TableHeaderCell, Text } from '@/features/shared/ui';
+import {
+  BoardBand,
+  BoardCellContent,
+  boardAxisClassName,
+  boardCellClassName,
+  Button,
+  DetailsPeek,
+  formatEntryInitials,
+  PeekCard,
+  SimpleTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+} from '@/features/shared/ui';
 import {
   SQUARES_POSITIONS,
   boxesByPlace,
   squaresBoxKey,
+  squaresLiveBox,
+  squaresMomentTag,
   winningPeriodsByPlace,
 } from './squares-board';
 
 /** What tapping a box does for the viewer: claim it, clear it, or nothing. */
 export type SquaresBoxAction = 'claim' | 'clear' | null;
 
+/** What the grid draws from the board read. */
+export type SquaresGridBoard = Pick<
+  SquaresBoardResponse,
+  'awayTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'homeTeamName' | 'periodLayout' | 'winners'
+>;
+
 /**
- * The 10x10 squares grid (#711, design §4.2): the home team across the top with its digits, the
- * away team down the side with theirs, blank until drawn. A claimed box shows its entry's name,
- * the viewer's own highlighted, and so are a linked entry's (#1762); a winning box is outlined. On a phone the grid scrolls sideways
- * inside its card, with the digit row and column pinned.
+ * The 10x10 squares board (#711, redesigned in #1758): the home team across the top and the away
+ * team down the side in navy bands, their digits beside the board ("?" until drawn). A claimed box
+ * shows its entry's initials, so the whole board fits a phone; hovering or tapping it opens the
+ * entry's full name and the box's numbers. The viewer's own boxes are shaded and outlined blue, as
+ * their rows are on other boards; winning boxes are gold with the period they won on a tag ("Q1/F" for a box that won Q1 and the final), and while a period is played its score's row and column
+ * are tinted and the box winning it now is outlined green with a Now tag. A box the viewer can
+ * claim or clear is a button that does so instead. The boxes of an entry a link names (`?entry=`,
+ * #1762) look as the viewer's own do.
  */
 export function SquaresGrid({
   actionFor,
@@ -26,114 +52,143 @@ export function SquaresGrid({
 }: {
   /** What a tap on this box does for the viewer; null leaves it read-only. */
   actionFor: (box: SquaresBoxDto | null) => SquaresBoxAction;
-  board: Pick<SquaresBoardResponse, 'awayTeamName' | 'boxes' | 'digits' | 'homeTeamName' | 'winners'>;
+  board: SquaresGridBoard;
   isBusy: boolean;
-  /** The entry a link names (`?entry=`), whose boxes are highlighted as the viewer's own are. */
+  /** The entry a link names (`?entry=`), whose boxes are shaded and outlined as the viewer's own are. */
   linkedEntryId?: string | null;
   myEntryIds: readonly string[];
   onBoxAction: (rowIndex: number, columnIndex: number, action: Exclude<SquaresBoxAction, null>) => void;
 }) {
   const boxes = boxesByPlace(board.boxes);
   const winningPeriods = winningPeriodsByPlace(board.winners);
+  const live = squaresLiveBox(board);
+  // From every entry of the contest, not only those holding a box, so a code never changes as others claim.
+  const initials = formatEntryInitials(board.entries.map((entry) => ({ id: entry.contestEntryId, name: entry.entryName })));
   const homeTeam = board.homeTeamName ?? 'Home team';
   const awayTeam = board.awayTeamName ?? 'Away team';
-  const digit = (digits: readonly number[] | undefined, index: number) => (digits ? String(digits[index]) : '');
+  const digit = (digits: readonly number[] | undefined, index: number) => (digits ? String(digits[index]) : '?');
+  // The box's numbers once drawn: "Chiefs 7 · Eagles 3", the away team's row first.
+  const numbersOf = (rowIndex: number, columnIndex: number) => (board.digits
+    ? `${awayTeam} ${board.digits.rowDigits[rowIndex]} · ${homeTeam} ${board.digits.columnDigits[columnIndex]}`
+    : null);
 
   return (
-    <div className="space-y-2" data-testid="squares-grid">
-      <Text as="div" className="pl-16 text-center" data-testid="squares-home-team" weight="semibold">{homeTeam}</Text>
-      <div className="flex">
-        <Text
-          as="div"
-          className="flex w-6 shrink-0 items-center justify-center [writing-mode:vertical-rl] rotate-180"
-          data-testid="squares-away-team"
-          weight="semibold"
-        >
-          {awayTeam}
-        </Text>
-        <div className="min-w-0 flex-1 overflow-x-auto" data-testid="squares-grid-scroll">
-          <SimpleTable className="w-auto border-separate border-spacing-0.5 text-xs">
-            <caption className="sr-only">{`${awayTeam} rows, ${homeTeam} columns`}</caption>
-            <TableHead tone="plain">
-              <tr>
-                <TableHeaderCell className="sticky left-0 top-0 z-20 h-8 w-8 bg-card p-0">
-                  <span className="sr-only">Digits</span>
+    // A linked entry is shown by its boxes, so landing on it scrolls to the board.
+    <div className="space-y-1" data-entry-id={linkedEntryId ?? undefined} data-testid="squares-grid">
+      <SimpleTable className="table-fixed border-separate border-spacing-0.5" density="compact">
+        <caption className="sr-only">{`${awayTeam} rows, ${homeTeam} columns`}</caption>
+        <colgroup>
+          <col className="w-5" />
+          <col className="w-5 sm:w-7" />
+          {SQUARES_POSITIONS.map((columnIndex) => <col key={columnIndex} />)}
+        </colgroup>
+        <TableHead tone="plain">
+          <tr>
+            <td aria-hidden colSpan={2} />
+            <TableHeaderCell className="p-0" colSpan={SQUARES_POSITIONS.length} scope="colgroup">
+              <BoardBand name={homeTeam} side="top" testId="squares-home-team" />
+            </TableHeaderCell>
+          </tr>
+          <tr>
+            <td aria-hidden colSpan={2} />
+            {SQUARES_POSITIONS.map((columnIndex) => (
+              <TableHeaderCell
+                align="center"
+                className={boardAxisClassName(live?.columnIndex === columnIndex)}
+                data-testid={`squares-column-digit-${columnIndex}`}
+                key={columnIndex}
+              >
+                {digit(board.digits?.columnDigits, columnIndex)}
+              </TableHeaderCell>
+            ))}
+          </tr>
+        </TableHead>
+        <TableBody>
+          {SQUARES_POSITIONS.map((rowIndex) => (
+            <tr key={rowIndex}>
+              {rowIndex === 0 ? (
+                <TableHeaderCell className="relative p-0" rowSpan={SQUARES_POSITIONS.length} scope="rowgroup">
+                  <BoardBand name={awayTeam} side="left" testId="squares-away-team" />
                 </TableHeaderCell>
-                {SQUARES_POSITIONS.map((columnIndex) => (
-                  <TableHeaderCell
-                    align="center"
-                    className="sticky top-0 z-10 h-8 min-w-16 rounded-md bg-muted p-0 text-sm font-semibold"
-                    data-testid={`squares-column-digit-${columnIndex}`}
-                    key={columnIndex}
-                  >
-                    {digit(board.digits?.columnDigits, columnIndex)}
-                  </TableHeaderCell>
-                ))}
-              </tr>
-            </TableHead>
-            <TableBody>
-              {SQUARES_POSITIONS.map((rowIndex) => (
-                <tr key={rowIndex}>
-                  <TableHeaderCell
-                    align="center"
-                    className="sticky left-0 z-10 w-8 rounded-md bg-muted p-0 text-sm font-semibold"
-                    data-testid={`squares-row-digit-${rowIndex}`}
-                    scope="row"
-                  >
-                    {digit(board.digits?.rowDigits, rowIndex)}
-                  </TableHeaderCell>
-                  {SQUARES_POSITIONS.map((columnIndex) => {
-                    const key = squaresBoxKey(rowIndex, columnIndex);
-                    const box = boxes.get(key) ?? null;
-                    const action = actionFor(box);
-                    const isMine = box !== null && myEntryIds.includes(box.contestEntryId);
-                    const isLinked = box !== null && box.contestEntryId === linkedEntryId;
-                    const won = winningPeriods.get(key) ?? [];
-                    const place = `Row ${rowIndex + 1}, column ${columnIndex + 1}`;
-                    const label = box
-                      ? `${place}: ${box.entryName}${action === 'clear' ? '. Tap to clear.' : ''}`
-                      : `${place}: empty${action === 'claim' ? '. Tap to claim.' : ''}`;
-                    const className = cn(
-                      'flex h-12 w-16 items-center justify-center rounded-md border px-1 py-0 text-center text-xs leading-tight',
-                      box ? 'border-border bg-muted/40' : 'border-dashed border-border bg-background',
-                      (isMine || isLinked) && 'border-primary bg-primary/15 font-semibold',
-                      won.length > 0 && 'ring-2 ring-accent ring-offset-1 ring-offset-background',
-                    );
-                    const content = <span className="line-clamp-2 break-words">{box?.entryName ?? ''}</span>;
-                    const marks = {
-                      'data-linked': isLinked || undefined,
-                      'data-mine': isMine || undefined,
-                      'data-testid': `squares-box-${rowIndex}-${columnIndex}`,
-                      'data-winner': won.length > 0 || undefined,
-                      title: box?.entryName,
-                    };
-                    return (
-                      <TableCell className="p-0" key={columnIndex}>
-                        {action === null ? (
-                          <div aria-label={label} className={className} role="img" {...marks}>{content}</div>
-                        ) : (
-                          <Button
-                            aria-label={label}
-                            className={cn(className, 'rounded-md font-normal hover:bg-primary/10', isMine && 'font-semibold')}
-                            disabled={isBusy}
-                            layout="row"
-                            onClick={() => onBoxAction(rowIndex, columnIndex, action)}
-                            size="sm"
-                            variant="ghost"
-                            {...marks}
-                          >
-                            {content}
-                          </Button>
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </tr>
-              ))}
-            </TableBody>
-          </SimpleTable>
-        </div>
-      </div>
+              ) : null}
+              <TableHeaderCell
+                align="center"
+                className={boardAxisClassName(live?.rowIndex === rowIndex)}
+                data-testid={`squares-row-digit-${rowIndex}`}
+                scope="row"
+              >
+                {digit(board.digits?.rowDigits, rowIndex)}
+              </TableHeaderCell>
+              {SQUARES_POSITIONS.map((columnIndex) => {
+                const key = squaresBoxKey(rowIndex, columnIndex);
+                const box = boxes.get(key) ?? null;
+                const action = actionFor(box);
+                const isMine = box !== null && myEntryIds.includes(box.contestEntryId);
+                const isLinked = box !== null && box.contestEntryId === linkedEntryId;
+                const won = winningPeriods.get(key) ?? [];
+                const isNow = live !== null && live.rowIndex === rowIndex && live.columnIndex === columnIndex;
+                const isLiveLine = live !== null && (live.rowIndex === rowIndex || live.columnIndex === columnIndex);
+                const numbers = numbersOf(rowIndex, columnIndex);
+                const tags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periodLayout));
+                const place = `Row ${rowIndex + 1}, column ${columnIndex + 1}`;
+                const facts = [numbers, tags.length > 0 ? `won ${tags.join(', ')}` : null, isNow ? 'winning now' : null]
+                  .filter((part) => part !== null);
+                const peekFacts = [
+                  ...(numbers === null ? [] : [{ label: 'Numbers', value: numbers }]),
+                  ...(tags.length > 0 ? [{ label: 'Won', value: tags.join('/') }] : []),
+                  ...(isNow ? [{ label: 'Now', value: 'Winning this period' }] : []),
+                ];
+                const label = box
+                  ? `${[`${place}: ${box.entryName}`, ...facts].join(', ')}${action === 'clear' ? '. Tap to clear.' : ''}`
+                  : `${[`${place}: empty`, ...facts].join(', ')}${action === 'claim' ? '. Tap to claim.' : ''}`;
+                const look = boardCellClassName({ isEmpty: box === null, isMine: isMine || isLinked, isWon: won.length > 0, isNow, isOnLiveLine: isLiveLine });
+                const tag = tags.length > 0
+                  // Two or more tags shorten Final to F ("Q1/F"), so the tag stays inside its box on a phone.
+                  ? { label: tags.length > 1 ? tags.map((each) => (each === 'Final' ? 'F' : each)).join('/') : tags[0], tone: 'won' as const }
+                  : isNow ? { label: 'Now', tone: 'now' as const } : undefined;
+                const content = <BoardCellContent code={box ? initials.get(box.contestEntryId) ?? '' : ''} tag={tag} />;
+                const marks = {
+                  'data-linked': isLinked || undefined,
+                  'data-mine': isMine || undefined,
+                  'data-now': isNow || undefined,
+                  'data-testid': `squares-box-${rowIndex}-${columnIndex}`,
+                  'data-winner': won.length > 0 || undefined,
+                };
+                return (
+                  <TableCell className="p-0" key={columnIndex}>
+                    {action !== null ? (
+                      <div className={look}>
+                        <Button
+                          aria-label={label}
+                          disabled={isBusy}
+                          {...marks}
+                          onClick={() => onBoxAction(rowIndex, columnIndex, action)}
+                          size="cell"
+                          variant="ghost"
+                        >
+                          {content}
+                        </Button>
+                      </div>
+                    ) : box ? (
+                      <DetailsPeek
+                        className={look}
+                        icon={<span className="flex size-full items-center justify-center" {...marks}>{content}</span>}
+                        label={label}
+                        testId={`squares-box-${rowIndex}-${columnIndex}-peek`}
+                        trigger="cell"
+                      >
+                        <PeekCard facts={peekFacts} testId={`squares-box-${rowIndex}-${columnIndex}-card`} title={box.entryName} />
+                      </DetailsPeek>
+                    ) : (
+                      <div aria-label={label} className={look} role="img" {...marks}>{content}</div>
+                    )}
+                  </TableCell>
+                );
+              })}
+            </tr>
+          ))}
+        </TableBody>
+      </SimpleTable>
     </div>
   );
 }

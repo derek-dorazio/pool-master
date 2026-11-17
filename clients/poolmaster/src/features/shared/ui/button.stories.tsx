@@ -35,6 +35,12 @@ export const Sizes: Story = {
   ),
 };
 
+/** A board cell's button (#1758): it fills the cell, such as a squares box, which draws its own look. */
+export const Cell: Story = {
+  args: { size: "cell", variant: "ghost", children: "BH" },
+  decorators: [(Story) => <div className="flex size-8 rounded-sm border border-dashed border-border"><Story /></div>],
+};
+
 export const Busy: Story = { args: { isLoading: true, children: "Saving" } };
 
 export const Disabled: Story = { args: { disabled: true } };

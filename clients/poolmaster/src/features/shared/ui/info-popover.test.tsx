@@ -114,6 +114,22 @@ describe("InfoPopover", () => {
     expect(screen.getByTestId("score-callout")).toHaveTextContent("19 pts · 7 reb · 5 ast");
   });
 
+  it("makes a whole board cell the button with a cell trigger, drawing no icon circle or underline, and opens it on a tap", () => {
+    render(
+      <InfoPopover icon="BH" label="Row 1, column 1: Big Hitters" testId="box" trigger="cell">
+        <p>Big Hitters</p>
+      </InfoPopover>,
+    );
+    const button = screen.getByTestId("box");
+
+    expect(button).toHaveTextContent("BH");
+    expect(button).toHaveClass("size-full");
+    expect(button).not.toHaveClass("size-9");
+    expect(button).not.toHaveClass("underline");
+    fireEvent.click(button);
+    expect(screen.getByTestId("box-callout")).toHaveTextContent("Big Hitters");
+  });
+
   it("closes on Escape and when focus moves elsewhere", () => {
     const button = drawPopover();
 

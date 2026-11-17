@@ -260,7 +260,8 @@ export function ContestEntryListPage() {
   const hasMine = myEntryIds.length > 0;
   const expandableIds = opensToPicks(contest) ? myEntryIds : [];
   const linkedMineId = myEntryIds.find((entryId) => entryId === linkedEntry.entryId) ?? null;
-  landOn(linkedMineId, () => {
+  // A squares board lands on its own linked entry once its boxes load.
+  landOn(contest.selectionType === SelectionType.SQUARES ? null : linkedMineId, () => {
     if (linkedMineId !== null && expandableIds.includes(linkedMineId)) {
       openRows.open(linkedMineId);
     }
@@ -338,11 +339,16 @@ export function ContestEntryListPage() {
         </Notice>
       ) : null}
 
-      {/* A squares contest's board is its entries' boxes: it stays above the list. */}
+      {/* A squares contest's board is its entry list (#1758): every entry is on it by its boxes. */}
       {contest.selectionType === SelectionType.SQUARES ? (
-        <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
-      ) : null}
-
+        <SquaresBoardView
+          canManage={viewer.isCommissioner || viewer.isRootAdmin}
+          contest={contest}
+          // Before lock only the viewer's own entry is linked: its boxes shade as theirs do anyway.
+          linkedEntryId={linkedMineId}
+          myEntryIds={contest.myEntryIds ?? []}
+        />
+      ) : (
       <SectionCard bare testId="contest-board-entries-section" title="Entries">
         {expandableIds.length > 0 ? (
           <div className="flex justify-end">
@@ -384,6 +390,7 @@ export function ContestEntryListPage() {
           )}
         </div>
       </SectionCard>
+      )}
     </ContestPageFrame>
   );
 }

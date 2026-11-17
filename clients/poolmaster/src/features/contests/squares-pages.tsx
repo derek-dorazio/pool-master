@@ -1,21 +1,15 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import { useParams } from 'react-router';
 import { describeSquaresRules } from '@poolmaster/shared/domain';
-import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
+import type { ContestDto, SquaresBoardResponse } from '@/lib/api';
 import { ContestPageFrame } from './contest-header';
 import { EntryRenameSection } from './entry-rename-section';
 import { canRenameEntries } from './contest-status';
-import { entryColumn, placeColumn, totalColumn } from './leaderboard-columns';
-import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
+import { LeaderboardFrame } from './leaderboard-kit';
 import { SquaresBoardView } from './squares-board-view';
 import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestEntryQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
 import { useLinkedEntry } from './use-linked-entry';
-import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
-
-/** The prefix of the standings' test ids. */
-const TEST_ID = 'squares-standing';
 
 /** A squares contest's rules sentence, once its board has loaded with the box limit. */
 function squaresRules(board: SquaresBoardResponse | undefined) {
@@ -61,38 +55,15 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
   );
 }
 
-/** A standings row: a squares entry, by the id every board names its entry with. */
-type StandingRow = SquaresEntryDto & { entryId: string };
-
-/** The standings' columns: place once Final, the entry, its boxes and the quarters it won. */
-function standingsColumns(contestId: string, leagueCode: string, leagueId: string, myEntryIds: readonly string[]): ColumnDef<StandingRow>[] {
-  return [
-    placeColumn(TEST_ID),
-    // A squares entry names no squad, so the viewer's own are the entries the contest says are theirs.
-    entryColumn(TEST_ID, { contestId, isMine: (row) => myEntryIds.includes(row.entryId), leagueCode, leagueId }),
-    { id: 'boxes', header: 'Boxes', accessorFn: (row) => row.boxCount },
-    totalColumn(TEST_ID, { header: 'Quarters won', id: 'won', value: (row) => row.periodsWon }),
-  ];
-}
-
 /**
- * A squares contest's leaderboard (#711): each quarter's winner and the grid with the winning
- * boxes outlined, then every entry with its boxes and the quarters it won, placed once Final. A
- * link naming an entry (`?entry=`, #1762) highlights its boxes and turns the standings to its row.
+ * A squares contest's leaderboard (#711, #1758): the score and winners tabs above the board, where
+ * every entry shows by its boxes, so there is no list of entries below it. A link naming an entry
+ * (`?entry=`, #1762) shades its boxes as the viewer's own are and scrolls to the board.
  */
 export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
   const boardQuery = useSquaresBoardQuery(contest);
   const { leagueCode, viewer } = useContestLeague(contest.leagueId);
-  const myEntriesFilter = useMyEntriesFilter();
   const linkedEntry = useLinkedEntry();
-  const myEntryIds = contest.myEntryIds ?? [];
-  // The linked entry's boxes light up while the standings show its row, as `ScoreboardGrid` lands on it.
-  const shownEntryIds = narrowToMyEntries(
-    boardQuery.data?.entries.map((row) => row.contestEntryId) ?? [],
-    (entryId) => myEntryIds.includes(entryId),
-    myEntriesFilter.isOn,
-  ).rows;
-  const linkedEntryId = shownEntryIds.find((entryId) => entryId === linkedEntry.entryId) ?? null;
 
   return (
     <LeaderboardFrame
@@ -106,19 +77,9 @@ export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
       <SquaresBoardView
         canManage={viewer.isCommissioner || viewer.isRootAdmin}
         contest={contest}
-        linkedEntryId={linkedEntryId}
-        myEntryIds={myEntryIds}
+        linkedEntryId={linkedEntry.entryId}
+        myEntryIds={contest.myEntryIds ?? []}
       />
-      {boardQuery.data ? (
-        <ScoreboardGrid
-          columns={standingsColumns(contest.id, leagueCode, contest.leagueId, contest.myEntryIds ?? [])}
-          data={boardQuery.data.entries.map((row) => ({ ...row, entryId: row.contestEntryId }))}
-          isMine={(row) => (contest.myEntryIds ?? []).includes(row.entryId)}
-          emptyMessage="No entry holds a box yet."
-          rowTestIdPrefix="squares-standing-row"
-          tableTestId="squares-standings-table"
-        />
-      ) : null}
     </LeaderboardFrame>
   );
 }
