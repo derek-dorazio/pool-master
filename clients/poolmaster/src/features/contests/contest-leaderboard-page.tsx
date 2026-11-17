@@ -42,7 +42,7 @@ import { LeaderboardFrame, LeaderboardSection } from './leaderboard-kit';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
 import { MyEntriesToggle } from './my-entries-toggle';
-import { useMyEntriesFilter } from './use-my-entries-filter';
+import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
@@ -433,9 +433,8 @@ export function ContestLeaderboardPage() {
   const openEntryIds = allEntryIds.filter(openRows.isOpen);
   // #1750 — "My entries" narrows the board to the viewer's own, each at its real place; search and
   // paging then work within them.
-  const myEntries = view.entries.filter(isMySquadsEntry(mySquadId));
-  const showsMineOnly = myEntriesFilter.isOn && myEntries.length > 0;
-  const matchingEntries = (showsMineOnly ? myEntries : view.entries).filter((entry) => matchesSearch(entry, search));
+  const myEntries = narrowToMyEntries(view.entries, isMySquadsEntry(mySquadId), myEntriesFilter.isOn);
+  const matchingEntries = myEntries.rows.filter((entry) => matchesSearch(entry, search));
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
   // A refetch or a narrower search can leave fewer pages than the one being shown.
   const currentPage = Math.min(pageIndex, pageCount - 1);
@@ -485,9 +484,9 @@ export function ContestLeaderboardPage() {
                 type="search"
                 value={search}
               />
-              {myEntries.length > 0 ? (
+              {myEntries.hasMine ? (
                 <MyEntriesToggle
-                  checked={showsMineOnly}
+                  checked={myEntries.showsMineOnly}
                   onCheckedChange={(on) => {
                     myEntriesFilter.setOn(on);
                     setPageIndex(0);

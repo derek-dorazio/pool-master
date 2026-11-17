@@ -115,6 +115,11 @@ export type DataGridProps<TData> = {
    * leaderboard's "My entries" switch. The caller narrows `data` itself.
    */
   toolbarEnd?: ReactNode;
+  /**
+   * Names a narrowing the caller applies to `data` itself, such as "mine" or "all": when it
+   * changes, the grid starts again from its first page, as it does for its own search.
+   */
+  pageResetKey?: string;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -192,6 +197,7 @@ export function DataGrid<TData>({
   headerTone = "plain",
   views,
   toolbarEnd,
+  pageResetKey,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
@@ -213,6 +219,13 @@ export function DataGrid<TData>({
   const [pagedSearchTerm, setPagedSearchTerm] = useState(searchTerm);
   if (searchTerm !== pagedSearchTerm) {
     setPagedSearchTerm(searchTerm);
+    resetPageIndex();
+  }
+
+  // So does another narrowing the caller applies, such as a leaderboard's My entries.
+  const [pagedResetKey, setPagedResetKey] = useState(pageResetKey);
+  if (pageResetKey !== pagedResetKey) {
+    setPagedResetKey(pageResetKey);
     resetPageIndex();
   }
 

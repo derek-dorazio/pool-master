@@ -7,7 +7,7 @@ import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
-import { useMyEntriesFilter } from './use-my-entries-filter';
+import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 
 /**
  * The pieces every contest leaderboard is built from (#1277): the frame with its notes and the
@@ -54,23 +54,24 @@ export function ScoreboardGrid<Row extends BoardRow>({
   /** The title bar's trailing slot: the viewer's best place (`YourBestNote`). */
   trailing?: ReactNode;
 }) {
-  const myEntries = useMyEntriesFilter();
-  const mine = data.filter(isMine);
-  const showsMineOnly = myEntries.isOn && mine.length > 0;
+  const myEntriesFilter = useMyEntriesFilter();
+  const myEntries = narrowToMyEntries(data, isMine, myEntriesFilter.isOn);
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
         headerTone="scoreboard"
         columns={columns}
-        data={showsMineOnly ? mine : data}
+        data={myEntries.rows}
         emptyMessage={emptyMessage}
         getRowId={(row) => row.entryId}
         pageSize={LEADERBOARD_PAGE_SIZE}
         rowTestId={(row) => `${rowTestIdPrefix}-${row.entryId}`}
         search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
         showColumnFilters={false}
+        // Flipping the filter starts the board again from its first page, as the lineup board does.
+        pageResetKey={myEntries.showsMineOnly ? 'mine' : 'all'}
         tableTestId={tableTestId}
-        toolbarEnd={mine.length > 0 ? <MyEntriesToggle checked={showsMineOnly} onCheckedChange={myEntries.setOn} /> : undefined}
+        toolbarEnd={myEntries.hasMine ? <MyEntriesToggle checked={myEntries.showsMineOnly} onCheckedChange={myEntriesFilter.setOn} /> : undefined}
       />
     </LeaderboardSection>
   );
