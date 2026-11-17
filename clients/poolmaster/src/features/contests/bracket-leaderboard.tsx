@@ -45,29 +45,32 @@ function bracketColumns({
   mySquadId: string | null;
   onOpen: (row: BracketBoardRow) => void;
 }): ColumnDef<BracketBoardRow>[] {
+  const entry = entryColumn<BracketBoardRow>(TEST_ID, {
+    contestId,
+    isMine: isMySquadsEntry(mySquadId),
+    leading: (row) => (
+      <Button
+        aria-label={`View bracket: ${row.entryName}`}
+        className="-my-2"
+        data-testid={`${TEST_ID}-open-${row.entryId}`}
+        onClick={() => onOpen(row)}
+        size="xs"
+        title="View bracket"
+        type="button"
+        variant="icon"
+      >
+        <BracketIcon aria-hidden size={16} />
+      </Button>
+    ),
+    leagueCode,
+    leagueId,
+  });
   return [
     placeColumn(TEST_ID),
     {
-      ...entryColumn(TEST_ID, {
-        contestId,
-        isMine: isMySquadsEntry(mySquadId),
-        leading: (row) => (
-          <Button
-            aria-label={`View bracket: ${row.entryName}`}
-            className="-my-2"
-            data-testid={`${TEST_ID}-open-${row.entryId}`}
-            onClick={() => onOpen(row)}
-            size="xs"
-            title="View bracket"
-            type="button"
-            variant="icon"
-          >
-            <BracketIcon aria-hidden size={16} />
-          </Button>
-        ),
-        leagueCode,
-        leagueId,
-      }),
+      ...entry,
+      // Wide enough to keep the icon, the name and its (i) on a line while the rest scroll under it.
+      cell: (context) => <span className="block w-48">{typeof entry.cell === 'function' ? entry.cell(context) : null}</span>,
       meta: { pinned: 'start' },
     },
     {

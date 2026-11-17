@@ -47,7 +47,7 @@ function DesktopBracket({ drawing, isOwnEntry, picking, tiebreaker }: BracketVie
     </div>
   ) : null);
   return (
-    <div className="overflow-x-auto pb-2" data-layout="desktop" data-testid="bracket-board">
+    <div className="relative overflow-x-auto pb-2" data-layout="desktop" data-testid="bracket-board">
       <div className="mx-auto flex w-max items-center gap-6">
         {half(left, false)}
         {drawing.middle ? (
@@ -82,21 +82,21 @@ function PhoneRegion({ group, picking }: { group: BracketGroup; picking: Bracket
   const move = (step: number) => setStart((current) => Math.min(Math.max(current + step, 0), lastStart));
   return (
     <div className="flex flex-col gap-2">
-      <nav aria-label={`${group.label} rounds`} className="flex items-center gap-2" data-testid="bracket-round-nav">
+      <nav aria-label={`${group.label} rounds`} className="flex items-center gap-3" data-testid="bracket-round-nav">
         {before ? (
-          <Button className="shrink-0" data-testid="bracket-round-nav-back" onClick={() => move(-1)} size="xs" type="button" variant="link">
-            <ChevronLeft aria-hidden size={14} />
-            {before.label}
+          <Button className="min-w-0 shrink" data-testid="bracket-round-nav-back" onClick={() => move(-1)} size="xs" type="button" variant="link">
+            <ChevronLeft aria-hidden className="shrink-0" size={14} />
+            <span className="truncate">{before.label}</span>
           </Button>
         ) : null}
         {shown.map((round) => (
-          <Text className="min-w-0 flex-1" data-testid="bracket-round-nav-shown" key={round.roundNumber} truncate variant="label">{round.label}</Text>
+          <Text className="shrink-0" data-testid="bracket-round-nav-shown" key={round.roundNumber} variant="label">{round.label}</Text>
         ))}
-        {showsWinner ? <Text className="min-w-0 flex-1" truncate variant="label">Winner</Text> : null}
+        {showsWinner ? <Text className="shrink-0" variant="label">Winner</Text> : null}
         {after ? (
-          <Button className="shrink-0" data-testid="bracket-round-nav-next" onClick={() => move(1)} size="xs" type="button" variant="link">
-            {after.label}
-            <ChevronRight aria-hidden size={14} />
+          <Button className="ml-auto min-w-0 shrink" data-testid="bracket-round-nav-next" onClick={() => move(1)} size="xs" type="button" variant="link">
+            <span className="truncate">{after.label}</span>
+            <ChevronRight aria-hidden className="shrink-0" size={14} />
           </Button>
         ) : null}
       </nav>
@@ -133,7 +133,7 @@ function PhoneRegion({ group, picking }: { group: BracketGroup; picking: Bracket
  */
 function PhoneBracket({ drawing, isOwnEntry, picking, tiebreaker }: BracketViewProps) {
   const middle = drawing.middle ? (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <BracketMiddle
         champion={drawing.champion}
         columnClassName={PHONE_COLUMN}
