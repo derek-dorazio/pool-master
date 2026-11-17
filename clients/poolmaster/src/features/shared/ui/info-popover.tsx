@@ -4,6 +4,15 @@ import { HOVER_CLOSE_GRACE_MS } from "./popover-timing";
 import { Tile } from "./tile";
 
 const CALLOUT_WIDTH = 288;
+
+/** How each kind of trigger button looks. */
+const TRIGGER_LOOK = {
+  icon: "inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50",
+  // Padding with a matching negative margin: a bigger target to tap, no taller a row.
+  text: "-mx-1 -my-2 rounded-sm px-1 py-2 underline decoration-dotted underline-offset-2",
+  // The whole cell is the button; the cell inside draws the look.
+  cell: "block size-full rounded-[inherit] text-inherit",
+} as const;
 const SCREEN_GUTTER = 16;
 
 /**
@@ -45,8 +54,9 @@ export function InfoPopover({
   /**
    * `icon` is a round icon button; `text` is a value in a line of text, such as a score in a
    * table cell, dotted underneath to say it opens, and no taller than the text around it.
+   * `cell` fills a small cell of a board, such as a squares box, which draws its own look.
    */
-  trigger?: "icon" | "text";
+  trigger?: "cell" | "icon" | "text";
 }) {
   // Hover opens it while the mouse is over it; a tap or click pins it open until tapped again.
   // Only a mouse hovers: a phone's tap also fires enter, which would fight the tap's toggle.
@@ -148,10 +158,7 @@ export function InfoPopover({
         aria-label={label}
         className={cn(
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          trigger === "icon"
-            ? "inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50"
-            // Padding with a matching negative margin: a bigger target to tap, no taller a row.
-            : "-mx-1 -my-2 rounded-sm px-1 py-2 underline decoration-dotted underline-offset-2",
+          TRIGGER_LOOK[trigger],
         )}
         data-testid={testId}
         onBlur={(event) => {

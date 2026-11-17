@@ -3,6 +3,7 @@ import {
   formatCount,
   formatCupPoints,
   formatCupPointsCount,
+  formatEntryInitials,
   formatMoneyCents,
   formatNumber,
   formatNumberList,
@@ -96,5 +97,46 @@ describe('formatNumberList', () => {
   it('joins numbers with commas, never grouping one, so a form box reads the list back the same', () => {
     expect(formatNumberList([1000, 6, 3])).toBe('1000, 6, 3');
     expect(formatNumberList([])).toBe('');
+  });
+});
+
+describe('formatEntryInitials', () => {
+  const codesOf = (...names: string[]) => {
+    const codes = formatEntryInitials(names.map((name, index) => ({ id: `entry-${index}`, name })));
+    return names.map((_, index) => codes.get(`entry-${index}`));
+  };
+
+  it('codes a two-word name by the first letters of its words, a digit counting as a letter', () => {
+    expect(codesOf('Big Hitters', 'Sharks 1', 'Derek’s Great Golf Guys')).toEqual(['BH', 'S1', 'DG']);
+  });
+
+  it('codes a one-word name by its first two letters', () => {
+    expect(codesOf('Mom', 'x')).toEqual(['MO', 'X']);
+  });
+
+  it('codes a name with no letters or digits as "?"', () => {
+    expect(codesOf('★ ★')).toEqual(['?']);
+  });
+
+  it('gives two names sharing a code three letters each, so every box on the board tells them apart', () => {
+    expect(codesOf('Big Hitters', 'Bay Hawks', 'Mile High')).toEqual(['BHI', 'BHA', 'MH']);
+  });
+
+  it('uses the first letters of three words when two names of three words or more share a code', () => {
+    expect(codesOf('Big Hitters Club', 'Bay Hawks')).toEqual(['BHC', 'BHA']);
+  });
+
+  it('gives two one-word names sharing a code their first three letters, or first two and last', () => {
+    expect(codesOf('Sharks', 'Shamrocks')).toEqual(['SHS', 'SHA']);
+  });
+
+  it('numbers the code when the same name is entered twice and its letters run out', () => {
+    expect(codesOf('Mo', 'Mo')).toEqual(['MO1', 'MO2']);
+  });
+
+  it('gives the same codes whatever order the entries come in', () => {
+    const forward = formatEntryInitials([{ id: 'a', name: 'Big Hitters' }, { id: 'b', name: 'Bay Hawks' }, { id: 'c', name: 'Bo Hunt' }]);
+    const backward = formatEntryInitials([{ id: 'c', name: 'Bo Hunt' }, { id: 'b', name: 'Bay Hawks' }, { id: 'a', name: 'Big Hitters' }]);
+    expect(Object.fromEntries(backward)).toEqual(Object.fromEntries(forward));
   });
 });

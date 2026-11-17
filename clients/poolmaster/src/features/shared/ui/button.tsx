@@ -30,6 +30,8 @@ const buttonVariants = cva(
         md: "h-12 px-4",
         lg: "h-14 px-5",
         icon: "h-12 w-12 p-0",
+        /** Fills a small board cell, such as a squares box, which draws its own look around it. */
+        cell: "size-full rounded-[inherit] p-0 text-xs",
       },
       /**
        * `row` is a button drawn as a line of content rather than a call to action: sentence

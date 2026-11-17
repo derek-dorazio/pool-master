@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { DETAILS_PEEK_HOVER_DELAY_MS } from "./popover-timing";
+import { cn } from "./class-names";
 import { FactList } from "./fact-list";
 import { InfoPopover } from "./info-popover";
 import { SectionFooterLink } from "./section-card";
@@ -34,8 +35,10 @@ export function DetailsPeek({
   /**
    * `icon` is the (i) after a thing's name; `text` makes a value itself the way in, dotted
    * underneath, such as a game's score on a stat pool leaderboard opening that game's stats.
+   * `cell` makes a whole board cell the way in, such as a squares box opening its holder: the
+   * `icon` is the cell's content, which draws its own look.
    */
-  trigger?: "icon" | "text";
+  trigger?: "cell" | "icon" | "text";
 }) {
   return (
     <InfoPopover
@@ -56,7 +59,7 @@ export function DetailsPeek({
 export type PeekFact = { label: string; testId?: string; value: ReactNode };
 
 /**
- * A peek card: the thing's name, a short subtitle, two to four label and value facts, and an
+ * A peek card: the thing's name, a short subtitle, up to four label and value facts, and an
  * optional link on to its full page. Each fact's label must be unique within the card.
  */
 export function PeekCard({
@@ -74,15 +77,18 @@ export function PeekCard({
 }) {
   return (
     <div className="text-sm" data-testid={testId}>
-      <div className="grid gap-0.5 border-b border-border px-4 py-3">
+      <div className={cn("grid gap-0.5 px-4 py-3", (facts.length > 0 || link) && "border-b border-border")}>
         <span className="font-display text-base font-bold text-foreground">{title}</span>
         {subtitle ? <span className="text-muted-foreground">{subtitle}</span> : null}
       </div>
-      <FactList
-        className="px-4 py-2"
-        density="compact"
-        facts={facts.map((fact) => ({ id: fact.label, label: fact.label, testId: fact.testId, value: fact.value }))}
-      />
+      {/* No facts yet, such as a squares box before the draw, is a card of its name alone. */}
+      {facts.length > 0 ? (
+        <FactList
+          className="px-4 py-2"
+          density="compact"
+          facts={facts.map((fact) => ({ id: fact.label, label: fact.label, testId: fact.testId, value: fact.value }))}
+        />
+      ) : null}
       {link ? <SectionFooterLink label={link.label} testId={link.testId} to={link.to} /> : null}
     </div>
   );

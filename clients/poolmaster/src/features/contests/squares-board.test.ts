@@ -3,23 +3,33 @@ import {
   formatClaimedCount,
   formatSquaresGameTeams,
   squaresGameChoices,
-  squaresMomentLabel,
+  squaresLiveBox,
   squaresMomentRows,
+  squaresMomentTag,
+  squaresScoreByPeriod,
   winningPeriodsByPlace,
 } from './squares-board';
 import { squaresGameFixture } from './test/squares-fixtures';
+import type { SquaresBoardResponse } from '@/lib/api';
+
+/** Digits as drawn for the live-box checks: the away score's 7 sits in row 3, the home score's 0 in column 0. */
+const LIVE_DIGITS: NonNullable<SquaresBoardResponse['digits']> = {
+  rowDigits: [3, 1, 4, 7, 5, 9, 2, 6, 8, 0],
+  columnDigits: [0, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+  drawnAt: '2099-02-07T23:00:00.000Z',
+};
 
 describe('squares board helpers', () => {
-  it('names a quarters game\'s scoring moments Q1, Halftime, Q3 and Final, a halves game\'s Halftime and Final, and a hockey game\'s 1st period, 2nd period and Final', () => {
-    expect([1, 2, 3, 4].map((period) => squaresMomentLabel(period, 'QUARTERS'))).toEqual(['Q1', 'Halftime', 'Q3', 'Final']);
-    expect([1, 2].map((period) => squaresMomentLabel(period, 'HALVES'))).toEqual(['Halftime', 'Final']);
-    expect([1, 2, 3].map((period) => squaresMomentLabel(period, 'THREE_PERIODS'))).toEqual(['1st period', '2nd period', 'Final']);
+  it('tags a quarters game\'s winning boxes Q1, Q2, Q3 and Final, a halves game\'s H1 and Final, and a hockey game\'s P1, P2 and Final', () => {
+    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, 'QUARTERS'))).toEqual(['Q1', 'Q2', 'Q3', 'Final']);
+    expect([1, 2].map((period) => squaresMomentTag(period, 'HALVES'))).toEqual(['H1', 'Final']);
+    expect([1, 2, 3].map((period) => squaresMomentTag(period, 'THREE_PERIODS'))).toEqual(['P1', 'P2', 'Final']);
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {
     const winner = { periodNumber: 2, homeScore: 10, awayScore: 3, rowIndex: 3, columnIndex: 0, contestEntryId: null, entryName: null };
     const rows = squaresMomentRows({ winners: [winner], periodLayout: 'QUARTERS' });
-    expect(rows.map((row) => [row.label, row.winner])).toEqual([['Q1', null], ['Halftime', winner], ['Q3', null], ['Final', null]]);
+    expect(rows.map((row) => [row.tag, row.winner])).toEqual([['Q1', null], ['Q2', winner], ['Q3', null], ['Final', null]]);
   });
 
   it('keeps every moment a box won when one box wins more than one', () => {
@@ -31,8 +41,8 @@ describe('squares board helpers', () => {
   });
 
   it('counts an entry\'s claimed boxes against its limit in words', () => {
-    expect(formatClaimedCount(4, 10)).toBe('4 of 10 boxes claimed');
-    expect(formatClaimedCount(0, 1)).toBe('0 of 1 box claimed');
+    expect(formatClaimedCount(4, 10)).toBe('4 of 10 boxes');
+    expect(formatClaimedCount(0, 1)).toBe('0 of 1 box');
   });
 
   it('offers only games still to kick off with no quarter scored, the final first and then by kickoff', () => {
@@ -61,5 +71,65 @@ describe('squares board helpers', () => {
     const names = new Map([['field-chiefs', 'Chiefs']]);
     expect(formatSquaresGameTeams(squaresGameFixture(), names)).toBe('Chiefs vs To be decided');
     expect(formatSquaresGameTeams(squaresGameFixture({ isNeutralSite: false }), names)).toBe('Chiefs @ To be decided');
+  });
+
+  it('leaves every period and total of the score table blank before kickoff', () => {
+    const score = squaresScoreByPeriod(squaresGameFixture(), 'QUARTERS');
+    expect(score.periodNames).toEqual(['Q1', 'Q2', 'Q3', 'Q4']);
+    expect(score.home).toEqual({ periods: [null, null, null, null], total: null });
+    expect(score.away).toEqual({ periods: [null, null, null, null], total: null });
+    expect(score.livePeriodNumber).toBeNull();
+  });
+
+  it('splits a live game\'s score into each period\'s points, counting the period being played from the score now', () => {
+    const game = squaresGameFixture({
+      status: 'IN_PROGRESS',
+      homeScore: 10,
+      awayScore: 17,
+      periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }, { periodNumber: 2, homeScore: 10, awayScore: 14 }],
+    });
+    const score = squaresScoreByPeriod(game, 'QUARTERS');
+    expect(score.away).toEqual({ periods: [7, 7, 3, null], total: 17 });
+    expect(score.home).toEqual({ periods: [3, 7, 0, null], total: 10 });
+    expect(score.livePeriodNumber).toBe(3);
+  });
+
+  it('runs a finished game\'s last period to the final score, overtime included, with no period live', () => {
+    const game = squaresGameFixture({
+      status: 'COMPLETED',
+      homeScore: 27,
+      awayScore: 24,
+      periodScores: [
+        { periodNumber: 1, homeScore: 3, awayScore: 7 },
+        { periodNumber: 2, homeScore: 10, awayScore: 14 },
+        { periodNumber: 3, homeScore: 17, awayScore: 17 },
+      ],
+    });
+    const score = squaresScoreByPeriod(game, 'QUARTERS');
+    expect(score.home).toEqual({ periods: [3, 7, 7, 10], total: 27 });
+    expect(score.away).toEqual({ periods: [7, 7, 3, 7], total: 24 });
+    expect(score.livePeriodNumber).toBeNull();
+  });
+
+  it('keeps a live game in its last period once the periods before it are all in', () => {
+    const game = squaresGameFixture({
+      status: 'IN_PROGRESS',
+      homeScore: 21,
+      awayScore: 20,
+      periodScores: [1, 2, 3].map((periodNumber) => ({ periodNumber, homeScore: 14, awayScore: 14 })),
+    });
+    expect(squaresScoreByPeriod(game, 'QUARTERS').livePeriodNumber).toBe(4);
+  });
+
+  it('finds the box winning the live period at the row of the away score\'s last digit and the column of the home score\'s', () => {
+    const game = squaresGameFixture({ status: 'IN_PROGRESS', homeScore: 10, awayScore: 17, periodScores: [{ periodNumber: 1, homeScore: 3, awayScore: 7 }] });
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game, periodLayout: 'QUARTERS' })).toEqual({ periodNumber: 2, rowIndex: 3, columnIndex: 0 });
+  });
+
+  it('finds no live box before the draw, before kickoff or once the game is over', () => {
+    const live = squaresGameFixture({ status: 'IN_PROGRESS', homeScore: 10, awayScore: 17 });
+    expect(squaresLiveBox({ digits: null, game: live, periodLayout: 'QUARTERS' })).toBeNull();
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture(), periodLayout: 'QUARTERS' })).toBeNull();
+    expect(squaresLiveBox({ digits: LIVE_DIGITS, game: squaresGameFixture({ status: 'COMPLETED', homeScore: 10, awayScore: 17 }), periodLayout: 'QUARTERS' })).toBeNull();
   });
 });

@@ -11,6 +11,8 @@ const iconVariants = cva("shrink-0", {
       muted: "text-muted-foreground",
       primary: "text-primary",
       danger: "text-destructive",
+      /** Done or won: the status green, such as the tick on a squares quarter the viewer won. */
+      done: "text-done",
     },
     /** Sits in a line of text, with a small gap before the words after it. */
     inline: {
