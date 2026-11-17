@@ -65,11 +65,11 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderLeaderboard() {
+function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/contest-1/leaderboard']}>
+      <MemoryRouter initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1/leaderboard', search }]}>
         <Routes>
           <Route element={<ContestLeaderboardPage />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
         </Routes>
@@ -92,6 +92,13 @@ describe('Survivor contest leaderboard', () => {
     for (const mock of [getSurvivorLeaderboardMock, getPickEmLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock]) {
       mock.mockReset();
     }
+  });
+
+  it('highlights the row of the entry a link names (?entry=) as the one to look at', async () => {
+    primeMocks();
+    renderLeaderboard('?entry=entry-1');
+
+    expect(await screen.findByTestId('survivor-leaderboard-row-entry-1')).toHaveAttribute('aria-current', 'true');
   });
 
   it('lists entries still in first with the week each other entry went out, and reads neither the pick\'em nor the roster leaderboard', async () => {

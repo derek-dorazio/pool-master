@@ -13,13 +13,14 @@ export type SquaresBoxAction = 'claim' | 'clear' | null;
 /**
  * The 10x10 squares grid (#711, design §4.2): the home team across the top with its digits, the
  * away team down the side with theirs, blank until drawn. A claimed box shows its entry's name,
- * the viewer's own highlighted; a winning box is outlined. On a phone the grid scrolls sideways
+ * the viewer's own highlighted, and so are a linked entry's (#1762); a winning box is outlined. On a phone the grid scrolls sideways
  * inside its card, with the digit row and column pinned.
  */
 export function SquaresGrid({
   actionFor,
   board,
   isBusy,
+  linkedEntryId = null,
   myEntryIds,
   onBoxAction,
 }: {
@@ -27,6 +28,8 @@ export function SquaresGrid({
   actionFor: (box: SquaresBoxDto | null) => SquaresBoxAction;
   board: Pick<SquaresBoardResponse, 'awayTeamName' | 'boxes' | 'digits' | 'homeTeamName' | 'winners'>;
   isBusy: boolean;
+  /** The entry a link names (`?entry=`), whose boxes are highlighted as the viewer's own are. */
+  linkedEntryId?: string | null;
   myEntryIds: readonly string[];
   onBoxAction: (rowIndex: number, columnIndex: number, action: Exclude<SquaresBoxAction, null>) => void;
 }) {
@@ -84,6 +87,7 @@ export function SquaresGrid({
                     const box = boxes.get(key) ?? null;
                     const action = actionFor(box);
                     const isMine = box !== null && myEntryIds.includes(box.contestEntryId);
+                    const isLinked = box !== null && box.contestEntryId === linkedEntryId;
                     const won = winningPeriods.get(key) ?? [];
                     const place = `Row ${rowIndex + 1}, column ${columnIndex + 1}`;
                     const label = box
@@ -92,11 +96,12 @@ export function SquaresGrid({
                     const className = cn(
                       'flex h-12 w-16 items-center justify-center rounded-md border px-1 py-0 text-center text-xs leading-tight',
                       box ? 'border-border bg-muted/40' : 'border-dashed border-border bg-background',
-                      isMine && 'border-primary bg-primary/15 font-semibold',
+                      (isMine || isLinked) && 'border-primary bg-primary/15 font-semibold',
                       won.length > 0 && 'ring-2 ring-accent ring-offset-1 ring-offset-background',
                     );
                     const content = <span className="line-clamp-2 break-words">{box?.entryName ?? ''}</span>;
                     const marks = {
+                      'data-linked': isLinked || undefined,
                       'data-mine': isMine || undefined,
                       'data-testid': `squares-box-${rowIndex}-${columnIndex}`,
                       'data-winner': won.length > 0 || undefined,

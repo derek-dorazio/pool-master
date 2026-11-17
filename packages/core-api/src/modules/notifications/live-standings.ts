@@ -65,7 +65,7 @@ import {
   StandingsMomentKind,
   buildContestUrl,
   buildEmailEventHeader,
-  buildLeaderboardUrl,
+  buildContestEntryUrl,
   formatUserName,
   type ContestStandingsEmailData,
   type EmailService,
@@ -138,7 +138,11 @@ interface StandingsBoard {
   /** The moment as one reader sees it: a pick'em week's leaders mark the reader's entries. */
   momentFor: (ownsSquad: (squadId: string) => boolean) => StandingsMoment;
   rows: StandingsBoardRow[];
-  personal: (ownsSquad: (squadId: string) => boolean) => Pick<ContestStandingsEmailData, 'cut' | 'out' | 'champions' | 'picksUrl'>;
+  /** The reader's own news; `entryUrlOf` links one of their entries opened on the contest page. */
+  personal: (
+    ownsSquad: (squadId: string) => boolean,
+    entryUrlOf: (entryId: string) => string,
+  ) => Pick<ContestStandingsEmailData, 'cut' | 'out' | 'champions' | 'picksUrl'>;
 }
 
 /** The event of a season contest that settled last, if it is due, and the next one still to play. */
@@ -372,9 +376,9 @@ export class LiveStandings implements DueNotifications {
         position: row.position,
         line: toLine(row, lastPositions, format, resultEventId),
       })),
-      personal: (ownsSquad) => ({
+      personal: (ownsSquad, entryUrlOf) => ({
         cut: moment.kind === StandingsMomentKind.ROUND
-          ? cutNews(leaderboard.entries.filter((row) => ownsSquad(row.squadId)), fieldRows, moment.roundNumber)
+          ? cutNews(leaderboard.entries.filter((row) => ownsSquad(row.squadId)), fieldRows, moment.roundNumber, entryUrlOf)
           : [],
         out: [],
         champions: [],
@@ -459,13 +463,19 @@ export class LiveStandings implements DueNotifications {
           isYours: false,
         },
       })),
-      personal: (ownsSquad) => ({
+      personal: (ownsSquad, entryUrlOf) => ({
         cut: [],
         out: [],
         champions: leaderboard.entries
           .filter((entry) => ownsSquad(entry.squadId))
-          .flatMap(({ champion, entryName, maxPossiblePoints }) => (champion
-            ? [{ entryName, team: champion.name, alive: champion.outcome !== PickOutcome.BUSTED, maxPossiblePoints }]
+          .flatMap(({ champion, entryId, entryName, maxPossiblePoints }) => (champion
+            ? [{
+              entryName,
+              entryUrl: entryUrlOf(entryId),
+              team: champion.name,
+              alive: champion.outcome !== PickOutcome.BUSTED,
+              maxPossiblePoints,
+            }]
             : [])),
       }),
     };
@@ -482,7 +492,7 @@ export class LiveStandings implements DueNotifications {
     const leaderboard = await this.deps.leaderboards.survivorLeaderboardOf(contest);
     const eventWeeks = leaderboard.weeks.filter((week) => week.sportEventId === sportEvent.id);
     const lastWeek = eventWeeks.at(-1);
-    const outThisWeek = new Map<string, StandingsElimination>();
+    const outThisWeek = new Map<string, Omit<StandingsElimination, 'entryUrl'>>();
     for (const entry of leaderboard.entries) {
       const week = entry.eliminatedInWeek === null ? undefined : leaderboard.weeks.at(entry.eliminatedInWeek - 1);
       if (week?.sportEventId !== sportEvent.id) continue;
@@ -512,14 +522,14 @@ export class LiveStandings implements DueNotifications {
           isOut: !entry.alive,
         },
       })),
-      personal: (ownsSquad) => {
+      personal: (ownsSquad, entryUrlOf) => {
         const yours = leaderboard.entries.filter((entry) => ownsSquad(entry.squadId));
         return {
           cut: [],
           champions: [],
           out: yours.flatMap((entry) => {
             const out = outThisWeek.get(entry.entryId);
-            return out ? [out] : [];
+            return out ? [{ ...out, entryUrl: entryUrlOf(entry.entryId) }] : [];
           }),
           // Only an entry still in picks next week.
           ...(yours.some((entry) => entry.alive) && { picksUrl }),
@@ -541,12 +551,15 @@ export class LiveStandings implements DueNotifications {
     const { rows } = board;
     const leaders = leaderCount(rows);
     const recipients = await this.recipients(league, rows);
-    const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const leaderboardUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const entryUrlOf = (entryId: string): string => buildContestEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entryId);
 
     try {
       await this.deps.email.sendMany('CONTEST_STANDINGS', recipients.map(({ user, squadIds }) => {
         const ownsSquad = (squadId: string): boolean => squadIds.has(squadId);
-        const lines = rows.map((row) => ({ ...row.line, isYours: ownsSquad(row.squadId) }));
+        const lines = rows.map((row): StandingsLine => (ownsSquad(row.squadId)
+          ? { ...row.line, isYours: true, entryUrl: entryUrlOf(row.entryId) }
+          : { ...row.line, isYours: false }));
         return {
           to: emailRecipientOf(user),
           about: due.about,
@@ -563,7 +576,7 @@ export class LiveStandings implements DueNotifications {
             yours: lines.slice(leaders).filter((line) => line.isYours),
             entryCount: lines.length,
             leaderboardUrl,
-            ...board.personal(ownsSquad),
+            ...board.personal(ownsSquad, entryUrlOf),
           },
         };
       }));
@@ -636,6 +649,7 @@ function cutNews(
   entries: readonly ContestLeaderboardEntryRow[],
   fieldRows: ReadonlyMap<string, SportEventParticipantView>,
   roundNumber: number,
+  entryUrlOf: (entryId: string) => string,
 ): StandingsCutNews[] {
   return entries.flatMap((row) => {
     const names = row.picks.flatMap((pick) => {
@@ -643,6 +657,6 @@ function cutNews(
       const round = fieldRow?.rounds.find((candidate) => candidate.round.roundNumber === roundNumber);
       return fieldRow && round?.round.status === ParticipantRoundStatus.MISSED_CUT ? [fieldRow.participant.name] : [];
     });
-    return names.length > 0 ? [{ entryName: row.entryName, names }] : [];
+    return names.length > 0 ? [{ entryName: row.entryName, entryUrl: entryUrlOf(row.entryId), names }] : [];
   });
 }

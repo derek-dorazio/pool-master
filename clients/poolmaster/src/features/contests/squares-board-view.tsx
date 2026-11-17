@@ -51,12 +51,15 @@ const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
 export function SquaresBoardView({
   canManage,
   contest,
+  linkedEntryId = null,
   myEntryIds,
   shownEntryId = null,
 }: {
   /** Whether the viewer is a commissioner of the league (or a root admin). */
   canManage: boolean;
   contest: ContestDto;
+  /** The entry a link names (`?entry=`, #1762), whose boxes are highlighted as the viewer's own are. */
+  linkedEntryId?: string | null;
   /** The viewer's own entries in the contest: one, or none before they enter. */
   myEntryIds: readonly string[];
   /** The entry the page is showing, if any: a commissioner claims for it until they choose another. */
@@ -233,6 +236,7 @@ export function SquaresBoardView({
           actionFor={actionFor}
           board={board}
           isBusy={boxMutation.isPending}
+          linkedEntryId={linkedEntryId}
           myEntryIds={myEntryIds}
           onBoxAction={changeBox}
         />

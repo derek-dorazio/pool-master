@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
@@ -91,7 +91,13 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderContestBoard() {
+/** The page's address and how it last moved, so a test can tell a replace from a push. */
+function AddressProbe() {
+  const location = useLocation();
+  return <div data-testid="address">{`${location.search}|${useNavigationType()}`}</div>;
+}
+
+function renderContestBoard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -103,10 +109,10 @@ function renderContestBoard() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={['/league/BIGDAWGS/contests/contest-1']}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
-          <Route element={<ContestEntryListPage />} path="/league/:leagueCode/contests/:contestId" />
+          <Route element={<><ContestEntryListPage /><AddressProbe /></>} path="/league/:leagueCode/contests/:contestId" />
           <Route
             element={<div data-testid="contest-entry-page" />}
             path="/league/:leagueCode/contests/:contestId/entries/:entryId"
@@ -421,6 +427,40 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByTestId('contest-board-toggle-entry-3')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-edit-entry-entry-3')).not.toBeInTheDocument();
     expect(theirs).not.toHaveTextContent('6 picks');
+  });
+
+  it('opens the viewer\'s own entry a link names (?entry=) and scrolls to it, and closing it drops ?entry= by replace', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ entries: [MINE, MY_DRAFT, THEIRS] });
+
+    renderContestBoard('?entry=entry-2');
+
+    const toggle = await screen.findByTestId('contest-board-toggle-entry-2');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(scrolled).toEqual([screen.getByTestId('contest-board-entry-entry-2')]);
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\|REPLACE$/);
+    scroll.mockRestore();
+  });
+
+  it('does nothing for another team\'s entry a link names before the contest locks: nothing opens, scrolls or shows its picks', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ entries: [MINE, THEIRS] });
+
+    renderContestBoard('?entry=entry-3');
+
+    const theirs = await screen.findByTestId('contest-board-entry-entry-3');
+    expect(screen.queryByTestId('contest-board-toggle-entry-3')).not.toBeInTheDocument();
+    expect(theirs).not.toHaveTextContent('6 picks');
+    expect(scroll).not.toHaveBeenCalled();
+    expect(screen.getByTestId('address')).toHaveTextContent('?entry=entry-3|POP');
+    scroll.mockRestore();
   });
 
   it('opens the viewer\'s tiered entry to its picks, tier 1 first, each with its tier and team, and closes it again', async () => {

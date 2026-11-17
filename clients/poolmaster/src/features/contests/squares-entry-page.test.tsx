@@ -269,6 +269,25 @@ describe('Squares contest leaderboard', () => {
     expect(screen.getByTestId('squares-standing-won-entry-1')).toHaveTextContent('2');
     expect(screen.getByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
   });
+  it('highlights the boxes of the entry a link names (?entry=) as the viewer\'s own are, and turns the standings to its row', async () => {
+    primeMocks({ contest: squaresContestFixture({ myEntryIds: ['entry-1'] }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
+
+    expect(await screen.findByTestId('squares-standing-row-entry-2')).toHaveAttribute('aria-current', 'true');
+    expect(box(1, 1)).toHaveAttribute('data-linked', 'true');
+    expect(box(1, 1)).toHaveClass('border-primary', 'bg-primary/15');
+    expect(box(1, 1)).not.toHaveAttribute('data-mine');
+    expect(box(0, 0)).not.toHaveAttribute('data-linked');
+  });
+
+  it('lights no boxes for a linked entry My entries hides', async () => {
+    primeMocks({ contest: squaresContestFixture({ myEntryIds: ['entry-1'] }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?mine=1&entry=entry-2');
+
+    expect(await screen.findByTestId('squares-standing-row-entry-1')).toBeInTheDocument();
+    expect(box(1, 1)).not.toHaveAttribute('data-linked');
+  });
+
   it('marks the viewer\'s own entry Yours in the standings, and no one else\'s', async () => {
     primeMocks({
       contest: squaresContestFixture({ myEntryIds: ['entry-1'] }),

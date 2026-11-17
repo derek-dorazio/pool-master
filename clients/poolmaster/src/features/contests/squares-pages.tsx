@@ -11,6 +11,8 @@ import { SquaresBoardView } from './squares-board-view';
 import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestEntryQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
+import { useLinkedEntry } from './use-linked-entry';
+import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 
 /** The prefix of the standings' test ids. */
 const TEST_ID = 'squares-standing';
@@ -75,11 +77,22 @@ function standingsColumns(contestId: string, leagueCode: string, leagueId: strin
 
 /**
  * A squares contest's leaderboard (#711): each quarter's winner and the grid with the winning
- * boxes outlined, then every entry with its boxes and the quarters it won, placed once Final.
+ * boxes outlined, then every entry with its boxes and the quarters it won, placed once Final. A
+ * link naming an entry (`?entry=`, #1762) highlights its boxes and turns the standings to its row.
  */
 export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
   const boardQuery = useSquaresBoardQuery(contest);
   const { leagueCode, viewer } = useContestLeague(contest.leagueId);
+  const myEntriesFilter = useMyEntriesFilter();
+  const linkedEntry = useLinkedEntry();
+  const myEntryIds = contest.myEntryIds ?? [];
+  // The linked entry's boxes light up while the standings show its row, as `ScoreboardGrid` lands on it.
+  const shownEntryIds = narrowToMyEntries(
+    boardQuery.data?.entries.map((row) => row.contestEntryId) ?? [],
+    (entryId) => myEntryIds.includes(entryId),
+    myEntriesFilter.isOn,
+  ).rows;
+  const linkedEntryId = shownEntryIds.find((entryId) => entryId === linkedEntry.entryId) ?? null;
 
   return (
     <LeaderboardFrame
@@ -90,7 +103,12 @@ export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
         <span data-testid="squares-leaderboard-rules">{squaresRules(boardQuery.data)}</span>
       )}
     >
-      <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
+      <SquaresBoardView
+        canManage={viewer.isCommissioner || viewer.isRootAdmin}
+        contest={contest}
+        linkedEntryId={linkedEntryId}
+        myEntryIds={myEntryIds}
+      />
       {boardQuery.data ? (
         <ScoreboardGrid
           columns={standingsColumns(contest.id, leagueCode, contest.leagueId, contest.myEntryIds ?? [])}
