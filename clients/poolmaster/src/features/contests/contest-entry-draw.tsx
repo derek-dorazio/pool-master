@@ -1,6 +1,6 @@
 import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
-import { Notice, formatDateTimeDisplay, MetricGrid, MetricTile, Text, Tile, useDisplayPreferences } from '@/features/shared/ui';
+import { Notice, formatDateTimeDisplay, Text, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { participantAffiliation, selectionParticipantLabel } from './contest-sport';
 import { ParticipantLine } from './participant-line';
 import type { SelectionGroup } from './contest-entry-selection';
@@ -17,43 +17,6 @@ export type DrawState = Pick<SelectionStateResponse, 'drawnAt' | 'rosterSize' | 
 /** The golfers an entry was dealt: the field's selected members, in the field's order. */
 function getDealtGolfers(selectionGroups: SelectionGroup[]) {
   return selectionGroups.flatMap((group) => group.participants.filter((participant) => participant.isSelected));
-}
-
-/** The summary tiles: the draw, the golfers dealt, and when entries close. */
-export function DrawEntryMetrics({
-  isEditable,
-  noun,
-  selectionState,
-}: {
-  isEditable: boolean;
-  /** What the event's sport calls a participant: "golfer", "horse". */
-  noun: SportNoun;
-  selectionState: DrawState;
-}) {
-  const displayPreferences = useDisplayPreferences();
-  const { drawnAt, rosterSize } = selectionState;
-  const dealtCount = getDealtGolfers(selectionState.selectionGroups ?? []).length;
-  return (
-    <Tile>
-      <MetricGrid className="md:grid-cols-3">
-        <MetricTile
-          helperText={drawnAt ? formatDateTimeDisplay(drawnAt, displayPreferences) : 'The commissioner runs it once entries are in'}
-          label="Draw"
-          value={<span data-testid="contest-entry-draw-status">{drawnAt ? 'Done' : 'Not yet run'}</span>}
-        />
-        <MetricTile
-          helperText={drawnAt ? 'Dealt at random by the draw' : `The draw deals ${countParticipants(rosterSize, noun)} to each entry`}
-          label={`${noun.many.charAt(0).toUpperCase()}${noun.many.slice(1)} dealt`}
-          value={`${dealtCount}/${rosterSize}`}
-        />
-        <MetricTile
-          helperText={isEditable ? 'Running the draw closes entries' : 'Entry editing is closed'}
-          label="Entries close"
-          value={isEditable ? 'At the draw' : 'Closed'}
-        />
-      </MetricGrid>
-    </Tile>
-  );
 }
 
 /**

@@ -123,6 +123,8 @@ Use those conventions as the starting point, but bias toward a consumer app:
     left, value right) by default, `inset` under a row that opened it,
     `columns` for a few side-by-side facts that stack on a phone.
   - **`MetricGrid`** for a page's few headline numbers as big-figure tiles.
+  - **`StatStrip`** for a pick screen's progress: one line of two or three
+    labelled numbers under the entry header, never tiles or helper text.
   - **`SimpleTable`** (or `DataGrid` with search or sorting) when each row is
     a thing of its own with several columns, such as an entry's picks.
   - **`CheckList`** for requirements met or not: what is missing first at

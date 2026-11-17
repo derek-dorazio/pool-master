@@ -3,10 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { getSelectionState, selectContestPick, submitContestEntry, unselectContestPick, updateContestEntry, type SelectionStateResponse } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { ContestEntryStatus, SelectionType, formatDollars } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, SelectionType } from '@poolmaster/shared/domain';
 import { getLogger } from '@/lib/logger';
-import { ErrorState, LoadingState, Notice, refetchFailed } from '@/features/shared/ui';
-import { DrawEntryMetrics } from './contest-entry-draw';
+import { ErrorState, formatDateTimeDisplay, LoadingState, Notice, refetchFailed, StatStrip, Text, useDisplayPreferences } from '@/features/shared/ui';
+import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
 import {
   buildPickedAtById,
   CONTEST_ENTRY_CODE_MESSAGES,
@@ -14,22 +14,24 @@ import {
   mergePickChange,
 } from './contest-entry-lineup';
 import {
-  formatStillToPick,
   getCompletionStats,
+  drawProgressItems,
   getContestPhaseLabel,
   getNextIncompleteGroupId,
+  rosterProgressItems,
 } from './contest-entry-helpers';
+import { TiebreakerField } from './contest-entry-selection';
 import { areContestEntriesOpen, CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
 import { ContestEntryFrame } from './contest-header';
 import { useContestLeagueCode } from './use-contest-league';
-import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
+import { contestEntryTiebreaker, contestEventStart, contestRosterParticipantNoun } from './contest-sport';
 import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
 import { contestSchedule } from './use-contest-schedule';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { RosterContestEntryLineupSection, type PickChange } from './roster-contest-entry-lineup-section';
-import { EntryRenameSection } from './entry-rename-section';
-import { RosterContestEntrySubmitSection } from './roster-contest-entry-submit-section';
+import { EntryFinishCard } from './entry-finish-card';
+import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { useContestQuery } from './use-contest-query';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -45,6 +47,7 @@ export function RosterContestEntryPage() {
   const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const displayPreferences = useDisplayPreferences();
   // Null opens the room on the contest's current event; the server says which one that is.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
   const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId, requestedEventId ?? undefined);
@@ -437,7 +440,6 @@ export function RosterContestEntryPage() {
   const isSubmitted = entryStatus === ContestEntryStatus.SUBMITTED;
   const selectionGroups = picksHidden ? [] : selectionState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
-  const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
   const lineupComplete =
     completionStats.requiredSelections > 0
     && completionStats.totalSelections >= completionStats.requiredSelections;
@@ -477,25 +479,57 @@ export function RosterContestEntryPage() {
     void navigate(buildLeagueContestPath(leagueCode, contestId));
   }
 
-  const progressNote = picksHidden ? null : [
-    `${completionStats.totalSelections} of ${completionStats.requiredSelections} picks saved`,
-    isBudget
-      ? lineupSummary ? `${formatDollars(lineupSummary.spent)} of the ${formatDollars(lineupSummary.salaryCap)} cap spent` : null
-      : `${completionStats.completedTiers} of ${selectionGroups.length} tiers complete`,
-    isEditable
-      ? nextIncompleteGroupId
-        ? isBudget
-          ? formatStillToPick(completionStats.requiredSelections - completionStats.totalSelections, participantNoun)
-          : `Next: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
-        : 'Lineup is fully selected'
-      : null,
-  ].filter((part) => part !== null).join(' · ');
+  const isDraftChanged = editedEntryName !== null || editedTiebreaker !== null;
+  // Saves the name and tiebreaker alone, once the entry is submitted and they change.
+  async function saveEntryDetails() {
+    try {
+      await saveEntryDetailsMutation.mutateAsync();
+    } catch {
+      // The mutation's own error shows on the card.
+    }
+  }
+
+  // When picks close, in the words the status line and the card use.
+  const closes = schedule?.startsAt ? formatDateTimeDisplay(schedule.startsAt, displayPreferences) : `the ${contestEventStart(contest.sport)}`;
+  const drawnAt = contest.drawnAt ?? selectionState.drawnAt ?? null;
+  const drawnAtText = drawnAt ? formatDateTimeDisplay(drawnAt, displayPreferences) : null;
+  const statusLine = isRandomDraw
+    ? drawnAtText ? `Drawn ${drawnAtText}` : 'Waiting for the draw'
+    : entryStatusLine({ closes, isOpen: isMyEntry && isEditable, status: picksHidden ? null : entryStatus });
+  // What still blocks Submit, in the order the entry would fix it.
+  const submitHint = !lineupComplete
+    ? 'Pick a full lineup to submit.'
+    : submitBlockedReason ?? (tiebreaker !== null && detailsEditable && !hasSelectedTiebreaker ? 'Choose your tiebreaker to submit.' : null);
   // Picks come first, then the entry's name, its tiebreaker and the one Submit for all of it.
-  const showFinish = isMyEntry && !isRandomDraw && (detailsEditable || isEditable || tiebreaker !== null);
+  const showFinish = isMyEntry && (isRandomDraw ? detailsEditable : detailsEditable || isEditable || tiebreaker !== null);
 
   const errorText = (error: Error | null, fallback: string) => (error
     ? extractErrorMessage(error, { codeMessages: CONTEST_ENTRY_CODE_MESSAGES, fallback })
     : null);
+  const finishError = (submitEntryMutation.isError ? errorText(submitEntryMutation.error, 'We could not submit this entry right now.') : null)
+    ?? (saveEntryDetailsMutation.isError ? errorText(saveEntryDetailsMutation.error, 'We could not save this entry right now.') : null);
+  const isFinishing = saveEntryDetailsMutation.isPending || submitEntryMutation.isPending;
+  const finishAction = isRandomDraw
+    ? editedEntryName !== null && entryNameDraft.trim() !== (selectionState.selectedEntryName ?? '') ? {
+      disabled: !entryNameDraft.trim() || isFinishing,
+      isBusy: isFinishing,
+      label: 'Save',
+      onClick: () => void saveEntryDetails(),
+      testId: 'contest-entry-save',
+    } : null
+    : isEditable && !isSubmitted ? {
+      disabled: finalSubmitDisabled,
+      isBusy: isFinishing,
+      label: 'Submit',
+      onClick: () => void submitEntry(),
+      testId: 'contest-entry-submit',
+    } : detailsEditable && isDraftChanged ? {
+      disabled: !entryNameDraft.trim() || isFinishing,
+      isBusy: isFinishing,
+      label: 'Save',
+      onClick: () => void saveEntryDetails(),
+      testId: 'contest-entry-save',
+    } : null;
 
   return (
     <ContestEntryFrame
@@ -505,6 +539,7 @@ export function RosterContestEntryPage() {
       phase={getContestPhaseLabel(contest, isEditable)}
       status={picksHidden ? null : entryStatus}
       statusFacts={[{ id: 'entries-close', label: 'Entries', value: isEditable ? 'Close when the event starts' : 'Closed' }]}
+      statusLine={statusLine}
       title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
     >
 
@@ -524,12 +559,25 @@ export function RosterContestEntryPage() {
         value={shownEventId}
       />
 
-      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : null}
+      {picksHidden ? null : (
+        <StatStrip
+          items={isRandomDraw
+            ? drawProgressItems({ drawnAt: drawnAtText, noun: participantNoun, rosterSize: selectionState.rosterSize })
+            : rosterProgressItems({ isBudget, isEditable, lineupSummary, selectionGroups })}
+          testId="contest-entry-progress"
+        />
+      )}
 
       <RosterContestEntryLineupSection
         drawState={isRandomDraw ? selectionState : null}
         expandedGroupId={expandedGroupId}
         groupToggleRefs={groupToggleRefs}
+        howToPlay={isEditable && isMyEntry && !isRandomDraw ? {
+          help: isBudget
+            ? `Tap ${participantNoun.many} to add them to your lineup, keeping the total under the salary cap. Picks save as you tap and lock when the event starts.`
+            : `Open each tier and tap the ${participantNoun.many} you want, up to the tier's picks. Picks save as you tap and lock when the event starts.`,
+          link: { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) },
+        } : null}
         isBudget={isBudget}
         isBusy={pickChangeMutation.isPending}
         isEditable={isEditable}
@@ -541,7 +589,6 @@ export function RosterContestEntryPage() {
         pickError={pickChangeMutation.isError ? errorText(pickChangeMutation.error, 'We could not save this entry right now.') : null}
         pickedAtById={buildPickedAtById(selectionState, entryId)}
         picksHidden={picksHidden}
-        progressNote={progressNote}
         selectionGroups={selectionGroups}
         sport={contest.sport ?? null}
       />
@@ -552,32 +599,35 @@ export function RosterContestEntryPage() {
         </Notice>
       )}
 
-      {/* A drawn lineup has nothing to submit, so its name changes on its own (#1739). */}
-      {isRandomDraw && isMyEntry && detailsEditable && entrySummary ? (
-        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={entrySummary.name} />
-      ) : null}
-
       {showFinish ? (
-        <RosterContestEntrySubmitSection
-          canSubmit={!finalSubmitDisabled}
-          detailsEditable={detailsEditable}
-          entryName={entryNameDraft}
-          isEditable={isEditable}
-          isSaving={saveEntryDetailsMutation.isPending}
-          isSubmitted={isSubmitted}
-          isSubmitting={submitEntryMutation.isPending}
-          lineupComplete={lineupComplete}
-          onEntryNameChange={setEntryNameDraft}
-          onSubmit={() => void submitEntry()}
-          onTiebreakerChange={setTiebreakerDraft}
-          progress={picksHidden ? null : `${completionStats.totalSelections} of ${completionStats.requiredSelections} picked`}
-          saveError={saveEntryDetailsMutation.isError ? errorText(saveEntryDetailsMutation.error, 'We could not save this entry right now.') : null}
-          savedTiebreakerValue={selectionState.tiebreakerValue}
-          submitBlockedReason={submitBlockedReason}
-          submitError={submitEntryMutation.isError ? errorText(submitEntryMutation.error, 'We could not submit this entry right now.') : null}
-          tiebreaker={tiebreaker}
-          tiebreakerValue={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
-        />
+        <EntryFinishCard
+          action={finishAction}
+          error={finishError}
+          errorTestId="contest-entry-submit-error"
+          name={detailsEditable ? { disabled: isFinishing, onChange: setEntryNameDraft, testId: 'contest-entry-name-input', value: entryNameDraft } : null}
+          status={isRandomDraw
+            ? 'Nothing to submit: the draw picks for you'
+            : isEditable ? entryFinishStatus({ closes, hint: submitHint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
+          statusTestId="contest-entry-finish-status"
+          testId="contest-entry-finish"
+          title={isRandomDraw ? 'Entry name' : 'Name and submit'}
+        >
+          {tiebreaker && !isRandomDraw && detailsEditable ? (
+            <TiebreakerField
+              disabled={isFinishing}
+              onChange={setTiebreakerDraft}
+              tiebreaker={tiebreaker}
+              value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
+            />
+          ) : null}
+          {tiebreaker && !isRandomDraw && !detailsEditable ? (
+            <Text as="p" data-testid="contest-entry-readonly-tiebreaker" variant="meta">
+              {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
+                ? 'No tiebreaker was saved.'
+                : `Tiebreaker: ${tiebreaker.describe(selectionState.tiebreakerValue)}`}
+            </Text>
+          ) : null}
+        </EntryFinishCard>
       ) : null}
     </ContestEntryFrame>
   );
