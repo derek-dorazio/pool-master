@@ -36,6 +36,8 @@ const textVariants = cva("", {
       default: "text-foreground",
       muted: "text-muted-foreground",
       danger: "text-destructive",
+      /** Something that came true, such as a pick that was right. */
+      done: "text-done",
       primary: "text-primary",
       /** Text on the header's dark band. */
       onInverse: "text-on-inverse",
