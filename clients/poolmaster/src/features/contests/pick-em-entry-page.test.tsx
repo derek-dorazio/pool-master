@@ -360,6 +360,18 @@ describe('Pick\'em contest entry page', () => {
     expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 
+  it('marks a postponed game with the gold Postponed chip and keeps its pick changeable until its new kickoff', async () => {
+    const postponed = week1Games({ 2: { status: 'POSTPONED', pick: weekPick(NFL_TEAMS.chiefs) } });
+    primeMocks({ week: pickEmWeekFixture({ games: postponed }) });
+    renderPickEmEntry();
+
+    const game = await screen.findByTestId('pick-em-game-2');
+    expect(within(game).getByTestId('pick-em-game-2-schedule')).toHaveTextContent('Postponed');
+    expect(within(game).queryByTestId('pick-em-game-2-locked')).not.toBeInTheDocument();
+    expect(within(game).getAllByRole('button').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('pick-em-game-1-schedule')).not.toBeInTheDocument();
+  });
+
   it('shows each team\'s spread beside it in a pool scored against the spread, "PK" for a pick\'em game, and marks a game on the spread a push', async () => {
     const games = week1Games({
       1: { homeSpread: 0 },

@@ -23,6 +23,7 @@ const {
   recordEventMatchPeriodScoreMock,
   clearEventMatchPeriodScoreMock,
   cancelEventMatchMock,
+  postponeEventMatchMock,
   updateEventBracketMatchMock,
   updateEventParticipantsMock,
   setEventPlayInWinnerMock,
@@ -52,6 +53,7 @@ const {
     recordEventMatchPeriodScoreMock: vi.fn(),
     clearEventMatchPeriodScoreMock: vi.fn(),
     cancelEventMatchMock: vi.fn(),
+    postponeEventMatchMock: vi.fn(),
     updateEventBracketMatchMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     setEventPlayInWinnerMock: vi.fn(),
@@ -74,6 +76,7 @@ bindApiMocks({
   recordEventMatchPeriodScore: recordEventMatchPeriodScoreMock,
   clearEventMatchPeriodScore: clearEventMatchPeriodScoreMock,
   cancelEventMatch: cancelEventMatchMock,
+  postponeEventMatch: postponeEventMatchMock,
   updateEventBracketMatch: updateEventBracketMatchMock,
   updateEventParticipants: updateEventParticipantsMock,
   setEventPlayInWinner: setEventPlayInWinnerMock,
@@ -390,6 +393,38 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       renderPage();
       expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
+    });
+
+    it('postpones a game not yet started, and reloads the games', async () => {
+      seed(week);
+      postponeEventMatchMock.mockResolvedValue({ data: { matches: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-postpone-2'));
+
+      expect(postponeEventMatchMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1', matchNumber: '2' } }));
+      await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(2));
+    });
+
+    it('shows a postponed game as Postponed, still cancellable and no longer postponable', async () => {
+      seed([week[0], { ...week[1], status: 'POSTPONED' }]);
+      renderPage();
+
+      const postponed = await screen.findByTestId('root-admin-bracket-match-2');
+      expect(within(postponed).getByText('Postponed')).toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-bracket-cancel-2')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-postpone-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-bracket-postpone-1')).toBeInTheDocument();
+    });
+
+    it('explains in product copy that a game under way cannot be postponed', async () => {
+      seed(week);
+      postponeEventMatchMock.mockResolvedValue({ error: { error: { code: 'MATCH_ALREADY_STARTED', message: 'Match 1 has started.' } } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-postpone-1'));
+
+      expect(await screen.findByTestId('root-admin-bracket-postpone-error-1')).toHaveTextContent('This game has started, so it can\'t be postponed.');
     });
 
     // #792: a game of a week can end level; a tie is saved with each side's score.

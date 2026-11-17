@@ -50,7 +50,7 @@ export interface MatchResultWrite {
  */
 export interface MatchLiveScoreWrite {
   id: string;
-  status: Extract<MatchStatus, 'SCHEDULED' | 'IN_PROGRESS'>;
+  status: Extract<MatchStatus, 'SCHEDULED' | 'IN_PROGRESS' | 'POSTPONED'>;
   homeScore: number | null;
   awayScore: number | null;
 }

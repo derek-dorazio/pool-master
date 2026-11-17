@@ -13701,7 +13701,7 @@ export type GamePicksResponse = {
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */
         kickoff: string;
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         isNeutralSite: boolean;
         /**
          * The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.
@@ -14039,7 +14039,7 @@ export type GamePickPreviewResponse = {
          * When the game starts: its scheduled time, else its event's start. Its pick locks then.
          */
         kickoff: string;
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         isNeutralSite: boolean;
         /**
          * The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.
@@ -19618,9 +19618,9 @@ export type GameStatLineUploadRequest = {
 };
 
 /**
- * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+ * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
  */
-export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
 /**
  * One side of a match. On a neutral site HOME is the upper line of the bracket.
@@ -19681,9 +19681,9 @@ export type SportEventMatchDto = {
      */
     scheduledDate: string | null;
     /**
-     * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+     * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
      */
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
      * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
      */
@@ -19782,9 +19782,9 @@ export type SportEventBracketResponse = {
          */
         scheduledDate: string | null;
         /**
-         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
@@ -19884,9 +19884,9 @@ export type SportEventMatchResponse = {
          */
         scheduledDate: string | null;
         /**
-         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
@@ -20304,9 +20304,9 @@ export type SquaresBoardResponse = {
          */
         scheduledDate: string | null;
         /**
-         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          */
-        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
@@ -32961,6 +32961,46 @@ export type CancelEventMatchResponses = {
 };
 
 export type CancelEventMatchResponse = CancelEventMatchResponses[keyof CancelEventMatchResponses];
+
+export type PostponeEventMatchData = {
+    body?: never;
+    path: {
+        eventId: string;
+        matchNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone';
+};
+
+export type PostponeEventMatchErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type PostponeEventMatchError = PostponeEventMatchErrors[keyof PostponeEventMatchErrors];
+
+export type PostponeEventMatchResponses = {
+    /**
+     * An event's bracket.
+     */
+    200: SportEventBracketResponse;
+};
+
+export type PostponeEventMatchResponse = PostponeEventMatchResponses[keyof PostponeEventMatchResponses];
 
 export type ProposeEventRoundMatchupsData = {
     body?: never;

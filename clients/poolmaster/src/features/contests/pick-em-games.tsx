@@ -11,6 +11,7 @@ import {
 } from '@/features/shared/ui';
 import { describePickOutcome } from './bracket-layout';
 import { EmptyPickSlot } from './empty-pick-slot';
+import { EventScheduleChip } from './event-schedule-chip';
 import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
 import { confidenceOptions, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
@@ -154,6 +155,7 @@ function PickEmGameCard({
     <GameCard
       aside={(
         <>
+          <EventScheduleChip status={game.status} testId={`pick-em-game-${game.matchNumber}-schedule`} />
           {isTiebreakerGame ? <Chip tone="info">Tiebreaker game</Chip> : null}
           {game.locked ? (
             <span className="inline-flex items-center gap-1" data-testid={`pick-em-game-${game.matchNumber}-locked`}>

@@ -193,6 +193,18 @@ describe('areMatchPicksOpen — changing one game\'s pick', () => {
     expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(50, MatchStatus.IN_PROGRESS), 1, NOW)).toBe(false);
   });
 
+  it('keeps a postponed game\'s pick open until its new kickoff while the week is under way, then locks it', () => {
+    const postponedToMonday = game(26, MatchStatus.POSTPONED);
+
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, NOW)).toBe(true);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, new Date(NOW.getTime() + 26 * HOUR))).toBe(false);
+  });
+
+  it('locks a postponed game with no new time yet at its old kickoff, as it was put off after picks closed', () => {
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, game(-2, MatchStatus.POSTPONED), 1, NOW)).toBe(false);
+  });
+
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])(
     'locks every game of a %s event, even one whose kickoff is still to come',
     (status) => {
@@ -346,6 +358,13 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
     expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 6 * HOUR) });
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], new Date(NOW.getTime() + 6 * HOUR))).toBe(false);
+  });
+
+  it('keeps a squares contest open until a postponed game\'s new kickoff', () => {
+    const timing = cutoffTiming(SUPER_BOWL, playoffs, [game('super-bowl', 30, MatchStatus.POSTPONED)]);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 30 * HOUR) });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
   });
 
   it.each([MatchStatus.IN_PROGRESS, MatchStatus.CANCELLED])('is started once the game is %s, though its kickoff time has not passed', (status) => {

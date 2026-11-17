@@ -19,7 +19,7 @@
  * change an entry, or the deal would no longer be the one every entry was given.
  */
 import type { Contest, ContestRules, ContestSelectionConfig } from '@poolmaster/shared/domain';
-import { ContestStatus, MatchStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, MatchStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { hasSportEventStarted } from '../events/operational-timing';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
@@ -47,9 +47,9 @@ export type ContestCutoff =
 
 const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
 
-/** Whether a game has moved on from SCHEDULED, by its status or by a period score entered for it. */
+/** Whether a game has moved on from being still to play (scheduled, or postponed before it began), by its status or by a period score entered for it. */
 function hasGameMovedOn(game: MatchTiming): boolean {
-  return game.status !== MatchStatus.SCHEDULED || (game.periodScores?.length ?? 0) > 0;
+  return !isMatchUnplayed(game.status) || (game.periodScores?.length ?? 0) > 0;
 }
 
 /**

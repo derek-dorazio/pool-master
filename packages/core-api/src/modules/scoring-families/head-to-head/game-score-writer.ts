@@ -31,7 +31,7 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -298,7 +298,7 @@ function groupByTeams<T>(items: readonly T[], teamsOf: (item: T) => readonly [st
  * has started, or none while no game has. Null when there is nothing to write, as for a game.
  */
 function seriesLiveScoreOf(series: SeriesStanding, match: SportEventMatch): Omit<MatchLiveScoreWrite, 'id'> | null {
-  if (match.status !== MatchStatus.SCHEDULED && match.status !== MatchStatus.IN_PROGRESS) return null;
+  if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
   if (!series.started) {
     return match.status === MatchStatus.IN_PROGRESS ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
   }
@@ -404,9 +404,11 @@ const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState
 
 /**
  * The live score a game puts on a match that has no result: its score from the match's sides
- * while it is played, or none once the provider says it has not started. Null when there is
+ * while it is played, or none once the provider says it has not started. A game the provider
+ * postpones is POSTPONED (#1791), its live score taken off, and scheduled again once the provider
+ * says so. Null when there is
  * nothing to write: the match has a result or was cancelled, a live game has no score yet or
- * teams that are not the match's, or a game not under way meets a match with no live score.
+ * teams that are not the match's, or a game not under way meets a match already in its state.
  */
 function liveScoreOf(
   game: GameScoreUpdate,
@@ -414,9 +416,14 @@ function liveScoreOf(
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
 ): Omit<MatchLiveScoreWrite, 'id'> | null {
-  if (match.status !== MatchStatus.SCHEDULED && match.status !== MatchStatus.IN_PROGRESS) return null;
+  if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
+  if (game.state === ProviderGameState.POSTPONED) {
+    return match.status === MatchStatus.POSTPONED ? null : { status: MatchStatus.POSTPONED, homeScore: null, awayScore: null };
+  }
   if (game.state !== ProviderGameState.IN_PROGRESS) {
-    return match.status === MatchStatus.IN_PROGRESS ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
+    const backToScheduled = match.status === MatchStatus.IN_PROGRESS
+      || (match.status === MatchStatus.POSTPONED && game.state === ProviderGameState.SCHEDULED);
+    return backToScheduled ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
   }
   const score = resultFromGame(game, match, sidesOf, teamsOf);
   return score === null ? null : { status: MatchStatus.IN_PROGRESS, homeScore: score.homeScore, awayScore: score.awayScore };

@@ -42,8 +42,8 @@ import {
   BracketAdvancement,
   eventRoundLabel,
   getSportDefinition,
+  isMatchUnplayed,
   MatchSide,
-  MatchStatus,
   ParticipantStatus,
   eventSportDefinition,
   eventPlaysMatches,
@@ -477,7 +477,7 @@ export class SportEventBracketService {
       );
     }
     const played = (await this.deps.matches.findBySportEvent(sportEventId)).some((match) => (
-      match.status !== MatchStatus.SCHEDULED
+      !isMatchUnplayed(match.status)
       && (match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
     ));
     if (played) {
@@ -540,7 +540,7 @@ export class SportEventBracketService {
       );
     }
     // A row in a second match got there by winning the first.
-    if (named.length > 1 || place.match.status !== MatchStatus.SCHEDULED) {
+    if (named.length > 1 || !isMatchUnplayed(place.match.status)) {
       this.deps.logger?.warn({ sportEventId, sportEventParticipantId, matchNumber: place.match.matchNumber }, 'Refused to replace a participant whose match has started');
       throw new SportEventError(
         `Field row ${sportEventParticipantId}'s match ${place.match.matchNumber} has started, so a withdrawal is now a walkover.`,

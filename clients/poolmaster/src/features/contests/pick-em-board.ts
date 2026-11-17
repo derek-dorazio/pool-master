@@ -76,11 +76,14 @@ export interface PickEmBoardGame {
   matchup: string;
   /** The result ("KC 27–20"), "Playing now", or the kickoff. */
   progress: string;
+  /** The game's status, for the shared Postponed chip on a game put off (#1791). */
+  status: MatchStatus;
 }
 
 /**
  * The week's games an opened entry lists, in kickoff order: each named by its teams, with its
- * result once played, else when it kicks off. A cancelled game is not one of the week's games.
+ * result once played, else when it kicks off (a postponed game's new time, once set). A cancelled
+ * game is not one of the week's games.
  */
 export function pickEmBoardGames(
   matches: readonly SportEventMatchDto[],
@@ -93,7 +96,7 @@ export function pickEmBoardGames(
     .map((match) => {
       const home = teamName(match.homeSportEventParticipantId);
       const away = teamName(match.awaySportEventParticipantId);
-      return { id: match.id, matchup: `${away} ${match.isNeutralSite ? 'vs' : 'at'} ${home}`, progress: gameProgress(match, home, away, formatKickoff) };
+      return { id: match.id, matchup: `${away} ${match.isNeutralSite ? 'vs' : 'at'} ${home}`, progress: gameProgress(match, home, away, formatKickoff), status: match.status };
     });
 }
 

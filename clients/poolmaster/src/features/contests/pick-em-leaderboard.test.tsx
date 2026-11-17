@@ -214,6 +214,15 @@ describe('Pick\'em contest leaderboard', () => {
     expect(screen.queryByTestId('pick-em-leaderboard-game-week2-game-1-entry-2')).not.toBeInTheDocument();
   });
 
+  it('marks a postponed game of the opened entry\'s week with the gold Postponed chip, and no other game', async () => {
+    primeMocks();
+    getEventBracketMock.mockResolvedValue({ data: { matches: week2EventGamesFixture({ 3: { status: 'POSTPONED' } }) } });
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('pick-em-leaderboard-game-week2-game-3-entry-1-schedule')).toHaveTextContent('Postponed');
+    expect(screen.queryByTestId('pick-em-leaderboard-game-week2-game-1-entry-1-schedule')).not.toBeInTheDocument();
+  });
+
   it('opens another entry to its picks on the games that have kicked off, marked right or missed, and never shows its pick on a game still to come', async () => {
     primeMocks();
     renderLeaderboard();
