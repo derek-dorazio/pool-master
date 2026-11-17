@@ -14,6 +14,16 @@ export function recentlyFinalYears(now: Date): number[] {
   return windowStartYear === year ? [year] : [year, windowStartYear];
 }
 
+/**
+ * The moment League Home asks for finals since (#1782): the start of the UTC day the window opens
+ * on, so the read's address changes once a day rather than every minute; `pickRecentlyFinal`
+ * trims the extra hours.
+ */
+export function recentlyFinalSince(now: Date): string {
+  const opens = new Date(now.getTime() - RECENTLY_FINAL_DAYS * DAY_MS);
+  return new Date(Date.UTC(opens.getUTCFullYear(), opens.getUTCMonth(), opens.getUTCDate())).toISOString();
+}
+
 /** The contests that went final in the last few days, newest first. */
 export function pickRecentlyFinal(contests: readonly ContestResultSummaryDto[], now: Date): ContestResultSummaryDto[] {
   const since = now.getTime() - RECENTLY_FINAL_DAYS * DAY_MS;

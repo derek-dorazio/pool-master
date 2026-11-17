@@ -199,6 +199,22 @@ describe('HistoryService (#837)', () => {
     ]);
   });
 
+  it('lists only the contests gone final since a moment when asked, so League Home reads its last few days of finals and not the whole year (#1782)', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2026-04-13T22:00:00.000Z');
+    finish('masters', 2026, [['eagles', 1, 1]], CupWeight.NORMAL, new Date('2026-04-14T06:00:00.000Z'));
+    contest('week-11', '2026-11-15T05:00:00.000Z');
+    finish('week-11', 2026, [['birdies', 1, 1]], CupWeight.NORMAL, new Date('2026-11-15T06:00:00.000Z'));
+    contest('rained-out', '2026-11-16T22:00:00.000Z');
+    // Final before the moment but settled after it: listed only by the whole year.
+    contest('late-settled', '2026-11-13T22:00:00.000Z');
+    finish('late-settled', 2026, [['bogeys', 1, 1]], CupWeight.NORMAL, new Date('2026-11-15T07:00:00.000Z'));
+
+    const recent = await service.listYearContests(LEAGUE, 2026, { finishedSince: new Date('2026-11-14T12:00:00.000Z') });
+
+    expect(recent.map((row) => row.contestId)).toEqual(['rained-out', 'week-11']);
+  });
+
   it('keeps a contest in the year its finishes were written for when its end time was never kept, dated by its settlement', async () => {
     const { contest, finish, service } = build();
     contest('old-pool', null);

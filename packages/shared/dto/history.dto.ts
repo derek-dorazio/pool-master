@@ -15,6 +15,7 @@ export const ListContestResultsQuerySchema = z.object({
   year: z.number().int().min(2000).max(9999).describe('The championship year, US Eastern, the contests went final in, such as 2026.'),
   squadId: z.uuid().optional().describe('Only the counted contests this squad placed in: its Played count.'),
   place: z.number().int().min(1).max(CHAMPIONSHIP_MATRIX_PLACES).optional().describe('With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).'),
+  finishedSince: z.iso.datetime().optional().describe('Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days\' finals without reading the whole year.'),
   finishOf: z.uuid().optional().describe('The squad whose finish each listed contest carries in squadFinish, without narrowing the list (#1570): any finish of its in the contest, counted or not. Defaults to squadId. A squad outside the league is 404 SQUAD_NOT_FOUND.'),
 }).describe('Which year\'s contests to list, for which squad or matrix cell, and whose finish each carries.');
 export type ListContestResultsQuery = z.infer<typeof ListContestResultsQuerySchema>;

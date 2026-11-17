@@ -23,8 +23,9 @@ export class InMemoryChampionship implements ChampionshipRepository {
     return this.finishes.filter((finish) => finish.leagueId === leagueId);
   }
 
-  async findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]> {
-    return this.finishes.filter((finish) => finish.leagueId === leagueId && finish.year === year);
+  async findByLeagueYear(leagueId: string, year: number, settledSince?: Date): Promise<LeagueYearFinish[]> {
+    return this.finishes.filter((finish) => finish.leagueId === leagueId && finish.year === year
+      && (settledSince === undefined || finish.settledAt >= settledSince));
   }
 
   async hasCountedFinish(leagueId: string, year: number): Promise<boolean> {

@@ -6,6 +6,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
+import { countsEventGames, describeContestProgress, type ContestProgress } from './contest-progress';
 import type {
   ContestConfigurationRepository,
   ContestEntryMatchPredictionRepository,
@@ -455,6 +456,33 @@ export class ContestService {
    */
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     return this.deps.entries.countSubmittedByContests(contestIds);
+  }
+
+  /** Every entry each contest holds, drafts included, as its cap counts them (#1781). */
+  async countAllEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
+    return this.deps.entries.countByContests(contestIds);
+  }
+
+  /**
+   * Each live contest's progress (#1782), by contest id, for a list: one read of games for the
+   * one-event prediction contests among them, however many there are. `eventsById` holds the
+   * contests' events, already read.
+   */
+  async findLiveProgress(contests: readonly Contest[], eventsById: ReadonlyMap<string, SportEvent>): Promise<Map<string, ContestProgress>> {
+    const gameEventIds = [...new Set(contests.filter(countsEventGames).flatMap((contest) => contest.sportEventIds))];
+    const games = gameEventIds.length === 0 ? [] : await this.deps.matches.findBySportEvents(gameEventIds);
+    const gamesByEvent = new Map<string, SportEventMatch[]>();
+    for (const game of games) {
+      const ofEvent = gamesByEvent.get(game.sportEventId);
+      if (ofEvent) ofEvent.push(game);
+      else gamesByEvent.set(game.sportEventId, [game]);
+    }
+    return new Map(contests.flatMap((contest) => {
+      const events = contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []);
+      const ofContest = countsEventGames(contest) ? gamesByEvent.get(contest.sportEventIds[0]) ?? [] : [];
+      const progress = describeContestProgress(contest, events, ofContest);
+      return progress ? [[contest.id, progress] as const] : [];
+    }));
   }
 
   /** Updates a contest. Only allowed when status is DRAFT. */

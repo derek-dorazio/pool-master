@@ -104,6 +104,14 @@ describe('CurrentContestList', () => {
     expect(row('draft-entry').getByRole('link', { name: 'Finish your picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/draft-entry/entries/draft-1');
   });
 
+  it('says Full, not Make your picks, on a contest whose cap is taken by drafts', () => {
+    const fullOfDrafts = buildContest({ id: 'drafts', name: 'Masters Budget', status: ContestStatus.OPEN, entriesPerContest: 3, entryCount: 1, allEntryCount: 3, ...onEvent });
+    drawList({ contests: [fullOfDrafts] });
+
+    expect(row('drafts').getByText('Full')).toBeInTheDocument();
+    expect(row('drafts').queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
+  });
+
   it('says Full on a full contest the viewer is not in, with Expand only for a commissioner', () => {
     drawList();
     expect(screen.getByTestId('list-full-full')).toHaveTextContent('Full');
