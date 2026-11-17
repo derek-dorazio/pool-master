@@ -15,7 +15,9 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { CONTEST_STATUS_LABELS } from './contest-status';
+import { EventScheduleChip } from './event-schedule-chip';
 import { describeContestNextStep, type ContestNextStep } from './my-contest-entry';
+import { contestScheduleChipStatus } from './schedule-changes';
 import { StartEntryButton } from './start-entry-button';
 import type { MyContestEntries } from './use-contest-entries';
 import { listedContestStartsAt } from './use-contest-schedule';
@@ -122,7 +124,8 @@ function renderActions(step: ContestNextStep, contest: ContestDto, leagueCode: s
  * The muted line under a contest's name: its status, then what matters at that status. Open:
  * when it closes and how many have entered. Live: the viewer's place of how many, or how many
  * entries when they are not in it. Set up: when it starts. "Your 2 entries" when they have more
- * than one.
+ * than one. The shared Postponed or Cancelled chip follows the status when the contest is off
+ * schedule (#1768).
  */
 function ContestStatusLine({
   contest,
@@ -139,6 +142,10 @@ function ContestStatusLine({
   const startsAt = listedContestStartsAt(contest);
   const entryCount = contest.entryCount ?? 0;
   const parts: { key: string; node: ReactNode }[] = [{ key: 'status', node: CONTEST_STATUS_LABELS[contest.status] }];
+  const scheduleChip = contestScheduleChipStatus(contest.sportEvents);
+  if (scheduleChip) {
+    parts.push({ key: 'schedule', node: <EventScheduleChip status={scheduleChip} testId={`${testId}-schedule`} /> });
+  }
   if (contest.status === ContestStatus.OPEN) {
     if (startsAt && step.kind !== 'none') {
       parts.push({ key: 'closes', node: <>closes <DateDisplay timeStyle={null} tone="inherit" value={startsAt} /></> });

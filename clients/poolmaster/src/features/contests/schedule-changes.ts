@@ -24,3 +24,20 @@ export function describeScheduleChanges(
   });
   return lines.length ? lines.join(' ') : null;
 }
+
+/**
+ * Which schedule chip a contest's one-line status (League Home's rows, #1768) carries: Postponed
+ * while any of its events is postponed, Cancelled once every one is cancelled, otherwise none. A
+ * season with one cancelled week goes on, so that week shows only on the contest's own pages.
+ */
+export function contestScheduleChipStatus(
+  sportEvents: readonly Pick<ScheduledEvent, 'status'>[],
+): typeof SportEventStatus.POSTPONED | typeof SportEventStatus.CANCELLED | null {
+  if (sportEvents.some((sportEvent) => sportEvent.status === SportEventStatus.POSTPONED)) {
+    return SportEventStatus.POSTPONED;
+  }
+  if (sportEvents.length > 0 && sportEvents.every((sportEvent) => sportEvent.status === SportEventStatus.CANCELLED)) {
+    return SportEventStatus.CANCELLED;
+  }
+  return null;
+}

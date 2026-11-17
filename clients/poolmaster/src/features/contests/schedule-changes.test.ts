@@ -1,6 +1,6 @@
 import { SportEventStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import { describeScheduleChanges } from './schedule-changes';
+import { contestScheduleChipStatus, describeScheduleChanges } from './schedule-changes';
 
 const formatStart = (startDate: string) => `at ${startDate}`;
 
@@ -18,5 +18,21 @@ describe('describeScheduleChanges', () => {
       { name: 'Week 12', startDate: '2026-11-25T01:15:00.000Z', status: SportEventStatus.SCHEDULED },
       { name: 'Week 13', startDate: '2026-11-27T01:15:00.000Z', status: SportEventStatus.IN_PROGRESS },
     ], formatStart)).toBeNull();
+  });
+});
+
+describe('contestScheduleChipStatus', () => {
+  it('chips a contest Postponed while any of its events is postponed, even beside a cancelled one', () => {
+    expect(contestScheduleChipStatus([{ status: SportEventStatus.CANCELLED }, { status: SportEventStatus.POSTPONED }])).toBe(SportEventStatus.POSTPONED);
+  });
+
+  it('chips a contest Cancelled only once every event is cancelled', () => {
+    expect(contestScheduleChipStatus([{ status: SportEventStatus.CANCELLED }])).toBe(SportEventStatus.CANCELLED);
+    expect(contestScheduleChipStatus([{ status: SportEventStatus.CANCELLED }, { status: SportEventStatus.SCHEDULED }])).toBeNull();
+  });
+
+  it('gives no chip to a contest on schedule or with no events', () => {
+    expect(contestScheduleChipStatus([{ status: SportEventStatus.SCHEDULED }])).toBeNull();
+    expect(contestScheduleChipStatus([])).toBeNull();
   });
 });

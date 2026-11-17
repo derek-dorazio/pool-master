@@ -9,6 +9,7 @@ import {
   PageHeader,
   LinkButton,
   LoadingState,
+  useMinuteClock,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { plural } from '@/lib/plural';
@@ -24,18 +25,6 @@ import { useLeagueContext } from './use-league-context';
 import { YearReviewBanner } from '@/features/championships/year-review-banner';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { OpensSoonCard } from '@/features/event-pages/opens-soon-card';
-
-const CLOCK_TICK_MS = 60_000;
-
-/** The current time, refreshed every minute so a countdown keeps moving. */
-function useMinuteClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), CLOCK_TICK_MS);
-    return () => window.clearInterval(timer);
-  }, []);
-  return now;
-}
 
 /**
  * League Home: the league's identity once, then its contests (#1763): up to three hero tiles for
