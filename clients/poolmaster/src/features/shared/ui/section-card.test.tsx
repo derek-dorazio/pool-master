@@ -170,6 +170,24 @@ describe("SectionRow", () => {
     expect(screen.getByTestId("row")).toHaveAttribute("href", "/contests/1");
   });
 
+  it("keeps its buttons outside its link, so a button is its own target while the rest of the row still opens the destination", () => {
+    const onClick = vi.fn();
+    inRouter(
+      <SectionRows>
+        <SectionRow actions={<button onClick={onClick} type="button">Edit picks</button>} name="Masters" testId="row" to="/contests/1" />
+      </SectionRows>,
+    );
+
+    const link = screen.getByTestId("row-link");
+    expect(link).toHaveAttribute("href", "/contests/1");
+    expect(link).toHaveAccessibleName("Masters");
+    const button = screen.getByRole("button", { name: "Edit picks" });
+    expect(link).not.toContainElement(button);
+    expect(screen.getByTestId("row-actions")).toContainElement(button);
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it("tints the row the viewer came from and scrolls it into view", () => {
     const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
     render(

@@ -15,3 +15,7 @@ export const Inverse: Story = {
   args: { tone: "inverse" },
   decorators: [(Story) => <div className="bg-surface-inverse p-4"><Story /></div>],
 };
+export const InverseAccent: Story = {
+  args: { tone: "inverseAccent" },
+  decorators: [(Story) => <div className="bg-surface-inverse p-4"><Story /></div>],
+};

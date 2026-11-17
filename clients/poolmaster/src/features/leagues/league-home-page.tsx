@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
-import { championshipYear, ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
+import { championshipYear, PlanFeature } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
@@ -10,13 +10,14 @@ import {
   LinkButton,
   LoadingState,
 } from '@/features/shared/ui';
-import { useLeagueSquadQuery } from '@/features/teams/use-league-squad-query';
 import { getLogger } from '@/lib/logger';
 import { plural } from '@/lib/plural';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
-import { pickUpNextContest } from './league-home';
-import { CupsCard, CurrentContestsCard, LiveStandingsCard, UpNextCard, YourTeamCard } from './league-home-cards';
+import { splitHomeContests } from './league-home';
+import { useRecentlyFinalContests } from './use-recently-final-contests';
+import { CupsCard, MoreContestsCard } from './league-home-cards';
+import { ContestHeroes } from './league-home-heroes';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -37,8 +38,11 @@ function useMinuteClock() {
 }
 
 /**
- * League Home: the league's identity once, then what needs the member now: the contest that
- * closes soonest, live standings for each contest they are in, and their own team.
+ * League Home: the league's identity once, then its contests (#1763): up to three hero tiles for
+ * the contests that matter now (live first, then open by soonest close), then More contests, every
+ * other current contest with the viewer's next step on its row and those gone final in the last
+ * few days, and the year's cups. Older finished contests are on My team's Past contests.
+ * `?focus={contestId}` tints and scrolls to the contest a contest page's breadcrumb came from.
  */
 export function LeagueHomePage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -46,6 +50,7 @@ export function LeagueHomePage() {
   const location = useLocation();
   const logger = useMemo(() => getLogger().child({ feature: 'league-home-page' }), []);
   const now = useMinuteClock();
+  const [searchParams] = useSearchParams();
 
   // Read once and remembered for this league only, because the effect below drops it from history
   // so Back or a reload does not show the notice again.
@@ -62,7 +67,6 @@ export function LeagueHomePage() {
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
-  const myTeamQuery = useLeagueSquadQuery(leagueId, viewer.mySquadId);
 
   useEffect(() => {
     if (leagueQuery.isError) {
@@ -73,30 +77,18 @@ export function LeagueHomePage() {
     }
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  // Members never see a draft; what is open or live is what Home is about.
-  const currentContests = useMemo(
-    // poolmaster-allow-list-lookup: the league's current contests (#1161), dropping the drafts members never see
-    () => (contestsQuery.data ?? []).filter(
-      (contest) => contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE,
-    ),
-    [contestsQuery.data],
-  );
   const myEntries = useMyContestEntries(leagueId, viewer.mySquadId !== null);
+  const finals = useRecentlyFinalContests(leagueId, viewer.mySquadId, now);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading league...' });
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
 
-  const upNext = pickUpNextContest(currentContests, now);
-  const otherContests = currentContests.filter((contest) => contest.id !== upNext?.contest.id);
-  const liveContests = currentContests.filter(
-    (contest) => contest.status === ContestStatus.ACTIVE
-      && (myEntries.entriesByContestId.get(contest.id)?.length ?? 0) > 0,
-  );
-  const myTeam = myTeamQuery.data ?? null;
+  const showDrafts = viewer.isCommissioner || viewer.isRootAdmin;
+  const { heroes, more } = splitHomeContests(contestsQuery.data ?? [], { now, showDrafts });
+  const focusContestId = searchParams.get('focus');
   const hasTeam = viewer.mySquadId !== null;
-  const entriesState = myEntries.state;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -135,31 +127,31 @@ export function LeagueHomePage() {
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load this league's contests." onRetry={() => void contestsQuery.refetch()} />
       ) : (
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className="grid gap-5">
-            {upNext ? (
-              <UpNextCard
-                entriesState={entriesState}
-                hasTeam={hasTeam}
-                leagueCode={leagueCode}
-                myEntries={myEntries.entriesByContestId.get(upNext.contest.id)}
-                now={now}
-                upNext={upNext}
-              />
-            ) : null}
-            <CurrentContestsCard
-              bestPlaceByContestId={myEntries.bestPlaceByContestId}
-              contests={otherContests}
-              emptyBody={upNext ? 'No other open or live contests.' : 'No open or live contests.'}
-              entriesByContestId={myEntries.entriesByContestId}
-              entriesState={entriesState}
+        <div className="space-y-5">
+          {heroes.length ? (
+            <ContestHeroes
+              contests={heroes}
+              focusContestId={focusContestId}
               hasTeam={hasTeam}
               leagueCode={leagueCode}
+              myEntries={myEntries}
+              mySquadId={viewer.mySquadId}
+              now={now}
             />
-          </div>
-          <div className="grid gap-5">
-            {liveContests.length ? (
-              <LiveStandingsCard contests={liveContests} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
+          ) : null}
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            {more.length || finals.length || !heroes.length ? (
+              <MoreContestsCard
+                canExpand={viewer.isCommissioner}
+                contests={more}
+                finals={finals}
+                focusContestId={focusContestId}
+                hasHeroes={heroes.length > 0}
+                hasTeam={hasTeam}
+                leagueCode={leagueCode}
+                myEntries={myEntries}
+                now={now}
+              />
             ) : null}
             {hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? (
               <CupsCard
@@ -168,9 +160,6 @@ export function LeagueHomePage() {
                 mySquadId={viewer.mySquadId}
                 year={championshipYear(now)}
               />
-            ) : null}
-            {viewer.isMember ? (
-              <YourTeamCard isLoading={myTeamQuery.isLoading} leagueCode={leagueCode} team={myTeam} />
             ) : null}
           </div>
         </div>
