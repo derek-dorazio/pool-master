@@ -1,8 +1,10 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
-import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
+import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { fakeLogger } from '../../../support/fake-logger';
 
 /**
  * The adapter's MLB reads against a fake BALLDONTLIE that checks every request it sends, and
@@ -13,7 +15,7 @@ import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec
 const API_KEY = 'test-api-key';
 const NOW = Date.UTC(2026, 10, 10);
 
-const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean() });
+const gameRow = z.looseObject({ id: z.number(), season: z.number(), postseason: z.boolean(), date: z.string() });
 const gamesIn = (file: string) => z.object({ data: z.array(gameRow) }).parse(readBalldontlieFixture('mlb', file)).data;
 const games = [...gamesIn('games-2025-postseason.json'), ...gamesIn('games-2026-postseason-partial.json')];
 
@@ -27,9 +29,11 @@ const gamesRoute: FakeRoute = pagedRoute(games, (row, query) => {
 const defaultRoutes: Record<string, FakeRoute> = {
   '/mlb/v1/games': gamesRoute,
   '/mlb/v1/teams': () => ({ body: readBalldontlieFixture('mlb', 'teams.json') }),
+  // Only the 2025 season is ranked; any other season's standings are empty.
+  '/mlb/v1/standings': ({ query }) => ({ body: query.get('season') === '2025' ? readBalldontlieFixture('mlb', 'standings-2025.json') : { data: [] } }),
 };
 
-function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
+function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW, logger?: FastifyBaseLogger): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
   const api = createFakeBalldontlie({ league: 'mlb', apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
@@ -40,6 +44,7 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
     requestsPerMinute: 600,
     now: () => clock,
     sleep: (ms) => { clock += ms; return Promise.resolve(); },
+    ...(logger && { logger }),
   });
   return {
     adapter,
@@ -107,7 +112,83 @@ describe('BalldontlieAdapter (MLB)', () => {
 
       expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', participantCount: 12, fieldLocked: true });
       expect(detail?.participants[0]).toMatchObject({ externalId: 'mlb-team-10', name: 'New York Yankees', metadata: { tour: 'MLB', abbreviation: 'NYY' } });
-      expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100']);
+      expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100', '/mlb/v1/standings?season=2025', '/mlb/v1/teams?']);
+    });
+
+    it('builds the bracket with each league\'s top two seeds waiting out the Wild Card Series, and puts them in the field before they play', async () => {
+      // The Wild Card Series alone: Toronto, Seattle, Milwaukee and Philadelphia have no game yet.
+      const wildCard = games.filter((game) => game.date < '2025-10-04');
+      const harness = setup({ ...defaultRoutes, '/mlb/v1/games': pagedRoute(wildCard) });
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
+
+      const team = (id: number) => `mlb-team-${String(id)}`;
+      expect(detail?.participants.map((participant) => participant.externalId)).toEqual(expect.arrayContaining([team(14), team(25), team(19), team(22)]));
+      expect(detail).toMatchObject({ participantCount: 12, rounds: 4 });
+      // AL: New York 4 v Boston 5 and Cleveland 3 v Detroit 6; Toronto (1) and Seattle (2) wait. NL likewise.
+      expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
+        [1, 1, 'AL', team(10), team(2), { matchNumber: 5, side: MatchSide.AWAY }],
+        [2, 1, 'AL', team(6), team(7), { matchNumber: 6, side: MatchSide.AWAY }],
+        [3, 1, 'NL', team(16), team(24), { matchNumber: 7, side: MatchSide.AWAY }],
+        [4, 1, 'NL', team(18), team(17), { matchNumber: 8, side: MatchSide.AWAY }],
+        [5, 2, 'AL', team(14), null, { matchNumber: 9, side: MatchSide.HOME }],
+        [6, 2, 'AL', team(25), null, { matchNumber: 9, side: MatchSide.AWAY }],
+        [7, 2, 'NL', team(19), null, { matchNumber: 10, side: MatchSide.HOME }],
+        [8, 2, 'NL', team(22), null, { matchNumber: 10, side: MatchSide.AWAY }],
+        [9, 3, 'AL', null, null, { matchNumber: 11, side: MatchSide.HOME }],
+        [10, 3, 'NL', null, null, { matchNumber: 11, side: MatchSide.AWAY }],
+        [11, 4, null, null, null, null],
+      ]);
+      expect(detail?.games).toHaveLength(4);
+    });
+
+    it('builds no bracket, and adds no team, while the standings seed no league', async () => {
+      const harness = setup({ ...defaultRoutes, '/mlb/v1/standings': () => ({ body: { data: [] } }) });
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
+
+      expect(detail?.bracket).toBeUndefined();
+      expect(detail?.games).toHaveLength(11);
+      expect(requestLine(harness.api).filter((line) => line.startsWith('/mlb/v1/teams'))).toEqual([]);
+    });
+
+    it('still gives the field and every series as a game, with no bracket, when the plan does not include the teams list, and warns', async () => {
+      const logger = fakeLogger();
+      const harness = setup({ ...defaultRoutes, '/mlb/v1/teams': () => ({ status: 401, body: { error: 'Unauthorized' } }) }, NOW, logger);
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('mlb-2025-postseason');
+
+      expect(detail).toMatchObject({ participantCount: 12, rounds: 4 });
+      expect(detail?.games).toHaveLength(11);
+      expect(detail?.bracket).toBeUndefined();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'balldontlie.playoffs.teamsRefused', league: 'mlb', season: 2025, status: 401 }),
+        expect.any(String),
+      );
+      expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'balldontlie.playoffs.bracketUnplaced' }), expect.any(String));
+    });
+
+    it('fails the read when the teams list fails for any reason but the plan, so an outage still shows', async () => {
+      const harness = setup({ ...defaultRoutes, '/mlb/v1/teams': () => ({ status: 400, body: { error: 'Bad request' } }) });
+      restore = harness.restore;
+
+      await expect(harness.adapter.getEventDetails('mlb-2025-postseason')).rejects.toThrow('/mlb/v1/teams');
+    });
+
+    it('warns that the bracket is left to an admin when the standings seed no league', async () => {
+      const logger = fakeLogger();
+      const harness = setup({ ...defaultRoutes, '/mlb/v1/standings': () => ({ body: { data: [] } }) }, NOW, logger);
+      restore = harness.restore;
+
+      await harness.adapter.getEventDetails('mlb-2025-postseason');
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'balldontlie.playoffs.bracketUnplaced', league: 'mlb', season: 2025, rankedTeams: 0 }),
+        expect.any(String),
+      );
     });
 
     it('gives nothing for a postseason the vendor has no games in yet', async () => {

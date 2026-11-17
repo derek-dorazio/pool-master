@@ -44,6 +44,21 @@ const mlbTeamDataSchema = z.object({
   runs: z.number().int().optional(),
 });
 
+/**
+ * `MLBStandings` from `/mlb/v1/standings`: a club's place in its division and its league, from
+ * which the six seeds a league are worked out (the document gives no seed).
+ */
+export const mlbStandingSchema = z.object({
+  team: mlbTeamSchema.optional(),
+  division_rank: z.number().int().optional(),
+  league_rank: z.number().int().optional(),
+});
+export type MlbStanding = z.infer<typeof mlbStandingSchema>;
+
+export const mlbStandingListSchema = z.object({
+  data: z.array(mlbStandingSchema),
+});
+
 /** `MLBGame` from `/mlb/v1/games`. */
 export const mlbGameSchema = z.object({
   id: z.number().int().optional(),

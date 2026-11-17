@@ -11,8 +11,9 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
-import { MLB_LEAGUES, mlbGameListSchema, mlbTeamListSchema, type MlbGame, type MlbTeam } from './mlb-contract';
-import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
+import { MLB_LEAGUES, mlbGameListSchema, mlbStandingListSchema, mlbTeamListSchema, type MlbGame, type MlbStanding, type MlbTeam } from './mlb-contract';
+import type { PlayoffSeedRanks } from './series-playoff-bracket';
+import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const MLB_POSTSEASON: PlayoffsLeague = {
@@ -32,10 +33,20 @@ export const MLB_POSTSEASON: PlayoffsLeague = {
   playoffYearOffset: 0,
   // March, when spring training gives way to the new season.
   seasonRolloverMonth: 2,
+  // Six seeds a league, the top two waiting out the Wild Card Series; the American League's half
+  // is listed first, as an admin loads it. The names are the vendor's `league` on a club.
+  bracket: {
+    kind: BracketShapeKind.BYES,
+    leagues: [
+      { name: 'American', label: 'AL' },
+      { name: 'National', label: 'NL' },
+    ],
+  },
 };
 
 const GAMES_PATH = '/mlb/v1/games';
 const TEAMS_PATH = '/mlb/v1/teams';
+const STANDINGS_PATH = '/mlb/v1/standings';
 
 /** A field the document leaves optional but without which a row cannot be placed or scored. */
 function required<Value>(value: Value | undefined, path: string, row: string, field: string): Value {
@@ -74,6 +85,32 @@ export function isMlbClub(team: MlbTeam): boolean {
 }
 
 /** MLB's two reads: a season's postseason games, and every club (the teams list's others left out). */
+/** Seeds a league seeds: its three division winners, then its three best other clubs. */
+const DIVISION_WINNERS = 3;
+const WILD_CARDS = 3;
+
+/**
+ * Each league's six seeds: its division winners 1 to 3 by their place in the league, then its next
+ * three clubs by the same 4 to 6. A league whose standings lack a division or league place for a
+ * club near the top gives no seeds, rather than a guess.
+ */
+export function toMlbSeeds(standings: readonly MlbStanding[]): PlayoffSeedRanks {
+  const seeds = new Map<number, number>();
+  for (const league of MLB_LEAGUES) {
+    const rows = standings.flatMap((standing) => {
+      const { team, division_rank: divisionRank, league_rank: leagueRank } = standing;
+      return team?.id === undefined || team.league !== league ? [] : [{ id: team.id, divisionRank, leagueRank }];
+    });
+    if (rows.some((row) => row.divisionRank === undefined || row.leagueRank === undefined)) continue;
+    const byPlace = [...rows].sort((left, right) => (left.leagueRank ?? 0) - (right.leagueRank ?? 0));
+    const winners = byPlace.filter((row) => row.divisionRank === 1).slice(0, DIVISION_WINNERS);
+    const wildCards = byPlace.filter((row) => !winners.includes(row)).slice(0, WILD_CARDS);
+    if (winners.length !== DIVISION_WINNERS || wildCards.length !== WILD_CARDS) continue;
+    [...winners, ...wildCards].forEach((row, index) => seeds.set(row.id, index + 1));
+  }
+  return seeds;
+}
+
 export function mlbPostseasonSource(client: BalldontlieClient): PlayoffsSource {
   return {
     league: MLB_POSTSEASON,
@@ -84,6 +121,10 @@ export function mlbPostseasonSource(client: BalldontlieClient): PlayoffsSource {
     async teams() {
       const page = await client.get(TEAMS_PATH, {}, mlbTeamListSchema);
       return page.data.filter(isMlbClub).map((team) => toMlbPlayoffTeam(team, TEAMS_PATH));
+    },
+    async seedRanks(season) {
+      const page = await client.get(STANDINGS_PATH, { season }, mlbStandingListSchema);
+      return toMlbSeeds(page.data);
     },
   };
 }
