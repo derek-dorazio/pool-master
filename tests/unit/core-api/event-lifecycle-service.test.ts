@@ -942,6 +942,19 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
   });
 
+  it('still reopens when the event\'s games are scheduled or postponed themselves, none of them begun', async () => {
+    const deps = liveContests([LIVE], {
+      games: [
+        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventMatch,
+        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventMatch,
+      ],
+    });
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
+  });
+
   it('writes nothing when no contest on the postponed event is live', async () => {
     const deps = liveContests([]);
 
