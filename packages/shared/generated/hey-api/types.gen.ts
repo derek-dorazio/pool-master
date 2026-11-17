@@ -13422,6 +13422,47 @@ export type SurvivorLeaderboardResponse = {
              * The team the entry picked, once its game has kicked off. Null before then, and with no pick.
              */
             team: string | null;
+            /**
+             * The picked team's short name ("KC") when it has one, shown with the team; else null.
+             */
+            teamShortName: string | null;
+            /**
+             * The picked team's game, shown with the team: null whenever the team is.
+             */
+            game: {
+                /**
+                 * The team the picked team played.
+                 */
+                opponent: string;
+                /**
+                 * The opponent's short name ("BUF") when it has one.
+                 */
+                opponentShortName: string | null;
+                /**
+                 * Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                 */
+                side: 'HOME' | 'AWAY';
+                /**
+                 * The game is at neither team's home ground: "KC v BUF" either way.
+                 */
+                isNeutralSite: boolean;
+                /**
+                 * Kickoff, when known.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * The game's status: COMPLETED once its result is in.
+                 */
+                status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+                /**
+                 * The picked team's score, once there is one.
+                 */
+                teamScore: number | null;
+                /**
+                 * The opponent's score, once there is one.
+                 */
+                opponentScore: number | null;
+            } | null;
         }>;
     }>;
 };
@@ -13652,9 +13693,28 @@ export type GamePicksResponse = {
          */
         eliminatedInWeek: number | null;
         /**
-         * The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team's entry, as they could show picks not yet revealed.
+         * The teams the entry picked in its other submitted weeks, a lost week's included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team's entry, as they could show picks not yet revealed.
          */
-        usedParticipantIds: Array<string> | null;
+        usedTeams: Array<{
+            /**
+             * The team, by participant: the same team in every week's field.
+             */
+            participantId: string;
+            /**
+             * The week the entry picked it in, 1 for the contest's first week.
+             */
+            weekNumber: number;
+        }> | null;
+        /**
+         * The week number each of this event's rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week.
+         */
+        roundWeeks: Array<{
+            roundNumber: number;
+            /**
+             * 1 for the contest's first week.
+             */
+            weekNumber: number;
+        }>;
     } | null;
     /**
      * The entry's status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.

@@ -689,6 +689,8 @@ describe('LiveStandings.queueDue', () => {
             ? (entry.outInWeek1 ? SurvivorWeekOutcome.ELIMINATED : entry.lifeLostInWeek1 ? SurvivorWeekOutcome.LIFE_LOST : SurvivorWeekOutcome.SURVIVED)
             : null,
           team: index === 0 ? (entry.outInWeek1?.team ?? entry.lifeLostInWeek1?.team ?? (entry.outInWeek1 ? null : 'Kansas City Chiefs')) : null,
+          teamShortName: null,
+          game: null,
         })),
       })),
     };

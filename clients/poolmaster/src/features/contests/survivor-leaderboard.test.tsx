@@ -158,8 +158,8 @@ describe('Survivor contest leaderboard', () => {
           livesLeft: 1,
           livesLost: 1,
           weeks: [
-            { sportEventId: 'week-1', roundNumber: 1, outcome: 'LIFE_LOST', team: 'Chiefs' },
-            { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null },
+            { sportEventId: 'week-1', roundNumber: 1, outcome: 'LIFE_LOST', team: 'Chiefs', teamShortName: null, game: null },
+            { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null, teamShortName: null, game: null },
           ],
         },
         chalk,

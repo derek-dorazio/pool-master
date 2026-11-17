@@ -105,7 +105,7 @@ export function isEliminated(gamePicks: Pick<GamePicksResponse, 'survivor'>): bo
 
 /** Whether the survivor entry picked the team in another week it submitted, so cannot pick it again. */
 export function isTeamUsed(gamePicks: Pick<GamePicksResponse, 'survivor'>, team: PickEmTeam): boolean {
-  return gamePicks.survivor?.usedParticipantIds?.includes(team.participantId) ?? false;
+  return gamePicks.survivor?.usedTeams?.some((used) => used.participantId === team.participantId) ?? false;
 }
 
 /** The team a survivor week's pick names, or null with none shown. */
@@ -268,10 +268,15 @@ function pickedParticipantId(game: PickEmGame): string | null {
  */
 export function roundWeek(gamePicks: GamePicksResponse, roundNumber: number): GamePicksResponse {
   const games = gamePicks.games.filter((game) => game.roundNumber === roundNumber);
+  const { survivor } = gamePicks;
+  const weekOfRound = new Map(survivor?.roundWeeks.map((week) => [week.roundNumber, week.weekNumber]));
   const otherRounds = gamePicks.games
     .filter((game) => game.roundNumber !== roundNumber)
-    .flatMap((game) => pickedParticipantId(game) ?? []);
-  const { survivor } = gamePicks;
+    .flatMap((game) => {
+      const participantId = pickedParticipantId(game);
+      const weekNumber = weekOfRound.get(game.roundNumber);
+      return participantId === null || weekNumber === undefined ? [] : [{ participantId, weekNumber }];
+    });
   return {
     ...gamePicks,
     games,
@@ -279,7 +284,10 @@ export function roundWeek(gamePicks: GamePicksResponse, roundNumber: number): Ga
     pickedCount: games.filter((game) => game.pick !== null).length,
     survivor: survivor && {
       ...survivor,
-      usedParticipantIds: survivor.usedParticipantIds && [...new Set([...survivor.usedParticipantIds, ...otherRounds])],
+      usedTeams: survivor.usedTeams && [
+        ...survivor.usedTeams,
+        ...otherRounds.filter((used) => !survivor.usedTeams?.some((known) => known.participantId === used.participantId)),
+      ],
     },
   };
 }

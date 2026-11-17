@@ -13603,6 +13603,36 @@ export interface components {
                     outcome: "SURVIVED" | "LIFE_LOST" | "ELIMINATED" | "PENDING" | null;
                     /** @description The team the entry picked, once its game has kicked off. Null before then, and with no pick. */
                     team: string | null;
+                    /** @description The picked team's short name ("KC") when it has one, shown with the team; else null. */
+                    teamShortName: string | null;
+                    /** @description The picked team's game, shown with the team: null whenever the team is. */
+                    game: {
+                        /** @description The team the picked team played. */
+                        opponent: string;
+                        /** @description The opponent's short name ("BUF") when it has one. */
+                        opponentShortName: string | null;
+                        /**
+                         * @description Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                         * @enum {string}
+                         */
+                        side: "HOME" | "AWAY";
+                        /** @description The game is at neither team's home ground: "KC v BUF" either way. */
+                        isNeutralSite: boolean;
+                        /**
+                         * Format: date-time
+                         * @description Kickoff, when known.
+                         */
+                        scheduledDate: string | null;
+                        /**
+                         * @description The game's status: COMPLETED once its result is in.
+                         * @enum {string}
+                         */
+                        status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                        /** @description The picked team's score, once there is one. */
+                        teamScore: number | null;
+                        /** @description The opponent's score, once there is one. */
+                        opponentScore: number | null;
+                    } | null;
                 }[];
             }[];
         };
@@ -13772,8 +13802,22 @@ export interface components {
             survivor: {
                 /** @description The week number (1 for the contest's first week) that put the entry out: a loss, a tie, or a week not submitted by its first kickoff. Null while it is still in. An entry that is out picks no later week. */
                 eliminatedInWeek: number | null;
-                /** @description The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team's entry, as they could show picks not yet revealed. */
-                usedParticipantIds: string[] | null;
+                /** @description The teams the entry picked in its other submitted weeks, a lost week's included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team's entry, as they could show picks not yet revealed. */
+                usedTeams: {
+                    /**
+                     * Format: uuid
+                     * @description The team, by participant: the same team in every week's field.
+                     */
+                    participantId: string;
+                    /** @description The week the entry picked it in, 1 for the contest's first week. */
+                    weekNumber: number;
+                }[] | null;
+                /** @description The week number each of this event's rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week. */
+                roundWeeks: {
+                    roundNumber: number;
+                    /** @description 1 for the contest's first week. */
+                    weekNumber: number;
+                }[];
             } | null;
             /**
              * @description The entry's status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.

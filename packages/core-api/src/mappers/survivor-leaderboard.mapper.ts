@@ -3,7 +3,7 @@
  * with a `SurvivorLeaderboardModel`; the published `SurvivorLeaderboardResponse` is shaped here.
  */
 
-import type { SportEventStatus, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
+import type { MatchSide, MatchStatus, SportEventStatus, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
 import type { SurvivorLeaderboardResponse } from '@poolmaster/shared/dto';
 
 export interface SurvivorLeaderboardWeekRow {
@@ -19,11 +19,26 @@ export interface SurvivorLeaderboardWeekRow {
   aliveCount: number;
 }
 
+/** A shown pick's game (#1757), from the picked team's side. */
+export interface SurvivorLeaderboardPickGameRow {
+  opponent: string;
+  opponentShortName: string | null;
+  side: MatchSide;
+  isNeutralSite: boolean;
+  scheduledDate: Date | null;
+  status: MatchStatus;
+  teamScore: number | null;
+  opponentScore: number | null;
+}
+
 export interface SurvivorLeaderboardEntryWeekRow {
   sportEventId: string;
   roundNumber: number;
   outcome: SurvivorWeekOutcome | null;
   team: string | null;
+  teamShortName: string | null;
+  /** Shown with the team, so null whenever it is. */
+  game: SurvivorLeaderboardPickGameRow | null;
 }
 
 export interface SurvivorLeaderboardEntryRow {
@@ -61,7 +76,10 @@ export function toSurvivorLeaderboardResponse(model: SurvivorLeaderboardModel): 
     weeks: model.weeks.map((week) => ({ ...week, startDate: week.startDate.toISOString() })),
     entries: model.entries.map((entry) => ({
       ...entry,
-      weeks: entry.weeks.map((week) => ({ ...week })),
+      weeks: entry.weeks.map((week) => ({
+        ...week,
+        game: week.game === null ? null : { ...week.game, scheduledDate: week.game.scheduledDate?.toISOString() ?? null },
+      })),
     })),
   };
 }
