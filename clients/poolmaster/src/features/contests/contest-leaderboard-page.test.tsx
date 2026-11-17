@@ -550,7 +550,7 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('Upset');
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-2')).toHaveTextContent('+3');
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-1')).toHaveTextContent('—');
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–74');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–\u206074');
   });
 
   it('opens a team\'s Wins to every game it played', async () => {
@@ -562,8 +562,8 @@ describe('ContestLeaderboardPage', () => {
     fireEvent.click(await screen.findByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek'));
 
     const callout = screen.getByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek-callout');
-    expect(callout).toHaveTextContent('First Roundbeat Gonzaga 81–76');
-    expect(callout).toHaveTextContent('Second Roundlost to Arizona 70–74');
+    expect(callout).toHaveTextContent('First Roundbeat Gonzaga 81–\u206076');
+    expect(callout).toHaveTextContent('Second Roundlost to Arizona 70–\u206074');
   });
 
   it('tints a hovered pick row\'s pinned cells too, over their opaque background', async () => {

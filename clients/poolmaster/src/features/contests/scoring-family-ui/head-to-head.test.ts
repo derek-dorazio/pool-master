@@ -183,7 +183,15 @@ describe('head-to-head leaderboard', () => {
     const out = pick({ points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false });
     const board = headToHeadUi.leaderboard({ ...bracketLeaderboard([out]), participants: [team(), gonzaga, arizona] }, basketball, context(vermontOutInRoundOfThirtyTwo));
 
-    expect(board.pickDetail('entry-1', out, team()).statLine).toBe('Round of 32: lost to Arizona 70–74');
+    expect(board.pickDetail('entry-1', out, team()).statLine).toBe('Round of 32: lost to Arizona 70–\u206074');
+  });
+
+  it('names the opponent by its short name where the field has one, so the line fits a phone row', () => {
+    const out = pick({ points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false });
+    const shortArizona = team({ ...arizona, participant: { ...arizona.participant, name: 'Arizona Wildcats', shortName: 'Arizona' } });
+    const board = headToHeadUi.leaderboard({ ...bracketLeaderboard([out]), participants: [team(), gonzaga, shortArizona] }, basketball, context(vermontOutInRoundOfThirtyTwo));
+
+    expect(board.pickDetail('entry-1', out, team()).statLine).toBe('Round of 32: lost to Arizona 70–⁠74');
   });
 
   it('opens Wins to every game the team played, by round', () => {
@@ -193,8 +201,8 @@ describe('head-to-head leaderboard', () => {
     expect(board.pickDetail('entry-1', out, team()).detailCells[0]?.peek).toEqual({
       title: 'Vermont',
       facts: [
-        { label: 'First Round', value: 'beat Gonzaga 81–76' },
-        { label: 'Round of 32', value: 'lost to Arizona 70–74' },
+        { label: 'First Round', value: 'beat Gonzaga 81–\u206076' },
+        { label: 'Round of 32', value: 'lost to Arizona 70–\u206074' },
       ],
     });
   });
@@ -208,7 +216,7 @@ describe('head-to-head leaderboard', () => {
 
     expect(board.pickDetail('entry-1', plainWin, team()).detailCells[0]?.peek?.facts.at(-1))
       .toEqual({ label: 'Round of 32', value: 'vs Arizona · start 2026-03-28T22:09:00.000Z' });
-    expect(board.pickDetail('entry-1', plainWin, team()).statLine).toBe('First Round: beat Gonzaga 81–76');
+    expect(board.pickDetail('entry-1', plainWin, team()).statLine).toBe('First Round: beat Gonzaga 81–\u206076');
   });
 
   it('says a team still in is playing now while its next game is live, and names an opponent not decided yet as TBD', () => {

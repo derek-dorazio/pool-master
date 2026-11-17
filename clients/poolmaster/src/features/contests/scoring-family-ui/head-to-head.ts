@@ -23,7 +23,10 @@ interface TeamGame {
   match: SportEventMatchDto;
   opponentId: string | null;
   won: boolean;
-  /** "81–76", the team's score first; null for a game with no score, such as a walkover. */
+  /**
+   * "81–76", the team's score first; null for a game with no score, such as a walkover. A word
+   * joiner follows the dash, which a line may otherwise break after, so a score never splits.
+   */
   score: string | null;
 }
 
@@ -38,7 +41,7 @@ function teamGames(games: readonly SportEventMatchDto[], teamId: string): TeamGa
         match,
         opponentId: isHome ? match.awaySportEventParticipantId : match.homeSportEventParticipantId,
         won: match.winnerSide === (isHome ? MatchSide.HOME : MatchSide.AWAY),
-        score: own === null || theirs === null ? null : `${String(own)}–${String(theirs)}`,
+        score: own === null || theirs === null ? null : `${String(own)}–\u2060${String(theirs)}`,
       };
     })
     .sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
@@ -85,7 +88,8 @@ export const headToHeadUi: ScoringFamilyUi = {
   leaderboard(response, sport, context) {
     const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
     const showsBonus = response.upsetBonus;
-    const names = new Map(response.participants.map((row) => [row.id, row.participant.name]));
+    // Opponents go by their short name where the field has one, so a result fits a phone row.
+    const names = new Map(response.participants.map((row) => [row.id, row.participant.shortName ?? row.participant.name]));
     const nameOf = (id: string | null) => (id === null ? 'TBD' : names.get(id) ?? 'TBD');
     const detailColumns: LeaderboardDetailColumn[] = [
       { key: 'wins', label: 'Wins', testId: 'contest-leaderboard-wins-header', width: 'minmax(48px,0.3fr)' },
