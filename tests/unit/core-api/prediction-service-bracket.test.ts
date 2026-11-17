@@ -145,6 +145,15 @@ describe('PredictionService on a bracket — filling it in', () => {
     expect(game(view, 5).home).toBeNull();
   });
 
+  it('names each team with its seed in the event, so the bracket can show it beside the name, and no seed for a team the field leaves unseeded', async () => {
+    const context = setup({ seeds: new Map([...EIGHT_SEEDS, ['T8', null]]) });
+    const view = await context.service.getGamePicks(context.input);
+
+    expect(game(view, 1).predictedHome).toMatchObject({ sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1 });
+    expect(game(view, 1).home).toMatchObject({ sportEventParticipantId: 'T1', seedNumber: 1 });
+    expect(game(view, 1).predictedAway).toMatchObject({ sportEventParticipantId: 'T8', seedNumber: null });
+  });
+
   it('saves picks through to the final in one request, each later game offering the teams picked to win the games before it', async () => {
     const context = setup();
     const view = await context.service.saveGamePicks({ ...context.input, picks: CHALK });

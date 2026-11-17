@@ -178,7 +178,7 @@ function primeMocks(opts?: {
   entriesPerContest?: number;
   /** The league plan's entries per contest; the contest's own cap unless given. */
   planEntriesPerContest?: number;
-  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'SQUARES';
+  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SQUARES';
   allEntryCount?: number;
   /** The event's field rows' tier ids and prices, by field row id; none unless given. */
   field?: Record<string, { tierId?: string; price?: number }>;
@@ -199,7 +199,7 @@ function primeMocks(opts?: {
         id: 'contest-1',
         name: 'Masters Pick 6',
         status: contestStatus,
-        contestFormat: opts?.selectionType === 'PICK_EM' ? 'PREDICTION' : 'ROSTER',
+        contestFormat: opts?.selectionType === 'PICK_EM' || opts?.selectionType === 'BRACKET' ? 'PREDICTION' : 'ROSTER',
         selectionType: opts?.selectionType ?? 'TIERED',
         leagueId: 'league-1',
         sport: 'GOLF',
@@ -551,6 +551,21 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(await screen.findByTestId('squares-grid')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entries-section')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entries')).not.toBeInTheDocument();
+  });
+
+  it('gives a bracket entry of the viewer\'s a bracket icon before its name, "Edit bracket" to its pick page, in place of ✎, and another team\'s entry none', async () => {
+    primeMocks({ selectionType: 'BRACKET', entries: [MINE, THEIRS] });
+
+    renderContestBoard();
+
+    const edit = await screen.findByTestId('contest-board-edit-entry-entry-1');
+    expect(edit).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    expect(edit).toHaveAttribute('title', 'Edit bracket');
+    expect(edit).toHaveAccessibleName('Edit bracket: Birdie Hunters 1');
+    expect(edit).not.toHaveTextContent('✎');
+    const mine = screen.getByTestId('contest-board-entry-entry-1');
+    expect(within(mine).getAllByRole('link').filter((link) => link.getAttribute('href') === edit.getAttribute('href'))).toEqual([edit]);
+    expect(screen.queryByTestId('contest-board-edit-entry-entry-3')).not.toBeInTheDocument();
   });
 
   it('says nobody has entered yet when the list is empty', async () => {

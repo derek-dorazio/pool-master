@@ -13526,6 +13526,24 @@ export type BracketLeaderboardResponse = {
          * The entry's guess of the final's total points.
          */
         tiebreakerValue: number | null;
+        /**
+         * The team the entry picks to win the final; null with no final pick standing.
+         */
+        champion: {
+            /**
+             * The team's field row in the event.
+             */
+            sportEventParticipantId: string;
+            name: string;
+            /**
+             * The team's seed in the event; null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
+            /**
+             * How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING.
+             */
+            outcome: 'CORRECT' | 'BUSTED' | 'PUSH' | 'PENDING';
+        } | null;
     }>;
 };
 
@@ -13628,6 +13646,10 @@ export type GamePicksResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * The team really playing on this side; null until it is decided.
@@ -13639,6 +13661,10 @@ export type GamePicksResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
@@ -13650,6 +13676,10 @@ export type GamePicksResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * As predictedHome, for the away side.
@@ -13661,6 +13691,10 @@ export type GamePicksResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks.
@@ -13946,6 +13980,10 @@ export type GamePickPreviewResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * The team really playing on this side; null until it is decided.
@@ -13957,6 +13995,10 @@ export type GamePickPreviewResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
@@ -13968,6 +14010,10 @@ export type GamePickPreviewResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * As predictedHome, for the away side.
@@ -13979,6 +14025,10 @@ export type GamePickPreviewResponse = {
             sportEventParticipantId: string;
             participantId: string;
             name: string;
+            /**
+             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             */
+            seedNumber: number | null;
         } | null;
         /**
          * Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has.
