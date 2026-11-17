@@ -78,6 +78,14 @@ describe("pool-master-3lo.1: shared Button primitives", () => {
     expect(button).not.toHaveClass("bg-transparent");
   });
 
+  it("fills its board cell with no padding of its own when its size is cell, taking the cell's corner", () => {
+    render(<Button size="cell" variant="ghost">BH</Button>);
+    const button = screen.getByRole("button", { name: "BH" });
+
+    expect(button).toHaveClass("size-full", "p-0", "rounded-[inherit]");
+    expect(button).not.toHaveClass("h-12");
+  });
+
   it("rule: marks loading buttons disabled for pending actions", () => {
     render(<Button isLoading>Saving</Button>);
 

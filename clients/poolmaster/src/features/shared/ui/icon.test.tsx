@@ -18,6 +18,7 @@ describe('Icon', () => {
     ['primary', 'text-primary'],
     ['danger', 'text-destructive'],
     ['default', 'text-foreground'],
+    ['done', 'text-done'],
   ] as const)('colours the icon in the %s tone', (tone, className) => {
     render(<Icon data-testid="award" icon={Award} tone={tone} />);
 

@@ -296,7 +296,7 @@ test('act 3: a new member joins, enters, and claims a box, which the grid shows 
     );
     state.entryId = created.entry.id;
     await expect(page.getByTestId('squares-entry-page')).toBeVisible();
-    await expect(page.getByTestId('squares-claimed-count')).toHaveText('0 of 10 boxes claimed');
+    await expect(page.getByTestId(`squares-entry-line-${state.entryId}-count`)).toHaveText('0 of 10 boxes');
   });
 
   await test.step('claim the box in row 3, column 5', async () => {
@@ -307,9 +307,10 @@ test('act 3: a new member joins, enters, and claims a box, which the grid shows 
       `/api/v1/selections/${state.contestId}/squares/2/4`,
     );
     expect(board.boxes).toEqual([expect.objectContaining({ rowIndex: 2, columnIndex: 4, contestEntryId: state.entryId })]);
-    await expect(page.getByTestId('squares-box-2-4')).toContainText(run.squadName);
+    // The box shows the entry's initials; its accessible name keeps the full name.
+    await expect(page.getByTestId('squares-box-2-4')).toHaveAttribute('aria-label', new RegExp(run.squadName));
     await expect(page.getByTestId('squares-box-2-4')).toHaveAttribute('data-mine', 'true');
-    await expect(page.getByTestId('squares-claimed-count')).toHaveText('1 of 10 boxes claimed');
+    await expect(page.getByTestId(`squares-entry-line-${state.entryId}-count`)).toHaveText('1 of 10 boxes');
   });
 
   await test.step('the member logs out', async () => {
@@ -326,7 +327,7 @@ test('act 4: the commissioner draws the numbers, and the digits appear along the
   // Before kickoff the contest's page lists its entries under the grid, where the commissioner draws.
   await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
   await expect(page.getByTestId('squares-board')).toBeVisible();
-  await expect(page.getByTestId('squares-row-digit-0')).toHaveText('');
+  await expect(page.getByTestId('squares-row-digit-0')).toHaveText('?');
 
   await page.getByTestId('squares-draw').click();
   const drawn = await submitAndRead<{ digits: { rowDigits: number[]; columnDigits: number[] } | null }>(
@@ -340,7 +341,7 @@ test('act 4: the commissioner draws the numbers, and the digits appear along the
     await expect(page.getByTestId(`squares-row-digit-${index}`)).toHaveText(String(digit));
   }
   await expect(page.getByTestId('squares-column-digit-0')).toHaveText(String(drawn.digits?.columnDigits[0]));
-  await expect(page.getByTestId('squares-box-2-4')).toContainText(run.squadName);
+  await expect(page.getByTestId('squares-box-2-4-peek')).toHaveAttribute('aria-label', new RegExp(run.squadName));
   await expect(page.getByTestId('squares-draw')).toHaveCount(0);
 
   await logOut(page);

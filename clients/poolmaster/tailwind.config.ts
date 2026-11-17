@@ -70,7 +70,8 @@ const config: Config = {
         },
         label: "var(--text-label)",
         "label-on-inverse": "var(--text-label-on-inverse)",
-        selected: "var(--surface-selected)",
+        // Mixed so a tint takes an alpha (`bg-selected/15`, the viewer's own squares box).
+        selected: themeColor("surface-selected"),
         "row-alt": "var(--surface-row-alt)",
         "row-hover": "var(--table-row-hover-surface)",
         "on-inverse": "var(--text-on-inverse)",
@@ -80,7 +81,8 @@ const config: Config = {
         "inverse-border": "var(--border-on-inverse)",
         "inverse-border-strong": "var(--border-on-inverse-strong)",
         done: {
-          DEFAULT: "var(--status-done)",
+          // Mixed so a tint takes an alpha (`bg-done/10`, a squares board's live row and column).
+          DEFAULT: themeColor("status-done"),
           foreground: "var(--text-on-done)",
         },
         border: themeColor("border"),
@@ -116,6 +118,10 @@ const config: Config = {
           DEFAULT: themeColor("card"),
           foreground: themeColor("card-foreground"),
         },
+      },
+      fontSize: {
+        /** The smallest type: a tag on a board cell, such as a squares box's Q1 or Now. */
+        "2xs": ["0.5625rem", { lineHeight: "0.75rem" }],
       },
       fontFamily: {
         body: ["var(--font-body)"],
