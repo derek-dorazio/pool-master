@@ -110,6 +110,8 @@ export class InMemoryContestWorld {
   readonly leaderboardSnapshots = new InMemoryLeaderboardSnapshots<StoredLeaderboard>(
     (sportEventId) => [...this.contests.values()].filter((contest) => contest.sportEventIds.includes(sportEventId)).map((contest) => contest.id),
   );
+  /** The contests each read asked to have their stale stored boards rebuilt (#1788), one list per ask. */
+  readonly leaderboardRebuildsAsked: string[][] = [];
   readonly leagues = new Map<string, League>();
   readonly users = new Map<string, User>();
   readonly memberships = new Map<string, LeagueMembership>();
@@ -914,6 +916,11 @@ export class InMemoryContestWorld {
       participants: { findByIds: async () => [] },
       matches: { findBySportEvent: async () => [], findBySportEvents: async () => [] },
       leaderboardSnapshots: this.leaderboardSnapshots,
+      leaderboardRebuilds: {
+        contestsChanged: async (contestIds) => {
+          this.leaderboardRebuildsAsked.push([...contestIds]);
+        },
+      },
       standings: this.standingRepo(),
       eventStandings: this.eventStandingRepo(),
       memberships: this.membershipRepo(),

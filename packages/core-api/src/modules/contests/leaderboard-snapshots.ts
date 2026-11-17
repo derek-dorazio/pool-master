@@ -125,6 +125,11 @@ export interface LeaderboardRebuilds {
   forEvent(sportEventId: string): JobsForWrite;
   /** The job rebuilding one contest's boards, for a write that changes only that contest (#1466). */
   forContest(contestId: string): JobsForWrite;
+  /**
+   * These contests' stored boards are no longer current: rebuild them soon (#1788). What a read
+   * that computes boards without storing them asks, so they are stored for the reads after.
+   */
+  contestsChanged(contestIds: readonly string[]): Promise<void>;
 }
 
 /** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
@@ -133,6 +138,10 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
 
   eventsChanged(sportEventIds: readonly string[]): Promise<void> {
     return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
+  }
+
+  contestsChanged(contestIds: readonly string[]): Promise<void> {
+    return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
   }
 
   forEvent(sportEventId: string): JobsForWrite {

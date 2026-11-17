@@ -96,6 +96,7 @@ import {
   leaderboardKindOf,
   nextKickoffAfter,
   type LeaderboardChanges,
+  type LeaderboardRebuilds,
 } from './leaderboard-snapshots';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames, type PickEmWeekGames } from './pick-em-standings';
 import { scoreGamePicks } from '../scoring-families/head-to-head/game-picks';
@@ -237,6 +238,12 @@ export interface ContestServiceDeps {
    * signals (a participant's name, a squad's). Five minutes unless set.
    */
   leaderboardSnapshotMaxAgeMs?: number;
+  /**
+   * Where a read that computed boards without storing them asks for the stale stored ones to be
+   * rebuilt (#1788): my entries and a cup's projection, which store nothing themselves so they
+   * cost the same statements however many contests they read.
+   */
+  leaderboardRebuilds: Pick<LeaderboardRebuilds, 'contestsChanged'>;
 }
 
 /** A stored board, tagged with the leaderboard it is (#1435): a contest has one kind of board. */
@@ -257,6 +264,9 @@ export type ContestLeaderboardSnapshotRead = ContestLeaderboardSnapshot<StoredLe
 
 /** One entry's row on any kind of board: whose it is and its place, null while it has none. */
 type LiveBoardRow = { entryId: string; squadId: string; position: number | null; displayPosition: string | null };
+
+/** A contest's live board rows, and whether they were computed because its stored board is stale (#1788). */
+type LiveBoard = { contestId: string; rows: readonly LiveBoardRow[]; staleStored: boolean };
 
 /** A contest's board with the snapshot version it was read from, for the poll's ETag (#1436). */
 export interface LeaderboardRead<Board> {
@@ -560,24 +570,27 @@ export class ContestService {
    * (#1565): read from the stored boards the leaderboards answer from, together, and the ones not
    * current computed side by side on reads batched across them (#1315), as a cup's projection
    * does. Those are not stored, so the read costs the same statements however many contests it
-   * names. An entry the board does not rank is left out.
+   * names; the stale stored ones are rebuilt by one queued job each, asked for in one write
+   * (#1788). An entry the board does not rank is left out.
    */
   private async placesOfEntries(contests: readonly Contest[], entryIds: ReadonlySet<string>): Promise<ContestEntryPlaceDto[]> {
     if (contests.length === 0) return [];
     const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
-    const boards = await Promise.all(contests.map((contest) => batched.boardPlacesOf(contest)));
-    return boards.flat().filter((place) => entryIds.has(place.entryId));
+    const boards = await Promise.all(contests.map((contest) => batched.boardOrNoneOf(contest)));
+    await this.rebuildStaleStoredBoards(boards);
+    return boards.flatMap(({ rows }) => rows.flatMap(({ entryId, position, displayPosition }) => (
+      position === null || displayPosition === null || !entryIds.has(entryId) ? [] : [{ entryId, position, displayPosition }]
+    )));
   }
 
   /**
-   * Every ranked entry's place on the contest's leaderboard, as `liveBoardRowsOf` reads it. None
-   * while no picks are revealed. A board that cannot be shown for another reason is logged and
-   * places nobody, so one broken contest leaves the rest listed.
+   * The contest's live board, as `liveBoardOf` reads it, for my entries' places. No rows while no
+   * picks are revealed. A board that cannot be shown for another reason is logged and has no
+   * rows, so one broken contest leaves the rest listed.
    */
-  private async boardPlacesOf(contest: Contest): Promise<ContestEntryPlaceDto[]> {
-    let rows: readonly LiveBoardRow[];
+  private async boardOrNoneOf(contest: Contest): Promise<LiveBoard> {
     try {
-      rows = await this.liveBoardRowsOf(contest);
+      return await this.liveBoardOf(contest);
     } catch (error) {
       if (!(error instanceof ContestOperationError)) throw error;
       if (error.code === 'CONTEST_LEADERBOARD_PICKS_HIDDEN') {
@@ -585,25 +598,35 @@ export class ContestService {
       } else {
         this.logger.warn({ contestId: contest.id, code: error.code }, 'entry places: the leaderboard cannot be shown, so its entries have no place');
       }
-      return [];
+      return { contestId: contest.id, rows: [], staleStored: false };
     }
-    return rows.flatMap(({ entryId, position, displayPosition }) => (
-      position === null || displayPosition === null ? [] : [{ entryId, position, displayPosition }]
-    ));
   }
 
   /**
    * The one read of a contest's live places (#1575), behind both an entry's place in my entries
    * and a cup's "if it ended now" projection: each entry's row on its stored board when current
-   * (#1435), else on the board computed now and not stored. None for squares, whose grid has no
-   * places until it settles. A board that cannot be shown throws as the leaderboard read would.
+   * (#1435), else on the board computed now and not stored, marked when it was computed because
+   * the stored one is stale (#1788). None for squares, whose grid has no places until it settles.
+   * A board that cannot be shown throws as the leaderboard read would.
    */
-  private async liveBoardRowsOf(contest: Contest): Promise<readonly LiveBoardRow[]> {
+  private async liveBoardOf(contest: Contest): Promise<LiveBoard> {
     const kind = leaderboardKindOf(contest);
-    if (!kind) return [];
+    if (!kind) return { contestId: contest.id, rows: [], staleStored: false };
     const stored = await this.deps.leaderboardSnapshots.find(contest.id, DEFAULT_SHOWN_EVENT);
     const board = stored && isSnapshotCurrent(stored, contest, this.now(), this.snapshotMaxAgeMs) ? boardOfKind(stored.board, kind) : null;
-    return board ? board.entries : (await this.computeStoredLeaderboard(contest, kind, DEFAULT_SHOWN_EVENT)).board.board.entries;
+    if (board) return { contestId: contest.id, rows: board.entries, staleStored: false };
+    const { board: computed } = await this.computeStoredLeaderboard(contest, kind, DEFAULT_SHOWN_EVENT);
+    return { contestId: contest.id, rows: computed.board.entries, staleStored: stored !== null };
+  }
+
+  /**
+   * Asks, in one write, for the stored boards these reads found stale to be rebuilt (#1788), so
+   * the reads after answer from them. A contest with none stored is computed on its first view,
+   * and asks nothing.
+   */
+  private async rebuildStaleStoredBoards(boards: readonly LiveBoard[]): Promise<void> {
+    const stale = boards.flatMap((board) => (board.staleStored ? [board.contestId] : []));
+    if (stale.length > 0) await this.deps.leaderboardRebuilds.contestsChanged(stale);
   }
 
   /**
@@ -1083,29 +1106,37 @@ export class ContestService {
    * until the contest settles. An entry with nothing scored has no place and is left out.
    */
   async livePositionsOf(contestId: string): Promise<RankedContestEntry[]> {
+    const board = await this.liveBoardForPositionsOf(contestId);
+    await this.rebuildStaleStoredBoards([board]);
+    return positionsOn(board);
+  }
+
+  /** `livePositionsOf`'s board: none ranked before any picks are revealed. */
+  private async liveBoardForPositionsOf(contestId: string): Promise<LiveBoard> {
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       throw new ContestNotFoundError(contestId);
     }
-    let rows: readonly LiveBoardRow[];
     try {
-      rows = await this.liveBoardRowsOf(contest);
+      return await this.liveBoardOf(contest);
     } catch (error) {
       if (!(error instanceof ContestOperationError) || error.code !== 'CONTEST_LEADERBOARD_PICKS_HIDDEN') throw error;
       this.logger.debug({ contestId }, 'live positions: picks are not revealed yet, so nothing is ranked');
-      return [];
+      return { contestId, rows: [], staleStored: false };
     }
-    return rows.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
   }
 
   /**
    * `livePositionsOf` for several contests, by contest id, in the same statements however many
    * (#1315): their stored boards are read together (#1435), and the ones not current are built
-   * side by side on reads batched across them.
+   * side by side on reads batched across them, the stale stored ones then rebuilt by jobs asked
+   * for in one write (#1788).
    */
   async livePositionsOfMany(contestIds: readonly string[]): Promise<Map<string, RankedContestEntry[]>> {
     const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
-    return new Map(await Promise.all(contestIds.map(async (contestId) => [contestId, await batched.livePositionsOf(contestId)] as const)));
+    const boards = await Promise.all(contestIds.map((contestId) => batched.liveBoardForPositionsOf(contestId)));
+    await this.rebuildStaleStoredBoards(boards);
+    return new Map(boards.map((board) => [board.contestId, positionsOn(board)]));
   }
 
   /**
@@ -2167,4 +2198,9 @@ function missedPickOf(pick: ContestEntrySeasonPrediction, teamLabelOf: ReadonlyM
   const teamName = teamLabelOf.get(pick.participantId);
   // Every picked team was read above; a participant row that has since gone names nothing.
   return teamName === undefined ? [] : [{ teamName }];
+}
+
+/** Each ranked entry's place on a live board, by squad; an entry with nothing scored is left out. */
+function positionsOn(board: LiveBoard): RankedContestEntry[] {
+  return board.rows.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
 }

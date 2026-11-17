@@ -556,6 +556,19 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     expect(await context.contestService.livePositionsOf(context.contest.id)).toContainEqual({ squadId: cara, position: 1 });
   });
 
+  it('asks for a cup contest\'s stale stored survivor board to be rebuilt, rather than computing it on every projection and never storing it (#1788)', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    await context.leaderboard();
+    storeUnderOlderBoardFormat(context.world.leaderboardSnapshots, context.contest.id);
+
+    await context.contestService.livePositionsOfMany([context.contest.id]);
+    await context.contestService.livePositionsOf(context.contest.id);
+
+    expect(context.world.leaderboardRebuildsAsked).toEqual([[context.contest.id], [context.contest.id]]);
+  });
+
   it('computes the survivor board again, rather than answering from the stored one, when that was stored under an older board format (#1761)', async () => {
     const context = setup();
     context.playWeek1();
