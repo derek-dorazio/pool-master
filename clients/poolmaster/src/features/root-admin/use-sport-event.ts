@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent, getEventBracket, listEventParticipants, listEventRounds, listEventTiers } from '@/lib/api';
+import { getEvent, getEventBracket, listEventRounds, listEventTiers } from '@/lib/api';
 import type {
   SportEventDto,
   SportEventMatchDto,
-  SportEventParticipantDto,
   SportEventRoundDto,
   SportEventTierDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { eventFieldQueryOptions } from '@/features/contests/use-event-games';
 
 /**
  * #236 — the tournament screens' reads of one sport event: the event, its round schedule, its
@@ -46,18 +46,8 @@ export function useSportEventQuery(eventId: string) {
 }
 
 export function useSportEventFieldQuery(eventId: string) {
-  return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.field(eventId),
-    queryFn: async (): Promise<SportEventParticipantDto[]> => {
-      const response = await listEventParticipants({ path: { eventId } });
-      if (!response.data?.participants) {
-        throwApiError(response.error, 'Event field response is missing data.');
-      }
-      return response.data.participants;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  // The admin pages keep the field under their own key, which their saves refresh.
+  return useQuery({ ...eventFieldQueryOptions(eventId), queryKey: QueryKeys.rootAdmin.manageSport.field(eventId) });
 }
 
 export function useSportEventTiersQuery(eventId: string) {

@@ -643,4 +643,47 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByRole("columnheader", { name: /Lifecycle/ })).not.toHaveClass("sticky");
     expect(screen.getByRole("cell", { name: "Active" })).not.toHaveClass("sticky");
   });
+
+  it("draws a row's detail rows under it, each cell under the column it is keyed to and the pinned column still pinned", () => {
+    const pinnedColumns = [
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+    ];
+    render(
+      <DataGrid
+        columns={pinnedColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }, { id: "row-2", lifecycle: "Inactive", name: "Beta" }]}
+        detailRows={(row) => (row.id === "row-1" ? [{ id: "d1", testId: "detail-1", cells: { name: "First game", lifecycle: "Won" } }] : [])}
+        emptyMessage="No rows."
+        getRowId={(row) => row.id}
+        rowTestId={(row) => `row-${row.id}`}
+      />,
+    );
+
+    const detail = screen.getByTestId("detail-1");
+    expect(within(detail).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["First game", "Won"]);
+    expect(within(detail).getByRole("cell", { name: "First game" })).toHaveClass("sticky", "left-0");
+    // Under its own row, before the next one.
+    expect(screen.getAllByRole("row").map((row) => row.getAttribute("data-testid")).filter(Boolean)).toEqual(["row-row-1", "detail-1", "row-row-2"]);
+  });
+
+  it("spans a detail row's line across every column from the one it names to the end", () => {
+    const threeColumns = [
+      ...columns,
+      columnHelper.accessor("id", { header: "Id", cell: ({ getValue }) => getValue() }),
+    ];
+    render(
+      <DataGrid
+        columns={threeColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        detailRows={() => [{ id: "d1", testId: "detail-1", cells: { name: "Week 3" }, span: { fromColumnId: "lifecycle", content: "KC v BUF · Won" } }]}
+        emptyMessage="No rows."
+        getRowId={(row) => row.id}
+        rowActions={() => <button type="button">More</button>}
+      />,
+    );
+
+    const cells = within(screen.getByTestId("detail-1")).getAllByRole("cell");
+    expect(cells.map((cell) => [cell.textContent, cell.getAttribute("colspan")])).toEqual([["Week 3", "1"], ["KC v BUF · Won", "2"], ["", null]]);
+  });
 });
