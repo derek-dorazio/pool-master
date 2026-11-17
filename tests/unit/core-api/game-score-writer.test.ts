@@ -84,7 +84,9 @@ describe('writeGameScores', () => {
   });
 
   it('writes nothing for games not under way on matches with no live score, and reads nothing while every game is linked', async () => {
-    const { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, applyLiveScores } = writer(bracket());
+    const matches = bracket();
+    matches[1] = { ...matches[1], status: MatchStatus.POSTPONED };
+    const { deps, recordResult, findByIds, findByProviderExternalIds, linkGames, applyLiveScores } = writer(matches);
 
     const result = await writeGameScores(deps, EVENT, [
       game('g1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED),
@@ -124,7 +126,7 @@ describe('writeGameScores', () => {
     expect(again.writeDiagnostics.rows[0]).toMatchObject({ disposition: 'UNCHANGED' });
   });
 
-  it('takes a live score back off a match once the provider says its game has not started, was postponed or was cancelled', async () => {
+  it('takes a live score back off a match once the provider says its game has not started or was cancelled, and marks it postponed when the provider postpones it', async () => {
     const matches = bracket();
     matches[0] = { ...matches[0], status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 3 };
     matches[1] = { ...matches[1], status: MatchStatus.IN_PROGRESS, homeScore: 0, awayScore: 0 };
@@ -136,9 +138,33 @@ describe('writeGameScores', () => {
     ]);
 
     expect(applyLiveScores).toHaveBeenCalledWith([
-      { id: 'm1', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
+      { id: 'm1', status: MatchStatus.POSTPONED, homeScore: null, awayScore: null },
       { id: 'm2', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
     ]);
+  });
+
+  it('marks a scheduled game postponed when the provider postpones it, and scheduled again once the provider reschedules it', async () => {
+    const matches = bracket();
+    const { deps, applyLiveScores } = writer(matches);
+
+    await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', null, null, ProviderGameState.POSTPONED)]);
+    matches[0] = { ...matches[0], status: MatchStatus.POSTPONED };
+    await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', null, null, ProviderGameState.SCHEDULED)]);
+
+    expect(applyLiveScores.mock.calls).toEqual([
+      [[{ id: 'm1', status: MatchStatus.POSTPONED, homeScore: null, awayScore: null }]],
+      [[{ id: 'm1', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null }]],
+    ]);
+  });
+
+  it('puts a postponed game\'s live score on it once the provider says it is being played', async () => {
+    const matches = bracket();
+    matches[0] = { ...matches[0], status: MatchStatus.POSTPONED };
+    const { deps, applyLiveScores } = writer(matches);
+
+    await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', 7, 0, ProviderGameState.IN_PROGRESS)]);
+
+    expect(applyLiveScores).toHaveBeenCalledWith([{ id: 'm1', status: MatchStatus.IN_PROGRESS, homeScore: 7, awayScore: 0 }]);
   });
 
   it('puts no live score on a match with a result or cancelled, from a live game with no score yet, or from one whose teams are not the match\'s', async () => {

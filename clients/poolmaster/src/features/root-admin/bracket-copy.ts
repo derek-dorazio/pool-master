@@ -1,4 +1,4 @@
-import { MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
 import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
@@ -53,7 +53,7 @@ export function replaceableEntries(
     }
   }
   return bracket
-    .filter((match) => match.status === MatchStatus.SCHEDULED && match.roundNumber === firstRound)
+    .filter((match) => isMatchUnplayed(match.status) && match.roundNumber === firstRound)
     .flatMap((match) => [MatchSide.HOME, MatchSide.AWAY].map((side) => sideEntry(match, side, fieldById)))
     .filter((entry): entry is SportEventParticipantDto => entry !== undefined
       && placesOf.get(entry.id) === 1 && entry.isActive && !entry.isPlayInPlace);
@@ -93,6 +93,7 @@ export function bracketErrorMessages(
     MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
     MATCH_RESULT_INVALID: `That result could not be saved. The winner's score is the higher, a ${tieWord(vocabulary).toLowerCase()} has level scores, and a final score is never below an earlier one.`,
     MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
+    MATCH_ALREADY_STARTED: `This ${noun.one} has started, so it can't be postponed.`,
     MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
     SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,
     SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
@@ -153,10 +154,10 @@ export function reseededRounds(bracket: readonly SportEventMatchDto[]): number[]
   return [...rounds].sort((left, right) => left - right);
 }
 
-/** Whether a round has begun: a match is no longer scheduled, or has a period's score (#772). */
+/** Whether a round has begun: a match is no longer still to play (scheduled or postponed), or has a period's score (#772). */
 export function roundStarted(bracket: readonly SportEventMatchDto[], roundNumber: number): boolean {
   return bracket.some((match) => match.roundNumber === roundNumber
-    && (match.status !== MatchStatus.SCHEDULED || match.periodScores.length > 0));
+    && (!isMatchUnplayed(match.status) || match.periodScores.length > 0));
 }
 
 /** The matches of the round before this one that have no result yet, in match-number order. */

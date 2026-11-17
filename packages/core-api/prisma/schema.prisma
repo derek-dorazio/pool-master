@@ -370,6 +370,7 @@ enum PrismaMatchStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  POSTPONED
 }
 
 /// One side of a match (#698). Mirrors the domain `MatchSide`; on a neutral site HOME is the

@@ -9,9 +9,9 @@ const kickoff = (startsAt: string) => `kicks off ${startsAt}`;
 describe('pickEmBoardGames', () => {
   it('lists the week\'s games in kickoff order, each named by its teams\' short names with its kickoff', () => {
     expect(pickEmBoardGames(week2EventGamesFixture(), teamName, kickoff)).toEqual([
-      { id: 'week2-game-1', matchup: 'BUF at KC', progress: 'kicks off 2099-09-20T17:00:00.000Z' },
-      { id: 'week2-game-2', matchup: 'DAL at PHI', progress: 'kicks off 2099-09-20T20:25:00.000Z' },
-      { id: 'week2-game-3', matchup: 'CHI at GB', progress: 'kicks off 2099-09-22T00:15:00.000Z' },
+      { id: 'week2-game-1', matchup: 'BUF at KC', progress: 'kicks off 2099-09-20T17:00:00.000Z', status: 'SCHEDULED' },
+      { id: 'week2-game-2', matchup: 'DAL at PHI', progress: 'kicks off 2099-09-20T20:25:00.000Z', status: 'SCHEDULED' },
+      { id: 'week2-game-3', matchup: 'CHI at GB', progress: 'kicks off 2099-09-22T00:15:00.000Z', status: 'SCHEDULED' },
     ]);
   });
 
@@ -24,6 +24,13 @@ describe('pickEmBoardGames', () => {
 
     expect(games.map((game) => game.progress)).toEqual(['BUF 24–⁠20', 'Tie 17–⁠17', 'Playing now']);
     expect(pickEmBoardGames(week2EventGamesFixture({ 2: { status: 'CANCELLED' } }), teamName, kickoff).map((game) => game.id)).toEqual(['week2-game-1', 'week2-game-3']);
+  });
+
+  it('keeps a postponed game in the week with its new kickoff and its status, for the Postponed chip', () => {
+    const games = pickEmBoardGames(week2EventGamesFixture({ 2: { status: 'POSTPONED', scheduledDate: '2099-09-23T00:15:00.000Z' } }), teamName, kickoff);
+
+    expect(games.map((game) => game.id)).toEqual(['week2-game-1', 'week2-game-3', 'week2-game-2']);
+    expect(games.at(-1)).toEqual({ id: 'week2-game-2', matchup: 'DAL at PHI', progress: 'kicks off 2099-09-23T00:15:00.000Z', status: 'POSTPONED' });
   });
 
   it('says a neutral-site game is "vs", a game with no kickoff yet has its time to be set, and a side not decided is to be decided', () => {

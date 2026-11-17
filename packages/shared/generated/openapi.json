@@ -31768,7 +31768,8 @@
                               "SCHEDULED",
                               "IN_PROGRESS",
                               "COMPLETED",
-                              "CANCELLED"
+                              "CANCELLED",
+                              "POSTPONED"
                             ],
                             "description": "The game's status: COMPLETED once its result is in."
                           },
@@ -32546,7 +32547,8 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED"
+                    "CANCELLED",
+                    "POSTPONED"
                   ]
                 },
                 "isNeutralSite": {
@@ -33393,7 +33395,8 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED"
+                    "CANCELLED",
+                    "POSTPONED"
                   ]
                 },
                 "isNeutralSite": {
@@ -45190,9 +45193,10 @@
           "SCHEDULED",
           "IN_PROGRESS",
           "COMPLETED",
-          "CANCELLED"
+          "CANCELLED",
+          "POSTPONED"
         ],
-        "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+        "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
       },
       "MatchSideDto": {
         "type": "string",
@@ -45299,9 +45303,10 @@
               "SCHEDULED",
               "IN_PROGRESS",
               "COMPLETED",
-              "CANCELLED"
+              "CANCELLED",
+              "POSTPONED"
             ],
-            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
           },
           "winnerSide": {
             "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
@@ -45530,9 +45535,10 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED"
+                    "CANCELLED",
+                    "POSTPONED"
                   ],
-                  "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+                  "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
                 },
                 "winnerSide": {
                   "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
@@ -45768,9 +45774,10 @@
                   "SCHEDULED",
                   "IN_PROGRESS",
                   "COMPLETED",
-                  "CANCELLED"
+                  "CANCELLED",
+                  "POSTPONED"
                 ],
-                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
               },
               "winnerSide": {
                 "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
@@ -46597,9 +46604,10 @@
                   "SCHEDULED",
                   "IN_PROGRESS",
                   "COMPLETED",
-                  "CANCELLED"
+                  "CANCELLED",
+                  "POSTPONED"
                 ],
-                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
               },
               "winnerSide": {
                 "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.",
@@ -78939,6 +78947,88 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone": {
+      "post": {
+        "operationId": "postponeEventMatch",
+        "summary": "Postpone a game",
+        "tags": [
+          "Events"
+        ],
+        "description": "Marks a released game POSTPONED before it begins: it is still to be played, shows as postponed, and its picks stay open until its time, which the bracket match edit (or the provider) moves to the new one. A game of a bracket can be postponed. Postponing a postponed game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result. 409 MATCH_CANCELLED for a cancelled game. 409 MATCH_ALREADY_STARTED for a game under way or with a period score. Returns the games. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "matchNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

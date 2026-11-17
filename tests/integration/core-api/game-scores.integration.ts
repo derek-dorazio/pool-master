@@ -252,7 +252,7 @@ describe('game scores from a provider', () => {
       .rejects.toThrow();
   });
 
-  it('takes a live score back off a match whose game the provider postpones, and writes a batch of live scores in one statement each', async () => {
+  it('marks a match postponed, its live score taken off, when the provider postpones its game, and writes a batch of live scores in one statement each', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const live = (gameId: string, home: string, away: string, homeScore: number, awayScore: number) => ({
       externalGameId: gameId, homeTeamExternalId: teamId(home), awayTeamExternalId: teamId(away), state: ProviderGameState.IN_PROGRESS, homeScore, awayScore,
@@ -275,7 +275,7 @@ describe('game scores from a provider', () => {
       ['UPDATE sport_event_matches', 2],
     ]);
     const [first, second] = await matches.findBySportEvent(event.id);
-    expect(first).toMatchObject({ status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null });
+    expect(first).toMatchObject({ status: MatchStatus.POSTPONED, homeScore: null, awayScore: null });
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 11, awayScore: 9 });
   });
 

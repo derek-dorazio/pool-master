@@ -11,7 +11,7 @@ import type {
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, SQUARES_GRID_SIZE, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, SQUARES_GRID_SIZE, UNPLAYED_MATCH_STATUSES, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
 import { forgettingReads, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
@@ -127,8 +127,9 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
             sportEventMatch: {
               OR: [
                 { status: MatchStatus.IN_PROGRESS },
-                { status: MatchStatus.SCHEDULED, scheduledDate: { lte: kickoffBy } },
-                { status: MatchStatus.SCHEDULED, scheduledDate: null, sportEvent: { startDate: { lte: kickoffBy } } },
+                // A postponed game (#1791) draws before its time as a scheduled one does.
+                { status: { in: [...UNPLAYED_MATCH_STATUSES] }, scheduledDate: { lte: kickoffBy } },
+                { status: { in: [...UNPLAYED_MATCH_STATUSES] }, scheduledDate: null, sportEvent: { startDate: { lte: kickoffBy } } },
               ],
             },
           },

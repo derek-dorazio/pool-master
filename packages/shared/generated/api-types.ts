@@ -2718,6 +2718,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Postpone a game
+         * @description Marks a released game POSTPONED before it begins: it is still to be played, shows as postponed, and its picks stay open until its time, which the bracket match edit (or the provider) moves to the new one. A game of a bracket can be postponed. Postponing a postponed game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result. 409 MATCH_CANCELLED for a cancelled game. 409 MATCH_ALREADY_STARTED for a game under way or with a period score. Returns the games. Root admin only.
+         */
+        post: operations["postponeEventMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed": {
         parameters: {
             query?: never;
@@ -13675,7 +13695,7 @@ export interface components {
                          * @description The game's status: COMPLETED once its result is in.
                          * @enum {string}
                          */
-                        status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                        status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                         /** @description The picked team's score, once there is one. */
                         teamScore: number | null;
                         /** @description The opponent's score, once there is one. */
@@ -13904,7 +13924,7 @@ export interface components {
                  */
                 kickoff: string;
                 /** @enum {string} */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 isNeutralSite: boolean;
                 /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
                 regionLabel: string | null;
@@ -14165,7 +14185,7 @@ export interface components {
                  */
                 kickoff: string;
                 /** @enum {string} */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 isNeutralSite: boolean;
                 /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
                 regionLabel: string | null;
@@ -18125,10 +18145,10 @@ export interface components {
             }[];
         };
         /**
-         * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+         * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          * @enum {string}
          */
-        MatchStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+        MatchStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /**
          * @description One side of a match. On a neutral site HOME is the upper line of the bracket.
          * @enum {string}
@@ -18176,10 +18196,10 @@ export interface components {
              */
             scheduledDate: string | null;
             /**
-             * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+             * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
              * @enum {string}
              */
-            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
              * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
              * @enum {string|null}
@@ -18257,10 +18277,10 @@ export interface components {
                  */
                 scheduledDate: string | null;
                 /**
-                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -18339,10 +18359,10 @@ export interface components {
                  */
                 scheduledDate: string | null;
                 /**
-                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -18643,10 +18663,10 @@ export interface components {
                  */
                 scheduledDate: string | null;
                 /**
-                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
                  * @enum {string}
                  */
-                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -32255,6 +32275,65 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postponeEventMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

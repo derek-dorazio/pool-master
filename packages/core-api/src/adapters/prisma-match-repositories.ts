@@ -12,7 +12,7 @@ import type {
   SportEventMatchRepository,
   SportEventMatchWrite,
 } from '@poolmaster/shared/db';
-import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
 import type { BackgroundJobRequest, SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
@@ -116,7 +116,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
       // poolmaster-allow-query-in-loop: the games one sync found live (per-row values, one transaction)
       scores.map(({ id, ...values }) => this.prisma.sportEventMatch.updateMany({
         // A result entered since the sync read the match stands.
-        where: { id, status: { in: [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS] } },
+        where: { id, status: { in: [...UNPLAYED_MATCH_STATUSES, MatchStatus.IN_PROGRESS] } },
         data: values,
       })),
     );

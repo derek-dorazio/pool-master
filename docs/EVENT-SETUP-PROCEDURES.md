@@ -377,6 +377,9 @@ A cancelled event counts for nothing, whatever scores or results it already hold
 A single game is cancelled instead, for a week of games that forms no bracket (an NFL
 regular-season week): *Cancel game* on its row of the week's results page, then confirm. It is
 offered only on a released week (a draft's games are edited freely) and an unplayed game; clear
-a result first. A cancelled game counts for nothing in any contest. A postponed game is cancelled
-in its own week and added to the week it moves to while that week is still a draft. A bracket's
+a result first. A cancelled game counts for nothing in any contest. A game put off to a later
+day of its own week, or of a bracket round, is postponed instead: *Postpone game* on its row,
+then set its new time on the game; its picks stay open until then. A game that moves to another
+week is cancelled in its own week and added to the week it moves to while that week is still a
+draft. A bracket's
 games cannot be cancelled: every one of them decides who goes on.

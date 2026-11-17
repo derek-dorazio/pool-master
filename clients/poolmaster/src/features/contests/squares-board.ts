@@ -4,7 +4,7 @@ import {
   MatchStatus,
   SQUARES_GRID_SIZE,
   assertNever,
-  isSquaresRound, pluralize 
+  isMatchUnplayed, isSquaresRound, pluralize 
 } from '@poolmaster/shared/domain';
 import type {
   SportEventMatchDto,
@@ -107,14 +107,14 @@ export function teamNamesById(field: readonly SportEventParticipantDto[]): Reado
 }
 
 /**
- * The games a squares contest can be played on (design §4.2): those still to kick off, with no
+ * The games a squares contest can be played on (design §4.2): those still to kick off (a postponed game too), with no
  * period score in, and in a round of single games (from the sport league's `squaresFromRound`), the
  * final first, then by kickoff. The server checks the same at create.
  */
 export function squaresGameChoices(games: readonly SportEventMatchDto[], now: Date, squaresFromRound: number | null = null): SportEventMatchDto[] {
   const kickoff = (game: SportEventMatchDto) => (game.scheduledDate === null ? Number.POSITIVE_INFINITY : Date.parse(game.scheduledDate));
   return games
-    .filter((game) => game.status === MatchStatus.SCHEDULED
+    .filter((game) => isMatchUnplayed(game.status)
       && game.periodScores.length === 0
       && isSquaresRound(squaresFromRound, game.roundNumber)
       && (game.scheduledDate === null || Date.parse(game.scheduledDate) > now.getTime()))
