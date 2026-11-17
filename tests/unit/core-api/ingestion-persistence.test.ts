@@ -685,6 +685,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
         )),
       },
       participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      participantLeagueAffiliation: { createMany: jest.fn().mockResolvedValue({ count: 0 }) },
     };
     // A callback transaction runs on the double itself; a batch runs all, in order.
     const $transaction = jest.fn((work: unknown): Promise<unknown> => (typeof work === 'function'
@@ -882,6 +883,49 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
         { sportId: 'sport-basketball', leagueAffiliations: { some: { sportLeagueId: { in: ['league-nba-finals', 'league-ncaam'] } } } },
       ] },
     }));
+  });
+
+  it('affiliates each participant, linked or created, with every league its tour names, and none for a tour no league carries, skipping ones already there', async () => {
+    const prisma = unmappedPrisma([siteTeam('site-duke', 'Duke Blue Devils', [' ncaam '])]);
+
+    await sync(prisma, [
+      collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'),
+      collegeTeam('ncaab-team-151', 'Gonzaga Bulldogs', 'ncaam'),
+      collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW'),
+    ]);
+
+    expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledWith({
+      data: [
+        { participantId: 'site-duke', sportLeagueId: 'league-ncaam' },
+        { participantId: 'created-ncaab-team-151', sportLeagueId: 'league-ncaam' },
+      ],
+      skipDuplicates: true,
+    });
+  });
+
+  it('affiliates a team the feed already links with the league its tour names, outside any creation, so a sync puts right one created unaffiliated', async () => {
+    const prisma = unmappedPrisma([]);
+    const team = collegeTeam('ncaab-team-151', 'Gonzaga Bulldogs', 'NCAAM');
+    prisma.participantProviderMapping.findMany.mockResolvedValue([{
+      providerId: team.providerId,
+      externalId: team.externalId,
+      participantId: 'site-gonzaga',
+      participant: { id: 'site-gonzaga', sportId: 'sport-basketball', name: team.name, firstName: null, lastName: null, nationality: null, role: null, teamAffiliation: null, photoUrl: null, status: 'ACTIVE' },
+    }]);
+
+    await new IngestionPersistence(asPrismaClient(prisma), fakeLogger()).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [team] });
+
+    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+    expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledWith({ data: [{ participantId: 'site-gonzaga', sportLeagueId: 'league-ncaam' }], skipDuplicates: true });
+  });
+
+  it('writes no affiliation for a feed that names no league', async () => {
+    const prisma = unmappedPrisma([]);
+
+    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
+
+    expect(prisma.participantLeagueAffiliation.createMany).not.toHaveBeenCalled();
   });
 
   it('reads no league for a feed that names none, and reads its candidates by exact name alone', async () => {

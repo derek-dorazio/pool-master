@@ -184,6 +184,7 @@ flowchart TD
 |---|---|---|
 | `participants` | `id` | Created only when no mapping and no unique same-name match exists. The same-name match reads through `participants_sport_id_name_idx` (#1537). |
 | `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when created, `HIGH` when linked by name. This mapping is how every later sync finds the participant. |
+| `participant_league_affiliations` | `@@unique([participant_id, sport_league_id])` | Each participant whose tour (`metadata.tour`) names one of the site's sport leagues by match keyword joins that league (#1800), in the same transaction that creates it, so a team the feed brings that the site lacked is on the league's roster rather than a guest in the field. A participant the feed already links joins too, so a sync puts right one created before this. One read of the sports' keyed leagues and one insert that skips affiliations already there, whatever the field's size. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
 
