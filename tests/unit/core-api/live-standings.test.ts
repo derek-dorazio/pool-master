@@ -557,6 +557,7 @@ describe('LiveStandings.queueDue', () => {
   function pickEmBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; total: number; week1: { position: number; points: number; display?: string } | null }>): PickEmLeaderboardModel {
     return {
       contestId,
+      currentWeekId: weekIds[0] ?? null,
       mode: 'STRAIGHT_UP',
       againstTheSpread: false,
       weeks: weekIds.map((sportEventId, index) => ({
@@ -586,7 +587,10 @@ describe('LiveStandings.queueDue', () => {
           position: index === 0 ? entry.week1?.position ?? null : null,
           displayPosition: index === 0 && entry.week1 ? entry.week1.display ?? String(entry.week1.position) : null,
           weeklyWinner: index === 0 && entry.week1?.position === 1,
+          correctPickCount: index === 0 ? entry.week1?.points ?? null : null,
+          missedPicks: [],
         })),
+        currentWeekPicks: [],
       })),
     };
   }
