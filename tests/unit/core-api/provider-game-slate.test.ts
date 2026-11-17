@@ -385,6 +385,18 @@ describe('ProviderGameSlateService', () => {
       expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
     });
 
+    it('keeps an admin\'s draft bracket when the provider sends games but no bracket, only moving a kickoff the provider moved', async () => {
+      const { sync, service, sides, store, event } = playoffSetup();
+      await sync(WILD_CARD);
+      const before = sides();
+      const idsBefore = store.matchRows.map((match) => match.id);
+
+      await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: [playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[] }))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      expect(sides()).toEqual(before);
+      expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
+    });
+
     it('reloads a draft bracket when the provider\'s seeds change who plays whom', async () => {
       const { sync, sides, rowOf, event } = playoffSetup();
       await sync(WILD_CARD);

@@ -347,7 +347,6 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
     for (let index = 0; index + 1 < previous.length; index += 2) {
       const left = previous[index];
       const right = previous[index + 1];
-      if (left === undefined || right === undefined) break;
       round.push({
         matchNumber: nextNumber,
         roundNumber: left.roundNumber + 1,

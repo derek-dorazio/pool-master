@@ -218,7 +218,7 @@ provider-synced (`isProviderSyncedEvent`):
 
 | Event status | What the provider's games do |
 |---|---|
-| `DRAFT` | When the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
+| `DRAFT` | On a one-round event (a game week), when the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
 | Released, not finished | Pairings and sides stay fixed. A match not yet started takes the provider's moved kickoff (`updateMatch`). A pairing no match holds, or a home and away swap, is logged for an admin. |
 | `COMPLETED`, `CANCELLED` | Nothing. |
 
@@ -261,7 +261,10 @@ semifinals is read from `region_id` order, which the vendor's document does not 
 against a real bracket before a live tournament.** The games are those from the round of 64 on
 with both teams, a First Four team's round of 64 game left out until its place is filled
 (`toNcaaScheduledGames`). The women's bracket names no region (`NCAAWBracket` has no
-`region_id`), so it carries games but no bracket, and an admin builds it.
+`region_id`), so it carries games but no bracket, and an admin builds it. Games without a bracket
+never load into an event of more than one round: they would replace the admin's bracket with one
+round's games, so a draft only takes their kickoffs (the same holds for the NFL postseason before
+the standings seed anyone).
 
 ## 3. Triggers
 
