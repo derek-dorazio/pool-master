@@ -142,6 +142,12 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      finalRows={board.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(viewer.mySquadId)(entry),
+        position: entry.position,
+        score: `${formatCount(entry.weeksSurvived, 'week', locale, 'weeks')} survived`,
+      }))}
       leagueCode={leagueCode}
       notes={(
         <>

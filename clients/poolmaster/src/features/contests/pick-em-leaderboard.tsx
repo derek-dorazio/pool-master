@@ -87,6 +87,12 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      finalRows={board.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position,
+        score: formatPoints(entry.totalPoints),
+      }))}
       leagueCode={leagueCode}
       notes={isUnderWay ? null : (
         <p data-testid="pick-em-leaderboard-not-started">Points show from the first kickoff. Entries are listed once they submit a week.</p>

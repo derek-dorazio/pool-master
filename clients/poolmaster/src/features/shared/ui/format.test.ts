@@ -7,9 +7,18 @@ import {
   formatMoneyCents,
   formatNumber,
   formatNumberList,
+  formatAndList,
   formatOrdinal,
   formatPlace,
 } from './format';
+
+describe('formatAndList', () => {
+  it('joins one, two or several items as a sentence list in the viewer\'s language', () => {
+    expect(formatAndList(['3rd'], 'en-US')).toBe('3rd');
+    expect(formatAndList(['3rd', '5th'], 'en-US')).toBe('3rd and 5th');
+    expect(formatAndList(['3rd', '5th', '11th'], 'en-US')).toBe('3rd, 5th, and 11th');
+  });
+});
 
 describe('formatOrdinal', () => {
   it.each([

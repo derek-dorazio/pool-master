@@ -206,15 +206,42 @@ describe('LeaderboardFrame', () => {
     expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
   });
 
-  it('says the standings are frozen once the contest is final', () => {
+  it('says the standings are frozen once the contest is final, in an (i) beside the Final chip rather than under the title', async () => {
     renderFrame({ contest: { ...contest, status: ContestStatus.COMPLETED } });
 
-    expect(screen.getByTestId('contest-leaderboard-settled-note')).toHaveTextContent('Final result: these standings are frozen at settlement.');
+    const header = within(screen.getByTestId('contest-leaderboard-header'));
+    expect(header.getByText('Final')).toBeInTheDocument();
+    expect(screen.queryByText('Final result: these standings are frozen at settlement.')).not.toBeInTheDocument();
+    fireEvent.click(header.getByTestId('contest-leaderboard-settled-note'));
+    expect(await screen.findByTestId('contest-leaderboard-settled-note-card')).toHaveTextContent('Final result: these standings are frozen at settlement.');
   });
 
-  it('says it in the board\'s own words, or not at all where the board has a note of its own', () => {
+  it('says it in the board\'s own words', async () => {
     renderFrame({ contest: { ...contest, status: ContestStatus.COMPLETED }, settledNote: 'The winners are frozen.' });
-    expect(screen.getByTestId('contest-leaderboard-settled-note')).toHaveTextContent('The winners are frozen.');
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-settled-note'));
+    expect(await screen.findByTestId('contest-leaderboard-settled-note-card')).toHaveTextContent('The winners are frozen.');
+  });
+
+  it('opens a final board on its winners banner, with the viewer\'s finish', () => {
+    renderFrame({
+      contest: { ...contest, status: ContestStatus.COMPLETED },
+      finalRows: [
+        { entryName: 'Big Hitters', isMine: false, position: 1, score: '11 pts' },
+        { entryName: 'Lakers 2', isMine: false, position: 2, score: '10 pts' },
+        { entryName: 'Sharks 1', isMine: true, position: 3, score: '9 pts' },
+      ],
+    });
+
+    expect(screen.getByTestId('contest-winners-winner-names')).toHaveTextContent('Big Hitters');
+    expect(screen.getByTestId('contest-winners-silver')).toHaveTextContent('Lakers 2 · 10 pts');
+    expect(screen.getByTestId('contest-winners-bronze')).toHaveTextContent('Sharks 1 · 9 pts');
+    expect(screen.getByTestId('contest-winners-yours')).toHaveTextContent('You finished 3rd of 3');
+  });
+
+  it('shows no winners banner while the contest is live, or for a board that names no standings', () => {
+    renderFrame({ finalRows: [{ entryName: 'Big Hitters', isMine: false, position: 1, score: '11 pts' }] });
+    expect(screen.queryByTestId('contest-winners')).not.toBeInTheDocument();
   });
 
   it('leaves the settled note out when the board says null', () => {

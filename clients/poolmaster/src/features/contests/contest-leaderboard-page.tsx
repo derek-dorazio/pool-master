@@ -456,6 +456,12 @@ export function ContestLeaderboardPage() {
   return (
     <LeaderboardFrame
       contest={contest}
+      finalRows={view.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position ?? null,
+        score: entry.total ?? '',
+      }))}
       leagueCode={leagueCode}
       notes={view.currentRoundLabel ? (
         <Chip data-testid="contest-leaderboard-round-cue" tone="info">

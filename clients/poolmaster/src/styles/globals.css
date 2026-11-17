@@ -38,7 +38,9 @@
     --color-gold-muted: #dcb455;
     --color-gold-muted-bright: #e6c672;
     --color-bronze-100: #e9c9a0;
+    --color-bronze-400: #b47a3c;
     --color-bronze-700: #5e3b0f;
+    --color-silver-400: #9aa6b8;
     /* Dusty red. 400 is light mode's red (4.5:1 for small text on paper); 300 is dark mode's. */
     --color-red-50: #f8eced;
     --color-red-100: #eed2d4;
@@ -170,6 +172,9 @@
     --podium-2-text: var(--color-navy-500);
     --podium-3-surface: var(--color-bronze-100);
     --podium-3-text: var(--color-bronze-700);
+    /* A drawn 2nd and 3rd place trophy (#1768): mid tones that read on paper and on graphite. */
+    --trophy-silver: var(--color-silver-400);
+    --trophy-bronze: var(--color-bronze-400);
 
     /* The shared components' role colours, from the roles above. */
     --background: var(--surface-canvas);

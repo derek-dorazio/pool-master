@@ -27,6 +27,15 @@ const tileVariants = cva("border", {
       md: "p-4 sm:p-6",
       lg: "p-5 sm:p-8",
     },
+    /**
+     * A 4px top edge that says what a hero is about at a glance (#1763): `live` red for a contest
+     * under way, `open` gold for one taking entries. Both read on the navy in either mode.
+     */
+    edge: {
+      none: "",
+      live: "border-t-4 border-t-[color:var(--text-danger)]",
+      open: "border-t-4 border-t-[color:var(--accent-primary)]",
+    },
     radius: {
       /** The one content corner, 8px, the same as `SectionCard` and `Notice`. */
       sm: "rounded-lg",
@@ -39,6 +48,7 @@ const tileVariants = cva("border", {
     },
   },
   defaultVariants: {
+    edge: "none",
     padding: "md",
     radius: "sm",
     variant: "default",
@@ -51,10 +61,10 @@ export type TileProps = ComponentProps<"div"> &
     as?: "div" | "section";
   };
 
-export function Tile({ as: Tag = "div", className, padding, radius, variant, ...props }: TileProps) {
+export function Tile({ as: Tag = "div", className, edge, padding, radius, variant, ...props }: TileProps) {
   return (
     <Tag
-      className={cn(tileVariants({ className, padding, radius, variant }))}
+      className={cn(tileVariants({ className, edge, padding, radius, variant }))}
       {...props}
     />
   );

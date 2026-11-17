@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ContestDto } from '@/lib/api';
 import { Button, TeamLine } from '@/features/shared/ui';
 import { BracketEntryDialog, type BracketBoardRow } from './bracket-entry-dialog';
+import { formatPoints } from './bracket-layout';
 import { contestScoreUnit } from './contest-sport';
 import { SETTLED_NOTE, entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
@@ -134,6 +135,13 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   return (
     <LeaderboardFrame
       contest={contest}
+      // A cancelled event scored nobody, so there are no winners to name.
+      finalRows={board.eventCancelled ? undefined : board.entries.map((entry) => ({
+        entryName: entry.entryName,
+        isMine: isMySquadsEntry(mySquadId)(entry),
+        position: entry.position,
+        score: formatPoints(entry.points),
+      }))}
       leagueCode={leagueCode}
       notes={(
         <>

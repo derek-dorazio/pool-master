@@ -59,6 +59,8 @@ export interface LeaderboardEntryRow {
   entryName: string;
   squadId: string;
   squadName: string;
+  /** The entry's rank, 1 best; null while unscored. */
+  position: number | null;
   displayPosition: string | null;
   total: string | null;
   /** The entry's result in each event it submitted and that has been revealed, in contest order. */
@@ -94,6 +96,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse, conte
     entryName: entry.entryName,
     squadId: entry.squadId,
     squadName: entry.squadName,
+    position: entry.position,
     displayPosition: entry.displayPosition,
     total: entry.totalScore === null ? null : scoringDefinition.format(entry.totalScore),
     events: entry.events.map((event) => ({

@@ -32,6 +32,20 @@ describe("pool-master-3lo.2 / pool-master-fo5.4: shared Tile primitive", () => {
     expect(screen.getByTestId("tile")).toHaveClass("bg-surface-inverse-deep", "text-on-inverse");
   });
 
+  it("draws a red top edge on a live hero and a gold one on an open hero, and none by default", () => {
+    render(
+      <>
+        <Tile data-testid="live" edge="live" variant="inverse">Live</Tile>
+        <Tile data-testid="open" edge="open" variant="inverse">Open</Tile>
+        <Tile data-testid="plain" variant="inverse">Plain</Tile>
+      </>,
+    );
+
+    expect(screen.getByTestId("live")).toHaveClass("border-t-4", "border-t-[color:var(--text-danger)]");
+    expect(screen.getByTestId("open")).toHaveClass("border-t-4", "border-t-[color:var(--accent-primary)]");
+    expect(screen.getByTestId("plain")).not.toHaveClass("border-t-4");
+  });
+
   it("draws the shared 8px corner by default, so an untitled box matches SectionCard and Notice", () => {
     render(<Tile data-testid="tile" padding="sm">Selected icon</Tile>);
 

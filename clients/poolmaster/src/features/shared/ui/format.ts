@@ -80,6 +80,11 @@ export function formatNumberList(values: readonly number[]): string {
   return values.join(", ");
 }
 
+/** Words as one list in the viewer's language: "3rd, 5th, and 11th". */
+export function formatAndList(items: readonly string[], locale?: string): string {
+  return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(items);
+}
+
 /** A place as an ordinal: "1st", "2nd", "3rd", "11th", "22nd". */
 export function formatOrdinal(place: number): string {
   const lastTwo = place % 100;
