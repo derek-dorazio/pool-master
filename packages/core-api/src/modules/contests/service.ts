@@ -1279,7 +1279,7 @@ export class ContestService {
       currentWeekId: currentWeek?.event.id ?? null,
       mode: scoring.mode,
       againstTheSpread: scoring.againstTheSpread,
-      weeks: weeks.map(({ event, games, started, settled, winnerEntryIds }) => ({
+      weeks: weeks.map(({ event, games, started, settled, cells, winnerEntryIds }) => ({
         sportEventId: event.id,
         name: event.name,
         startDate: event.startDate,
@@ -1288,6 +1288,8 @@ export class ContestService {
         settled,
         gameCount: games.games.length,
         tiebreakerTotalPoints: games.tiebreakerTotalPoints,
+        // #1778 — the entries on the board the week placed, counted once from the week's own places.
+        placedEntryCount: rows.filter((row) => (cells.get(row.entryId)?.position ?? null) !== null).length,
         winnerEntryIds,
       })),
       entries: rows,

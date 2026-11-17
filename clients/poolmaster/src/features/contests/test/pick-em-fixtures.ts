@@ -184,11 +184,11 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
     weeks: [
       {
         sportEventId: 'week-1', name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED',
-        started: true, settled: true, gameCount: 3, tiebreakerTotalPoints: 41, winnerEntryIds: ['entry-2'],
+        started: true, settled: true, gameCount: 3, tiebreakerTotalPoints: 41, placedEntryCount: 1, winnerEntryIds: ['entry-2'],
       },
       {
         sportEventId: 'week-2', name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS',
-        started: true, settled: false, gameCount: 3, tiebreakerTotalPoints: null, winnerEntryIds: [],
+        started: true, settled: false, gameCount: 3, tiebreakerTotalPoints: null, placedEntryCount: 2, winnerEntryIds: [],
       },
     ],
     entries: [

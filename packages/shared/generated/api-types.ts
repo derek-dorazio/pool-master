@@ -13639,6 +13639,8 @@ export interface components {
                 gameCount: number;
                 /** @description The week's last game's combined score once it is played: what the week's tiebreakers are measured against. */
                 tiebreakerTotalPoints: number | null;
+                /** @description How many of the board's entries the week has placed: the "of N" of an entry's place in it. None until the week starts. */
+                placedEntryCount: number;
                 /** @description The week's winners, the entries in first place once the week has settled; more than one when they are still level after the tiebreaker. Empty until it settles. */
                 winnerEntryIds: string[];
             }[];

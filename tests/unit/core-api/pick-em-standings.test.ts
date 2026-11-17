@@ -267,6 +267,21 @@ describe('ContestService.getPickEmLeaderboard', () => {
     expect(leaderboard.entries.flatMap((entry) => entry.weeks.map((week) => week.points))).toEqual([null, null, null, null, null, null]);
   });
 
+  it('counts the entries each week placed, from its frozen or live places: none before it starts, and not an entry that left the week in draft', async () => {
+    const context = setup();
+    context.setNow(BEFORE_KICKOFF);
+    context.world.contests.set(context.contest.id, { ...context.contest, status: ContestStatus.OPEN });
+    expect((await context.leaderboard()).weeks.map((week) => week.placedEntryCount)).toEqual([0, 0]);
+
+    context.world.contests.set(context.contest.id, { ...context.contest, status: ContestStatus.ACTIVE });
+    await settleWeek1(context);
+    context.setNow(DURING_WEEK_2);
+    context.play(context.week2Games.g4, MatchSide.HOME, 27, 3);
+
+    // Week 1 from its frozen places, all three entries; week 2 live, without Cara's draft.
+    expect((await context.leaderboard()).weeks.map((week) => [week.name, week.placedEntryCount])).toEqual([['Week 1', 3], ['Week 2', 2]]);
+  });
+
   it('scores a week under way live from its played games, with no winner until it settles', async () => {
     const context = setup();
     context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
