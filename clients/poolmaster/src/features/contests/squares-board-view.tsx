@@ -58,15 +58,12 @@ export function SquaresBoardView({
   canManage,
   contest,
   myEntryIds,
-  shownEntryId = null,
 }: {
   /** Whether the viewer is a commissioner of the league (or a root admin). */
   canManage: boolean;
   contest: ContestDto;
   /** The viewer's own entries in the contest: one, or none before they enter. */
   myEntryIds: readonly string[];
-  /** The entry the page is showing, if any: a commissioner claims for it until they choose another. */
-  shownEntryId?: string | null;
 }) {
   const logger = getLogger().child({ feature: 'squares-board' });
   const queryClient = useQueryClient();
@@ -148,7 +145,6 @@ export function SquaresBoardView({
   const myEntryId = myEntryIds.at(0) ?? null;
   const claimingEntryId = canManage
     ? claimForEntryId
-      ?? board.entries.find((entry) => entry.contestEntryId === shownEntryId)?.contestEntryId
       ?? myEntryId
       ?? board.entries.at(0)?.contestEntryId
       ?? null

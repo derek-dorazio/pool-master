@@ -286,7 +286,7 @@ test('act 3: a new member joins, enters, and claims a box, which the grid shows 
     await expect(page.getByTestId('league-home')).toBeVisible();
   });
 
-  await test.step('create an entry and land on the empty grid', async () => {
+  await test.step('create an entry and stay on the contest page, its board empty', async () => {
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
     const created = await submitAndRead<{ entry: { id: string } }>(
       page,
@@ -295,7 +295,8 @@ test('act 3: a new member joins, enters, and claims a box, which the grid shows 
       `/api/v1/contests/${state.contestId}/entries/me`,
     );
     state.entryId = created.entry.id;
-    await expect(page.getByTestId('squares-entry-page')).toBeVisible();
+    // A squares contest has no entry page: the new entry's link brings the viewer back here.
+    await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}$`));
     await expect(page.getByTestId(`squares-entry-line-${state.entryId}-count`)).toHaveText('0 of 10 boxes');
   });
 

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
@@ -9,7 +9,6 @@ import {
   DRAWN_DIGITS,
   squaresBoardFixture,
   squaresContestFixture,
-  squaresEntryFixture,
   squaresGameFixture,
   squaresLeagueContextFixture,
 } from './test/squares-fixtures';
@@ -21,7 +20,6 @@ const {
   getContestMock,
   getLeagueMock,
   getSquaresBoardMock,
-  getContestEntryMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -33,7 +31,6 @@ const {
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
     getSquaresBoardMock: vi.fn(),
-    getContestEntryMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -45,7 +42,6 @@ bindApiMocks({
   getContest: getContestMock,
   getLeague: getLeagueMock,
   getSquaresBoard: getSquaresBoardMock,
-  getContestEntry: getContestEntryMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -73,6 +69,12 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
+/** Where the contest page sits in the app's routes: says which contest it was sent to. */
+function ContestPageStandIn() {
+  const { contestId, leagueCode } = useParams();
+  return <p data-testid="contest-page-stand-in">{`${leagueCode ?? ''} ${contestId ?? ''}`}</p>;
+}
+
 function renderPage(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -81,6 +83,7 @@ function renderPage(path: string) {
         <Routes>
           <Route element={<ContestEntryPage />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
           <Route element={<ContestLeaderboardPage />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
+          <Route element={<ContestPageStandIn />} path="/league/:leagueCode/contests/:contestId" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -98,7 +101,6 @@ function primeMocks({
 } = {}) {
   getContestMock.mockResolvedValue({ data: { contest } });
   getSquaresBoardMock.mockResolvedValue({ data: board });
-  getContestEntryMock.mockImplementation(({ path }: { path: { entryId: string } }) => Promise.resolve({ data: squaresEntryFixture(path.entryId) }));
   getLeagueMock.mockResolvedValue({ data: squaresLeagueContextFixture(role) });
 }
 
@@ -106,26 +108,32 @@ const box = (rowIndex: number, columnIndex: number) => screen.getByTestId(`squar
 /** What a screen reader reaches for a box: its peek's button once it opens a peek, else the box itself. */
 const boxControl = (rowIndex: number, columnIndex: number) => screen.queryByTestId(`squares-box-${rowIndex}-${columnIndex}-peek`) ?? box(rowIndex, columnIndex);
 
-describe('Squares contest entry page', () => {
+describe('Squares contest entry links', () => {
+  afterEach(() => {
+    getContestMock.mockReset();
+  });
+
+  it('sends a link to a squares entry, from Make your picks, an email or a short link, to the contest page, where its boxes are claimed on the board', async () => {
+    getContestMock.mockResolvedValue({ data: { contest: squaresContestFixture() } });
+    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+
+    expect(await screen.findByTestId('contest-page-stand-in')).toHaveTextContent('BIGDAWGS contest-1');
+  });
+});
+
+describe('Squares board', () => {
   afterEach(() => {
     for (const mock of [
       claimSquaresBoxMock, clearSquaresBoxMock, drawSquaresNumbersMock, getContestMock,
-      getLeagueMock, getSquaresBoardMock, getContestEntryMock,
+      getLeagueMock, getSquaresBoardMock,
     ]) {
       mock.mockReset();
     }
   });
 
-  it('offers the viewer\'s entry\'s name to change on the grid page while entries are open, the contest page having no Rename', async () => {
-    primeMocks();
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
-
-    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
-  });
-
   it('shows each claimed box by its entry\'s initials with the full name kept for screen readers, the viewer\'s own marked, the team bands, "?" digits and no tabs before the draw, and a line per entry of the viewer\'s with its count', async () => {
     primeMocks();
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     await screen.findByTestId('squares-grid');
     expect(box(0, 0)).toHaveTextContent('MM');
@@ -155,7 +163,7 @@ describe('Squares contest entry page', () => {
         ],
       }),
     });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     await screen.findByTestId('squares-grid');
     expect(box(1, 1)).toHaveTextContent('BHI');
@@ -167,7 +175,7 @@ describe('Squares contest entry page', () => {
       boxes: [...squaresBoardFixture().boxes, { rowIndex: 4, columnIndex: 7, contestEntryId: 'entry-1', entryName: 'Morgan’s Madness' }],
     });
     claimSquaresBoxMock.mockResolvedValue({ data: claimed });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     fireEvent.click(await screen.findByTestId('squares-box-4-7'));
 
@@ -185,7 +193,7 @@ describe('Squares contest entry page', () => {
     });
     primeMocks({ board: full });
     clearSquaresBoxMock.mockResolvedValue({ data: squaresBoardFixture({ maxSquaresPerEntry: 1, boxes: full.boxes.slice(1) }) });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     await screen.findByTestId('squares-grid');
     expect(box(1, 1).tagName).not.toBe('BUTTON');
@@ -203,7 +211,7 @@ describe('Squares contest entry page', () => {
       error: { error: { code: 'SQUARES_BOX_TAKEN', message: 'That box is taken.' } },
       response: new Response(null, { status: 409 }),
     });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     fireEvent.click(await screen.findByTestId('squares-box-2-2'));
 
@@ -211,24 +219,12 @@ describe('Squares contest entry page', () => {
     await waitFor(() => expect(getSquaresBoardMock).toHaveBeenCalledTimes(2));
   });
 
-  it('claims for the entry on screen when a commissioner opens another member\'s entry, until they choose another', async () => {
-    primeMocks({ role: 'COMMISSIONER' });
-    claimSquaresBoxMock.mockResolvedValue({ data: squaresBoardFixture() });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-2');
-
-    expect(await screen.findByTestId('squares-claim-for')).toHaveValue('entry-2');
-    expect(screen.getByTestId('squares-entry-line-entry-2')).toHaveTextContent('Derek’s Great Golf Guys1 of 2 boxes');
-    expect(screen.getByTestId('squares-entry-line-entry-2')).not.toHaveTextContent('Yours');
-    fireEvent.click(box(6, 3));
-    await waitFor(() => expect(claimSquaresBoxMock).toHaveBeenCalledWith(expect.objectContaining({ body: { contestEntryId: 'entry-2' } })));
-  });
-
   it('lets a commissioner claim a box for another entry they choose, and draw the numbers after a confirm, after which the digits show and no box can be tapped', async () => {
     primeMocks({ role: 'COMMISSIONER' });
     claimSquaresBoxMock.mockResolvedValue({ data: squaresBoardFixture() });
     const drawn = squaresBoardFixture({ claimsOpen: false, drawOpen: false, digits: DRAWN_DIGITS });
     drawSquaresNumbersMock.mockResolvedValue({ data: drawn });
-    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard');
 
     fireEvent.change(await screen.findByTestId('squares-claim-for'), { target: { value: 'entry-2' } });
     expect(screen.getByTestId('squares-entry-line-entry-2-count')).toHaveTextContent('1 of 2 boxes');
@@ -251,7 +247,7 @@ describe('Squares contest entry page', () => {
 
 describe('Squares contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getContestMock, getLeagueMock, getSquaresBoardMock, getContestEntryMock]) {
+    for (const mock of [getContestMock, getLeagueMock, getSquaresBoardMock]) {
       mock.mockReset();
     }
   });
