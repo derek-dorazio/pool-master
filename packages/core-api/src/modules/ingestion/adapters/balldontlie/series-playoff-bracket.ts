@@ -19,7 +19,7 @@
 import { MatchSide } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../core/provider-interface';
 import { playoffSeries, type PlayoffSeries } from './series-playoff-rounds';
-import { playoffsTeamExternalId, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
+import { BracketShapeKind, playoffsTeamExternalId, type DivisionBracketConference, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 
 /** A team's seed rank within its group (a conference, or the whole league), by its vendor id. */
 export type PlayoffSeedRanks = ReadonlyMap<number, number>;
@@ -37,98 +37,136 @@ export function firstRoundOrder(teams: number): number[] {
   return order;
 }
 
-function groupOf(league: PlayoffsLeague, team: PlayoffTeam): string | null {
-  const groups = league.bracket?.groups ?? null;
-  if (groups === null) return null;
-  const conference = team.metadata['conference'];
-  return typeof conference === 'string' && groups.includes(conference) ? conference : null;
-}
-
 /** Whether the games hold the first round's every series, without which no bracket can be seeded. */
 export function hasWholeFirstRound(league: PlayoffsLeague, games: readonly PlayoffGame[]): boolean {
   return playoffSeries(games).filter((series) => series.round === 1).length === league.rounds[0].seriesCount;
 }
 
-interface SeededSeries {
-  group: string | null;
-  topSeed: number;
+/** One first-round match as the bracket places it: its two teams, its region, and the rank that heads its half. */
+interface FirstRoundSlot {
   top: PlayoffTeam;
   bottom: PlayoffTeam;
+  regionLabel: string | null;
+  /** The better team's rank: the lower, the better; the half holding the lower hosts the next match. */
+  bestSeed: number;
   series: PlayoffSeries;
 }
 
+function metadataText(team: PlayoffTeam, key: string): string | null {
+  const value = team.metadata[key];
+  return typeof value === 'string' ? value : null;
+}
+
+/** A first-round series with its better-ranked team on top; null when the ranks name neither. */
+function ranked(series: PlayoffSeries, ranks: PlayoffSeedRanks): { top: PlayoffTeam; bottom: PlayoffTeam; topRank: number } | null {
+  const { home, away } = series.games[0];
+  const homeRank = ranks.get(home.id);
+  const awayRank = ranks.get(away.id);
+  if (homeRank === undefined && awayRank === undefined) return null;
+  const homeIsTop = homeRank !== undefined && (awayRank === undefined || homeRank < awayRank);
+  return homeIsTop ? { top: home, bottom: away, topRank: homeRank } : { top: away, bottom: home, topRank: awayRank ?? Number.MAX_SAFE_INTEGER };
+}
+
 /**
- * The first round's series, each with its group and its better team's seed; null unless every
- * group has its full first round, each top seed once.
+ * A league seeded within each group (the NBA's conferences, or the WNBA as one): each group's
+ * first round by its top seeds' order, 1 v n down; null unless every group has its full first
+ * round, each top seed once.
  */
-function seededFirstRound(league: PlayoffsLeague, series: readonly PlayoffSeries[], ranks: PlayoffSeedRanks): SeededSeries[] | null {
-  const shape = league.bracket;
-  if (shape === undefined) return null;
-  const groups = shape.groups ?? [null];
-  const teamsPerGroup = (league.rounds[0].seriesCount * 2) / groups.length;
-  const firstRound = series.filter((each) => each.round === 1);
-  if (firstRound.length !== league.rounds[0].seriesCount) return null;
-  const seeded: SeededSeries[] = [];
-  for (const each of firstRound) {
-    const { home, away } = each.games[0];
-    const homeRank = ranks.get(home.id);
-    const awayRank = ranks.get(away.id);
-    const homeIsTop = homeRank !== undefined && (awayRank === undefined || homeRank < awayRank);
-    const top = homeIsTop ? home : away;
-    const topSeed = homeIsTop ? homeRank : awayRank;
-    const bottom = homeIsTop ? away : home;
-    const group = groupOf(league, top);
-    if (topSeed === undefined || topSeed > teamsPerGroup / 2 || (shape.groups !== null && (group === null || groupOf(league, bottom) !== group))) return null;
-    if (seeded.some((other) => other.group === group && other.topSeed === topSeed)) return null;
-    seeded.push({ group, topSeed, top, bottom, series: each });
+function seededSlots(league: PlayoffsLeague, groups: readonly string[] | null, firstRound: readonly PlayoffSeries[], ranks: PlayoffSeedRanks): FirstRoundSlot[] | null {
+  const groupList = groups ?? [null];
+  const teamsPerGroup = (league.rounds[0].seriesCount * 2) / groupList.length;
+  const groupOf = (team: PlayoffTeam) => {
+    const conference = metadataText(team, 'conference');
+    return groups === null ? null : conference !== null && groups.includes(conference) ? conference : undefined;
+  };
+  const seeded: Array<{ group: string | null; topSeed: number; slot: FirstRoundSlot }> = [];
+  for (const series of firstRound) {
+    const sides = ranked(series, ranks);
+    if (sides === null || sides.topRank > teamsPerGroup / 2) return null;
+    const group = groupOf(sides.top);
+    if (group === undefined || groupOf(sides.bottom) !== group) return null;
+    if (seeded.some((other) => other.group === group && other.topSeed === sides.topRank)) return null;
+    seeded.push({ group, topSeed: sides.topRank, slot: { top: sides.top, bottom: sides.bottom, regionLabel: group, bestSeed: sides.topRank, series } });
   }
-  return seeded;
+  return groupList.flatMap((group) => firstRoundOrder(teamsPerGroup).map((topSeed) => {
+    const entry = seeded.find((each) => each.group === group && each.topSeed === topSeed);
+    if (entry === undefined) throw new Error(`The seeded first round has no ${String(topSeed)} seed in ${String(group)}.`);
+    return entry.slot;
+  }));
+}
+
+/**
+ * A league seeded by division (the NHL's): in each conference, each division's winner meets a
+ * wild card and its second and third teams meet each other, the two winners meeting in the next
+ * round. A division's winner and second are the better-ranked teams of its two series; the
+ * winner's series is listed first, divisions and conferences in the league's order. Null unless
+ * every conference has its full first round, each division two series headed by its own teams and
+ * its second meeting its third.
+ */
+function divisionSlots(league: PlayoffsLeague, conferences: DivisionBracketConference[], firstRound: readonly PlayoffSeries[], ranks: PlayoffSeedRanks): FirstRoundSlot[] | null {
+  const sides = firstRound.map((series) => ({ series, sides: ranked(series, ranks) }));
+  if (sides.some((each) => each.sides === null)) return null;
+  const slots: FirstRoundSlot[] = [];
+  for (const conference of conferences) {
+    const inConference = sides.filter((each) => each.sides !== null && metadataText(each.sides.top, 'conference') === conference.name);
+    if (inConference.length * conferences.length !== league.rounds[0].seriesCount) return null;
+    for (const division of conference.divisions) {
+      const headed = inConference
+        .filter((each) => each.sides !== null && metadataText(each.sides.top, 'division') === division)
+        .sort((left, right) => (left.sides?.topRank ?? 0) - (right.sides?.topRank ?? 0));
+      const [winner, second] = headed;
+      if (headed.length !== 2 || winner.sides === null || second.sides === null) return null;
+      if (metadataText(second.sides.bottom, 'division') !== division) return null;
+      for (const { series, sides: each } of [winner, second]) {
+        if (each === null) return null;
+        slots.push({ top: each.top, bottom: each.bottom, regionLabel: conference.label, bestSeed: each.topRank, series });
+      }
+    }
+  }
+  return slots.length === league.rounds[0].seriesCount ? slots : null;
 }
 
 /**
  * The playoffs' whole bracket, every series from the first round to the final, the first round's
  * sides by seed and every later side empty; null for a league with no bracket shape, or until the
- * seed ranks place the whole first round.
+ * ranks place the whole first round.
  */
 export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly PlayoffGame[], ranks: PlayoffSeedRanks): ProviderBracketMatch[] | null {
   const shape = league.bracket;
   if (shape === undefined) return null;
-  const seeded = seededFirstRound(league, playoffSeries(games), ranks);
-  if (seeded === null) return null;
-  const groups = shape.groups ?? [null];
-  const teamsPerGroup = (league.rounds[0].seriesCount * 2) / groups.length;
-  const team = (each: PlayoffTeam) => playoffsTeamExternalId(league, each.id);
+  const firstRound = playoffSeries(games).filter((series) => series.round === 1);
+  if (firstRound.length !== league.rounds[0].seriesCount) return null;
+  const slots = shape.kind === BracketShapeKind.SEEDED
+    ? seededSlots(league, shape.groups, firstRound, ranks)
+    : divisionSlots(league, shape.conferences, firstRound, ranks);
+  return slots === null ? null : linkBracket(league, slots);
+}
 
+/** The first round's matches numbered in order, each two consecutive ones' winners meeting next, to the final. */
+function linkBracket(league: PlayoffsLeague, slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
+  const team = (each: PlayoffTeam) => playoffsTeamExternalId(league, each.id);
   /** Each match with the best seed in the half it heads, to say which side hosts the next. */
-  let previous: Array<{ match: ProviderBracketMatch; bestSeed: number }> = groups.flatMap((group) => firstRoundOrder(teamsPerGroup).map((topSeed) => {
-    const slot = seeded.find((each) => each.group === group && each.topSeed === topSeed);
-    if (slot === undefined) throw new Error(`The seeded first round has no ${String(topSeed)} seed in ${String(group)}.`);
-    const first = slot.series.games[0];
-    return {
-      bestSeed: topSeed,
-      match: {
-        matchNumber: 0,
-        roundNumber: 1,
-        homeTeamExternalId: team(slot.top),
-        awayTeamExternalId: team(slot.bottom),
-        isNeutralSite: false,
-        scheduledAt: new Date(first.start),
-        advancesTo: null,
-        regionLabel: group,
-      },
-    };
+  let previous: Array<{ match: ProviderBracketMatch; bestSeed: number }> = slots.map((slot, index) => ({
+    bestSeed: slot.bestSeed,
+    match: {
+      matchNumber: index + 1,
+      roundNumber: 1,
+      homeTeamExternalId: team(slot.top),
+      awayTeamExternalId: team(slot.bottom),
+      isNeutralSite: false,
+      scheduledAt: new Date(slot.series.games[0].start),
+      advancesTo: null,
+      regionLabel: slot.regionLabel,
+    },
   }));
-  previous.forEach((entry, index) => {
-    entry.match.matchNumber = index + 1;
-  });
   const bracket = previous.map((entry) => entry.match);
   while (previous.length > 1) {
     const round: typeof previous = [];
     for (let index = 0; index + 1 < previous.length; index += 2) {
       const [left, right] = [previous[index], previous[index + 1]];
-      // Where the halves' best seeds tie (the Finals, two 1 seeds) the first half is home: home
-      // court there goes to the better record, which is not modelled, and a side is display only,
-      // since nothing in a series is neutral or scored by side.
+      // Where the halves' best seeds tie (the NBA Finals, two 1 seeds) the first half is home:
+      // home court there goes to the better record, which is not modelled, and a side is display
+      // only, since nothing in a series is neutral or scored by side.
       const homeIsLeft = left.bestSeed <= right.bestSeed;
       const matchNumber = bracket.length + 1;
       left.match.advancesTo = { matchNumber, side: homeIsLeft ? MatchSide.HOME : MatchSide.AWAY };

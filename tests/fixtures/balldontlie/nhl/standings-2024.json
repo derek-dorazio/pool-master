@@ -1,0 +1,324 @@
+{
+  "data": [
+    {
+      "team": {
+        "id": 9,
+        "full_name": "Winnipeg Jets",
+        "tricode": "WPG",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Central",
+      "games_played": 82,
+      "points": 116,
+      "regulation_wins": 44,
+      "regulation_plus_ot_wins": 52,
+      "wins": 56,
+      "losses": 22,
+      "ot_losses": 4
+    },
+    {
+      "team": {
+        "id": 1,
+        "full_name": "Washington Capitals",
+        "tricode": "WSH",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "games_played": 82,
+      "points": 111,
+      "regulation_wins": 44,
+      "regulation_plus_ot_wins": 50,
+      "wins": 51,
+      "losses": 22,
+      "ot_losses": 9
+    },
+    {
+      "team": {
+        "id": 13,
+        "full_name": "Vegas Golden Knights",
+        "tricode": "VGK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "games_played": 82,
+      "points": 110,
+      "regulation_wins": 43,
+      "regulation_plus_ot_wins": 48,
+      "wins": 50,
+      "losses": 22,
+      "ot_losses": 10
+    },
+    {
+      "team": {
+        "id": 5,
+        "full_name": "Toronto Maple Leafs",
+        "tricode": "TOR",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "games_played": 82,
+      "points": 108,
+      "regulation_wins": 41,
+      "regulation_plus_ot_wins": 47,
+      "wins": 52,
+      "losses": 26,
+      "ot_losses": 4
+    },
+    {
+      "team": {
+        "id": 11,
+        "full_name": "Dallas Stars",
+        "tricode": "DAL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Central",
+      "games_played": 82,
+      "points": 106,
+      "regulation_wins": 42,
+      "regulation_plus_ot_wins": 48,
+      "wins": 50,
+      "losses": 26,
+      "ot_losses": 6
+    },
+    {
+      "team": {
+        "id": 16,
+        "full_name": "Los Angeles Kings",
+        "tricode": "LAK",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "games_played": 82,
+      "points": 105,
+      "regulation_wins": 40,
+      "regulation_plus_ot_wins": 46,
+      "wins": 48,
+      "losses": 25,
+      "ot_losses": 9
+    },
+    {
+      "team": {
+        "id": 8,
+        "full_name": "Tampa Bay Lightning",
+        "tricode": "TBL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "games_played": 82,
+      "points": 102,
+      "regulation_wins": 42,
+      "regulation_plus_ot_wins": 46,
+      "wins": 47,
+      "losses": 27,
+      "ot_losses": 8
+    },
+    {
+      "team": {
+        "id": 12,
+        "full_name": "Colorado Avalanche",
+        "tricode": "COL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Central",
+      "games_played": 82,
+      "points": 102,
+      "regulation_wins": 43,
+      "regulation_plus_ot_wins": 47,
+      "wins": 49,
+      "losses": 29,
+      "ot_losses": 4
+    },
+    {
+      "team": {
+        "id": 15,
+        "full_name": "Edmonton Oilers",
+        "tricode": "EDM",
+        "conference_name": "Western",
+        "division_name": "Pacific",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Pacific",
+      "games_played": 82,
+      "points": 101,
+      "regulation_wins": 35,
+      "regulation_plus_ot_wins": 44,
+      "wins": 48,
+      "losses": 29,
+      "ot_losses": 5
+    },
+    {
+      "team": {
+        "id": 3,
+        "full_name": "Carolina Hurricanes",
+        "tricode": "CAR",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "games_played": 82,
+      "points": 99,
+      "regulation_wins": 40,
+      "regulation_plus_ot_wins": 44,
+      "wins": 47,
+      "losses": 30,
+      "ot_losses": 5
+    },
+    {
+      "team": {
+        "id": 7,
+        "full_name": "Florida Panthers",
+        "tricode": "FLA",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "games_played": 82,
+      "points": 98,
+      "regulation_wins": 38,
+      "regulation_plus_ot_wins": 45,
+      "wins": 47,
+      "losses": 31,
+      "ot_losses": 4
+    },
+    {
+      "team": {
+        "id": 6,
+        "full_name": "Ottawa Senators",
+        "tricode": "OTT",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "games_played": 82,
+      "points": 97,
+      "regulation_wins": 35,
+      "regulation_plus_ot_wins": 42,
+      "wins": 45,
+      "losses": 30,
+      "ot_losses": 7
+    },
+    {
+      "team": {
+        "id": 14,
+        "full_name": "Minnesota Wild",
+        "tricode": "MIN",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Central",
+      "games_played": 82,
+      "points": 97,
+      "regulation_wins": 34,
+      "regulation_plus_ot_wins": 42,
+      "wins": 45,
+      "losses": 30,
+      "ot_losses": 7
+    },
+    {
+      "team": {
+        "id": 10,
+        "full_name": "St. Louis Blues",
+        "tricode": "STL",
+        "conference_name": "Western",
+        "division_name": "Central",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Western",
+      "division_name": "Central",
+      "games_played": 82,
+      "points": 96,
+      "regulation_wins": 35,
+      "regulation_plus_ot_wins": 42,
+      "wins": 44,
+      "losses": 30,
+      "ot_losses": 8
+    },
+    {
+      "team": {
+        "id": 2,
+        "full_name": "Montr\u00e9al Canadiens",
+        "tricode": "MTL",
+        "conference_name": "Eastern",
+        "division_name": "Atlantic",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Atlantic",
+      "games_played": 82,
+      "points": 91,
+      "regulation_wins": 31,
+      "regulation_plus_ot_wins": 37,
+      "wins": 40,
+      "losses": 31,
+      "ot_losses": 11
+    },
+    {
+      "team": {
+        "id": 4,
+        "full_name": "New Jersey Devils",
+        "tricode": "NJD",
+        "conference_name": "Eastern",
+        "division_name": "Metropolitan",
+        "season": 2024
+      },
+      "season": 2024,
+      "conference_name": "Eastern",
+      "division_name": "Metropolitan",
+      "games_played": 82,
+      "points": 91,
+      "regulation_wins": 37,
+      "regulation_plus_ot_wins": 41,
+      "wins": 42,
+      "losses": 33,
+      "ot_losses": 7
+    }
+  ]
+}

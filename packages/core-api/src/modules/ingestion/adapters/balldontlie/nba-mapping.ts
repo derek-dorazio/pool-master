@@ -26,7 +26,7 @@ import {
 } from './nba-contract';
 import type { PlayoffSeedRanks } from './series-playoff-bracket';
 import type { PlayoffPlayer, PlayoffStatLine } from './series-playoff-rounds';
-import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
+import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffRoundsSource } from './series-playoffs-reader';
 
 export const NBA_PLAYOFFS: PlayoffsLeague = {
@@ -45,7 +45,7 @@ export const NBA_PLAYOFFS: PlayoffsLeague = {
   // September, ahead of October's opening night.
   seasonRolloverMonth: 8,
   // Each conference seeds its own half; the West's is listed first, as an admin loads it.
-  bracket: { groups: ['West', 'East'] },
+  bracket: { kind: BracketShapeKind.SEEDED, groups: ['West', 'East'] },
 };
 
 const GAMES_PATH = '/nba/v1/games';

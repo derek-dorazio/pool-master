@@ -287,8 +287,16 @@ standings are read only once the whole first round is out, so an NBA playoffs is
 matches until the play-in is played. The vendor documents no tier for the standings: where the
 plan refuses them (401 or 403), the read logs `balldontlie.playoffs.standingsRefused` and carries on
 with the field and the series games but no bracket, which an admin then builds; any other failure
-fails the read as before. The NHL's and MLB's postseasons give no games yet: an admin builds their
-brackets.
+fails the read as before. **The NHL's bracket** is seeded by division instead
+(`BracketShapeKind.DIVISIONS`): `/nhl/v1/standings` gives no rank, so every team is ranked across
+the league by points, then regulation wins, regulation and overtime wins, and wins
+(`toNhlSeedRanks`; the league's later tie-breaks are not read). In each conference, East first,
+each division heads two first-round series: the better-ranked team heading one is the division's
+winner, meeting a wild card, and the other is its second, meeting its third. The winner's series is
+listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is each match's region.
+Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. MLB's
+postseason gives no games yet: its top seeds' byes leave them out of the first round's games, so
+the field needs the standings too, and an admin builds its bracket.
 
 ## 3. Triggers
 
@@ -576,6 +584,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   `seasons`, not `seasons[]`; a game is placed on its `game_date`, since `start_time_utc` has no
   documented format. The teams list keeps only teams in a conference, leaving out a moved or folded
   franchise.
+- **Bracket.** `NHL_PLAYOFFS.bracket` seeds by division from `/nhl/v1/standings` points
+  (`toNhlSeedRanks`) once the first round is out, and gives each series as a game (*2d*).
 - **Key code.** `nhl-contract.ts`; `nhl-mapping.ts` `NHL_PLAYOFFS`, `nhlPlayoffsSource`,
   `toNhlPlayoffGame`, `isNhlFranchise`.
 
@@ -656,8 +666,8 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks), the NFL postseason, the NCAA men's tournament and the NBA's and WNBA's
-  playoffs: see *2d*. Still to come are the other fixed-shape playoffs (NHL, MLB, World Cup). The
+  League matchweeks), the NFL postseason, the NCAA men's tournament and the NBA's, WNBA's and NHL's
+  playoffs: see *2d*. Still to come are the other fixed-shape playoffs (MLB, World Cup). The
   CFP has no committee seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).

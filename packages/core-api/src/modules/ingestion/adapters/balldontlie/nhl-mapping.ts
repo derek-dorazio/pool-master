@@ -10,8 +10,9 @@
 
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
-import { nhlGameListSchema, nhlTeamListSchema, type NhlGame, type NhlTeam } from './nhl-contract';
-import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
+import { nhlGameListSchema, nhlStandingListSchema, nhlTeamListSchema, type NhlGame, type NhlStanding, type NhlTeam } from './nhl-contract';
+import type { PlayoffSeedRanks } from './series-playoff-bracket';
+import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const NHL_PLAYOFFS: PlayoffsLeague = {
@@ -31,10 +32,20 @@ export const NHL_PLAYOFFS: PlayoffsLeague = {
   playoffYearOffset: 1,
   // September, ahead of October's opening night.
   seasonRolloverMonth: 8,
+  // Each division's winner meets a wild card and its second its third; the East's half is listed
+  // first, as an admin loads it. The names are the vendor's `conference_name` and `division_name`.
+  bracket: {
+    kind: BracketShapeKind.DIVISIONS,
+    conferences: [
+      { name: 'Eastern', label: 'East', divisions: ['Atlantic', 'Metropolitan'] },
+      { name: 'Western', label: 'West', divisions: ['Central', 'Pacific'] },
+    ],
+  },
 };
 
 const GAMES_PATH = '/nhl/v1/games';
 const TEAMS_PATH = '/nhl/v1/teams';
+const STANDINGS_PATH = '/nhl/v1/standings';
 
 /** A field the document leaves optional but without which a row cannot be placed or scored. */
 function required<Value>(value: Value | undefined, path: string, row: string, field: string): Value {
@@ -79,7 +90,27 @@ export function isNhlFranchise(team: NhlTeam): boolean {
   return Boolean(team.conference_name);
 }
 
-/** The NHL's two reads: a season's postseason games, and every current franchise. */
+/**
+ * Every team ranked across the league by points, then regulation wins, regulation and overtime
+ * wins, and wins: the order that decides a division's winner and who has home ice. The league's
+ * later tie-breaks (head to head, goal differential) are not read, so a tie through all four is
+ * left in the vendor's order. A row without a team id or points is left out.
+ */
+export function toNhlSeedRanks(standings: readonly NhlStanding[]): PlayoffSeedRanks {
+  const rows = standings.flatMap((standing) => {
+    const id = standing.team?.id;
+    return id === undefined || standing.points === undefined ? [] : [{ id, keys: [standing.points, standing.regulation_wins ?? 0, standing.regulation_plus_ot_wins ?? 0, standing.wins ?? 0] }];
+  });
+  const ordered = rows
+    .map((row, index) => ({ ...row, index }))
+    .sort((left, right) => {
+      const differing = left.keys.findIndex((key, position) => key !== right.keys[position]);
+      return differing === -1 ? left.index - right.index : right.keys[differing] - left.keys[differing];
+    });
+  return new Map(ordered.map((row, rank) => [row.id, rank + 1]));
+}
+
+/** The NHL's reads: a season's postseason games, every current franchise, and the season's standings. */
 export function nhlPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
   return {
     league: NHL_PLAYOFFS,
@@ -90,6 +121,10 @@ export function nhlPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
     async teams() {
       const teams = await client.getAllPages(TEAMS_PATH, {}, nhlTeamListSchema);
       return teams.filter(isNhlFranchise).map((team) => toNhlPlayoffTeam(team, TEAMS_PATH));
+    },
+    async seedRanks(season) {
+      const page = await client.get(STANDINGS_PATH, { season }, nhlStandingListSchema);
+      return toNhlSeedRanks(page.data);
     },
   };
 }

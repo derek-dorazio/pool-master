@@ -14,6 +14,7 @@ import {
   toPlayoffSeriesGames,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
+import { NHL_PLAYOFFS, toNhlSeedRanks } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
 import { toWnbaSeedRanks } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -147,5 +148,64 @@ describe('series playoffs bracket', () => {
   it('reads the NBA\'s conference ranks and the WNBA\'s playoff seeds by team, leaving out a row without either', () => {
     expect(toNbaSeedRanks([{ team: { id: 2 }, conference_rank: 1 }, { team: { id: 3 } }, { conference_rank: 4 }])).toEqual(new Map([[2, 1]]));
     expect(toWnbaSeedRanks([{ team: { id: 8 }, playoff_seed: 1 }, { team: { id: 3 } }])).toEqual(new Map([[8, 1]]));
+  });
+});
+
+describe('series playoffs bracket by division', () => {
+  /** A team of a division, by its rank across the league (1 the best). */
+  const hockey = (rank: number, conference: 'Eastern' | 'Western', division: string): PlayoffTeam => ({ id: rank, name: `Team ${String(rank)}`, metadata: { conference, division } });
+  const ranks = new Map(Array.from({ length: 16 }, (_, index) => [index + 1, index + 1]));
+  // East: Atlantic 1, 4, 5 and Metropolitan 2, 3, 6, wild cards 7 (Atlantic) and 8 (Metropolitan).
+  const atl = (rank: number) => hockey(rank, 'Eastern', 'Atlantic');
+  const met = (rank: number) => hockey(rank, 'Eastern', 'Metropolitan');
+  // West: Central 9, 12, 13 and Pacific 10, 11, 14, wild cards 15 (Central) and 16 (Pacific).
+  const cen = (rank: number) => hockey(rank, 'Western', 'Central');
+  const pac = (rank: number) => hockey(rank, 'Western', 'Pacific');
+  const firstRound = () => [
+    game(atl(1), met(8), 0), game(atl(4), atl(5), 0), game(met(2), atl(7), 0), game(met(3), met(6), 0),
+    game(cen(9), pac(16), 0), game(cen(12), cen(13), 0), game(pac(10), cen(15), 0), game(pac(11), pac(14), 0),
+  ];
+  const sides = (games: PlayoffGame[]) => toPlayoffsBracket(NHL_PLAYOFFS, games, ranks)
+    ?.filter((match) => match.roundNumber === 1)
+    .map((match) => [match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId]);
+
+  it('lists each division\'s winner against its wild card, then its second against its third, divisions and conferences in the league\'s order', () => {
+    const team = (rank: number) => `nhl-team-${String(rank)}`;
+
+    expect(sides(firstRound())).toEqual([
+      ['East', team(1), team(8)], ['East', team(4), team(5)], ['East', team(2), team(7)], ['East', team(3), team(6)],
+      ['West', team(9), team(16)], ['West', team(12), team(13)], ['West', team(10), team(15)], ['West', team(11), team(14)],
+    ]);
+  });
+
+  it('takes a division\'s winner as the better-ranked of the two teams heading its series, though a wild card from its own division meets it', () => {
+    // The Atlantic's own wild card (7) meets its winner (1): both of its series are within the division.
+    const games = [game(atl(1), atl(7), 0), game(atl(4), atl(5), 0), game(met(2), met(8), 0), game(met(3), met(6), 0), ...firstRound().slice(4)];
+
+    expect(sides(games)?.slice(0, 2)).toEqual([['East', 'nhl-team-1', 'nhl-team-7'], ['East', 'nhl-team-4', 'nhl-team-5']]);
+  });
+
+  it('builds no bracket when a division\'s second meets a team from another division', () => {
+    const games = [game(atl(1), met(8), 0), game(atl(4), met(6), 0), game(met(2), atl(7), 0), game(met(3), atl(5), 0), ...firstRound().slice(4)];
+
+    expect(toPlayoffsBracket(NHL_PLAYOFFS, games, ranks)).toBeNull();
+  });
+
+  it('builds no bracket when a division heads other than two series', () => {
+    const games = [game(atl(1), met(8), 0), game(atl(4), met(6), 0), game(atl(5), atl(7), 0), game(met(2), met(3), 0), ...firstRound().slice(4)];
+
+    expect(toPlayoffsBracket(NHL_PLAYOFFS, games, ranks)).toBeNull();
+  });
+
+  it('builds no bracket while the standings rank neither team of a series', () => {
+    expect(toPlayoffsBracket(NHL_PLAYOFFS, firstRound(), new Map([...ranks].filter(([team]) => team !== 3 && team !== 6)))).toBeNull();
+  });
+
+  it('ranks NHL teams by points, then regulation wins, regulation and overtime wins and wins, leaving out a row without points', () => {
+    const row = (id: number, points: number | undefined, regulationWins = 30, regulationPlusOtWins = 35, wins = 40) => ({ team: { id }, points, regulation_wins: regulationWins, regulation_plus_ot_wins: regulationPlusOtWins, wins });
+
+    expect([...toNhlSeedRanks([row(1, 100), row(2, 104), row(3, 100, 32), row(4, 100, 32, 36), row(5, undefined), row(6, 100, 30, 35, 40)])]).toEqual([
+      [2, 1], [4, 2], [3, 3], [1, 4], [6, 5],
+    ]);
   });
 });

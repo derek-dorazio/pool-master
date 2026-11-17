@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
+import { MatchSide, ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
@@ -28,6 +28,8 @@ const gamesRoute: FakeRoute = pagedRoute(games, (row, query) => {
 const defaultRoutes: Record<string, FakeRoute> = {
   '/nhl/v1/games': gamesRoute,
   '/nhl/v1/teams': pagedRoute(teamRows),
+  // Only the 2024 season is ranked; any other season's standings are empty.
+  '/nhl/v1/standings': ({ query }) => ({ body: query.get('season') === '2024' ? readBalldontlieFixture('nhl', 'standings-2024.json') : { data: [] } }),
 };
 
 function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
@@ -115,7 +117,41 @@ describe('BalldontlieAdapter (NHL)', () => {
 
       expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', participantCount: 16, fieldLocked: true });
       expect(detail?.participants[0]).toMatchObject({ externalId: 'nhl-team-1', name: 'Washington Capitals', metadata: { tour: 'NHL', abbreviation: 'WSH' } });
-      expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100']);
+      expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100', '/nhl/v1/standings?season=2024']);
+    });
+
+    it('builds the bracket by division, East first: each division\'s winner against a wild card and its second against its third, home ice by points', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('nhl-2024-postseason');
+
+      const team = (id: number) => `nhl-team-${String(id)}`;
+      // Atlantic: Toronto v Ottawa (a wild card), Tampa Bay v Florida. Metropolitan: Washington v
+      // Montreal, Carolina v New Jersey. Central: Winnipeg v St. Louis, Dallas v Colorado. Pacific:
+      // Vegas v Minnesota, Los Angeles v Edmonton.
+      expect(detail?.bracket?.filter((match) => match.roundNumber === 1).map((match) => [match.matchNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId])).toEqual([
+        [1, 'East', team(5), team(6)],
+        [2, 'East', team(8), team(7)],
+        [3, 'East', team(1), team(2)],
+        [4, 'East', team(3), team(4)],
+        [5, 'West', team(9), team(10)],
+        [6, 'West', team(11), team(12)],
+        [7, 'West', team(13), team(14)],
+        [8, 'West', team(16), team(15)],
+      ]);
+      // Washington (111 points) hosts the East final over Toronto (108); Winnipeg (116) the Stanley Cup Final.
+      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.matchNumber, match.regionLabel])).toEqual([
+        [9, 'East'], [10, 'East'], [11, 'West'], [12, 'West'], [13, 'East'], [14, 'West'], [15, null],
+      ]);
+      const byNumber = new Map(detail?.bracket?.map((match) => [match.matchNumber, match]));
+      expect([9, 10, 13, 14].map((matchNumber) => byNumber.get(matchNumber)?.advancesTo)).toEqual([
+        { matchNumber: 13, side: MatchSide.AWAY },
+        { matchNumber: 13, side: MatchSide.HOME },
+        { matchNumber: 15, side: MatchSide.AWAY },
+        { matchNumber: 15, side: MatchSide.HOME },
+      ]);
+      expect(detail?.games).toHaveLength(15);
     });
 
     it('gives a postseason under way with the teams its games have so far', async () => {

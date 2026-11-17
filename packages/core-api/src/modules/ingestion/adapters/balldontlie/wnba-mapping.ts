@@ -15,7 +15,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
 import { wnbaGameListSchema, wnbaStandingListSchema, wnbaTeamListSchema, type WnbaGame, type WnbaStanding, type WnbaTeam } from './wnba-contract';
 import type { PlayoffSeedRanks } from './series-playoff-bracket';
-import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from './series-playoffs';
+import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const WNBA_PLAYOFFS: PlayoffsLeague = {
@@ -34,7 +34,7 @@ export const WNBA_PLAYOFFS: PlayoffsLeague = {
   // May, when the new season tips off.
   seasonRolloverMonth: 4,
   // The eight best records are seeded 1 to 8 across the league, whatever their conference.
-  bracket: { groups: null },
+  bracket: { kind: BracketShapeKind.SEEDED, groups: null },
 };
 
 const GAMES_PATH = '/wnba/v1/games';
