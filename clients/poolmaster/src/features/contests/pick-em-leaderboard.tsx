@@ -133,7 +133,10 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
         entry: (
           <span className="block min-w-0">
             <Text as="span" className="block truncate" size="inherit" weight="semibold">{game.matchup}</Text>
-            <Text as="span" className="block truncate" tone="muted" variant="caption">{game.progress}</Text>
+            <span className="flex min-w-0 flex-wrap items-center gap-2">
+              <Text as="span" className="truncate" tone="muted" variant="caption">{game.progress}</Text>
+              <EventScheduleChip status={game.status} testId={`${TEST_ID}-game-${game.id}-${entry.entryId}-schedule`} />
+            </span>
           </span>
         ),
         weeks: pick ? {

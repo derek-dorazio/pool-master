@@ -8,7 +8,7 @@
  * in its own region. A side an earlier match's link fills keeps that winner.
  */
 
-import { MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
+import { isMatchUnplayed, MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
 
 /** Both sides of one match of a reseeded round, as the admin sets them. */
 export interface RoundMatchup {
@@ -100,7 +100,7 @@ export function roundPlacementBlocker(bracket: readonly SportEventMatch[], round
   }
   // A game with a quarter score (#772) has started, though its status may still read SCHEDULED.
   const started = bracket.filter((match) => match.roundNumber === roundNumber
-    && (match.status !== MatchStatus.SCHEDULED || match.periodScores.length > 0));
+    && (!isMatchUnplayed(match.status) || match.periodScores.length > 0));
   if (started.length > 0) {
     return {
       code: 'BRACKET_ROUND_ALREADY_PLAYED',

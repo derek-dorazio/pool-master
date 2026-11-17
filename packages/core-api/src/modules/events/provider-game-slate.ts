@@ -8,7 +8,7 @@ import type {
 import {
   eventPlaysMatches,
   isProviderSyncedEvent,
-  MatchStatus,
+  isMatchUnplayed,
   SportEventStatus,
   type SportEvent,
   type SportEventMatch,
@@ -224,7 +224,7 @@ export class ProviderGameSlateService {
 
   /**
    * Each stored match of a provider game's two teams takes the game's kickoff while it has not
-   * started, and on a draft the game's home and away, its spread turned around with them.
+   * started (a postponed game's new time too, #1791), and on a draft the game's home and away, its spread turned around with them.
    */
   private async updateMatches(
     event: SportEvent,
@@ -244,7 +244,7 @@ export class ProviderGameSlateService {
         continue;
       }
       const isSwapped = match.homeSportEventParticipantId !== game.homeSportEventParticipantId;
-      const movesKickoff = match.status === MatchStatus.SCHEDULED && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
+      const movesKickoff = isMatchUnplayed(match.status) && game.scheduledDate !== null && !sameTime(match.scheduledDate, game.scheduledDate);
       if (isSwapped && !draft) swapped.push(match.matchNumber);
       const patch = {
         ...(movesKickoff && { scheduledDate: game.scheduledDate }),

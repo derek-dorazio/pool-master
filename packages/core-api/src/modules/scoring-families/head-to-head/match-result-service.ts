@@ -297,6 +297,35 @@ export class MatchResultService {
   }
 
   /**
+   * Postpones one game of a released event before it begins (#1791): it is still to be played,
+   * shows as postponed, and keeps its picks open until its time, which an admin or the provider
+   * moves to the new one. A game of a bracket can be postponed too, since it is not called off.
+   * Postponing a postponed game changes nothing. 404 BRACKET_MATCH_NOT_FOUND; 409
+   * MATCH_ALREADY_PLAYED for a game with a result; 409 MATCH_CANCELLED for a cancelled game; 409
+   * MATCH_ALREADY_STARTED for a game under way or with a period score, whose picks have locked.
+   */
+  async postponeMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
+    await this.requireReleasedBracketEvent(sportEventId);
+    const bracket = await this.deps.matches.findBySportEvent(sportEventId);
+    const match = this.requireMatch(sportEventId, bracket, matchNumber);
+    if (match.status === MatchStatus.POSTPONED) {
+      return bracket;
+    }
+    const refusal = postponeRefusal(match);
+    if (refusal) {
+      this.deps.logger?.warn({ sportEventId, matchNumber, status: match.status, code: refusal.code }, 'Refused to postpone a game');
+      throw new SportEventError(`Match ${matchNumber} ${refusal.reason}, so it cannot be postponed.`, refusal.code, 409);
+    }
+    const result = { id: match.id, status: MatchStatus.POSTPONED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null };
+    // The game's chip shows on the event's contests' boards, so they are rebuilt (#1466).
+    const rebuild = this.rebuild(sportEventId);
+    const after = await this.write(sportEventId, bracket, result, null, rebuild.jobs);
+    rebuild.queued();
+    this.deps.logger?.info({ sportEventId, matchNumber }, 'Postponed a game');
+    return after;
+  }
+
+  /**
    * Enters or corrects the score at the end of one period of a game (#772): the end of the first,
    * second or third quarter in American football, as the scoreboard shows it. It can go in while
    * the game is played and be corrected after it. The last period's score is the final result,
@@ -597,3 +626,10 @@ function describeFinalBelowPeriods(
   return higher ? `a side's final score is lower than at the end of ${periods.label.one} ${higher.periodNumber}` : null;
 }
 
+/** Why a game cannot be postponed: it has a result, was called off, or is under way. Undefined when it can. */
+function postponeRefusal(match: SportEventMatch): { code: 'MATCH_ALREADY_PLAYED' | 'MATCH_CANCELLED' | 'MATCH_ALREADY_STARTED'; reason: string } | undefined {
+  if (match.status === MatchStatus.COMPLETED) return { code: 'MATCH_ALREADY_PLAYED', reason: 'has a result' };
+  if (match.status === MatchStatus.CANCELLED) return { code: 'MATCH_CANCELLED', reason: 'was cancelled' };
+  if (match.status === MatchStatus.IN_PROGRESS || match.periodScores.length > 0) return { code: 'MATCH_ALREADY_STARTED', reason: 'has started' };
+  return undefined;
+}

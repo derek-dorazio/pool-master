@@ -10,7 +10,7 @@ import { registerSchema } from './schema-registry';
 /** The most matches one bracket holds: a 128-place draw has 127. */
 export const BRACKET_MATCHES_MAX = 127;
 
-export const MatchStatusDtoSchema = z.enum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
+export const MatchStatusDtoSchema = z.enum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.');
 export const MatchSideDtoSchema = z.enum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
 export const MatchEndingDtoSchema = z.enum(MatchEnding).describe('How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.');
 

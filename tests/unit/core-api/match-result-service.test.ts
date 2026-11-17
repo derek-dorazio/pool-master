@@ -587,6 +587,76 @@ describe('MatchResultService.cancelMatch', () => {
   });
 });
 
+describe('MatchResultService.postponeMatch', () => {
+  it('postpones a released game not yet started, leaving it unplayed and the week\'s other game as it was', async () => {
+    const { service, event } = await week();
+
+    const games = await service.postponeMatch(event.id, 1);
+
+    expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide, game.homeScore, game.resultSource])).toEqual([
+      [1, MatchStatus.POSTPONED, null, null, null],
+      [2, MatchStatus.SCHEDULED, null, null, null],
+    ]);
+  });
+
+  it('postpones a bracket game, which is put off rather than called off', async () => {
+    const { service, event } = await setup();
+
+    const games = await service.postponeMatch(event.id, 1);
+
+    expect(games.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.POSTPONED);
+  });
+
+  it('writes the event\'s board rebuild with the postponement, so the boards show it', async () => {
+    const { store, event } = await week();
+    const matches = store.matchRepo();
+    const applyResult = jest.spyOn(matches, 'applyResult');
+    const queued = jest.fn();
+    const service = new MatchResultService({
+      sportEvents: store.sportEventRepo(),
+      matches,
+      leaderboards: { forEvent: () => ({ jobs: [SETTLE_GAME_JOB], queued }) },
+      now: () => AS_OF,
+    });
+
+    await service.postponeMatch(event.id, 1);
+
+    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: MatchStatus.POSTPONED }), jobs: [SETTLE_GAME_JOB] }));
+    expect(queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('changes nothing when the game is already postponed, and a result still completes it', async () => {
+    const { service, event } = await week();
+    await service.postponeMatch(event.id, 1);
+
+    const again = await service.postponeMatch(event.id, 1);
+    const played = await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+
+    expect(again.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.POSTPONED);
+    expect(played.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.COMPLETED);
+  });
+
+  it('refuses a game with a result (409 MATCH_ALREADY_PLAYED), a cancelled game (409 MATCH_CANCELLED) and a game with a quarter score (409 MATCH_ALREADY_STARTED)', async () => {
+    const { service, event } = await week();
+    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await expect(service.postponeMatch(event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_PLAYED', statusCode: 409 });
+
+    await service.cancelMatch(event.id, 2);
+    await expect(service.postponeMatch(event.id, 2)).rejects.toMatchObject({ code: 'MATCH_CANCELLED', statusCode: 409 });
+
+    const other = await week();
+    await other.service.recordPeriodScore(other.event.id, 1, 1, { homeScore: 3, awayScore: 0 });
+    await expect(other.service.postponeMatch(other.event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_STARTED', statusCode: 409 });
+  });
+
+  it('refuses (409 SPORT_EVENT_NOT_RELEASED) a game of a draft week', async () => {
+    const { service, event } = await week();
+    event.status = SportEventStatus.DRAFT;
+
+    await expect(service.postponeMatch(event.id, 1)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+  });
+});
+
 // #772: the score at the end of each quarter but the last, as the scoreboard shows it. The final
 // score, overtime included, is the game's result.
 describe('MatchResultService period scores', () => {

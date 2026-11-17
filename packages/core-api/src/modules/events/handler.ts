@@ -497,6 +497,13 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return { matches: matches.map(mapSportEventMatchToDto) };
     },
 
+    postponeEventMatch: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
+    ): Promise<SportEventBracketResponse> => {
+      const matches = await matchResults.postponeMatch(request.params.eventId, request.params.matchNumber);
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
     proposeEventRoundMatchups: async (
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number } }>,
     ): Promise<SportEventRoundMatchupsResponse> => {
