@@ -26,6 +26,11 @@ describe('describeContestProgress', () => {
     expect(describeContestProgress(live(ContestFormat.ROSTER), events(SportEventStatus.IN_PROGRESS), [])).toBeNull();
   });
 
+  it('gives no progress, rather than 0 of 0, to a contest of several events that are all cancelled', () => {
+    expect(describeContestProgress(live(ContestFormat.PREDICTION), events(SportEventStatus.CANCELLED, SportEventStatus.CANCELLED), [])).toBeNull();
+    expect(describeContestProgress(live(ContestFormat.ROSTER), events(SportEventStatus.CANCELLED, SportEventStatus.CANCELLED), [])).toBeNull();
+  });
+
   it('gives no progress to a contest that is not live', () => {
     for (const status of [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.COMPLETED]) {
       expect(describeContestProgress({ contestFormat: ContestFormat.PREDICTION, status }, events(SportEventStatus.COMPLETED, SportEventStatus.SCHEDULED), [])).toBeNull();

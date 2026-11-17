@@ -12,7 +12,8 @@ export type ContestProgress = { played: number; total: number; unit: ContestProg
  * counts its events, as weeks for a prediction contest (a pick'em or survivor season) and as
  * events for a roster one; a prediction contest of one event counts that event's games. Cancelled
  * events and games count for neither side. Null when the contest is not ACTIVE, when it is one
- * roster event (its leaderboard says more), or when its one event has fewer than two games to count.
+ * roster event (its leaderboard says more), when every one of its events is cancelled, or when its
+ * one event has fewer than two games to count.
  * `games` are the contest's one event's games; only a one-event prediction contest reads them.
  */
 export function describeContestProgress(
@@ -26,6 +27,9 @@ export function describeContestProgress(
   const isPrediction = contest.contestFormat === ContestFormat.PREDICTION;
   if (events.length > 1) {
     const counted = events.filter((event) => event.status !== SportEventStatus.CANCELLED);
+    if (counted.length === 0) {
+      return null;
+    }
     return {
       played: counted.filter((event) => event.status === SportEventStatus.COMPLETED).length,
       total: counted.length,

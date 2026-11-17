@@ -466,9 +466,15 @@ export class ContestService {
   async findLiveProgress(contests: readonly Contest[], eventsById: ReadonlyMap<string, SportEvent>): Promise<Map<string, ContestProgress>> {
     const gameEventIds = [...new Set(contests.filter(countsEventGames).flatMap((contest) => contest.sportEventIds))];
     const games = gameEventIds.length === 0 ? [] : await this.deps.matches.findBySportEvents(gameEventIds);
+    const gamesByEvent = new Map<string, SportEventMatch[]>();
+    for (const game of games) {
+      const ofEvent = gamesByEvent.get(game.sportEventId);
+      if (ofEvent) ofEvent.push(game);
+      else gamesByEvent.set(game.sportEventId, [game]);
+    }
     return new Map(contests.flatMap((contest) => {
       const events = contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []);
-      const ofContest = countsEventGames(contest) ? games.filter((game) => game.sportEventId === contest.sportEventIds[0]) : [];
+      const ofContest = countsEventGames(contest) ? gamesByEvent.get(contest.sportEventIds[0]) ?? [] : [];
       const progress = describeContestProgress(contest, events, ofContest);
       return progress ? [[contest.id, progress] as const] : [];
     }));
