@@ -88,7 +88,10 @@ export function isContestPickingOver(
   if (contest.selectionType === SelectionType.PICK_EM || contest.selectionType === SelectionType.SURVIVOR) {
     return false;
   }
-  return contest.status === ContestStatus.ACTIVE && contest.sportEvents.every((sportEvent) => hasContestEventStarted(sportEvent, now));
+  // A contest with no events has nothing started, so it is never over on that count (#1775).
+  return contest.status === ContestStatus.ACTIVE
+    && contest.sportEvents.length > 0
+    && contest.sportEvents.every((sportEvent) => hasContestEventStarted(sportEvent, now));
 }
 
 /** Whether an entry's name can still change (#1739): until entries close, as the server allows. */
