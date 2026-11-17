@@ -8,6 +8,7 @@ import {
   firstKickoff,
   isPlayoffSurvivor,
   isTeamUsed,
+  teamUsedInWeek,
   missedWeek,
   roundWeek,
   survivorPickTeam,
@@ -106,10 +107,12 @@ describe('pick\'em week helpers', () => {
 });
 
 describe('survivor week helpers', () => {
-  it('knows the teams used in another week, and names the week\'s one pick', () => {
+  it('knows the teams used in another week and the week each was used in, and names the week\'s one pick', () => {
     const week = survivorWeekFixture({ games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }) });
     expect(isTeamUsed(week, NFL_TEAMS.bills)).toBe(true);
     expect(isTeamUsed(week, NFL_TEAMS.chiefs)).toBe(false);
+    expect(teamUsedInWeek(week, NFL_TEAMS.bills)).toBe(1);
+    expect(teamUsedInWeek(week, NFL_TEAMS.chiefs)).toBeNull();
     expect(survivorPickTeam(week)).toEqual(NFL_TEAMS.eagles);
     expect(survivorPickTeam(survivorWeekFixture())).toBeNull();
   });

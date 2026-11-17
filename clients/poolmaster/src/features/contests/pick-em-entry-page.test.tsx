@@ -455,14 +455,14 @@ describe('Survivor contest entry page', () => {
     getContestMock.mockResolvedValue({ data: { contest: pickEmContestFixture({ selectionType: 'SURVIVOR' }) } });
   }
 
-  it('asks for one winner, marks a team used in another week and refuses its tap, and shows no tiebreaker or points', async () => {
+  it('asks for one winner, marks a team used in another week with the week it was used in and refuses its tap, and shows no tiebreaker or points', async () => {
     primeSurvivor();
     renderPickEmEntry();
 
     expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Pick a winner');
     const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
     expect(bills).toBeDisabled();
-    expect(bills).toHaveTextContent('Used');
+    expect(bills).toHaveTextContent('Used · Week 1');
     expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toBeEnabled();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
     expect(screen.getByTestId('survivor-status')).toHaveTextContent('In');
@@ -523,7 +523,7 @@ describe('Playoff survivor entry page', () => {
     getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture() } });
   }
 
-  it('opens on the round still to be picked, named as the bracket names it, marks the earlier round\'s team used and warns that the round needs a pick', async () => {
+  it('opens on the round still to be picked, named as the bracket names it, marks the earlier round\'s team used in that round and warns that the round needs a pick', async () => {
     primePlayoff();
     renderPickEmEntry();
 
@@ -532,7 +532,7 @@ describe('Playoff survivor entry page', () => {
     expect(switcher).toHaveValue('2');
     const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
     expect(bills).toBeDisabled();
-    expect(bills).toHaveTextContent('Used');
+    expect(bills).toHaveTextContent('Used · Conference Championship');
     expect(team(2, NFL_TEAMS.eagles.sportEventParticipantId)).toBeEnabled();
     expect(screen.queryByTestId('pick-em-game-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
