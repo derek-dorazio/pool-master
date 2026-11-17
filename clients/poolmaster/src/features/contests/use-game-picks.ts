@@ -22,6 +22,28 @@ const PICKS_NAMES = {
 } as const;
 
 /**
+ * One entry's picks on one event's games: a bracket, or a pick'em week. Polled while the contest
+ * is live, since once the games are under way each pick's mark moves with the results. The pick
+ * pages and the leaderboard's bracket dialog (#1753) share it.
+ */
+export function gamePicksQueryOptions(contest: Pick<ContestDto, 'id' | 'status'>, entryId: string, sportEventId: string) {
+  const contestId = contest.id;
+  return {
+    queryKey: QueryKeys.gamePicks.detail(contestId, entryId, sportEventId),
+    queryFn: async (): Promise<GamePicksResponse> => {
+      const response = await getGamePicks({ path: { contestId, entryId, sportEventId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Game picks response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: Boolean(entryId && sportEventId),
+    retry: false,
+    refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
+  } as const;
+}
+
+/**
  * One entry's game picks for one event, as a bracket or a pick'em week reads and writes them: the
  * picks, the save that takes a pick or the tiebreaker, the submit, and the tiebreaker being typed.
  *
@@ -57,20 +79,7 @@ export function useGamePicks({
   // never overwrites what is being typed (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
   const [tiebreakerDraft, setTiebreakerDraft] = useState<string | null>(null);
 
-  const gamePicksQuery = useQuery({
-    queryKey: gamePicksKey,
-    queryFn: async (): Promise<GamePicksResponse> => {
-      const response = await getGamePicks({ path: { contestId, entryId, sportEventId } });
-      if (!response.data) {
-        throwApiError(response.error, `${picksName} picks response is missing data.`);
-      }
-      return response.data;
-    },
-    enabled: Boolean(entryId && sportEventId),
-    retry: false,
-    // Once the games are under way each pick's mark moves with the results.
-    refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
-  });
+  const gamePicksQuery = useQuery(gamePicksQueryOptions(contest, entryId, sportEventId));
 
   const logRefusal = (refusedAction: string, error: Error) => {
     const payload = { action: refusedAction, data: { contestId, entryId, sportEventId }, err: error };

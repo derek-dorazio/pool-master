@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
 import { EntryDetailsPeek } from './entry-details-peek';
@@ -48,7 +49,20 @@ export function isMySquadsEntry(mySquadId: string | null) {
  */
 export function entryColumn<Row extends BoardRow>(
   testIdPrefix: string,
-  { contestId, isMine, leagueCode, leagueId }: { contestId: string; isMine: (row: NoInfer<Row>) => boolean; leagueCode: string; leagueId: string },
+  {
+    contestId,
+    isMine,
+    leading,
+    leagueCode,
+    leagueId,
+  }: {
+    contestId: string;
+    isMine: (row: NoInfer<Row>) => boolean;
+    /** Something before the name, such as the button that opens a bracket (#1753). */
+    leading?: (row: NoInfer<Row>) => ReactNode;
+    leagueCode: string;
+    leagueId: string;
+  },
 ): ColumnDef<Row> {
   return {
     id: 'entry',
@@ -56,6 +70,7 @@ export function entryColumn<Row extends BoardRow>(
     accessorFn: (row) => [row.entryName, row.squadName].filter(Boolean).join(' '),
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-2">
+        {leading?.(row.original)}
         <Text asChild size="inherit" variant="strong">
           <Link
             className="hover:underline"

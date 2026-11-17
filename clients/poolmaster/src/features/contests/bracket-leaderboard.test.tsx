@@ -8,13 +8,18 @@ import {
   bracketContestFixture,
   bracketLeaderboardFixture,
   bracketLeagueContextFixture,
+  filledBracketGames,
+  gamePicksFixture,
 } from './test/bracket-fixtures';
 
 const {
   getBracketLeaderboardMock,
   getContestLeaderboardMock,
   getContestMock,
+  getEventMock,
+  getGamePicksMock,
   getLeagueMock,
+  getSportLeagueMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -23,7 +28,10 @@ const {
     getBracketLeaderboardMock: vi.fn(),
     getContestLeaderboardMock: vi.fn(),
     getContestMock: vi.fn(),
+    getEventMock: vi.fn(),
+    getGamePicksMock: vi.fn(),
     getLeagueMock: vi.fn(),
+    getSportLeagueMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -32,7 +40,10 @@ bindApiMocks({
   getBracketLeaderboard: getBracketLeaderboardMock,
   getContest: getContestMock,
   getContestLeaderboard: getContestLeaderboardMock,
+  getEvent: getEventMock,
+  getGamePicks: getGamePicksMock,
   getLeague: getLeagueMock,
+  getSportLeague: getSportLeagueMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -82,16 +93,18 @@ function renderLeaderboard() {
 function primeMocks() {
   getContestMock.mockResolvedValue({ data: { contest: bracketContestFixture({ status: 'ACTIVE' }) } });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
+  getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: 'sport-league-1', startDate: '2099-03-19T16:00:00.000Z' } } });
+  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sport-league-1', name: 'NCAA Men', roundNames: [] } } });
 }
 
 describe('Bracket contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getBracketLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock]) {
+    for (const mock of [getBracketLeaderboardMock, getContestLeaderboardMock, getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSportLeagueMock]) {
       mock.mockReset();
     }
   });
 
-  it('ranks a bracket contest\'s entries from the bracket board with place, entry name with its (i), points, max possible, correct picks and tiebreaker, and never reads the roster board', async () => {
+  it('ranks a bracket contest\'s entries from the bracket board with place, entry with its bracket icon and (i), champion, points, right picks and most possible, and never reads the roster board', async () => {
     primeMocks();
     getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
     renderLeaderboard();
@@ -101,16 +114,96 @@ describe('Bracket contest leaderboard', () => {
     expect(leader).toHaveTextContent('Chalk All The Way');
     expect(leader).not.toHaveTextContent('Derek’s Great Golf Guys');
     expect(within(leader).getByRole('button', { name: 'About Chalk All The Way' })).toBeInTheDocument();
-    expect(within(leader).getByTestId('bracket-leaderboard-points-entry-2')).toHaveTextContent('12 pts');
-    expect(within(leader).getByTestId('bracket-leaderboard-max-entry-2')).toHaveTextContent('20 pts');
-    expect(within(leader).getByTestId('bracket-leaderboard-correct-entry-2')).toHaveTextContent('5 of 7');
-    expect(within(leader).getByTestId('bracket-leaderboard-tiebreaker-entry-2')).toHaveTextContent('141');
+    expect(within(leader).getByRole('button', { name: 'View bracket: Chalk All The Way' })).toHaveAttribute('title', 'View bracket');
+    expect(within(leader).getByTestId('bracket-leaderboard-champion-entry-2')).toHaveTextContent('1Duke');
+    expect(within(leader).getByTestId('bracket-leaderboard-champion-entry-2')).toHaveAttribute('data-mark', 'none');
+    expect(within(leader).getByTestId('bracket-leaderboard-points-entry-2')).toHaveTextContent('12');
+    expect(within(leader).getByTestId('bracket-leaderboard-right-entry-2')).toHaveTextContent('5');
+    expect(within(leader).getByTestId('bracket-leaderboard-max-entry-2')).toHaveTextContent('20');
+    expect(screen.getAllByRole('columnheader').map((header) => header.textContent.replace(/[^A-Za-z]/g, ''))).toEqual(['Place', 'Entry', 'Champion', 'Pts', 'Right', 'Max']);
 
     const mine = screen.getByTestId('bracket-leaderboard-row-entry-1');
     expect(mine).toHaveTextContent('Yours');
-    expect(within(mine).getByTestId('bracket-leaderboard-tiebreaker-entry-1')).toHaveTextContent('—');
     expect(screen.getByTestId('bracket-leaderboard-my-best')).toHaveTextContent('Your best: 2 · Derek’s Bracket, 8 pts');
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
+  });
+
+  it('strikes an entry\'s champion through in red with a cross once that team is out', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    renderLeaderboard();
+
+    // Once the viewer's league has loaded the board stops re-rendering its rows.
+    await screen.findByText('Yours');
+    const champion = screen.getByTestId('bracket-leaderboard-champion-entry-1');
+    expect(champion).toHaveAttribute('data-mark', 'wrong');
+    expect(within(champion).getByText('Houston')).toHaveClass('line-through');
+    expect(within(champion).getByLabelText('Wrong')).toBeInTheDocument();
+  });
+
+  it('keeps the Entry column pinned while the board scrolls sideways', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    renderLeaderboard();
+
+    const header = (await screen.findByRole('columnheader', { name: 'Entry' }));
+    expect(header).toHaveClass('sticky', 'left-0');
+    expect(within(screen.getByTestId('bracket-leaderboard-row-entry-2')).getAllByRole('cell')[1]).toHaveClass('sticky', 'left-0');
+    expect(screen.getByRole('columnheader', { name: 'Champion' })).not.toHaveClass('sticky');
+  });
+
+  it('opens an entry\'s whole bracket read-only in a dialog from its bracket icon, titled with the entry and its standing, and closes it from Close', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    getGamePicksMock.mockResolvedValue({
+      data: gamePicksFixture({ entryId: 'entry-2', entryName: 'Chalk All The Way', ownEntry: false, status: 'SUBMITTED', tiebreakerValue: 141, games: filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true })) }),
+    });
+    renderLeaderboard();
+
+    await screen.findByText('Yours');
+    fireEvent.click(screen.getByTestId('bracket-leaderboard-open-entry-2'));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Chalk All The Way' })).toBeInTheDocument();
+    expect(within(dialog).queryByText('Yours')).not.toBeInTheDocument();
+    expect(within(dialog).getByTestId('bracket-dialog-standing')).toHaveTextContent('1st · 12 pts · 5 right · 20 max · Champion: Duke');
+    expect(await within(dialog).findByTestId('bracket-board')).toBeInTheDocument();
+    expect(getGamePicksMock.mock.calls[0]?.[0]).toMatchObject({ path: { contestId: 'contest-1', entryId: 'entry-2', sportEventId: 'event-1' } });
+    expect(within(dialog).queryByRole('button', { pressed: false })).not.toBeInTheDocument();
+
+    // Radix tabs switch on the press, as a tap does.
+    fireEvent.mouseDown(within(dialog).getByRole('tab', { name: 'National Championship' }));
+    expect(within(dialog).getByTestId('bracket-champion')).toHaveTextContent('Duke');
+    expect(within(dialog).getByTestId('bracket-view-tiebreaker')).toHaveTextContent('Tiebreaker: 141 total points in the final.');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('marks the viewer\'s own bracket as theirs in the dialog\'s title, with its champion as their champion', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    getGamePicksMock.mockResolvedValue({ data: gamePicksFixture({ status: 'SUBMITTED', games: filledBracketGames().map((game) => ({ ...game, locked: true, revealed: true })) }) });
+    renderLeaderboard();
+
+    await screen.findByText('Yours');
+    fireEvent.click(screen.getByTestId('bracket-leaderboard-open-entry-1'));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: /Derek’s Bracket/ })).toHaveTextContent('Yours');
+    expect(within(dialog).getByTestId('bracket-dialog-standing')).toHaveTextContent('2nd · 8 pts · 4 right · 16 max · Champion: Houston');
+  });
+
+  it('says so in the dialog when the bracket cannot be read, with a retry', async () => {
+    primeMocks();
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
+    getGamePicksMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'Boom.' } }, status: 500 });
+    renderLeaderboard();
+
+    await screen.findByText('Yours');
+    fireEvent.click(screen.getByTestId('bracket-leaderboard-open-entry-2'));
+
+    expect(await screen.findByTestId('bracket-dialog-error')).toBeInTheDocument();
   });
 
   it('opens an entry\'s filled bracket from its name on the board', async () => {
