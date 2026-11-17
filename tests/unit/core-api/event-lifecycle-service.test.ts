@@ -904,6 +904,26 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-ahead'], expect.objectContaining({ to: ContestStatus.OPEN, startsAt: earlierWeek }));
   });
 
+  it('reopens a season contest whose first week moved past its second week\'s start, from the second week\'s start, while that week is still ahead', async () => {
+    const weekTwoStart = new Date('2026-05-05T20:00:00.000Z');
+    const season = buildContest({ ...LIVE, id: 'contest-season', sportEventIds: ['sport-event-1', 'sport-event-2'] });
+    const deps = liveContests([season]);
+
+    await follow(deps, postponedEvents(NEW_START, [{ id: 'sport-event-2', startDate: weekTwoStart }]));
+
+    expect(weekTwoStart.getTime()).toBeLessThan(NEW_START.getTime());
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-season'], expect.objectContaining({ to: ContestStatus.OPEN, startsAt: weekTwoStart }));
+  });
+
+  it('keeps a season contest live once the week after its postponed first week has started', async () => {
+    const season = buildContest({ ...LIVE, id: 'contest-season', sportEventIds: ['sport-event-1', 'sport-event-2'] });
+    const deps = liveContests([season]);
+
+    await follow(deps, postponedEvents(NEW_START, [{ id: 'sport-event-2', startDate: new Date(NOW.getTime() - 60_000), status: SportEventStatus.IN_PROGRESS }]));
+
+    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
+  });
+
   it('reopens the contests starting at the same moment in one write', async () => {
     const second = buildContest({ ...LIVE, id: 'contest-2', leagueId: 'league-2' });
     const deps = liveContests([LIVE, second]);
