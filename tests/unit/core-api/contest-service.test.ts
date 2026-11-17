@@ -233,6 +233,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     eventParticipants: fieldReads(jest.fn().mockResolvedValue([]), jest.fn().mockResolvedValue([])),
     tiers: { listTiers: jest.fn().mockResolvedValue([]) },
     leaderboardSnapshots: new InMemoryLeaderboardSnapshots<StoredLeaderboard>(),
+    leaderboardRebuilds: { contestsChanged: jest.fn(async () => undefined) },
     ...deps,
   });
 }

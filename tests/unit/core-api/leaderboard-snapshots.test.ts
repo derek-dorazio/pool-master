@@ -84,6 +84,18 @@ describe('JobLeaderboardRebuilds', () => {
     expect(jobs.rows.map((row) => row.status)).toEqual([BackgroundJobStatus.RUNNING, BackgroundJobStatus.QUEUED]);
   });
 
+  it('queues one rebuild job per contest a read found a stale stored board for, however often each is named (#1788)', async () => {
+    const { jobs, rebuilds } = setup();
+
+    await rebuilds.contestsChanged(['contest-1', 'contest-2', 'contest-1']);
+    await rebuilds.contestsChanged(['contest-2']);
+
+    expect(waiting(jobs)).toEqual([
+      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-1' } },
+      { type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-2' } },
+    ]);
+  });
+
   it('writes nothing and wakes nothing when a write named no event', async () => {
     const { jobs, rebuilds, runner } = setup();
 
