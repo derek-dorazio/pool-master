@@ -153,8 +153,10 @@ export function SquaresBoardView({
   const shownLinkedEntryId = board.entries.some((entry) => entry.contestEntryId === linkedEntryId) ? linkedEntryId : null;
   landOn(shownLinkedEntryId);
   const myEntryId = myEntryIds.at(0) ?? null;
+  // A commissioner claims for the entry a link names (?entry=) until they choose another.
   const claimingEntryId = canManage
     ? claimForEntryId
+      ?? shownLinkedEntryId
       ?? myEntryId
       ?? board.entries.at(0)?.contestEntryId
       ?? null

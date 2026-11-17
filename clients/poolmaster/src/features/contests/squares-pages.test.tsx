@@ -220,6 +220,16 @@ describe('Squares board', () => {
     await waitFor(() => expect(getSquaresBoardMock).toHaveBeenCalledTimes(2));
   });
 
+  it('claims for the entry a commissioner\'s link names (?entry=), not their own, until they choose another', async () => {
+    primeMocks({ role: 'COMMISSIONER' });
+    claimSquaresBoxMock.mockResolvedValue({ data: squaresBoardFixture() });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
+
+    expect(await screen.findByTestId('squares-claim-for')).toHaveValue('entry-2');
+    fireEvent.click(box(6, 3));
+    await waitFor(() => expect(claimSquaresBoxMock).toHaveBeenCalledWith(expect.objectContaining({ body: { contestEntryId: 'entry-2' } })));
+  });
+
   it('lets a commissioner claim a box for another entry they choose, and draw the numbers after a confirm, after which the digits show and no box can be tapped', async () => {
     primeMocks({ role: 'COMMISSIONER' });
     claimSquaresBoxMock.mockResolvedValue({ data: squaresBoardFixture() });
