@@ -54,6 +54,7 @@ export function batchedLeaderboardDeps(deps: ContestServiceDeps): ContestService
     (prediction) => ({ entryId: prediction.contestEntryId, sportEventId: prediction.sportEventId }),
   );
   const participants = batchedByIds((ids) => deps.participants.findByIds(ids), (participant) => participant.id);
+  const fieldRows = batchedByIds((ids) => deps.fieldRows.findByIds(ids), (row) => row.id);
   const snapshots = new BatchedRead<{ contestId: string; shownEvent: string }, ContestLeaderboardSnapshotRead | null>(async (asks) => {
     const found = new Map<string, ContestLeaderboardSnapshotRead>();
     for (const shownEvent of new Set(asks.map((ask) => ask.shownEvent))) {
@@ -92,6 +93,7 @@ export function batchedLeaderboardDeps(deps: ContestServiceDeps): ContestService
       findByEntriesAndEvents: (entryIds, sportEventIds) => predictions.load({ entryIds, sportEventIds }),
     },
     participants: { findByIds: (ids) => participants.load(ids) },
+    fieldRows: { findByIds: (ids) => fieldRows.load(ids) },
     leaderboardSnapshots: withReads(deps.leaderboardSnapshots, { find: (contestId, shownEvent) => snapshots.load({ contestId, shownEvent }) }),
     eventParticipants: deps.eventParticipants.batchedFieldReads(),
   };

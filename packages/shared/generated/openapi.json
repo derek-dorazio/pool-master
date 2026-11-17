@@ -31575,13 +31575,101 @@
                           "string",
                           "null"
                         ]
+                      },
+                      "teamShortName": {
+                        "description": "The picked team's short name (\"KC\") when it has one, shown with the team; else null.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "game": {
+                        "description": "The picked team's game, shown with the team: null whenever the team is.",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "opponent": {
+                            "type": "string",
+                            "description": "The team the picked team played."
+                          },
+                          "opponentShortName": {
+                            "description": "The opponent's short name (\"BUF\") when it has one.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "side": {
+                            "type": "string",
+                            "enum": [
+                              "HOME",
+                              "AWAY"
+                            ],
+                            "description": "Whether the picked team was HOME or AWAY: \"KC v BUF\" at home, \"KC at BUF\" away."
+                          },
+                          "isNeutralSite": {
+                            "type": "boolean",
+                            "description": "The game is at neither team's home ground: \"KC v BUF\" either way."
+                          },
+                          "scheduledDate": {
+                            "description": "Kickoff, when known.",
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "CANCELLED"
+                            ],
+                            "description": "The game's status: COMPLETED once its result is in."
+                          },
+                          "teamScore": {
+                            "description": "The picked team's score, once there is one.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "opponentScore": {
+                            "description": "The opponent's score, once there is one.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "opponent",
+                          "opponentShortName",
+                          "side",
+                          "isNeutralSite",
+                          "scheduledDate",
+                          "status",
+                          "teamScore",
+                          "opponentScore"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
                       "sportEventId",
                       "roundNumber",
                       "outcome",
-                      "team"
+                      "team",
+                      "teamShortName",
+                      "game"
                     ],
                     "additionalProperties": false,
                     "description": "One entry's week of a survivor contest."
@@ -32069,21 +32157,65 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               },
-              "usedParticipantIds": {
-                "description": "The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team's entry, as they could show picks not yet revealed.",
+              "usedTeams": {
+                "description": "The teams the entry picked in its other submitted weeks, a lost week's included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team's entry, as they could show picks not yet revealed.",
                 "type": [
                   "array",
                   "null"
                 ],
                 "items": {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "object",
+                  "properties": {
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team, by participant: the same team in every week's field."
+                    },
+                    "weekNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The week the entry picked it in, 1 for the contest's first week."
+                    }
+                  },
+                  "required": [
+                    "participantId",
+                    "weekNumber"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A team a survivor entry has already used (#1757)."
                 }
+              },
+              "roundWeeks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "roundNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "weekNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "1 for the contest's first week."
+                    }
+                  },
+                  "required": [
+                    "roundNumber",
+                    "weekNumber"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "The week number each of this event's rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week."
               }
             },
             "required": [
               "eliminatedInWeek",
-              "usedParticipantIds"
+              "usedTeams",
+              "roundWeeks"
             ],
             "additionalProperties": false
           },

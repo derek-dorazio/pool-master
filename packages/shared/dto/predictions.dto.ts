@@ -4,7 +4,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
+import { ContestEntryStatus, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
 import { SURVIVOR_LIVES_MAX } from '../domain/contest-rules';
 
 // --- Requests ---
@@ -72,9 +72,19 @@ export const GamePickGameDtoSchema = z.object({
 }).describe('One game of the event with the entry\'s pick on it.');
 export type GamePickGameDto = z.infer<typeof GamePickGameDtoSchema>;
 
+export const GamePicksUsedTeamDtoSchema = z.object({
+  participantId: z.uuid().describe('The team, by participant: the same team in every week\'s field.'),
+  weekNumber: z.number().int().describe('The week the entry picked it in, 1 for the contest\'s first week.'),
+}).describe('A team a survivor entry has already used (#1757).');
+export type GamePicksUsedTeamDto = z.infer<typeof GamePicksUsedTeamDtoSchema>;
+
 export const GamePicksSurvivorDtoSchema = z.object({
   eliminatedInWeek: z.number().int().nullable().describe('The week number (1 for the contest\'s first week) that put the entry out: a loss, a tie, or a week not submitted by its first kickoff. Null while it is still in. An entry that is out picks no later week.'),
-  usedParticipantIds: z.array(z.uuid()).nullable().describe('The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team\'s entry, as they could show picks not yet revealed.'),
+  usedTeams: z.array(GamePicksUsedTeamDtoSchema).nullable().describe('The teams the entry picked in its other submitted weeks, a lost week\'s included, each with the week it was picked in: it cannot pick them again (until every team is used, where the contest allows). Null on another team\'s entry, as they could show picks not yet revealed.'),
+  roundWeeks: z.array(z.object({
+    roundNumber: z.number().int(),
+    weekNumber: z.number().int().describe('1 for the contest\'s first week.'),
+  })).describe('The week number each of this event\'s rounds is (#1757): one entry for a regular-season week, one per round of a playoff, so a team picked in another round can say its week.'),
 }).describe('A survivor entry\'s season as one week sees it.');
 export type GamePicksSurvivorDto = z.infer<typeof GamePicksSurvivorDtoSchema>;
 
@@ -194,11 +204,25 @@ export const SurvivorLeaderboardWeekDtoSchema = z.object({
 }).describe('One week of a survivor contest: a regular-season week, or one round of a playoff bracket.');
 export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekDtoSchema>;
 
+export const SurvivorLeaderboardPickGameDtoSchema = z.object({
+  opponent: z.string().describe('The team the picked team played.'),
+  opponentShortName: z.string().nullable().describe('The opponent\'s short name ("BUF") when it has one.'),
+  side: z.enum(MatchSide).describe('Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.'),
+  isNeutralSite: z.boolean().describe('The game is at neither team\'s home ground: "KC v BUF" either way.'),
+  scheduledDate: z.iso.datetime().nullable().describe('Kickoff, when known.'),
+  status: z.enum(MatchStatus).describe('The game\'s status: COMPLETED once its result is in.'),
+  teamScore: z.number().int().nullable().describe('The picked team\'s score, once there is one.'),
+  opponentScore: z.number().int().nullable().describe('The opponent\'s score, once there is one.'),
+}).describe('The game a survivor pick was on (#1757), from the picked team\'s side.');
+export type SurvivorLeaderboardPickGameDto = z.infer<typeof SurvivorLeaderboardPickGameDtoSchema>;
+
 export const SurvivorLeaderboardEntryWeekDtoSchema = z.object({
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('The round of the event the week is, as on the contest\'s weeks.'),
   outcome: z.enum(SurvivorWeekOutcome).nullable().describe('SURVIVED when the picked team won or its game was cancelled. After a loss, a tie or a week not submitted by its first kickoff: LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry\'s last. PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.'),
   team: z.string().nullable().describe('The team the entry picked, once its game has kicked off. Null before then, and with no pick.'),
+  teamShortName: z.string().nullable().describe('The picked team\'s short name ("KC") when it has one, shown with the team; else null.'),
+  game: SurvivorLeaderboardPickGameDtoSchema.nullable().describe('The picked team\'s game, shown with the team: null whenever the team is.'),
 }).describe('One entry\'s week of a survivor contest.');
 export type SurvivorLeaderboardEntryWeekDto = z.infer<typeof SurvivorLeaderboardEntryWeekDtoSchema>;
 

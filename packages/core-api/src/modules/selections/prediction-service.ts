@@ -194,8 +194,10 @@ export interface GamePicksView {
 export interface GamePicksSurvivorView {
   /** The week number that put the entry out; null while it stands. */
   eliminatedInWeek: number | null;
-  /** The teams, by participant, the entry picked in its other submitted weeks; null to anyone but its own team, as they would show picks not yet revealed. */
-  usedParticipantIds: string[] | null;
+  /** The teams, by participant, the entry picked in its other submitted weeks, each with the week number it was picked in; null to anyone but its own team, as they would show picks not yet revealed. */
+  usedTeams: { participantId: string; weekNumber: number }[] | null;
+  /** The week number of each of this event's rounds. */
+  roundWeeks: { roundNumber: number; weekNumber: number }[];
 }
 
 /** A game setup's pick preview (#1612): its event, its unsaved rules and the trial picks. */
@@ -585,7 +587,7 @@ export class PredictionService {
     const participantId = context.season.participantIdOf.get(sportEventParticipantId);
     const usedInAnotherRound = standing.some((other) => other.sportEventMatchId !== pick.sportEventMatchId
       && other.sportEventParticipantId === sportEventParticipantId);
-    if (usedInAnotherRound || (participantId !== undefined && context.season.usedParticipantIds.has(participantId))) {
+    if (usedInAnotherRound || (participantId !== undefined && context.season.usedTeamWeeks.has(participantId))) {
       throw selectionErrors.teamAlreadyUsed(context.entry.id, sportEventParticipantId);
     }
   }
@@ -767,7 +769,7 @@ export class PredictionService {
     const run = survivorRun(entryWeeks, lives);
     // This event's own rounds are read from its picks; it takes one place, at its first week.
     const weekIndex = entryWeeks.findIndex((week) => week.sportEventId === sportEventId);
-    const usedParticipantIds = survivorTeamsUsedInCycle(
+    const usedTeamWeekIndexes = survivorTeamsUsedInCycle(
       entryWeeks.map((week) => (week.sportEventId !== sportEventId && !week.cancelled && week.submitted ? week.pickedParticipantId : null)),
       weekIndex,
       reuseTeamsOnceAllUsed ? await this.deps.field.countDistinctParticipants(contest.sportEventIds) : null,
@@ -775,7 +777,8 @@ export class PredictionService {
     const ownWeeks = weeks.filter((week) => week.event.id === sportEventId);
     const first = ownWeeks.at(0);
     return {
-      usedParticipantIds,
+      // Season weeks are numbered from 1 in week order, one to each entry week.
+      usedTeamWeeks: new Map([...usedTeamWeekIndexes].map(([participantId, index]) => [participantId, index + 1])),
       eliminatedInWeek: run.eliminatedAt === null ? null : run.eliminatedAt + 1,
       participantIdOf: new Map(field.map((row) => [row.id, row.participantId])),
       roundOf: new Map(ownWeeks.flatMap((week) => week.games.map((game) => [game.id, week.roundNumber] as const))),
@@ -823,7 +826,10 @@ export class PredictionService {
       tiePicksOffered: context.tiePicksOffered,
       survivor: context.season === null ? null : {
         eliminatedInWeek: this.eliminatedInWeekShown(context.season),
-        usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,
+        usedTeams: ownEntry
+          ? [...context.season.usedTeamWeeks].map(([participantId, weekNumber]) => ({ participantId, weekNumber }))
+          : null,
+        roundWeeks: [...context.season.weekNumberOfRound].map(([roundNumber, weekNumber]) => ({ roundNumber, weekNumber })),
       },
       status,
       submittedAt: entry.events.find((event) => event.sportEventId === sportEvent.id)?.submittedAt ?? null,

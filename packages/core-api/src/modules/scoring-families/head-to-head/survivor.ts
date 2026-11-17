@@ -119,29 +119,30 @@ export function survivorRun(weeks: readonly SurvivorWeek[], lives: number): Surv
  * picked, and its own pick is left out. With `teamCount` null each team is used once all season,
  * so every other week's pick counts. Otherwise the weeks run in cycles, the week being picked
  * taking one place in its cycle: a cycle ends once it holds `teamCount` teams, and only the picks
- * of the week's own cycle, before it or picked ahead after it, count.
+ * of the week's own cycle, before it or picked ahead after it, count. Each used team maps to the
+ * index of the week it was picked in, so the pick screen can say when (#1757).
  */
 export function survivorTeamsUsedInCycle(
   picks: readonly (string | null)[],
   weekIndex: number,
   teamCount: number | null,
-): Set<string> {
+): Map<string, number> {
   if (teamCount === null) {
-    return new Set(picks.flatMap((pick, index) => (index !== weekIndex && pick !== null ? [pick] : [])));
+    return new Map(picks.flatMap((pick, index) => (index !== weekIndex && pick !== null ? [[pick, index] as const] : [])));
   }
-  let cycle = new Set<string>();
+  let cycle = new Map<string, number>();
   let holdsWeek = false;
   for (const [index, pick] of picks.entries()) {
     if (index === weekIndex) {
       holdsWeek = true;
     } else if (pick !== null) {
-      cycle.add(pick);
+      cycle.set(pick, index);
     } else {
       continue;
     }
     if (cycle.size + (holdsWeek ? 1 : 0) >= teamCount) {
       if (holdsWeek) return cycle;
-      cycle = new Set<string>();
+      cycle = new Map<string, number>();
     }
   }
   return cycle;

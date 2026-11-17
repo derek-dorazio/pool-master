@@ -17,6 +17,8 @@ import type {
   ContestRepository,
   ContestEntryRepository,
   ContestEntryTotals,
+  ContestEntryWithSquad,
+  SportEventParticipantRepository,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
@@ -56,6 +58,7 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
+  MatchSide,
   survivorLivesOf,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
@@ -94,8 +97,8 @@ import {
   type LeaderboardChanges,
 } from './leaderboard-snapshots';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
-import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
-import { toSurvivorLeaderboardResponse, type SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
+import { loadSurvivorSeason, survivorWeekKey, type SurvivorSeasonPick } from './survivor-standings';
+import { toSurvivorLeaderboardResponse, type SurvivorLeaderboardModel, type SurvivorLeaderboardPickGameRow } from '../../mappers/survivor-leaderboard.mapper';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -201,8 +204,10 @@ export interface ContestServiceDeps {
   picks: ContestEntryPickRepository;
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent' | 'findByEntriesAndEvents'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
-  /** A survivor leaderboard's picked teams' names (#719). */
+  /** A survivor leaderboard's picked teams' and their opponents' names (#719, #1757). */
   participants: Pick<ParticipantRepository, 'findByIds'>;
+  /** A survivor leaderboard's opponents' field rows, for their teams (#1757). */
+  fieldRows: Pick<SportEventParticipantRepository, 'findByIds'>;
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
   memberships: LeagueMembershipRepository;
@@ -1273,10 +1278,43 @@ export class ContestService {
       return found !== undefined
         && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, openingRoundOf.get(found.event.id) ?? found.game.roundNumber, now);
     };
-    const revealedParticipantIds = new Set(season.entries.flatMap(({ picks }) =>
-      [...picks.values()].filter((pick) => isRevealed(pick.sportEventMatchId)).map((pick) => pick.participantId)));
-    const nameById = new Map((await this.deps.participants.findByIds([...revealedParticipantIds]))
-      .map((participant) => [participant.id, participant.name]));
+    // Only a submitted week's pick is shown, from its game's kickoff: a draft one never counted,
+    // and the entry is out for not submitting.
+    const shownPick = (entry: ContestEntryWithSquad, sportEventId: string, pick: SurvivorSeasonPick | undefined) =>
+      pick !== undefined && contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED && isRevealed(pick.sportEventMatchId)
+        ? pick
+        : undefined;
+    const shown = season.entries.flatMap(({ entry, picks }) =>
+      [...picks.values()].flatMap((pick) => shownPick(entry, pick.sportEventId, pick) ?? []));
+    // Each shown pick's opponent (#1757): the other side of its game, by its field row.
+    const opponentRowOf = (pick: SurvivorSeasonPick) => {
+      const game = gameById.get(pick.sportEventMatchId)?.game;
+      if (!game) return null;
+      return game.homeSportEventParticipantId === pick.sportEventParticipantId ? game.awaySportEventParticipantId : game.homeSportEventParticipantId;
+    };
+    const opponentRowIds = [...new Set(shown.flatMap((pick) => opponentRowOf(pick) ?? []))];
+    const participantOfRow = new Map((opponentRowIds.length === 0 ? [] : await this.deps.fieldRows.findByIds(opponentRowIds))
+      .map((row) => [row.id, row.participantId]));
+    const participantIds = new Set([...shown.map((pick) => pick.participantId), ...participantOfRow.values()]);
+    const participantById = new Map((participantIds.size === 0 ? [] : await this.deps.participants.findByIds([...participantIds]))
+      .map((participant) => [participant.id, participant]));
+    const gameOf = (pick: SurvivorSeasonPick): SurvivorLeaderboardPickGameRow | null => {
+      const game = gameById.get(pick.sportEventMatchId)?.game;
+      const opponentRow = opponentRowOf(pick);
+      const opponent = opponentRow === null ? undefined : participantById.get(participantOfRow.get(opponentRow) ?? '');
+      if (!game || !opponent) return null;
+      const side = game.homeSportEventParticipantId === pick.sportEventParticipantId ? MatchSide.HOME : MatchSide.AWAY;
+      return {
+        opponent: opponent.name,
+        opponentShortName: opponent.shortName ?? null,
+        side,
+        isNeutralSite: game.isNeutralSite,
+        scheduledDate: game.scheduledDate,
+        status: game.status,
+        teamScore: side === MatchSide.HOME ? game.homeScore : game.awayScore,
+        opponentScore: side === MatchSide.HOME ? game.awayScore : game.homeScore,
+      };
+    };
     const settled = contest.status === ContestStatus.COMPLETED
       ? new Map((await this.deps.standings.findByContest(contestId)).map((standing) => [standing.contestEntryId, standing]))
       : new Map<string, never>();
@@ -1297,15 +1335,15 @@ export class ContestService {
         position: frozen?.position ?? position,
         displayPosition: frozen?.displayPosition ?? displayPosition,
         weeks: season.weeks.map(({ event, roundNumber }, index) => {
-          const pick = picks.get(survivorWeekKey({ sportEventId: event.id, roundNumber }));
+          const pick = shownPick(entry, event.id, picks.get(survivorWeekKey({ sportEventId: event.id, roundNumber })));
+          const team = pick === undefined ? undefined : participantById.get(pick.participantId);
           return {
             sportEventId: event.id,
             roundNumber,
             outcome: run.weeks[index]?.outcome ?? null,
-            // Only a submitted week's pick is shown: a draft one never counted, and the entry is out for not submitting.
-            team: pick !== undefined && contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED && isRevealed(pick.sportEventMatchId)
-              ? nameById.get(pick.participantId) ?? null
-              : null,
+            team: team?.name ?? null,
+            teamShortName: team?.shortName ?? null,
+            game: pick === undefined || team === undefined ? null : gameOf(pick),
           };
         }),
       };

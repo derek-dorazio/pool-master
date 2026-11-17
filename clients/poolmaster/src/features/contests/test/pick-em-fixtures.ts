@@ -218,7 +218,7 @@ export function survivorWeekFixture(overrides: Partial<GamePicksResponse> = {}):
   return pickEmWeekFixture({
     selectionType: 'SURVIVOR',
     mode: null,
-    survivor: { eliminatedInWeek: null, usedParticipantIds: [NFL_TEAMS.bills.participantId] },
+    survivor: { eliminatedInWeek: null, usedTeams: [{ participantId: NFL_TEAMS.bills.participantId, weekNumber: 1 }], roundWeeks: [{ roundNumber: 1, weekNumber: 2 }] },
     tiebreakerMatchId: null,
     points: null,
     maxPossiblePoints: null,
@@ -242,16 +242,16 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
         alive: true, eliminatedInWeek: null, weeksSurvived: 1, livesLeft: 1, livesLost: 0, position: 1, displayPosition: '1',
         weeks: [
-          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Chiefs' },
-          { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null },
+          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Chiefs', teamShortName: null, game: null },
+          { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null, teamShortName: null, game: null },
         ],
       },
       {
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
         alive: false, eliminatedInWeek: 2, weeksSurvived: 1, livesLeft: 0, livesLost: 1, position: 2, displayPosition: '2',
         weeks: [
-          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
-          { sportEventId: 'week-2', roundNumber: 1, outcome: 'ELIMINATED', team: 'Bears' },
+          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills', teamShortName: null, game: null },
+          { sportEventId: 'week-2', roundNumber: 1, outcome: 'ELIMINATED', team: 'Bears', teamShortName: null, game: null },
         ],
       },
     ],
@@ -275,7 +275,7 @@ export function playoffSurvivorFixture(overrides: Partial<GamePicksResponse> = {
     sportEventId: 'playoffs',
     status: 'SUBMITTED',
     submittedAt: '2099-09-01T12:00:00.000Z',
-    survivor: { eliminatedInWeek: null, usedParticipantIds: [] },
+    survivor: { eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }, { roundNumber: 2, weekNumber: 2 }] },
     games,
     ...overrides,
   });
@@ -307,16 +307,16 @@ export function playoffSurvivorLeaderboardFixture(): SurvivorLeaderboardResponse
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
         alive: true, eliminatedInWeek: null, weeksSurvived: 1, livesLeft: 1, livesLost: 0, position: 1, displayPosition: '1',
         weeks: [
-          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
-          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },
+          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills', teamShortName: null, game: null },
+          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null, teamShortName: null, game: null },
         ],
       },
       {
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
         alive: false, eliminatedInWeek: 1, weeksSurvived: 0, livesLeft: 0, livesLost: 1, position: 2, displayPosition: '2',
         weeks: [
-          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'ELIMINATED', team: 'Chiefs' },
-          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },
+          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'ELIMINATED', team: 'Chiefs', teamShortName: null, game: null },
+          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null, teamShortName: null, game: null },
         ],
       },
     ],
