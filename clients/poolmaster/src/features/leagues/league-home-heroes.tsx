@@ -1,5 +1,3 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { Link } from 'react-router';
 import { ContestStatus, SelectionType, formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { describeContestNextStep } from '@/features/contests/my-contest-entry';
@@ -10,7 +8,7 @@ import { listedContestStartsAt } from '@/features/contests/use-contest-schedule'
 import {
   Countdown,
   Eyebrow,
-  Heading,
+  HeroTile,
   LinkButton,
   QueryState,
   StatusBadge,
@@ -89,65 +87,6 @@ const HERO_COLUMNS: Record<number, string> = {
 };
 
 /**
- * A hero's frame: the navy panel with its top edge, a link over the whole tile to the contest
- * page beneath its buttons, and the buttons on their own row at the bottom.
- */
-function HeroFrame({
-  actions,
-  children,
-  contest,
-  edge,
-  eyebrow,
-  isHighlighted,
-  leagueCode,
-  testId,
-}: {
-  actions: ReactNode;
-  children: ReactNode;
-  contest: ContestDto;
-  edge: 'live' | 'open';
-  /** The line over the contest's name. */
-  eyebrow: ReactNode;
-  isHighlighted: boolean;
-  leagueCode: string;
-  testId: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const titleId = useId();
-  useEffect(() => {
-    if (isHighlighted) {
-      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-  }, [isHighlighted]);
-
-  return (
-    <Tile
-      aria-labelledby={titleId}
-      as="section"
-      className={cn('relative flex flex-col gap-3', isHighlighted ? 'ring-2 ring-ring ring-offset-2 ring-offset-background' : undefined)}
-      data-highlighted={isHighlighted || undefined}
-      data-testid={testId}
-      edge={edge}
-      radius="panel"
-      ref={ref}
-      variant="inverse"
-    >
-      {/* Beneath the buttons, so they stay their own targets: a button is never inside a link. */}
-      <Link
-        aria-labelledby={titleId}
-        className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        data-testid={`${testId}-link`}
-        to={buildLeagueContestPath(leagueCode, contest.id)}
-      />
-      {eyebrow}
-      <Heading data-testid={`${testId}-name`} id={titleId} level={2} size="xl" tone="inherit" variant="card">{contest.name}</Heading>
-      {children}
-      <div className="relative mt-auto flex flex-wrap items-center gap-3" data-testid={`${testId}-actions`}>{actions}</div>
-    </Tile>
-  );
-}
-
-/**
  * A live contest's hero: LIVE and its progress, its name, the viewer's best place in big type
  * with how many entered and its total, then the top three plus each of the viewer's own rows, and
  * the Leaderboard button. A viewer not in it sees the top three alone. Each live hero reads its
@@ -185,9 +124,8 @@ function LiveHero({
   const entered = formatNumber(contest.entryCount ?? 0, locale);
 
   return (
-    <HeroFrame
+    <HeroTile
       actions={<LinkButton data-testid={`${testId}-leaderboard`} size="sm" to={buildLeagueContestPath(leagueCode, contest.id)}>Leaderboard</LinkButton>}
-      contest={contest}
       edge="live"
       eyebrow={(
         <div className="flex flex-wrap items-center gap-2">
@@ -196,8 +134,9 @@ function LiveHero({
         </div>
       )}
       isHighlighted={isHighlighted}
-      leagueCode={leagueCode}
       testId={testId}
+      title={contest.name}
+      to={buildLeagueContestPath(leagueCode, contest.id)}
     >
       {bestPlace ? (
         <div className="flex flex-wrap items-baseline gap-2" data-testid={`${testId}-place`}>
@@ -224,7 +163,7 @@ function LiveHero({
           )}
         </QueryState>
       </Tile>
-    </HeroFrame>
+    </HeroTile>
   );
 }
 
@@ -284,7 +223,7 @@ function OpenHero({
       : `${entryCount} so far`;
 
   return (
-    <HeroFrame
+    <HeroTile
       actions={(
         <>
           {step.kind === 'start' ? (
@@ -300,12 +239,12 @@ function OpenHero({
           <Text data-testid={`${testId}-note`} tone="onInverseMuted">{note}</Text>
         </>
       )}
-      contest={contest}
       edge="open"
       eyebrow={<Eyebrow tone="inverse">{`Open for entries · ${formatSelectionTypeName(contest.selectionType)}`}</Eyebrow>}
       isHighlighted={isHighlighted}
-      leagueCode={leagueCode}
       testId={testId}
+      title={contest.name}
+      to={buildLeagueContestPath(leagueCode, contest.id)}
     >
       {closesAt ? (
         <>
@@ -315,6 +254,6 @@ function OpenHero({
           <Countdown label="Entries close in" now={now} testId={`${testId}-countdown`} tone="inverseAccent" until={closesAt} />
         </>
       ) : null}
-    </HeroFrame>
+    </HeroTile>
   );
 }
