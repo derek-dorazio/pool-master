@@ -605,8 +605,24 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(screen.queryByTestId('contest-entry-picks-entry-1')).not.toBeInTheDocument();
   });
 
+  it('leaves a pick\'em entry\'s status line at "Submitted", naming no team, even with its week\'s picks already loaded', async () => {
+    primeMocks({ selectionType: 'PICK_EM', entries: [MINE] });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: pickEmEventFieldFixture('event-1') } });
+    getEventBracketMock.mockResolvedValue({ data: { matches: week2EventGamesFixture() } });
+    getGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({
+      games: week1Games({ 2: { sportEventMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) } }),
+    }) });
+
+    renderContestBoard();
+
+    const picks = await screen.findByTestId('contest-entry-picks-entry-1');
+    await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-value-entry-1-/).map((cell) => cell.textContent)).toContain('KC'));
+    expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted$/);
+  });
+
   it('names the team on the status line of the viewer\'s own survivor entry, by the week it is picked for, and another team\'s pick nowhere', async () => {
     primeMocks({ selectionType: 'SURVIVOR', entries: [MINE, THEIRS] });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: pickEmEventFieldFixture('event-1') } });
     getGamePicksMock.mockResolvedValue({ data: survivorWeekFixture({
       status: 'SUBMITTED',
       survivor: { eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] },
@@ -615,7 +631,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     renderContestBoard();
 
-    await waitFor(() => expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted · Week 1: Eagles$/));
+    await waitFor(() => expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted · Week 1: PHI$/));
     expect(screen.getByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-entry-status-entry-3')).not.toBeInTheDocument();
     expect(getGamePicksMock).toHaveBeenCalledTimes(1);

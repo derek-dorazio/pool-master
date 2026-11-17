@@ -60,6 +60,10 @@ describe('survivorStatusLabel', () => {
     expect(survivorStatusLabel(entry({ alive: false, eliminatedInWeek: 3, livesLeft: 0, livesLost: 1 }), weeks, weekName)).toBe('Out · Week 3');
     expect(survivorStatusLabel(entry({ alive: false, eliminatedInWeek: 9, livesLeft: 0, livesLost: 1 }), weeks, weekName)).toBe('Out · Week 9');
   });
+
+  it('reads plain "Out" for an entry that is out with no week named, never "In"', () => {
+    expect(survivorStatusLabel(entry({ alive: false, eliminatedInWeek: null, livesLeft: 0, livesLost: 1 }), weeks, weekName)).toBe('Out');
+  });
 });
 
 describe('survivorCellView', () => {

@@ -34,18 +34,22 @@ export function survivorPickOf(entry: SurvivorRow, week: Pick<SurvivorWeek, 'rou
 
 /**
  * The status chip under an entry's name: "In", "In · 2 lives" in a two-life contest before a loss,
- * "In · 1 life left" after one (#1754), or "Out · Week 9" naming the week that put it out.
+ * "In · 1 life left" after one (#1754), or "Out · Week 9" naming the week that put it out ("Out"
+ * where the board names no week).
  */
 export function survivorStatusLabel(
   entry: Pick<SurvivorRow, 'alive' | 'eliminatedInWeek' | 'livesLeft' | 'livesLost'>,
   weeks: readonly SurvivorWeek[],
   weekName: SurvivorWeekName,
 ): string {
-  if (entry.alive || entry.eliminatedInWeek === null) {
+  if (entry.alive) {
     if (entry.livesLost > 0) {
       return `In · ${pluralize(entry.livesLeft, 'life', 'lives')} left`;
     }
     return entry.livesLeft > 1 ? `In · ${pluralize(entry.livesLeft, 'life', 'lives')}` : 'In';
+  }
+  if (entry.eliminatedInWeek === null) {
+    return 'Out';
   }
   const week = weeks.find((candidate) => candidate.weekNumber === entry.eliminatedInWeek);
   return `Out · ${week ? weekName(week) : `Week ${entry.eliminatedInWeek}`}`;
