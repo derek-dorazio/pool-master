@@ -91,6 +91,7 @@ export type DataGridProps<TData> = {
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
   // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
   // TanStack's own documented shape for this position.
+  /** A filterable column needs a text header: its filter box is named by it, else by the raw column id. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   data: TData[];
