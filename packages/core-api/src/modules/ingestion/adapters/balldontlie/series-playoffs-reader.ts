@@ -14,7 +14,9 @@ import { BalldontlieRequestError } from './balldontlie-client';
 import { GameProgress, PROGRESS_BY_STATE } from './competition-status';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import {
+  BracketShapeKind,
   playoffsScopeId,
+  playoffsTeamExternalId,
   toPlayoffsEvent,
   toPlayoffsEvents,
   toPlayoffsFieldParticipants,
@@ -102,14 +104,22 @@ export class PlayoffsReader {
     const { league } = this.source;
     const participants = toPlayoffsFieldParticipants(league, games);
     const event = { ...toPlayoffsEvent(league, season, games, participants.length), participants };
-    // A league whose bracket is not built from its seeds yet (the NHL's, MLB's) gives no games: an
-    // admin builds its bracket, and series games alone would not keep one.
+    // A league whose bracket is not built from its seeds gives no games: an admin builds its
+    // bracket, and series games alone would not keep one.
     if (league.bracket === undefined || this.source.seedRanks === undefined) return event;
     // The standings are read only once the whole first round is out, when they can seed it.
     const ranks = hasWholeFirstRound(league, games) ? await this.seedRanks(this.source.seedRanks.bind(this.source), season) : null;
-    const bracket = ranks === null ? null : toPlayoffsBracket(league, games, ranks);
+    // A bye bracket's top seeds play no first-round game, so they come from the league's teams.
+    const teams = ranks !== null && ranks.size > 0 && league.bracket.kind === BracketShapeKind.BYES ? await this.source.teams() : [];
+    const bracket = ranks === null ? null : toPlayoffsBracket(league, games, ranks, teams);
+    const named = new Set(bracket?.flatMap((match) => [match.homeTeamExternalId, match.awayTeamExternalId]));
+    const inField = new Set(participants.map((participant) => participant.externalId));
+    const byes = teams.filter((team) => named.has(playoffsTeamExternalId(league, team.id)) && !inField.has(playoffsTeamExternalId(league, team.id)));
+    const field = [...participants, ...byes.map((team) => toPlayoffsTeamParticipant(league, team))];
     return {
       ...event,
+      participants: field,
+      participantCount: field.length,
       rounds: league.rounds.length,
       games: toPlayoffSeriesGames(league, games, bracket),
       ...(bracket !== null && { bracket }),

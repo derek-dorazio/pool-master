@@ -128,18 +128,66 @@ function divisionSlots(league: PlayoffsLeague, conferences: DivisionBracketConfe
 
 /**
  * The playoffs' whole bracket, every series from the first round to the final, the first round's
- * sides by seed and every later side empty; null for a league with no bracket shape, or until the
- * ranks place the whole first round.
+ * sides by seed and every later side empty but a bye's; null for a league with no bracket shape, or
+ * until the ranks place the whole first round. `teams` are the league's teams, which a bye bracket
+ * needs for the top seeds no first-round game names.
  */
-export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly PlayoffGame[], ranks: PlayoffSeedRanks): ProviderBracketMatch[] | null {
+export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly PlayoffGame[], ranks: PlayoffSeedRanks, teams: readonly PlayoffTeam[] = []): ProviderBracketMatch[] | null {
   const shape = league.bracket;
   if (shape === undefined) return null;
   const firstRound = playoffSeries(games).filter((series) => series.round === 1);
   if (firstRound.length !== league.rounds[0].seriesCount) return null;
+  if (shape.kind === BracketShapeKind.BYES) return byeBracket(league, shape.leagues, firstRound, ranks, teams);
   const slots = shape.kind === BracketShapeKind.SEEDED
     ? seededSlots(league, shape.groups, firstRound, ranks)
     : divisionSlots(league, shape.conferences, firstRound, ranks);
   return slots === null ? null : linkBracket(league, slots);
+}
+
+/**
+ * A bracket whose top two seeds a league wait out the first round (MLB's): in each league, in the
+ * league's order, the 4 v 5 and 3 v 6 series are the first round, the 1 seed hosts the 4/5 winner
+ * and the 2 seed the 3/6 winner, and the 1 seed's half hosts the league final. The first league's
+ * champion is home in the final, which is display only, as the NBA Finals' is. The ranks are each
+ * league's seeds, and `teams` names the league each top seed plays in; null unless each league's
+ * first round is its 4 v 5 and 3 v 6 and both its top seeds are among `teams`.
+ */
+function byeBracket(
+  league: PlayoffsLeague,
+  leagues: ReadonlyArray<{ name: string; label: string }>,
+  firstRound: readonly PlayoffSeries[],
+  ranks: PlayoffSeedRanks,
+  teams: readonly PlayoffTeam[],
+): ProviderBracketMatch[] | null {
+  const team = (each: PlayoffTeam) => playoffsTeamExternalId(league, each.id);
+  const count = leagues.length;
+  const match = (matchNumber: number, roundNumber: number, regionLabel: string | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
+    matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, isNeutralSite: false, scheduledAt: null, advancesTo: null, regionLabel, ...fill,
+  });
+  const rounds: ProviderBracketMatch[][] = [[], [], []];
+  for (const [index, { name, label }] of leagues.entries()) {
+    const inLeague = firstRound.flatMap((series) => {
+      const sides = ranked(series, ranks);
+      return sides !== null && metadataText(sides.top, 'league') === name ? [{ ...sides, series }] : [];
+    });
+    const headedBy = (seed: number) => inLeague.find((sides) => sides.topRank === seed && ranks.get(sides.bottom.id) === 9 - seed);
+    const bye = (seed: number) => teams.find((each) => metadataText(each, 'league') === name && ranks.get(each.id) === seed);
+    const [fourFive, threeSix, first, second] = [headedBy(4), headedBy(3), bye(1), bye(2)];
+    if (inLeague.length !== 2 || fourFive === undefined || threeSix === undefined || first === undefined || second === undefined) return null;
+    const firstRoundNumber = 2 * index + 1;
+    const divisionNumber = 2 * count + 2 * index + 1;
+    const championshipNumber = 4 * count + index + 1;
+    rounds[0].push(
+      match(firstRoundNumber, 1, label, { homeTeamExternalId: team(fourFive.top), awayTeamExternalId: team(fourFive.bottom), scheduledAt: new Date(fourFive.series.games[0].start), advancesTo: { matchNumber: divisionNumber, side: MatchSide.AWAY } }),
+      match(firstRoundNumber + 1, 1, label, { homeTeamExternalId: team(threeSix.top), awayTeamExternalId: team(threeSix.bottom), scheduledAt: new Date(threeSix.series.games[0].start), advancesTo: { matchNumber: divisionNumber + 1, side: MatchSide.AWAY } }),
+    );
+    rounds[1].push(
+      match(divisionNumber, 2, label, { homeTeamExternalId: team(first), advancesTo: { matchNumber: championshipNumber, side: MatchSide.HOME } }),
+      match(divisionNumber + 1, 2, label, { homeTeamExternalId: team(second), advancesTo: { matchNumber: championshipNumber, side: MatchSide.AWAY } }),
+    );
+    rounds[2].push(match(championshipNumber, 3, label, { advancesTo: { matchNumber: 5 * count + 1, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
+  }
+  return [...rounds.flat(), match(5 * count + 1, 4, null)];
 }
 
 /** The first round's matches numbered in order, each two consecutive ones' winners meeting next, to the final. */

@@ -3,6 +3,8 @@ import { balldontliePaginationSchema } from '../../../../packages/core-api/src/m
 import {
   mlbGameListSchema,
   mlbGameSchema,
+  mlbStandingListSchema,
+  mlbStandingSchema,
   mlbTeamListSchema,
   mlbTeamSchema,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-contract';
@@ -27,6 +29,7 @@ describe('BALLDONTLIE MLB fixtures', () => {
     ['teams.json', '/mlb/v1/teams', mlbTeamListSchema],
     ['games-2025-postseason.json', '/mlb/v1/games', mlbGameListSchema],
     ['games-2026-postseason-partial.json', '/mlb/v1/games', mlbGameListSchema],
+    ['standings-2025.json', '/mlb/v1/standings', mlbStandingListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -46,6 +49,7 @@ describe('BALLDONTLIE MLB fields the adapter reads', () => {
   const pairs: Array<[component: string, adapterSchema: z.ZodType]> = [
     ['MLBGame', mlbGameSchema],
     ['MLBTeam', mlbTeamSchema],
+    ['MLBStandings', mlbStandingSchema],
     ['Pagination', balldontliePaginationSchema],
   ];
 

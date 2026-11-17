@@ -14,6 +14,7 @@ import {
   toPlayoffSeriesGames,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
+import { MLB_POSTSEASON, toMlbSeeds } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
 import { NHL_PLAYOFFS, toNhlSeedRanks } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
 import { toWnbaSeedRanks } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping';
 
@@ -207,5 +208,38 @@ describe('series playoffs bracket by division', () => {
     expect([...toNhlSeedRanks([row(1, 100), row(2, 104), row(3, 100, 32), row(4, 100, 32, 36), row(5, undefined), row(6, 100, 30, 35, 40)])]).toEqual([
       [2, 1], [4, 2], [3, 3], [1, 4], [6, 5],
     ]);
+  });
+});
+
+describe('series playoffs bracket with byes', () => {
+  /** A club by its seed in its league: American 1xx, National 2xx. */
+  const club = (league: 'American' | 'National', seed: number): PlayoffTeam => ({ id: (league === 'American' ? 100 : 200) + seed, name: `${league} ${String(seed)}`, metadata: { league } });
+  const seeds = new Map((['American', 'National'] as const).flatMap((league) => [1, 2, 3, 4, 5, 6].map((seed) => [club(league, seed).id, seed] as const)));
+  const teams = (['American', 'National'] as const).flatMap((league) => [1, 2, 3, 4, 5, 6].map((seed) => club(league, seed)));
+  const wildCard = (pairs: Array<[number, number]> = [[4, 5], [3, 6]]) => (['American', 'National'] as const)
+    .flatMap((league) => pairs.map(([home, away]) => game(club(league, home), club(league, away), 0)));
+
+  it('builds no bracket when a league\'s first round is not its 4 v 5 and 3 v 6', () => {
+    expect(toPlayoffsBracket(MLB_POSTSEASON, wildCard([[3, 5], [4, 6]]), seeds, teams)).toBeNull();
+  });
+
+  it('builds no bracket while a top seed is missing from the league\'s teams', () => {
+    expect(toPlayoffsBracket(MLB_POSTSEASON, wildCard(), seeds, teams.filter((team) => team.id !== club('National', 2).id))).toBeNull();
+  });
+
+  it('puts each league\'s 1 seed home against the 4/5 winner and its 2 seed against the 3/6 winner', () => {
+    const bracket = toPlayoffsBracket(MLB_POSTSEASON, wildCard(), seeds, teams);
+
+    expect(bracket?.filter((match) => match.roundNumber === 2).map((match) => [match.regionLabel, match.homeTeamExternalId])).toEqual([
+      ['AL', 'mlb-team-101'], ['AL', 'mlb-team-102'], ['NL', 'mlb-team-201'], ['NL', 'mlb-team-202'],
+    ]);
+  });
+
+  it('seeds each league\'s division winners 1 to 3 by league place, then its next three clubs 4 to 6, and seeds no league whose places are missing', () => {
+    const row = (id: number, league: string, divisionRank: number | undefined, leagueRank: number) => ({ team: { id, league }, division_rank: divisionRank, league_rank: leagueRank });
+    const american = [row(1, 'American', 2, 1), row(2, 'American', 1, 2), row(3, 'American', 1, 3), row(4, 'American', 2, 4), row(5, 'American', 1, 5), row(6, 'American', 3, 6), row(7, 'American', 2, 7), row(8, 'American', 4, 8)];
+    const national = [row(11, 'National', 1, 1), row(12, 'National', undefined, 2)];
+
+    expect([...toMlbSeeds([...american, ...national])]).toEqual([[2, 1], [3, 2], [5, 3], [1, 4], [4, 5], [6, 6]]);
   });
 });

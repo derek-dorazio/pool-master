@@ -52,6 +52,8 @@ export const BracketShapeKind = {
   SEEDED: 'SEEDED',
   /** Seeded by division within each conference, a division's winner meeting a wild card: the NHL's. */
   DIVISIONS: 'DIVISIONS',
+  /** Six seeds a league, the top two waiting out the first round: MLB's. */
+  BYES: 'BYES',
 } as const;
 export type BracketShapeKind = (typeof BracketShapeKind)[keyof typeof BracketShapeKind];
 
@@ -64,11 +66,13 @@ export interface DivisionBracketConference {
 
 /**
  * A bracket fixed by seed. `groups` seed their own half each, in bracket order, by a team's
- * `metadata.conference` (null for a league seeded as one); `conferences` order a division bracket.
+ * `metadata.conference` (null for a league seeded as one); `conferences` order a division bracket;
+ * `leagues` order a bye bracket by a team's `metadata.league`.
  */
 export type PlayoffsBracketShape =
   | { kind: typeof BracketShapeKind.SEEDED; groups: readonly string[] | null }
-  | { kind: typeof BracketShapeKind.DIVISIONS; conferences: DivisionBracketConference[] };
+  | { kind: typeof BracketShapeKind.DIVISIONS; conferences: DivisionBracketConference[] }
+  | { kind: typeof BracketShapeKind.BYES; leagues: ReadonlyArray<{ name: string; label: string }> };
 
 /** A team as a league's normalizer reads it. */
 export interface PlayoffTeam {

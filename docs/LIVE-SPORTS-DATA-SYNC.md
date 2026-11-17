@@ -294,9 +294,15 @@ the league by points, then regulation wins, regulation and overtime wins, and wi
 each division heads two first-round series: the better-ranked team heading one is the division's
 winner, meeting a wild card, and the other is its second, meeting its third. The winner's series is
 listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is each match's region.
-Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. MLB's
-postseason gives no games yet: its top seeds' byes leave them out of the first round's games, so
-the field needs the standings too, and an admin builds its bracket.
+Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. **MLB's
+bracket** has byes (`BracketShapeKind.BYES`): `/mlb/v1/standings` gives no seed, so each league's
+division winners are seeded 1 to 3 by `league_rank` and its next three clubs 4 to 6 (`toMlbSeeds`;
+a league with a club missing either place gets no seeds). In each league, American first, the
+Wild Card Series are 4 v 5 and 3 v 6, the 1 seed hosts the 4/5 winner and the 2 seed the 3/6
+winner in the Division Series, and the 1 seed's half hosts the League Championship Series; the
+American League's champion is home in the World Series, display only. The two top seeds play no
+first-round game, so the read also takes the league's teams (`/mlb/v1/teams`) and adds them to the
+field, since the slate loads nothing while a bracket team is missing from it.
 
 ## 3. Triggers
 
@@ -598,6 +604,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   are no series, so their first series is round 2. No round is listed until MLB reads box scores.
 - **Sync.** As the NBA bracket's, a side's runs being its score. The teams list keeps only the
   American and National League clubs, so an All-Star side is left out.
+- **Bracket.** `MLB_POSTSEASON.bracket` seeds six clubs a league from `/mlb/v1/standings`
+  (`toMlbSeeds`), the top two with byes, and gives each series as a game (*2d*).
 - **Key code.** `mlb-contract.ts`; `mlb-mapping.ts` `MLB_POSTSEASON`, `mlbPostseasonSource`,
   `toMlbPlayoffGame`, `isMlbClub`.
 
@@ -666,8 +674,8 @@ event waits for an admin's release for now, with automatic release the aim once 
 - **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
 - **The sync keeps an event's details current** (#1727). Built: see *2b*.
 - **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks), the NFL postseason, the NCAA men's tournament and the NBA's, WNBA's and NHL's
-  playoffs: see *2d*. Still to come are the other fixed-shape playoffs (MLB, World Cup). The
+  League matchweeks), the NFL postseason, the NCAA men's tournament, the NBA's, WNBA's and NHL's
+  playoffs and MLB's postseason: see *2d*. Still to come is the World Cup. The
   CFP has no committee seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
   still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
   provider game finds its match*).
