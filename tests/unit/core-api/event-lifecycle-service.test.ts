@@ -6,6 +6,7 @@ import {
   SPORT_EVENT_STATUS_TRANSITIONS,
   SelectionType,
   SportEventStatus,
+  type Contest,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -835,5 +836,132 @@ describe('EventLifecycleService — leaderboard rebuild (#1466)', () => {
 
     expect(store.backgroundJobs).toEqual([]);
     expect(leaderboards.sportEventIds).toEqual([]);
+  });
+});
+
+describe('EventLifecycleService — a postponed event\'s contests follow its start', () => {
+  const NOW = new Date('2026-05-02T21:00:00.000Z');
+  const NEW_START = new Date('2026-05-09T20:00:00.000Z');
+  const LIVE = buildContest({ ...STARTED_CONTEST, status: ContestStatus.ACTIVE });
+
+  /** The postponed event, its start moved to `startDate`, and any other events the contests score. */
+  function postponedEvents(startDate: Date, others: Array<Partial<SportEvent> & { id: string }> = []) {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate, status: SportEventStatus.POSTPONED });
+    for (const other of others) store.addEvent({ name: other.id, startDate: NEW_START, status: SportEventStatus.SCHEDULED, ...other });
+    return store.sportEventRepo();
+  }
+
+  function liveContests(contests: readonly Contest[], options: { games?: SportEventMatch[]; configurations?: Array<{ contestId: string; configJson: unknown }> } = {}) {
+    const deps = contestDeps();
+    deps.contests.findBySportEvent = jest.fn().mockResolvedValue(contests);
+    deps.configurations = fakeContestConfigurationRepo({ findByContests: jest.fn().mockResolvedValue(options.configurations ?? []) });
+    deps.matches = { findBySportEvent: jest.fn().mockResolvedValue(options.games ?? []) };
+    return deps;
+  }
+
+  async function follow(deps: EventLifecycleContestDeps, sportEvents: ReturnType<typeof postponedEvents>) {
+    await new EventLifecycleService(deps, sportEvents, fakeLogger()).followPostponedStart(expectDefined(await sportEvents.findById('sport-event-1')), NOW);
+  }
+
+  it('takes a live contest back to OPEN, so it takes entries and pick changes, when its postponed event has not started', async () => {
+    const deps = liveContests([LIVE]);
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.ACTIVE] });
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], { from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: NEW_START });
+  });
+
+  it('reopens the live contests as the event is postponed, without waiting for the next sweep', async () => {
+    const store = new InMemorySportEvents();
+    // The transition reads the clock, so the moved start is a week from now.
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
+    const deps = liveContests([LIVE]);
+
+    await new EventLifecycleService(deps, store.sportEventRepo(), fakeLogger()).applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.POSTPONED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN }));
+  });
+
+  it('keeps live a season contest whose earlier event has started, and reopens one whose every event is still ahead, starting at its first event', async () => {
+    const season = buildContest({ ...LIVE, id: 'contest-season', sportEventIds: ['sport-event-0', 'sport-event-1'] });
+    const ahead = buildContest({ ...LIVE, id: 'contest-ahead', sportEventIds: ['sport-event-1', 'sport-event-2'] });
+    const earlierWeek = new Date('2026-05-05T20:00:00.000Z');
+    const sportEvents = postponedEvents(NEW_START, [
+      { id: 'sport-event-0', startDate: new Date('2026-04-25T20:00:00.000Z'), status: SportEventStatus.COMPLETED },
+      { id: 'sport-event-2', startDate: earlierWeek },
+    ]);
+    const deps = liveContests([season, ahead]);
+
+    await follow(deps, sportEvents);
+
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledTimes(1);
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-ahead'], expect.objectContaining({ to: ContestStatus.OPEN, startsAt: earlierWeek }));
+  });
+
+  it('reopens the contests starting at the same moment in one write', async () => {
+    const second = buildContest({ ...LIVE, id: 'contest-2', leagueId: 'league-2' });
+    const deps = liveContests([LIVE, second]);
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledTimes(1);
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2'], expect.objectContaining({ startsAt: NEW_START }));
+  });
+
+  it('keeps live a squares contest, a contest whose draw dealt its picks and a bracket starting at a later round, and reopens a full bracket', async () => {
+    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
+    const drawn = buildContest({ ...LIVE, id: 'contest-drawn', drawnAt: new Date('2026-05-01T00:00:00.000Z') });
+    const secondChance = buildContest({ ...LIVE, id: 'contest-second-chance', selectionType: SelectionType.BRACKET });
+    const fullBracket = buildContest({ ...LIVE, id: 'contest-full-bracket', selectionType: SelectionType.BRACKET });
+    const deps = liveContests([squares, drawn, secondChance, fullBracket], {
+      configurations: [
+        { contestId: secondChance.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 } },
+        { contestId: fullBracket.id, configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 } },
+      ],
+    });
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.configurations.findByContests).toHaveBeenCalledWith([secondChance.id, fullBracket.id]);
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith([fullBracket.id], expect.objectContaining({ to: ContestStatus.OPEN }));
+  });
+
+  it('keeps every contest live when a game of the event was already under way before the postponement', async () => {
+    const deps = liveContests([LIVE], {
+      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventMatch],
+    });
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
+  });
+
+  it('writes nothing when no contest on the postponed event is live', async () => {
+    const deps = liveContests([]);
+
+    await follow(deps, postponedEvents(NEW_START));
+
+    expect(deps.matches.findBySportEvent).not.toHaveBeenCalled();
+    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
+  });
+
+  it('starts the open contests once the postponed event\'s start has passed, as at any start', async () => {
+    const deps = liveContests([STARTED_CONTEST]);
+    const passed = new Date(NOW.getTime() - 60_000);
+
+    await follow(deps, postponedEvents(passed));
+
+    expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.OPEN] });
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({
+      from: [ContestStatus.OPEN],
+      to: ContestStatus.ACTIVE,
+      startsAt: passed,
+    }));
   });
 });

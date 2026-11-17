@@ -390,7 +390,7 @@ export class InMemorySportEvents {
       },
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
-        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
+        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
       )),
     };
   }

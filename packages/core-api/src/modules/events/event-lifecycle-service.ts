@@ -28,7 +28,7 @@ import {
   SportEventStatus,
   isDeclaredSportEventTransition,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
@@ -116,6 +116,8 @@ export interface EventLifecycleContestDeps {
 
 /** A contest starts from OPEN; any other status is left where it is. */
 const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN];
+/** A live contest is the only kind a postponement takes back to OPEN (#1792). */
+const REOPENABLE: readonly ContestStatus[] = [ContestStatus.ACTIVE];
 
 export class EventLifecycleService {
   constructor(
@@ -226,6 +228,9 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
+    if (input.toStatus === SportEventStatus.POSTPONED) {
+      await this.followPostponedStart(updated);
+    }
     // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
     // it is about.
     if (jobs.length > 0) this.jobs?.queued();
@@ -316,6 +321,74 @@ export class EventLifecycleService {
       completedAt: new Date(payload.completedAt),
       sportEvent,
     });
+  }
+
+  /**
+   * A postponed event's contests follow its start (#1792): while the start is ahead, a contest that
+   * went live on it takes entries and pick changes again, back to OPEN; once the start has passed,
+   * its contests go live as at any start. The lifecycle scheduler asks on each sweep of a postponed
+   * event, so a start moved later reopens them and the new start closes them.
+   */
+  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date()): Promise<void> {
+    if (hasSportEventStarted(sportEvent, now)) {
+      await this.activateContestsPastCutoff(sportEvent, now);
+      return;
+    }
+    await this.reopenContestsBeforeStart(sportEvent, now);
+  }
+
+  /**
+   * Back to OPEN, the live contests on a postponed event that has not started (#1792), when the
+   * contest closes at the event's start and none of its events has started: a season contest whose
+   * earlier week was played stays live, and its postponed week takes pick changes as any later
+   * week does. The contest's start moves to its first event's start, so its pages count down to
+   * the new start and close entries at it. A bracket that starts at a later round and a squares contest close at a game, and a
+   * contest with a random draw has dealt its picks, so those stay live too. A game already under
+   * way, or with a period score, means play began before the postponement, so nothing reopens.
+   */
+  private async reopenContestsBeforeStart(sportEvent: SportEvent, now: Date): Promise<void> {
+    const live = (await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: REOPENABLE }))
+      .filter((contest) => contest.drawnAt === undefined && contest.selectionType !== SelectionType.SQUARES);
+    if (live.length === 0) return;
+    if ((await this.contestDeps.matches.findBySportEvent(sportEvent.id)).some(hasGameMovedOn)) return;
+
+    const brackets = live.filter((contest) => contest.selectionType === SelectionType.BRACKET);
+    const configJsonByContest = new Map(
+      (brackets.length === 0 ? [] : await this.contestDeps.configurations.findByContests(brackets.map((contest) => contest.id)))
+        .map((configuration) => [configuration.contestId, configuration.configJson]),
+    );
+    const atEventStart = live.filter((contest) => contest.selectionType !== SelectionType.BRACKET
+      || contestCutoff(configJsonByContest.get(contest.id)).kind === ContestCutoffKind.EVENT_START);
+    const otherEventIds = [...new Set(atEventStart.flatMap((contest) => contest.sportEventIds))].filter((id) => id !== sportEvent.id);
+    const startById = new Map<string, Date>([[sportEvent.id, sportEvent.startDate]]);
+    const started = new Set<string>();
+    for (const other of otherEventIds.length === 0 ? [] : await this.sportEvents.findByIds(otherEventIds)) {
+      startById.set(other.id, other.startDate);
+      if (hasSportEventStarted(other, now)) started.add(other.id);
+    }
+
+    // A reopened contest starts at its first event's start again, now ahead, which is what its
+    // pages count down to and close entries at: one guarded write per start, as when contests go live.
+    const dueByStart = new Map<number, string[]>();
+    for (const contest of atEventStart) {
+      if (contest.sportEventIds.some((id) => started.has(id))) continue;
+      const startsAt = Math.min(...contest.sportEventIds.map((id) => startById.get(id)?.getTime() ?? sportEvent.startDate.getTime()));
+      dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), contest.id]);
+    }
+    for (const [startsAt, contestIds] of dueByStart) {
+      // poolmaster-allow-query-in-loop: one write per start moment of the reopened contests, not per contest
+      const reopened = await this.contestDeps.contests.transitionStatuses(contestIds, {
+        from: REOPENABLE,
+        to: ContestStatus.OPEN,
+        startsAt: new Date(startsAt),
+      });
+      for (const contestId of reopened) {
+        this.logger?.info(
+          { action: 'events.postponed.contestReopened', data: { contestId, sportEventId: sportEvent.id, startsAt: new Date(startsAt).toISOString() } },
+          'Reopened a live contest for entries because its postponed event has not started',
+        );
+      }
+    }
   }
 
   /**
