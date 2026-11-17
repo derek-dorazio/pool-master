@@ -85,6 +85,7 @@ import {
   isSquaresRound,
   UpsetBonusRule,
   PlanCap,
+  survivorLivesOf,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
@@ -1030,7 +1031,7 @@ export class ContestManagementService {
         await this.assertEventGamesDecided(each.id, { openingRoundOnly: true });
       }
       return {
-        configJson: { selectionType: rules.selectionType, reuseTeamsOnceAllUsed: rules.reuseTeamsOnceAllUsed ?? true },
+        configJson: { selectionType: rules.selectionType, reuseTeamsOnceAllUsed: rules.reuseTeamsOnceAllUsed ?? true, lives: survivorLivesOf(rules) },
         scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
       };
     }

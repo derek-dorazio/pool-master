@@ -66,8 +66,8 @@ function rosterPreview(selected: readonly string[] = []): RosterPickPreviewRespo
   };
 }
 
-const bills = { sportEventParticipantId: 'sep-bills', participantId: 'p-bills', name: 'Bills' };
-const chiefs = { sportEventParticipantId: 'sep-chiefs', participantId: 'p-chiefs', name: 'Chiefs' };
+const bills = { sportEventParticipantId: 'sep-bills', participantId: 'p-bills', name: 'Bills', seedNumber: null };
+const chiefs = { sportEventParticipantId: 'sep-chiefs', participantId: 'p-chiefs', name: 'Chiefs', seedNumber: null };
 
 function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTeam: typeof bills | null = null): GamePickPreviewResponse {
   return {

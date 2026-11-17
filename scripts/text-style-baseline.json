@@ -15,7 +15,6 @@
   "clients/poolmaster/src/features/contests/pick-em-games.tsx": 1,
   "clients/poolmaster/src/features/contests/pick-em-leaderboard.tsx": 1,
   "clients/poolmaster/src/features/contests/pick-option.tsx": 3,
-  "clients/poolmaster/src/features/contests/squares-grid.tsx": 10,
   "clients/poolmaster/src/features/event-pages/clutch-card-page.tsx": 50,
   "clients/poolmaster/src/features/event-pages/event-page.tsx": 11,
   "clients/poolmaster/src/features/event-pages/start-page.tsx": 10,

@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
+import { SURVIVOR_LIVES_MAX } from '../domain/contest-rules';
 
 // --- Requests ---
 
@@ -38,6 +39,7 @@ export const GamePickTeamDtoSchema = z.object({
   sportEventParticipantId: z.uuid().describe('The team\'s field row in the event: what a pick names.'),
   participantId: z.uuid(),
   name: z.string(),
+  seedNumber: z.number().int().nullable().describe('The team\'s seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.'),
 }).describe('One team of a game.');
 export type GamePickTeamDto = z.infer<typeof GamePickTeamDtoSchema>;
 
@@ -100,6 +102,14 @@ export const GamePicksResponseSchema = z.object({
 }).describe('A prediction contest entry\'s picks on one event\'s games.');
 export type GamePicksResponse = z.infer<typeof GamePicksResponseSchema>;
 
+export const BracketLeaderboardChampionDtoSchema = z.object({
+  sportEventParticipantId: z.uuid().describe('The team\'s field row in the event.'),
+  name: z.string(),
+  seedNumber: z.number().int().nullable().describe('The team\'s seed in the event; null where the event seeds no field, or this team.'),
+  outcome: z.enum(PickOutcome).describe('How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING.'),
+}).describe('An entry\'s pick to win a bracket\'s final (#1753).');
+export type BracketLeaderboardChampionDto = z.infer<typeof BracketLeaderboardChampionDtoSchema>;
+
 export const BracketLeaderboardEntryDtoSchema = z.object({
   entryId: z.uuid(),
   entryName: z.string(),
@@ -112,6 +122,7 @@ export const BracketLeaderboardEntryDtoSchema = z.object({
   maxPossiblePoints: z.number().int().describe('Points so far plus the round value of every pick whose team is still in: the most the entry can still reach.'),
   correctPickCount: z.number().int(),
   tiebreakerValue: z.number().int().nullable().describe('The entry\'s guess of the final\'s total points.'),
+  champion: BracketLeaderboardChampionDtoSchema.nullable().describe('The team the entry picks to win the final; null with no final pick standing.'),
 }).describe('One entry\'s standing in a bracket contest.');
 export type BracketLeaderboardEntryDto = z.infer<typeof BracketLeaderboardEntryDtoSchema>;
 
@@ -186,7 +197,7 @@ export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekD
 export const SurvivorLeaderboardEntryWeekDtoSchema = z.object({
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('The round of the event the week is, as on the contest\'s weeks.'),
-  outcome: z.enum(SurvivorWeekOutcome).nullable().describe('SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.'),
+  outcome: z.enum(SurvivorWeekOutcome).nullable().describe('SURVIVED when the picked team won or its game was cancelled. After a loss, a tie or a week not submitted by its first kickoff: LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry\'s last. PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.'),
   team: z.string().nullable().describe('The team the entry picked, once its game has kicked off. Null before then, and with no pick.'),
 }).describe('One entry\'s week of a survivor contest.');
 export type SurvivorLeaderboardEntryWeekDto = z.infer<typeof SurvivorLeaderboardEntryWeekDtoSchema>;
@@ -200,7 +211,9 @@ export const SurvivorLeaderboardEntryDtoSchema = z.object({
   alive: z.boolean().describe('Whether the entry is still in.'),
   eliminatedInWeek: z.number().int().nullable().describe('The week number that put the entry out; null while it is in.'),
   weeksSurvived: z.number().int().describe('The weeks the entry survived: its score.'),
-  position: z.number().int().describe('The entry\'s place: entries still in first, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end.'),
+  livesLeft: z.number().int().min(0).max(SURVIVOR_LIVES_MAX).describe('The lives the entry has left: the contest\'s lives (1 or 2) less the weeks it lost. 0 once it is out.'),
+  livesLost: z.number().int().min(0).describe('The weeks that cost the entry a life, the one that put it out included.'),
+  position: z.number().int().describe('The entry\'s place: entries still in first, then by lives left, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end with the same lives left.'),
   displayPosition: z.string().describe('The place as shown, "T2" when shared.'),
   weeks: z.array(SurvivorLeaderboardEntryWeekDtoSchema).describe('The entry\'s result for each of the contest\'s weeks, in week order.'),
 }).describe('One entry\'s standing in a survivor contest.');

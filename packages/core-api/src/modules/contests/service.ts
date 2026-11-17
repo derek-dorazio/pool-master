@@ -56,6 +56,7 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
+  survivorLivesOf,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
   eventSportDefinition,
@@ -82,7 +83,7 @@ import {
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse, type BracketLeaderboardEntryRow, type BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import { toPickEmLeaderboardResponse, type PickEmLeaderboardEntryRow, type PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
-import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
+import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import {
   DEFAULT_SHOWN_EVENT,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
@@ -1005,14 +1006,10 @@ export class ContestService {
   }
 
   /**
-   * The same bracket leaderboard for a contest already in hand, with no reader to check, and each
-   * entry's champion pick: what the bracket round emails read (#877).
+   * The same bracket leaderboard for a contest already in hand, with no reader to check: what the
+   * bracket round emails read (#877), each entry's champion pick among them.
    */
-  async bracketStandingsOf(contest: Contest): Promise<{
-    leaderboard: BracketLeaderboardModel;
-    /** Each entry's pick to win the final, by entry id, for entries with one standing. */
-    champions: Map<string, NonNullable<BracketEntryStanding['champion']>>;
-  }> {
+  async bracketStandingsOf(contest: Contest): Promise<{ leaderboard: BracketLeaderboardModel }> {
     const contestId = contest.id;
     if (contest.selectionType !== SelectionType.BRACKET) {
       throw new ContestOperationError(
@@ -1056,6 +1053,7 @@ export class ContestService {
         // Not frozen at settlement: a result corrected after it can move this count, never the place or points.
         correctPickCount: standing.score.correctPickCount,
         tiebreakerValue: contestEntryEventTiebreaker(standing.entry, event.id),
+        champion: standing.champion,
       };
     }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
     return {
@@ -1067,7 +1065,6 @@ export class ContestService {
         finalTotalPoints: standings.finalTotalPoints,
         entries,
       },
-      champions: new Map(standings.entries.flatMap(({ entry, champion }) => (champion ? [[entry.id, champion] as const] : []))),
     };
   }
 
@@ -1266,7 +1263,8 @@ export class ContestService {
       );
     }
     const now = this.now();
-    const season = await loadSurvivorSeason(this.deps, contest, now);
+    const configuration = await this.deps.configurations.findByContest(contestId);
+    const season = await loadSurvivorSeason(this.deps, contest, now, survivorLivesOf(configuration?.configJson));
     const openingRoundOf = new Map<string, number>();
     for (const { event, roundNumber } of season.weeks) openingRoundOf.set(event.id, Math.min(openingRoundOf.get(event.id) ?? roundNumber, roundNumber));
     const gameById = new Map(season.weeks.flatMap(({ event, games }) => games.map((game) => [game.id, { event, game }] as const)));
@@ -1294,6 +1292,8 @@ export class ContestService {
         alive,
         eliminatedInWeek: run.eliminatedAt === null ? null : run.eliminatedAt + 1,
         weeksSurvived: run.weeksSurvived,
+        livesLeft: run.livesLeft,
+        livesLost: run.livesLost,
         position: frozen?.position ?? position,
         displayPosition: frozen?.displayPosition ?? displayPosition,
         weeks: season.weeks.map(({ event, roundNumber }, index) => {
@@ -1323,10 +1323,11 @@ export class ContestService {
         status: event.status,
         started,
         aliveCount: started && !cancelled
-          // Still in after the week: those who survived it, and those whose game is still to finish.
+          // Still in after the week: those who survived it or lost a life they stay in with (#1754),
+          // and those whose game is still to finish.
           ? season.entries.filter(({ run }) => {
             const outcome = run.weeks[index]?.outcome ?? null;
-            return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.PENDING;
+            return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.LIFE_LOST || outcome === SurvivorWeekOutcome.PENDING;
           }).length
           : 0,
       })),

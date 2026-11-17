@@ -6,6 +6,8 @@ export { LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export { UploadPreviewTable } from "./upload-preview-table";
+export { BoardBand, BoardCellContent } from "./board-cell";
+export { boardAxisClassName, boardCellClassName, type BoardCellState } from "./board-cell-styles";
 export { Button, LinkButton, type LinkButtonProps } from "./button";
 export { copyToClipboard } from "./clipboard";
 export { CopyButton } from "./copy-button";
@@ -44,11 +46,13 @@ export {
   formatCount,
   formatCupPoints,
   formatCupPointsCount,
+  formatEntryInitials,
   formatMoneyCents,
   formatNumber,
   formatNumberList,
   formatOrdinal,
   formatPlace,
+  type InitialsEntry,
   type PlaceRow,
 } from "./format";
 export { browserLocale, browserTimeZone, timeZoneLabel } from "./time-zone-options";
@@ -124,3 +128,7 @@ export { SectionBody, SectionCard, SectionEmpty, SectionFooterLink, SectionNote,
 export { LockedSection } from "./locked-section";
 export { Text, type TextProps } from "./text";
 export { Icon, type IconProps } from "./icon";
+export { SeedChip } from "./seed-chip";
+export { TeamLine, type TeamLineMark, type TeamLineProps } from "./team-line";
+export { TrophyMark } from "./trophy-mark";
+export { WIDE_SCREEN_QUERY, useMediaQuery } from "./use-media-query";

@@ -50,7 +50,7 @@ const later = (when: Date, hours: number) => new Date(when.getTime() + hours * H
 
 type TeamName = 'Bills' | 'Jets' | 'Chiefs' | 'Raiders';
 
-function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
+function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) {
   const world = new InMemoryContestWorld();
   const games = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -243,15 +243,15 @@ describe('survivorRun', () => {
       survivorWeek({ sportEventId: 'w1', ...winning, pickedParticipantId: 'bills' }),
       survivorWeek({ sportEventId: 'w2', ...losing, pickedParticipantId: 'jets' }),
       survivorWeek({ sportEventId: 'w3', ...winning, pickedParticipantId: 'chiefs' }),
-    ]);
+    ], 1);
     expect(run.weeks.map((week) => week.outcome)).toEqual([SurvivorWeekOutcome.SURVIVED, SurvivorWeekOutcome.ELIMINATED, null]);
     expect(run).toMatchObject({ eliminatedAt: 1, weeksSurvived: 1 });
     expect([...run.usedParticipantIds]).toEqual(['bills', 'jets']);
   });
 
   it('puts the entry out in a started week it did not submit, but not in one not yet started', () => {
-    expect(survivorRun([survivorWeek({ sportEventId: 'w1', ...winning, submitted: false })]).eliminatedAt).toBe(0);
-    const ahead = survivorRun([survivorWeek({ sportEventId: 'w1', started: false, submitted: false, pick: null })]);
+    expect(survivorRun([survivorWeek({ sportEventId: 'w1', ...winning, submitted: false })], 1).eliminatedAt).toBe(0);
+    const ahead = survivorRun([survivorWeek({ sportEventId: 'w1', started: false, submitted: false, pick: null })], 1);
     expect(ahead).toMatchObject({ eliminatedAt: null, weeksSurvived: 0 });
     expect(ahead.weeks[0]?.outcome).toBeNull();
   });
@@ -260,10 +260,45 @@ describe('survivorRun', () => {
     const run = survivorRun([
       survivorWeek({ sportEventId: 'w1', cancelled: true, submitted: false, pickedParticipantId: 'bills' }),
       survivorWeek({ sportEventId: 'w2', ...winning, pickedParticipantId: 'chiefs' }),
-    ]);
+    ], 1);
     expect(run.weeks.map((week) => week.outcome)).toEqual([null, SurvivorWeekOutcome.SURVIVED]);
     expect(run).toMatchObject({ eliminatedAt: null, weeksSurvived: 1 });
     expect([...run.usedParticipantIds]).toEqual(['chiefs']);
+  });
+  it('keeps an entry with two lives in after its first loss, a life lost, and puts it out at its second', () => {
+    const run = survivorRun([
+      survivorWeek({ sportEventId: 'w1', ...losing, pickedParticipantId: 'jets' }),
+      survivorWeek({ sportEventId: 'w2', ...winning, pickedParticipantId: 'bills' }),
+      survivorWeek({ sportEventId: 'w3', ...losing, pickedParticipantId: 'raiders' }),
+      survivorWeek({ sportEventId: 'w4', ...winning, pickedParticipantId: 'chiefs' }),
+    ], 2);
+    expect(run.weeks.map((week) => week.outcome)).toEqual([SurvivorWeekOutcome.LIFE_LOST, SurvivorWeekOutcome.SURVIVED, SurvivorWeekOutcome.ELIMINATED, null]);
+    expect(run).toMatchObject({ eliminatedAt: 2, weeksSurvived: 1, livesLost: 2, livesLeft: 0 });
+    // The team picked in the week the life was lost is used, as any other pick is.
+    expect([...run.usedParticipantIds]).toEqual(['jets', 'bills', 'raiders']);
+  });
+
+  it('costs a life, not the entry, for a tie or a week not submitted when the entry has two lives', () => {
+    const tied = game('t', { status: MatchStatus.COMPLETED, winnerSide: null });
+    const run = survivorRun([
+      survivorWeek({ sportEventId: 'w1', games: [tied], pick: { sportEventMatchId: 't', sportEventParticipantId: 't-home' }, pickedParticipantId: 'bills' }),
+    ], 2);
+    expect(run.weeks[0]?.outcome).toBe(SurvivorWeekOutcome.LIFE_LOST);
+    expect(run).toMatchObject({ eliminatedAt: null, livesLost: 1, livesLeft: 1 });
+
+    const missed = survivorRun([
+      survivorWeek({ sportEventId: 'w1', ...winning, submitted: false }),
+      survivorWeek({ sportEventId: 'w2', ...winning, pickedParticipantId: 'chiefs' }),
+      survivorWeek({ sportEventId: 'w3', ...winning, submitted: false }),
+    ], 2);
+    expect(missed.weeks.map((week) => week.outcome)).toEqual([SurvivorWeekOutcome.LIFE_LOST, SurvivorWeekOutcome.SURVIVED, SurvivorWeekOutcome.ELIMINATED]);
+    expect(missed).toMatchObject({ eliminatedAt: 2, weeksSurvived: 1, livesLeft: 0 });
+  });
+
+  it('leaves every life to an entry that has lost no week, and one life to a one-life entry still in', () => {
+    expect(survivorRun([survivorWeek({ sportEventId: 'w1', ...winning, pickedParticipantId: 'bills' })], 2)).toMatchObject({ livesLost: 0, livesLeft: 2 });
+    expect(survivorRun([survivorWeek({ sportEventId: 'w1', ...winning, pickedParticipantId: 'bills' })], 1)).toMatchObject({ livesLost: 0, livesLeft: 1 });
+    expect(survivorRun([survivorWeek({ sportEventId: 'w1', ...losing, pickedParticipantId: 'jets' })], 1)).toMatchObject({ livesLost: 1, livesLeft: 0, eliminatedAt: 0 });
   });
 });
 
@@ -336,7 +371,7 @@ describe('survivorPredictionEngine', () => {
 
 describe('PredictionService — a survivor week', () => {
   /** Weeks 1 and 2 played; week 3 two hours from its first kickoff. */
-  function beforeWeek3(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
+  function beforeWeek3(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) {
     const context = setup(rules);
     context.playWeek1();
     context.playWeek2();
@@ -755,5 +790,99 @@ describe('ContestSettlementService — a survivor contest', () => {
     const board = await context.leaderboard();
     expect(board.entries.map((entry) => [entry.entryName, entry.weeksSurvived, entry.displayPosition]))
       .toEqual([['Bob', 1, 'T1'], ['Cara', 1, 'T1'], ['Alice', 0, 'T3'], ['Dan', 0, 'T3']]);
+  });
+});
+
+describe('A survivor contest with two lives', () => {
+  // With two lives: Bob loses week 2 (the Jets) and stays in; Dan leaves week 2 in draft and
+  // stays in; Cara loses week 1, then misses week 2, and is out in week 2.
+  const twoLives = { lives: 2 };
+
+  it('ranks entries still in by lives left before weeks survived, so an entry yet to lose ranks above one that lost a life', async () => {
+    const context = setup(twoLives);
+    context.playWeek1();
+    context.play(context.gamesByNumber.g3, MatchSide.HOME);
+    // Week 2 is under way: Alice's Chiefs have not played, so she, Bob and Dan have each survived one week.
+    context.setNow(later(WEEK_2, 2));
+    const board = await context.leaderboard();
+
+    expect(board.entries.map((entry) => [entry.entryName, entry.displayPosition, entry.alive, entry.eliminatedInWeek, entry.weeksSurvived, entry.livesLeft, entry.livesLost])).toEqual([
+      ['Alice', '1', true, null, 1, 2, 0],
+      ['Bob', 'T2', true, null, 1, 1, 1],
+      ['Dan', 'T2', true, null, 1, 1, 1],
+      ['Cara', '4', false, 2, 0, 0, 2],
+    ]);
+    // Week 1's lost life keeps Cara counted in after it; week 2 keeps everyone but Cara.
+    expect(board.weeks.map((week) => [week.weekNumber, week.aliveCount])).toEqual([[1, 4], [2, 3], [3, 0]]);
+  });
+
+  it('marks a lost life\'s week as a life lost, distinct from the week that puts the entry out', async () => {
+    const context = setup(twoLives);
+    context.playWeek1();
+    context.playWeek2();
+    context.setNow(later(WEEK_2, 26));
+    const board = await context.leaderboard();
+    const weeksOf = (name: string) => expectDefined(board.entries.find((entry) => entry.entryName === name)).weeks.map((week) => week.outcome);
+
+    expect(weeksOf('Bob')).toEqual([SurvivorWeekOutcome.SURVIVED, SurvivorWeekOutcome.LIFE_LOST, null]);
+    expect(weeksOf('Cara')).toEqual([SurvivorWeekOutcome.LIFE_LOST, SurvivorWeekOutcome.ELIMINATED, null]);
+  });
+
+  it('ranks a one-life contest exactly as before: every entry has one life, lost when it goes out', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.playWeek2();
+    context.setNow(later(WEEK_2, 26));
+    const board = await context.leaderboard();
+
+    expect(board.entries.map((entry) => [entry.entryName, entry.displayPosition, entry.livesLeft, entry.livesLost])).toEqual([
+      ['Alice', '1', 1, 0],
+      ['Bob', 'T2', 0, 1],
+      ['Dan', 'T2', 0, 1],
+      ['Cara', '4', 0, 1],
+    ]);
+  });
+
+  it('lets an entry that lost a life keep picking, never the team it lost with', async () => {
+    const context = setup(twoLives);
+    context.playWeek1();
+    context.playWeek2();
+    context.setEventStatus(context.week1.id, SportEventStatus.COMPLETED);
+    context.setEventStatus(context.week2.id, SportEventStatus.COMPLETED);
+    context.setNow(later(WEEK_3, -2));
+    const { g5, g6 } = context.gamesByNumber;
+    const input = { contestId: context.contest.id, entryId: 'entry-bob', sportEventId: context.week3.id, actorUserId: context.userOf('Bob') };
+    const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
+
+    const view = await context.predictions.getGamePicks(input);
+    expect(view.survivor?.eliminatedInWeek).toBeNull();
+    await expectRefused(context.predictions.saveGamePicks({ ...input, picks: [pickOf(g6, 'Jets')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
+    await context.predictions.saveGamePicks({ ...input, picks: [pickOf(g5, 'Bills')] });
+    await context.predictions.submitGamePicks(input);
+    expect(context.storedPicks('entry-bob')).toContain(g5.id);
+  });
+
+  it('settles a lost life\'s week as decided with no week survived, and ranks the season by lives, then weeks survived', async () => {
+    const context = setup(twoLives);
+    context.playWeek1();
+    await settle(context, context.week1.id, later(WEEK_1, 48));
+    context.playWeek2();
+    await settle(context, context.week2.id, later(WEEK_2, 48));
+    const frozen = await context.world.eventStandingRepo().findByContest(context.contest.id);
+    const week2 = frozen
+      .filter((standing) => standing.sportEventId === context.week2.id)
+      .map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])
+      .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    // Cara, out in week 2, and Bob and Dan, who lost a life in it, each settle week 2 at 0.
+    expect(week2).toEqual([['entry-alice', 1, '1'], ['entry-bob', 0, 'T2'], ['entry-cara', 0, 'T2'], ['entry-dan', 0, 'T2']]);
+
+    // Nobody picks week 3: Alice loses her first life and stays in; Bob and Dan go out in it.
+    context.playWeek3();
+    const summary = await settle(context, context.week3.id, later(WEEK_3, 48));
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
+    const totals = (await context.world.standingRepo().findByContest(context.contest.id))
+      .map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])
+      .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    expect(totals).toEqual([['entry-alice', 2, '1'], ['entry-bob', 1, 'T2'], ['entry-cara', 0, '4'], ['entry-dan', 1, 'T2']]);
   });
 });

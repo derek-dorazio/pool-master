@@ -1,4 +1,4 @@
-import { canFillBudgetRoster } from '@poolmaster/shared/domain';
+import { SelectionType, canFillBudgetRoster, survivorLivesOf } from '@poolmaster/shared/domain';
 
 describe('canFillBudgetRoster', () => {
   it('fits when the cheapest golfers for every place cost exactly the cap', () => {
@@ -15,5 +15,14 @@ describe('canFillBudgetRoster', () => {
 
   it('refuses a roster larger than the priced field, since its places cannot all be filled', () => {
     expect(canFillBudgetRoster([100, 100], 3, 50_000)).toBe(false);
+  });
+});
+
+describe('survivorLivesOf', () => {
+  it('reads a survivor contest\'s lives, 1 when its rules name none, and 1 for any other format', () => {
+    expect(survivorLivesOf({ selectionType: SelectionType.SURVIVOR, lives: 2 })).toBe(2);
+    expect(survivorLivesOf({ selectionType: SelectionType.SURVIVOR })).toBe(1);
+    expect(survivorLivesOf({ selectionType: SelectionType.BRACKET, startsAtRound: 1 })).toBe(1);
+    expect(survivorLivesOf(null)).toBe(1);
   });
 });

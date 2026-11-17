@@ -7085,6 +7085,8 @@ export interface components {
         } | {
             /** @enum {string} */
             selectionType: "SURVIVOR";
+            /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+            lives?: number;
             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
             reuseTeamsOnceAllUsed?: boolean;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -7293,6 +7295,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Contest-configuration identifier. */
@@ -7658,6 +7662,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -7824,6 +7830,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Contest-configuration identifier. */
@@ -8211,6 +8219,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -8555,6 +8565,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -8934,6 +8946,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -12097,6 +12111,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -13566,7 +13582,11 @@ export interface components {
                 eliminatedInWeek: number | null;
                 /** @description The weeks the entry survived: its score. */
                 weeksSurvived: number;
-                /** @description The entry's place: entries still in first, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end. */
+                /** @description The lives the entry has left: the contest's lives (1 or 2) less the weeks it lost. 0 once it is out. */
+                livesLeft: number;
+                /** @description The weeks that cost the entry a life, the one that put it out included. */
+                livesLost: number;
+                /** @description The entry's place: entries still in first, then by lives left, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end with the same lives left. */
                 position: number;
                 /** @description The place as shown, "T2" when shared. */
                 displayPosition: string;
@@ -13577,10 +13597,10 @@ export interface components {
                     /** @description The round of the event the week is, as on the contest's weeks. */
                     roundNumber: number;
                     /**
-                     * @description SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.
+                     * @description SURVIVED when the picked team won or its game was cancelled. After a loss, a tie or a week not submitted by its first kickoff: LIFE_LOST when that cost a life the entry stays in with (a contest of two lives), ELIMINATED when it was the entry's last. PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.
                      * @enum {string|null}
                      */
-                    outcome: "SURVIVED" | "ELIMINATED" | "PENDING" | null;
+                    outcome: "SURVIVED" | "LIFE_LOST" | "ELIMINATED" | "PENDING" | null;
                     /** @description The team the entry picked, once its game has kicked off. Null before then, and with no pick. */
                     team: string | null;
                 }[];
@@ -13681,6 +13701,22 @@ export interface components {
                 correctPickCount: number;
                 /** @description The entry's guess of the final's total points. */
                 tiebreakerValue: number | null;
+                /** @description The team the entry picks to win the final; null with no final pick standing. */
+                champion: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event.
+                     */
+                    sportEventParticipantId: string;
+                    name: string;
+                    /** @description The team's seed in the event; null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
+                    /**
+                     * @description How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING.
+                     * @enum {string}
+                     */
+                    outcome: "CORRECT" | "BUSTED" | "PUSH" | "PENDING";
+                } | null;
             }[];
         };
         /** @description A prediction contest entry's picks on one event's games. */
@@ -13763,6 +13799,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team really playing on this side; null until it is decided. */
                 away: {
@@ -13774,6 +13812,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
                 predictedHome: {
@@ -13785,6 +13825,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description As predictedHome, for the away side. */
                 predictedAway: {
@@ -13796,6 +13838,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks. */
                 locked: boolean;
@@ -13939,6 +13983,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
                 /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
             };
@@ -14014,6 +14060,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team really playing on this side; null until it is decided. */
                 away: {
@@ -14025,6 +14073,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
                 predictedHome: {
@@ -14036,6 +14086,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description As predictedHome, for the away side. */
                 predictedAway: {
@@ -14047,6 +14099,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has. */
                 locked: boolean;
@@ -19790,6 +19844,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
                     /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -20236,6 +20292,8 @@ export interface components {
                     } | {
                         /** @enum {string} */
                         selectionType: "SURVIVOR";
+                        /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                        lives?: number;
                         /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                         reuseTeamsOnceAllUsed?: boolean;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -20685,6 +20743,8 @@ export interface components {
                         } | {
                             /** @enum {string} */
                             selectionType: "SURVIVOR";
+                            /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                            lives?: number;
                             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
@@ -21145,6 +21205,8 @@ export interface components {
                         } | {
                             /** @enum {string} */
                             selectionType: "SURVIVOR";
+                            /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                            lives?: number;
                             /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */

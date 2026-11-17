@@ -155,7 +155,7 @@ describe('LiveStandings.queueDue', () => {
   let boards: Map<string, ContestLeaderboardEntryRow[]>;
   let pickEmBoards: Map<string, PickEmLeaderboardModel>;
   let survivorBoards: Map<string, SurvivorLeaderboardModel>;
-  let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[]; champions: Map<string, { name: string; outcome: PickOutcome }> }>;
+  let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[] }>;
   let matches: Map<string, SportEventMatch[]>;
   let roundNames: string[];
   let positions: Map<string, number | null>;
@@ -229,7 +229,6 @@ describe('LiveStandings.queueDue', () => {
           if (!board) throw new Error('no bracket board');
           return {
             leaderboard: { contestId: contest.id, sportEventId: contest.sportEventIds[0] ?? '', eventCancelled: false, gameCount: 63, finalTotalPoints: null, entries: board.entries },
-            champions: board.champions,
           };
         },
       },
@@ -637,7 +636,7 @@ describe('LiveStandings.queueDue', () => {
     expect(outbox.rows).toHaveLength(0);
   });
 
-  function survivorBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; displayPosition?: string; weeksSurvived: number; outInWeek1?: { team: string | null } }>): SurvivorLeaderboardModel {
+  function survivorBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; displayPosition?: string; weeksSurvived: number; outInWeek1?: { team: string | null }; lifeLostInWeek1?: { team: string } }>): SurvivorLeaderboardModel {
     return {
       contestId,
       weeks: weekIds.map((sportEventId, index) => ({
@@ -660,13 +659,17 @@ describe('LiveStandings.queueDue', () => {
         alive: !entry.outInWeek1,
         eliminatedInWeek: entry.outInWeek1 ? 1 : null,
         weeksSurvived: entry.weeksSurvived,
+        livesLeft: entry.outInWeek1 ? 0 : 1,
+        livesLost: entry.outInWeek1 || entry.lifeLostInWeek1 ? 1 : 0,
         position: entry.position,
         displayPosition: entry.displayPosition ?? String(entry.position),
         weeks: weekIds.map((sportEventId, index) => ({
           sportEventId,
           roundNumber: 1,
-          outcome: index === 0 ? (entry.outInWeek1 ? SurvivorWeekOutcome.ELIMINATED : SurvivorWeekOutcome.SURVIVED) : null,
-          team: index === 0 ? (entry.outInWeek1 ? entry.outInWeek1.team : 'Kansas City Chiefs') : null,
+          outcome: index === 0
+            ? (entry.outInWeek1 ? SurvivorWeekOutcome.ELIMINATED : entry.lifeLostInWeek1 ? SurvivorWeekOutcome.LIFE_LOST : SurvivorWeekOutcome.SURVIVED)
+            : null,
+          team: index === 0 ? (entry.outInWeek1?.team ?? entry.lifeLostInWeek1?.team ?? (entry.outInWeek1 ? null : 'Kansas City Chiefs')) : null,
         })),
       })),
     };
@@ -695,6 +698,24 @@ describe('LiveStandings.queueDue', () => {
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).not.toContain(' is out:');
     expect(toAna.textBody).toContain('Make picks for next week: ');
+  });
+
+  it('tells no reader an entry is out when it lost a life it stays in with, and counts it still in, in a two-life survivor contest', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.SURVIVOR, settledAt);
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    survivorBoards.set(contest.id, survivorBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, weeksSurvived: 1 },
+      { entryId: 'e2', squad: ben.squad, position: 2, weeksSurvived: 0, lifeLostInWeek1: { team: 'Chicago Bears' } },
+    ]));
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toBen] = emailsTo(ben.user.id);
+    expect(toBen.textBody).toContain('Week 1 is done. 2 of 2 entries are still in Last One Standing.');
+    expect(toBen.textBody).not.toContain(' is out:');
+    expect(toBen.textBody).toContain('Make picks for next week: ');
   });
 
   it('names as a season contest\'s next event the one still to play, passing over an event that finished but has not settled', async () => {
@@ -742,8 +763,28 @@ describe('LiveStandings.queueDue', () => {
     return { league, tournament, contest };
   }
 
-  function bracketRow(entryId: string, squad: { id: string; name: string }, position: number, points: number, maxPossiblePoints: number): BracketLeaderboardEntryRow {
-    return { entryId, entryName: `Entry ${entryId}`, entryNumber: 1, squadId: squad.id, squadName: squad.name, position, displayPosition: String(position), points, maxPossiblePoints, correctPickCount: 0, tiebreakerValue: null };
+  function bracketRow(
+    entryId: string,
+    squad: { id: string; name: string },
+    position: number,
+    points: number,
+    maxPossiblePoints: number,
+    champion: { name: string; outcome: PickOutcome } | null = null,
+  ): BracketLeaderboardEntryRow {
+    return {
+      entryId,
+      entryName: `Entry ${entryId}`,
+      entryNumber: 1,
+      squadId: squad.id,
+      squadName: squad.name,
+      position,
+      displayPosition: String(position),
+      points,
+      maxPossiblePoints,
+      correctPickCount: 0,
+      tiebreakerValue: null,
+      champion: champion ? { sportEventParticipantId: `sep-${champion.name}`, seedNumber: 1, ...champion } : null,
+    };
   }
 
   it('sends a bracket round\'s results once its last game is decided and the buffer has passed, with each reader\'s champion pick and the next round\'s start', async () => {
@@ -752,8 +793,10 @@ describe('LiveStandings.queueDue', () => {
     const ana = member(league.id, 'Ana');
     const ben = member(league.id, 'Ben');
     bracketBoards.set(contest.id, {
-      entries: [bracketRow('e1', ana.squad, 1, 30, 190), bracketRow('e2', ben.squad, 2, 20, 120)],
-      champions: new Map([['e1', { name: 'Duke', outcome: PickOutcome.PENDING }], ['e2', { name: 'Kansas', outcome: PickOutcome.BUSTED }]]),
+      entries: [
+        bracketRow('e1', ana.squad, 1, 30, 190, { name: 'Duke', outcome: PickOutcome.PENDING }),
+        bracketRow('e2', ben.squad, 2, 20, 120, { name: 'Kansas', outcome: PickOutcome.BUSTED }),
+      ],
     });
 
     await standings().queueDue(after(done, 29));
@@ -786,7 +829,7 @@ describe('LiveStandings.queueDue', () => {
       game(4, MatchStatus.SCHEDULED, new Date(0)),
     ]);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
 
     await standings().queueDue(after(done, 31));
 
@@ -798,7 +841,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, tournament, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     world.addConfiguration(contest.id, {
       selectionType: SelectionType.BRACKET,
       // Only its starting round is read here.
@@ -973,7 +1016,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, tournament, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     world.sportEvents.set(tournament.id, { ...tournament, status: SportEventStatus.SCHEDULED });
 
     await standings().queueDue(after(done, 31));
@@ -985,7 +1028,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     sportLeagueFound = false;
 
     await standings().queueDue(after(done, 31));

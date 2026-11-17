@@ -53,6 +53,7 @@ import {
   type SportEvent,
   type SportEventMatch,
   type SportEventParticipant,
+  survivorLivesOf,
   type SurvivorContestRules,
 } from '@poolmaster/shared/domain';
 import type {
@@ -137,6 +138,8 @@ export interface GamePickTeam {
   sportEventParticipantId: string;
   participantId: string;
   name: string;
+  /** The team's seed in the event, where the event seeds its field (#1753). */
+  seedNumber: number | null;
 }
 
 export interface GamePickGame {
@@ -693,7 +696,10 @@ export class PredictionService {
       entry,
       predictions,
       season: setup.engine.readsEarlierWeeks
-        ? await this.loadSeason(contest, entry, { sportEvent, matches }, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
+        ? await this.loadSeason(contest, entry, { sportEvent, matches }, field, {
+          reuseTeamsOnceAllUsed: rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true),
+          lives: survivorLivesOf(rules),
+        }, now)
         : null,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
       now,
@@ -735,7 +741,8 @@ export class PredictionService {
   }
 
   /**
-   * The entry's season as a survivor week reads it: the week that put it out, if any, and the
+   * The entry's season as a survivor week reads it: the week that put it out, if any (its last
+   * life lost, #1754: a week that cost a life it stays in with puts it out of nothing), and the
    * teams it picked in the other events it submitted, earlier or later (a later week can be picked
    * ahead), so no team is picked twice. In a playoff (#785) the event's rounds are weeks of their
    * own: a round after the one that put the entry out takes no pick. When teams can be picked
@@ -749,7 +756,7 @@ export class PredictionService {
     entry: ContestEntry,
     week: { sportEvent: SportEvent; matches: readonly SportEventMatch[] },
     field: readonly SportEventParticipant[],
-    reuseTeamsOnceAllUsed: boolean,
+    { reuseTeamsOnceAllUsed, lives }: { reuseTeamsOnceAllUsed: boolean; lives: number },
     now: Date,
   ): Promise<PredictionSeason> {
     const sportEventId = week.sportEvent.id;
@@ -757,7 +764,7 @@ export class PredictionService {
     const predictions = await this.deps.predictions.findByEntriesAndEvents([entry.id], contest.sportEventIds);
     const picks = survivorPicksByEntry(predictions, weeks).get(entry.id) ?? new Map<string, never>();
     const entryWeeks = survivorWeeksOf(entry, weeks, picks);
-    const run = survivorRun(entryWeeks);
+    const run = survivorRun(entryWeeks, lives);
     // This event's own rounds are read from its picks; it takes one place, at its first week.
     const weekIndex = entryWeeks.findIndex((week) => week.sportEventId === sportEventId);
     const usedParticipantIds = survivorTeamsUsedInCycle(
@@ -897,6 +904,7 @@ export class PredictionService {
       sportEventParticipantId: row.id,
       participantId: row.participantId,
       name: nameByParticipantId.get(row.participantId) ?? '',
+      seedNumber: row.seedNumber ?? null,
     }]));
     return (fieldId) => (fieldId === null ? null : teamByFieldId.get(fieldId) ?? null);
   }

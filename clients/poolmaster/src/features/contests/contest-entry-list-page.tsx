@@ -47,12 +47,15 @@ import { useOpenEntryRows } from './use-open-entry-rows';
 import { MineMarker } from './mine-marker';
 import { isContestFull } from './my-contest-entry';
 import { areContestEntriesOpen } from './contest-status';
+import { SELECTION_TYPE_ICONS } from './selection-type-icons';
 import { SquaresBoardView } from './squares-board-view';
 import { StartEntryButton } from './start-entry-button';
 import { contestSchedule } from './use-contest-schedule';
 import { useContestEntriesQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
+
+const BracketIcon = SELECTION_TYPE_ICONS[SelectionType.BRACKET];
 
 /**
  * Whether an entry row of this contest opens to its picks on the entry list. A lineup's does;
@@ -115,11 +118,29 @@ function EntryRow({
   onToggle: () => void;
 }) {
   const picks = picksInEvent(entry, currentEventId);
+  const entryPath = buildLeagueContestEntryPath(leagueCode, contest.id, entry.id);
+  // A bracket's own entries open their bracket from the icon before the name (#1753); the other
+  // formats keep ✎ at the row's end.
+  const editsFromIcon = isMine && canEdit && contest.selectionType === SelectionType.BRACKET;
   const summary = (
     <div className="flex items-center justify-between gap-3">
       <span className="block min-w-0">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="flex items-center">
+            {editsFromIcon ? (
+              <Button
+                aria-label={`Edit bracket: ${entry.name}`}
+                asChild
+                className="-my-2 mr-1"
+                data-testid={`contest-board-edit-entry-${entry.id}`}
+                size="xs"
+                variant="icon"
+              >
+                <Link title="Edit bracket" to={entryPath}>
+                  <BracketIcon aria-hidden size={16} />
+                </Link>
+              </Button>
+            ) : null}
             <Text variant="strong">{entry.name}</Text>
             <EntryDetailsPeek
               className="-my-2"
@@ -138,7 +159,7 @@ function EntryRow({
           </Text>
         ) : null}
       </span>
-      {isMine && canEdit ? (
+      {isMine && canEdit && !editsFromIcon ? (
         <Button
           aria-label={`Edit ${entry.name}`}
           asChild
@@ -146,7 +167,7 @@ function EntryRow({
           size="icon"
           variant="icon"
         >
-          <Link title="Edit picks and name" to={buildLeagueContestEntryPath(leagueCode, contest.id, entry.id)}>
+          <Link title="Edit picks and name" to={entryPath}>
             <Pencil aria-hidden size={16} />
           </Link>
         </Button>
@@ -306,11 +327,10 @@ export function ContestEntryListPage() {
         </Notice>
       ) : null}
 
-      {/* A squares contest's board is its entries' boxes: it stays above the list. */}
+      {/* A squares contest's board is its entry list (#1758): every entry is on it by its boxes. */}
       {contest.selectionType === SelectionType.SQUARES ? (
         <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
-      ) : null}
-
+      ) : (
       <SectionCard bare testId="contest-board-entries-section" title="Entries">
         {expandableIds.length > 0 ? (
           <div className="flex justify-end">
@@ -346,6 +366,7 @@ export function ContestEntryListPage() {
           )}
         </div>
       </SectionCard>
+      )}
     </ContestPageFrame>
   );
 }

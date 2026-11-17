@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { ContestEntryListPage } from './contest-entry-list-page';
+import { squaresBoardFixture } from './test/squares-fixtures';
 
 const {
   enterContestMock,
@@ -12,6 +13,7 @@ const {
   getEventMock,
   listContestEntriesMock,
   getLeagueMock,
+  getSquaresBoardMock,
   listEventParticipantsMock,
   listEventTiersMock,
   mockLogger,
@@ -33,6 +35,7 @@ const {
     getContestMock: vi.fn(),
     getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
+    getSquaresBoardMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventTiersMock: vi.fn(),
@@ -48,6 +51,8 @@ bindApiMocks({
   // #202 — the contest board reads the league BY ID for the viewer's own squad membership. It
   // used to list every squad in the league and scan each one's members for the signed-in user.
   getLeague: getLeagueMock,
+  // #1758 — a squares contest's page is its board, read whole.
+  getSquaresBoard: getSquaresBoardMock,
   listContestEntries: listContestEntriesMock,
   // #1740 — a lineup pick's tier or price is its field row's: the event's field and tiers.
   listEventParticipants: listEventParticipantsMock,
@@ -173,7 +178,7 @@ function primeMocks(opts?: {
   entriesPerContest?: number;
   /** The league plan's entries per contest; the contest's own cap unless given. */
   planEntriesPerContest?: number;
-  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
+  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SQUARES';
   allEntryCount?: number;
   /** The event's field rows' tier ids and prices, by field row id; none unless given. */
   field?: Record<string, { tierId?: string; price?: number }>;
@@ -194,7 +199,7 @@ function primeMocks(opts?: {
         id: 'contest-1',
         name: 'Masters Pick 6',
         status: contestStatus,
-        contestFormat: opts?.selectionType === 'PICK_EM' ? 'PREDICTION' : 'ROSTER',
+        contestFormat: opts?.selectionType === 'PICK_EM' || opts?.selectionType === 'BRACKET' ? 'PREDICTION' : 'ROSTER',
         selectionType: opts?.selectionType ?? 'TIERED',
         leagueId: 'league-1',
         sport: 'GOLF',
@@ -319,6 +324,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     listEventParticipantsMock.mockReset();
     listEventTiersMock.mockReset();
     getLeagueMock.mockReset();
+    getSquaresBoardMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.child.mockClear();
@@ -534,6 +540,32 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(await screen.findByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-toggle-entry-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-board-toggle-all')).not.toBeInTheDocument();
+  });
+
+  it('shows a squares contest\'s board as its entry list, with no Entries section below it, since every entry is on the board by its boxes', async () => {
+    primeMocks({ selectionType: 'SQUARES', entries: [MINE, THEIRS] });
+    getSquaresBoardMock.mockResolvedValue({ data: squaresBoardFixture() });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('squares-grid')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entries-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entries')).not.toBeInTheDocument();
+  });
+
+  it('gives a bracket entry of the viewer\'s a bracket icon before its name, "Edit bracket" to its pick page, in place of ✎, and another team\'s entry none', async () => {
+    primeMocks({ selectionType: 'BRACKET', entries: [MINE, THEIRS] });
+
+    renderContestBoard();
+
+    const edit = await screen.findByTestId('contest-board-edit-entry-entry-1');
+    expect(edit).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+    expect(edit).toHaveAttribute('title', 'Edit bracket');
+    expect(edit).toHaveAccessibleName('Edit bracket: Birdie Hunters 1');
+    expect(edit).not.toHaveTextContent('✎');
+    const mine = screen.getByTestId('contest-board-entry-entry-1');
+    expect(within(mine).getAllByRole('link').filter((link) => link.getAttribute('href') === edit.getAttribute('href'))).toEqual([edit]);
+    expect(screen.queryByTestId('contest-board-edit-entry-entry-3')).not.toBeInTheDocument();
   });
 
   it('says nobody has entered yet when the list is empty', async () => {

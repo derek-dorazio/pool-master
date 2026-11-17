@@ -25,7 +25,7 @@ const SUBMITTED_AT = new Date('2026-09-10T12:00:00.000Z');
 const KICKOFF = new Date('2026-09-13T17:00:00.000Z');
 
 function team(name: string): GamePickTeam {
-  return { sportEventParticipantId: `sep-${name}`, participantId: `participant-${name}`, name };
+  return { sportEventParticipantId: `sep-${name}`, participantId: `participant-${name}`, name, seedNumber: null };
 }
 
 /** One game of the view: `away` at `home`, the entry's pick of `picked` (null for a tie pick), unpicked when undefined. */

@@ -32,8 +32,8 @@ function group(groupId: string, ids: string[], selected: string[], picksFromGrou
 }
 
 type PreviewGame = GamePickPreviewResponse['games'][number];
-const bills = { sportEventParticipantId: 'sep-bills', participantId: 'p-bills', name: 'Bills' };
-const chiefs = { sportEventParticipantId: 'sep-chiefs', participantId: 'p-chiefs', name: 'Chiefs' };
+const bills = { sportEventParticipantId: 'sep-bills', participantId: 'p-bills', name: 'Bills', seedNumber: null };
+const chiefs = { sportEventParticipantId: 'sep-chiefs', participantId: 'p-chiefs', name: 'Chiefs', seedNumber: null };
 
 function previewGame(matchNumber: number, pick: PreviewGame['pick'] = null): PreviewGame {
   return {

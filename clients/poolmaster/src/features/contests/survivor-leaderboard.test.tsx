@@ -102,7 +102,7 @@ describe('Survivor contest leaderboard', () => {
     expect(within(table).getAllByRole('columnheader').map((header) => header.textContent.replace('↕', ''))).toEqual(
       expect.arrayContaining(['Place', 'Entry', 'Status', 'Weeks survived', 'Week 1 (2 in)', 'Week 2 (1 in)']),
     );
-    expect(screen.getByTestId('survivor-leaderboard-standing-entry-1')).toHaveTextContent('In');
+    expect(screen.getByTestId('survivor-leaderboard-standing-entry-1')).toHaveTextContent(/^In$/);
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out in week 2');
     expect(screen.getByTestId('survivor-leaderboard-survived-entry-2')).toHaveTextContent('1');
     expect(screen.getByTestId('survivor-leaderboard-still-in')).toHaveTextContent('1 entry still in.');
@@ -130,5 +130,29 @@ describe('Survivor contest leaderboard', () => {
     );
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out in Conference Championship');
     expect(screen.getByTestId('survivor-leaderboard-week-playoffs-round-1-entry-1')).toHaveTextContent('BillsSurvived');
+  });
+
+  it('reads "In · 1 life left" for an entry that lost a life it stays in with, and shows that week as a life lost', async () => {
+    const board = survivorLeaderboardFixture();
+    const [morgan, chalk] = board.entries;
+    primeMocks(survivorLeaderboardFixture({
+      entries: [
+        {
+          ...morgan,
+          livesLeft: 1,
+          livesLost: 1,
+          weeks: [
+            { sportEventId: 'week-1', roundNumber: 1, outcome: 'LIFE_LOST', team: 'Chiefs' },
+            { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null },
+          ],
+        },
+        chalk,
+      ],
+    }));
+    renderLeaderboard();
+
+    await screen.findByTestId('survivor-leaderboard-table');
+    expect(screen.getByTestId('survivor-leaderboard-standing-entry-1')).toHaveTextContent('In · 1 life left');
+    expect(screen.getByTestId('survivor-leaderboard-week-week-1-entry-1')).toHaveTextContent('ChiefsLost a life');
   });
 });
