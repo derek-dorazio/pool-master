@@ -3,6 +3,7 @@ import { Trophy } from 'lucide-react';
 import { SportEventStatus, formatPickEmRulesName } from '@poolmaster/shared/domain';
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
 import { formatPoints } from './bracket-layout';
+import { EventScheduleChip } from './event-schedule-chip';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid, YourBestNote } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
@@ -16,11 +17,24 @@ type PickEmWeek = PickEmLeaderboardResponse['weeks'][number];
 /** The prefix of the board's test ids. */
 const TEST_ID = 'pick-em-leaderboard';
 
-/** A week's column heading: its name, with how it stands once it is under way. */
-function weekHeading(week: PickEmWeek): string {
-  if (week.status === SportEventStatus.CANCELLED) {
-    return `${week.name} (cancelled)`;
+/**
+ * A week's column heading: its name, with how it stands once it is under way, or the shared
+ * Postponed or Cancelled chip (#1768) when it is not going ahead as scheduled.
+ */
+function WeekHeading({ week }: { week: PickEmWeek }) {
+  if (week.status === SportEventStatus.CANCELLED || week.status === SportEventStatus.POSTPONED) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {week.name}
+        <EventScheduleChip status={week.status} testId={`${TEST_ID}-week-${week.sportEventId}-schedule`} />
+      </span>
+    );
   }
+  return weekHeading(week);
+}
+
+/** A week's heading words while it is on schedule. */
+function weekHeading(week: PickEmWeek): string {
   if (week.settled) {
     return `${week.name} (final)`;
   }
@@ -54,7 +68,7 @@ function pickEmColumns(
     totalColumn(TEST_ID, { format: formatPoints, header: 'Season', id: 'total', value: (row) => row.totalPoints }),
     ...weeks.map((week): ColumnDef<PickEmRow> => ({
       id: `week-${week.sportEventId}`,
-      header: weekHeading(week),
+      header: () => <WeekHeading week={week} />,
       accessorFn: (row) => row.weeks.find((cell) => cell.sportEventId === week.sportEventId)?.points ?? null,
       cell: ({ row }) => {
         const cell = row.original.weeks.find((candidate) => candidate.sportEventId === week.sportEventId);

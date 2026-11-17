@@ -22,6 +22,7 @@ const contest = {
   leagueId: 'league-1',
   myEntryIds: ['entry-1'],
   name: 'Masters Pool',
+  sportEvents: [] as ContestDto['sportEvents'],
   status: ContestStatus.ACTIVE,
 } as ContestDto;
 
@@ -213,3 +214,24 @@ describe('ContestEntryFrame', () => {
     expect(screen.getByTestId('contest-entry-status-last-updated')).toHaveTextContent('2026');
   });
 });
+
+describe('ContestPageFrame schedule notice', () => {
+  it('says under the header, in one line, when an event is postponed and that a cancelled one scores nothing', async () => {
+    renderFrame({ contestOverrides: {
+      sportEvents: [
+        { endDate: null, name: 'BUF @ KC', participantType: null, scoringFamily: null, sequence: 1, sportEventId: 'e1', startDate: '2026-11-25T01:15:00.000Z', status: 'POSTPONED' },
+        { endDate: null, name: 'SEA @ SF', participantType: null, scoringFamily: null, sequence: 2, sportEventId: 'e2', startDate: '2026-11-25T21:00:00.000Z', status: 'CANCELLED' },
+      ],
+    } });
+
+    expect(await screen.findByTestId('contest-schedule-notice')).toHaveTextContent(/^BUF @ KC postponed to .+\. SEA @ SF cancelled: no points\.$/);
+  });
+
+  it('shows no notice while every event is on schedule', async () => {
+    renderFrame();
+
+    await screen.findByTestId('frame-header-name');
+    expect(screen.queryByTestId('contest-schedule-notice')).not.toBeInTheDocument();
+  });
+});
+

@@ -5,6 +5,7 @@ import { Chip, formatCount, useDisplayPreferences, type StatusBadgeProps } from 
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, ScoreboardGrid } from './leaderboard-kit';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
+import { EventScheduleChip } from './event-schedule-chip';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestLeague } from './use-contest-league';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
@@ -53,11 +54,19 @@ function formatSurvivorStanding(entry: Pick<SurvivorRow, 'alive' | 'eliminatedIn
   return week && week.roundCount > 1 ? `Out in ${weekName(week)}` : `Out in week ${entry.eliminatedInWeek}`;
 }
 
-/** A week's column heading: its name, with how it stands once it is under way. */
-function weekHeading(week: SurvivorWeek, weekName: WeekName): string {
+/**
+ * A week's column heading: its name, with how many are still in once it is under way, or the
+ * shared Postponed or Cancelled chip (#1768) when it is not going ahead as scheduled.
+ */
+function WeekHeading({ week, weekName }: { week: SurvivorWeek; weekName: WeekName }) {
   const name = weekName(week);
-  if (week.status === SportEventStatus.CANCELLED) {
-    return `${name} (cancelled)`;
+  if (week.status === SportEventStatus.CANCELLED || week.status === SportEventStatus.POSTPONED) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {name}
+        <EventScheduleChip status={week.status} testId={`survivor-leaderboard-week-${week.sportEventId}-schedule`} />
+      </span>
+    );
   }
   return week.started ? `${name} (${week.aliveCount} in)` : name;
 }
@@ -103,7 +112,7 @@ function survivorColumns(
     totalColumn(TEST_ID, { header: 'Weeks survived', id: 'survived', value: (row) => row.weeksSurvived }),
     ...weeks.map((week): ColumnDef<SurvivorRow> => ({
       id: `week-${weekKey(week)}`,
-      header: weekHeading(week, weekName),
+      header: () => <WeekHeading week={week} weekName={weekName} />,
       accessorFn: (row) => cellOf(row, week)?.outcome ?? null,
       cell: ({ row }) => {
         const cell = cellOf(row.original, week);

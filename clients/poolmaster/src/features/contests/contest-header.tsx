@@ -7,12 +7,13 @@ import {
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
-import { PageHeader } from '@/features/shared/ui';
+import { Notice, PageHeader, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { ContestStatusBadge } from './contest-status-badge';
 import { EntryStatusPeek, type EntryStatusFact } from './entry-status-peek';
+import { describeScheduleChanges } from './schedule-changes';
 
 /** What a contest page's frame reads of its contest. */
-type FramedContest = Pick<ContestDto, 'endsAt' | 'id' | 'leagueId' | 'name' | 'status'>;
+type FramedContest = Pick<ContestDto, 'endsAt' | 'id' | 'leagueId' | 'name' | 'sportEvents' | 'status'>;
 
 /**
  * Where a contest page belongs when its URL names another league (#1412): the same page under the
@@ -77,6 +78,7 @@ export function ContestPageFrame({
   titleAside?: ReactNode;
 }) {
   const ownLeagueAddress = useOwnLeagueAddress(contest.leagueId, leagueCode);
+  const displayPreferences = useDisplayPreferences();
   if (ownLeagueAddress) {
     return <Navigate replace to={ownLeagueAddress} />;
   }
@@ -102,9 +104,28 @@ export function ContestPageFrame({
         title={title ?? contest.name}
         titleAside={titleAside}
       />
+      <ScheduleChangeNotice
+        formatStart={(startDate) => formatDateTimeDisplay(startDate, displayPreferences)}
+        sportEvents={contest.sportEvents}
+      />
       {children}
     </section>
   );
+}
+
+/**
+ * The one line under every contest page's header while an event of the contest is postponed or
+ * cancelled (#1768), the same on every contest type's board and pick screen.
+ */
+function ScheduleChangeNotice({
+  formatStart,
+  sportEvents,
+}: {
+  formatStart: (startDate: string) => string;
+  sportEvents: FramedContest['sportEvents'];
+}) {
+  const line = describeScheduleChanges(sportEvents, formatStart);
+  return line ? <Notice data-testid="contest-schedule-notice" tone="warning">{line}</Notice> : null;
 }
 
 /**

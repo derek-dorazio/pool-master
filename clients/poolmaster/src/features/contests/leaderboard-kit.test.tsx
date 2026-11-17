@@ -175,7 +175,7 @@ describe('ScoreboardGrid', () => {
   });
 });
 
-const contest = { id: 'contest-1', myEntryIds: [], name: 'Masters Pool', status: ContestStatus.ACTIVE } as unknown as ContestDto;
+const contest = { id: 'contest-1', myEntryIds: [], name: 'Masters Pool', sportEvents: [], status: ContestStatus.ACTIVE } as unknown as ContestDto;
 
 function renderFrame(props: Partial<Parameters<typeof LeaderboardFrame>[0]> = {}) {
   // The frame reads the contest's league to check the URL names it (#1412); this contest names none.

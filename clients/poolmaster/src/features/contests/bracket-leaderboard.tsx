@@ -151,9 +151,7 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
               {`The final scored ${board.finalTotalPoints} total ${contestScoreUnit(contest.sport)}: tiebreakers are measured against it.`}
             </p>
           ) : null}
-          {board.eventCancelled ? (
-            <p data-testid="bracket-leaderboard-cancelled-note">This event was cancelled, so no bracket scores any points.</p>
-          ) : null}
+          {/* A cancelled event is the contest page's shared schedule notice (#1768). */}
         </>
       )}
       // A cancelled event's note stands in for the settled one: nothing was scored to freeze.
