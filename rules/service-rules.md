@@ -300,7 +300,8 @@ definition of done.
   that added one answers 500. The stored leaderboards carry a board format for this: a change to
   any leaderboard response (roster, bracket, pick'em or survivor, or a row or week on one) bumps
   `LEADERBOARD_BOARD_FORMAT` in the same change, and boards stored under an older format are
-  computed again instead of served.
+  computed again instead of served. A test hashes the four responses' shapes in the contract
+  and fails on a change with no bump; add the new format's hash there, never edit an old one.
 
 ### List Envelope Discipline
 

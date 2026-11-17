@@ -1,7 +1,7 @@
 /**
  * An in-memory ContestLeaderboardSnapshotRepository (#1435) that stores as the Prisma adapter does:
  * a write replaces only a snapshot that began computing earlier or was stored under an older board
- * format (#1761), and each one moves the version up.
+ * format (#1761), never one stored under a newer format, and each one moves the version up.
  */
 import type {
   ContestLeaderboardSnapshot,
@@ -38,7 +38,7 @@ export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSn
     this.saves.push(write);
     const key = `${write.contestId}:${write.shownEvent}`;
     const stored = this.rows.get(key);
-    if (stored && stored.computedFrom >= write.computedFrom && stored.boardFormat >= write.boardFormat) return null;
+    if (stored && (stored.boardFormat > write.boardFormat || (stored.computedFrom >= write.computedFrom && stored.boardFormat === write.boardFormat))) return null;
     const saved = { ...write, version: (stored?.version ?? 0) + 1 };
     this.rows.set(key, saved);
     return saved;

@@ -128,6 +128,12 @@ describe('isSnapshotCurrent', () => {
 
     expect(isSnapshotCurrent(olderFormat, { updatedAt: contestUpdatedAt }, later(1), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(false);
   });
+
+  it('stays current when stored under a newer board format, so a task still on older code mid-deploy serves it rather than rebuilding it under its own', () => {
+    const newerFormat = { ...stored, boardFormat: LEADERBOARD_BOARD_FORMAT + 1 };
+
+    expect(isSnapshotCurrent(newerFormat, { updatedAt: contestUpdatedAt }, later(1), LEADERBOARD_SNAPSHOT_MAX_AGE_MS)).toBe(true);
+  });
 });
 
 describe('nextKickoffAfter', () => {

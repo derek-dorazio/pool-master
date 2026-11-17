@@ -66,8 +66,9 @@ export class PrismaContestLeaderboardSnapshotRepository<Board> implements Contes
   /**
    * Overwrites the stored row only if it was computed from older reads, or written under an older
    * board format (#1761), which is never served: one that began at the same moment or later holds
-   * scores at least as new, and is kept. One statement, answering the row stored, or null when
-   * there is no older row.
+   * scores at least as new, and is kept. A row written under a newer format is never overwritten,
+   * so a task still on older code during a deploy cannot replace it. One statement, answering the
+   * row stored, or null when there is no older row.
    */
   private async overwriteOlder(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null> {
     const { contestId, shownEvent, boardFormat, computedFrom, contestUpdatedAt, validUntil } = write;
@@ -75,6 +76,7 @@ export class PrismaContestLeaderboardSnapshotRepository<Board> implements Contes
       const updated = await this.prisma.contestLeaderboardSnapshot.update({
         where: {
           contestId_shownEvent: { contestId, shownEvent },
+          boardFormat: { lte: boardFormat },
           OR: [{ computedFrom: { lt: computedFrom } }, { boardFormat: { lt: boardFormat } }],
         },
         data: { boardFormat, computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue, version: { increment: 1 } },

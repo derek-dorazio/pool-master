@@ -89,7 +89,7 @@ export function readLeaderboardSnapshotMaxAgeMs(env: NodeJS.ProcessEnv): number 
 
 /**
  * Whether a stored board still answers a read at `now`: it was stored under the current board
- * format, it is younger than `maxAgeMs`, no event it does not show has started since, and the
+ * format or a newer one, it is younger than `maxAgeMs`, no event it does not show has started since, and the
  * contest has not changed since (its status, its name, its draw).
  */
 export function isSnapshotCurrent(
@@ -98,7 +98,10 @@ export function isSnapshotCurrent(
   now: Date,
   maxAgeMs: number,
 ): boolean {
-  return snapshot.boardFormat === LEADERBOARD_BOARD_FORMAT
+  // A newer format is current too: during a rolling deploy a task still on the older code serves
+  // the newer board (the response drops a field its schema does not name) rather than rebuilding
+  // it under its own format and taking turns with the newer tasks.
+  return snapshot.boardFormat >= LEADERBOARD_BOARD_FORMAT
     && now.getTime() - snapshot.computedFrom.getTime() < maxAgeMs
     && (snapshot.validUntil === null || now < snapshot.validUntil)
     && snapshot.contestUpdatedAt.getTime() === contest.updatedAt.getTime();

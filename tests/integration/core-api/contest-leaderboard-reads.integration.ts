@@ -702,6 +702,19 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     expect(await write('current format', LEADERBOARD_BOARD_FORMAT, 100)).toMatchObject({ version: 2, boardFormat: LEADERBOARD_BOARD_FORMAT, board: { label: 'current format' } });
   });
 
+  it('never overwrites a board stored under a newer format, even from a rebuild that began later, so a task still on older code mid-deploy cannot replace it', async () => {
+    const { contest } = await liveContest();
+    const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
+    const write = (label: string, boardFormat: number, ms: number) => snapshots.save({
+      contestId: contest.id, shownEvent: '', boardFormat, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+
+    await write('newer format', LEADERBOARD_BOARD_FORMAT + 1, 100);
+
+    expect(await write('current format', LEADERBOARD_BOARD_FORMAT, 200)).toBeNull();
+    expect(await snapshots.find(contest.id, '')).toMatchObject({ version: 1, boardFormat: LEADERBOARD_BOARD_FORMAT + 1, board: { label: 'newer format' } });
+  });
+
   it('keeps one stored board per shown event, and deletes them with their contest', async () => {
     const settled = await createEvent('Masters', 200, SportEventStatus.COMPLETED, [-1, -2, -3, -4]);
     const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
