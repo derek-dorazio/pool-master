@@ -364,7 +364,7 @@ placed, until that team has played.
 An event that will not be played is cancelled from the Workflow card on its home page: *Move to
 Cancelled*, then confirm. It is offered from Draft, Scheduled, In Progress and Postponed (*Move
 to Postponed* parks an event whose date is moving; it goes back to Scheduled or In Progress
-later). Cancelled is final: no move leads out of it, and a data file never changes the event
+later, and while its start is ahead its live contests take entries and pick changes again). Cancelled is final: no move leads out of it, and a data file never changes the event
 again.
 
 A cancelled event counts for nothing, whatever scores or results it already holds:

@@ -264,8 +264,8 @@ export interface SportEventRepository {
   /** Sets when the provider last sent a notification about each of these events (#1499). */
   recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void>;
   /**
-   * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED` or
-   * `IN_PROGRESS`. Unordered.
+   * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED`,
+   * `IN_PROGRESS` or `POSTPONED`, whose contests follow its start (#1792). Unordered.
    */
   findAutoLifecycleCandidates(): Promise<SportEvent[]>;
 }

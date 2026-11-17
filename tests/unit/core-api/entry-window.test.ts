@@ -49,6 +49,11 @@ describe('areContestEntriesOpen — joining, renaming and leaving a contest', ()
     },
   );
 
+  it('opens entries on a contest reopened for its postponed event, until the new start', () => {
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [event('week-6', 24 * 7, SportEventStatus.POSTPONED)], NOW)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [event('week-6', -1, SportEventStatus.POSTPONED)], NOW)).toBe(false);
+  });
+
   it('closes entries once a random draw has dealt, before the event starts', () => {
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: NOW }, [upcoming], NOW)).toBe(false);
   });
@@ -61,6 +66,13 @@ describe('areEventPicksOpen — changing and submitting one event\'s picks', () 
 
   it('still takes picks for a later event on an ACTIVE contest whose first event is being played', () => {
     expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, later, NOW)).toBe(true);
+  });
+
+  it('takes picks on a live season contest for a postponed week until its new start, and closes them at it', () => {
+    const postponedWeek = event('week-6', 24 * 7, SportEventStatus.POSTPONED);
+    const postponedPastStart = event('week-6', -1, SportEventStatus.POSTPONED);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, postponedWeek, NOW)).toBe(true);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, postponedPastStart, NOW)).toBe(false);
   });
 
   it('closes an event\'s picks at its scheduled start, before its status is moved on', () => {
