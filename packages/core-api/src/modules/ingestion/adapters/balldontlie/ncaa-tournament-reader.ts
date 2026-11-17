@@ -1,20 +1,24 @@
 /**
  * The BALLDONTLIE NCAA basketball tournament reads behind the adapter (#1496), for one league,
- * men's or women's: each season's tournament as an event, its teams with their seeds, every
- * Division I team, and the tournament's game scores. The bracket endpoints need the GOAT tier;
+ * men's or women's: each season's tournament as an event, its teams with their seeds and its
+ * play-in places, its games and the men's whole bracket (#1728), every Division I team, and the
+ * tournament's game scores. The bracket endpoints need the GOAT tier;
  * the teams lists name no paid tier.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import type { BalldontlieClient } from './balldontlie-client';
-import { ncaaBracketListSchema, ncaaTeamListSchema, type NcaaBracketGame } from './ncaa-tournament-contract';
+import { ncaabBracketListSchema, ncaaBracketListSchema, ncaaTeamListSchema, type NcaaBracketGame } from './ncaa-tournament-contract';
 import {
   bracketPathOf,
   ncaaTournamentScopeId,
   teamsPathOf,
+  toNcaaBracket,
   toNcaaFieldParticipants,
   toNcaaGameScoreUpdates,
+  toNcaaPlayInPlaces,
+  toNcaaScheduledGames,
   toNcaaTeamParticipant,
   toNcaaTournamentEvent,
   type NcaaTournamentLeague,
@@ -51,8 +55,16 @@ export class NcaaTournamentReader {
   async eventDetails(season: number): Promise<SportEventDetail | null> {
     const games = await this.bracketOf(season);
     if (games.length === 0) return null;
-    const participants = toNcaaFieldParticipants(this.league, games);
-    return { ...toNcaaTournamentEvent({ league: this.league, season }, games, participants.length), participants };
+    const scope = { league: this.league, season };
+    // The play-in places stand in the field for the First Four's teams until a winner fills one (#1728).
+    const participants = [...toNcaaFieldParticipants(this.league, games), ...toNcaaPlayInPlaces(scope, games)];
+    const bracket = toNcaaBracket(scope, games);
+    return {
+      ...toNcaaTournamentEvent(scope, games, participants.length),
+      participants,
+      games: toNcaaScheduledGames(this.league, games),
+      ...(bracket !== null && { bracket }),
+    };
   }
 
   /** Every Division I team in the league. */
@@ -72,7 +84,8 @@ export class NcaaTournamentReader {
   }
 
   private bracketOf(season: number): Promise<NcaaBracketGame[]> {
-    return this.client.getAllPages(bracketPathOf(this.league), { season }, ncaaBracketListSchema);
+    // The men's bracket names each game's region; the women's document has none to read.
+    return this.client.getAllPages(bracketPathOf(this.league), { season }, this.league.bracketRegions ? ncaabBracketListSchema : ncaaBracketListSchema);
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {

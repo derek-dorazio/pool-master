@@ -97,3 +97,68 @@ export type PlaceRow = { position: number; displayPosition: string };
 export function formatPlace(row: PlaceRow): string {
   return row.displayPosition.startsWith("T") ? row.displayPosition : formatOrdinal(row.position);
 }
+
+/** An entry to give a short code on a board: its id and the name the code is made from. */
+export type InitialsEntry = { id: string; name: string };
+
+/** A name's words as initials are read from them: letters and digits only, upper case. */
+function initialsWords(name: string): string[] {
+  return name
+    .split(/\s+/u)
+    .map((word) => word.replace(/[^\p{L}\p{N}]/gu, "").toUpperCase())
+    .filter((word) => word.length > 0);
+}
+
+/** A name's two-letter code: the first letters of its first two words, or a single word's first two. */
+function twoLetterCode(words: readonly string[]): string {
+  const [first = "", second = ""] = words;
+  if (first === "") {
+    return "?";
+  }
+  return second === "" ? first.slice(0, 2) : `${first[0]}${second[0]}`;
+}
+
+/** The three-letter codes a name can fall back to when its two letters are shared, best first. */
+function threeLetterCodes(words: readonly string[]): string[] {
+  const [first = "", second = "", third = ""] = words;
+  const candidates = second === ""
+    ? [first.slice(0, 3), first.length > 3 ? `${first.slice(0, 2)}${first.at(-1) ?? ""}` : ""]
+    : [
+      third === "" ? "" : `${first[0]}${second[0]}${third[0]}`,
+      `${first[0]}${second.slice(0, 2)}`,
+      `${first.slice(0, 2)}${second[0]}`,
+      `${first[0]}${second[0]}${words.at(-1)?.at(-1) ?? ""}`,
+    ];
+  return [...new Set(candidates.filter((code) => code.length === 3))];
+}
+
+/**
+ * Each entry's initials for a board too small for names (#1758): "Big Hitters" is BH, "Sharks 1"
+ * S1, and a one-word "Mom" MO. When two entries share a code, each of them takes three letters
+ * ("Big Hitters" BHI, "Bay Hawks" BHA), and the code's number when letters run out
+ * ("MO1", "MO2" for two entries both named "Mo"). The codes depend only on the set of entries, never on their order.
+ */
+export function formatEntryInitials(entries: readonly InitialsEntry[]): ReadonlyMap<string, string> {
+  const sorted = [...entries].sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+  const baseCodes = new Map(sorted.map((entry) => [entry.id, twoLetterCode(initialsWords(entry.name))]));
+  const timesUsed = new Map<string, number>();
+  for (const code of baseCodes.values()) {
+    timesUsed.set(code, (timesUsed.get(code) ?? 0) + 1);
+  }
+  const codes = new Map<string, string>();
+  const taken = new Set([...baseCodes.values()].filter((code) => timesUsed.get(code) === 1));
+  for (const entry of sorted) {
+    const base = baseCodes.get(entry.id) ?? "?";
+    if (timesUsed.get(base) === 1) {
+      codes.set(entry.id, base);
+      continue;
+    }
+    let code = threeLetterCodes(initialsWords(entry.name)).find((candidate) => !taken.has(candidate));
+    for (let number = 1; code === undefined; number += 1) {
+      code = taken.has(`${base}${number}`) ? undefined : `${base}${number}`;
+    }
+    taken.add(code);
+    codes.set(entry.id, code);
+  }
+  return codes;
+}

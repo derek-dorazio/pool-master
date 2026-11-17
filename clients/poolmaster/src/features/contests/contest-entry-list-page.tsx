@@ -326,11 +326,10 @@ export function ContestEntryListPage() {
         </Notice>
       ) : null}
 
-      {/* A squares contest's board is its entries' boxes: it stays above the list. */}
+      {/* A squares contest's board is its entry list (#1758): every entry is on it by its boxes. */}
       {contest.selectionType === SelectionType.SQUARES ? (
         <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
-      ) : null}
-
+      ) : (
       <SectionCard bare testId="contest-board-entries-section" title="Entries">
         {expandableIds.length > 0 ? (
           <div className="flex justify-end">
@@ -366,6 +365,7 @@ export function ContestEntryListPage() {
           )}
         </div>
       </SectionCard>
+      )}
     </ContestPageFrame>
   );
 }

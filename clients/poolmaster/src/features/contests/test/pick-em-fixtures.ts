@@ -193,19 +193,22 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
         position: 1, displayPosition: '1', totalPoints: 3,
         weeks: [
-          { sportEventId: 'week-1', submitted: true, points: 2, position: 1, displayPosition: '1', weeklyWinner: true },
-          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false },
+          { sportEventId: 'week-1', submitted: true, points: 2, position: 1, displayPosition: '1', weeklyWinner: true, correctPickCount: 2, missedPicks: [{ teamName: 'BUF' }] },
+          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false, correctPickCount: 1, missedPicks: [] },
         ],
+        currentWeekPicks: [],
       },
       {
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
         position: 2, displayPosition: '2', totalPoints: 1,
         weeks: [
-          { sportEventId: 'week-1', submitted: false, points: null, position: null, displayPosition: null, weeklyWinner: false },
-          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false },
+          { sportEventId: 'week-1', submitted: false, points: null, position: null, displayPosition: null, weeklyWinner: false, correctPickCount: null, missedPicks: [] },
+          { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false, correctPickCount: 1, missedPicks: [] },
         ],
+        currentWeekPicks: [],
       },
     ],
+    currentWeekId: 'week-2',
     ...overrides,
   };
 }

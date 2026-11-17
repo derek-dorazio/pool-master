@@ -37,30 +37,31 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
   return byPlace;
 }
 
-/**
- * What a scoring moment is called (design §1), by the game's period layout: a quarters game's are
- * Q1, Halftime, Q3 and Final, a halves game's Halftime and Final, a hockey game's 1st period, 2nd
- * period and Final. The last is Final, which includes overtime.
- */
-export function squaresMomentLabel(periodNumber: number, layout: MatchPeriodLayout) {
-  if (periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count) {
-    return 'Final';
-  }
+/** A period's short name, the letter the game's layout counts in and its number: Q2, H1, P3. */
+function periodShortName(periodNumber: number, layout: MatchPeriodLayout) {
   switch (layout) {
     case MatchPeriodLayout.QUARTERS:
-      return ['Q1', 'Halftime', 'Q3'][periodNumber - 1] ?? `Q${periodNumber}`;
+      return `Q${periodNumber}`;
     case MatchPeriodLayout.HALVES:
-      return 'Halftime';
+      return `H${periodNumber}`;
     case MatchPeriodLayout.THREE_PERIODS:
-      return ['1st period', '2nd period'][periodNumber - 1] ?? `Period ${periodNumber}`;
+      return `P${periodNumber}`;
     default:
       return assertNever(layout, 'match period layout');
   }
 }
 
-/** "4 of 10 boxes claimed": how many of its boxes an entry holds. */
+/**
+ * The tag a winning box wears on the board (#1758): the period it won by its short name (Q1, Q2,
+ * Q3), and Final for the last, overtime included.
+ */
+export function squaresMomentTag(periodNumber: number, layout: MatchPeriodLayout) {
+  return periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count ? 'Final' : periodShortName(periodNumber, layout);
+}
+
+/** "4 of 10 boxes": how many of the boxes it may claim an entry holds. */
 export function formatClaimedCount(claimed: number, limit: number) {
-  return `${claimed} of ${pluralize(limit, 'box', 'boxes')} claimed`;
+  return `${claimed} of ${pluralize(limit, 'box', 'boxes')}`;
 }
 
 /** How many boxes of the grid are claimed: "37 of 100 boxes taken". */
@@ -71,7 +72,8 @@ export function formatGridTaken(claimed: number) {
 /** One row of the winners list: a scoring moment with its score and winning box once it is in. */
 export type SquaresMomentRow = {
   periodNumber: number;
-  label: string;
+  /** Its short tag, as on the board's winning box: Q1, Q2, Q3, Final. */
+  tag: string;
   winner: SquaresWinnerDto | null;
 };
 
@@ -81,7 +83,7 @@ export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners' | 
     const periodNumber = index + 1;
     return {
       periodNumber,
-      label: squaresMomentLabel(periodNumber, board.periodLayout),
+      tag: squaresMomentTag(periodNumber, board.periodLayout),
       winner: board.winners.find((winner) => winner.periodNumber === periodNumber) ?? null,
     };
   });
@@ -119,4 +121,92 @@ export function squaresGameChoices(games: readonly SportEventMatchDto[], now: Da
     .sort((left, right) => Number(left.advancesToMatchId !== null) - Number(right.advancesToMatchId !== null)
       || kickoff(left) - kickoff(right)
       || left.matchNumber - right.matchNumber);
+}
+
+/** A side's points in each period and in all, for the score-by-quarter table (#1758). */
+export type SquaresPeriodScoreLine = {
+  /** Each period's points, first to last; null for a period not started. The last includes overtime. */
+  periods: (number | null)[];
+  /** The score so far; null before kickoff. */
+  total: number | null;
+};
+
+/** The score by period (#1758): each side's points in each period, the period being played, and the totals. */
+export type SquaresScoreByPeriod = {
+  /** Each period's short name: Q1 to Q4, H1 and H2, or P1 to P3. */
+  periodNames: string[];
+  away: SquaresPeriodScoreLine;
+  home: SquaresPeriodScoreLine;
+  /** The period being played while the game is live; null before kickoff and once it is over. */
+  livePeriodNumber: number | null;
+};
+
+/** The period being played: the one after the last whose score is in, while the game is live. */
+function livePeriodNumber(game: SportEventMatchDto, layout: MatchPeriodLayout) {
+  return game.status === MatchStatus.IN_PROGRESS
+    ? Math.min(game.periodScores.length + 1, MATCH_PERIOD_LAYOUTS[layout].count)
+    : null;
+}
+
+/**
+ * The game's score by period (#1758), from the score at each period's end and the game's score
+ * now: a period's points are its end score less the one before, the period being played counts
+ * from the score now, and the last period runs to the final score, overtime included. Before
+ * kickoff every period and total is null.
+ */
+export function squaresScoreByPeriod(game: SportEventMatchDto, layout: MatchPeriodLayout): SquaresScoreByPeriod {
+  const count = MATCH_PERIOD_LAYOUTS[layout].count;
+  const live = livePeriodNumber(game, layout);
+  const endScores = new Map(game.periodScores.map((score) => [score.periodNumber, score]));
+  const line = (side: 'home' | 'away'): SquaresPeriodScoreLine => {
+    const scoreNow = side === 'home' ? game.homeScore : game.awayScore;
+    // The score at the end of each period: the recorded one, else the score now for the live or last period.
+    const endOf = (periodNumber: number) => {
+      const recorded = endScores.get(periodNumber);
+      if (recorded) {
+        return side === 'home' ? recorded.homeScore : recorded.awayScore;
+      }
+      const runsToScoreNow = periodNumber === live || (periodNumber === count && game.status === MatchStatus.COMPLETED);
+      return runsToScoreNow ? scoreNow : null;
+    };
+    const periods = Array.from({ length: count }, (_, index) => {
+      const end = endOf(index + 1);
+      const before = index === 0 ? 0 : endOf(index);
+      return end === null || before === null ? null : end - before;
+    });
+    const lastRecorded = game.periodScores.at(-1);
+    const recordedTotal = lastRecorded ? (side === 'home' ? lastRecorded.homeScore : lastRecorded.awayScore) : null;
+    return { periods, total: scoreNow ?? recordedTotal };
+  };
+  return {
+    periodNames: Array.from({ length: count }, (_, index) => periodShortName(index + 1, layout)),
+    away: line('away'),
+    home: line('home'),
+    livePeriodNumber: live,
+  };
+}
+
+/** The box winning the period being played, by the score now (#1758). */
+export type SquaresLiveBox = {
+  periodNumber: number;
+  rowIndex: number;
+  columnIndex: number;
+};
+
+/**
+ * The box that would win the period being played if it ended now (#1758): the row of the away
+ * score's last digit and the column of the home score's. Null unless the digits are drawn and the
+ * game is live with a score.
+ */
+export function squaresLiveBox(board: Pick<SquaresBoardResponse, 'digits' | 'game' | 'periodLayout'>): SquaresLiveBox | null {
+  const periodNumber = livePeriodNumber(board.game, board.periodLayout);
+  const { homeScore, awayScore } = board.game;
+  if (periodNumber === null || board.digits === null || homeScore === null || awayScore === null) {
+    return null;
+  }
+  return {
+    periodNumber,
+    rowIndex: board.digits.rowDigits.indexOf(awayScore % 10),
+    columnIndex: board.digits.columnDigits.indexOf(homeScore % 10),
+  };
 }

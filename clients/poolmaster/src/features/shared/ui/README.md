@@ -290,7 +290,9 @@ navy tooltip of one to three plain sentences and at most one link.
   after a short hover delay, so scanning a list does not flash every row, and mounts its card
   only when it opens. `trigger="text"` makes a value itself the way in instead of the (i),
   dotted underneath, such as a game's score opening that game's stats; `icon` is then the
-  value. `PeekCard` takes `title`, `subtitle`, `facts` and one `link`.
+  value. `trigger="cell"` makes a whole board cell the way in, such as a squares box opening
+  its holder; the cell's content is the `icon` and draws its own look. `PeekCard` takes `title`,
+  `subtitle`, `facts` and one `link`.
   `EntryDetailsPeek` in `features/contests` is the product peek for an entry.
 - **Story:** [details-peek.stories.tsx](./details-peek.stories.tsx)
 
@@ -460,6 +462,22 @@ A small table with no search, sort or paging: a top five, a plan comparison.
   with the `ExpandableRow` chevron.
 - **Story:** [simple-table.stories.tsx](./simple-table.stories.tsx)
 
+### `BoardBand`, `BoardCellContent`, `boardCellClassName`, `boardAxisClassName`
+A game board drawn as a grid of small cells, such as the 10x10 squares board: navy team bands
+on its edges, a number beside each row and column, and cells holding a short code.
+- **Use when:** every cell must show at once on a phone, so a cell holds a code (an entry's
+  initials from `formatEntryInitials`), never a full name.
+- **Don't use when:** the rows are things with names and figures; that is a `SimpleTable` or a
+  `DataGrid`.
+- **Props that matter:** the page builds its own `SimpleTable` and draws each cell with
+  `boardCellClassName({ isEmpty, isMine, isWon, isNow, isOnLiveLine })` (the viewer's own are
+  shaded blue, winners gold, the live one outlined green) and `BoardCellContent` (`code`, and a
+  corner `tag` such as "Q1" or "Now"). A cell that opens its holder is a `DetailsPeek` with
+  `trigger="cell"`; one the viewer acts on is a `Button` with `size="cell"` inside a frame drawn
+  with the cell's class. `BoardBand` goes across the top or, in a `relative` cell spanning the
+  rows, down the side.
+- **Story:** [board-cell.stories.tsx](./board-cell.stories.tsx)
+
 ### `BulkUploadPanel` and `UploadPreviewTable`
 Paste or upload rows, preview what they would change, then apply.
 - **Props that matter:** the caller owns the row schema, the parser and the preview and apply
@@ -589,8 +607,9 @@ import them from there.
 
 A value written on screen goes through `format.ts`, exported from the index:
 `formatPlace` / `formatOrdinal` ("T2", "1st"), `formatNumber`, `formatCount`
-("1,000 entries"), `formatCupPoints`, `formatMoneyCents` and `formatNumberList`,
-plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
+("1,000 entries"), `formatCupPoints`, `formatMoneyCents`, `formatNumberList` and
+`formatEntryInitials` (each entry's short code on a board: "BH", "S1", three letters when two
+share a code), plus the date formatters from `date-time-format.ts`. Numbers take the viewer's
 locale from `useDisplayPreferences().locale`, so pass it in rather than fixing
 `en-US`. Feature code never calls `toLocaleString`, `toFixed` or `new Intl.*Format`
 itself; `poolmaster/no-inline-display-format` enforces it
