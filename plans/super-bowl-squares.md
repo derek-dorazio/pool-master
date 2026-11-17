@@ -279,7 +279,9 @@ them. The shuffle code is shared.
   the first quarter is entered.** Claiming closes at kickoff whether or not the draw has run, so
   a commissioner who forgets until the game has begun can still draw, and nobody can choose their
   box knowing the digits. There is no automatic draw at kickoff (passive time locks were rejected;
-  explicit actions instead).
+  explicit actions instead). *Superseded by Derek 2026-11-17 (#1760):* the numbers are drawn
+  automatically when the grid fills or five minutes before kickoff, and the commissioner's Draw
+  button stays for drawing early.
 - **Q3.6** What about boxes nobody claimed? *Decided by Derek 2026-10-19:* **the draw runs with
   empty boxes, and a quarter whose winning box is empty shows "No winner"**. Commissioners handle that payout
   their own way (roll it over, refund), outside Poolmaster. A "fill the empty boxes at random"

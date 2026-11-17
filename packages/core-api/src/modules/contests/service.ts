@@ -30,11 +30,13 @@ import type {
   ContestExpansionRepository,
   ContestLeaderboardSnapshot,
   ContestLeaderboardSnapshotRepository,
+  ContestEntrySeasonPrediction,
 } from '@poolmaster/shared/db';
 import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
+  ContestEntryMatchPrediction,
   LeagueMembership,
   RankedContestEntry,
   SportEvent,
@@ -56,6 +58,7 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
+  PickOutcome,
   survivorLivesOf,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
@@ -82,7 +85,7 @@ import {
   type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse, type BracketLeaderboardEntryRow, type BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
-import { toPickEmLeaderboardResponse, type PickEmLeaderboardEntryRow, type PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
+import { toPickEmLeaderboardResponse, type PickEmLeaderboardEntryPickRow, type PickEmLeaderboardEntryRow, type PickEmLeaderboardMissedPickRow, type PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import {
   DEFAULT_SHOWN_EVENT,
@@ -93,7 +96,9 @@ import {
   nextKickoffAfter,
   type LeaderboardChanges,
 } from './leaderboard-snapshots';
-import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
+import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames, type PickEmWeekGames } from './pick-em-standings';
+import { scoreGamePicks } from '../scoring-families/head-to-head/game-picks';
+import type { BracketScore } from '../scoring-families/head-to-head/bracket-picks';
 import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
 import { toSurvivorLeaderboardResponse, type SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
 import {
@@ -126,6 +131,7 @@ import {
   areMatchPicksRevealed,
   contestCutoff,
   cutoffTiming,
+  openingRoundNumber,
   type ContestCutoff,
   type EventTiming,
 } from './entry-window';
@@ -1142,6 +1148,22 @@ export class ContestService {
       else matchesByEvent.set(match.sportEventId, [match]);
     }
 
+    // #1751 — every started week's picks in one read, for how many each entry got right, the teams
+    // it missed and the current week's picks game by game; the week under way scores from it too.
+    const seasonPicks = await this.deps.predictions.findByEntriesAndEvents(
+      counted.map((entry) => entry.id),
+      events.filter((event) => event.status !== SportEventStatus.CANCELLED && areEventPicksRevealed(contest, event, now)).map((event) => event.id),
+    );
+    const picksOf = new Map<string, typeof seasonPicks>();
+    const weekPicksOf = new Map<string, typeof seasonPicks>();
+    for (const pick of seasonPicks) {
+      for (const [map, key] of [[picksOf, entryWeekKey(pick.contestEntryId, pick.sportEventId)], [weekPicksOf, pick.sportEventId]] as const) {
+        const picks = map.get(key);
+        if (picks) picks.push(pick);
+        else map.set(key, [pick]);
+      }
+    }
+
     const weeks = await Promise.all(events.map(async (event) => {
       const weekMatches = matchesByEvent.get(event.id) ?? [];
       const games = pickEmWeekGames(event, weekMatches);
@@ -1155,7 +1177,9 @@ export class ContestService {
           && !entries.some((entry) => contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED));
       // Only a week under way is scored live: a settled week answers from its frozen standings,
       // and one not started shows no points (#762).
-      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, scoring, weekMatches) : null;
+      const live = started && !settled
+        ? await loadPickEmWeekStandings(this.deps, contestId, event, scoring, weekMatches, weekPicksOf.get(event.id) ?? [])
+        : null;
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {
@@ -1170,8 +1194,27 @@ export class ContestService {
           }]),
       );
       const winnerEntryIds = settled ? frozen.filter((standing) => standing.position === 1).map((standing) => standing.contestEntryId) : [];
-      return { event, games, started, settled, cells, winnerEntryIds };
+      return { event, games, started, settled, cells, winnerEntryIds, live };
     }));
+
+    // Each entry's picks scored once a week: the week under way from its live standings, a settled
+    // week against its games here.
+    const scoresOf = new Map<string, BracketScore>(weeks.filter((week) => week.started && !week.games.eventCancelled).flatMap(({ event, games, live }) => (live
+      ? live.entries.map((standing) => [entryWeekKey(standing.entry.id, event.id), standing.score] as const)
+      : counted.map((entry) => {
+        const key = entryWeekKey(entry.id, event.id);
+        return [key, scoreGamePicks(games.games, picksOf.get(key) ?? [], scoring)] as const;
+      }))));
+    const missedParticipantIds = new Set(seasonPicks.flatMap((pick) => (
+      pick.participantId !== null
+        && scoresOf.get(entryWeekKey(pick.contestEntryId, pick.sportEventId))?.picks.get(pick.sportEventMatchId)?.outcome === PickOutcome.BUSTED
+        ? [pick.participantId]
+        : []
+    )));
+    const teamLabelOf = new Map((await this.deps.participants.findByIds([...missedParticipantIds]))
+      .map((participant) => [participant.id, participant.shortName ?? participant.name]));
+    // The week the board opens on: the latest that has started, else the first.
+    const currentWeek = [...weeks].reverse().find((week) => week.started) ?? weeks.at(0);
 
     const totals = new Map(rankContestTotals(
       counted,
@@ -1202,15 +1245,29 @@ export class ContestService {
         totalPoints: settled?.totalScore ?? total?.score ?? 0,
         weeks: weeks.map(({ event, cells, winnerEntryIds }) => {
           const cell = cells.get(entry.id);
+          const submitted = contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED;
+          const key = entryWeekKey(entry.id, event.id);
+          const score = submitted ? scoresOf.get(key) : undefined;
           return {
             sportEventId: event.id,
-            submitted: contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED,
+            submitted,
             points: cell?.points ?? null,
             position: cell?.position ?? null,
             displayPosition: cell?.displayPosition ?? null,
             weeklyWinner: winnerEntryIds.includes(entry.id),
+            correctPickCount: score?.correctPickCount ?? null,
+            missedPicks: score ? (picksOf.get(key) ?? [])
+              .filter((pick) => score.picks.get(pick.sportEventMatchId)?.outcome === PickOutcome.BUSTED)
+              .flatMap((pick) => missedPickOf(pick, teamLabelOf)) : [],
           };
         }),
+        // A week the entry has not submitted counts for nothing, so none of its picks show.
+        currentWeekPicks: currentWeek && contestEntryEventStatus(entry, currentWeek.event.id) === ContestEntryStatus.SUBMITTED ? revealedWeekPicks(
+          currentWeek,
+          picksOf.get(entryWeekKey(entry.id, currentWeek.event.id)) ?? [],
+          scoresOf.get(entryWeekKey(entry.id, currentWeek.event.id)),
+          (game) => areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, currentWeek.event, game, openingRoundNumber(currentWeek.games.games), now),
+        ) : [],
       };
     }).sort((left, right) =>
       (left.position ?? Number.MAX_SAFE_INTEGER) - (right.position ?? Number.MAX_SAFE_INTEGER)
@@ -1219,6 +1276,7 @@ export class ContestService {
 
     const leaderboard: PickEmLeaderboardModel = {
       contestId,
+      currentWeekId: currentWeek?.event.id ?? null,
       mode: scoring.mode,
       againstTheSpread: scoring.againstTheSpread,
       weeks: weeks.map(({ event, games, started, settled, winnerEntryIds }) => ({
@@ -2064,4 +2122,45 @@ function boardOfKind<K extends LeaderboardKind>(stored: StoredLeaderboard, kind:
   if (stored.kind !== kind) return null;
   // The tag names the board's kind, so a match is that kind's board.
   return stored.board as StoredBoardOf<K>;
+}
+
+/** The key of one entry's picks for one week. */
+function entryWeekKey(contestEntryId: string, sportEventId: string): string {
+  return `${contestEntryId}:${sportEventId}`;
+}
+
+/**
+ * An entry's picks on a week's games, in game order, each with how it stands (#1751): only the
+ * games whose picks have been revealed by their kickoff, so the shared board never shows a pick
+ * another entry could still copy. A pick on a game the week no longer counts is left out.
+ */
+function revealedWeekPicks(
+  week: { games: PickEmWeekGames },
+  picks: readonly ContestEntryMatchPrediction[],
+  score: BracketScore | undefined,
+  isRevealed: (game: SportEventMatch) => boolean,
+): PickEmLeaderboardEntryPickRow[] {
+  const pickOf = new Map(picks.map((pick) => [pick.sportEventMatchId, pick]));
+  return week.games.games.flatMap((game) => {
+    const pick = pickOf.get(game.id);
+    if (!pick || !isRevealed(game)) {
+      return [];
+    }
+    return [{
+      sportEventMatchId: game.id,
+      // Null for a tie pick (#792).
+      sportEventParticipantId: pick.sportEventParticipantId,
+      outcome: score?.picks.get(game.id)?.outcome ?? PickOutcome.PENDING,
+    }];
+  });
+}
+
+/** A pick that did not come true, named by its team (#1751); null names a tie pick. */
+function missedPickOf(pick: ContestEntrySeasonPrediction, teamLabelOf: ReadonlyMap<string, string>): PickEmLeaderboardMissedPickRow[] {
+  if (pick.participantId === null) {
+    return [{ teamName: null }];
+  }
+  const teamName = teamLabelOf.get(pick.participantId);
+  // Every picked team was read above; a participant row that has since gone names nothing.
+  return teamName === undefined ? [] : [{ teamName }];
 }

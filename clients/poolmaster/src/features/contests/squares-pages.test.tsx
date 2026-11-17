@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
@@ -69,10 +69,11 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-/** Where the contest page sits in the app's routes: says which contest it was sent to. */
+/** Where the contest page sits in the app's routes: says which contest, and which entry, it was sent to. */
 function ContestPageStandIn() {
   const { contestId, leagueCode } = useParams();
-  return <p data-testid="contest-page-stand-in">{`${leagueCode ?? ''} ${contestId ?? ''}`}</p>;
+  const { search } = useLocation();
+  return <p data-testid="contest-page-stand-in">{`${leagueCode ?? ''} ${contestId ?? ''} ${search}`}</p>;
 }
 
 function renderPage(path: string) {
@@ -113,11 +114,11 @@ describe('Squares contest entry links', () => {
     getContestMock.mockReset();
   });
 
-  it('sends a link to a squares entry, from Make your picks, an email or a short link, to the contest page, where its boxes are claimed on the board', async () => {
+  it('sends a link to a squares entry, from Make your picks, an email or a short link, to the contest page with that entry opened, where its boxes are claimed on the board', async () => {
     getContestMock.mockResolvedValue({ data: { contest: squaresContestFixture() } });
     renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
 
-    expect(await screen.findByTestId('contest-page-stand-in')).toHaveTextContent('BIGDAWGS contest-1');
+    expect(await screen.findByTestId('contest-page-stand-in')).toHaveTextContent('BIGDAWGS contest-1 ?entry=entry-1');
   });
 });
 
@@ -342,6 +343,33 @@ describe('Squares contest leaderboard', () => {
     fireEvent.mouseDown(screen.getByTestId('squares-tab-winners'));
     fireEvent.click(screen.getByTestId('squares-tab-winners'));
     expect(await screen.findByTestId('squares-winners')).toHaveTextContent('Q1Chiefs 7, Eagles 3');
+  });
+
+  it('shades the boxes of the entry a link names (?entry=) as the viewer\'s own are, and scrolls to the board', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-2');
+
+    await screen.findByTestId('squares-grid');
+    expect(box(1, 1)).toHaveAttribute('data-linked', 'true');
+    expect(box(1, 1)).not.toHaveAttribute('data-mine');
+    expect(box(0, 0)).not.toHaveAttribute('data-linked');
+    expect(scrolled).toEqual([screen.getByTestId('squares-grid')]);
+    scroll.mockRestore();
+  });
+
+  it('shades no boxes and scrolls nowhere for an entry id the board doesn\'t hold', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ contest: squaresContestFixture({ status: 'ACTIVE', myEntryIds: ['entry-1'] }), board: squaresBoardFixture({ contestStatus: 'ACTIVE', claimsOpen: false, drawOpen: false }) });
+    renderPage('/league/BIGDAWGS/contests/contest-1/leaderboard?entry=entry-9');
+
+    await screen.findByTestId('squares-grid');
+    expect(screen.queryAllByTestId(/^squares-box-/).some((each) => each.hasAttribute('data-linked'))).toBe(false);
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
   });
 
   it('shows a box\'s full entry name and its numbers on a tap once the numbers are drawn', async () => {

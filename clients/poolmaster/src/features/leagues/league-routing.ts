@@ -83,6 +83,11 @@ export function buildLeagueContestPath(leagueCode: string, contestId: string) {
   return `/league/${leagueCode}/contests/${contestId}`;
 }
 
+/** One entry opened on its contest's page (`?entry=`, #1762), as emails and shared links name it. */
+export function buildLeagueContestEntryLinkPath(leagueCode: string, contestId: string, entryId: string) {
+  return `${buildLeagueContestPath(leagueCode, contestId)}?entry=${encodeURIComponent(entryId)}`;
+}
+
 /**
  * A contest page's way back to the Contests page (#1392): the tab the contest is listed on, Past
  * at the year it went final once it is final and Current before, with the contest in focus, so

@@ -296,7 +296,7 @@ test('act 3: a new member joins, enters, and claims a box, which the grid shows 
     );
     state.entryId = created.entry.id;
     // A squares contest has no entry page: the new entry's link brings the viewer back here.
-    await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}$`));
+    await expect(page).toHaveURL(new RegExp(`/league/${run.leagueCode}/contests/${state.contestId}\\?entry=${state.entryId}$`));
     await expect(page.getByTestId(`squares-entry-line-${state.entryId}-count`)).toHaveText('0 of 10 boxes');
   });
 

@@ -28,6 +28,7 @@ const rankedEventIds = [
   'integration-rebuild-fail',
   'integration-linked-by-name',
   'integration-linked-by-league',
+  'integration-play-in-place',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -82,6 +83,8 @@ afterAll(async () => {
           'ingestion-batch-3',
           'ingestion-rebuild-1',
           'ingestion-rebuild-2',
+          'ingestion-play-in-team',
+          'ingestion-play-in-place',
         ],
       },
     },
@@ -443,6 +446,27 @@ describe('IngestionPersistence', () => {
     expect(byGolfer).toEqual({
       'ingestion-odds-1': { seedNumber: 3, oddsToWin: 8.5 },
       'ingestion-odds-2': { seedNumber: 3, oddsToWin: null },
+    });
+  });
+
+  it('marks the row it makes for a provider\'s play-in place as one, and a team\'s row as none', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(getAppPrisma());
+    const entrant = (externalId: string, metadata: Record<string, unknown>) => ({
+      externalId, providerId: 'TEST_PROVIDER', sport: Sport.GOLF, name: `Golfer ${externalId}`, active: true, metadata,
+    });
+    const detail = rankedFieldDetail('integration-play-in-place', [
+      entrant('ingestion-play-in-team', { seed: 1 }),
+      entrant('ingestion-play-in-place', { seed: 16, playInPlace: true }),
+    ]);
+    const event = await linkedProviderEvent(prisma, { providerId: detail.providerId, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
+
+    await persistence.persistEventDetailWithDiagnostics(detail);
+
+    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true } });
+    expect(Object.fromEntries(rows.map((row) => [row.participant.externalId, row.isPlayInPlace]))).toEqual({
+      'ingestion-play-in-team': false,
+      'ingestion-play-in-place': true,
     });
   });
 

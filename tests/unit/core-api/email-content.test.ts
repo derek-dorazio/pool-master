@@ -1,5 +1,8 @@
 import {
+  buildContestEntryUrl,
+  buildContestUrl,
   buildCreateContestUrl,
+  buildEntryUrl,
   formatStandingPlace,
   formatUserName,
 } from '../../../packages/core-api/src/modules/email';
@@ -24,6 +27,15 @@ describe('buildCreateContestUrl', () => {
     expect(buildCreateContestUrl('https://app.example.test', 'OFFICE24')).toBe(base);
     expect(buildCreateContestUrl('https://app.example.test', 'OFFICE24', { templateId: 't1', sportEventId: 'e1' })).toBe(`${base}?template=t1&event=e1`);
     expect(buildCreateContestUrl('https://app.example.test', 'OFFICE24', { sportEventId: 'e1' })).toBe(`${base}?event=e1`);
+  });
+});
+
+describe('contest links', () => {
+  it('links the contest page, one entry opened on it (?entry=) and the entry\'s pick screen, each id encoded', () => {
+    const base = 'https://app.example.test/';
+    expect(buildContestUrl(base, 'OFFICE24', 'contest-1')).toBe('https://app.example.test/league/OFFICE24/contests/contest-1');
+    expect(buildContestEntryUrl(base, 'OFFICE24', 'contest-1', 'entry 7')).toBe('https://app.example.test/league/OFFICE24/contests/contest-1?entry=entry%207');
+    expect(buildEntryUrl(base, 'OFFICE24', 'contest-1', 'entry-7')).toBe('https://app.example.test/league/OFFICE24/contests/contest-1/entries/entry-7');
   });
 });
 

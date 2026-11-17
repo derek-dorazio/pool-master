@@ -117,7 +117,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     rules: MASTERS_RULES,
     entryCount: 12,
     hasEntry: false,
-    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   CONTEST_ENTRY_REMINDER: {
     userName: 'Morgan Member',
@@ -152,17 +152,17 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     moment: { kind: StandingsMomentKind.ROUND, eventName: 'The Masters', roundNumber: 2 },
     top: [
       { place: '1', entryName: 'Amen Corner', score: '-12', movement: 2, isYours: false },
-      { place: 'T2', entryName: 'Green Jackets', score: '-9', movement: 0, isYours: true },
+      { place: 'T2', entryName: 'Green Jackets', score: '-9', movement: 0, isYours: true, entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-green` },
       { place: 'T2', entryName: 'Azalea', score: '-9', movement: -1, isYours: false },
     ],
     yours: [
-      { place: '14', entryName: 'Long Shots', score: '+3', movement: -4, isYours: true },
+      { place: '14', entryName: 'Long Shots', score: '+3', movement: -4, isYours: true, entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-long` },
     ],
     entryCount: 18,
-    cut: [{ entryName: 'Long Shots', names: ['Danny Willett', 'Mike Weir'] }],
+    cut: [{ entryName: 'Long Shots', entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-long`, names: ['Danny Willett', 'Mike Weir'] }],
     out: [],
     champions: [],
-    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   CONTEST_RESULTS: {
     userName: 'Morgan Member',
@@ -172,17 +172,17 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       kind: ContestResultsKind.SCORED,
       winners: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
       top: [
-        { place: '1', entryName: 'Green Jackets', score: '-14', movement: null, isYours: true },
+        { place: '1', entryName: 'Green Jackets', score: '-14', movement: null, isYours: true, entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-green` },
         { place: '2', entryName: 'Amen Corner', score: '-12', movement: null, isYours: false },
         { place: '3', entryName: 'Azalea', score: '-9', movement: null, isYours: false },
       ],
       yours: [
-        { place: '14', entryName: 'Long Shots', score: '+3', movement: null, isYours: true },
+        { place: '14', entryName: 'Long Shots', score: '+3', movement: null, isYours: true, entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-long` },
       ],
       entryCount: 18,
-      yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
+      yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member', entryUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1?entry=entry-green` }],
     },
-    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1/leaderboard`,
+    leaderboardUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
   CONTEST_EVENT_CHANGED: {
     userName: 'Morgan Member',

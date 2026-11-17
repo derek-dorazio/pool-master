@@ -33,6 +33,7 @@ import { useSquaresBoardQuery } from './use-squares-board';
 import { useContestLeagueCode } from './use-contest-league';
 import { SquaresWinners } from './squares-winners';
 import { entryWriteKeys } from './use-contest-entries';
+import { useLandOnEntry } from './use-linked-entry';
 
 /** The tabs above a drawn board. */
 type SquaresTab = 'score' | 'winners';
@@ -57,11 +58,17 @@ const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
 export function SquaresBoardView({
   canManage,
   contest,
+  linkedEntryId = null,
   myEntryIds,
 }: {
   /** Whether the viewer is a commissioner of the league (or a root admin). */
   canManage: boolean;
   contest: ContestDto;
+  /**
+   * The entry a link names (`?entry=`, #1762): once the board holds it, its boxes are shaded as
+   * the viewer's own are and the page scrolls to the board, once. An id the board doesn't hold is ignored.
+   */
+  linkedEntryId?: string | null;
   /** The viewer's own entries in the contest: one, or none before they enter. */
   myEntryIds: readonly string[];
 }) {
@@ -74,6 +81,7 @@ export function SquaresBoardView({
   // The entry a commissioner claims for; null is the entry on screen, else their own, else the first entry.
   const [claimForEntryId, setClaimForEntryId] = useState<string | null>(null);
   const [isDrawConfirmOpen, setIsDrawConfirmOpen] = useState(false);
+  const landOn = useLandOnEntry();
   // The tab the viewer chose; until they choose, Score while the game is played and Winners once it is over.
   const [chosenTab, setChosenTab] = useState<SquaresTab | null>(null);
 
@@ -142,6 +150,8 @@ export function SquaresBoardView({
   }
 
   const board = boardQuery.data;
+  const shownLinkedEntryId = board.entries.some((entry) => entry.contestEntryId === linkedEntryId) ? linkedEntryId : null;
+  landOn(shownLinkedEntryId);
   const myEntryId = myEntryIds.at(0) ?? null;
   const claimingEntryId = canManage
     ? claimForEntryId
@@ -267,6 +277,7 @@ export function SquaresBoardView({
           actionFor={actionFor}
           board={board}
           isBusy={boxMutation.isPending}
+          linkedEntryId={shownLinkedEntryId}
           myEntryIds={myEntryIds}
           onBoxAction={changeBox}
         />
