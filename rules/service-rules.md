@@ -302,6 +302,8 @@ definition of done.
   `LEADERBOARD_BOARD_FORMAT` in the same change, and boards stored under an older format are
   computed again instead of served. A test hashes the four responses' shapes in the contract
   and fails on a change with no bump; add the new format's hash there, never edit an old one.
+  A bump may only add fields, never remove or rename one: during a rolling deploy a task still
+  on the older code serves the newer board, and drops only the fields its schema does not name.
 
 ### List Envelope Discipline
 
