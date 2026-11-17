@@ -39,8 +39,8 @@ function SignInTarget() {
   return <div data-testid="redirect-target">{JSON.stringify(location.state)}</div>;
 }
 
-function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {
-  return render(
+function memberGuardTree(initialEntries: string[]) {
+  return (
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route element={<MemberRouteGuard />}>
@@ -48,8 +48,12 @@ function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {
         </Route>
         <Route element={<SignInTarget />} path="/" />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {
+  return render(memberGuardTree(initialEntries));
 }
 
 function renderRootAdminGuard(initialEntries = ['/manage']) {
@@ -111,6 +115,24 @@ describe('route guards', () => {
 
     expect(JSON.parse((await screen.findByTestId('redirect-target')).textContent)).toEqual({
       from: '/league/LEAGUE1',
+    });
+  });
+
+  it('stamps the page an account signs out of with that account, so the next account to sign in (a root admin) does not land on it', async () => {
+    // Signed in on a league page; sign-out forgets the remembered account before the guard
+    // sees the session go, so only the guard itself still knows whose page this was.
+    authState.isAuthenticated = true;
+    authState.user = { id: 'member-1' };
+    const view = renderMemberGuard(['/league/LEAGUE1']);
+    expect(await screen.findByTestId('member-guard-allowed')).toBeVisible();
+
+    authState.isAuthenticated = false;
+    authState.user = null;
+    view.rerender(memberGuardTree(['/league/LEAGUE1']));
+
+    expect(JSON.parse((await screen.findByTestId('redirect-target')).textContent)).toEqual({
+      from: '/league/LEAGUE1',
+      fromUserId: 'member-1',
     });
   });
 
