@@ -10,6 +10,7 @@ import {
   SelectionType,
   SportEventStatus,
   contestEntryEventTiebreaker,
+  type ContestEntryMatchPrediction,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -83,7 +84,8 @@ export function pickEmWeekGames(
 
 /**
  * The contest's entries that submitted the week, scored against its games and ranked. A caller
- * that already read the week's matches passes them in, so they are not read again.
+ * that already read the week's matches, or its entries' picks, passes them in, so they are not
+ * read again.
  */
 export async function loadPickEmWeekStandings(
   deps: PickEmStandingsReadDeps,
@@ -91,6 +93,7 @@ export async function loadPickEmWeekStandings(
   sportEvent: Pick<SportEvent, 'id' | 'status' | 'startDate'>,
   scoring: GamePickScoring,
   weekMatches?: readonly SportEventMatch[],
+  weekPredictions?: readonly ContestEntryMatchPrediction[],
 ): Promise<PickEmWeekStandings> {
   const sportEventId = sportEvent.id;
   const [entries, matches] = await Promise.all([
@@ -98,9 +101,9 @@ export async function loadPickEmWeekStandings(
     weekMatches ?? deps.matches.findBySportEvent(sportEventId),
   ]);
   const { eventCancelled, games, tiebreakerTotalPoints: tiebreakerTotal } = pickEmWeekGames(sportEvent, matches);
-  const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
+  const predictions = weekPredictions ?? await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
 
-  const picksByEntry = new Map<string, typeof predictions>();
+  const picksByEntry = new Map<string, ContestEntryMatchPrediction[]>();
   for (const prediction of predictions) {
     const picks = picksByEntry.get(prediction.contestEntryId);
     if (picks) picks.push(prediction);

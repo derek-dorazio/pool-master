@@ -112,6 +112,7 @@ function setup() {
     predictions: games.predictionRepo(),
     matches: games.matchRepo(),
     eventParticipants: games.fieldService(),
+    participants: games.participantRepo(),
     now: () => now,
   });
   const contestService = new ContestService(deps);
@@ -344,6 +345,72 @@ describe('ContestService.getPickEmLeaderboard', () => {
     const leaderboard = await context.leaderboard();
     expect(leaderboard.weeks[1]).toMatchObject({ settled: true, winnerEntryIds: [] });
     expect(leaderboard.entries.map((entry) => entry.weeks[1]?.points)).toEqual([null, null, null]);
+  });
+
+  it('counts each week\'s picks that came true and names the team of each that did not', async () => {
+    const context = setup();
+    context.playWeek1();
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.weeks[0]?.correctPickCount, entry.weeks[0]?.missedPicks])).toEqual([
+      ['Alice', 2, [{ teamName: 'Home 2' }]],
+      ['Bob', 2, [{ teamName: 'Away 3' }]],
+      ['Cara', 1, [{ teamName: 'Away 1' }, { teamName: 'Away 3' }]],
+    ]);
+    // Week 2 has not started: nothing has come true or missed yet.
+    expect(leaderboard.entries.map((entry) => [entry.weeks[1]?.correctPickCount, entry.weeks[1]?.missedPicks])).toEqual([[null, []], [null, []], [null, []]]);
+  });
+
+  it('names a missed tie pick with no team, for the page to call it a tie', async () => {
+    const context = setup();
+    const { g2 } = context.week1Games;
+    const alicePick = expectDefined(context.games.predictions.get(`entry-alice:${g2.id}`));
+    context.games.predictions.set(`entry-alice:${g2.id}`, { ...alicePick, predictedResult: PredictedResult.TIE, sportEventParticipantId: null });
+    context.playWeek1();
+
+    const leaderboard = await context.leaderboard();
+    const alice = expectDefined(leaderboard.entries.find((entry) => entry.entryName === 'Alice'));
+    expect(alice.weeks[0]?.missedPicks).toEqual([{ teamName: null }]);
+    expect(alice.currentWeekPicks.find((pick) => pick.sportEventMatchId === g2.id)).toEqual({ sportEventMatchId: g2.id, sportEventParticipantId: null, outcome: 'BUSTED' });
+  });
+
+  it('carries only the picks on games that have kicked off, never one still to be played', async () => {
+    const context = setup();
+    // An hour after the first game kicks off; the second and third are a day and two away.
+    context.setNow(new Date(WEEK_1.getTime() + HOUR));
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.currentWeekId).toBe(context.week1.id);
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.currentWeekPicks])).toEqual([
+      ['Alice', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Bob', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Cara', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.awaySportEventParticipantId, outcome: 'BUSTED' }]],
+    ]);
+  });
+
+  it('moves the current week on once the next week starts, leaving out an entry\'s picks on a week it left in draft', async () => {
+    const context = setup();
+    await settleWeek1(context);
+    context.setNow(DURING_WEEK_2);
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.currentWeekId).toBe(context.week2.id);
+    expect(leaderboard.entries.map((entry) => [entry.entryName, entry.currentWeekPicks.map((pick) => pick.outcome)])).toEqual([
+      ['Alice', ['PENDING', 'PENDING', 'PENDING']],
+      ['Bob', ['PENDING', 'PENDING', 'PENDING']],
+      ['Cara', []],
+    ]);
+  });
+
+  it('opens on the first week before any has started, with no picks shown', async () => {
+    const context = setup();
+    context.setNow(BEFORE_KICKOFF);
+    context.world.contests.set(context.contest.id, { ...context.contest, status: ContestStatus.OPEN });
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.currentWeekId).toBe(context.week1.id);
+    expect(leaderboard.entries.every((entry) => entry.currentWeekPicks.length === 0)).toBe(true);
   });
 
   it('refuses a contest that is not pick\'em with CONTEST_FORMAT_MISMATCH', async () => {
