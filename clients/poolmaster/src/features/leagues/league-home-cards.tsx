@@ -1,146 +1,74 @@
 import { useState } from 'react';
 import { SelectionType } from '@poolmaster/shared/domain';
-import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto, SquadDto } from '@/lib/api';
+import type { ContestDto } from '@/lib/api';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
-import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { EntryDetailsPeek } from '@/features/contests/entry-details-peek';
 import { MineMarker } from '@/features/contests/mine-marker';
-import { StartEntryButton } from '@/features/contests/start-entry-button';
+import type { MyContestEntries } from '@/features/contests/use-contest-entries';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
-  Countdown,
-  Eyebrow,
-  formatDateTimeDisplay,
-  Heading,
-  LinkButton,
-  LoadingState,
+  PageTabs,
+  QueryState,
   SectionCard,
-  SectionEmpty,
   SectionRow,
   SectionRows,
-  QueryState,
-  SegmentedControl,
   SimpleTable,
   TableBody,
   TableCell,
   TableRow,
-  Tile,
-  useDisplayPreferences,
+  Tabs,
+  TabsContent,
 } from '@/features/shared/ui';
-import { formatOwnerCount } from '@/features/teams/team-directory';
 import {
   buildBracketTopStandings,
   buildTopStandings,
+  orderLiveStandings,
   type StandingRow,
-  type UpNextContest,
 } from './league-home';
-import {
-  describeMyEntry,
-  type MyEntriesState,
-} from '@/features/contests/my-contest-entry';
 import { cupProgress, cupsOnShow, describeCupStanding } from '@/features/championships/cup-view';
 import { useSeasonCupsQuery } from '@/features/championships/use-cups-query';
 import {
   buildLeagueContestPath,
-  buildLeagueContestsPath,
   buildLeaguePointsRacePath,
-  buildLeagueTeamPath,
   buildLeagueTrophyCasePath,
 } from './league-routing';
 
-export function UpNextCard({
-  entriesState,
+/**
+ * League Home's Contests card (#1763): every current contest, entered or not, each with the
+ * viewer's next step, in the one list the league has. It is always shown, with one italic line
+ * when nothing is open or live.
+ */
+export function ContestsCard({
+  canExpand,
+  contests,
+  focusContestId,
   hasTeam,
   leagueCode,
   myEntries,
   now,
-  upNext,
+  showDrafts,
 }: {
-  entriesState: MyEntriesState;
-  hasTeam: boolean;
-  leagueCode: string;
-  myEntries: readonly ContestEntryDto[] | undefined;
-  now: Date;
-  upNext: UpNextContest;
-}) {
-  const displayPreferences = useDisplayPreferences();
-  const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
-
-  return (
-    <Tile
-      aria-labelledby="league-home-up-next-title"
-      as="section"
-      className="grid gap-4 p-6"
-      data-testid="league-home-up-next"
-      padding="none"
-      radius="panel"
-      variant="inverse"
-    >
-      <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>
-      <Heading level={2} variant="card" size="2xl" tone="inherit" id="league-home-up-next-title">
-        {upNext.contest.name}
-      </Heading>
-      <p className="text-sm text-on-inverse-muted">
-        Entries close {formatDateTimeDisplay(upNext.closesAt, displayPreferences)}.
-      </p>
-      <Countdown label="Entries close in" now={now} testId="league-home-countdown" tone="inverse" until={upNext.closesAt} />
-      <div className="flex flex-wrap items-center gap-3">
-        {next.kind === 'start' ? (
-          <StartEntryButton
-            contestId={upNext.contest.id}
-            label={next.label}
-            leagueCode={leagueCode}
-            size="sm"
-            surface="inverse"
-            testId="league-home-up-next-action"
-          />
-        ) : (
-          <LinkButton data-testid="league-home-up-next-action" size="sm" to={next.to}>
-            {next.label}
-          </LinkButton>
-        )}
-        <span className="text-sm text-on-inverse-muted">{next.note}</span>
-      </div>
-    </Tile>
-  );
-}
-
-/**
- * League Home's Current contests card (#1390, #1561): the shared current-contest list, less the
- * Up next contest, always shown, with one italic line when nothing else is open or live.
- */
-export function CurrentContestsCard({
-  bestPlaceByContestId,
-  contests,
-  emptyBody,
-  entriesByContestId,
-  entriesState,
-  hasTeam,
-  leagueCode,
-}: {
-  bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
+  canExpand: boolean;
   contests: readonly ContestDto[];
-  emptyBody: string;
-  entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
-  entriesState: MyEntriesState;
+  focusContestId: string | null;
   hasTeam: boolean;
   leagueCode: string;
+  myEntries: MyContestEntries;
+  now: Date;
+  showDrafts: boolean;
 }) {
   return (
-    <SectionCard
-      footer={{ label: 'All contests', testId: 'league-home-all-contests', to: buildLeagueContestsPath(leagueCode) }}
-      testId="league-home-current-contests"
-      title="Current contests"
-    >
+    <SectionCard testId="league-home-contests" title="Contests">
       <CurrentContestList
-        bestPlaceByContestId={bestPlaceByContestId}
+        canExpand={canExpand}
         contests={contests}
-        emptyBody={emptyBody}
-        entriesByContestId={entriesByContestId}
-        entriesState={entriesState}
+        emptyBody="No open or live contests."
+        focusContestId={focusContestId}
         hasTeam={hasTeam}
         leagueCode={leagueCode}
-        showDrafts={false}
+        myEntries={myEntries}
+        now={now}
+        showDrafts={showDrafts}
         testIdPrefix="league-home-contest"
       />
     </SectionCard>
@@ -171,23 +99,28 @@ function StandingsRow({ leagueCode, leagueId, row }: { leagueCode: string; leagu
 }
 
 /**
- * Live standings (#1391): a chip for every live contest the viewer has an entry in, the first
- * chosen to start, and the chosen contest's top five with their own row if lower. Only the chosen
- * contest's leaderboard is read, so Home makes one leaderboard request however many are live.
+ * Live standings (#1391, #1763): a tab for every live contest in the league, the ones the viewer
+ * has an entry in first, each group by start, and the chosen contest's top five, with the
+ * viewer's own row if lower. A contest they are not in shows its top five alone. Only the chosen
+ * tab's leaderboard is read, so Home makes one leaderboard request however many are live.
  */
 export function LiveStandingsCard({
   contests,
   leagueCode,
+  myContestIds,
   mySquadId,
 }: {
-  /** The live contests the viewer has an entry in, at least one. */
+  /** The league's live contests, at least one. */
   contests: readonly ContestDto[];
   leagueCode: string;
+  /** The contests the viewer's team has an entry in. */
+  myContestIds: ReadonlySet<string>;
   mySquadId: string | null;
 }) {
-  const [chosenId, setChosenId] = useState(contests[0].id);
-  // A contest that went final since the chip was chosen falls back to the first one still live.
-  const contest = contests.find((candidate) => candidate.id === chosenId) ?? contests[0];
+  const ordered = orderLiveStandings(contests, myContestIds);
+  const [chosenId, setChosenId] = useState(ordered[0].id);
+  // A contest that went final since its tab was chosen falls back to the first one still live.
+  const contest = ordered.find((candidate) => candidate.id === chosenId) ?? ordered[0];
 
   return (
     <SectionCard
@@ -197,24 +130,25 @@ export function LiveStandingsCard({
         to: buildLeagueContestPath(leagueCode, contest.id),
       }}
       testId="league-home-live-standings"
-      title={`${contest.name} · Top 5`}
-      trailing={<ContestStatusBadge status={contest.status} />}
+      title="Live standings"
     >
-      {contests.length > 1 ? (
-        <div className="border-b border-border px-4 py-3">
-          <SegmentedControl
+      <Tabs onValueChange={setChosenId} value={contest.id}>
+        <div className="border-b border-border px-4">
+          <PageTabs
             aria-label="Live contest to show"
-            onChange={setChosenId}
-            options={contests.map((option) => ({
+            items={ordered.map((option) => ({
               label: option.name,
-              testId: `league-home-live-standings-chip-${option.id}`,
+              testId: `league-home-live-standings-tab-${option.id}`,
               value: option.id,
             }))}
-            value={contest.id}
+            variant="state"
           />
         </div>
-      ) : null}
-      <TopStandings contest={contest} key={contest.id} leagueCode={leagueCode} mySquadId={mySquadId} />
+        {/* Only the open tab's panel mounts, so only its leaderboard is read. */}
+        <TabsContent className="focus-visible:outline-none" value={contest.id}>
+          <TopStandings contest={contest} key={contest.id} leagueCode={leagueCode} mySquadId={mySquadId} />
+        </TabsContent>
+      </Tabs>
     </SectionCard>
   );
 }
@@ -248,34 +182,6 @@ function TopStandings({ contest, leagueCode, mySquadId }: { contest: ContestDto;
         </SimpleTable>
       )}
     </QueryState>
-  );
-}
-
-export function YourTeamCard({
-  isLoading,
-  leagueCode,
-  team,
-}: {
-  isLoading: boolean;
-  leagueCode: string;
-  team: SquadDto | null;
-}) {
-  return (
-    <SectionCard
-      footer={{ label: team ? 'My team' : 'Create your team', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
-      testId="league-home-your-team"
-      title="Yours"
-    >
-      {isLoading ? (
-        <LoadingState size="inline" />
-      ) : team ? (
-        <SectionRows>
-          <SectionRow facts={formatOwnerCount(team)} name={team.name} testId="league-home-your-team-row" />
-        </SectionRows>
-      ) : (
-        <SectionEmpty>You haven&apos;t created your team in this league yet.</SectionEmpty>
-      )}
-    </SectionCard>
   );
 }
 

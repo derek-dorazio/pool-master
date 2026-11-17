@@ -3,7 +3,7 @@ import { enterContest } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';
-import { Button, Notice, Text } from '@/features/shared/ui';
+import { Button, Notice } from '@/features/shared/ui';
 import { entryWriteKeys } from './use-contest-entries';
 
 function refusal(error: Error | null) {
@@ -20,7 +20,6 @@ export function StartEntryButton({
   label,
   leagueCode,
   size,
-  surface,
   testId,
   variant,
 }: {
@@ -28,10 +27,9 @@ export function StartEntryButton({
   label: string;
   leagueCode: string;
   size?: 'sm';
-  /** `inverse` on a dark tile (Home's Up next), where a refusal reads as light text, not a notice box. */
-  surface?: 'inverse';
   testId: string;
-  variant?: 'inverse';
+  /** `secondary` beside another action, such as Add entry beside Edit picks on League Home. */
+  variant?: 'secondary';
 }) {
   const navigate = useNavigate();
   const startEntry = useInvalidatingMutation({
@@ -61,15 +59,9 @@ export function StartEntryButton({
         {label}
       </Button>
       {startEntry.isError ? (
-        surface === 'inverse' ? (
-          <Text as="p" data-testid={`${testId}-error`} role="alert" tone="onInverse" variant="meta">
-            {refusal(startEntry.error)}
-          </Text>
-        ) : (
-          <Notice data-testid={`${testId}-error`} tone="danger">
-            {refusal(startEntry.error)}
-          </Notice>
-        )
+        <Notice data-testid={`${testId}-error`} tone="danger">
+          {refusal(startEntry.error)}
+        </Notice>
       ) : null}
     </div>
   );

@@ -45,6 +45,7 @@ import { lineupSpend, useLineupPickValues, type LineupPickValues } from './use-l
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
 import { MineMarker } from './mine-marker';
+import { isContestFull } from './my-contest-entry';
 import { areContestEntriesOpen } from './contest-status';
 import { SquaresBoardView } from './squares-board-view';
 import { StartEntryButton } from './start-entry-button';
@@ -228,7 +229,7 @@ export function ContestEntryListPage() {
   // The cap counts every team's drafts too: its plan's (#947), or its expansion (#987).
   const entryCount = contest.allEntryCount ?? entries.length;
   const entryCap = contest.entriesPerContest;
-  const isFull = entryCap !== null && entryCount >= entryCap;
+  const isFull = isContestFull(contest, entryCount);
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
   const hasMine = myEntryIds.length > 0;
   const expandableIds = opensToPicks(contest) ? myEntryIds : [];

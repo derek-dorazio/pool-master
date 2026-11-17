@@ -1,94 +1,177 @@
-import { formatSelectionTypeName } from '@poolmaster/shared/domain';
-import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
-import { buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { Eyebrow, SectionEmpty, SectionRows, formatCount, formatNumber, formatPlace, useDisplayPreferences } from '@/features/shared/ui';
-import { ContestRow } from './contest-row';
-import { CURRENT_CONTEST_GROUP_LABEL, groupCurrentContests } from './current-contests';
-import { describeMyEntry, type MyEntriesState } from './my-contest-entry';
+import type { ReactNode } from 'react';
+import { ContestStatus } from '@poolmaster/shared/domain';
+import type { ContestDto, ContestEntryPlaceDto } from '@/lib/api';
+import { buildLeagueAdminContestPath, buildLeagueContestPath } from '@/features/leagues/league-routing';
+import {
+  DateDisplay,
+  LinkButton,
+  SectionEmpty,
+  SectionRow,
+  SectionRows,
+  StatusBadge,
+  formatCount,
+  formatNumber,
+  formatPlace,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
+import { CONTEST_STATUS_LABELS } from './contest-status';
+import { orderCurrentContests } from './current-contests';
+import { describeContestNextStep, type ContestNextStep } from './my-contest-entry';
+import { StartEntryButton } from './start-entry-button';
+import type { MyContestEntries } from './use-contest-entries';
 import { listedContestStartsAt } from './use-contest-schedule';
 
 /**
- * A league's current contests (#1390), the one list League Home and the Contests page share:
- * grouped Live, Open, then Set up (commissioners only), each row saying where the
- * viewer's entry stands in the same words everywhere and opening the contest by the one link rule.
- * The group heading names the status, so a row carries no badge of its own, which leaves a phone
- * row room for the contest's name. A live contest's row shows the place of the viewer's best
- * entry, as its leaderboard has it (#1565), and a viewer with several entries in a contest sees
- * how many in its fact line. Drawn as a section card's body; `focusContestId` tints and scrolls to
- * the contest the viewer came from.
+ * League Home's contests (#1763): every current contest in the league, entered or not, Open
+ * (soonest closing first), then Live, then Set up for commissioners. Each row is the contest's
+ * name, a muted status line, and the viewer's next step as a button: Make your picks, Edit picks
+ * and Add entry, or Full. A tap anywhere else on the row opens the contest page. Drawn as a
+ * section card's body; `focusContestId` tints and scrolls to the contest the viewer came from.
  */
 export function CurrentContestList({
-  bestPlaceByContestId,
+  canExpand,
   contests,
   emptyBody,
-  entriesByContestId,
-  entriesState,
   focusContestId = null,
   hasTeam,
   leagueCode,
+  myEntries,
+  now,
   showDrafts,
-  showEntryCount = false,
   testIdPrefix,
 }: {
-  /** The best place among the viewer's entries in each live contest that ranks one. */
-  bestPlaceByContestId: ReadonlyMap<string, ContestEntryPlaceDto>;
+  /** Whether the viewer commissions the league, so a full contest offers Expand. */
+  canExpand: boolean;
   contests: readonly ContestDto[];
   emptyBody: string;
-  entriesByContestId: ReadonlyMap<string, readonly ContestEntryDto[]>;
-  entriesState: MyEntriesState;
   focusContestId?: string | null;
   hasTeam: boolean;
   leagueCode: string;
-  /** Whether the viewer commissions the league or is a root admin, the only people who see a draft. */
+  myEntries: Pick<MyContestEntries, 'bestPlaceByContestId' | 'entriesByContestId' | 'state'>;
+  now: Date;
+  /** Whether the viewer commissions the league or is a root admin, the only people who see a set-up contest. */
   showDrafts: boolean;
-  /** Each row's entry count after its kind, for the Contests page's full list. */
-  showEntryCount?: boolean;
   testIdPrefix: string;
 }) {
-  const { locale } = useDisplayPreferences();
-  const sections = groupCurrentContests(contests, { showDrafts });
-  if (!sections.length) {
+  const ordered = orderCurrentContests(contests, { showDrafts });
+  if (!ordered.length) {
     return <SectionEmpty testId={`${testIdPrefix}-empty`}>{emptyBody}</SectionEmpty>;
   }
 
   return (
-    <div data-testid={`${testIdPrefix}-list`}>
-      {sections.map(({ contests: grouped, group }) => (
-        <section aria-label={CURRENT_CONTEST_GROUP_LABEL[group]} data-testid={`${testIdPrefix}-group-${group}`} key={group}>
-          <Eyebrow className="px-4 pb-1 pt-3" tone="muted">{CURRENT_CONTEST_GROUP_LABEL[group]}</Eyebrow>
-          <SectionRows>
-            {grouped.map((contest) => {
-              const myEntries = entriesByContestId.get(contest.id);
-              const bestPlace = bestPlaceByContestId.get(contest.id);
-              return (
-                <ContestRow
-                  details={describeContestFacts(contest, showEntryCount, myEntries?.length ?? 0, locale)}
-                  isHighlighted={contest.id === focusContestId}
-                  key={contest.id}
-                  name={contest.name}
-                  note={describeMyEntry(leagueCode, contest, myEntries, entriesState, hasTeam).note}
-                  startsAt={listedContestStartsAt(contest)}
-                  testId={`${testIdPrefix}-${contest.id}`}
-                  to={buildLeagueContestPath(leagueCode, contest.id)}
-                  trailing={bestPlace ? formatPlace(bestPlace) : null}
-                />
-              );
-            })}
-          </SectionRows>
-        </section>
-      ))}
-    </div>
+    <SectionRows testId={`${testIdPrefix}-list`}>
+      {ordered.map((contest) => {
+        const testId = `${testIdPrefix}-${contest.id}`;
+        const entries = myEntries.entriesByContestId.get(contest.id);
+        const step = describeContestNextStep({
+          bestPlace: myEntries.bestPlaceByContestId.get(contest.id),
+          contest,
+          entriesState: myEntries.state,
+          hasTeam,
+          leagueCode,
+          myEntries: entries,
+          now,
+        });
+        return (
+          <SectionRow
+            actions={renderActions(step, contest, leagueCode, canExpand, testId)}
+            facts={<ContestStatusLine contest={contest} myEntryCount={entries?.length ?? 0} step={step} testId={`${testId}-status`} />}
+            isHighlighted={contest.id === focusContestId}
+            key={contest.id}
+            name={contest.name}
+            note={step.kind === 'note' ? <span data-testid={`${testId}-note`}>{step.note}</span> : undefined}
+            testId={testId}
+            to={buildLeagueContestPath(leagueCode, contest.id)}
+          />
+        );
+      })}
+    </SectionRows>
   );
 }
 
+/** The row's buttons for its next step, or nothing when the row itself is the way in. */
+function renderActions(step: ContestNextStep, contest: ContestDto, leagueCode: string, canExpand: boolean, testId: string) {
+  switch (step.kind) {
+    case 'start':
+      return <StartEntryButton contestId={contest.id} label="Make your picks" leagueCode={leagueCode} size="sm" testId={`${testId}-make-picks`} />;
+    case 'entered':
+      return (
+        <>
+          <LinkButton data-testid={`${testId}-edit-picks`} size="sm" to={step.edit.to}>{step.edit.label}</LinkButton>
+          {step.canAddEntry ? (
+            <StartEntryButton contestId={contest.id} label="Add entry" leagueCode={leagueCode} size="sm" testId={`${testId}-add-entry`} variant="secondary" />
+          ) : null}
+        </>
+      );
+    case 'full':
+      return (
+        <>
+          <StatusBadge data-testid={`${testId}-full`} tone="neutral">Full</StatusBadge>
+          {/* Members never see expansions or prices; its commissioners can expand it. */}
+          {canExpand ? (
+            <LinkButton data-testid={`${testId}-expand`} size="sm" to={buildLeagueAdminContestPath(leagueCode, contest.id)} variant="secondary">
+              Expand
+            </LinkButton>
+          ) : null}
+        </>
+      );
+    case 'none':
+    case 'note':
+    case 'standing':
+      return undefined;
+  }
+}
+
 /**
- * A row's fact line after its date: the contest's kind, its entry count on the full list, and how
- * many entries the viewer has when they have more than one (#1565).
+ * The muted line under a contest's name: its status, then what matters at that status. Open:
+ * when it closes and how many have entered. Live: the viewer's place of how many, or how many
+ * entries when they are not in it. Set up: when it starts. "Your 2 entries" when they have more
+ * than one.
  */
-function describeContestFacts(contest: ContestDto, showEntryCount: boolean, myEntryCount: number, locale: string): string {
-  return [
-    formatSelectionTypeName(contest.selectionType),
-    ...(showEntryCount ? [formatCount(contest.entryCount ?? 0, 'entry', locale, 'entries')] : []),
-    ...(myEntryCount > 1 ? [`Your ${formatNumber(myEntryCount, locale)} entries`] : []),
-  ].join(' · ');
+function ContestStatusLine({
+  contest,
+  myEntryCount,
+  step,
+  testId,
+}: {
+  contest: ContestDto;
+  myEntryCount: number;
+  step: ContestNextStep;
+  testId: string;
+}) {
+  const { locale } = useDisplayPreferences();
+  const startsAt = listedContestStartsAt(contest);
+  const entryCount = contest.entryCount ?? 0;
+  const parts: { key: string; node: ReactNode }[] = [{ key: 'status', node: CONTEST_STATUS_LABELS[contest.status] }];
+  if (contest.status === ContestStatus.OPEN) {
+    if (startsAt && step.kind !== 'none') {
+      parts.push({ key: 'closes', node: <>closes <DateDisplay timeStyle={null} tone="inherit" value={startsAt} /></> });
+    }
+    parts.push({ key: 'entries', node: formatCount(entryCount, 'entry', locale, 'entries') });
+  } else if (contest.status === ContestStatus.ACTIVE) {
+    parts.push(step.kind === 'standing' && step.place
+      ? { key: 'place', node: describePlaceOf(step.place, entryCount, locale) }
+      : { key: 'entries', node: formatCount(entryCount, 'entry', locale, 'entries') });
+  } else if (startsAt) {
+    parts.push({ key: 'starts', node: <>starts <DateDisplay timeStyle={null} tone="inherit" value={startsAt} /></> });
+  }
+  if (myEntryCount > 1) {
+    parts.push({ key: 'mine', node: `Your ${formatNumber(myEntryCount, locale)} entries` });
+  }
+
+  return (
+    <span className="flex flex-wrap items-center gap-x-1" data-testid={testId}>
+      {parts.map(({ key, node }, index) => (
+        <span className="inline-flex items-center gap-x-1" key={key}>
+          {index > 0 ? <span aria-hidden="true">·</span> : null}
+          {node}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** "you're 3rd of 14": the viewer's best entry's place among the contest's entries. */
+function describePlaceOf(place: ContestEntryPlaceDto, entryCount: number, locale: string): string {
+  return `you're ${formatPlace(place)} of ${formatNumber(entryCount, locale)}`;
 }

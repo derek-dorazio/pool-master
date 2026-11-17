@@ -1,34 +1,18 @@
 /**
- * League Home's derivations: which contest is up next, how long until it closes, and the top of
- * a live leaderboard. Pure, so each rule is testable on its own.
+ * League Home's derivations: the order of the Live standings tabs and the top of a live
+ * leaderboard. Pure, so each rule is testable on its own.
  */
-import { ContestStatus } from '@poolmaster/shared/domain';
 import type { BracketLeaderboardResponse, ContestDto, ContestLeaderboardResponse } from '@/lib/api';
 import { buildLeaderboardView } from '@/features/contests/contest-leaderboard';
-import { areContestEntriesOpen } from '@/features/contests/contest-status';
-import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
+import { bySoonestStart } from '@/features/contests/current-contests';
 
-export type UpNextContest = {
-  contest: ContestDto;
-  /** The entry cutoff: the event's scheduled start. */
-  closesAt: string;
-};
-
-/** The open contest whose entries close soonest. A contest with no known cutoff comes last. */
-export function pickUpNextContest(
-  contests: readonly ContestDto[],
-  now: Date,
-): UpNextContest | null {
-  const candidates = contests.flatMap((contest) => {
-    const startsAt = listedContestStartsAt(contest);
-    if (contest.status !== ContestStatus.OPEN || !areContestEntriesOpen(contest, startsAt, now)) {
-      return [];
-    }
-    return startsAt ? [{ contest, closesAt: startsAt }] : [];
-  });
-
-  candidates.sort((left, right) => Date.parse(left.closesAt) - Date.parse(right.closesAt));
-  return candidates[0] ?? null;
+/**
+ * Live standings' tabs (#1763): the live contests the viewer has an entry in first, then the rest,
+ * each group by start, soonest first.
+ */
+export function orderLiveStandings(contests: readonly ContestDto[], myContestIds: ReadonlySet<string>): ContestDto[] {
+  const rank = (contest: ContestDto) => (myContestIds.has(contest.id) ? 0 : 1);
+  return [...contests].sort((left, right) => rank(left) - rank(right) || bySoonestStart(left, right));
 }
 
 export type StandingRow = {

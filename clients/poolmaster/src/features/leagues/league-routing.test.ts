@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
-  buildContestsFocusPath,
+  buildContestBreadcrumb,
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
   buildLeagueAdminContestsPath,
-  buildLeagueContestsPath,
+  buildLeagueTeamPastContestsPath,
   buildLeagueHistoryPath,
   buildLeagueTeamHomePath,
   getCommissionerLeagueIds,
@@ -93,7 +93,6 @@ describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
       '/league/BIGDOGS/teams/team-1',
     );
     expect(buildLeagueHistoryPath('BIGDOGS')).toBe('/league/BIGDOGS/history');
-    expect(buildLeagueContestsPath('BIGDOGS')).toBe('/league/BIGDOGS/contests');
     expect(buildLeagueAdminContestsPath('BIGDOGS')).toBe(
       '/league/BIGDOGS/admin/contests',
     );
@@ -112,21 +111,27 @@ describe('buildLeagueContestPath', () => {
   });
 });
 
-describe('buildContestsFocusPath', () => {
-  it('opens the Current tab focused on a contest that is not final', () => {
+describe('buildContestBreadcrumb', () => {
+  it('leads back to League Home, focused on a contest that is not final', () => {
     for (const status of [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE]) {
-      expect(buildContestsFocusPath('BIGDAWGS', { endsAt: null, id: 'c1', status })).toBe('/league/BIGDAWGS/contests?focus=c1');
+      expect(buildContestBreadcrumb('BIGDAWGS', { endsAt: null, id: 'c1', status })).toEqual({ href: '/league/BIGDAWGS?focus=c1', label: 'Home' });
     }
   });
 
-  it('opens the Past tab at the US Eastern year a final contest ended, focused on it', () => {
+  it('leads back to My team\'s Past contests at the US Eastern year a final contest ended, focused on it', () => {
     // 3 AM UTC on New Year's Day is still New Year's Eve in the East.
-    expect(buildContestsFocusPath('BIGDAWGS', { endsAt: '2027-01-01T03:00:00.000Z', id: 'c1', status: ContestStatus.COMPLETED }))
-      .toBe('/league/BIGDAWGS/contests/history?year=2026&focus=c1');
+    expect(buildContestBreadcrumb('BIGDAWGS', { endsAt: '2027-01-01T03:00:00.000Z', id: 'c1', status: ContestStatus.COMPLETED }))
+      .toEqual({ href: '/league/BIGDAWGS/team?past=all&pastYear=2026&focus=c1', label: 'My team' });
   });
 
-  it('opens the Past tab on its newest year, focused on the contest, when a final contest has no end', () => {
-    expect(buildContestsFocusPath('BIGDAWGS', { endsAt: null, id: 'c1', status: ContestStatus.COMPLETED }))
-      .toBe('/league/BIGDAWGS/contests/history?focus=c1');
+  it('opens Past contests on its newest year, focused on the contest, when a final contest has no end', () => {
+    expect(buildContestBreadcrumb('BIGDAWGS', { endsAt: null, id: 'c1', status: ContestStatus.COMPLETED }))
+      .toEqual({ href: '/league/BIGDAWGS/team?past=all&focus=c1', label: 'My team' });
+  });
+});
+
+describe('buildLeagueTeamPastContestsPath', () => {
+  it('opens My team\'s full Past contests list, with no year or focus unless given', () => {
+    expect(buildLeagueTeamPastContestsPath('BIGDAWGS')).toBe('/league/BIGDAWGS/team?past=all');
   });
 });
