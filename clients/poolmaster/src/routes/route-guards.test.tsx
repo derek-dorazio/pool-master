@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resolvePostAuthDestination } from '@/features/auth/post-auth-destination';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
 const { authState, mockLogger } = vi.hoisted(() => {
@@ -134,6 +135,24 @@ describe('route guards', () => {
       from: '/league/LEAGUE1',
       fromUserId: 'member-1',
     });
+  });
+
+  it('returns the member who signed out to the league page they left, while a root admin signing in next goes to Manage', async () => {
+    authState.isAuthenticated = true;
+    authState.user = { id: 'member-1' };
+    const view = renderMemberGuard(['/league/LEAGUE1']);
+    expect(await screen.findByTestId('member-guard-allowed')).toBeVisible();
+
+    authState.isAuthenticated = false;
+    authState.user = null;
+    view.rerender(memberGuardTree(['/league/LEAGUE1']));
+    const returnState = JSON.parse((await screen.findByTestId('redirect-target')).textContent) as {
+      from: string;
+      fromUserId?: string;
+    };
+
+    expect(resolvePostAuthDestination({ id: 'member-1', isRootAdmin: false, isActive: true }, returnState)).toBe('/league/LEAGUE1');
+    expect(resolvePostAuthDestination({ id: 'root-admin', isRootAdmin: true, isActive: true }, returnState)).toBe('/manage');
   });
 
   it('allows authenticated member routes and logs the happy path', async () => {

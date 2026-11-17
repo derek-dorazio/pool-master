@@ -76,6 +76,9 @@ export function MemberRouteGuard() {
   }
 
   if (!auth.isAuthenticated) {
+    // With nobody let in and nobody remembered (a fresh tab opening an email's entry link or a
+    // shared league link), the return path goes unstamped on purpose: it is a deep link, not
+    // anyone's page, and sign-in follows it for whoever signs in.
     const fromUserId = admittedUserId ?? getLastSignedInUserId();
     return (
       <Navigate
