@@ -134,6 +134,46 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       expect(detail).toMatchObject({ status: 'IN_PROGRESS', participantCount: 4, endDate: new Date('2026-04-21T00:00:00Z') });
     });
 
+    it('gives a playoffs under way no bracket and reads no standings while its first round is not all out', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('nba-2025-postseason');
+
+      expect(detail?.bracket).toBeUndefined();
+      expect(detail?.games?.map((game) => [game.roundNumber, game.homeTeamExternalId, game.awayTeamExternalId])).toEqual([
+        [1, 'nba-team-20', 'nba-team-6'],
+        [1, 'nba-team-8', 'nba-team-10'],
+      ]);
+      expect(requestLine(harness.api).filter((line) => line.startsWith('/nba/v1/standings'))).toEqual([]);
+    });
+
+    it('seeds the bracket by conference, West first, the play-in\'s 7 and 8 seeds placed by whom they meet, not by their standings rank', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('nba-2023-postseason');
+
+      const team = (id: number) => `nba-team-${String(id)}`;
+      // New Orleans ranked 7th in the West but lost the play-in to the Lakers, so meets Oklahoma City as the 8 seed.
+      expect(detail?.bracket?.filter((match) => match.roundNumber === 1).map((match) => [match.matchNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId])).toEqual([
+        [1, 'West', team(21), team(19)],
+        [2, 'West', team(13), team(7)],
+        [3, 'West', team(18), team(24)],
+        [4, 'West', team(8), team(14)],
+        [5, 'East', team(2), team(16)],
+        [6, 'East', team(6), team(22)],
+        [7, 'East', team(17), team(12)],
+        [8, 'East', team(20), team(23)],
+      ]);
+      expect(detail?.bracket?.filter((match) => match.roundNumber > 1).map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.advancesTo?.matchNumber ?? null])).toEqual([
+        [9, 2, 'West', 13], [10, 2, 'West', 13], [11, 2, 'East', 14], [12, 2, 'East', 14], [13, 3, 'West', 15], [14, 3, 'East', 15], [15, 4, null, null],
+      ]);
+      expect(detail?.rounds).toBe(4);
+      expect(detail?.games).toHaveLength(15);
+      expect(requestLine(harness.api)).toContain('/nba/v1/standings?season=2023');
+    });
+
     it('gives nothing for a season whose playoffs have no game yet', async () => {
       const harness = setup();
       restore = harness.restore;
