@@ -349,8 +349,9 @@ export function ContestEntryListPage() {
         <SquaresBoardView
           canManage={viewer.isCommissioner || viewer.isRootAdmin}
           contest={contest}
-          // Before lock only the viewer's own entry is linked: its boxes shade as theirs do anyway.
-          linkedEntryId={linkedMineId}
+          // Before lock a member's link opens only their own entry; a commissioner's opens any
+          // entry, which they then claim boxes for.
+          linkedEntryId={viewer.isCommissioner || viewer.isRootAdmin ? linkedEntry.entryId : linkedMineId}
           myEntryIds={contest.myEntryIds ?? []}
         />
       ) : (
