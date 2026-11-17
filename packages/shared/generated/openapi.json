@@ -31695,6 +31695,12 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
+                "placedEntryCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "How many of the board's entries the week has placed: the \"of N\" of an entry's place in it. None until the week starts."
+                },
                 "winnerEntryIds": {
                   "type": "array",
                   "items": {
@@ -31713,6 +31719,7 @@
                 "settled",
                 "gameCount",
                 "tiebreakerTotalPoints",
+                "placedEntryCount",
                 "winnerEntryIds"
               ],
               "additionalProperties": false,

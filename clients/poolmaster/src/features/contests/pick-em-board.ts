@@ -45,24 +45,10 @@ export function pickEmShownWeeks(board: Pick<PickEmBoard, 'currentWeekId' | 'wee
 }
 
 /**
- * How many entries each week has placed, by week id: the "of N" of a week's place, counted once
- * per week for the whole board.
- */
-export function pickEmPlacedCounts(board: Pick<PickEmBoard, 'entries'>): ReadonlyMap<string, number> {
-  const counts = new Map<string, number>();
-  for (const cell of board.entries.flatMap((entry) => entry.weeks)) {
-    if (cell.position !== null) {
-      counts.set(cell.sportEventId, (counts.get(cell.sportEventId) ?? 0) + 1);
-    }
-  }
-  return counts;
-}
-
-/**
  * One entry's cell for one week: how many of its picks came true so far, a medal for the week's
- * top three, and a peek with its place among the week's `placed` entries and the picks it missed.
+ * top three, and a peek with its place among the entries the week placed and the picks it missed.
  */
-export function pickEmWeekCell(week: PickEmBoardWeek, placed: number, cell: PickEmBoardEntryWeek | undefined): PickEmWeekCellView {
+export function pickEmWeekCell(week: PickEmBoardWeek, cell: PickEmBoardEntryWeek | undefined): PickEmWeekCellView {
   if (!cell || cell.correctPickCount === null) {
     return { text: '—', medal: null, peek: null };
   }
@@ -74,7 +60,7 @@ export function pickEmWeekCell(week: PickEmBoardWeek, placed: number, cell: Pick
       title: week.name,
       facts: [
         { label: 'Right', value: `${String(cell.correctPickCount)} of ${String(week.gameCount)}` },
-        ...(place ? [{ label: 'Place', value: `${place} of ${String(placed)}` }] : []),
+        ...(place ? [{ label: 'Place', value: `${place} of ${String(week.placedEntryCount)}` }] : []),
         {
           label: 'Missed',
           value: cell.missedPicks.length > 0 ? cell.missedPicks.map((miss) => miss.teamName ?? 'Tie').join(', ') : 'None',

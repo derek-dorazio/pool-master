@@ -569,6 +569,7 @@ describe('LiveStandings.queueDue', () => {
         settled: index === 0,
         gameCount: 16,
         tiebreakerTotalPoints: null,
+        placedEntryCount: index === 0 ? entries.length : 0,
         winnerEntryIds: index === 0 ? entries.filter((entry) => entry.week1?.position === 1).map((entry) => entry.entryId) : [],
       })),
       entries: entries.map((entry) => ({
