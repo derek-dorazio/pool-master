@@ -193,11 +193,28 @@ describe('survivor rules', () => {
     expect(suggestContestName('NFL Week 1', SelectionType.SURVIVOR, null, 0)).toBe('NFL Week 1 Survivor');
   });
 
+  it('mentions the second life only in a two-life survivor contest, where a loss costs a life and a second puts the entry out', () => {
+    expect(formatContestRules({ selectionType: SelectionType.SURVIVOR, lives: 2 }, 0, TEAM)).toBe(
+      'Pick one team to win each week, and never the same team twice until every team has been picked. A loss, a tie or a week not submitted by its first kickoff costs a life. You can lose once and stay in; a second loss puts you out. The last entries standing win.',
+    );
+    expect(formatContestRules({ selectionType: SelectionType.SURVIVOR, lives: 1 }, 0, TEAM))
+      .toBe(formatContestRules({ selectionType: SelectionType.SURVIVOR }, 0, TEAM));
+  });
+
+  it('turns the Lives choice into the survivor rules\' lives, 1 unless set to 2, and fills it back', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorLives: 2 }, SelectionType.SURVIVOR, 0, TEAM).configuration)
+      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, lives: 2, maxEntriesPerSquad: 1 });
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, lives: 2, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
+      .toEqual({ ...DEFAULT_CONTEST_RULES, survivorLives: 2 });
+    // A contest saved before lives reads as one life.
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 }, { ...DEFAULT_CONTEST_RULES, survivorLives: 2 }).survivorLives).toBe(1);
+  });
+
   it('turns the rules fields into survivor rules with the team reuse setting and entry limit, and fills both back', () => {
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '2' }, SelectionType.SURVIVOR, 0, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 2 }, error: null });
+      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, lives: 1, maxEntriesPerSquad: 2 }, error: null });
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }, SelectionType.SURVIVOR, 0, TEAM).configuration)
-      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 });
+      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, lives: 1, maxEntriesPerSquad: 1 });
     expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: null }, { ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }))
       .toEqual({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true });
     expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))

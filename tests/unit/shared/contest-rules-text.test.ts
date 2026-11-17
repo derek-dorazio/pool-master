@@ -68,6 +68,8 @@ describe('formatContestRules — the other selection types', () => {
 
     expect(survivor(undefined)).toContain('never the same team twice until every team has been picked');
     expect(survivor(false)).toContain('Pick one team to win each week, and never the same team twice. A loss');
+    expect(survivor(undefined)).not.toContain('lose once');
+    expect(formatContestRules(rules({ selectionType: SelectionType.SURVIVOR, lives: 2 }), 0, golfer)).toContain('You can lose once and stay in; a second loss puts you out.');
     expect(formatContestRules(rules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 1 }), 0, golfer)).toMatch(/^Claim up to 1 box on a 10x10 grid/);
   });
 });

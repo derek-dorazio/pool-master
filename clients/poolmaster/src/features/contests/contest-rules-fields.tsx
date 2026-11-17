@@ -3,6 +3,7 @@ import {
   PickEmMode,
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SQUARES_PER_ENTRY_MAX,
+  SURVIVOR_LIVES_MAX,
   SelectionType,
   type SportNoun,
   describeBracketRules,
@@ -273,6 +274,9 @@ function BracketRulesInputs({
   );
 }
 
+/** The survivor Lives choice (#1754): 1 up to the most a contest allows. */
+const SURVIVOR_LIVES_CHOICES = Array.from({ length: SURVIVOR_LIVES_MAX }, (_, index) => index + 1);
+
 type RulesInputsProps = {
   bracketStartRounds: readonly BracketStartRoundOption[];
   onChange: (next: Partial<ContestRulesValues>) => void;
@@ -301,7 +305,24 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   ),
   [SelectionType.SURVIVOR]: ({ onChange, values }: RulesInputsProps) => (
     <div className="space-y-4">
-      <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams)}</Text>
+      <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams, values.survivorLives)}</Text>
+      <FormField label="Lives">
+        <SegmentedControl
+          aria-label="Lives"
+          onChange={(value) => {
+            const survivorLives = SURVIVOR_LIVES_CHOICES.find((lives) => String(lives) === value);
+            if (survivorLives !== undefined) {
+              onChange({ survivorLives });
+            }
+          }}
+          options={SURVIVOR_LIVES_CHOICES.map((lives) => ({
+            label: String(lives),
+            testId: `contest-survivor-lives-${String(lives)}`,
+            value: String(lives),
+          }))}
+          value={String(values.survivorLives)}
+        />
+      </FormField>
       <Text as="div" className="space-y-1">
         <label className="flex items-center gap-3 font-medium text-foreground">
           <Checkbox
