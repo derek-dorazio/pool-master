@@ -40,7 +40,7 @@ export function SquaresWinners({
       </TableHead>
       <TableBody>
         {moments.map(({ periodNumber, tag, winner }) => {
-          const isMine = winner?.contestEntryId !== null && winner !== null && myEntryIds.includes(winner.contestEntryId);
+          const isMine = winner !== null && winner.contestEntryId !== null && myEntryIds.includes(winner.contestEntryId);
           const squadId = winner ? squadIdOf(winner.contestEntryId) : undefined;
           return (
             <TableRow data-mine={isMine || undefined} data-testid={`squares-winner-${periodNumber}`} isHighlighted={isMine} key={periodNumber}>

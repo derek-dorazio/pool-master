@@ -27,6 +27,7 @@ const BEFORE_DRAW: SquaresGridBoard = {
   homeTeamName: 'Eagles',
   boxes: BOXES,
   digits: null,
+  entries: NAMES.map((entryName, index) => ({ contestEntryId: `e${index}`, entryName, squadId: `s${index}`, boxCount: 0, periodsWon: 0, displayPosition: null })),
   game: squaresGameFixture(),
   periodLayout: 'QUARTERS',
   winners: [],
@@ -74,7 +75,7 @@ export const Live: Story = {
   },
 };
 
-/** Final: four winners, one box winning twice (Q1/Final). */
+/** Final: four winners, one box winning twice (Q1/F). */
 export const Final: Story = {
   args: {
     actionFor: () => null,

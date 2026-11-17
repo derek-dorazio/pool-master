@@ -9,7 +9,7 @@ const CELLS: { label: string; state: BoardCellState; code: string; tag?: { label
   { label: "Held", state: PLAIN, code: "BH" },
   { label: "Yours", state: { ...PLAIN, isMine: true }, code: "S1" },
   { label: "Won", state: { ...PLAIN, isWon: true }, code: "MH", tag: { label: "Q1", tone: "won" } },
-  { label: "Yours, won twice", state: { ...PLAIN, isMine: true, isWon: true }, code: "S1", tag: { label: "Q1/Final", tone: "won" } },
+  { label: "Yours, won twice", state: { ...PLAIN, isMine: true, isWon: true }, code: "S1", tag: { label: "Q1/F", tone: "won" } },
   { label: "Live line", state: { ...PLAIN, isOnLiveLine: true }, code: "L2" },
   { label: "Winning now", state: { ...PLAIN, isNow: true, isOnLiveLine: true }, code: "MO", tag: { label: "Now", tone: "now" } },
 ];

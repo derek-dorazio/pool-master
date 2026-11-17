@@ -145,6 +145,22 @@ describe('Squares contest entry page', () => {
     expect(screen.queryByTestId('squares-claim-for')).not.toBeInTheDocument();
   });
 
+  it('codes a box from every entry of the contest, so a code does not change when another entry sharing it claims its first box', async () => {
+    primeMocks({
+      board: squaresBoardFixture({
+        boxes: [{ rowIndex: 1, columnIndex: 1, contestEntryId: 'entry-2', entryName: 'Big Hitters' }],
+        entries: [
+          { contestEntryId: 'entry-1', entryName: 'Bay Hawks', squadId: 'squad-1', boxCount: 0, periodsWon: 0, displayPosition: null },
+          { contestEntryId: 'entry-2', entryName: 'Big Hitters', squadId: 'squad-2', boxCount: 1, periodsWon: 0, displayPosition: null },
+        ],
+      }),
+    });
+    renderPage('/league/BIGDAWGS/contests/contest-1/entries/entry-1');
+
+    await screen.findByTestId('squares-grid');
+    expect(box(1, 1)).toHaveTextContent('BHI');
+  });
+
   it('claims an empty box for the viewer\'s own entry on a tap and shows the board the server answers with', async () => {
     primeMocks();
     const claimed = squaresBoardFixture({
@@ -277,7 +293,8 @@ describe('Squares contest leaderboard', () => {
     expect(within(screen.getByTestId('squares-winner-1')).getByRole('button', { name: 'About Morgan’s Madness' })).toBeInTheDocument();
     expect(within(screen.getByTestId('squares-winner-3')).queryByRole('button')).not.toBeInTheDocument();
     expect(box(0, 0)).toHaveAttribute('data-winner', 'true');
-    expect(box(0, 0)).toHaveTextContent('MMQ1/Final');
+    expect(box(0, 0)).toHaveTextContent('MMQ1/F');
+    expect(boxControl(0, 0)).toHaveAccessibleName(/won Q1, Final/);
     expect(box(7, 9)).toHaveAttribute('data-winner', 'true');
     expect(box(7, 9)).toHaveTextContent('Q3');
     expect(box(5, 5)).not.toHaveAttribute('data-winner');

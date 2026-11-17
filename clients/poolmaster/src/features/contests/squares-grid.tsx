@@ -29,7 +29,7 @@ export type SquaresBoxAction = 'claim' | 'clear' | null;
 /** What the grid draws from the board read. */
 export type SquaresGridBoard = Pick<
   SquaresBoardResponse,
-  'awayTeamName' | 'boxes' | 'digits' | 'game' | 'homeTeamName' | 'periodLayout' | 'winners'
+  'awayTeamName' | 'boxes' | 'digits' | 'entries' | 'game' | 'homeTeamName' | 'periodLayout' | 'winners'
 >;
 
 /**
@@ -37,7 +37,7 @@ export type SquaresGridBoard = Pick<
  * team down the side in navy bands, their digits beside the board ("?" until drawn). A claimed box
  * shows its entry's initials, so the whole board fits a phone; hovering or tapping it opens the
  * entry's full name and the box's numbers. The viewer's own boxes are shaded and outlined blue, as
- * their rows are on other boards; winning boxes are gold with the period they won on a tag, and while a period is played its score's row and column
+ * their rows are on other boards; winning boxes are gold with the period they won on a tag ("Q1/F" for a box that won Q1 and the final), and while a period is played its score's row and column
  * are tinted and the box winning it now is outlined green with a Now tag. A box the viewer can
  * claim or clear is a button that does so instead.
  */
@@ -58,9 +58,8 @@ export function SquaresGrid({
   const boxes = boxesByPlace(board.boxes);
   const winningPeriods = winningPeriodsByPlace(board.winners);
   const live = squaresLiveBox(board);
-  const initials = formatEntryInitials(
-    [...new Map(board.boxes.map((box) => [box.contestEntryId, box.entryName])).entries()].map(([id, name]) => ({ id, name })),
-  );
+  // From every entry of the contest, not only those holding a box, so a code never changes as others claim.
+  const initials = formatEntryInitials(board.entries.map((entry) => ({ id: entry.contestEntryId, name: entry.entryName })));
   const homeTeam = board.homeTeamName ?? 'Home team';
   const awayTeam = board.awayTeamName ?? 'Away team';
   const digit = (digits: readonly number[] | undefined, index: number) => (digits ? String(digits[index]) : '?');
@@ -138,7 +137,8 @@ export function SquaresGrid({
                   : `${[`${place}: empty`, ...facts].join(', ')}${action === 'claim' ? '. Tap to claim.' : ''}`;
                 const look = boardCellClassName({ isEmpty: box === null, isMine, isWon: won.length > 0, isNow, isOnLiveLine: isLiveLine });
                 const tag = tags.length > 0
-                  ? { label: tags.join('/'), tone: 'won' as const }
+                  // Two or more tags shorten Final to F ("Q1/F"), so the tag stays inside its box on a phone.
+                  ? { label: tags.length > 1 ? tags.map((each) => (each === 'Final' ? 'F' : each)).join('/') : tags[0], tone: 'won' as const }
                   : isNow ? { label: 'Now', tone: 'now' as const } : undefined;
                 const content = <BoardCellContent code={box ? initials.get(box.contestEntryId) ?? '' : ''} tag={tag} />;
                 const marks = {
