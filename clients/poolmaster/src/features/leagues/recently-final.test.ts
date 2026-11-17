@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildContestResult } from '@/features/championships/test/fixtures';
-import { RECENTLY_FINAL_DAYS, describeRecentlyFinal, pickRecentlyFinal, recentlyFinalYears } from './recently-final';
+import { RECENTLY_FINAL_DAYS, describeRecentlyFinal, pickRecentlyFinal, recentlyFinalSince, recentlyFinalYears } from './recently-final';
 
 const NOW = new Date('2026-11-17T18:00:00.000Z');
 
@@ -13,6 +13,13 @@ describe('pickRecentlyFinal', () => {
     ];
 
     expect(pickRecentlyFinal(contests, NOW).map((contest) => contest.contestId)).toEqual(['today', 'two-days']);
+  });
+});
+
+describe('recentlyFinalSince', () => {
+  it('asks from the start of the UTC day the window opens on, so the read changes once a day, not every minute', () => {
+    expect(recentlyFinalSince(new Date('2026-11-17T20:15:00.000Z'))).toBe('2026-11-14T00:00:00.000Z');
+    expect(recentlyFinalSince(new Date('2026-11-17T23:59:00.000Z'))).toBe('2026-11-14T00:00:00.000Z');
   });
 });
 

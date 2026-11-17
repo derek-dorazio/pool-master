@@ -6,7 +6,7 @@
  * real route. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
 import { randomUUID } from 'crypto';
-import { ContestFormat, ContestStatus, CupWeight, RecordType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, CupWeight, RecordType, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
   createTestUser,
@@ -36,7 +36,7 @@ import {
   SportEventYearListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { expectConstantQueries } from '../query-scaling';
-import { get, okBody, seedEventWithField, seedLeagueWithTeams } from '../list-route-seeds';
+import { get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestRow } from '../../support/contest-rows';
 import { freshEventEdition } from '../../support/event-edition';
@@ -65,6 +65,30 @@ async function seedLeagueWithContests(contests: number) {
       status: ContestStatus.OPEN,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
+    });
+  }
+  return seeded;
+}
+
+const HOUR = 60 * 60 * 1000;
+
+/**
+ * A league with `contests` live one-week pick'em contests, each on its own NFL week of three games
+ * with one played, so the list reads every week's games for its progress (#1782).
+ */
+async function seedLeagueWithLivePickEms(contests: number) {
+  const seeded = await seedLeagueWithTeams(1);
+  const contestRows = new PrismaContestRepository(getAppPrisma());
+  for (let index = 0; index < contests; index += 1) {
+    const { event } = await seedFootballWeek({ games: 3, startDate: new Date(Date.now() - HOUR), status: SportEventStatus.IN_PROGRESS, played: 1 });
+    await createContestRow(contestRows, {
+      leagueId: seeded.league.id,
+      seasonYear: event.startDate.getUTCFullYear(),
+      sportEventIds: [event.id],
+      name: `Pick'em ${seeded.suffix} ${index}`,
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.PICK_EM,
     });
   }
   return seeded;
@@ -222,6 +246,19 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
       seed: seedLeagueWithContests,
       call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/contests/`, commissioner),
       rowsShown: (response) => okBody(response, ContestListResponseSchema).contests.length,
+    });
+  });
+
+  it("GET a league's live one-week pick'ems: the same statements for 2 as for 20, each with its games played (#1782)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/contests/',
+      seed: seedLeagueWithLivePickEms,
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/contests/`, commissioner),
+      rowsShown: (response) => {
+        const { contests } = okBody(response, ContestListResponseSchema);
+        expect(contests.map((contest) => contest.progress)).toEqual(contests.map(() => ({ played: 1, total: 3, unit: 'GAMES' })));
+        return contests.length;
+      },
     });
   });
 

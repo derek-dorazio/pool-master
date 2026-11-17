@@ -1,11 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { ContestStatus, SelectionType, formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { describeContestNextStep } from '@/features/contests/my-contest-entry';
 import { StartEntryButton } from '@/features/contests/start-entry-button';
 import type { MyContestEntries } from '@/features/contests/use-contest-entries';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
-import { eventGamesQueryOptions } from '@/features/contests/use-event-games';
 import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 import {
   Countdown,
@@ -26,7 +24,6 @@ import {
 import {
   buildBracketTopStandings,
   buildTopStandings,
-  countsEventGames,
   describeLiveProgress,
   type StandingRow,
 } from './league-home';
@@ -123,9 +120,8 @@ function LiveHero({
   const myBestRow = standings && bestPlace
     ? [...standings.rows, ...standings.myRowsBelow].find((row) => row.entryId === bestPlace.entryId)
     : undefined;
-  // A one-event prediction contest counts its event's games (#1763), the shared games read.
-  const gamesQuery = useQuery(eventGamesQueryOptions(countsEventGames(contest) ? contest.sportEvents[0]?.sportEventId ?? '' : ''));
-  const progress = describeLiveProgress(contest, gamesQuery.data);
+  // The contest list counts its progress (#1782): no games read here.
+  const progress = describeLiveProgress(contest, locale);
   // A viewer with no entry in it watches it (the approved mock); one in it reads their leaderboard.
   const isIn = Boolean(myEntries.entriesByContestId.get(contest.id)?.length) || bestPlace !== undefined;
   const entered = formatNumber(contest.entryCount ?? 0, locale);
