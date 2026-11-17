@@ -98,32 +98,37 @@ function seededSlots(league: PlayoffsLeague, groups: readonly string[] | null, f
 /**
  * A league seeded by division (the NHL's): in each conference, each division's winner meets a
  * wild card and its second and third teams meet each other, the two winners meeting in the next
- * round. A division's winner and second are the better-ranked teams of its two series; the
- * winner's series is listed first, divisions and conferences in the league's order. Null unless
- * every conference has its full first round, each division two series headed by its own teams and
- * its second meeting its third.
+ * round. A series belongs to a division by its teams, not by which side ranks higher: the
+ * division's winner is its best-ranked team in the first round, its series is whichever one it
+ * plays (a wild card from the other division may out-rank it), and the division's other series is
+ * the one between two more of its own teams. The winner's series is listed first, divisions and
+ * conferences in the league's order; each series' better-ranked team is on top. Null unless every
+ * first-round team has a rank and every conference has its full first round, each division two
+ * series of its own.
  */
 function divisionSlots(league: PlayoffsLeague, conferences: DivisionBracketConference[], firstRound: readonly PlayoffSeries[], ranks: PlayoffSeedRanks): FirstRoundSlot[] | null {
-  const sides = firstRound.map((series) => ({ series, sides: ranked(series, ranks) }));
-  if (sides.some((each) => each.sides === null)) return null;
+  const rankOf = (team: PlayoffTeam) => ranks.get(team.id) ?? Number.MAX_SAFE_INTEGER;
+  const teamsOf = (series: PlayoffSeries) => [series.games[0].home, series.games[0].away];
+  if (firstRound.some((series) => teamsOf(series).some((team) => !ranks.has(team.id)))) return null;
   const slots: FirstRoundSlot[] = [];
   for (const conference of conferences) {
-    const inConference = sides.filter((each) => each.sides !== null && metadataText(each.sides.top, 'conference') === conference.name);
+    const inConference = firstRound.filter((series) => teamsOf(series).every((team) => metadataText(team, 'conference') === conference.name));
     if (inConference.length * conferences.length !== league.rounds[0].seriesCount) return null;
     for (const division of conference.divisions) {
-      const headed = inConference
-        .filter((each) => each.sides !== null && metadataText(each.sides.top, 'division') === division)
-        .sort((left, right) => (left.sides?.topRank ?? 0) - (right.sides?.topRank ?? 0));
-      const [winner, second] = headed;
-      if (headed.length !== 2 || winner.sides === null || second.sides === null) return null;
-      if (metadataText(second.sides.bottom, 'division') !== division) return null;
-      for (const { series, sides: each } of [winner, second]) {
-        if (each === null) return null;
-        slots.push({ top: each.top, bottom: each.bottom, regionLabel: conference.label, bestSeed: each.topRank, series });
+      const inDivision = (team: PlayoffTeam) => metadataText(team, 'division') === division;
+      const winner = inConference.flatMap(teamsOf).filter(inDivision).sort((left, right) => rankOf(left) - rankOf(right)).at(0);
+      if (winner === undefined) return null;
+      const winnerSeries = inConference.find((series) => teamsOf(series).includes(winner));
+      const otherSeries = inConference.find((series) => series !== winnerSeries && teamsOf(series).every(inDivision));
+      if (winnerSeries === undefined || otherSeries === undefined) return null;
+      for (const series of [winnerSeries, otherSeries]) {
+        const sides = ranked(series, ranks);
+        if (sides === null) return null;
+        slots.push({ top: sides.top, bottom: sides.bottom, regionLabel: conference.label, bestSeed: sides.topRank, series });
       }
     }
   }
-  return slots.length === league.rounds[0].seriesCount ? slots : null;
+  return slots.length === league.rounds[0].seriesCount && new Set(slots.map((slot) => slot.series)).size === slots.length ? slots : null;
 }
 
 /**
@@ -185,6 +190,9 @@ function byeBracket(
       match(divisionNumber, 2, label, { homeTeamExternalId: team(first), advancesTo: { matchNumber: championshipNumber, side: MatchSide.HOME } }),
       match(divisionNumber + 1, 2, label, { homeTeamExternalId: team(second), advancesTo: { matchNumber: championshipNumber, side: MatchSide.AWAY } }),
     );
+    // The first league's champion (the AL's) is home in the World Series. That side is display
+    // only: home field there goes to the better record, which is not modelled, and nothing in a
+    // series is neutral or scored by side.
     rounds[2].push(match(championshipNumber, 3, label, { advancesTo: { matchNumber: 5 * count + 1, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
   }
   return [...rounds.flat(), match(5 * count + 1, 4, null)];

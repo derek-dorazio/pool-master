@@ -186,6 +186,16 @@ describe('series playoffs bracket by division', () => {
     expect(sides(games)?.slice(0, 2)).toEqual([['East', 'nhl-team-1', 'nhl-team-7'], ['East', 'nhl-team-4', 'nhl-team-5']]);
   });
 
+  it('places a division\'s winner by its division even when the wild card it meets has more points, with the wild card at home', () => {
+    // Metropolitan 1, 2, 3 and its 4th (4) take a wild card; the Atlantic's winner is only 5th,
+    // with 6 and 7, and the Atlantic's 8 takes the other wild card. The better wild card (4)
+    // meets the lesser winner (5) and out-ranks it.
+    const games = [game(met(1), atl(8), 0), game(met(2), met(3), 0), game(atl(5), met(4), 0), game(atl(6), atl(7), 0), ...firstRound().slice(4)];
+    const team = (rank: number) => `nhl-team-${String(rank)}`;
+
+    expect(sides(games)?.slice(0, 4)).toEqual([['East', team(4), team(5)], ['East', team(6), team(7)], ['East', team(1), team(8)], ['East', team(2), team(3)]]);
+  });
+
   it('builds no bracket when a division\'s second meets a team from another division', () => {
     const games = [game(atl(1), met(8), 0), game(atl(4), met(6), 0), game(met(2), atl(7), 0), game(met(3), atl(5), 0), ...firstRound().slice(4)];
 
@@ -198,8 +208,8 @@ describe('series playoffs bracket by division', () => {
     expect(toPlayoffsBracket(NHL_PLAYOFFS, games, ranks)).toBeNull();
   });
 
-  it('builds no bracket while the standings rank neither team of a series', () => {
-    expect(toPlayoffsBracket(NHL_PLAYOFFS, firstRound(), new Map([...ranks].filter(([team]) => team !== 3 && team !== 6)))).toBeNull();
+  it('builds no bracket while the standings leave a first-round team unranked, since its division\'s winner cannot be told', () => {
+    expect(toPlayoffsBracket(NHL_PLAYOFFS, firstRound(), new Map([...ranks].filter(([team]) => team !== 6)))).toBeNull();
   });
 
   it('ranks NHL teams by points, then regulation wins, regulation and overtime wins and wins, leaving out a row without points', () => {

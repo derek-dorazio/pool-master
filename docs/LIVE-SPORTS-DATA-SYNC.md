@@ -287,20 +287,25 @@ standings are read only once the whole first round is out, so an NBA playoffs is
 matches until the play-in is played. The vendor documents no tier for the standings: where the
 plan refuses them (401 or 403), the read logs `balldontlie.playoffs.standingsRefused` and carries on
 with the field and the series games but no bracket, which an admin then builds; any other failure
-fails the read as before. **The NHL's bracket** is seeded by division instead
+fails the read as before. MLB's teams list is read the same way (`balldontlie.playoffs.teamsRefused`).
+When the reads succeed but the standings do not place the whole first round, the read logs
+`balldontlie.playoffs.bracketUnplaced` and loads no bracket, so a refusal is never silent. **The NHL's bracket** is seeded by division instead
 (`BracketShapeKind.DIVISIONS`): `/nhl/v1/standings` gives no rank, so every team is ranked across
 the league by points, then regulation wins, regulation and overtime wins, and wins
 (`toNhlSeedRanks`; the league's later tie-breaks are not read). In each conference, East first,
-each division heads two first-round series: the better-ranked team heading one is the division's
-winner, meeting a wild card, and the other is its second, meeting its third. The winner's series is
-listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is each match's region.
+each division has two first-round series, told by its teams: its best-ranked team is its winner,
+whose series is whichever one it plays (the wild card it meets may have more points and be home),
+and its other series is the one between two more of its own teams, its second and third. The
+winner's series is listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is
+each match's region.
 Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. **MLB's
 bracket** has byes (`BracketShapeKind.BYES`): `/mlb/v1/standings` gives no seed, so each league's
 division winners are seeded 1 to 3 by `league_rank` and its next three clubs 4 to 6 (`toMlbSeeds`;
 a league with a club missing either place gets no seeds). In each league, American first, the
 Wild Card Series are 4 v 5 and 3 v 6, the 1 seed hosts the 4/5 winner and the 2 seed the 3/6
 winner in the Division Series, and the 1 seed's half hosts the League Championship Series; the
-American League's champion is home in the World Series, display only. The two top seeds play no
+American League's champion is home in the World Series, display only (home field there goes to the
+better record, which is not modelled). The two top seeds play no
 first-round game, so the read also takes the league's teams (`/mlb/v1/teams`) and adds them to the
 field, since the slate loads nothing while a bracket team is missing from it.
 

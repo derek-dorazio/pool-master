@@ -12,7 +12,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { BalldontlieRequestError } from './balldontlie-client';
 import { GameProgress, PROGRESS_BY_STATE } from './competition-status';
-import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
+import type { DateRange, ProviderBracketMatch, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import {
   BracketShapeKind,
   playoffsScopeId,
@@ -107,11 +107,24 @@ export class PlayoffsReader {
     // A league whose bracket is not built from its seeds gives no games: an admin builds its
     // bracket, and series games alone would not keep one.
     if (league.bracket === undefined || this.source.seedRanks === undefined) return event;
+    const readRanks = this.source.seedRanks.bind(this.source);
     // The standings are read only once the whole first round is out, when they can seed it.
-    const ranks = hasWholeFirstRound(league, games) ? await this.seedRanks(this.source.seedRanks.bind(this.source), season) : null;
+    const ranks = hasWholeFirstRound(league, games) ? await this.unlessRefused(season, 'standings', () => readRanks(season)) : null;
     // A bye bracket's top seeds play no first-round game, so they come from the league's teams.
-    const teams = ranks !== null && ranks.size > 0 && league.bracket.kind === BracketShapeKind.BYES ? await this.source.teams() : [];
-    const bracket = ranks === null ? null : toPlayoffsBracket(league, games, ranks, teams);
+    const needsTeams = ranks !== null && ranks.size > 0 && league.bracket.kind === BracketShapeKind.BYES;
+    const byeTeams = needsTeams ? await this.unlessRefused(season, 'teams', () => this.source.teams()) : [];
+    const teams = byeTeams ?? [];
+    let bracket: ProviderBracketMatch[] | null = null;
+    // A refused read has said why already; anything else that leaves the bracket out says so here.
+    if (ranks !== null && byeTeams !== null) {
+      bracket = toPlayoffsBracket(league, games, ranks, teams);
+      if (bracket === null) {
+        this.logger?.warn(
+          { action: 'balldontlie.playoffs.bracketUnplaced', league: league.key, season, rankedTeams: ranks.size, teams: teams.length },
+          'The standings did not place a series playoffs\' whole first round, so it loads without a bracket; an admin builds it',
+        );
+      }
+    }
     const named = new Set(bracket?.flatMap((match) => [match.homeTeamExternalId, match.awayTeamExternalId]));
     const inField = new Set(participants.map((participant) => participant.externalId));
     const byes = teams.filter((team) => named.has(playoffsTeamExternalId(league, team.id)) && !inField.has(playoffsTeamExternalId(league, team.id)));
@@ -127,18 +140,19 @@ export class PlayoffsReader {
   }
 
   /**
-   * The season's seed ranks, or null when the plan does not include the standings (a 401 or 403):
-   * the bracket is the one thing that needs them, and an admin builds it without, so the field
-   * and the series games still load. Any other failure is thrown, so an outage still shows.
+   * A read the bracket needs (the standings, or a bye bracket's teams), or null when the plan does
+   * not include it (a 401 or 403): the bracket is the one thing that needs it, and an admin builds
+   * it without, so the field and the series games still load. Any other failure is thrown, so an
+   * outage still shows.
    */
-  private async seedRanks(read: (season: number) => Promise<PlayoffSeedRanks>, season: number): Promise<PlayoffSeedRanks | null> {
+  private async unlessRefused<Value>(season: number, what: 'standings' | 'teams', read: () => Promise<Value>): Promise<Value | null> {
     try {
-      return await read(season);
+      return await read();
     } catch (error) {
       if (!(error instanceof BalldontlieRequestError) || (error.status !== 401 && error.status !== 403)) throw error;
       this.logger?.warn(
-        { action: 'balldontlie.playoffs.standingsRefused', league: this.source.league.key, season, path: error.path, status: error.status },
-        'Read a series playoffs without its standings, which the plan does not include; an admin builds its bracket',
+        { action: `balldontlie.playoffs.${what}Refused`, league: this.source.league.key, season, path: error.path, status: error.status },
+        `Read a series playoffs without its ${what}, which the plan does not include; an admin builds its bracket`,
       );
       return null;
     }
