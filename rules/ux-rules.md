@@ -371,8 +371,12 @@ administration area (root admin included), reusing the same shared components.
    row list: a settings row is a `SectionRow` too, never a component of its own.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
-   the same `Pager`. A long ranked list also offers a way to jump to the
-   viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
+   the same `Pager`. A contest leaderboard stays sorted by place, with the viewer's
+   entries marked where they fall, and offers a **My entries** switch while the viewer
+   has an entry on it: on, the board lists only theirs, each at its real place, with
+   search and paging within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
+   in `ScoreboardGrid` and the lineup board alike). Any other long ranked list offers a
+   way to jump to the viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
    clicks, its first cell is the link a keyboard reaches), with no per-row Manage
    button. Quick actions that need no page of their own sit in a `RowActionsMenu`

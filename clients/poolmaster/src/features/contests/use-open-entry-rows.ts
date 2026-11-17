@@ -20,7 +20,7 @@ export function useOpenEntryRows(startOpenIds: readonly string[]) {
     toggle: (entryId: string) => {
       setChosen((current) => new Map(current).set(entryId, !isOpen(entryId)));
     },
-    /** Opens one row, as Jump to my entry does. */
+    /** Opens one row, as turning on a closed entry's Stats switch does. */
     open: (entryId: string) => {
       setChosen((current) => new Map(current).set(entryId, true));
     },

@@ -22,11 +22,22 @@ const rows: Row[] = [
   { entryId: 'entry-2', entryName: 'Bandits 1', displayPosition: null, position: null, points: 0, squadId: 'squad-2', squadName: 'Birdie Bandits' },
 ];
 
-function renderBoard(columns: ColumnDef<Row>[], data: Row[] = rows) {
+function renderBoard(
+  columns: ColumnDef<Row>[],
+  data: Row[] = rows,
+  { address = '/', mySquadId = null }: { address?: string; mySquadId?: string | null } = {},
+) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
-        <ScoreboardGrid columns={columns} data={data} emptyMessage="Nobody yet." rowTestIdPrefix="board-row" tableTestId="board" />
+      <MemoryRouter initialEntries={[address]}>
+        <ScoreboardGrid
+          columns={columns}
+          data={data}
+          emptyMessage="Nobody yet."
+          isMine={isMySquadsEntry(mySquadId)}
+          rowTestIdPrefix="board-row"
+          tableTestId="board"
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -106,6 +117,55 @@ describe('ScoreboardGrid', () => {
     expect(within(section).getByTestId('board')).toBeInTheDocument();
     // Bare: a title and rule with no box, so the board keeps the page's full width on a phone.
     expect(section).not.toHaveClass('border');
+  });
+
+  it('lists only the viewer\'s entries, each at its real place, once My entries is turned on, and every entry again once it is off', () => {
+    const board = [...rows, { ...rows[0], entryId: 'entry-3', entryName: 'Crushers 2', displayPosition: '3', position: 3 }];
+    renderBoard([placeColumn('board')], board, { mySquadId: 'squad-1' });
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
+
+    expect(screen.getByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.queryByTestId('board-row-entry-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('board-place-entry-3')).toHaveTextContent('3');
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
+
+    expect(screen.getByTestId('board-row-entry-2')).toBeInTheDocument();
+  });
+
+  it('starts the board again from its first page when My entries is turned off from a later page of the viewer\'s entries', () => {
+    const board = Array.from({ length: 60 }, (_, index) => ({
+      ...rows[0],
+      entryId: `entry-${String(index + 1)}`,
+      entryName: `Entry ${String(index + 1)}`,
+      displayPosition: String(index + 1),
+      position: index + 1,
+      squadId: index % 2 === 0 ? 'squad-1' : 'squad-2',
+    }));
+    renderBoard([placeColumn('board')], board, { address: '/?mine=1', mySquadId: 'squad-1' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('26–30 of 30')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
+
+    expect(screen.getByText('1–25 of 60')).toBeInTheDocument();
+  });
+
+  it('starts with My entries on when the address carries ?mine=1, so a reload keeps the filter', () => {
+    renderBoard([placeColumn('board')], rows, { address: '/?mine=1', mySquadId: 'squad-1' });
+
+    expect(screen.getByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.getByTestId('board-row-entry-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('board-row-entry-2')).not.toBeInTheDocument();
+  });
+
+  it('offers no My entries switch to a viewer with no entry on the board, and lists every entry even with ?mine=1', () => {
+    renderBoard([placeColumn('board')], rows, { address: '/?mine=1', mySquadId: 'squad-elsewhere' });
+
+    expect(screen.queryByTestId('contest-leaderboard-my-entries')).not.toBeInTheDocument();
+    expect(screen.getByTestId('board-row-entry-2')).toBeInTheDocument();
   });
 
   it('says the board\'s own empty message when no entry is on it', () => {

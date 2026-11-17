@@ -95,6 +95,7 @@ export function SquaresLeaderboard({ contest }: { contest: ContestDto }) {
         <ScoreboardGrid
           columns={standingsColumns(contest.id, leagueCode, contest.leagueId, contest.myEntryIds ?? [])}
           data={boardQuery.data.entries.map((row) => ({ ...row, entryId: row.contestEntryId }))}
+          isMine={(row) => (contest.myEntryIds ?? []).includes(row.entryId)}
           emptyMessage="No entry holds a box yet."
           rowTestIdPrefix="squares-standing-row"
           tableTestId="squares-standings-table"
