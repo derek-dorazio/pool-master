@@ -33,6 +33,9 @@ import { useLeaderboardFallback } from './use-leaderboard-fallback';
 /** The prefix of the board's test ids. */
 const TEST_ID = 'survivor-leaderboard';
 
+/** A week's team reads green once survived, red once lost, and plain while its game is to come. */
+const SURVIVOR_CELL_TONES = { survived: 'done', lost: 'danger', pending: 'default' } as const;
+
 /**
  * A week's column heading: its name, or with the shared Postponed or Cancelled chip (#1768) when
  * it is not going ahead as scheduled.
@@ -84,9 +87,9 @@ function WeekCell({ entry, ownTeam, week, weekName }: { entry: SurvivorRow; ownT
   }
   if (view.kind === 'hidden') {
     return (
-      <span className="inline-flex text-muted-foreground" data-state="hidden" data-testid={testId}>
+      <Text as="span" className="inline-flex" data-state="hidden" data-testid={testId} size="inherit" tone="muted">
         <Lock aria-label="Hidden until kickoff" size={14} />
-      </span>
+      </Text>
     );
   }
   if (view.kind === 'missed') {
@@ -97,17 +100,21 @@ function WeekCell({ entry, ownTeam, week, weekName }: { entry: SurvivorRow; ownT
     );
   }
   const label = (
-    <span
+    <Text
+      as="span"
       className={cn(
-        'inline-flex min-w-9 items-center justify-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold whitespace-nowrap',
-        view.tone === 'survived' && 'bg-[var(--status-active-surface)] [color:var(--status-active-text)]',
-        view.tone === 'lost' && 'bg-[var(--status-danger-surface)] [color:var(--status-danger-text)] line-through',
-        view.tone === 'pending' && 'border border-border text-foreground',
+        'inline-flex min-w-9 items-center justify-center gap-0.5 rounded px-1 py-0.5 whitespace-nowrap',
+        view.tone === 'survived' && 'bg-[var(--status-active-surface)]',
+        view.tone === 'lost' && 'bg-[var(--status-danger-surface)] line-through',
+        view.tone === 'pending' && 'border border-border',
       )}
+      tone={SURVIVOR_CELL_TONES[view.tone]}
+      variant="caption"
+      weight="semibold"
     >
       {view.tone === 'lost' ? <X aria-hidden size={12} strokeWidth={3} /> : null}
       {view.label}
-    </span>
+    </Text>
   );
   return (
     <span className="inline-flex" data-state={view.tone} data-testid={testId}>
