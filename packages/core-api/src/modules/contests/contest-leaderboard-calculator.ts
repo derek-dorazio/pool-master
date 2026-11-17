@@ -11,6 +11,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   rankSortedScores,
   SelectionType,
+  UpsetBonusRule,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
   type ContestSelectionConfig,
@@ -140,6 +141,15 @@ export function resolveLineupSize(
     case undefined:
       return null;
   }
+}
+
+/**
+ * Whether a contest scores an upset bonus (#1748): a knockout round-points contest whose bonus
+ * rule is not NONE. Every other scoring definition has no upset bonus to show.
+ */
+export function hasUpsetBonus(scoring: ContestScoringSettings): boolean {
+  return scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS'
+    && scoring.config.upsetBonus.rule !== UpsetBonusRule.NONE;
 }
 
 export function resolveContestCountingRule(

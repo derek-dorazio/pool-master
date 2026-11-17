@@ -28412,6 +28412,10 @@
             "additionalProperties": false,
             "description": "How an entry's picks combine into its total."
           },
+          "upsetBonus": {
+            "type": "boolean",
+            "description": "Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest."
+          },
           "participants": {
             "type": "array",
             "items": {
@@ -29365,6 +29369,7 @@
           "scoringFamily",
           "scoringDefinitionId",
           "countingRule",
+          "upsetBonus",
           "participants",
           "entries",
           "asOf"

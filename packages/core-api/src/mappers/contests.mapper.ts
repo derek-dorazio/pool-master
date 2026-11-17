@@ -135,6 +135,8 @@ export interface ContestLeaderboardModel {
   scoringFamily: ScoringFamily | null;
   scoringDefinitionId: ParticipantScoringDefinitionId;
   countingRule: ContestLeaderboardCountingRule;
+  /** Whether the contest scores an upset bonus: a knockout contest with its bonus on (#1748). */
+  upsetBonus: boolean;
   /** The shown event's field rows, published as the event's own canonical DTO. */
   participants: SportEventParticipantView[];
   entries: ContestLeaderboardEntryRow[];
@@ -368,6 +370,7 @@ export function toContestLeaderboardResponse(
     scoringFamily: leaderboard.scoringFamily,
     scoringDefinitionId: leaderboard.scoringDefinitionId,
     countingRule: leaderboard.countingRule,
+    upsetBonus: leaderboard.upsetBonus,
     participants: leaderboard.participants.map(mapSportEventParticipantToDto),
     entries: leaderboard.entries.map((entry) => ({
       entryId: entry.entryId,

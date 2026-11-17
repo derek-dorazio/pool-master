@@ -10,6 +10,7 @@ import type { SportDefinition } from '@poolmaster/shared/domain';
 import type {
   ContestLeaderboardResponse,
   ScoredContestEntryPickDto,
+  SportEventMatchDto,
   SportEventParticipantDto,
 } from '@/lib/api';
 
@@ -44,6 +45,8 @@ export interface LeaderboardDetailCell {
    * popover when the score is hovered, tapped or pressed. Absent where the cell has none.
    */
   peek?: { title: string; facts: Array<{ label: string; value: string }> };
+  /** Set where the cell is a status: its text shows as a chip, `success` for a team still in. */
+  chip?: 'success' | 'neutral';
 }
 
 /** A note under the board that explains something the family's cells show. */
@@ -93,9 +96,23 @@ export interface EntryTiebreakerUi {
   describe: (value: number) => string;
 }
 
+/**
+ * What a board knows beyond its response, for a family that describes a team's games (#1748):
+ * the shown event's games, and how its rounds and kick-offs read. A board that reads none (a
+ * league home's card) leaves it out, and the family shows only what the response says.
+ */
+export interface LeaderboardContext {
+  /** The shown event's games (its bracket's matches), in match order. */
+  games: readonly SportEventMatchDto[];
+  /** A round as the event's bracket screens name it: "Sweet 16". */
+  roundName: (roundNumber: number) => string;
+  /** A game's start as the viewer reads it. */
+  formatStart: (startsAt: string) => string;
+}
+
 /** One scoring family's web presentation. */
 export interface ScoringFamilyUi {
-  leaderboard(response: ContestLeaderboardResponse, sport: SportDefinition): ScoringFamilyLeaderboard;
+  leaderboard(response: ContestLeaderboardResponse, sport: SportDefinition, context?: LeaderboardContext): ScoringFamilyLeaderboard;
   /** The entry's tiebreaker prediction, or null when the family asks for none. */
   entryTiebreaker: EntryTiebreakerUi | null;
 }

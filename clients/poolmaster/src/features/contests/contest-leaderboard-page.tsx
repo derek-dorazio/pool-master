@@ -1,4 +1,5 @@
 import { Trophy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useParams } from 'react-router';
@@ -29,7 +30,7 @@ import {
   type LeaderboardPickRow,
   type LeaderboardView,
 } from './contest-leaderboard';
-import { ContestStatus, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, ScoringFamily, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { SquaresLeaderboard } from './squares-pages';
@@ -47,6 +48,9 @@ import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
 import { upperFirst } from '@/lib/upper-first';
+import { useEventRoundName } from './use-bracket-round-label';
+import { sportEventQueryOptions } from './use-contest-schedule';
+import { useLeaderboardEventGames } from './use-event-games';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -187,6 +191,8 @@ function PickRow({
               >
                 <PeekCard facts={cell.peek.facts} title={cell.peek.title} />
               </DetailsPeek>
+            ) : cell.chip && cell.text ? (
+              <Chip className="whitespace-nowrap px-2 py-0.5" tone={cell.chip}>{cell.text}</Chip>
             ) : (cell.text ?? NO_SCORE)}
           </span>
         ))}
@@ -358,6 +364,13 @@ export function ContestLeaderboardPage() {
   const openRows = useOpenEntryRows(myEntryIds);
   // #1747 — which entries show their picks' stat lines: the viewer's own start on, as they start open.
   const statsRows = useOpenEntryRows(myEntryIds);
+  // #1748 — a team-picks board describes each team's games, read from the shown event's bracket.
+  const shownEventId = leaderboardQuery.data?.sportEventId ?? '';
+  const isTeamPicks = leaderboardQuery.data !== undefined
+    && eventSportDefinition(leaderboardQuery.data).scoringFamily === ScoringFamily.HEAD_TO_HEAD;
+  const gamesQuery = useLeaderboardEventGames(shownEventId, contestQuery.data?.status, isTeamPicks);
+  const shownEventQuery = useQuery({ ...sportEventQueryOptions(shownEventId), enabled: isTeamPicks && shownEventId !== '' });
+  const roundName = useEventRoundName(shownEventQuery.data ?? null);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
@@ -393,7 +406,12 @@ export function ContestLeaderboardPage() {
   }
 
   const contest = contestQuery.data;
-  const view = buildLeaderboardView(leaderboardQuery.data);
+  // Until its games load (or if their read fails) a team-picks board shows what the leaderboard says alone.
+  const view = buildLeaderboardView(leaderboardQuery.data, gamesQuery.data ? {
+    games: gamesQuery.data,
+    roundName,
+    formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
+  } : undefined);
   const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));
