@@ -64,7 +64,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderLeaderboard() {
+function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -73,7 +73,7 @@ function renderLeaderboard() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
       <MemoryRouter
-        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1' }]}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
           <Route
@@ -1228,43 +1228,61 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
-  it('jumps to the page holding the viewer\'s best-placed entry, clearing the search, and marks it as theirs', async () => {
-    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
+  /** Thirty entries, of which the viewer's team (squad-mine) holds those placed 3, 17 and 28. */
+  function boardWithMyEntriesAt(places: number[]) {
+    const board = leaderboardWithEntries(30);
+    return {
+      ...board,
+      entries: board.entries.map((entry) => (places.includes(entry.position)
+        ? { ...entry, squadId: 'squad-mine', squadName: 'My Team', entryName: `My Team Entry ${String(entry.position)}` }
+        : entry)),
+    };
+  }
+
+  it('narrows the board to the viewer\'s entries with My entries on, each at its real place, and writes ?mine=1', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
 
     renderLeaderboard();
+    // The switch needs the viewer's team, which the league context read brings after the contest.
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-my-entries'));
 
-    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find an entry' }), { target: { value: 'Team 3' } });
-    // The button needs the viewer's team, which the league context read brings after the contest.
-    fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+    expect(screen.getByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/).map((row) => row.getAttribute('data-testid')))
+      .toEqual(['contest-leaderboard-entry-entry-3', 'contest-leaderboard-entry-entry-17', 'contest-leaderboard-entry-entry-28']);
+    expect(screen.getByTestId('contest-leaderboard-position-entry-28')).toHaveTextContent('28');
+  });
 
-    const mine = screen.getByTestId('contest-leaderboard-entry-entry-28');
-    expect(mine).toHaveTextContent('Yours');
-    expect(screen.getByRole('searchbox', { name: 'Find an entry' })).toHaveValue('');
+  it('keeps My entries on across a reload, from ?mine=1 in the address', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
+
+    renderLeaderboard('?mine=1');
+
+    expect(await screen.findByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-28')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
   });
 
-  it('scrolls the viewer\'s entry into view on the page Jump to my entry turns to', async () => {
-    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
-    const scrolledElements: Element[] = [];
-    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
-      scrolledElements.push(this);
-    });
+  it('searches within the viewer\'s entries while My entries is on, and shows the whole board, theirs marked, once it is off', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
 
-    try {
-      renderLeaderboard();
-      fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+    renderLeaderboard('?mine=1');
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find an entry' }), { target: { value: 'Entry 17' } });
 
-      expect(scrolledElements).toHaveLength(1);
-      expect(scrolledElements[0]).toContainElement(screen.getByTestId('contest-leaderboard-entry-entry-28'));
-    } finally {
-      scrollSpy.mockRestore();
-    }
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/)).toHaveLength(1);
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-17')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find an entry' }), { target: { value: '' } });
+    fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
+
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-3')).toHaveTextContent('Yours');
+    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
   });
 
-  it('offers no Jump to my entry when the viewer has no entry on the leaderboard', async () => {
+  it('offers no My entries switch when the viewer has no entry on the leaderboard, and shows the whole board even with ?mine=1', async () => {
     primeMocks({ mySquadId: 'squad-elsewhere' });
 
-    renderLeaderboard();
+    renderLeaderboard('?mine=1');
 
     await screen.findByTestId('contest-leaderboard-entry-entry-1');
     // The viewer's team comes from the league context; the answer is only meaningful once it has.
@@ -1272,7 +1290,8 @@ describe('ContestLeaderboardPage', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(screen.queryByTestId('contest-leaderboard-jump-to-mine')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-my-entries')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
   it('shows a server failure with no refusal code under the generic error, and logs it', async () => {
