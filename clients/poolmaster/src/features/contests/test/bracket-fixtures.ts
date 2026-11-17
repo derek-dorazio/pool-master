@@ -16,19 +16,20 @@ import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 type Game = GamePicksResponse['games'][number];
 type Team = NonNullable<Game['predictedHome']>;
 
-function team(key: string, name: string): Team {
-  return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name };
+function team(key: string, name: string, seedNumber: number): Team {
+  return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name, seedNumber };
 }
 
+/** Each region seeds its four teams 1 to 4. */
 export const TEAMS = {
-  duke: team('duke', 'Duke'),
-  vermont: team('vermont', 'Vermont'),
-  houston: team('houston', 'Houston'),
-  texas: team('texas', 'Texas'),
-  kansas: team('kansas', 'Kansas'),
-  akron: team('akron', 'Akron'),
-  gonzaga: team('gonzaga', 'Gonzaga'),
-  yale: team('yale', 'Yale'),
+  duke: team('duke', 'Duke', 1),
+  vermont: team('vermont', 'Vermont', 4),
+  houston: team('houston', 'Houston', 2),
+  texas: team('texas', 'Texas', 3),
+  kansas: team('kansas', 'Kansas', 1),
+  akron: team('akron', 'Akron', 4),
+  gonzaga: team('gonzaga', 'Gonzaga', 2),
+  yale: team('yale', 'Yale', 3),
 } as const;
 
 /** Far enough ahead that "has not started" holds whatever day the suite runs. */
@@ -185,6 +186,7 @@ export function bracketLeaderboardFixture(overrides: Partial<BracketLeaderboardR
         maxPossiblePoints: 20,
         correctPickCount: 5,
         tiebreakerValue: 141,
+        champion: { sportEventParticipantId: TEAMS.duke.sportEventParticipantId, name: 'Duke', seedNumber: 1, outcome: 'PENDING' },
       },
       {
         entryId: 'entry-1',
@@ -198,6 +200,7 @@ export function bracketLeaderboardFixture(overrides: Partial<BracketLeaderboardR
         maxPossiblePoints: 16,
         correctPickCount: 4,
         tiebreakerValue: null,
+        champion: { sportEventParticipantId: TEAMS.houston.sportEventParticipantId, name: 'Houston', seedNumber: 2, outcome: 'BUSTED' },
       },
     ],
     ...overrides,

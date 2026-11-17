@@ -624,4 +624,23 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(season.compareDocumentPosition(screen.getByTestId("grid-search")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId("grid-table-views-end")).toContainElement(season);
   });
+  it("keeps a column marked pinned at the start stuck to the grid's left edge, header and cells, and leaves the others to scroll", () => {
+    const pinnedColumns = [
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+    ];
+    render(
+      <DataGrid
+        columns={pinnedColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        emptyMessage="No rows."
+        getRowId={(row) => row.id}
+      />,
+    );
+
+    expect(screen.getByRole("columnheader", { name: /Name/ })).toHaveClass("sticky", "left-0");
+    expect(screen.getByRole("cell", { name: "Alpha" })).toHaveClass("sticky", "left-0", "bg-card");
+    expect(screen.getByRole("columnheader", { name: /Lifecycle/ })).not.toHaveClass("sticky");
+    expect(screen.getByRole("cell", { name: "Active" })).not.toHaveClass("sticky");
+  });
 });

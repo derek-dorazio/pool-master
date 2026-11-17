@@ -31948,6 +31948,49 @@
                   ],
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
+                },
+                "champion": {
+                  "description": "The team the entry picks to win the final; null with no final pick standing.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event."
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event; null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "CORRECT",
+                        "BUSTED",
+                        "PUSH",
+                        "PENDING"
+                      ],
+                      "description": "How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING."
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "name",
+                    "seedNumber",
+                    "outcome"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -31961,7 +32004,8 @@
                 "points",
                 "maxPossiblePoints",
                 "correctPickCount",
-                "tiebreakerValue"
+                "tiebreakerValue",
+                "champion"
               ],
               "additionalProperties": false,
               "description": "One entry's standing in a bracket contest."
@@ -32197,12 +32241,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -32224,12 +32278,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -32251,12 +32315,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -32278,12 +32352,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -32998,12 +33082,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -33025,12 +33119,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -33052,12 +33156,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },
@@ -33079,12 +33193,22 @@
                     },
                     "name": {
                       "type": "string"
+                    },
+                    "seedNumber": {
+                      "description": "The team's seed in the event (\"1\" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "participantId",
-                    "name"
+                    "name",
+                    "seedNumber"
                   ],
                   "additionalProperties": false
                 },

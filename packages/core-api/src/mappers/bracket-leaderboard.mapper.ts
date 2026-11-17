@@ -4,6 +4,7 @@
  */
 
 import type { BracketLeaderboardResponse } from '@poolmaster/shared/dto';
+import type { BracketChampionPick } from '../modules/contests/bracket-standings';
 
 export interface BracketLeaderboardEntryRow {
   entryId: string;
@@ -17,6 +18,8 @@ export interface BracketLeaderboardEntryRow {
   maxPossiblePoints: number;
   correctPickCount: number;
   tiebreakerValue: number | null;
+  /** The entry's pick to win the final; null with no final pick standing. */
+  champion: BracketChampionPick | null;
 }
 
 export interface BracketLeaderboardModel {
@@ -40,6 +43,6 @@ export function toBracketLeaderboardResponse(model: BracketLeaderboardModel): Br
     eventCancelled: model.eventCancelled,
     gameCount: model.gameCount,
     finalTotalPoints: model.finalTotalPoints,
-    entries: model.entries.map((entry) => ({ ...entry })),
+    entries: model.entries.map((entry) => ({ ...entry, champion: entry.champion ? { ...entry.champion } : null })),
   };
 }

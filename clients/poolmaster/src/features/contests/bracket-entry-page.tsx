@@ -11,9 +11,10 @@ import {
   Text,
 } from '@/features/shared/ui';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
-import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
-import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
+import { buildBracketRounds, describeBracketClose, describeBracketTiebreaker, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
+import { BracketView } from './bracket-view';
+import { drawBracket } from './bracket-view-model';
 import { ContestEntryFrame } from './contest-header';
 import { EntryRenameSection } from './entry-rename-section';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
@@ -164,7 +165,12 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
                 {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}
               </Text>
             ) : null}
-            <BracketBoard canPick={canPick} isBusy={saveMutation.isPending} onPick={pick} rounds={rounds} />
+            <BracketView
+              drawing={drawBracket(gamePicks.games, roundLabel)}
+              isOwnEntry={gamePicks.ownEntry}
+              picking={canPick ? { isBusy: saveMutation.isPending, onPick: pick } : null}
+              tiebreaker={canPick ? undefined : describeBracketTiebreaker(gamePicks.tiebreakerValue, contestScoreUnit(contest.sport))}
+            />
           </SectionCard>
 
           {/* The name above Submit, so Submit stays the page's last action. */}
@@ -191,15 +197,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               submitError={errorMessage(submitMutation.error, 'We could not submit this bracket. Please try again.')}
               tiebreakerText={tiebreakerDraft ?? (gamePicks.tiebreakerValue === null ? '' : String(gamePicks.tiebreakerValue))}
             />
-          ) : (
-            <SectionCard headingLevel={3} padded testId="bracket-tiebreaker-summary" title="Tiebreaker">
-              <Text as="p" size="sm">
-                {gamePicks.tiebreakerValue === null
-                  ? 'No tiebreaker was saved.'
-                  : `Tiebreaker: ${gamePicks.tiebreakerValue} total ${contestScoreUnit(contest.sport)} in the final.`}
-              </Text>
-            </SectionCard>
-          )}
+          ) : null}
         </>
       )}
     </ContestEntryFrame>

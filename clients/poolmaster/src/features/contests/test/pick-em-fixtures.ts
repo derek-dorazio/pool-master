@@ -16,7 +16,7 @@ type Game = GamePicksResponse['games'][number];
 type Team = NonNullable<Game['home']>;
 
 function team(key: string, name: string): Team {
-  return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name };
+  return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name, seedNumber: null };
 }
 
 export const NFL_TEAMS = {

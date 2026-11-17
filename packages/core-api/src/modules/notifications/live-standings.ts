@@ -444,7 +444,7 @@ export class LiveStandings implements DueNotifications {
     moment: StandingsMoment,
     lastPositions: ReadonlyMap<string, number>,
   ): Promise<StandingsBoard> {
-    const { leaderboard, champions } = await this.deps.leaderboards.bracketStandingsOf(contest);
+    const { leaderboard } = await this.deps.leaderboards.bracketStandingsOf(contest);
     return {
       momentFor: () => moment,
       rows: leaderboard.entries.map((entry) => ({
@@ -464,12 +464,9 @@ export class LiveStandings implements DueNotifications {
         out: [],
         champions: leaderboard.entries
           .filter((entry) => ownsSquad(entry.squadId))
-          .flatMap((entry) => {
-            const champion = champions.get(entry.entryId);
-            return champion
-              ? [{ entryName: entry.entryName, team: champion.name, alive: champion.outcome !== PickOutcome.BUSTED, maxPossiblePoints: entry.maxPossiblePoints }]
-              : [];
-          }),
+          .flatMap(({ champion, entryName, maxPossiblePoints }) => (champion
+            ? [{ entryName, team: champion.name, alive: champion.outcome !== PickOutcome.BUSTED, maxPossiblePoints }]
+            : [])),
       }),
     };
   }

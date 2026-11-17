@@ -13708,6 +13708,22 @@ export interface components {
                 correctPickCount: number;
                 /** @description The entry's guess of the final's total points. */
                 tiebreakerValue: number | null;
+                /** @description The team the entry picks to win the final; null with no final pick standing. */
+                champion: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event.
+                     */
+                    sportEventParticipantId: string;
+                    name: string;
+                    /** @description The team's seed in the event; null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
+                    /**
+                     * @description How the pick stands: CORRECT once the team won the final, BUSTED once it is out, else PENDING.
+                     * @enum {string}
+                     */
+                    outcome: "CORRECT" | "BUSTED" | "PUSH" | "PENDING";
+                } | null;
             }[];
         };
         /** @description A prediction contest entry's picks on one event's games. */
@@ -13790,6 +13806,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team really playing on this side; null until it is decided. */
                 away: {
@@ -13801,6 +13819,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
                 predictedHome: {
@@ -13812,6 +13832,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description As predictedHome, for the away side. */
                 predictedAway: {
@@ -13823,6 +13845,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks. */
                 locked: boolean;
@@ -14041,6 +14065,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team really playing on this side; null until it is decided. */
                 away: {
@@ -14052,6 +14078,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
                 predictedHome: {
@@ -14063,6 +14091,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description As predictedHome, for the away side. */
                 predictedAway: {
@@ -14074,6 +14104,8 @@ export interface components {
                     /** Format: uuid */
                     participantId: string;
                     name: string;
+                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                    seedNumber: number | null;
                 } | null;
                 /** @description Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the starting round has. */
                 locked: boolean;
