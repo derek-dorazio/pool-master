@@ -332,25 +332,25 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
     state.entryId = created.entry.id;
     await expect(page.getByTestId('pick-em-entry-page')).toBeVisible();
     await expect(page.getByTestId('pick-em-week-switcher')).toHaveValue(week1Id);
-    await expect(page.getByTestId('pick-em-picked-count')).toHaveText('0 of 1 picked');
-    await expect(page.getByTestId('pick-em-not-submitted-warning')).toBeVisible();
+    await expect(page.getByTestId('pick-em-picked-count')).toHaveText('0 of 1');
+    await expect(page.getByTestId('contest-entry-status-line')).toContainText('Not submitted · submit by');
   });
 
   await test.step('pick the Bills', async () => {
     const billsTestId = `pick-em-game-1-team-${week1FieldRowIds['Bills']}`;
     await submitAndRead(page, billsTestId, 'PUT', gamePicksPath());
     await expect(page.getByTestId(billsTestId)).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('pick-em-picked-count')).toHaveText('1 of 1 picked');
+    await expect(page.getByTestId('pick-em-picked-count')).toHaveText('1 of 1');
   });
 
-  await test.step(`save a tiebreaker of ${TIEBREAKER} total points on the game and submit the week`, async () => {
+  await test.step(`type a tiebreaker of ${TIEBREAKER} total points and submit the week, which saves the tiebreaker first`, async () => {
     await expect(page.getByTestId('pick-em-submit')).toBeDisabled();
     await page.getByTestId('pick-em-tiebreaker-input').fill(String(TIEBREAKER));
-    const saved = await submitAndRead<{ tiebreakerValue: number | null; canSubmit: boolean }>(page, 'pick-em-tiebreaker-save', 'PUT', gamePicksPath());
-    expect(saved).toMatchObject({ tiebreakerValue: TIEBREAKER, canSubmit: true });
     await expect(page.getByTestId('pick-em-submit')).toBeEnabled();
+    const savedResponse = page.waitForResponse((response) => response.request().method() === 'PUT' && new URL(response.url()).pathname === gamePicksPath());
     const submitted = await submitAndRead<{ status: string }>(page, 'pick-em-submit', 'POST', `${gamePicksPath()}/submit`);
     expect(submitted.status).toBe('SUBMITTED');
+    expect(await (await savedResponse).json()).toMatchObject({ tiebreakerValue: TIEBREAKER });
   });
 
   await test.step('submitting returns to the contest page, which lists the entry as the member\'s before the first kickoff', async () => {

@@ -106,6 +106,16 @@ describe("SectionCard help", () => {
     expect(screen.getByTestId("cups-help-callout")).toHaveTextContent("What each place earns.");
     expect(screen.queryByTestId("general-help-callout")).not.toBeInTheDocument();
   });
+
+  it("ends the (?)'s sentences with its one link on, such as How to Play", () => {
+    inRouter(
+      <SectionCard help="Tap a team to pick it." helpLink={{ label: "How to play", to: "/how-to-play/pick-em" }} testId="picks" title="Pick each game"><p>a</p></SectionCard>,
+    );
+
+    fireEvent.click(screen.getByTestId("picks-help"));
+    expect(screen.getByTestId("picks-help-callout")).toHaveTextContent("Tap a team to pick it.");
+    expect(screen.getByTestId("picks-help-link")).toHaveAttribute("href", "/how-to-play/pick-em");
+  });
 });
 
 describe("SectionTitle", () => {

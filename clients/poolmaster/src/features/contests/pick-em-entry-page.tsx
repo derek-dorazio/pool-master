@@ -14,22 +14,21 @@ import {
   formatDateTimeDisplay,
   FormField,
   LoadingState,
-  MetricGrid,
-  MetricTile,
   SectionCard,
   Select,
-  Text,
+  StatStrip,
   useDisplayPreferences,
 } from '@/features/shared/ui';
+import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { formatPickProgress, formatPoints } from './bracket-layout';
+import { formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
-import { EntryRenameSection } from './entry-rename-section';
+import { EntryFinishCard } from './entry-finish-card';
+import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
-import { EntrySubmitBar } from './entry-submit-bar';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
@@ -49,6 +48,7 @@ import {
   roundWeek,
   survivorPickTeam,
   teamPick,
+  tiebreakerLabel,
   tiePick,
   weekRounds,
   weekSubmitHint,
@@ -57,7 +57,10 @@ import {
 } from './pick-em-week';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
+import { gameEntryFinish } from './game-entry-finish';
+import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
+import { TiebreakerNumberField } from './tiebreaker-number-field';
 
 /**
  * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718), in the contest's
@@ -70,7 +73,7 @@ function pickEmCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages 
   return {
     PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before this week can be submitted.`,
     PREDICTION_CONFIDENCE_INVALID: `Give each pick a different confidence value, from 1 up to the number of ${match.many}.`,
-    PREDICTION_TIEBREAKER_MISSING: `Save your tiebreaker, the total ${contestScoreUnit(sport)} of the tiebreaker ${match.one}, before you submit.`,
+    PREDICTION_TIEBREAKER_MISSING: `Enter your tiebreaker, the total ${contestScoreUnit(sport)} of the tiebreaker ${match.one}, before you submit.`,
     PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
     PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: `The week has started, so a pick can be changed to the other ${participant.one} but not removed.`,
     CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this can no longer change.`,
@@ -125,6 +128,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const entryQuery = useContestEntryQuery(contestId, entryId);
   const leagueCode = useContestLeagueCode();
   const navigate = useNavigate();
+  const name = useEntryName({ contestId, entryId, savedName: gamePicksQuery.data?.entryName ?? '' });
 
   const switchWeek = (next: string) => {
     saveMutation.reset();
@@ -160,7 +164,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
-  const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
   const isSurvivor = isSurvivorWeek(gamePicks);
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
   // A contest of one playoff event counts its weeks by the event's rounds.
@@ -188,9 +191,40 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const errorMessage = (error: Error | null, fallback: string) => (error
     ? extractErrorMessage(error, { codeMessages: pickEmCodeMessages(contest.sport), fallback })
     : null);
-  // A save with no picks is the tiebreaker's: its refusal shows beside the tiebreaker field.
-  const isTiebreakerSave = saveMutation.variables?.picks.length === 0;
-  const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
+  // A save with no picks is the tiebreaker's, from the Name and submit card.
+  const pickError = saveMutation.variables?.picks.length === 0 ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
+
+  // When the week's picks close, in the words the status line and the card use.
+  const closes = kickoff ? formatDateTimeDisplay(kickoff, displayPreferences) : `the ${eventStart}`;
+  const statusLine = !gamePicks.ownEntry
+    ? entryStatusLine({ closes, isOpen: false, status: gamePicks.status })
+    : eliminatedInWeek !== null
+    ? `Out in ${eliminatedIn}`
+    : missedWeek(gamePicks)
+    ? `Not submitted before the ${eventStart} · ${isSurvivor ? 'out' : 'scores nothing'}`
+    : roundNeedsPick
+    ? `No pick yet · pick a ${participant.one} before this round's first ${match.one}`
+    : entryStatusLine({ closes, isOpen: canChange, status: gamePicks.status });
+
+  // The Name and submit card: the name, the tiebreaker while its game is open, and one button.
+  const tiebreakerGameOpen = canChange && gamePicks.games.some((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId && !game.locked);
+  const tiebreakerFieldLabel = tiebreakerGameOpen ? tiebreakerLabel(gamePicks, contestScoreUnit(contest.sport)) : null;
+  const submits = canChange && !isSubmitted;
+  const {
+    finish, finishError, isChanged, isFinishing, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
+  } = gameEntryFinish({
+    errorMessage,
+    name,
+    // A submitted week returns to the contest's page (#1739).
+    onSubmitted: () => void navigate(buildLeagueContestPath(leagueCode, contestId)),
+    savedTiebreaker: gamePicks.tiebreakerValue,
+    submitFallback: 'We could not submit this week. Please try again.',
+    submits,
+    writes: { saveMutation, submitMutation, tiebreakerDraft },
+  });
+  // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
+  const hint = weekSubmitHint({ ...gamePicks, tiebreakerValue: typedTiebreaker ?? gamePicks.tiebreakerValue });
+  const nameEditable = gamePicks.ownEntry && canRenameEntries(contest);
 
   return (
     <ContestEntryFrame
@@ -203,6 +237,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
       ]}
       status={gamePicks.status}
+      statusLine={statusLine}
       testId="pick-em-entry-page"
       title={gamePicks.entryName}
     >
@@ -225,79 +260,33 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         </FormField>
       ) : null}
 
-      {eliminatedInWeek !== null ? (
-        <Notice data-testid="survivor-eliminated" title="Out">
-          {`This entry went out in ${eliminatedIn}, so it picks no more ${period}s.`}
-        </Notice>
-      ) : null}
-      {canChange && !isSubmitted && kickoff ? (
-        <Notice data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
-          {isSurvivor
-            ? `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. An entry that hasn't submitted by then is out.`
-            : `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. A week that isn't submitted by then scores nothing.`}
-        </Notice>
-      ) : null}
-      {roundNeedsPick ? (
-        <Notice data-testid="survivor-round-needs-pick" title="No pick yet" tone="warning">
-          {`Pick a ${participant.one} before this round's first ${match.one}, or the entry is out.`}
-        </Notice>
-      ) : null}
-      {missedWeek(gamePicks) && eliminatedInWeek === null ? (
-        <Notice data-testid="pick-em-missed-week">
-          {isSurvivor
-            ? `This week wasn't submitted before its ${eventStart}, so this entry is out.`
-            : `This week wasn't submitted before its ${eventStart}, so it scores nothing.`}
-        </Notice>
-      ) : null}
-
-      <SectionCard headingLevel={3} padded testId="pick-em-scorecard" title={`This ${period}`}>
-        {isSurvivor ? (
-          <MetricGrid>
-            <MetricTile
-              helperText={canChange ? `Your pick locks when its ${match.one} starts.` : 'No pick can change now.'}
-              label="Your pick"
-              value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
-            />
-          </MetricGrid>
-        ) : (
-        <MetricGrid className="md:grid-cols-3">
-          <MetricTile
-            helperText={canChange ? 'Each pick locks at its game\'s kickoff.' : 'No pick can change now.'}
-            label="Picked"
-            value={<span data-testid="pick-em-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-          />
-          <MetricTile
-            helperText={gamePicks.mode === PickEmMode.CONFIDENCE ? 'The values of the correct picks so far.' : 'One point for each correct pick so far.'}
-            label="Points"
-            value={<span data-testid="pick-em-points">{formatScore(gamePicks.points)}</span>}
-          />
-          <MetricTile
-            helperText="Points so far plus every pick still to be decided."
-            label="Max possible"
-            value={<span data-testid="pick-em-max-possible">{formatScore(gamePicks.maxPossiblePoints)}</span>}
-          />
-        </MetricGrid>
-        )}
-      </SectionCard>
+      <StatStrip
+        items={isSurvivor ? [
+          { label: 'Your pick', value: survivorTeam?.name ?? 'None yet', testId: 'survivor-pick' },
+          { label: 'Status', value: eliminatedInWeek === null ? 'In' : 'Out', testId: 'survivor-status' },
+        ] : [
+          { label: 'Picked', value: `${gamePicks.pickedCount} of ${gamePicks.gameCount}`, testId: 'pick-em-picked-count' },
+          { label: 'Points', value: formatScore(gamePicks.points), testId: 'pick-em-points' },
+          { label: 'Max', value: formatScore(gamePicks.maxPossiblePoints), testId: 'pick-em-max-possible' },
+        ]}
+        testId="pick-em-progress"
+      />
 
       {pickError ? <Notice data-testid="pick-em-pick-error" tone="danger">{pickError}</Notice> : null}
 
       <SectionCard
         headingLevel={3}
+        help={canChange ? (isSurvivor
+          ? `Tap the one ${participant.one} you think wins this ${period}. If that pick loses, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again. Your pick locks when its ${match.one} starts.`
+          : gamePicks.mode === PickEmMode.CONFIDENCE
+          ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value. Each pick locks at its game's kickoff.`
+          : `${pickInstruction}. Each correct pick scores 1 point. Each pick locks at its game's kickoff.`) : undefined}
+        helpLink={canChange ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) } : undefined}
         padded
         testId="pick-em-picks"
         title={canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
         titleTestId="contest-entry-builder-heading"
       >
-        {canChange ? (
-          <Text as="p" size="sm" variant="meta">
-            {isSurvivor
-              ? `Tap the one ${participant.one} you think wins this ${period}. If that pick loses, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again.`
-              : gamePicks.mode === PickEmMode.CONFIDENCE
-              ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
-              : `${pickInstruction}. Each correct pick scores 1 point.`}
-          </Text>
-        ) : null}
         <PickEmGames
           canChange={canChange}
           gamePicks={gamePicks}
@@ -305,49 +294,42 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           onConfidence={rank}
           onPick={pick}
           tie={{ label: tieLabel, onPick: pickTie }}
-          tiebreaker={{
-            isSaving: saveMutation.isPending,
-            onChange: setTiebreakerDraft,
-            onSave: (tiebreakerValue) => save({ picks: [], tiebreakerValue }),
-            saveError: isTiebreakerSave ? errorMessage(saveMutation.error, 'We could not save your tiebreaker. Please try again.') : null,
-            text: tiebreakerDraft ?? (gamePicks.tiebreakerValue === null ? '' : String(gamePicks.tiebreakerValue)),
-          }}
         />
       </SectionCard>
 
-      {/* The name above Submit, so Submit stays the page's last action. */}
-      {gamePicks.ownEntry && canRenameEntries(contest) ? (
-        <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
-      ) : null}
-      {gamePicks.ownEntry && (canChange || isSubmitted) ? (
-        <EntrySubmitBar
-          error={submitMutation.error ? errorMessage(submitMutation.error, 'We could not submit this week. Please try again.') : null}
-          errorTestId="pick-em-submit-error"
-          hint={isSubmitted ? null : hint}
-          hintTestId="pick-em-submit-hint"
-          progress={isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
-          progressTestId="pick-em-progress"
-          submit={isSubmitted ? null : {
-            disabled: !gamePicks.canSubmit || submitMutation.isPending || saveMutation.isPending,
-            isSubmitting: submitMutation.isPending,
+      {gamePicks.ownEntry && (submits || isSubmitted || nameEditable) ? (
+        <EntryFinishCard
+          action={submits ? {
+            disabled: hint !== null || tiebreakerInvalid || !name.isValid || isFinishing,
+            isBusy: isFinishing,
             label: isPlayoff ? 'Submit entry' : 'Submit week',
-            onSubmit: () => {
-              submitMutation.reset();
-              // A submitted week returns to the contest's page (#1739).
-              submitMutation.mutate(undefined, { onSuccess: () => void navigate(buildLeagueContestPath(leagueCode, contestId)) });
-            },
+            onClick: () => void finish(),
             testId: 'pick-em-submit',
-          }}
-          testId="pick-em-submit-panel"
+          } : isChanged ? {
+            disabled: tiebreakerInvalid || !name.isValid || isFinishing,
+            isBusy: isFinishing,
+            label: 'Save',
+            onClick: () => void finish(),
+            testId: 'pick-em-save',
+          } : null}
+          error={finishError}
+          errorTestId="pick-em-submit-error"
+          name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
+          status={canChange || isSubmitted ? entryFinishStatus({ closes, hint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+          statusTestId="pick-em-finish-status"
+          testId="pick-em-finish"
+          title="Name and submit"
         >
-          {isSubmitted ? (
-            <Notice data-testid="pick-em-submitted" title="Submitted" tone="success">
-              {isSurvivor
-                ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its ${match.one} starts.`
-                : 'This week counts. You can still change a pick until its game kicks off.'}
-            </Notice>
+          {tiebreakerFieldLabel ? (
+            <TiebreakerNumberField
+              disabled={isFinishing}
+              label={tiebreakerFieldLabel}
+              onChange={setTiebreakerDraft}
+              testId="pick-em-tiebreaker-input"
+              text={tiebreakerText}
+            />
           ) : null}
-        </EntrySubmitBar>
+        </EntryFinishCard>
       ) : null}
     </ContestEntryFrame>
   );

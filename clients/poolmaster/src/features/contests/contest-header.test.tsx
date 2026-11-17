@@ -181,6 +181,7 @@ describe('ContestEntryFrame', () => {
           phase="Open until the first game"
           rules={['Confidence']}
           status={status}
+          statusLine="Not submitted · submit by Thu 8:15 PM"
           title="Birdie Hunters 2"
         >
           <p>The picks</p>
@@ -189,18 +190,18 @@ describe('ContestEntryFrame', () => {
     );
   }
 
-  it('heads an entry page with the entry\'s name, its status icon instead of badges, and only the contest and rules in one line', () => {
+  it('heads an entry page with the entry\'s name, its status icon instead of badges, and where the entry stands in one line under the name', () => {
     drawEntryFrame();
 
     expect(screen.getByTestId('contest-entry-header-name')).toHaveTextContent('Birdie Hunters 2');
     expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
     expect(screen.queryByText('Live')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-header-status-slot')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-summary')).toHaveTextContent(/^Masters Pool · Confidence$/);
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by Thu 8:15 PM$/);
     expect(screen.getByText('The picks')).toBeInTheDocument();
   });
 
-  it('leads the status peek with the status and the contest\'s phase, not the entry\'s name again, then the entry\'s dates', () => {
+  it('leads the status peek with the status and the contest\'s phase, not the entry\'s name again, then the contest\'s rules and the entry\'s dates', () => {
     drawEntryFrame(ContestEntryStatus.SUBMITTED);
 
     fireEvent.click(screen.getByTestId('contest-entry-status'));
@@ -209,6 +210,7 @@ describe('ContestEntryFrame', () => {
 
     expect(screen.getByTestId('contest-entry-status-entry-status')).toHaveTextContent('Submitted');
     expect(screen.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the first game');
+    expect(screen.getByTestId('contest-entry-status-rules')).toHaveTextContent('Confidence');
     expect(screen.getByTestId('contest-entry-status-created')).toHaveTextContent('2026');
     expect(screen.getByTestId('contest-entry-status-last-updated')).toHaveTextContent('2026');
   });

@@ -63,6 +63,15 @@ export function firstKickoff(games: readonly PickEmGame[]): string | null {
   );
 }
 
+/**
+ * The tiebreaker field's label, naming its game (#1769): "Tiebreaker · total points, Seahawks at
+ * 49ers", or null while the week has no tiebreaker game.
+ */
+export function tiebreakerLabel(gamePicks: Pick<PickEmWeek, 'games' | 'tiebreakerMatchId'>, scoreUnit: string): string | null {
+  const game = tiebreakerGame(gamePicks);
+  return game ? `Tiebreaker · total ${scoreUnit}, ${describeMatchup(game)}` : null;
+}
+
 /** The game whose total points the week's tiebreaker guesses, or null while the week has none. */
 export function tiebreakerGame(gamePicks: Pick<PickEmWeek, 'games' | 'tiebreakerMatchId'>): PickEmGame | null {
   return gamePicks.games.find((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId) ?? null;
@@ -215,7 +224,7 @@ export function weekSubmitHint(gamePicks: GamePicksResponse): string | null {
     }
   }
   if (gamePicks.tiebreakerValue === null) {
-    return 'Save your tiebreaker to submit.';
+    return 'Enter your tiebreaker to submit.';
   }
   return null;
 }

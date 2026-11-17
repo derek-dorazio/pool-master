@@ -464,7 +464,10 @@ describe('ContestEntryPage', () => {
     expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveTextContent('Next up');
     expect(screen.queryByTestId('contest-menu-entries')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-view-team-link')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
+    // The tiebreaker waits in the Name and submit card from the start, and Submit says what is left.
+    expect(within(screen.getByTestId('contest-entry-finish')).getByTestId('contest-entry-tiebreaker-select')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent('Pick a full lineup to submit.');
+    expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
 
@@ -482,7 +485,7 @@ describe('ContestEntryPage', () => {
     fireEvent.click(screen.getByTestId('contest-entry-participant-sep-2'));
     expect(await screen.findByTestId('contest-entry-tiebreaker-select')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('contest-entry-header-name-input'), {
+    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
       target: { value: 'Sunday Charge' },
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
@@ -542,9 +545,8 @@ describe('ContestEntryPage', () => {
     expect(await screen.findByTestId('contest-entry-submit')).toBeEnabled();
     expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-tiebreaker-status')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent(
-      'Your lineup is complete. Submit it: an entry only counts once it is submitted.',
-    );
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
+    expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent(/^Submit by /);
     expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveTextContent('Choose 1 horse from this tier.');
 
     fireEvent.click(screen.getByTestId('contest-entry-submit'));
@@ -618,8 +620,8 @@ describe('ContestEntryPage', () => {
 
     const { queryClient } = renderContestEntryPage();
 
-    await screen.findByTestId('contest-entry-header-name-input');
-    fireEvent.change(screen.getByTestId('contest-entry-header-name-input'), {
+    await screen.findByTestId('contest-entry-name-input');
+    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
       target: { value: 'Unsaved Sunday Charge' },
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
@@ -644,7 +646,7 @@ describe('ContestEntryPage', () => {
       }),
     );
 
-    expect(screen.getByTestId('contest-entry-header-name-input')).toHaveValue('Unsaved Sunday Charge');
+    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Unsaved Sunday Charge');
     expect(screen.getByTestId('contest-entry-tiebreaker-select')).toHaveValue('-12');
   });
 
@@ -749,7 +751,7 @@ describe('ContestEntryPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
     );
-    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
     expect(screen.queryByText('Editable until the event starts')).not.toBeInTheDocument();
   });
 
@@ -1117,7 +1119,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState(twoOnePickTiers([], [])) });
     const { queryClient } = renderContestEntryPage();
 
-    const nameInput = await screen.findByTestId('contest-entry-header-name-input');
+    const nameInput = await screen.findByTestId('contest-entry-name-input');
     expect(nameInput).toHaveValue('Birdie Hunters Entry 1');
     fireEvent.change(nameInput, { target: { value: 'Sunday Charge' } });
 
@@ -1127,7 +1129,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     await queryClient.refetchQueries();
 
     expect(getSelectionStateMock).toHaveBeenCalledTimes(2);
-    expect(screen.getByTestId('contest-entry-header-name-input')).toHaveValue('Sunday Charge');
+    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Sunday Charge');
   });
 
   it('opens the earlier tier still short of picks once the last short tier is filled', async () => {
@@ -1287,26 +1289,35 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       };
     }
 
-    it('marks a complete but unsubmitted entry Not submitted and says it only counts once submitted', async () => {
+    it('marks a complete but unsubmitted entry Not submitted under its name, with when to submit by, and offers Submit', async () => {
       primeCommonMocks();
       getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
 
       renderContestEntryPage();
 
       expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
-      expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once it is submitted');
-      expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Submit entry');
+      expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
+      expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Submit');
+      expect(screen.getByTestId('contest-entry-progress')).toHaveTextContent('Picked1 of 1NextLineup full');
     });
 
-    it('marks a submitted entry Submitted, with no warning and a Save entry action', async () => {
+    it('marks a submitted entry Submitted with a tick and no button, until its name or tiebreaker changes, which Save then saves', async () => {
       primeCommonMocks();
       getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('SUBMITTED') });
+      updateContestEntryMock.mockResolvedValue({ data: { entry: { id: 'entry-1', name: 'Sunday Charge' } } });
 
       renderContestEntryPage();
 
       expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
-      expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Save entry');
+      expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent(/^✓ Submitted · change until /);
+      expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contest-entry-save')).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByTestId('contest-entry-name-input'), { target: { value: 'Sunday Charge' } });
+      fireEvent.click(screen.getByTestId('contest-entry-save'));
+
+      await waitFor(() => expect(updateContestEntryMock).toHaveBeenCalledWith(expect.objectContaining({ body: expect.objectContaining({ name: 'Sunday Charge' }) as unknown })));
+      expect(submitContestEntryMock).not.toHaveBeenCalled();
     });
 
     it('puts the picks first, then the entry name, the tiebreaker and one Submit for the whole entry outside the tiebreaker', async () => {
@@ -1317,7 +1328,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       const submit = await screen.findByTestId('contest-entry-submit');
       const picks = screen.getByTestId('contest-entry-builder-heading');
-      const name = screen.getByTestId('contest-entry-header-name-input');
+      const name = screen.getByTestId('contest-entry-name-input');
       const tiebreaker = screen.getByTestId('contest-entry-tiebreaker-select');
       const follows = (earlier: Element, later: Element) =>
         Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -1363,7 +1374,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       await waitFor(() =>
         expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted'));
-      expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('needs submitting again');
+      expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
+      expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent('Pick a full lineup to submit.');
     });
 
     it('stays on the page and shows the server\'s reason when a submit is refused, logged as a rejection', async () => {
@@ -1503,7 +1515,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
 
-    expect(screen.getByTestId('contest-entry-submit-blocked')).toHaveTextContent(
+    expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent(
       'Your picks cost $16,000, over the $15,000 salary cap. Remove one to get under it, then submit.',
     );
     expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
@@ -1528,25 +1540,22 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     expect(getSelectionStateMock).toHaveBeenCalledTimes(roomReadsBefore);
   });
 
-  it('counts the golfers still to pick in the singular when one place is left', async () => {
+  it('shows a budget lineup\'s progress in one strip: how many are picked and the spend against the cap', async () => {
     primeBudgetMocks(['sep-2']);
 
     renderContestEntryPage();
 
-    expect(await screen.findByTestId('contest-entry-progress')).toHaveTextContent('1 golfer still to pick');
-    expect(screen.getByTestId('contest-entry-progress')).not.toHaveTextContent('1 golfers still to pick');
+    expect(await screen.findByTestId('contest-entry-progress')).toHaveTextContent('Picked1 of 2Spent$7,000 of $15,000');
   });
 
-  it('leaves the spend out of the progress line, rather than saying Hidden, when the picks are visible but the server sent no spend', async () => {
+  it('leaves the spend out of the progress strip, rather than saying Hidden, when the picks are visible but the server sent no spend', async () => {
     primeBudgetMocks(['sep-2']);
     getSelectionStateMock.mockResolvedValue({ data: { ...budgetState(['sep-2']), lineupSummary: null } });
 
     renderContestEntryPage();
 
     const progress = await screen.findByTestId('contest-entry-progress');
-    expect(progress).toHaveTextContent('picks saved');
-    expect(progress).not.toHaveTextContent('cap spent');
-    expect(progress).not.toHaveTextContent('Hidden');
+    expect(progress).toHaveTextContent(/^Picked1 of 2$/);
   });
 
   it('removes a picked golfer when their chip is tapped', async () => {
@@ -1660,12 +1669,22 @@ describe('ContestEntryPage — a random-draw entry', () => {
     getSelectionStateMock.mockResolvedValue({ data: drawState(dealtIds, drawnAt) });
   }
 
-  it('offers a draw entry\'s name to change on its own, there being no lineup to submit, while entries are open', async () => {
+  it('ends a draw entry with an Entry name card, there being nothing to submit, whose Save shows once the name changes', async () => {
     primeDrawMocks([], null);
+    updateContestEntryMock.mockResolvedValue({ data: { entry: { id: 'entry-1', name: 'Lucky Draw' } } });
 
     renderContestEntryPage();
 
-    expect(await screen.findByTestId('contest-entry-rename-input')).toBeInTheDocument();
+    const card = await screen.findByTestId('contest-entry-finish');
+    expect(within(card).getByRole('heading', { name: 'Entry name' })).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent('Nothing to submit: the draw picks for you');
+    expect(screen.queryByTestId('contest-entry-save')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('Waiting for the draw');
+
+    fireEvent.change(screen.getByTestId('contest-entry-name-input'), { target: { value: 'Lucky Draw' } });
+    fireEvent.click(screen.getByTestId('contest-entry-save'));
+
+    await waitFor(() => expect(updateContestEntryMock).toHaveBeenCalledWith(expect.objectContaining({ body: { name: 'Lucky Draw' } })));
   });
 
   it('offers no name change once the draw has run, entries being closed', async () => {
@@ -1674,7 +1693,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
     renderContestEntryPage();
 
     await screen.findByText('Scottie Scheffler');
-    expect(screen.queryByTestId('contest-entry-rename-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
   });
 
   it('before the draw, says the commissioner\'s draw will deal the entry its golfers and offers nothing to pick or submit', async () => {
@@ -1689,8 +1708,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(within(await openStatusCallout()).getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the draw');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Name and submit' })).not.toBeInTheDocument();
   });
 
   it('after the draw, lists only the golfers the entry was dealt, read-only, with entries closed', async () => {
@@ -1702,7 +1720,8 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(within(dealt).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Scottie Scheffler', 'Jordan Spieth']);
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-draw-done')).toHaveTextContent('The draw is final.');
-    expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Done');
+    expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('2026');
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Drawn /);
     expect(screen.getByRole('heading', { name: 'Dealt golfers' })).toBeInTheDocument();
     // The status icon is the one thing to press: the dealt golfers are read-only.
     expect(screen.getAllByRole('button')).toEqual([screen.getByTestId('contest-entry-status')]);
@@ -1792,7 +1811,7 @@ describe('ContestEntryPage — a contest of two events', () => {
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });
 
-  it('still warns that a short lineup in the open second event is not submitted once the first event has started, with no tiebreaker to ask for', async () => {
+  it('still says a short lineup in the open second event is not submitted once the first event has started, with no tiebreaker to ask for', async () => {
     primeTwoEventMocks();
     const started = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Race 1', startDate: '2020-05-02T22:00:00.000Z', status: 'IN_PROGRESS' });
     const next = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Race 2', startDate: '2099-05-16T22:00:00.000Z' });
@@ -1807,10 +1826,11 @@ describe('ContestEntryPage — a contest of two events', () => {
 
     renderContestEntryPage();
 
-    expect(await screen.findByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once its lineup is complete and submitted');
-    // The entry's name locked with the first event, so only the warning is left to show.
-    expect(screen.queryByTestId('contest-entry-header-name-input')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
+    // The entry's name locked with the first event, so the card keeps only Submit, closed until the lineup is full.
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-finish-status')).toHaveTextContent('Pick a full lineup to submit.');
+    expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
   });
 
   it('shows no event switcher for a contest of one event', async () => {

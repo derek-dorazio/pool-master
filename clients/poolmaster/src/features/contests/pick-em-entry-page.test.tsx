@@ -117,12 +117,28 @@ describe('Pick\'em contest entry page', () => {
     }
   });
 
-  it('offers the entry\'s name to change on its own pick screen while entries are open, above Submit, the contest page having no Rename', async () => {
+  it('ends the week with one Name and submit card holding the name, the tiebreaker naming its game, and Submit week, after the games', async () => {
     primeMocks();
     renderPickEmEntry();
 
-    const rename = await screen.findByTestId('contest-entry-rename-input');
-    expect(rename.compareDocumentPosition(screen.getByTestId('pick-em-submit-panel')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const card = await screen.findByTestId('pick-em-finish');
+    expect(within(card).getByRole('heading', { name: 'Name and submit' })).toBeInTheDocument();
+    expect(within(card).getByTestId('contest-entry-name-input')).toBeInTheDocument();
+    expect(within(card).getByLabelText('Tiebreaker · total points, Bears at Packers')).toBe(screen.getByTestId('pick-em-tiebreaker-input'));
+    expect(within(card).getByTestId('pick-em-submit')).toHaveTextContent('Submit week');
+    expect(screen.getByTestId('pick-em-picks').compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(screen.getByTestId('pick-em-games')).queryByTestId('pick-em-tiebreaker-input')).not.toBeInTheDocument();
+  });
+
+  it('keeps how to pick behind the section title\'s (?), with a link to How to Play, and no sentence above the games', async () => {
+    primeMocks();
+    renderPickEmEntry();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-builder-heading-help'));
+
+    expect(screen.getByTestId('contest-entry-builder-heading-help-callout')).toHaveTextContent('Tap the team you think wins each game. Each correct pick scores 1 point.');
+    expect(screen.getByTestId('contest-entry-builder-heading-help-link')).toHaveAttribute('href', expect.stringContaining('format=PICK_EM'));
+    expect(within(screen.getByTestId('pick-em-picks-body')).queryByText(/Tap the team/)).not.toBeInTheDocument();
   });
 
   it('opens on the week being picked, lists its games in kickoff order with the away team first, and never reads the roster selection room', async () => {
@@ -137,16 +153,17 @@ describe('Pick\'em contest entry page', () => {
     expect(games).toEqual(['pick-em-game-2', 'pick-em-game-3', 'pick-em-game-1']);
     const sunday = within(screen.getByTestId('pick-em-game-2')).getAllByRole('button').map((button) => button.textContent);
     expect(sunday).toEqual(['Bills', 'Chiefs']);
-    expect(screen.getByTestId('pick-em-picked-count')).toHaveTextContent('0 of 3 picked');
+    expect(screen.getByTestId('pick-em-progress')).toHaveTextContent('Picked0 of 3Points0 ptsMax3 pts');
     expect(getSelectionStateMock).not.toHaveBeenCalled();
   });
 
-  it('warns that a draft week scores nothing unless it is submitted before the first kickoff, and says what is left before it can be', async () => {
+  it('says under the name that a draft week is not submitted and when to submit by, with no warning notice, and on the card what is left before it can be', async () => {
     primeMocks();
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('pick-em-not-submitted-warning')).toHaveTextContent('A week that isn\'t submitted by then scores nothing.');
-    expect(screen.getByTestId('pick-em-submit-hint')).toHaveTextContent('Pick every game to submit: 3 still to pick.');
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Pick every game to submit: 3 still to pick.');
     expect(screen.getByTestId('pick-em-submit')).toBeDisabled();
   });
 
@@ -187,25 +204,51 @@ describe('Pick\'em contest entry page', () => {
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId }] });
     await waitFor(() => expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
-    expect(screen.getByTestId('pick-em-picked-count')).toHaveTextContent('1 of 3 picked');
+    expect(screen.getByTestId('pick-em-picked-count')).toHaveTextContent('1 of 3');
   });
 
-  it('takes the tiebreaker on the week\'s last game only, and saves it with no picks', async () => {
-    primeMocks();
-    saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ tiebreakerValue: 44 }) });
+  it('saves a typed tiebreaker with no picks when Submit week is pressed, then submits the week', async () => {
+    const picked = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    primeMocks({ week: pickEmWeekFixture({ games: picked }) });
+    saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, canSubmit: true }) });
+    submitGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, status: 'SUBMITTED' }) });
     renderPickEmEntry();
 
-    const monday = await screen.findByTestId('pick-em-game-1');
-    expect(within(monday).getByTestId('pick-em-tiebreaker-input')).toBeInTheDocument();
-    expect(within(monday).getByText(/Total points in Bears at Packers/)).toBeInTheDocument();
-    expect(within(screen.getByTestId('pick-em-game-2')).queryByTestId('pick-em-tiebreaker-input')).not.toBeInTheDocument();
+    expect(within(await screen.findByTestId('pick-em-game-1')).getByText('Tiebreaker game')).toBeInTheDocument();
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Enter your tiebreaker to submit.');
+    expect(screen.getByTestId('pick-em-submit')).toBeDisabled();
 
     fireEvent.change(screen.getByTestId('pick-em-tiebreaker-input'), { target: { value: '44' } });
-    fireEvent.click(screen.getByTestId('pick-em-tiebreaker-save'));
+    fireEvent.click(screen.getByTestId('pick-em-submit'));
+
+    await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalledTimes(1));
+    expect(savedBody()).toEqual({ picks: [], tiebreakerValue: 44 });
+    expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
+  });
+
+  it('saves a changed name or tiebreaker on a submitted week with Save, which stays on the week', async () => {
+    const picked = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    primeMocks({ week: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, status: 'SUBMITTED' }) });
+    saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ games: picked, tiebreakerValue: 51, status: 'SUBMITTED' }) });
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('pick-em-finish-status')).toHaveTextContent(/^✓ Submitted · change until /);
+    expect(screen.queryByTestId('pick-em-save')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('pick-em-tiebreaker-input'), { target: { value: '51' } });
+    fireEvent.click(screen.getByTestId('pick-em-save'));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
-    expect(savedBody()).toEqual({ picks: [], tiebreakerValue: 44 });
-    expect(await screen.findByTestId('pick-em-tiebreaker-saved')).toHaveTextContent('Saved tiebreaker: 44 total points.');
+    expect(savedBody()).toEqual({ picks: [], tiebreakerValue: 51 });
+    expect(submitGamePicksMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
   });
 
   it('submits a week with every game picked and its tiebreaker saved, then returns to the contest\'s page', async () => {
@@ -221,7 +264,7 @@ describe('Pick\'em contest entry page', () => {
     renderPickEmEntry();
 
     expect(await screen.findByTestId('pick-em-submit')).toBeEnabled();
-    expect(screen.queryByTestId('pick-em-submit-hint')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent(/^Submit by /);
     fireEvent.click(screen.getByTestId('pick-em-submit'));
 
     expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
@@ -257,7 +300,7 @@ describe('Pick\'em contest entry page', () => {
     saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ mode: 'CONFIDENCE', games: ranked }) });
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('pick-em-submit-hint')).toHaveTextContent('Rank every pick from 1 to 3: 1 still to rank.');
+    expect(await screen.findByTestId('pick-em-finish-status')).toHaveTextContent('Rank every pick from 1 to 3: 1 still to rank.');
     fireEvent.change(screen.getByTestId('pick-em-game-2-confidence'), { target: { value: '3' } });
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
@@ -299,8 +342,9 @@ describe('Pick\'em contest entry page', () => {
     expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
     expect(within(screen.getByTestId('pick-em-game-1')).getAllByRole('button').length).toBeGreaterThan(0);
     expect(screen.getByTestId('pick-em-points')).toHaveTextContent('1 pt');
-    expect(screen.getByTestId('pick-em-submitted')).toBeInTheDocument();
-    expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Submitted · change until /);
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent(/^✓ Submitted · change until /);
+    expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 
   it('shows each team\'s spread beside it in a pool scored against the spread, "PK" for a pick\'em game, and marks a game on the spread a push', async () => {
@@ -333,7 +377,7 @@ describe('Pick\'em contest entry page', () => {
     primeMocks({ week: pickEmWeekFixture({ games: missed }) });
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('pick-em-missed-week')).toHaveTextContent('scores nothing');
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent('Not submitted before the first kickoff · scores nothing');
     expect(within(screen.getByTestId('pick-em-games')).queryAllByRole('button')).toHaveLength(0);
     expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
     expect(screen.queryByTestId('pick-em-tiebreaker-input')).not.toBeInTheDocument();
@@ -408,10 +452,11 @@ describe('Survivor contest entry page', () => {
     expect(bills).toHaveTextContent('Used');
     expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toBeEnabled();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
-    expect(screen.getByTestId('pick-em-submit-hint')).toHaveTextContent('Pick one team to submit.');
-    expect(screen.queryByTestId('pick-em-tiebreaker')).not.toBeInTheDocument();
+    expect(screen.getByTestId('survivor-status')).toHaveTextContent('In');
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Pick one team to submit.');
+    expect(screen.queryByTestId('pick-em-tiebreaker-input')).not.toBeInTheDocument();
     expect(screen.queryByTestId('pick-em-points')).not.toBeInTheDocument();
-    expect(screen.getByTestId('pick-em-not-submitted-warning')).toHaveTextContent('An entry that hasn\'t submitted by then is out.');
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Not submitted · submit by /);
   });
 
   it('saves the tapped team as the week\'s one pick and names it', async () => {
@@ -433,9 +478,10 @@ describe('Survivor contest entry page', () => {
     primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] }, canSubmit: false }));
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('survivor-eliminated')).toHaveTextContent('This entry went out in week 1, so it picks no more weeks.');
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Out in week 1$/);
+    expect(screen.getByTestId('survivor-status')).toHaveTextContent('Out');
     expect(screen.getByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`).tagName).not.toBe('BUTTON');
-    expect(screen.queryByTestId('pick-em-submit-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 
   it('shows a refused pick of a used team in product copy', async () => {
@@ -477,7 +523,7 @@ describe('Playoff survivor entry page', () => {
     expect(team(2, NFL_TEAMS.eagles.sportEventParticipantId)).toBeEnabled();
     expect(screen.queryByTestId('pick-em-game-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
-    expect(screen.getByTestId('survivor-round-needs-pick')).toHaveTextContent('Pick a team before this round\'s first game, or the entry is out.');
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('No pick yet · pick a team before this round\'s first game');
   });
 
   it('shows an earlier round\'s pick, locked, on switching to it', async () => {
@@ -498,16 +544,15 @@ describe('Playoff survivor entry page', () => {
     getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture({ sport: 'TENNIS' }) } });
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('survivor-round-needs-pick')).toHaveTextContent('Pick a player before this round\'s first match, or the entry is out.');
-    expect(screen.getByText('Your pick locks when its match starts.')).toBeInTheDocument();
-    expect(screen.getByText(/^Tap the one player you think wins this round\./)).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent('No pick yet · pick a player before this round\'s first match');
+    fireEvent.click(screen.getByTestId('contest-entry-builder-heading-help'));
+    expect(screen.getByTestId('contest-entry-builder-heading-help-callout')).toHaveTextContent(/^Tap the one player you think wins this round\..*Your pick locks when its match starts\./);
   });
 
   it('says which round put an entry out', async () => {
     primePlayoff(playoffSurvivorFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] } }));
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('survivor-eliminated'))
-      .toHaveTextContent('This entry went out in the Conference Championship, so it picks no more rounds.');
+    expect(await screen.findByTestId('contest-entry-status-line')).toHaveTextContent(/^Out in the Conference Championship$/);
   });
 });

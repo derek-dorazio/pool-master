@@ -90,7 +90,7 @@ describe('pick\'em week helpers', () => {
       .toBe('Rank every pick from 1 to 3: 2 still to rank.');
     expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 1, 2]) })))
       .toBe('Use each value from 1 to 3 once: a value is on more than one pick.');
-    expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Save your tiebreaker to submit.');
+    expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Enter your tiebreaker to submit.');
     expect(weekSubmitHint(pickEmWeekFixture({ games: allPicked([null, null, null]), tiebreakerValue: 41 }))).toBeNull();
   });
 });

@@ -1,30 +1,32 @@
 import { useNavigate, useParams } from 'react-router';
-import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import {
   Notice,
   ErrorState,
   LoadingState,
-  MetricGrid,
-  MetricTile,
   SectionCard,
-  Text,
+  StatStrip,
 } from '@/features/shared/ui';
+import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
 import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
-import { BracketSubmitPanel } from './bracket-entry-submit';
-import { buildBracketRounds, describeBracketClose, describeBracketTiebreaker, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
+import { buildBracketRounds, describeBracketClose, describeBracketTiebreaker, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
 import { BracketView } from './bracket-view';
 import { drawBracket } from './bracket-view-model';
 import { ContestEntryFrame } from './contest-header';
-import { EntryRenameSection } from './entry-rename-section';
+import { EntryFinishCard } from './entry-finish-card';
+import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
-import { canRenameEntries, contestStatusLabel } from './contest-status';
+import { canRenameEntries, CONTEST_ENTRY_STATUS_LABELS, contestStatusLabel } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
+import { gameEntryFinish } from './game-entry-finish';
+import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
+import { TiebreakerNumberField } from './tiebreaker-number-field';
 
 /**
  * Copy for the refusals a bracket's picks, tiebreaker and submit can meet (#721), in the
@@ -36,7 +38,7 @@ function bracketCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages
   const participant = contestParticipantNoun(sport);
   return {
     PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before your bracket can be submitted.`,
-    PREDICTION_TIEBREAKER_MISSING: `Save your tiebreaker, the total ${contestScoreUnit(sport)} of the final, before you submit.`,
+    PREDICTION_TIEBREAKER_MISSING: `Enter your tiebreaker, the total ${contestScoreUnit(sport)} of the final, before you submit.`,
     PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
     PREDICTION_TEAM_NOT_IN_GAME: `That ${participant.one} can’t reach this ${match.one} in your bracket any more. Your bracket has been refreshed.`,
     CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this bracket can no longer change.`,
@@ -71,6 +73,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const entryQuery = useContestEntryQuery(contestId, entryId);
   const leagueCode = useContestLeagueCode();
   const navigate = useNavigate();
+  const name = useEntryName({ contestId, entryId, savedName: gamePicksQuery.data?.entryName ?? '' });
 
   if (gamePicksQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading bracket..." />;
@@ -107,12 +110,29 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const errorMessage = (error: Error | null, fallback: string) => (error
     ? extractErrorMessage(error, { codeMessages: bracketCodeMessages(contest.sport), fallback })
     : null);
-  // A save with no picks is the tiebreaker's: its refusal shows beside the tiebreaker field.
-  const isTiebreakerSave = saveMutation.variables?.picks.length === 0;
+  const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
+  const scoreUnit = contestScoreUnit(contest.sport);
+  const submits = canPick && !isSubmitted;
+  const {
+    finish, finishError, isChanged, isFinishing, isTiebreakerSave, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
+  } = gameEntryFinish({
+    errorMessage,
+    name,
+    // A submitted bracket returns to the contest's page (#1739).
+    onSubmitted: () => void navigate(buildLeagueContestPath(leagueCode, contestId)),
+    savedTiebreaker: gamePicks.tiebreakerValue,
+    submitFallback: 'We could not submit this bracket. Please try again.',
+    submits,
+    writes: { saveMutation, submitMutation, tiebreakerDraft },
+  });
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
-  const tiebreakerError = isTiebreakerSave
-    ? errorMessage(saveMutation.error, 'We could not save your tiebreaker. Please try again.')
-    : null;
+  const stillToPick = gamePicks.gameCount - gamePicks.pickedCount;
+  // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
+  const hint = stillToPick > 0
+    ? `Pick every ${match.one} to submit: ${stillToPick} still to pick.`
+    : (typedTiebreaker ?? gamePicks.tiebreakerValue) === null ? 'Enter your tiebreaker to submit.' : null;
+  const nameEditable = gamePicks.ownEntry && canRenameEntries(contest);
+  const status = picksHidden ? null : gamePicks.status;
 
   return (
     <ContestEntryFrame
@@ -120,7 +140,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       entry={entrySummary}
       leagueCode={leagueCode}
       phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
-      status={picksHidden ? null : gamePicks.status}
+      status={status}
+      statusLine={entryStatusLine({ closes: closesAt, isOpen: canPick, status })}
       testId="bracket-entry-page"
       title={gamePicks.entryName}
     >
@@ -131,72 +152,67 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
         </Notice>
       ) : (
         <>
-          <SectionCard headingLevel={3} padded testId="bracket-scorecard" title="Your bracket">
-            <MetricGrid className="md:grid-cols-3">
-              <MetricTile
-                helperText={gamePicks.ownEntry && isOpen ? `Picks lock at ${closesAt}.` : 'Every pick is locked.'}
-                label="Picked"
-                value={<span data-testid="bracket-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-              />
-              <MetricTile
-                helperText="Correct picks so far."
-                label="Points"
-                value={<span data-testid="bracket-points">{formatScore(gamePicks.points)}</span>}
-              />
-              <MetricTile
-                helperText="Points so far plus every pick still alive."
-                label="Max possible"
-                value={<span data-testid="bracket-max-possible">{formatScore(gamePicks.maxPossiblePoints)}</span>}
-              />
-            </MetricGrid>
-          </SectionCard>
+          <StatStrip
+            items={[
+              { label: 'Picked', value: `${gamePicks.pickedCount} of ${gamePicks.gameCount}`, testId: 'bracket-picked-count' },
+              { label: 'Points', value: formatScore(gamePicks.points), testId: 'bracket-points' },
+              { label: 'Max', value: formatScore(gamePicks.maxPossiblePoints), testId: 'bracket-max-possible' },
+            ]}
+            testId="bracket-progress"
+          />
 
           {pickError ? <Notice data-testid="bracket-pick-error" tone="danger">{pickError}</Notice> : null}
 
           <SectionCard
             headingLevel={3}
+            help={canPick ? `Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it. Picks lock at ${closesAt}.` : undefined}
+            helpLink={canPick ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) } : undefined}
             padded
             testId="bracket-picks"
             title={canPick ? 'Fill in your bracket' : 'Bracket'}
             titleTestId="contest-entry-builder-heading"
           >
-            {canPick ? (
-              <Text as="p" size="sm" variant="meta">
-                {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}
-              </Text>
-            ) : null}
             <BracketView
               drawing={drawBracket(gamePicks.games, roundLabel)}
               isOwnEntry={gamePicks.ownEntry}
               picking={canPick ? { isBusy: saveMutation.isPending, onPick: pick } : null}
-              tiebreaker={canPick ? undefined : describeBracketTiebreaker(gamePicks.tiebreakerValue, contestScoreUnit(contest.sport))}
+              tiebreaker={canPick ? undefined : describeBracketTiebreaker(gamePicks.tiebreakerValue, scoreUnit)}
             />
           </SectionCard>
 
-          {/* The name above Submit, so Submit stays the page's last action. */}
-          {gamePicks.ownEntry && canRenameEntries(contest) ? (
-            <EntryRenameSection contestId={contestId} entryId={entryId} savedName={gamePicks.entryName} />
-          ) : null}
-          {canPick ? (
-            <BracketSubmitPanel
-              gamePicks={gamePicks}
-              sport={contest.sport}
-              isSaving={saveMutation.isPending}
-              isSubmitting={submitMutation.isPending}
-              onSaveTiebreaker={(tiebreakerValue) => {
-                saveMutation.reset();
-                saveMutation.mutate({ picks: [], tiebreakerValue });
-              }}
-              onSubmit={() => {
-                submitMutation.reset();
-                // A submitted bracket returns to the contest's page (#1739).
-                submitMutation.mutate(undefined, { onSuccess: () => void navigate(buildLeagueContestPath(leagueCode, contestId)) });
-              }}
-              onTiebreakerChange={setTiebreakerDraft}
-              saveError={tiebreakerError}
-              submitError={errorMessage(submitMutation.error, 'We could not submit this bracket. Please try again.')}
-              tiebreakerText={tiebreakerDraft ?? (gamePicks.tiebreakerValue === null ? '' : String(gamePicks.tiebreakerValue))}
-            />
+          {gamePicks.ownEntry && (canPick || nameEditable) ? (
+            <EntryFinishCard
+              action={submits ? {
+                disabled: hint !== null || tiebreakerInvalid || !name.isValid || isFinishing,
+                isBusy: isFinishing,
+                label: 'Submit bracket',
+                onClick: () => void finish(),
+                testId: 'bracket-submit',
+              } : isChanged ? {
+                disabled: tiebreakerInvalid || !name.isValid || isFinishing,
+                isBusy: isFinishing,
+                label: 'Save',
+                onClick: () => void finish(),
+                testId: 'bracket-save',
+              } : null}
+              error={finishError}
+              errorTestId="bracket-submit-error"
+              name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
+              status={canPick ? entryFinishStatus({ closes: closesAt, hint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+              statusTestId="bracket-finish-status"
+              testId="bracket-finish"
+              title="Name and submit"
+            >
+              {canPick ? (
+                <TiebreakerNumberField
+                  disabled={isFinishing}
+                  label={`Tiebreaker · total ${scoreUnit} in the final`}
+                  onChange={setTiebreakerDraft}
+                  testId="bracket-tiebreaker-input"
+                  text={tiebreakerText}
+                />
+              ) : null}
+            </EntryFinishCard>
           ) : null}
         </>
       )}
