@@ -52,27 +52,32 @@ export class PrismaContestLeaderboardSnapshotRepository<Board> implements Contes
     if (stored) return stored;
     // No older row: there is none yet, or the one there is newer. Skipping a duplicate keeps the
     // newer one, and keeps two first rebuilds at once from failing each other.
-    const { contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil } = write;
+    const { contestId, shownEvent, boardFormat, computedFrom, contestUpdatedAt, validUntil } = write;
     const created = await this.prisma.contestLeaderboardSnapshot.createMany({
-      data: [{ contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue }],
+      data: [{ contestId, shownEvent, boardFormat, computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue }],
       skipDuplicates: true,
     });
     if (created.count > 0) return { ...write, version: 1 };
-    // Another first build inserted between the two: overwrite it if it began earlier than this one.
+    // Another first build inserted between the two: overwrite it if it began earlier than this one,
+    // or was written under an older board format.
     return this.overwriteOlder(write);
   }
 
   /**
-   * Overwrites the stored row only if it was computed from older reads: one that began at the same
-   * moment or later holds scores at least as new, and is kept. One statement, answering the row
-   * stored, or null when there is no older row.
+   * Overwrites the stored row only if it was computed from older reads, or written under an older
+   * board format (#1761), which is never served: one that began at the same moment or later holds
+   * scores at least as new, and is kept. One statement, answering the row stored, or null when
+   * there is no older row.
    */
   private async overwriteOlder(write: ContestLeaderboardSnapshotWrite<Board>): Promise<ContestLeaderboardSnapshot<Board> | null> {
-    const { contestId, shownEvent, computedFrom, contestUpdatedAt, validUntil } = write;
+    const { contestId, shownEvent, boardFormat, computedFrom, contestUpdatedAt, validUntil } = write;
     try {
       const updated = await this.prisma.contestLeaderboardSnapshot.update({
-        where: { contestId_shownEvent: { contestId, shownEvent }, computedFrom: { lt: computedFrom } },
-        data: { computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue, version: { increment: 1 } },
+        where: {
+          contestId_shownEvent: { contestId, shownEvent },
+          OR: [{ computedFrom: { lt: computedFrom } }, { boardFormat: { lt: boardFormat } }],
+        },
+        data: { boardFormat, computedFrom, contestUpdatedAt, validUntil, board: write.board as Prisma.InputJsonValue, version: { increment: 1 } },
       });
       return toSnapshot<Board>(updated);
     } catch (error) {
@@ -91,6 +96,7 @@ function toSnapshot<Board>(row: SnapshotRow): ContestLeaderboardSnapshot<Board> 
     contestId: row.contestId,
     shownEvent: row.shownEvent,
     version: row.version,
+    boardFormat: row.boardFormat,
     computedFrom: row.computedFrom,
     contestUpdatedAt: row.contestUpdatedAt,
     validUntil: row.validUntil,

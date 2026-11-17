@@ -1741,6 +1741,10 @@ model ContestLeaderboardSnapshot {
   shownEvent       String    @map("shown_event") @db.VarChar(36)
   /// Goes up by one on every write: what a poll's ETag is built from (#1436).
   version          Int       @default(1)
+  /// The board format it was written under (#1761): one older than the code's
+  /// `LEADERBOARD_BOARD_FORMAT` is never served, but computed again. 0 is a row written by a task
+  /// still running code from before formats were counted, during the deploy that adds this.
+  boardFormat      Int       @default(0) @map("board_format")
   /// When the rebuild that wrote it began reading. A rebuild that began earlier never overwrites
   /// it, so a slow rebuild of older scores cannot replace a newer board.
   computedFrom     DateTime  @map("computed_from") @db.Timestamptz

@@ -4,6 +4,7 @@ import type { PrismaClient } from '@prisma/client';
 import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaContestLeaderboardSnapshotRepository, PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import {
   cleanupTestData,
   createTestUser,
@@ -609,7 +610,7 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
     const at = (ms: number) => new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms));
     const write = (label: string, computedFrom: Date) => snapshots.save({
-      contestId: contest.id, shownEvent: '', computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+      contestId: contest.id, shownEvent: '', boardFormat: LEADERBOARD_BOARD_FORMAT, computedFrom, contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
     });
 
     expect(await write('first', at(100))).toMatchObject({ version: 1, board: { label: 'first' } });
@@ -626,7 +627,7 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     const appPrisma = getAppPrisma();
     const older = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(appPrisma);
     const write = (label: string, ms: number) => ({
-      contestId: contest.id, shownEvent: '', computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+      contestId: contest.id, shownEvent: '', boardFormat: LEADERBOARD_BOARD_FORMAT, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
     });
     // The newer build finds no row to overwrite; the older build's insert lands before its own.
     let olderInserted = false;
@@ -675,6 +676,30 @@ describe('Contest leaderboard snapshots (#1435)', () => {
 
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
     expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2 }]);
+  });
+
+  it('computes the board again on the next read, and stores it under the current format, when the stored one was written under an older board format (#1761)', async () => {
+    const { contest, viewerId } = await liveContest();
+    const service = serviceOn(getAppPrisma());
+    await service.getLeaderboard(contest.id, viewerId);
+    await getPrisma().contestLeaderboardSnapshot.updateMany({ where: { contestId: contest.id }, data: { boardFormat: LEADERBOARD_BOARD_FORMAT - 1 } });
+
+    const { statements } = await recordStatements(() => service.getLeaderboard(contest.id, viewerId));
+
+    expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entries')).toHaveLength(1);
+    expect(await snapshotRows(contest.id)).toMatchObject([{ version: 2, boardFormat: LEADERBOARD_BOARD_FORMAT }]);
+  });
+
+  it('overwrites a board stored under an older format even when it began computing later, so it is never kept in place of a current one', async () => {
+    const { contest } = await liveContest();
+    const snapshots = new PrismaContestLeaderboardSnapshotRepository<{ label: string }>(getAppPrisma());
+    const write = (label: string, boardFormat: number, ms: number) => snapshots.save({
+      contestId: contest.id, shownEvent: '', boardFormat, computedFrom: new Date(Date.UTC(2026, 10, 7, 21, 0, 0, ms)), contestUpdatedAt: contest.updatedAt, validUntil: null, board: { label },
+    });
+
+    await write('older format', LEADERBOARD_BOARD_FORMAT - 1, 200);
+
+    expect(await write('current format', LEADERBOARD_BOARD_FORMAT, 100)).toMatchObject({ version: 2, boardFormat: LEADERBOARD_BOARD_FORMAT, board: { label: 'current format' } });
   });
 
   it('keeps one stored board per shown event, and deletes them with their contest', async () => {

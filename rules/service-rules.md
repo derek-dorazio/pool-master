@@ -295,6 +295,12 @@ definition of done.
 - If the response is `{ league: ... }`, schema must say `{ league: ... }`.
 - If the response is `{ success: true }`, schema must say `{ success: true }`.
 - Dates over the wire must be ISO 8601 strings, not `Date` objects.
+- A response that is stored and served again must be recomputed once its shape changes. Fastify
+  refuses to serialise a body missing a required field, so a stored copy written before a deploy
+  that added one answers 500. The stored leaderboards carry a board format for this: a change to
+  any leaderboard response (roster, bracket, pick'em or survivor, or a row or week on one) bumps
+  `LEADERBOARD_BOARD_FORMAT` in the same change, and boards stored under an older format are
+  computed again instead of served.
 
 ### List Envelope Discipline
 
