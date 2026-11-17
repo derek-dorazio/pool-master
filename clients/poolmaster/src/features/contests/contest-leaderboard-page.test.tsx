@@ -19,6 +19,8 @@ const {
   getContestMock,
   getCurrentUserMock,
   getContestLeaderboardMock,
+  getEventBracketMock,
+  getEventMock,
   getLeagueMock,
   mockLogger,
   refreshTokenMock,
@@ -38,6 +40,8 @@ const {
     getContestMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
     getContestLeaderboardMock: vi.fn(),
+    getEventBracketMock: vi.fn(),
+    getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     mockLogger: logger,
     refreshTokenMock: vi.fn(),
@@ -48,6 +52,8 @@ bindApiMocks({
   getContest: getContestMock,
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
+  getEvent: getEventMock,
+  getEventBracket: getEventBracketMock,
   getLeague: getLeagueMock,
   refreshToken: refreshTokenMock,
 });
@@ -196,6 +202,7 @@ function leaderboardResponse(entryTotalScore = -5) {
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+      upsetBonus: false,
       participants: [
         participant({
           id: 'sep-1',
@@ -492,6 +499,73 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-toggle-all-stats')).not.toBeInTheDocument();
   });
 
+  function teamPicksBoard() {
+    const base = leaderboardResponse().data;
+    const teamRow = (id: string, name: string) => ({ ...participant({ id, name }), standing: null, rounds: [] });
+    const knockoutPick = (pickId: string, sportEventParticipantId: string, knockout: Record<string, unknown>) => ({
+      ...base.entries[0].picks[0], pickId, sportEventParticipantId, golf: null, knockout,
+    });
+    return {
+      ...base,
+      sport: 'BASKETBALL',
+      scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+      upsetBonus: true,
+      participants: [teamRow('sep-1', 'Vermont'), teamRow('sep-2', 'Gonzaga'), teamRow('sep-3', 'Arizona'), teamRow('sep-4', 'Duke')],
+      entries: [{
+        ...base.entries[0],
+        totalScore: 7,
+        picks: [
+          knockoutPick('pick-1', 'sep-1', { points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false }),
+          knockoutPick('pick-2', 'sep-4', { points: 6, wins: 1, upsetBonusPoints: 3, isAlive: true }),
+        ],
+      }],
+    };
+  }
+
+  function primeTeamPicksGames() {
+    const match = (matchNumber: number, roundNumber: number, homeId: string, awayId: string, result: Record<string, unknown>) => ({
+      id: `match-${String(matchNumber)}`, sportEventId: 'event-1', roundNumber, matchNumber,
+      homeSportEventParticipantId: homeId, awaySportEventParticipantId: awayId, isNeutralSite: true,
+      scheduledDate: '2026-03-21T18:00:00.000Z', status: 'SCHEDULED', winnerSide: null, homeScore: null, awayScore: null,
+      homeShootoutScore: null, awayShootoutScore: null, ending: 'PLAYED', resultSource: null, advancesToMatchId: null,
+      advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], ...result,
+    });
+    getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: null, rounds: 6 } } });
+    getEventBracketMock.mockResolvedValue({ data: { matches: [
+      match(1, 1, 'sep-1', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 81, awayScore: 76 }),
+      match(9, 2, 'sep-1', 'sep-3', { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
+      match(2, 1, 'sep-4', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 90, awayScore: 60 }),
+    ] } });
+  }
+
+  it('shows a team-picks board\'s Status as In or Out with the round it went out in, its upset bonus as +N, and its latest game under its name', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    // With no sport league to name them, the rounds take basketball's own names.
+    expect(await screen.findByText('Out · Second Round')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-status-entry-1-pick-2')).toHaveTextContent('In');
+    expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('Upset');
+    expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-2')).toHaveTextContent('+3');
+    expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-1')).toHaveTextContent('—');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–74');
+  });
+
+  it('opens a team\'s Wins to every game it played', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek'));
+
+    const callout = screen.getByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek-callout');
+    expect(callout).toHaveTextContent('First Roundbeat Gonzaga 81–76');
+    expect(callout).toHaveTextContent('Second Roundlost to Arizona 70–74');
+  });
+
   it('tints a hovered pick row\'s pinned cells too, over their opaque background', async () => {
     primeMocks();
 
@@ -767,6 +841,7 @@ describe('ContestLeaderboardPage', () => {
       leaderboard: {
         ...board,
         countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+        upsetBonus: false,
         entries: board.entries.map((entry) => ({
           ...entry,
           countingPickLimit: 4,
@@ -854,8 +929,10 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByTestId('contest-leaderboard-position-entry-1');
+    // A golf board reads no games, so it passes no games context.
     expect(buildLeaderboardView).toHaveBeenCalledWith(
       expect.objectContaining({ contestId: 'contest-1', scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' }),
+      undefined,
     );
     buildLeaderboardView.mockRestore();
   });
@@ -868,6 +945,7 @@ describe('ContestLeaderboardPage', () => {
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+        upsetBonus: false,
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -892,6 +970,7 @@ describe('ContestLeaderboardPage', () => {
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+        upsetBonus: false,
         participants: [],
         entries: [],
         asOf: null,

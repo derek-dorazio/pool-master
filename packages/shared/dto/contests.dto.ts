@@ -250,6 +250,7 @@ export const ContestLeaderboardResponseSchema = z.object({
     'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
   ),
   countingRule: ContestCountingRuleDtoSchema,
+  upsetBonus: z.boolean().describe('Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick\'s bonus in its own column even before any team has earned one. False for every other contest.'),
   participants: z.array(SportEventParticipantDtoSchema).describe('The shown event\'s field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.'),
   entries: z.array(ContestEntryStandingDtoSchema).describe('Contest entries that submitted at least one revealed event, best total first.'),
   asOf: z.iso.datetime().nullable().describe('Latest standing timestamp the leaderboard reflects, or null when there is none.'),

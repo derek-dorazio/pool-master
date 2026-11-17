@@ -23,6 +23,7 @@ import {
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type {
   LeaderboardDetailCell,
+  LeaderboardContext,
   LeaderboardDetailColumn,
   LeaderboardFootnote,
 } from './scoring-family-ui/types';
@@ -79,10 +80,10 @@ export interface LeaderboardView {
  * never re-sorted here, because position and its tie-aware `displayPosition` were decided
  * server-side against the scoring definition's direction.
  */
-export function buildLeaderboardView(response: ContestLeaderboardResponse): LeaderboardView {
+export function buildLeaderboardView(response: ContestLeaderboardResponse, context?: LeaderboardContext): LeaderboardView {
   // The shown event's definition: a stat pool plays its sport's composite, not its bracket.
   const sport = eventSportDefinition(response);
-  const family = getScoringFamilyUi(sport).leaderboard(response, sport);
+  const family = getScoringFamilyUi(sport).leaderboard(response, sport, context);
   const scoringDefinition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
   const participantsById = new Map(
     response.participants.map((participant) => [participant.id, participant]),

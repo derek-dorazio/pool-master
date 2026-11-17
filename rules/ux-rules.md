@@ -409,7 +409,11 @@ administration area (root admin included), reusing the same shared components.
    game under their name ("G4: 15 pts · 6 reb · 4 ast", struck through too when the
    pick does not count). A series has one column of scores per game, each score a
    `DetailsPeek` on that game's stats, and DNP for a game missed; a single game has
-   Tot only. No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
+   Tot only. A team-picks board's Status is a chip, "In" or "Out · <round>" with
+   the round's full name; the same Stats switch puts each team's latest game under
+   its name ("Elite Eight: beat Tennessee 69–50"); Wins is a `DetailsPeek` on every
+   game played and, for a team still in, its next one; the Upset column shows only
+   when the contest has the bonus on, as "+3". No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
    viewer's own start open, and "Show all details" / "Hide all details" above the
    list opens or closes every row that has details. The old `/leaderboard`
    address redirects to it. **Buttons never land on the contest page**: Make
