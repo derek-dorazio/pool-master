@@ -1,6 +1,7 @@
 /**
  * An in-memory ContestLeaderboardSnapshotRepository (#1435) that stores as the Prisma adapter does:
- * a write replaces only a snapshot that began computing earlier, and each one moves the version up.
+ * a write replaces only a snapshot that began computing earlier or was stored under an older board
+ * format (#1761), never one stored under a newer format, and each one moves the version up.
  */
 import type {
   ContestLeaderboardSnapshot,
@@ -8,7 +9,7 @@ import type {
   ContestLeaderboardSnapshotRepository,
   ContestLeaderboardSnapshotWrite,
 } from '@poolmaster/shared/db';
-import { DEFAULT_SHOWN_EVENT } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { DEFAULT_SHOWN_EVENT, LEADERBOARD_BOARD_FORMAT } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 
 export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSnapshotRepository<Board> {
   readonly rows = new Map<string, ContestLeaderboardSnapshot<Board>>();
@@ -37,7 +38,7 @@ export class InMemoryLeaderboardSnapshots<Board> implements ContestLeaderboardSn
     this.saves.push(write);
     const key = `${write.contestId}:${write.shownEvent}`;
     const stored = this.rows.get(key);
-    if (stored && stored.computedFrom >= write.computedFrom) return null;
+    if (stored && (stored.boardFormat > write.boardFormat || (stored.computedFrom >= write.computedFrom && stored.boardFormat === write.boardFormat))) return null;
     const saved = { ...write, version: (stored?.version ?? 0) + 1 };
     this.rows.set(key, saved);
     return saved;
@@ -66,4 +67,15 @@ export function placeOnStoredBoard<Board extends PlacedBoard>(
   if (!row) throw new Error(`No stored default board for contest ${contestId}`);
   const entries = row.board.board.entries.map((entry) => (entry.entryId === entryId ? { ...entry, position, displayPosition: String(position) } : entry));
   snapshots.rows.set(key, { ...row, board: { ...row.board, board: { ...row.board.board, entries } } });
+}
+
+/**
+ * Marks the contest's stored default board as written under the board format before the current
+ * one (#1761), as a board stored before a deploy that changed the response shape is.
+ */
+export function storeUnderOlderBoardFormat<Board>(snapshots: InMemoryLeaderboardSnapshots<Board>, contestId: string): void {
+  const key = `${contestId}:${DEFAULT_SHOWN_EVENT}`;
+  const row = snapshots.rows.get(key);
+  if (!row) throw new Error(`No stored default board for contest ${contestId}`);
+  snapshots.rows.set(key, { ...row, boardFormat: LEADERBOARD_BOARD_FORMAT - 1 });
 }
