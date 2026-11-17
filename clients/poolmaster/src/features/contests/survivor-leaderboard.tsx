@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules } from '@poolmaster/shared/domain';
+import { SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize } from '@poolmaster/shared/domain';
 import type { ContestDto, SurvivorLeaderboardResponse } from '@/lib/api';
 import { Chip, formatCount, useDisplayPreferences, type StatusBadgeProps } from '@/features/shared/ui';
 import { entryColumn, isMySquadsEntry, placeColumn, totalColumn } from './leaderboard-columns';
@@ -17,12 +17,15 @@ const TEST_ID = 'survivor-leaderboard';
 
 const OUTCOME_LABELS: Record<SurvivorWeekOutcome, string> = {
   SURVIVED: 'Survived',
+  LIFE_LOST: 'Lost a life',
   ELIMINATED: 'Out',
   PENDING: 'Pending',
 };
 
+/** A week that cost a life is red, as a week that put the entry out is (#1754). */
 const OUTCOME_TONES: Record<SurvivorWeekOutcome, NonNullable<StatusBadgeProps['tone']>> = {
   SURVIVED: 'success',
+  LIFE_LOST: 'danger',
   ELIMINATED: 'danger',
   PENDING: 'neutral',
 };
@@ -38,10 +41,13 @@ function weekKey(week: Pick<SurvivorWeek, 'roundCount' | 'roundNumber' | 'sportE
   return week.roundCount > 1 ? `${week.sportEventId}-round-${week.roundNumber}` : week.sportEventId;
 }
 
-/** "In" for an entry still standing, else "Out in week 3", or in a playoff "Out in Divisional". */
-function formatSurvivorStanding(entry: Pick<SurvivorRow, 'alive' | 'eliminatedInWeek'>, weeks: readonly SurvivorWeek[], weekName: WeekName): string {
+/**
+ * "In" for an entry still standing, "In · 1 life left" once it has lost a life it stays in with
+ * (#1754), else "Out in week 3", or in a playoff "Out in Divisional".
+ */
+function formatSurvivorStanding(entry: Pick<SurvivorRow, 'alive' | 'eliminatedInWeek' | 'livesLeft' | 'livesLost'>, weeks: readonly SurvivorWeek[], weekName: WeekName): string {
   if (entry.alive || entry.eliminatedInWeek === null) {
-    return 'In';
+    return entry.livesLost > 0 ? `In · ${pluralize(entry.livesLeft, 'life', 'lives')} left` : 'In';
   }
   const week = weeks.find((candidate) => candidate.weekNumber === entry.eliminatedInWeek);
   return week && week.roundCount > 1 ? `Out in ${weekName(week)}` : `Out in week ${entry.eliminatedInWeek}`;

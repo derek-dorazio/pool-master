@@ -53,6 +53,7 @@ import {
   getTiersInPlay,
   type Contest,
   type ContestEntry,
+  survivorLivesOf,
   type ContestSelectionConfig,
   type League,
   type SportEvent,
@@ -391,13 +392,17 @@ export class EntryReminders implements DueNotifications {
     });
   }
 
-  /** The survivor entries already out: a loss, a tie, a week started with no pick, or no team left. */
+  /**
+   * The survivor entries already out: their last life lost (#1754) to a loss, a tie, a week started
+   * with no pick, or no team left. An entry that lost a life it stays in with is still reminded.
+   */
   private async survivorEntriesOut(deps: EntryReminderDeps, due: DueReminder, entries: ContestEntry[]): Promise<Set<string>> {
     const weeks = await loadSurvivorWeeks(deps, due.contest, due.now);
     const predictions = await this.deps.predictions.findByEntriesAndEvents(entries.map((entry) => entry.id), due.contest.sportEventIds);
     const picksByEntry = survivorPicksByEntry(predictions, weeks);
+    const lives = survivorLivesOf(due.rules);
     return new Set(entries
-      .filter((entry) => survivorRun(survivorWeeksOf(entry, weeks, picksByEntry.get(entry.id) ?? new Map<string, SurvivorSeasonPick>())).eliminatedAt !== null)
+      .filter((entry) => survivorRun(survivorWeeksOf(entry, weeks, picksByEntry.get(entry.id) ?? new Map<string, SurvivorSeasonPick>()), lives).eliminatedAt !== null)
       .map((entry) => entry.id));
   }
 

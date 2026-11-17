@@ -56,6 +56,7 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
+  survivorLivesOf,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
   eventSportDefinition,
@@ -1262,7 +1263,8 @@ export class ContestService {
       );
     }
     const now = this.now();
-    const season = await loadSurvivorSeason(this.deps, contest, now);
+    const configuration = await this.deps.configurations.findByContest(contestId);
+    const season = await loadSurvivorSeason(this.deps, contest, now, survivorLivesOf(configuration?.configJson));
     const openingRoundOf = new Map<string, number>();
     for (const { event, roundNumber } of season.weeks) openingRoundOf.set(event.id, Math.min(openingRoundOf.get(event.id) ?? roundNumber, roundNumber));
     const gameById = new Map(season.weeks.flatMap(({ event, games }) => games.map((game) => [game.id, { event, game }] as const)));
@@ -1290,6 +1292,8 @@ export class ContestService {
         alive,
         eliminatedInWeek: run.eliminatedAt === null ? null : run.eliminatedAt + 1,
         weeksSurvived: run.weeksSurvived,
+        livesLeft: run.livesLeft,
+        livesLost: run.livesLost,
         position: frozen?.position ?? position,
         displayPosition: frozen?.displayPosition ?? displayPosition,
         weeks: season.weeks.map(({ event, roundNumber }, index) => {
@@ -1319,10 +1323,11 @@ export class ContestService {
         status: event.status,
         started,
         aliveCount: started && !cancelled
-          // Still in after the week: those who survived it, and those whose game is still to finish.
+          // Still in after the week: those who survived it or lost a life they stay in with (#1754),
+          // and those whose game is still to finish.
           ? season.entries.filter(({ run }) => {
             const outcome = run.weeks[index]?.outcome ?? null;
-            return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.PENDING;
+            return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.LIFE_LOST || outcome === SurvivorWeekOutcome.PENDING;
           }).length
           : 0,
       })),

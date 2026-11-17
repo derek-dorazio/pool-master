@@ -65,7 +65,10 @@ export interface SurvivorEntryStanding {
   run: SurvivorRun;
   /** The entry's pick in each week, by week key (`survivorWeekKey`). */
   picks: Map<string, SurvivorSeasonPick>;
-  /** Still standing: entries out in the same week share a place, below every entry still in. */
+  /**
+   * Still standing: entries out in the same week share a place, below every entry still in.
+   * Entries still in rank by lives left (#1754), then weeks survived.
+   */
   alive: boolean;
   position: number;
   displayPosition: string;
@@ -168,13 +171,16 @@ export function survivorPicksByEntry(
 }
 
 /**
- * The season so far: every entry that submitted a week, run through the weeks and ranked, entries
- * still standing first, then by weeks survived. Entries that tie share a place.
+ * The season so far: every entry that submitted a week, run through the weeks with the contest's
+ * `lives` (`survivorLivesOf`, #1754) and ranked: entries still standing first, then more lives
+ * left, then more weeks survived. Entries out have no life left, and the one out later survived
+ * more weeks. Entries that tie share a place.
  */
 export async function loadSurvivorSeason(
   deps: SurvivorStandingsReadDeps,
   contest: Pick<Contest, 'id' | 'sportEventIds'>,
   now: Date,
+  lives: number,
 ): Promise<SurvivorSeasonStandings> {
   const [weeks, entries] = await Promise.all([
     loadSurvivorWeeks(deps, contest, now),
@@ -186,12 +192,14 @@ export async function loadSurvivorSeason(
 
   const runs = counted.map((entry) => {
     const picks = picksByEntry.get(entry.id) ?? new Map<string, SurvivorSeasonPick>();
-    const run = survivorRun(survivorWeeksOf(entry, weeks, picks));
+    const run = survivorRun(survivorWeeksOf(entry, weeks, picks), lives);
     return { entry, run, picks, alive: run.eliminatedAt === null };
   });
-  const rankKey = (standing: { alive: boolean; run: SurvivorRun }) => `${standing.alive ? 1 : 0}:${standing.run.weeksSurvived}`;
+  const rankKey = (standing: { alive: boolean; run: SurvivorRun }) => `${standing.alive ? 1 : 0}:${standing.run.livesLeft}:${standing.run.weeksSurvived}`;
   const better = (left: (typeof runs)[number], right: (typeof runs)[number]) =>
-    Number(right.alive) - Number(left.alive) || right.run.weeksSurvived - left.run.weeksSurvived;
+    Number(right.alive) - Number(left.alive)
+    || right.run.livesLeft - left.run.livesLeft
+    || right.run.weeksSurvived - left.run.weeksSurvived;
   const ordered = [...runs].sort((left, right) =>
     better(left, right) || left.entry.entryNumber - right.entry.entryNumber || left.entry.name.localeCompare(right.entry.name));
   const sharing = new Map<string, number>();

@@ -71,6 +71,7 @@ describe('loadSurvivorSeason', () => {
       deps([started], [game('g1', 'week-1')], [entry('idle', 1, ['week-1']), entry('picker', 2, ['week-1'])], [stray]),
       { id: 'survivor', sportEventIds: ['week-1'] },
       NOW,
+      1,
     );
 
     expect(season.entries.map((standing) => [standing.entry.id, standing.picks.size, standing.displayPosition])).toEqual([

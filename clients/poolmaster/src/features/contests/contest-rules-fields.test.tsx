@@ -69,6 +69,20 @@ describe('contest rules fields for a survivor contest', () => {
 
     expect(onChange).toHaveBeenCalledWith({ survivorReuseTeams: false });
   });
+
+  it('offers Lives of 1 or 2, starting at 1, reports the choice, and names the second life in the rules only with 2', () => {
+    const onChange = vi.fn();
+    const props = { onChange, participant: TEAM, salaryCap: null, selectionType: SelectionType.SURVIVOR, tierCount: 0 } as const;
+    const { rerender } = render(<ContestRulesFields {...props} values={DEFAULT_CONTEST_RULES} />);
+
+    expect(screen.getByTestId('contest-survivor-lives-1')).toBeChecked();
+    expect(screen.getByTestId('contest-survivor-rules')).not.toHaveTextContent('lose once');
+    fireEvent.click(screen.getByTestId('contest-survivor-lives-2'));
+    expect(onChange).toHaveBeenCalledWith({ survivorLives: 2 });
+
+    rerender(<ContestRulesFields {...props} values={{ ...DEFAULT_CONTEST_RULES, survivorLives: 2 }} />);
+    expect(screen.getByTestId('contest-survivor-rules')).toHaveTextContent('You can lose once and stay in; a second loss puts you out.');
+  });
 });
 
 describe('contest rules fields for a tiered contest', () => {
