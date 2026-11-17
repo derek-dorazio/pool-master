@@ -150,7 +150,8 @@ export function InfoPopover({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           trigger === "icon"
             ? "inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50"
-            : "rounded-sm underline decoration-dotted underline-offset-2",
+            // Padding with a matching negative margin: a bigger target to tap, no taller a row.
+            : "-mx-1 -my-2 rounded-sm px-1 py-2 underline decoration-dotted underline-offset-2",
         )}
         data-testid={testId}
         onBlur={(event) => {

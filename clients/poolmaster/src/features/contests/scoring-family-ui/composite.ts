@@ -20,6 +20,8 @@ import { SPORT_STAT_LABELS } from './stat-labels';
 import type { ScoringFamilyUi } from './types';
 
 const DID_NOT_PLAY = 'did not play';
+/** A live game the player has no line in yet: they may still check in, so not "did not play". */
+const NOT_IN_YET = 'not in yet';
 
 /**
  * "15 pts · 6 reb · 4 ast": a game's stats in the composite's order, each with its unit written
@@ -106,8 +108,9 @@ export const compositeUi: ScoringFamilyUi = {
 };
 
 /**
- * The line under a player's name: the game being played right now, else the player's latest
- * game with a line, else the board's latest game, which they did not play. A series names the
+ * The line under a player's name: the game being played right now (not in yet, while they have
+ * no line in it), else the player's latest game with a line, else the board's latest game,
+ * which they did not play. A series names the
  * game ("G4: 15 pts · 6 reb"); a single game needs no name. Absent before any game has a line.
  */
 function statLineFor(
@@ -123,6 +126,6 @@ function statLineFor(
   }
   const playedGames = gameNumbers.filter((roundNumber) => statLineText(participant, roundNumber, stats) !== null);
   const shownGame = liveGame ?? playedGames.at(-1) ?? latestGame;
-  const text = statLineText(participant, shownGame, stats) ?? DID_NOT_PLAY;
+  const text = statLineText(participant, shownGame, stats) ?? (shownGame === liveGame ? NOT_IN_YET : DID_NOT_PLAY);
   return isSingleGame ? upperFirst(text) : `G${String(shownGame)}: ${text}`;
 }

@@ -250,7 +250,8 @@ function EntryBlock({
         rowTestId={`contest-leaderboard-entry-bar-${entry.entryId}`}
         onToggle={onToggle}
         summary={
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
+          // One line on a phone too: the name side wraps within itself, the switch and total stay put.
+          <div className="flex items-center justify-between gap-3">
             <span className="block min-w-0">
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span
@@ -292,8 +293,7 @@ function EntryBlock({
                 </span>
               ) : null}
             </span>
-            {/* ml-auto keeps the switch and total at the right end when a phone wraps them under the name. */}
-            <span className="ml-auto flex items-center gap-3">
+            <span className="flex flex-none items-center gap-3">
               {onStatsChange ? (
                 // #1747 — one switch per entry turns on every pick's stat line at once.
                 <span className="flex items-center gap-2">
@@ -303,7 +303,7 @@ function EntryBlock({
                     onCheckedChange={onStatsChange}
                     testId={`contest-leaderboard-stats-${entry.entryId}`}
                   />
-                  <Text aria-hidden as="span" size="xs" variant="label">Stats</Text>
+                  <Text aria-hidden as="span" className="hidden sm:inline" size="xs" variant="label">Stats</Text>
                 </span>
               ) : null}
               <span

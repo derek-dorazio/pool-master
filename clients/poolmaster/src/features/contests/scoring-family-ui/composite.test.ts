@@ -153,14 +153,15 @@ describe('composite leaderboard', () => {
     expect(view.pickDetail('entry-1', ohtaniPick, missedGame3).statLine).toBe('G1: 1 TB');
   });
 
-  it('shows the game being played on every line while it is live, and that a player not in it did not play, with a Live head on its column', () => {
+  it('shows the game being played on every line while it is live, a player with no line in it yet as not in yet, with a Live head on its column', () => {
     const liveGame4 = { ...game(4, [{ stat: SportStat.TOTAL_BASES, value: 2 }]), status: 'IN_PROGRESS' as const };
     const ohtaniLive = player('sep-1', 'Shohei Ohtani', [...ohtani.rounds, liveGame4]);
     const view = compositeUi.leaderboard({ ...board, participants: [ohtaniLive, rojas] }, worldSeries);
 
     expect(view.detailColumns.map((column) => [column.label, column.isLive ?? false])).toEqual([['G1', false], ['G3', false], ['G4', true]]);
     expect(view.pickDetail('entry-1', ohtaniPick, ohtaniLive).statLine).toBe('G4: 2 TB');
-    expect(view.pickDetail('entry-1', rojasPick, rojas).statLine).toBe('G4: did not play');
+    // He may still check in, so the line waits as the cell does rather than saying he did not play.
+    expect(view.pickDetail('entry-1', rojasPick, rojas).statLine).toBe('G4: not in yet');
     // Game 4 is still going, so a player without a score in it yet shows a dash, not DNP.
     expect(view.pickDetail('entry-1', rojasPick, rojas).detailCells[2]?.text).toBeNull();
   });
