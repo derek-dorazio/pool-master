@@ -134,3 +134,4 @@ export { TeamLine, type TeamLineMark, type TeamLineProps } from "./team-line";
 export { TrophyMark, type TrophyMetal } from "./trophy-mark";
 export { WinnersBanner, type WinnersPlace } from "./winners-banner";
 export { WIDE_SCREEN_QUERY, useMediaQuery } from "./use-media-query";
+export { useMinuteClock } from "./use-minute-clock";
