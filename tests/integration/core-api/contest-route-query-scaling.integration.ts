@@ -35,6 +35,7 @@ import {
   SurvivorLeaderboardResponseSchema,
 } from '@poolmaster/shared/dto';
 import { PrismaContestEntryMatchPredictionRepository } from '../../../packages/core-api/src/adapters';
+import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { expectDefined } from '../../support/expect-defined';
 import { writePicks } from '../../support/prediction-writes';
 import {
@@ -157,9 +158,11 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
  * A league whose commissioner's team has a submitted entry in each of `contests` ACTIVE golf
  * contests, each over a major of its own that is played, its standings frozen, and one under way,
  * with a rival team's entry beside it, so every contest's leaderboard ranks the viewer's entry.
- * With `stored`, each contest's leaderboard has been read once, so its board is stored.
+ * With `boards` 'stored', each contest's leaderboard has been read once, so its board is stored;
+ * with 'stale', that stored board is then stale, as every one is after a deploy that bumps the
+ * board format (#1788); with 'computed', none is stored.
  */
-async function seedMyLiveEntries({ contests, stored }: { contests: number; stored: boolean }) {
+async function seedMyLiveEntries({ contests, boards }: { contests: number; boards: 'computed' | 'stored' | 'stale' }) {
   const prisma = getPrisma();
   const seeded = await seedMyEntries({ contests: 0, events: 0 });
   const mySquad = await prisma.squad.findFirstOrThrow({ where: { leagueId: seeded.league.id } });
@@ -216,8 +219,11 @@ async function seedMyLiveEntries({ contests, stored }: { contests: number; store
     }
     contestIds.push(contest.id);
   }
-  if (stored) {
+  if (boards !== 'computed') {
     for (const contestId of contestIds) await get(`/api/v1/contests/${contestId}/leaderboard`, seeded.viewer);
+  }
+  if (boards === 'stale') {
+    await prisma.contestLeaderboardSnapshot.updateMany({ where: { contestId: { in: contestIds } }, data: { boardFormat: LEADERBOARD_BOARD_FORMAT - 1 } });
   }
   return seeded;
 }
@@ -547,7 +553,7 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
   it("GET my entries in a league's current contests: the same statements for my places in 2 live contests as in 20, their boards computed (#1565)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/my-entries',
-      seed: (contests) => seedMyLiveEntries({ contests, stored: false }),
+      seed: (contests) => seedMyLiveEntries({ contests, boards: 'computed' }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
       rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).places.length,
     });
@@ -556,7 +562,16 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
   it("GET my entries in a league's current contests: the same statements for my places in 2 live contests as in 20, their boards stored (#1565)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/my-entries',
-      seed: (contests) => seedMyLiveEntries({ contests, stored: true }),
+      seed: (contests) => seedMyLiveEntries({ contests, boards: 'stored' }),
+      call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
+      rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).places.length,
+    });
+  });
+
+  it("GET my entries in a league's current contests: the same statements for my places in 2 live contests as in 20, their stored boards stale, asking for every rebuild in one write (#1788)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/contests/my-entries',
+      seed: (contests) => seedMyLiveEntries({ contests, boards: 'stale' }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/my-entries`, viewer),
       rowsShown: (response) => okBody(response, MyContestEntriesResponseSchema).places.length,
     });

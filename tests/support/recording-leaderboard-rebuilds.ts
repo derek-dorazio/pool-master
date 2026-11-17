@@ -43,4 +43,8 @@ export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
     this.handedOut.push(contestId);
     return { jobs: [contestRebuildJob(contestId)], queued: () => { this.contestIds.push(contestId); } };
   }
+
+  async contestsChanged(contestIds: readonly string[]): Promise<void> {
+    this.contestIds.push(...contestIds);
+  }
 }

@@ -550,6 +550,31 @@ describe('ContestService.listMyLeagueEntries — a live contest\'s places', () =
     expect(shown.map((entry) => [entry.entryId, entry.displayPosition])).toEqual([['entry-alice', 'T1'], ['entry-alice-2', 'T3']]);
   });
 
+  it('asks once for the stale stored boards of the viewer\'s live contests to be rebuilt, rather than computing them on every read and never storing them (#1788)', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    const { teammate } = onAlicesTeam(context);
+    await context.leaderboard();
+    storeUnderOlderBoardFormat(context.world.leaderboardSnapshots, context.contest.id);
+
+    const mine = await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+
+    expect(mine.places).toContainEqual({ entryId: 'entry-alice', position: 1, displayPosition: 'T1' });
+    expect(context.world.leaderboardRebuildsAsked).toEqual([[context.contest.id]]);
+  });
+
+  it('asks for no rebuild when the stored board is current, or when none is stored, since a contest no one has viewed is computed on its first view', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    const { teammate } = onAlicesTeam(context);
+
+    await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+    await context.leaderboard();
+    await context.contestService.listMyLeagueEntries(context.contest.leagueId, teammate.id);
+
+    expect(context.world.leaderboardRebuildsAsked).toEqual([]);
+  });
+
   it('answers from the leaderboard\'s stored board while it is current, so a row shows the place the leaderboard shows', async () => {
     const context = setup();
     context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
