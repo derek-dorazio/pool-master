@@ -6,7 +6,7 @@ import { DetailsPeek, PeekCard, Text, formatDateTimeDisplay, useDisplayPreferenc
 import { formatPoints } from './bracket-layout';
 import { isMySquadsEntry, totalColumn } from './leaderboard-columns';
 import { LeaderboardFrame, YourBestNote } from './leaderboard-kit';
-import { pickEmBoardGames, pickEmPlacedCounts, pickEmShownWeeks, pickEmWeekCell, pickLabel, reportMissingTeam, teamNameIn, teamNamesOf, type PickEmBoardPick } from './pick-em-board';
+import { pickEmBoardGames, pickEmShownWeeks, pickEmWeekCell, pickLabel, reportMissingTeam, teamNameIn, teamNamesOf, type PickEmBoardPick } from './pick-em-board';
 import { SeasonWeeksGrid, type SeasonWeeksDetail } from './season-weeks-grid';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
@@ -26,8 +26,8 @@ function weekHeading(week: PickEmWeek): string {
 }
 
 /** One entry's cell for one week: its picks right so far, a medal for the week's top three, and a peek on how the week went. */
-function WeekCell({ entry, placed, week }: { entry: PickEmRow; placed: number; week: PickEmWeek }) {
-  const view = pickEmWeekCell(week, placed, entry.weeks.find((cell) => cell.sportEventId === week.sportEventId));
+function WeekCell({ entry, week }: { entry: PickEmRow; week: PickEmWeek }) {
+  const view = pickEmWeekCell(week, entry.weeks.find((cell) => cell.sportEventId === week.sportEventId));
   const testId = `${TEST_ID}-week-${week.sportEventId}-${entry.entryId}`;
   if (!view.peek) {
     return <span className="text-muted-foreground" data-testid={testId}>{view.text}</span>;
@@ -107,7 +107,6 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
   const isUnderWay = board.weeks.some((week) => week.started);
   const names = namesQuery.data;
   const teamName = teamNameIn(names ?? new Map<string, string>(), reportMissingTeam(currentWeekId));
-  const placedCounts = pickEmPlacedCounts(board);
   const games = names ? pickEmBoardGames(gamesQuery.data ?? [], teamName, (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences)) : [];
 
   const details = (entry: PickEmRow): SeasonWeeksDetail[] => {
@@ -154,7 +153,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
         summaryColumns={[totalColumn<PickEmRow>(TEST_ID, { format: formatPoints, header: 'Season', id: 'total', value: (row) => row.totalPoints })]}
         testIdPrefix={TEST_ID}
         trailing={<YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.totalPoints} testId="pick-em-leaderboard-my-best" />}
-        weekCell={(entry, week) => <WeekCell entry={entry} placed={placedCounts.get(week.sportEventId) ?? 0} week={week} />}
+        weekCell={(entry, week) => <WeekCell entry={entry} week={week} />}
         weekHeading={weekHeading}
         weekId={(week) => week.sportEventId}
         weeks={pickEmShownWeeks(board)}

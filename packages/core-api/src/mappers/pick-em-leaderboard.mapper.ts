@@ -15,6 +15,7 @@ export interface PickEmLeaderboardWeekRow {
   settled: boolean;
   gameCount: number;
   tiebreakerTotalPoints: number | null;
+  placedEntryCount: number;
   winnerEntryIds: string[];
 }
 

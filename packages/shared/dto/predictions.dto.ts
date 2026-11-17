@@ -145,6 +145,7 @@ export const PickEmLeaderboardWeekDtoSchema = z.object({
   settled: z.boolean().describe('Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. A cancelled week, or a completed week no entry submitted, is settled with nothing frozen.'),
   gameCount: z.number().int().describe('The week\'s games, cancelled ones left out. None when the week was cancelled.'),
   tiebreakerTotalPoints: z.number().int().nullable().describe('The week\'s last game\'s combined score once it is played: what the week\'s tiebreakers are measured against.'),
+  placedEntryCount: z.number().int().describe('How many of the board\'s entries the week has placed: the "of N" of an entry\'s place in it. None until the week starts.'),
   winnerEntryIds: z.array(z.uuid()).describe('The week\'s winners, the entries in first place once the week has settled; more than one when they are still level after the tiebreaker. Empty until it settles.'),
 }).describe('One week of a pick\'em contest.');
 export type PickEmLeaderboardWeekDto = z.infer<typeof PickEmLeaderboardWeekDtoSchema>;

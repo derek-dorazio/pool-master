@@ -699,16 +699,17 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       }
     });
 
-    await test.step('rename the entry on its pick screen; saving returns to the contest page', async () => {
+    await test.step('rename the submitted entry on its pick screen with Save, then find the new name on the contest page', async () => {
       const name = e2eName('Entry', run.runId);
-      await page.getByTestId('contest-entry-header-name-input').fill(name);
+      await page.getByTestId('contest-entry-name-input').fill(name);
       const renamed = await submitAndRead<{ entry: { name: string } }>(
         page,
-        'contest-entry-submit',
+        'contest-entry-save',
         'PATCH',
         `/api/v1/contests/${state.contestId}/entries/${state.entryId}`,
       );
       expect(renamed.entry.name).toBe(name);
+      await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toContainText(name);
     });
@@ -734,7 +735,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // Over the cap the page says so and Submit stays disabled, whatever the tiebreaker.
       await expect(page.getByTestId('contest-entry-over-budget')).toBeVisible();
       await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
-      await expect(page.getByTestId('contest-entry-submit-blocked')).toContainText('over the $50,000 salary cap');
+      await expect(page.getByTestId('contest-entry-finish-status')).toContainText('over the $50,000 salary cap');
       await expect(page.getByTestId('contest-entry-submit')).toBeDisabled();
 
       // The swap: tap the $20,000 golfer off, then add the other $6,000 one.

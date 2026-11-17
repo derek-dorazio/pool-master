@@ -310,7 +310,7 @@ test('act 3: a new member joins, fills in the bracket, sees a changed pick clear
     );
     state.entryId = created.entry.id;
     await expect(page.getByTestId('bracket-board')).toBeVisible();
-    await expect(page.getByTestId('bracket-progress')).toHaveText('0 of 3 picked');
+    await expect(page.getByTestId('bracket-picked-count')).toHaveText('0 of 3');
     await expect(page.getByTestId('bracket-game-3-open-home')).toBeVisible();
   });
 
@@ -320,25 +320,25 @@ test('act 3: a new member joins, fills in the bracket, sees a changed pick clear
     await expect(teamButton(3, 'Duke')).toBeVisible();
     await expect(teamButton(3, 'Houston')).toBeVisible();
     await pick(3, 'Duke');
-    await expect(page.getByTestId('bracket-progress')).toHaveText('3 of 3 picked');
+    await expect(page.getByTestId('bracket-picked-count')).toHaveText('3 of 3');
   });
 
   await test.step('switch the first game to Texas: the final now offers Texas, and its Duke pick is cleared', async () => {
     await pick(1, 'Texas');
     await expect(teamButton(3, 'Duke')).toHaveCount(0);
     await expect(teamButton(3, 'Texas')).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.getByTestId('bracket-progress')).toHaveText('2 of 3 picked');
+    await expect(page.getByTestId('bracket-picked-count')).toHaveText('2 of 3');
     await pick(3, 'Texas');
   });
 
-  await test.step(`save a tiebreaker of ${TIEBREAKER} total points and submit the bracket`, async () => {
+  await test.step(`type a tiebreaker of ${TIEBREAKER} total points and submit the bracket, which saves the tiebreaker first`, async () => {
     await expect(page.getByTestId('bracket-submit')).toBeDisabled();
     await page.getByTestId('bracket-tiebreaker-input').fill(String(TIEBREAKER));
-    const saved = await submitAndRead<{ tiebreakerValue: number | null; canSubmit: boolean }>(page, 'bracket-tiebreaker-save', 'PUT', gamePicksPath());
-    expect(saved).toMatchObject({ tiebreakerValue: TIEBREAKER, canSubmit: true });
     await expect(page.getByTestId('bracket-submit')).toBeEnabled();
+    const savedResponse = page.waitForResponse((response) => response.request().method() === 'PUT' && new URL(response.url()).pathname === gamePicksPath());
     const submitted = await submitAndRead<{ status: string }>(page, 'bracket-submit', 'POST', `${gamePicksPath()}/submit`);
     expect(submitted.status).toBe('SUBMITTED');
+    expect(await (await savedResponse).json()).toMatchObject({ tiebreakerValue: TIEBREAKER });
     // Submitting returns to the contest's page, which lists the entry as the member's, submitted.
     await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toHaveAttribute('data-mine', 'true');
     await expect(page.getByTestId(`contest-board-entry-status-${state.entryId}`)).toHaveText('Submitted');
