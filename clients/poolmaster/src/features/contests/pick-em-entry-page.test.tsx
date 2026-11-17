@@ -240,7 +240,7 @@ describe('Pick\'em contest entry page', () => {
     saveGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({ games: picked, tiebreakerValue: 51, status: 'SUBMITTED' }) });
     renderPickEmEntry();
 
-    expect(await screen.findByTestId('pick-em-finish-status')).toHaveTextContent(/^✓ Submitted · change until /);
+    expect(await screen.findByTestId('pick-em-finish-status')).toHaveTextContent('✓ Submitted · each pick locks at its kickoff');
     expect(screen.queryByTestId('pick-em-save')).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('pick-em-tiebreaker-input'), { target: { value: '51' } });
     fireEvent.click(screen.getByTestId('pick-em-save'));
@@ -271,6 +271,19 @@ describe('Pick\'em contest entry page', () => {
     expect(submitGamePicksMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'week-1' },
     }));
+  });
+
+  it('keeps Submit week off and says submitting is closed when the server says the week cannot submit, though every game is picked and the tiebreaker saved', async () => {
+    const picked = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    primeMocks({ week: pickEmWeekFixture({ games: picked, tiebreakerValue: 44, canSubmit: false }) });
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('pick-em-submit')).toBeDisabled();
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('Submitting is closed.');
   });
 
   it('stays on the week with the refusal shown when its submit is refused', async () => {
@@ -342,8 +355,8 @@ describe('Pick\'em contest entry page', () => {
     expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
     expect(within(screen.getByTestId('pick-em-game-1')).getAllByRole('button').length).toBeGreaterThan(0);
     expect(screen.getByTestId('pick-em-points')).toHaveTextContent('1 pt');
-    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent(/^Submitted · change until /);
-    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent(/^✓ Submitted · change until /);
+    expect(screen.getByTestId('contest-entry-status-line')).toHaveTextContent('Submitted · each pick locks at its kickoff');
+    expect(screen.getByTestId('pick-em-finish-status')).toHaveTextContent('✓ Submitted · each pick locks at its kickoff');
     expect(screen.queryByTestId('pick-em-submit')).not.toBeInTheDocument();
   });
 

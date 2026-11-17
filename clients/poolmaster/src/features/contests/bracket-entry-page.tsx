@@ -23,7 +23,7 @@ import { firstContestEvent } from './contest-events';
 import { canRenameEntries, CONTEST_ENTRY_STATUS_LABELS, contestStatusLabel } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
-import { gameEntryFinish } from './game-entry-finish';
+import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
 import { TiebreakerNumberField } from './tiebreaker-number-field';
@@ -114,8 +114,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const scoreUnit = contestScoreUnit(contest.sport);
   const submits = canPick && !isSubmitted;
   const {
-    finish, finishError, isChanged, isFinishing, isTiebreakerSave, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
+    canSubmit, finish, finishError, isChanged, isFinishing, isTiebreakerSave, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
   } = gameEntryFinish({
+    canSubmit: gamePicks.canSubmit,
     errorMessage,
     name,
     // A submitted bracket returns to the contest's page (#1739).
@@ -130,7 +131,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
   const hint = stillToPick > 0
     ? `Pick every ${match.one} to submit: ${stillToPick} still to pick.`
-    : (typedTiebreaker ?? gamePicks.tiebreakerValue) === null ? 'Enter your tiebreaker to submit.' : null;
+    : (typedTiebreaker ?? gamePicks.tiebreakerValue) === null ? 'Enter your tiebreaker to submit.'
+    : canSubmit ? null : SUBMIT_CLOSED;
   const nameEditable = gamePicks.ownEntry && canRenameEntries(contest);
   const status = picksHidden ? null : gamePicks.status;
 
@@ -183,7 +185,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           {gamePicks.ownEntry && (canPick || nameEditable) ? (
             <EntryFinishCard
               action={submits ? {
-                disabled: hint !== null || tiebreakerInvalid || !name.isValid || isFinishing,
+                disabled: hint !== null || !canSubmit || tiebreakerInvalid || !name.isValid || isFinishing,
                 isBusy: isFinishing,
                 label: 'Submit bracket',
                 onClick: () => void finish(),

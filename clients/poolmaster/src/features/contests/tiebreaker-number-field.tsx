@@ -6,6 +6,9 @@ import { parseBracketTiebreaker } from './bracket-layout';
  * A pick'em week's or a bracket's tiebreaker (#1769): one number, the total of a named game's
  * score, typed in the Name and submit card and saved by its button. The label names the game:
  * "Tiebreaker · total points, SEA @ SF".
+ *
+ * Not `TiebreakerField` (contest-entry-selection.tsx): a roster contest picks its tiebreaker from
+ * the options its scoring family lists, in a select, and saves it with the entry details.
  */
 export function TiebreakerNumberField({
   disabled = false,

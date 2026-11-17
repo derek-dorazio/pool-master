@@ -57,7 +57,7 @@ import {
 } from './pick-em-week';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
-import { gameEntryFinish } from './game-entry-finish';
+import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
 import { TiebreakerNumberField } from './tiebreaker-number-field';
@@ -194,6 +194,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // A save with no picks is the tiebreaker's, from the Name and submit card.
   const pickError = saveMutation.variables?.picks.length === 0 ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
 
+  // Each pick locks at its own game's kickoff, so a submitted week says that rather than one time.
+  const locks = isSurvivor ? 'your pick locks at its kickoff' : 'each pick locks at its kickoff';
   // When the week's picks close, in the words the status line and the card use.
   const closes = kickoff ? formatDateTimeDisplay(kickoff, displayPreferences) : `the ${eventStart}`;
   const statusLine = !gamePicks.ownEntry
@@ -204,15 +206,16 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     ? `Not submitted before the ${eventStart} · ${isSurvivor ? 'out' : 'scores nothing'}`
     : roundNeedsPick
     ? `No pick yet · pick a ${participant.one} before this round's first ${match.one}`
-    : entryStatusLine({ closes, isOpen: canChange, status: gamePicks.status });
+    : entryStatusLine({ closes, isOpen: canChange, locks, status: gamePicks.status });
 
   // The Name and submit card: the name, the tiebreaker while its game is open, and one button.
   const tiebreakerGameOpen = canChange && gamePicks.games.some((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId && !game.locked);
   const tiebreakerFieldLabel = tiebreakerGameOpen ? tiebreakerLabel(gamePicks, contestScoreUnit(contest.sport)) : null;
   const submits = canChange && !isSubmitted;
   const {
-    finish, finishError, isChanged, isFinishing, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
+    canSubmit, finish, finishError, isChanged, isFinishing, tiebreakerInvalid, tiebreakerText, typedTiebreaker,
   } = gameEntryFinish({
+    canSubmit: gamePicks.canSubmit,
     errorMessage,
     name,
     // A submitted week returns to the contest's page (#1739).
@@ -223,7 +226,10 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     writes: { saveMutation, submitMutation, tiebreakerDraft },
   });
   // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
-  const hint = weekSubmitHint({ ...gamePicks, tiebreakerValue: typedTiebreaker ?? gamePicks.tiebreakerValue });
+  const hint = weekSubmitHint(
+    { ...gamePicks, tiebreakerValue: typedTiebreaker ?? gamePicks.tiebreakerValue },
+    { tiebreakerOpen: tiebreakerGameOpen },
+  ) ?? (canSubmit ? null : SUBMIT_CLOSED);
   const nameEditable = gamePicks.ownEntry && canRenameEntries(contest);
 
   return (
@@ -300,7 +306,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {gamePicks.ownEntry && (submits || isSubmitted || nameEditable) ? (
         <EntryFinishCard
           action={submits ? {
-            disabled: hint !== null || tiebreakerInvalid || !name.isValid || isFinishing,
+            disabled: hint !== null || !canSubmit || tiebreakerInvalid || !name.isValid || isFinishing,
             isBusy: isFinishing,
             label: isPlayoff ? 'Submit entry' : 'Submit week',
             onClick: () => void finish(),
@@ -315,7 +321,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           error={finishError}
           errorTestId="pick-em-submit-error"
           name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
-          status={canChange || isSubmitted ? entryFinishStatus({ closes, hint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+          status={canChange || isSubmitted ? entryFinishStatus({ closes, hint, isSubmitted, locks }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
           statusTestId="pick-em-finish-status"
           testId="pick-em-finish"
           title="Name and submit"

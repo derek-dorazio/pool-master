@@ -209,7 +209,11 @@ function confidenceHint(gamePicks: GamePicksResponse): string | null {
 }
 
 /** Why the week cannot be submitted yet, in the order the entry would fix it, or null. */
-export function weekSubmitHint(gamePicks: GamePicksResponse): string | null {
+export function weekSubmitHint(
+  gamePicks: GamePicksResponse,
+  /** False once the tiebreaker's game has started: there is no field left to enter it in. */
+  { tiebreakerOpen = true }: { tiebreakerOpen?: boolean } = {},
+): string | null {
   if (isSurvivorWeek(gamePicks)) {
     return gamePicks.pickedCount === 0 ? 'Pick one team to submit.' : null;
   }
@@ -223,7 +227,7 @@ export function weekSubmitHint(gamePicks: GamePicksResponse): string | null {
       return hint;
     }
   }
-  if (gamePicks.tiebreakerValue === null) {
+  if (gamePicks.tiebreakerValue === null && tiebreakerOpen) {
     return 'Enter your tiebreaker to submit.';
   }
   return null;

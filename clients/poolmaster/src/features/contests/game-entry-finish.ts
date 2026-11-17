@@ -3,6 +3,9 @@ import { parseBracketTiebreaker } from './bracket-layout';
 import type { useEntryName } from './use-entry-name';
 import type { useGamePicks } from './use-game-picks';
 
+/** The card's hint when the server refuses a submit for a reason the page doesn't name, such as its first game having started. */
+export const SUBMIT_CLOSED = 'Submitting is closed.';
+
 type GamePicksWrites = Pick<ReturnType<typeof useGamePicks>, 'saveMutation' | 'submitMutation' | 'tiebreakerDraft'>;
 
 /**
@@ -11,6 +14,7 @@ type GamePicksWrites = Pick<ReturnType<typeof useGamePicks>, 'saveMutation' | 's
  * Each step's error shows on the card, so a refusal stops the run without a second message.
  */
 export function gameEntryFinish({
+  canSubmit,
   errorMessage,
   name,
   onSubmitted,
@@ -19,6 +23,8 @@ export function gameEntryFinish({
   submits,
   writes: { saveMutation, submitMutation, tiebreakerDraft },
 }: {
+  /** The server's word that the entry can be submitted now, its tiebreaker as saved. */
+  canSubmit: boolean;
   /** The page's own wording of a refusal, or null when there is none. */
   errorMessage: (error: Error | null, fallback: string) => string | null;
   name: ReturnType<typeof useEntryName>;
@@ -53,6 +59,11 @@ export function gameEntryFinish({
     }
   };
   return {
+    /**
+     * The server allows the submit: it said so, or the one thing it lacked is the tiebreaker the
+     * button saves first. The page's hint names any other reason; the server stays the judge.
+     */
+    canSubmit: canSubmit || (savedTiebreaker === null && typedTiebreaker !== null),
     finish,
     finishError: errorMessage(submitMutation.error, submitFallback)
       ?? (isTiebreakerSave ? errorMessage(saveMutation.error, 'We could not save your tiebreaker. Please try again.') : null)

@@ -93,6 +93,16 @@ describe('pick\'em week helpers', () => {
     expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Enter your tiebreaker to submit.');
     expect(weekSubmitHint(pickEmWeekFixture({ games: allPicked([null, null, null]), tiebreakerValue: 41 }))).toBeNull();
   });
+
+  it('asks for no tiebreaker once its game has started, since there is no field left to enter it in', () => {
+    const games = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers) },
+      2: { pick: weekPick(NFL_TEAMS.chiefs) },
+      3: { pick: weekPick(NFL_TEAMS.eagles) },
+    });
+    expect(weekSubmitHint(pickEmWeekFixture({ games }), { tiebreakerOpen: false })).toBeNull();
+    expect(weekSubmitHint(pickEmWeekFixture({ games }), { tiebreakerOpen: true })).toBe('Enter your tiebreaker to submit.');
+  });
 });
 
 describe('survivor week helpers', () => {
