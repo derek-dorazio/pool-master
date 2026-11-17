@@ -59,7 +59,7 @@ export function buildTopStandings(
     entryId: entry.entryId,
     isMine: mySquadId !== null && entry.squadId === mySquadId,
     name: entry.entryName,
-    position: entry.displayPosition,
+    position: view.entries[index]?.displayPosition ?? null,
     squadId: entry.squadId,
     total: view.entries[index]?.total ?? null,
   })), limit);

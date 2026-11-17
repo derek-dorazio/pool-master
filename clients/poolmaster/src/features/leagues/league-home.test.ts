@@ -212,13 +212,25 @@ describe('buildTopStandings', () => {
     expect(result.myRowBelow).toBeNull();
   });
 
-  it('shows a null total for an entry with no scored picks yet', () => {
+  it('places every entry tied 1st at even par (E) before the first score, as the contest board does', () => {
     const result = buildTopStandings(
-      leaderboardFixture([entryFixture(1, { totalScore: null, displayPosition: null })]),
+      leaderboardFixture([
+        entryFixture(1, { totalScore: null, displayPosition: null }),
+        entryFixture(2, { totalScore: null, displayPosition: null }),
+      ]),
       null,
     );
 
-    expect(result.rows[0]).toMatchObject({ position: null, total: null });
+    expect(result.rows.map((row) => [row.position, row.total])).toEqual([['T1', 'E'], ['T1', 'E']]);
+  });
+
+  it('shows a null total for an unscored entry once others have scored', () => {
+    const result = buildTopStandings(
+      leaderboardFixture([entryFixture(1), entryFixture(2, { totalScore: null, displayPosition: null })]),
+      null,
+    );
+
+    expect(result.rows[1]).toMatchObject({ position: null, total: null });
   });
 
   it('honours a custom limit', () => {

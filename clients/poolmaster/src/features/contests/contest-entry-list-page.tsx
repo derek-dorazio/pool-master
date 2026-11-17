@@ -30,7 +30,6 @@ import {
   LoadingState,
   Notice,
   SectionCard,
-  SectionEmpty,
   Text,
   Tile,
   cn,
@@ -40,6 +39,7 @@ import {
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestPageFrame } from './contest-header';
+import { ContestEntryListSquaresPendingSection } from './contest-entry-list-squares-pending-section';
 import { ContestPagePending } from './contest-page-pending';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { EntryLineupPicks } from './entry-lineup-picks';
@@ -391,9 +391,7 @@ export function ContestEntryListPage() {
       {/* A contest being set up has nobody to list (#1768); a squares board waits for it to open. */}
       {isSetUp ? (
         contest.selectionType === SelectionType.SQUARES ? (
-          <SectionCard testId="contest-board-squares-pending" title="Squares board">
-            <SectionEmpty testId="contest-board-squares-pending-note">The board appears when the contest opens.</SectionEmpty>
-          </SectionCard>
+          <ContestEntryListSquaresPendingSection />
         ) : null
       ) : contest.selectionType === SelectionType.SQUARES ? (
         <SquaresBoardView
