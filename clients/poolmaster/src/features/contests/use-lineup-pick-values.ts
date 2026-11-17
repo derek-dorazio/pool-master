@@ -1,16 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { SelectionType } from '@poolmaster/shared/domain';
 import {
-  listEventParticipants,
   listEventTiers,
   type ContestDto,
   type ContestEntryParticipantDetailDto,
-  type SportEventParticipantDto,
   type SportEventTierDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { sportEventQueryOptions } from './use-contest-schedule';
+import { eventFieldQueryOptions } from './use-event-games';
 
 /**
  * What a lineup pick shows beside its name on the contest page (#1740), by how the contest is
@@ -26,15 +25,8 @@ const SHARED_EVENT_READ = { retry: false, staleTime: 5 * 60_000 } as const;
 
 function useEventFieldQuery(sportEventId: string, enabled: boolean) {
   return useQuery({
+    ...eventFieldQueryOptions(sportEventId),
     ...SHARED_EVENT_READ,
-    queryKey: QueryKeys.sportEvents.field(sportEventId),
-    queryFn: async (): Promise<SportEventParticipantDto[]> => {
-      const response = await listEventParticipants({ path: { eventId: sportEventId } });
-      if (!response.data?.participants) {
-        throwApiError(response.error, 'Event field response is missing data.');
-      }
-      return response.data.participants;
-    },
     enabled: enabled && sportEventId !== '',
   });
 }
