@@ -3,6 +3,7 @@ import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { ncaaFullBracket } from '../../../support/ncaa-full-bracket';
 
 /**
  * The adapter's NCAA basketball tournament reads, men's and women's, against a fake BALLDONTLIE
@@ -134,6 +135,30 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6, metadata: { tour: 'NCAAW', season: 2025 } });
       expect(detail?.participants.map((team) => team.externalId)).toEqual(['ncaaw-team-41', 'ncaaw-team-2636', 'ncaaw-team-150', 'ncaaw-team-2655', 'ncaaw-team-2579']);
       expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
+    });
+
+    it('gives a men\'s tournament before the First Four its teams and a play-in place per First Four game, its round of 64 games and its whole 63-match bracket', async () => {
+      const harness = setup({ ...defaultRoutes, '/ncaab/v1/bracket': bracketRoute(bracketRow.array().parse(ncaaFullBracket())) });
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('ncaab-2025-tournament');
+
+      // Two First Four games in this bracket: 62 teams and 2 places.
+      expect(detail?.participants).toHaveLength(64);
+      expect(detail?.participants.filter((team) => team.metadata.playInPlace === true).map((team) => team.externalId))
+        .toEqual(['ncaab-2025-east-11-seed-play-in', 'ncaab-2025-south-16-seed-play-in']);
+      expect(detail?.games).toHaveLength(30);
+      expect(detail?.bracket).toHaveLength(63);
+    });
+
+    it('gives a women\'s tournament no bracket, since the women\'s bracket names no region', async () => {
+      const harness = setup();
+      restore = harness.restore;
+
+      const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
+
+      expect(detail?.bracket).toBeUndefined();
+      expect(detail?.games?.every((game) => game.roundNumber >= 1)).toBe(true);
     });
 
     it('gives nothing for a season whose bracket the vendor has not published', async () => {

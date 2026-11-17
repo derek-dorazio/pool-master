@@ -98,11 +98,14 @@ export class ProviderGameSlateService {
       return { outcome: 'SKIPPED', reason: skipped ?? 'NO_EVENT' };
     }
 
-    const fieldRowOf = await this.fieldRows(event, input);
+    // Only a draft loads the bracket, so a released event reads none: a side it names may have left
+    // the field since (a play-in place its winner filled), and must not hold up the games.
+    const sync = event.status === SportEventStatus.DRAFT ? input : { ...input, bracket: undefined };
+    const fieldRowOf = await this.fieldRows(event, sync);
     if (fieldRowOf === null) {
       return { outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' };
     }
-    const outcome = await this.syncMatches(event, input, fieldRowOf);
+    const outcome = await this.syncMatches(event, sync, fieldRowOf);
     if (outcome.outcome !== 'UNCHANGED') await this.dateRoundsByKickoff(event.id);
     return outcome;
   }

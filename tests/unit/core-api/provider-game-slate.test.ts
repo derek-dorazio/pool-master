@@ -439,6 +439,15 @@ describe('ProviderGameSlateService', () => {
       expect(sides()[4]).toEqual([5, null, null]);
     });
 
+    it('reads no bracket on a released playoff, so a side the bracket names that has left the field (a filled play-in place) holds up no games', async () => {
+      const { sync, store, event } = playoffSetup();
+      await sync(WILD_CARD);
+      await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+
+      await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[], BRACKET.map((match) => (match.matchNumber === 4 ? slot(4, 2, 8, null) : match))))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+    });
+
     it('leaves the bracket unloaded while a team the bracket names is not in the field yet', async () => {
       const { sync, sides } = playoffSetup();
 
