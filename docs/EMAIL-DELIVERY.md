@@ -439,7 +439,9 @@ its game. A pick'em, bracket or survivor week that goes back to draft and is sub
 sends a new receipt. The two formats nobody submits get theirs once their draw runs: a quick pick
 contest's draw sends every entry its dealt picks ("Your quick picks"), and a squares draw sends
 every entry holding a box its boxes with their numbers, the away team's digit for the row and
-the home team's for the column ("Your numbers"). Claiming a box sends nothing. A squares draw
+the home team's for the column ("Your numbers"), whether the commissioner drew or the numbers
+were drawn automatically when the grid filled or five minutes before kickoff (#1760). Claiming a
+box sends nothing, except the claim that fills the grid, which draws. A squares draw
 queues its receipts in one batch as it answers. A quick pick draw only marks itself as owing them,
 recording the event it dealt (`contest_draws.receipts_pending_sport_event_id`, #1171): the next
 receipts sweep (`DRAW_RECEIPTS`, a clock-driven email sweep), up to five minutes later, queues every dealt entry's receipt for that event in one

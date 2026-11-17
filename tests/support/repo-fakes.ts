@@ -535,6 +535,7 @@ export function fakeSquaresRepo(overrides: Partial<ContestSquaresRepository> = {
     clear: jest.fn().mockResolvedValue('cleared'),
     findDraw: one(),
     recordDraw: jest.fn().mockResolvedValue('drawn'),
+    findDueForAutoDraw: many(),
     findWinners: many(),
     replaceWinners: nothing(),
     ...overrides,
