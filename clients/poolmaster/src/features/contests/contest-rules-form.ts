@@ -4,6 +4,8 @@ import {
   PickEmMode,
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SQUARES_PER_ENTRY_MAX,
+  SURVIVOR_LIVES_DEFAULT,
+  SURVIVOR_LIVES_MAX,
   SelectionType,
   type SportNoun,
   countParticipants,
@@ -35,6 +37,8 @@ export type ContestRulesValues = {
   maxSquaresPerEntry: string;
   /** A bracket's starting round: "1" for the full bracket, a later round for a second chance. */
   startsAtRound: string;
+  /** How many weeks a survivor entry can lose before it is out (#1754): 1 or 2. */
+  survivorLives: number;
   /** Whether a survivor entry may pick its teams again once it has used every team (#787). */
   survivorReuseTeams: boolean;
   /** How many of the event's tiers a tiered entry picks from, the first ones; empty for every tier. */
@@ -53,6 +57,7 @@ export const CONTEST_RULES_FORM_SHAPE = {
   picksPerTier: z.string(),
   rosterSize: z.string(),
   startsAtRound: z.string(),
+  survivorLives: z.number().int().min(1).max(SURVIVOR_LIVES_MAX),
   survivorReuseTeams: z.boolean(),
   tiersUsed: z.string(),
   unlimitedEntries: z.boolean(),
@@ -160,9 +165,9 @@ function parseBracketRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.BRACKET, startsAtRound });
 }
 
-/** The survivor rules (#719): whether teams can be picked again once all are used (#787), and the entry limit. */
+/** The survivor rules (#719): whether teams can be picked again once all are used (#787), the lives (#1754), and the entry limit. */
 function parseSurvivorRules(values: ContestRulesValues): RulesResult {
-  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: values.survivorReuseTeams });
+  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: values.survivorReuseTeams, lives: values.survivorLives });
 }
 
 /**
@@ -229,6 +234,7 @@ export function toContestRulesValues(
     rosterSize: current.rosterSize,
     maxSquaresPerEntry: current.maxSquaresPerEntry,
     startsAtRound: current.startsAtRound,
+    survivorLives: current.survivorLives,
     survivorReuseTeams: current.survivorReuseTeams,
     tiersUsed: current.tiersUsed,
     unlimitedEntries: current.unlimitedEntries,
@@ -249,7 +255,7 @@ export function toContestRulesValues(
     case SelectionType.BRACKET:
       return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
     case SelectionType.SURVIVOR:
-      return { ...rules, ...entryLimit, survivorReuseTeams: configuration.reuseTeamsOnceAllUsed ?? true };
+      return { ...rules, ...entryLimit, survivorReuseTeams: configuration.reuseTeamsOnceAllUsed ?? true, survivorLives: configuration.lives ?? SURVIVOR_LIVES_DEFAULT };
     case SelectionType.SQUARES:
       return { ...rules, ...entryLimit, maxSquaresPerEntry: String(configuration.maxSquaresPerEntry) };
   }
@@ -268,6 +274,8 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   maxSquaresPerEntry: '10',
   // A bracket starts as the full bracket.
   startsAtRound: '1',
+  // A survivor entry has one life unless the commissioner gives it two (#1754).
+  survivorLives: SURVIVOR_LIVES_DEFAULT,
   // Teams can be picked again once all are used, in every sport (#787).
   survivorReuseTeams: true,
   // A tiered entry picks from every tier.

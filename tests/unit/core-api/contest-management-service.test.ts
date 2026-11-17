@@ -2556,7 +2556,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
-  it('creates a PREDICTION survivor contest on a week with games, storing its selection type and, left out, that teams can be picked again once all are used', async () => {
+  it('creates a PREDICTION survivor contest on a week with games, storing its selection type and, left out, that teams can be picked again once all are used and one life', async () => {
     const { contestCoreRepo, contestConfigurationRepo, service } = pickEmService({ gameCount: 3 });
 
     await service.createContest({ leagueId: 'league-1' }, pickEmRequest({
@@ -2571,21 +2571,21 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.SURVIVOR,
-      configJson: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true },
+      configJson: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, lives: 1 },
     }));
   });
 
-  it('stores a survivor contest whose teams can never be picked again as reuseTeamsOnceAllUsed false', async () => {
+  it('stores a survivor contest whose teams can never be picked again as reuseTeamsOnceAllUsed false, with the two lives it was given', async () => {
     const { contestConfigurationRepo, service } = pickEmService({ gameCount: 3 });
 
     await service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       name: 'Office Survivor',
       selectionType: SelectionType.SURVIVOR,
-      configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 },
+      configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, lives: 2, maxEntriesPerSquad: 1 },
     }));
 
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-      configJson: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false },
+      configJson: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, lives: 2 },
     }));
   });
 

@@ -35,6 +35,10 @@ export interface SurvivorLeaderboardEntryRow {
   alive: boolean;
   eliminatedInWeek: number | null;
   weeksSurvived: number;
+  /** The lives the entry has left (#1754): 0 once it is out. */
+  livesLeft: number;
+  /** The weeks that cost the entry a life, the one that put it out included. */
+  livesLost: number;
   position: number;
   displayPosition: string;
   weeks: SurvivorLeaderboardEntryWeekRow[];

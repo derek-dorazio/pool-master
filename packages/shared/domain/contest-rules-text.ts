@@ -3,7 +3,7 @@
  * from one place so the two never read differently.
  */
 
-import type { ContestRules } from './contest-rules';
+import { SURVIVOR_LIVES_DEFAULT, type ContestRules } from './contest-rules';
 import { PickEmMode, SelectionType } from './enums';
 import type { SportNoun } from './sports';
 import { getTieredRosterSize, getTiersInPlay } from './tiered-roster';
@@ -123,13 +123,17 @@ export function describePickEmRules({ mode, againstTheSpread }: { mode: PickEmMo
 /**
  * A survivor contest's rules (#719): one winner a week, each team once, out after a loss. With
  * `reuseTeamsOnceAllUsed` true each team is usable again once all are used (#787); null leaves
- * team reuse out, for a screen that doesn't read the contest's rules.
+ * team reuse out, for a screen that doesn't read the contest's rules. With two `lives` (#1754) the
+ * first loss costs a life and the second puts the entry out; one life reads as it always has.
  */
-export function describeSurvivorRules(reuseTeamsOnceAllUsed: boolean | null) {
+export function describeSurvivorRules(reuseTeamsOnceAllUsed: boolean | null, lives: number = SURVIVOR_LIVES_DEFAULT) {
   const once = reuseTeamsOnceAllUsed === null
     ? ''
     : reuseTeamsOnceAllUsed ? ', and never the same team twice until every team has been picked' : ', and never the same team twice';
-  return `Pick one team to win each week${once}. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.`;
+  const losing = lives > 1
+    ? 'A loss, a tie or a week not submitted by its first kickoff costs a life. You can lose once and stay in; a second loss puts you out. The last entries standing win.'
+    : 'A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.';
+  return `Pick one team to win each week${once}. ${losing}`;
 }
 
 /** A squares contest's rules (#711) as a sentence. */
@@ -190,7 +194,7 @@ export function formatContestRules(
     case SelectionType.BRACKET:
       return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
     case SelectionType.SURVIVOR:
-      return describeSurvivorRules(configuration.reuseTeamsOnceAllUsed ?? true);
+      return describeSurvivorRules(configuration.reuseTeamsOnceAllUsed ?? true, configuration.lives ?? SURVIVOR_LIVES_DEFAULT);
     case SelectionType.SQUARES:
       return describeSquaresRules(configuration.maxSquaresPerEntry);
   }
