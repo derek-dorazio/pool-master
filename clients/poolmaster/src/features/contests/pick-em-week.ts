@@ -103,9 +103,14 @@ export function isEliminated(gamePicks: Pick<GamePicksResponse, 'survivor'>): bo
   return (gamePicks.survivor?.eliminatedInWeek ?? null) !== null;
 }
 
+/** The week number the survivor entry picked the team in, in another week it submitted (#1757); null for a team it has not used. */
+export function teamUsedInWeek(gamePicks: Pick<GamePicksResponse, 'survivor'>, team: PickEmTeam): number | null {
+  return gamePicks.survivor?.usedTeams?.find((used) => used.participantId === team.participantId)?.weekNumber ?? null;
+}
+
 /** Whether the survivor entry picked the team in another week it submitted, so cannot pick it again. */
 export function isTeamUsed(gamePicks: Pick<GamePicksResponse, 'survivor'>, team: PickEmTeam): boolean {
-  return gamePicks.survivor?.usedTeams?.some((used) => used.participantId === team.participantId) ?? false;
+  return teamUsedInWeek(gamePicks, team) !== null;
 }
 
 /** The team a survivor week's pick names, or null with none shown. */

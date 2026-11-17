@@ -13,7 +13,7 @@ import { describePickOutcome } from './bracket-layout';
 import { EmptyPickSlot } from './empty-pick-slot';
 import { GameCard } from './game-card';
 import { PickedLine, PickOption } from './pick-option';
-import { confidenceOptions, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
+import { confidenceOptions, gameTeams, isSurvivorWeek, isTiePicked, teamUsedInWeek, teamSpread, type PickEmGame, type PickEmTeam, type PickEmWeek } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
 const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
@@ -124,6 +124,17 @@ function ConfidenceValue({
   );
 }
 
+/** A week as a used team names it, by default "Week 11". */
+function defaultWeekName(weekNumber: number): string {
+  return `Week ${weekNumber}`;
+}
+
+/** The week a survivor team was used in, named, or null for a team the entry has not used. */
+function usedWeekName(gamePicks: PickEmWeek, team: PickEmTeam, weekName: (weekNumber: number) => string): string | null {
+  const weekNumber = teamUsedInWeek(gamePicks, team);
+  return weekNumber === null ? null : weekName(weekNumber);
+}
+
 function PickEmGameCard({
   canChange,
   game,
@@ -132,6 +143,7 @@ function PickEmGameCard({
   onConfidence,
   onPick,
   tie,
+  weekName,
 }: {
   canChange: boolean;
   game: PickEmGame;
@@ -140,6 +152,7 @@ function PickEmGameCard({
   onConfidence: (game: PickEmGame, value: number | null) => void;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
   tie: PickEmTie;
+  weekName: (weekNumber: number) => string;
 }) {
   const displayPreferences = useDisplayPreferences();
   const choosable = canChange && !game.locked;
@@ -193,7 +206,7 @@ function PickEmGameCard({
             <PickOption
               isBusy={isBusy}
               isPicked={isPicked}
-              isUsed={isTeamUsed(gamePicks, team)}
+              usedIn={usedWeekName(gamePicks, team, weekName)}
               key={team.sportEventParticipantId}
               onPick={() => onPick(game, team)}
               testId={testId}
@@ -239,6 +252,7 @@ export function PickEmGames({
   onConfidence,
   onPick,
   tie,
+  weekName = defaultWeekName,
 }: {
   /** Whether the viewer may change this week now: their own entry, before its games lock. */
   canChange: boolean;
@@ -249,6 +263,8 @@ export function PickEmGames({
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
   /** The tie choice, shown on each game when the pool takes tie picks (`tiePicksOffered`). */
   tie: PickEmTie;
+  /** What a survivor week is called where a used team says when it was used: "Week 11", or a playoff's round. */
+  weekName?: (weekNumber: number) => string;
 }) {
   const games = [...gamePicks.games].sort(
     (left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff) || left.matchNumber - right.matchNumber,
@@ -265,6 +281,7 @@ export function PickEmGames({
           gamePicks={gamePicks}
           isBusy={isBusy}
           key={game.sportEventMatchId}
+          weekName={weekName}
           onConfidence={onConfidence}
           onPick={onPick}
           tie={tie}

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { ContestEntryListPage } from './contest-entry-list-page';
-import { NFL_TEAMS, pickEmEventFieldFixture, pickEmWeekFixture, week1Games, week2EventGamesFixture, weekPick } from './test/pick-em-fixtures';
+import { NFL_TEAMS, pickEmEventFieldFixture, pickEmWeekFixture, survivorWeekFixture, week1Games, week2EventGamesFixture, weekPick } from './test/pick-em-fixtures';
 import { squaresBoardFixture } from './test/squares-fixtures';
 
 const {
@@ -192,7 +192,7 @@ function primeMocks(opts?: {
   entriesPerContest?: number;
   /** The league plan's entries per contest; the contest's own cap unless given. */
   planEntriesPerContest?: number;
-  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SQUARES';
+  selectionType?: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SQUARES' | 'SURVIVOR';
   allEntryCount?: number;
   /** The event's field rows' tier ids and prices, by field row id; none unless given. */
   field?: Record<string, { tierId?: string; price?: number }>;
@@ -213,7 +213,7 @@ function primeMocks(opts?: {
         id: 'contest-1',
         name: 'Masters Pick 6',
         status: contestStatus,
-        contestFormat: opts?.selectionType === 'PICK_EM' || opts?.selectionType === 'BRACKET' ? 'PREDICTION' : 'ROSTER',
+        contestFormat: opts?.selectionType === 'PICK_EM' || opts?.selectionType === 'BRACKET' || opts?.selectionType === 'SURVIVOR' ? 'PREDICTION' : 'ROSTER',
         selectionType: opts?.selectionType ?? 'TIERED',
         leagueId: 'league-1',
         sport: 'GOLF',
@@ -603,6 +603,22 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     fireEvent.click(screen.getByTestId('contest-board-toggle-entry-1'));
     expect(screen.queryByTestId('contest-entry-picks-entry-1')).not.toBeInTheDocument();
+  });
+
+  it('names the team on the status line of the viewer\'s own survivor entry, by the week it is picked for, and another team\'s pick nowhere', async () => {
+    primeMocks({ selectionType: 'SURVIVOR', entries: [MINE, THEIRS] });
+    getGamePicksMock.mockResolvedValue({ data: survivorWeekFixture({
+      status: 'SUBMITTED',
+      survivor: { eliminatedInWeek: null, usedTeams: [], roundWeeks: [{ roundNumber: 1, weekNumber: 1 }] },
+      games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }),
+    }) });
+
+    renderContestBoard();
+
+    await waitFor(() => expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted · Week 1: Eagles$/));
+    expect(screen.getByTestId('contest-board-edit-entry-entry-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entry-status-entry-3')).not.toBeInTheDocument();
+    expect(getGamePicksMock).toHaveBeenCalledTimes(1);
   });
 
   it('shows a squares contest\'s board as its entry list, with no Entries section below it, since every entry is on the board by its boxes', async () => {
