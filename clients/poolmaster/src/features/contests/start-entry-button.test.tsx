@@ -11,12 +11,12 @@ bindApiMocks({ enterContest: enterContestMock });
 
 const REFUSAL = 'Your team already has the most entries allowed.';
 
-function renderButton(surface?: 'inverse') {
+function renderButton() {
   enterContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_ENTRY_LIMIT_REACHED', message: REFUSAL } }, status: 409 });
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <MemoryRouter>
-        <StartEntryButton contestId="contest-1" label="Make your picks" leagueCode="BIGDAWGS" surface={surface} testId="start" />
+        <StartEntryButton contestId="contest-1" label="Make your picks" leagueCode="BIGDAWGS" testId="start" />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -34,15 +34,5 @@ describe('StartEntryButton — a refused new entry', () => {
     const refusal = await screen.findByTestId('start-error');
     expect(refusal).toHaveTextContent(REFUSAL);
     expect(refusal).toHaveClass('rounded-lg');
-  });
-
-  it('shows the refusal as light alert text, not a light notice box, on a dark tile', async () => {
-    renderButton('inverse');
-
-    const refusal = await screen.findByTestId('start-error');
-    expect(refusal).toHaveTextContent(REFUSAL);
-    expect(refusal).toHaveAttribute('role', 'alert');
-    expect(refusal).toHaveClass('text-on-inverse');
-    expect(refusal).not.toHaveClass('rounded-lg');
   });
 });

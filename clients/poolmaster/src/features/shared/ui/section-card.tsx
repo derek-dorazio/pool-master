@@ -171,7 +171,9 @@ export function SectionRows({ children, testId }: { children: ReactNode; testId?
 
 /**
  * One row of a section: a name, up to two muted fact lines, and at the right one figure
- * (`value`) and one badge or action (`aside`). With `to` the whole row is a link; with `control`
+ * (`value`) and one badge or action (`aside`). With `to` the whole row is a link; `actions` are
+ * buttons of their own at the row's end (under the name on a phone), and with `to` a tap anywhere
+ * else on the row still opens `to`; with `control`
  * (a checkbox) the control leads the row and the whole row is its label, so a tap anywhere on it
  * toggles it. `picture` puts a small drawing at the row's start (a contest type's picture),
  * 64×40 on a phone and 96×60 from the small breakpoint up. Rows tint on hover; `isHighlighted`
@@ -179,6 +181,7 @@ export function SectionRows({ children, testId }: { children: ReactNode; testId?
  * list has chosen (a year, say) and marks it current.
  */
 export function SectionRow({
+  actions,
   aside,
   control,
   facts,
@@ -194,6 +197,8 @@ export function SectionRow({
   value,
   valueTestId,
 }: {
+  /** Buttons that are their own targets, such as Edit picks; the row's `to` covers the rest of it. */
+  actions?: ReactNode;
   /** A status badge or one action, drawn as given. */
   aside?: ReactNode;
   /** A checkbox at the row's start, which the whole row labels. Not with `to`. */
@@ -224,6 +229,7 @@ export function SectionRow({
 }) {
   const linkRef = useRef<HTMLAnchorElement>(null);
   const rowRef = useRef<HTMLElement>(null);
+  const nameId = useId();
   useEffect(() => {
     if (isHighlighted) {
       (linkRef.current ?? rowRef.current)?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -268,7 +274,7 @@ export function SectionRow({
       {picture ? <span className="block aspect-[16/10] w-16 flex-none self-start overflow-hidden rounded-md sm:w-24 sm:self-center" data-testid={testId ? `${testId}-picture` : undefined}>{picture}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-semibold text-foreground">{name}</span>
+          <span className="truncate font-semibold text-foreground" id={nameId}>{name}</span>
           {nameAddon}
         </span>
         {facts ? <span className="block text-sm text-muted-foreground">{facts}</span> : null}
@@ -282,6 +288,27 @@ export function SectionRow({
       ) : null}
     </>
   );
+
+  if (actions) {
+    // The row's link stretches over the whole row beneath the buttons, so the buttons stay their
+    // own targets (a button is never inside a link) and a tap anywhere else opens `to`.
+    return (
+      <li className="even:bg-row-alt">
+        <div
+          className={cn(className, "relative flex-wrap")}
+          data-highlighted={isHighlighted || undefined}
+          data-testid={testId}
+          ref={rowRef as RefObject<HTMLDivElement>}
+        >
+          {to ? (
+            <Link aria-current={ariaCurrent} aria-labelledby={nameId} className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" data-testid={testId ? `${testId}-link` : undefined} ref={linkRef} to={to} />
+          ) : null}
+          {content}
+          <span className="relative flex w-full flex-wrap items-center gap-2 sm:w-auto" data-testid={testId ? `${testId}-actions` : undefined}>{actions}</span>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li className="even:bg-row-alt">

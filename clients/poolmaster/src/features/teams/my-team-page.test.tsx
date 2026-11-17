@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PlanFeature, TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
+import { ContestStatus, PlanFeature, TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Toaster } from '@/features/shared/ui';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -18,6 +18,7 @@ import {
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
 import { getTeamIconOption } from './team-icon-catalog';
+import { buildContest, buildContestEntry, buildContestSportEvent } from '@/features/contests/test/contest-admin-fixtures';
 import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadHistory, buildSquadYear } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
@@ -38,6 +39,7 @@ const listRecordsMock = vi.fn();
 const listPerpetualTrophiesMock = vi.fn();
 const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
+const listContestFinishedYearsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
 const getLeagueSquadMock = vi.fn();
@@ -57,6 +59,7 @@ bindApiMocks({
   listContestResults: listContestResultsMock,
   listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
+  listContestFinishedYears: listContestFinishedYearsMock,
   listPerpetualTrophies: listPerpetualTrophiesMock,
   listRecords: listRecordsMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -159,6 +162,9 @@ function primeTeam({
   getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory({ medals: { firsts: 0, seconds: 0, thirds: 0 }, trophies: [], years: [] }) }));
   listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
   listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
+  listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: [], places: [] }));
+  listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [] }));
 }
 
 afterEach(() => {
@@ -166,7 +172,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, getLeagueSquadMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listMyContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
+    getContestLeaderboardMock, listMyContestEntriesMock, listContestsMock, listContestFinishedYearsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
     mock.mockReset();
   }
@@ -265,18 +271,132 @@ describe('My team', () => {
   });
 });
 
-describe('My team without a contest list', () => {
-  it('shows no contest list and reads no contests, entries or leaderboards, since contests live on Home and Contests', async () => {
+describe('My team › Your entries', () => {
+  const open = buildContest({
+    id: 'contest-open',
+    name: 'CFP Championship Stars',
+    status: ContestStatus.OPEN,
+    sportEvents: [buildContestSportEvent({ startDate: '2099-11-23T12:00:00.000Z' })],
+  });
+  const live = buildContest({ id: 'contest-live', name: 'Week 12 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 14 });
+
+  it('lists each of the team\'s current entries by entry and contest, with Edit picks on an open one and its place on a live one, reading no leaderboard', async () => {
+    primeTeam();
+    listContestsMock.mockResolvedValue(apiSuccess({ contests: [live, open] }));
+    listMyContestEntriesMock.mockResolvedValue(apiSuccess({
+      entries: [
+        buildContestEntry({ id: 'entry-open', contestId: 'contest-open', name: 'Sharks 1' }),
+        buildContestEntry({ id: 'entry-live', contestId: 'contest-live', name: 'Sharks 1' }),
+      ],
+      places: [{ entryId: 'entry-live', position: 3, displayPosition: '3' }],
+    }));
+
+    renderTeamRoutes();
+
+    const section = within(await screen.findByTestId('my-team-your-entries'));
+    expect(await section.findByText('Sharks 1 · CFP Championship Stars')).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-entry-entry-open-status')).toHaveTextContent(/^Submitted · closes .*Nov 23, 2099/);
+    expect(section.getByRole('link', { name: 'Edit picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-open/entries/entry-open');
+    expect(screen.getByTestId('my-team-entry-entry-live-status')).toHaveTextContent('Live · 3rd of 14');
+    expect(screen.getByTestId('my-team-entry-entry-live')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-live');
+    // The open contest leads, as on Home.
+    expect(section.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('CFP Championship Stars'),
+      expect.stringContaining('Week 12 Pick'),
+    ]);
+    expect(getContestLeaderboardMock).not.toHaveBeenCalled();
+  });
+
+  it('says so in one line when the team has no entry in a current contest', async () => {
     primeTeam();
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('my-team-owners')).toBeInTheDocument();
-    expect(screen.queryByTestId('my-team-entries')).not.toBeInTheDocument();
-    expect(screen.queryByText('My entries')).not.toBeInTheDocument();
-    expect(listContestsMock).not.toHaveBeenCalled();
-    expect(listMyContestEntriesMock).not.toHaveBeenCalled();
-    expect(getContestLeaderboardMock).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('my-team-your-entries-none')).toHaveTextContent('You have no entries in a current contest.');
+  });
+});
+
+describe('My team › Past contests', () => {
+  const finished = (index: number) => buildContestResult({
+    contestId: `past-${String(index)}`,
+    name: `Week ${String(index)} Pick'em`,
+    squadFinish: { place: index, displayPlace: String(index), points: 100 },
+  });
+
+  it('shows the latest three contests the team finished with its place, leaving out ones it was not in, and an All link', async () => {
+    primeTeam();
+    listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026] }));
+    listContestResultsMock.mockResolvedValue(apiSuccess({
+      contests: [finished(1), buildContestResult({ contestId: 'not-in', name: 'Masters Tiers' }), finished(2), finished(3), finished(4)],
+    }));
+
+    renderTeamRoutes();
+
+    const section = within(await screen.findByTestId('my-team-past-contests'));
+    expect(await section.findByTestId('my-team-past-contest-past-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/past-1');
+    expect(section.getByTestId('my-team-past-contest-past-2-trailing')).toHaveTextContent('2nd');
+    expect(section.getByTestId('my-team-past-contest-past-3')).toBeInTheDocument();
+    expect(section.queryByTestId('my-team-past-contest-past-4')).not.toBeInTheDocument();
+    expect(section.queryByTestId('my-team-past-contest-not-in')).not.toBeInTheDocument();
+    expect(section.getByTestId('my-team-past-contests-all')).toHaveAttribute('href', '/league/BIGDAWGS/team?past=all');
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({
+      query: expect.objectContaining({ finishOf: 'team-1', year: 2026 }) as unknown,
+    }));
+  });
+
+  it('fills the latest three from last year early in a year, newest first', async () => {
+    primeTeam();
+    listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026, 2025] }));
+    listContestResultsMock.mockImplementation(({ query }: { query: { year: number } }) => apiSuccess({
+      contests: query.year === 2026 ? [finished(1)] : [finished(7), finished(8), finished(9)],
+    }));
+
+    renderTeamRoutes();
+
+    const section = within(await screen.findByTestId('my-team-past-contests'));
+    await section.findByTestId('my-team-past-contest-past-8');
+    expect(section.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Week 1 Pick'),
+      expect.stringContaining('Week 7 Pick'),
+      expect.stringContaining('Week 8 Pick'),
+    ]);
+    expect(section.queryByTestId('my-team-past-contest-past-9')).not.toBeInTheDocument();
+  });
+
+  it('opens the full list at the year and contest a final contest\'s breadcrumb named, with a season picker and no All link', async () => {
+    primeTeam();
+    listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026, 2025] }));
+    listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [finished(1), finished(2), finished(3), finished(4)] }));
+
+    renderTeamRoutes('/league/BIGDAWGS/team?past=all&pastYear=2025&focus=past-4');
+
+    const section = within(await screen.findByTestId('my-team-past-contests'));
+    expect(await section.findByTestId('my-team-past-contest-past-4')).toHaveAttribute('data-highlighted', 'true');
+    expect(section.queryByTestId('my-team-past-contests-all')).not.toBeInTheDocument();
+    expect(section.getByTestId('my-team-past-contests-year')).toBeInTheDocument();
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({
+      query: expect.objectContaining({ year: 2025 }) as unknown,
+    }));
+  });
+
+  it('says so in one line, with no All link, before the league has finished a contest', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('my-team-past-contests-none')).toHaveTextContent('No finished contests yet.');
+    expect(screen.queryByTestId('my-team-past-contests-all')).not.toBeInTheDocument();
+  });
+
+  it('offers no All link when the latest few are every contest the team finished in its only year', async () => {
+    primeTeam();
+    listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026] }));
+    listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [finished(1), finished(2)] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('my-team-past-contest-past-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('my-team-past-contests-all')).not.toBeInTheDocument();
   });
 });
 

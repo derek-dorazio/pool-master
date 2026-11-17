@@ -16,8 +16,9 @@ import {
   getLeagueByCodeData,
   getLeagueSquadFrom,
 } from './test/fixtures';
-import type { CupDto } from '@/lib/api';
-import { buildRunningCup } from '@/features/championships/test/fixtures';
+import type { ContestResultSummaryDto, CupDto } from '@/lib/api';
+import { week2EventGamesFixture } from '@/features/contests/test/pick-em-fixtures';
+import { buildContestResult, buildRunningCup } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 const getCurrentUserMock = vi.fn();
@@ -27,6 +28,8 @@ const getYearReviewMock = vi.fn();
 const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listCupsMock = vi.fn();
+const listContestResultsMock = vi.fn();
+const getEventBracketMock = vi.fn();
 const getLeagueSquadMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
@@ -38,6 +41,8 @@ bindApiMocks({
   listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
   listCups: listCupsMock,
+  listContestResults: listContestResultsMock,
+  getEventBracket: getEventBracketMock,
   getLeagueSquad: getLeagueSquadMock,
   refreshToken: refreshTokenMock,
 });
@@ -85,7 +90,7 @@ function renderLeagueHome(initialEntry: string | { pathname: string; state: unkn
 
 type ContestStatus = 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
 
-function contest(id: string, name: string, status: ContestStatus, sportEventId = `event-${id}`) {
+function contest(id: string, name: string, status: ContestStatus, sportEventId = `event-${id}`, entryCount = 4) {
   return {
     id,
     name,
@@ -95,7 +100,8 @@ function contest(id: string, name: string, status: ContestStatus, sportEventId =
     leagueId: 'league-1',
     sportEvents: [{ sportEventId, sequence: 1, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED' }],
     sport: 'GOLF',
-    entryCount: 4,
+    entryCount,
+    entriesPerContest: null as number | null,
   };
 }
 
@@ -156,8 +162,13 @@ function primeMocks({
   role = 'MEMBER',
   features = Object.values(PlanFeature),
   description = null,
+  places = [],
+  finals = [],
 }: {
   description?: string | null;
+  /** The championship year's finished contests, as the results read lists them. */
+  finals?: ContestResultSummaryDto[];
+  places?: { entryId: string; position: number; displayPosition: string }[];
   features?: PlanFeature[];
   contests?: ReturnType<typeof contest>[];
   cups?: CupDto[];
@@ -190,9 +201,10 @@ function primeMocks({
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
   ));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
+  listContestResultsMock.mockResolvedValue(apiSuccess({ contests: finals }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   // The viewer's team's entries across the league's current contests, in one read (#1197).
-  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat(), places: [] }));
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat(), places }));
 }
 
 beforeEach(() => {
@@ -205,6 +217,7 @@ afterEach(() => {
   for (const mock of [
     getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock, getYearReviewMock,
     listMyContestEntriesMock, listContestsMock, listCupsMock, getLeagueSquadMock, refreshTokenMock,
+    listContestResultsMock, getEventBracketMock,
   ]) {
     mock.mockReset();
   }
@@ -255,30 +268,26 @@ describe('League Home', () => {
     expect(screen.queryByTestId('league-home-description')).not.toBeInTheDocument();
   });
 
-  it('puts the open contest that closes soonest up next, with a countdown to its cutoff', async () => {
+  it('draws an open contest as a hero with its kind, when entries close, a countdown and Make your picks', async () => {
     primeMocks({
-      contests: [
-        contest('later', 'US Open Pick 6', 'OPEN'),
-        contest('sooner', 'RBC Heritage Tiers', 'OPEN'),
-      ],
-      eventStarts: {
-        'event-later': '2026-04-20T12:00:00.000Z',
-        'event-sooner': '2026-04-13T02:06:00.000Z',
-      },
+      contests: [contest('sooner', 'RBC Heritage Tiers', 'OPEN', 'event-sooner', 11)],
+      eventStarts: { 'event-sooner': '2026-04-13T02:06:00.000Z' },
     });
 
     renderLeagueHome();
 
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByRole('heading', { name: 'RBC Heritage Tiers' })).toBeInTheDocument();
-    expect(upNext.getByRole('timer')).toHaveAccessibleName('Entries close in 2 days 14 hours 6 minutes');
-    // Make your picks starts the entry and opens its pick screen, so it is a button, not a link to the contest.
-    expect(upNext.getByRole('button', { name: 'Make your picks' })).toBeInTheDocument();
-    expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(within(screen.getByTestId('league-home-current-contests')).getByText('US Open Pick 6')).toBeInTheDocument();
+    const hero = within(await screen.findByTestId('league-home-hero-sooner'));
+    expect(hero.getByRole('heading', { name: 'RBC Heritage Tiers' })).toBeInTheDocument();
+    expect(hero.getByText('Open for entries · Tiered')).toBeInTheDocument();
+    expect(hero.getByRole('timer')).toHaveAccessibleName('Entries close in 2 days 14 hours 6 minutes');
+    expect(await hero.findByRole('button', { name: 'Make your picks' })).toBeInTheDocument();
+    expect(hero.getByTestId('league-home-hero-sooner-note')).toHaveTextContent('11 entries so far');
+    // A tap anywhere else on the hero opens the contest page.
+    expect(hero.getByTestId('league-home-hero-sooner-link')).toHaveAttribute('href', '/league/BIGDAWGS/contests/sooner');
+    expect(hero.getByTestId('league-home-hero-sooner-link')).toHaveAccessibleName('RBC Heritage Tiers');
   });
 
-  it('offers Edit picks up next once the team has submitted its entry, opening the entry\'s pick screen', async () => {
+  it('offers Edit picks and Add entry on an open hero once the team is in, saying which entry is in', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
       entriesByContest: { 'open-1': [entry('open-1', 'team-1')] },
@@ -286,15 +295,13 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByRole('link', { name: 'Edit picks' })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/open-1/entries/open-1-team-1',
-    );
-    expect(upNext.getByText('Your entry is submitted.')).toBeInTheDocument();
+    const hero = within(await screen.findByTestId('league-home-hero-open-1'));
+    expect(await hero.findByRole('link', { name: 'Edit picks' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1/entries/open-1-team-1');
+    expect(hero.getByRole('button', { name: 'Add entry' })).toBeInTheDocument();
+    expect(hero.getByTestId('league-home-hero-open-1-note')).toHaveTextContent('team-1 entry is in');
   });
 
-  it('offers to finish the picks when the team has an entry it has not submitted', async () => {
+  it('offers to finish the picks on a hero when the team has an entry it has not submitted', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
       entriesByContest: { 'open-1': [entry('open-1', 'team-1', 'DRAFT')] },
@@ -302,52 +309,69 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-hero-open-1')).findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
+  });
+
+  it('draws at most three heroes, live first then open by soonest closing, and lists the rest under More contests', async () => {
+    primeMocks({
+      contests: [
+        contest('open-late', 'US Open Pick 6', 'OPEN'),
+        contest('open-soon', 'RBC Heritage Tiers', 'OPEN'),
+        contest('live-1', 'Masters Pick 6', 'ACTIVE'),
+        contest('open-mid', 'PGA Budget', 'OPEN'),
+      ],
+      eventStarts: { 'event-open-soon': '2026-04-12T12:00:00.000Z', 'event-open-mid': '2026-04-20T12:00:00.000Z', 'event-open-late': '2026-06-18T12:00:00.000Z' },
+    });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [standing(1, 'team-a', 'Bogey Men', -14)])));
+
+    renderLeagueHome();
+
+    const heroes = await screen.findByTestId('league-home-heroes');
+    expect(within(heroes).getAllByRole('heading').map((heading) => heading.textContent)).toEqual(['Masters Pick 6', 'RBC Heritage Tiers', 'PGA Budget']);
+    const more = within(screen.getByTestId('league-home-more-contests'));
+    expect(more.getByRole('heading', { name: 'More contests' })).toBeInTheDocument();
+    expect(more.getByTestId('league-home-contest-open-late')).toHaveTextContent('US Open Pick 6');
+    expect(more.queryByTestId('league-home-contest-live-1')).not.toBeInTheDocument();
   });
 
   it('reads the team\'s entries for every open and live contest in one league-wide request, not one per contest', async () => {
     primeMocks({
-      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')],
       entriesByContest: { 'open-1': [entry('open-1', 'team-1', 'DRAFT')] },
     });
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-up-next')).findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-hero-open-1')).findByRole('link', { name: 'Finish your picks' })).toBeInTheDocument();
     expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
     expect(listMyContestEntriesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
   });
 
   it('does not offer to make picks while it is still checking whether the team has entered', async () => {
-    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
     listMyContestEntriesMock.mockImplementation(() => new Promise(() => undefined));
 
     renderLeagueHome();
 
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
-    expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
-    expect(upNext.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
+    const hero = within(await screen.findByTestId('league-home-hero-open-1'));
+    expect(await hero.findByText('Checking your entry...')).toBeInTheDocument();
+    expect(hero.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
   });
 
   it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
-    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN')] });
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
     listMyContestEntriesMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Entries unavailable' } },
     });
 
     renderLeagueHome();
 
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
-    expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
-    expect(upNext.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-current-contests')).not.toHaveTextContent('You have not entered yet.');
+    const hero = within(await screen.findByTestId('league-home-hero-open-1'));
+    expect(await hero.findByText("We couldn't check your entry.")).toBeInTheDocument();
+    expect(hero.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
   });
 
-  it('puts nothing up next once a contest\'s cutoff has passed, even while it still reads open', async () => {
+  it('makes no hero of a contest whose cutoff has passed, even while it still reads open, listing it under Contests', async () => {
     primeMocks({
       contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
       eventStarts: { 'event-open-1': '2026-04-10T11:00:00.000Z' },
@@ -355,155 +379,126 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-current-contests')).findByText('RBC Heritage Tiers')).toBeInTheDocument();
-    expect(screen.queryByTestId('league-home-up-next')).not.toBeInTheDocument();
+    const card = within(await screen.findByTestId('league-home-more-contests'));
+    expect(card.getByRole('heading', { name: 'Contests' })).toBeInTheDocument();
+    expect(card.getByTestId('league-home-contest-open-1')).toHaveTextContent('RBC Heritage Tiers');
+    expect(screen.queryByTestId('league-home-heroes')).not.toBeInTheDocument();
   });
 
-  it('shows the top five of a live contest the team is in, adding the team\'s own row when it ranks lower', async () => {
-    primeMocks({
-      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')],
-      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
-    });
-    getContestLeaderboardMock.mockResolvedValue(apiSuccess({
-      contestId: 'live-1',
-      sportEventId: 'event-live-1',
-      sport: 'GOLF',
-      scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
-      upsetBonus: false,
-      participants: [],
-      asOf: null,
-      entries: [
-        standing(1, 'team-a', 'Bogey Men', -14),
-        standing(2, 'team-b', 'Sand Trappers', -11),
-        standing(3, 'team-c', 'Grip It', -10),
-        standing(4, 'team-d', 'Mulligans', -8),
-        standing(5, 'team-e', 'Fairway Fanatics', -7),
-        standing(6, 'team-f', 'Birdie Sanders', -6),
-        standing(7, 'team-1', 'Casey Crushers', -5),
-      ],
-    }));
+  it('lists a full contest under More contests as Full, not as a hero', async () => {
+    primeMocks({ contests: [{ ...contest('full', 'Masters Tiered', 'OPEN', 'event-full', 100), entriesPerContest: 100 }] });
 
     renderLeagueHome();
 
-    const standings = within(await screen.findByTestId('league-home-live-standings'));
-    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
-    expect(standings.getByText('Fairway Fanatics')).toBeInTheDocument();
-    expect(standings.queryByText('Birdie Sanders')).not.toBeInTheDocument();
-    const myRow = standings.getByRole('row', { name: /Casey Crushers/ });
-    expect(myRow).toHaveTextContent('7');
-    expect(myRow).toHaveTextContent('Yours');
-    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/live-1',
-    );
+    expect(await screen.findByTestId('league-home-contest-full-full')).toHaveTextContent('Full');
+    expect(screen.queryByTestId('league-home-heroes')).not.toBeInTheDocument();
   });
 
-  it('offers a chip for each live contest the team is in, switching the top five to the chosen one', async () => {
+  it('draws a live contest the team is in as a hero: its place in big type, the top three plus its own row, and Leaderboard', async () => {
     primeMocks({
-      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
-      entriesByContest: { 'live-1': [entry('live-1', 'team-1')], 'live-2': [entry('live-2', 'team-1')] },
+      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE', 'event-live-1', 7)],
+      // The entry the leaderboard ranks 7th is the team's own.
+      entriesByContest: { 'live-1': [{ ...entry('live-1', 'team-1'), id: 'entry-team-1' }] },
+      places: [{ entryId: 'entry-team-1', position: 7, displayPosition: '7' }],
     });
-    getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) => apiSuccess(liveLeaderboard(
-      path.contestId,
-      path.contestId === 'live-1' ? [standing(1, 'team-a', 'Bogey Men', -14)] : [standing(1, 'team-z', 'Net Gains', 22)],
-    )));
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [
+      standing(1, 'team-a', 'Bogey Men', -14),
+      standing(2, 'team-b', 'Sand Trappers', -11),
+      standing(3, 'team-c', 'Grip It', -10),
+      standing(4, 'team-d', 'Mulligans', -8),
+      standing(7, 'team-1', 'Casey Crushers', -5),
+    ])));
 
     renderLeagueHome();
 
-    const standings = within(await screen.findByTestId('league-home-live-standings'));
-    expect(standings.getByRole('radio', { name: 'Masters Pick 6' })).toBeChecked();
-    expect(standings.getByRole('radio', { name: 'NBA Finals Stars' })).not.toBeChecked();
-    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
-    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(standings.getByRole('radio', { name: 'NBA Finals Stars' }));
-
-    expect(await standings.findByText('Net Gains')).toBeInTheDocument();
-    expect(standings.queryByText('Bogey Men')).not.toBeInTheDocument();
-    expect(standings.getByRole('heading', { name: 'NBA Finals Stars · Top 5' })).toBeInTheDocument();
-    expect(standings.getByRole('link', { name: /Full leaderboard/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-2');
-    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
-    expect(getContestLeaderboardMock.mock.lastCall?.[0]).toMatchObject({ path: { contestId: 'live-2' } });
+    const hero = within(await screen.findByTestId('league-home-hero-live-1'));
+    expect(hero.getByText('Live')).toBeInTheDocument();
+    expect(await hero.findByText('1 · Bogey Men')).toBeInTheDocument();
+    expect(hero.getByText('3 · Grip It')).toBeInTheDocument();
+    expect(hero.queryByText(/Mulligans/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-home-hero-live-1-standing-entry-team-1')).toHaveTextContent('7 · Casey Crushers (you)');
+    expect(screen.getByTestId('league-home-hero-live-1-standing-entry-team-1')).toHaveAttribute('data-mine', 'true');
+    expect(screen.getByTestId('league-home-hero-live-1-place')).toHaveTextContent('7thof 7 · -5');
+    expect(hero.getByRole('link', { name: 'Leaderboard' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 
-  it('shows no chips when the team is in one live contest', async () => {
-    primeMocks({
-      contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
-      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
-    });
+  it('draws a live contest the team is not in with the top three and Watch, no place and no row of its own', async () => {
+    primeMocks({ contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')] });
     getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [standing(1, 'team-a', 'Bogey Men', -14)])));
 
     renderLeagueHome();
 
-    const standings = within(await screen.findByTestId('league-home-live-standings'));
-    expect(await standings.findByText('Bogey Men')).toBeInTheDocument();
-    expect(standings.queryByRole('radiogroup')).not.toBeInTheDocument();
-    expect(standings.getByRole('heading', { name: 'Masters Pick 6 · Top 5' })).toBeInTheDocument();
+    const hero = within(await screen.findByTestId('league-home-hero-live-1'));
+    expect(await hero.findByText('1 · Bogey Men')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-hero-live-1-place')).not.toBeInTheDocument();
+    expect(hero.queryByText(/\(you\)/)).not.toBeInTheDocument();
+    expect(hero.getByRole('link', { name: 'Watch' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 
-  it('lists the other live and open contests under Current contests, live first, leaving out the one up next', async () => {
+  it('makes one request each for the league, its contests and the team\'s entries, and one leaderboard per live hero', async () => {
     primeMocks({
-      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
-      eventStarts: { 'event-open-1': '2026-04-20T12:00:00.000Z', 'event-open-2': '2026-06-18T12:00:00.000Z' },
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE'), contest('live-2', 'NBA Finals Stars', 'ACTIVE')],
+      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
     });
+    getContestLeaderboardMock.mockImplementation(({ path }: { path: { contestId: string } }) => apiSuccess(liveLeaderboard(
+      path.contestId,
+      [standing(1, 'team-1', 'Casey Crushers', -5)],
+    )));
 
     renderLeagueHome();
 
-    const card = await screen.findByTestId('league-home-current-contests');
-    expect(await within(card).findByTestId('league-home-contest-group-live')).toHaveTextContent('Masters Pick 6');
-    expect(within(card).getByTestId('league-home-contest-group-open')).toHaveTextContent('US Open Pick 6');
-    expect(within(card).queryByTestId('league-home-contest-open-1')).not.toBeInTheDocument();
-    expect(within(card).getByTestId('league-home-contest-live-1')).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
+    expect(await within(await screen.findByTestId('league-home-hero-live-2')).findByText(/Casey Crushers/)).toBeInTheDocument();
+    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
+    expect(listContestsMock).toHaveBeenCalledTimes(1);
+    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
+    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
+    // One results read, for the contests gone final lately; no games read for a roster contest.
+    expect(listContestResultsMock).toHaveBeenCalledTimes(1);
+    expect(getEventBracketMock).not.toHaveBeenCalled();
   });
 
-  it('makes one request each for the league, its contests, the team\'s entries and one live leaderboard', async () => {
-    primeMocks({
-      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN'), contest('open-2', 'US Open Pick 6', 'OPEN'), contest('live-1', 'Masters Pick 6', 'ACTIVE')],
-      entriesByContest: { 'live-1': [entry('live-1', 'team-1')] },
-    });
-    getContestLeaderboardMock.mockResolvedValue(apiSuccess({
-      contestId: 'live-1',
-      sportEventId: 'event-live-1',
-      sport: 'GOLF',
-      scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-      countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
-      upsetBonus: false,
-      participants: [],
-      asOf: null,
-      entries: [standing(1, 'team-1', 'Casey Crushers', -5)],
+  it('counts a one-week pick\'em hero\'s games played from its event\'s games', async () => {
+    const week = { ...contest('week-1', 'Week 12 Pick\'em', 'ACTIVE'), contestFormat: 'PREDICTION', selectionType: 'PICK_EM' };
+    primeMocks({ contests: [week] });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('week-1', [standing(1, 'team-a', 'Bogey Men', 3)])));
+    getEventBracketMock.mockResolvedValue(apiSuccess({
+      matches: week2EventGamesFixture({ 1: { status: 'COMPLETED' }, 2: { status: 'COMPLETED' }, 3: { status: 'SCHEDULED' } }),
     }));
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-live-standings')).findByText('Casey Crushers')).toBeInTheDocument();
-    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
-    expect(listContestsMock).toHaveBeenCalledTimes(1);
-    expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
-    expect(getContestLeaderboardMock).toHaveBeenCalledTimes(1);
+    expect(await screen.findByTestId('league-home-hero-week-1-progress')).toHaveTextContent('2 of 3 games played');
   });
 
-  it('shows no live standings for a live contest the team has no entry in', async () => {
-    primeMocks({ contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')] });
+  it('keeps a contest gone final in the last few days in More contests with the team\'s finish', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
+      finals: [buildContestResult({ completedAt: '2026-04-09T12:00:00.000Z', contestId: 'week-11', name: 'Week 11 Pick\'em', rankedEntryCount: 14, squadFinish: { displayPlace: '5', place: 5, points: 0 } })],
+    });
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-current-contests')).findByText('You have not entered yet.')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-home-final-week-11')).toHaveTextContent('Final · you were 5th of 14');
+  });
+
+  it('shows no Up next, Live standings or Your team card any more', async () => {
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
+
+    renderLeagueHome();
+
+    await screen.findByTestId('league-home-hero-open-1');
+    expect(screen.queryByTestId('league-home-up-next')).not.toBeInTheDocument();
     expect(screen.queryByTestId('league-home-live-standings')).not.toBeInTheDocument();
-    expect(getContestLeaderboardMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('league-home-your-team')).not.toBeInTheDocument();
+    expect(getLeagueSquadMock).not.toHaveBeenCalled();
   });
 
-  it('shows the member\'s squad as a row with its owner count, not its owners\' names, and a My team footer link', async () => {
-    primeMocks();
+  it('tints and scrolls to the contest a contest page\'s Home breadcrumb came from', async () => {
+    primeMocks({ contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
 
-    renderLeagueHome();
+    renderLeagueHome('/league/BIGDAWGS?focus=open-1');
 
-    const team = within(await screen.findByTestId('league-home-your-team'));
-    expect(await team.findByTestId('league-home-your-team-row')).toHaveTextContent('Casey Crushers1 owner');
-    expect(team.queryByText('Casey Commissioner')).not.toBeInTheDocument();
-    expect(team.getByRole('link', { name: /My team/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
-    // One read of the viewer's own team, not the league's whole team list.
-    expect(getLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-1' } }));
+    expect(await screen.findByTestId('league-home-hero-open-1')).toHaveAttribute('data-highlighted', 'true');
   });
 
   it('shows the year\'s cups with who leads and the viewer\'s place, each opening its Points race', async () => {
@@ -524,7 +519,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    await screen.findByTestId('league-home-your-team');
+    await screen.findByTestId('league-home-more-contests');
     expect(listCupsMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('league-home-cups')).not.toBeInTheDocument();
   });
@@ -544,7 +539,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    await screen.findByTestId('league-home-your-team');
+    await screen.findByTestId('league-home-more-contests');
     await vi.waitFor(() => expect(listCupsMock).toHaveBeenCalled());
     expect(screen.queryByTestId('league-home-cups')).not.toBeInTheDocument();
   });
@@ -554,23 +549,33 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-your-team')).findByRole('link', { name: /Create your team/ })).toBeInTheDocument();
-    const upNext = within(await screen.findByTestId('league-home-up-next'));
-    expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
-    expect(upNext.getByText('Create your team to enter.')).toBeInTheDocument();
+    const hero = within(await screen.findByTestId('league-home-hero-open-1'));
+    expect(hero.getByText('Create your team to enter.')).toBeInTheDocument();
+    expect(hero.queryByRole('button', { name: 'Make your picks' })).not.toBeInTheDocument();
     expect(listMyContestEntriesMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the titled Current contests card with one italic line and an All contests link when no contest is open or live', async () => {
-    primeMocks({ contests: [contest('done', 'Players Championship', 'COMPLETED'), contest('draft', 'Draft', 'DRAFT')] });
+  it('shows a set-up contest to a commissioner under Contests, and to no member', async () => {
+    primeMocks({ role: 'COMMISSIONER', contests: [contest('draft', 'Super Bowl Squares', 'DRAFT')] });
+    const { unmount } = renderLeagueHome();
+    expect(await screen.findByTestId('league-home-contest-draft-status')).toHaveTextContent(/^Set up/);
+    unmount();
+
+    primeMocks({ contests: [contest('draft', 'Super Bowl Squares', 'DRAFT')] });
+    renderLeagueHome();
+    expect(await screen.findByTestId('league-home-contest-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-contest-draft')).not.toBeInTheDocument();
+  });
+
+  it('keeps a titled Contests card with one italic line when no contest is open or live, linking to no contests page', async () => {
+    primeMocks({ contests: [contest('done', 'Players Championship', 'COMPLETED')] });
 
     renderLeagueHome();
 
-    const card = within(await screen.findByTestId('league-home-current-contests'));
-    expect(card.getByRole('heading', { name: 'Current contests' })).toBeInTheDocument();
+    const card = within(await screen.findByTestId('league-home-more-contests'));
+    expect(card.getByRole('heading', { name: 'Contests' })).toBeInTheDocument();
     expect(card.getByTestId('league-home-contest-empty')).toHaveTextContent('No open or live contests.');
-    expect(card.queryByRole('button')).not.toBeInTheDocument();
-    expect(card.getByRole('link', { name: /All contests/ })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
+    expect(card.queryByRole('link', { name: /All contests/ })).not.toBeInTheDocument();
   });
 
   it('shows an error instead of an empty page when the contests cannot be loaded', async () => {
@@ -580,7 +585,7 @@ describe('League Home', () => {
     renderLeagueHome();
 
     expect(await screen.findByText("We couldn't load this league's contests.")).toBeInTheDocument();
-    expect(screen.queryByTestId('league-home-current-contests')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-home-more-contests')).not.toBeInTheDocument();
   });
 
   it('explains that an inactive league is read-only', async () => {
