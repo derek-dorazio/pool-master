@@ -18,6 +18,7 @@ import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules
 
 const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   1: '904e71cf6f273fa03c7ea11a859a7ade3022ca52f6e4501cbdd3c7ca92e2f754',
+  2: '2c3156abdb2ae9a63f84e3982fef0fd61515765473e019f8266c9602b6e75e6b',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];
