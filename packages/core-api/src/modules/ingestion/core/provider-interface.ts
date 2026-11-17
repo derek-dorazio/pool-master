@@ -26,9 +26,10 @@ export interface SportDataProvider {
    * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
    * without one, every event the provider has for the sport (#402: the catalog browse no
    * longer defaults to a window around today). Called on demand by the catalog browse,
-   * score-source linking and the year import; nothing schedules it (#126).
+   * score-source linking and the year import; nothing schedules it (#126). Given a `tour`, a
+   * provider that reads its sport league by league may read only that tour's league (#1797).
    */
-  getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]>;
+  getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
   getEventDetails(eventId: string, options?: ProviderEventSyncOptions): Promise<SportEventDetail | null>;
@@ -129,6 +130,34 @@ export function supportsLiveSimulation(
 }
 
 // --- Shared types ---
+
+/** What a caller of `getUpcomingEvents` wants from a sport's list (#1797). */
+export interface ProviderEventListOptions {
+  /**
+   * The sport league's match keyword, when only its events are wanted. A provider that reads
+   * the sport league by league reads only the one whose events carry this tour, and throws
+   * `ProviderLeagueRefusedError` when the plan refuses it; one that cannot tell ignores it, and
+   * the caller filters by tour as before.
+   */
+  tour?: string;
+}
+
+/**
+ * A provider refused one league's reads because the account's plan does not include them
+ * (#1797): an HTTP 401 or 403 from the vendor. Thrown only for a read the caller asked of that
+ * league alone; a sport's whole list leaves a refused league out instead.
+ */
+export class ProviderLeagueRefusedError extends Error {
+  constructor(
+    readonly providerName: string,
+    readonly league: string,
+    readonly status: number,
+    options?: { cause?: unknown },
+  ) {
+    super(`${providerName} refused ${league}'s reads (HTTP ${String(status)}): the current plan does not include them.`, options);
+    this.name = 'ProviderLeagueRefusedError';
+  }
+}
 
 export interface DateRange {
   from: Date;

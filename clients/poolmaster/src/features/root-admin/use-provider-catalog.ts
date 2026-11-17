@@ -11,16 +11,18 @@ import { useProvidersQuery } from './use-providers-query';
 export type ProviderCatalogEvent = ProviderEventDto;
 
 /**
- * The providers covering a sport (its primary first) and the one chosen, which starts as the
- * primary; null when none covers it, as for horse racing today. Shared by the catalog browse
- * below and the sport league year import (#385). Choosing matters only where two providers
- * cover the sport, as the QA mock and BALLDONTLIE do for golf (#1495).
+ * The providers covering a sport (its primary first) and the one chosen, which starts as
+ * `preferredProviderId` when it covers the sport (the sport league's event sync provider, for the
+ * year import, #1797), else the primary; null when none covers it, as for horse racing today.
+ * Shared by the catalog browse below and the sport league year import (#385). Choosing matters
+ * only where two providers cover the sport, as the QA mock and BALLDONTLIE do for golf (#1495).
  */
-export function useSportProviderId(enabled: boolean, sport: Sport) {
+export function useSportProviderId(enabled: boolean, sport: Sport, preferredProviderId: string | null = null) {
   const providersQuery = useProvidersQuery({ enabled });
   const [chosenProviderId, setProviderId] = useState<string | null>(null);
   const providers = sportProviderOptions(providersQuery.data, sport);
-  const chosen = providers.find((provider) => provider.providerId === chosenProviderId) ?? providers.at(0);
+  const byId = (providerId: string | null) => providers.find((provider) => provider.providerId === providerId);
+  const chosen = byId(chosenProviderId) ?? byId(preferredProviderId) ?? providers.at(0);
   return {
     providerId: chosen?.providerId ?? null,
     providers,
