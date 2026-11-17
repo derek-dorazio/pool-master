@@ -155,7 +155,7 @@ describe('LiveStandings.queueDue', () => {
   let boards: Map<string, ContestLeaderboardEntryRow[]>;
   let pickEmBoards: Map<string, PickEmLeaderboardModel>;
   let survivorBoards: Map<string, SurvivorLeaderboardModel>;
-  let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[]; champions: Map<string, { name: string; outcome: PickOutcome }> }>;
+  let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[] }>;
   let matches: Map<string, SportEventMatch[]>;
   let roundNames: string[];
   let positions: Map<string, number | null>;
@@ -228,7 +228,6 @@ describe('LiveStandings.queueDue', () => {
           if (!board) throw new Error('no bracket board');
           return {
             leaderboard: { contestId: contest.id, sportEventId: contest.sportEventIds[0] ?? '', eventCancelled: false, gameCount: 63, finalTotalPoints: null, entries: board.entries },
-            champions: board.champions,
           };
         },
       },
@@ -741,8 +740,28 @@ describe('LiveStandings.queueDue', () => {
     return { league, tournament, contest };
   }
 
-  function bracketRow(entryId: string, squad: { id: string; name: string }, position: number, points: number, maxPossiblePoints: number): BracketLeaderboardEntryRow {
-    return { entryId, entryName: `Entry ${entryId}`, entryNumber: 1, squadId: squad.id, squadName: squad.name, position, displayPosition: String(position), points, maxPossiblePoints, correctPickCount: 0, tiebreakerValue: null };
+  function bracketRow(
+    entryId: string,
+    squad: { id: string; name: string },
+    position: number,
+    points: number,
+    maxPossiblePoints: number,
+    champion: { name: string; outcome: PickOutcome } | null = null,
+  ): BracketLeaderboardEntryRow {
+    return {
+      entryId,
+      entryName: `Entry ${entryId}`,
+      entryNumber: 1,
+      squadId: squad.id,
+      squadName: squad.name,
+      position,
+      displayPosition: String(position),
+      points,
+      maxPossiblePoints,
+      correctPickCount: 0,
+      tiebreakerValue: null,
+      champion: champion ? { sportEventParticipantId: `sep-${champion.name}`, seedNumber: 1, ...champion } : null,
+    };
   }
 
   it('sends a bracket round\'s results once its last game is decided and the buffer has passed, with each reader\'s champion pick and the next round\'s start', async () => {
@@ -751,8 +770,10 @@ describe('LiveStandings.queueDue', () => {
     const ana = member(league.id, 'Ana');
     const ben = member(league.id, 'Ben');
     bracketBoards.set(contest.id, {
-      entries: [bracketRow('e1', ana.squad, 1, 30, 190), bracketRow('e2', ben.squad, 2, 20, 120)],
-      champions: new Map([['e1', { name: 'Duke', outcome: PickOutcome.PENDING }], ['e2', { name: 'Kansas', outcome: PickOutcome.BUSTED }]]),
+      entries: [
+        bracketRow('e1', ana.squad, 1, 30, 190, { name: 'Duke', outcome: PickOutcome.PENDING }),
+        bracketRow('e2', ben.squad, 2, 20, 120, { name: 'Kansas', outcome: PickOutcome.BUSTED }),
+      ],
     });
 
     await standings().queueDue(after(done, 29));
@@ -785,7 +806,7 @@ describe('LiveStandings.queueDue', () => {
       game(4, MatchStatus.SCHEDULED, new Date(0)),
     ]);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
 
     await standings().queueDue(after(done, 31));
 
@@ -797,7 +818,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, tournament, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     world.addConfiguration(contest.id, {
       selectionType: SelectionType.BRACKET,
       // Only its starting round is read here.
@@ -972,7 +993,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, tournament, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     world.sportEvents.set(tournament.id, { ...tournament, status: SportEventStatus.SCHEDULED });
 
     await standings().queueDue(after(done, 31));
@@ -984,7 +1005,7 @@ describe('LiveStandings.queueDue', () => {
     const done = new Date('2026-03-21T04:30:00.000Z');
     const { league, contest } = liveBracket(done);
     const ana = member(league.id, 'Ana');
-    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)] });
     sportLeagueFound = false;
 
     await standings().queueDue(after(done, 31));

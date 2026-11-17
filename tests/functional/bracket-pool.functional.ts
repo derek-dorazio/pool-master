@@ -289,6 +289,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const fresh = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
     expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, mode: null, gameCount: 15, pickedCount: 0, tiebreakerValue: null, canSubmit: false });
     expect(predictedSeeds(fresh, 1)).toEqual([row(1), row(16)]);
+    // Each team carries its seed, which the bracket shows beside its name.
+    expect(fresh.games.find((game) => game.matchNumber === 1)?.predictedHome?.seedNumber).toBe(1);
     expect(predictedSeeds(fresh, 9)).toEqual([null, null]);
 
     // --- Alice fills in the whole bracket in one request, with her tiebreaker ------------------
@@ -418,6 +420,12 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       [entries.alice, '1', 31, 31, 14, 140],
       [entries.bob, '2', 31, 31, 14, 120],
       [entries.cara, '3', 15, 15, 9, 150],
+    ]);
+    // Each entry's champion pick, with its seed: right for Alice and Bob, Cara's 2 seed out.
+    expect(decided.entries.map((entry) => [entry.entryId, entry.champion?.sportEventParticipantId, entry.champion?.seedNumber, entry.champion?.outcome])).toEqual([
+      [entries.alice, row(1), 1, PickOutcome.CORRECT],
+      [entries.bob, row(1), 1, PickOutcome.CORRECT],
+      [entries.cara, row(2), 2, PickOutcome.BUSTED],
     ]);
 
     // --- Settled ---------------------------------------------------------------------------------

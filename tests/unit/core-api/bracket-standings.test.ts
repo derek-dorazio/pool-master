@@ -192,23 +192,25 @@ describe('loadBracketStandings', () => {
     ]);
   });
 
-  it('names each entry\'s pick to win the final, pending while its team is still playing and busted once it is out', async () => {
+  it('names each entry\'s pick to win the final with its field row and seed, pending while its team is still playing and busted once it is out', async () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
     const champions = async () => (await loadBracketStandings(context.deps, context.contest.id, context.sportEvent)).entries
       .map((standing) => [standing.entry.name, standing.champion]);
+    const t1 = { sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1 };
+    const t2 = { sportEventParticipantId: 'T2', name: 'Team T2', seedNumber: 2 };
 
     expect(await champions()).toEqual([
-      ['Alice', { name: 'Team T1', outcome: PickOutcome.PENDING }],
-      ['Bob', { name: 'Team T1', outcome: PickOutcome.PENDING }],
-      ['Cara', { name: 'Team T2', outcome: PickOutcome.PENDING }],
+      ['Alice', { ...t1, outcome: PickOutcome.PENDING }],
+      ['Bob', { ...t1, outcome: PickOutcome.PENDING }],
+      ['Cara', { ...t2, outcome: PickOutcome.PENDING }],
     ]);
 
     context.play(FINAL_T1_70_66);
     expect(await champions()).toEqual([
-      ['Alice', { name: 'Team T1', outcome: PickOutcome.CORRECT }],
-      ['Bob', { name: 'Team T1', outcome: PickOutcome.CORRECT }],
-      ['Cara', { name: 'Team T2', outcome: PickOutcome.BUSTED }],
+      ['Alice', { ...t1, outcome: PickOutcome.CORRECT }],
+      ['Bob', { ...t1, outcome: PickOutcome.CORRECT }],
+      ['Cara', { ...t2, outcome: PickOutcome.BUSTED }],
     ]);
   });
 
@@ -404,7 +406,7 @@ describe('ContestService.getBracketLeaderboard', () => {
       .toMatchObject({ code: 'CONTEST_LEADERBOARD_SCORING_DEFINITION_UNKNOWN' });
   });
 
-  it('answers the live standings once the event is under way: points, most possible, correct picks and tiebreakers', async () => {
+  it('answers the live standings once the event is under way: points, most possible, correct picks, tiebreakers and each entry\'s champion pick', async () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
 
@@ -415,6 +417,11 @@ describe('ContestService.getBracketLeaderboard', () => {
       ['Alice', 'T1', 8, 12, 6, 140],
       ['Bob', 'T1', 8, 12, 6, 120],
       ['Cara', '3', 5, 9, 4, 150],
+    ]);
+    expect(leaderboard.entries.map((row) => [row.entryName, row.champion])).toEqual([
+      ['Alice', { sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1, outcome: PickOutcome.PENDING }],
+      ['Bob', { sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1, outcome: PickOutcome.PENDING }],
+      ['Cara', { sportEventParticipantId: 'T2', name: 'Team T2', seedNumber: 2, outcome: PickOutcome.PENDING }],
     ]);
   });
 

@@ -137,6 +137,8 @@ export interface GamePickTeam {
   sportEventParticipantId: string;
   participantId: string;
   name: string;
+  /** The team's seed in the event, where the event seeds its field (#1753). */
+  seedNumber: number | null;
 }
 
 export interface GamePickGame {
@@ -897,6 +899,7 @@ export class PredictionService {
       sportEventParticipantId: row.id,
       participantId: row.participantId,
       name: nameByParticipantId.get(row.participantId) ?? '',
+      seedNumber: row.seedNumber ?? null,
     }]));
     return (fieldId) => (fieldId === null ? null : teamByFieldId.get(fieldId) ?? null);
   }

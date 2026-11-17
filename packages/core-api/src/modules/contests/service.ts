@@ -82,7 +82,7 @@ import {
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse, type BracketLeaderboardEntryRow, type BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import { toPickEmLeaderboardResponse, type PickEmLeaderboardEntryRow, type PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
-import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
+import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import {
   DEFAULT_SHOWN_EVENT,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
@@ -1002,14 +1002,10 @@ export class ContestService {
   }
 
   /**
-   * The same bracket leaderboard for a contest already in hand, with no reader to check, and each
-   * entry's champion pick: what the bracket round emails read (#877).
+   * The same bracket leaderboard for a contest already in hand, with no reader to check: what the
+   * bracket round emails read (#877), each entry's champion pick among them.
    */
-  async bracketStandingsOf(contest: Contest): Promise<{
-    leaderboard: BracketLeaderboardModel;
-    /** Each entry's pick to win the final, by entry id, for entries with one standing. */
-    champions: Map<string, NonNullable<BracketEntryStanding['champion']>>;
-  }> {
+  async bracketStandingsOf(contest: Contest): Promise<{ leaderboard: BracketLeaderboardModel }> {
     const contestId = contest.id;
     if (contest.selectionType !== SelectionType.BRACKET) {
       throw new ContestOperationError(
@@ -1053,6 +1049,7 @@ export class ContestService {
         // Not frozen at settlement: a result corrected after it can move this count, never the place or points.
         correctPickCount: standing.score.correctPickCount,
         tiebreakerValue: contestEntryEventTiebreaker(standing.entry, event.id),
+        champion: standing.champion,
       };
     }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
     return {
@@ -1064,7 +1061,6 @@ export class ContestService {
         finalTotalPoints: standings.finalTotalPoints,
         entries,
       },
-      champions: new Map(standings.entries.flatMap(({ entry, champion }) => (champion ? [[entry.id, champion] as const] : []))),
     };
   }
 

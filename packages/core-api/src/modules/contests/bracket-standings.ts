@@ -32,11 +32,21 @@ export interface BracketStandingsReadDeps extends ContestLeaderboardReadDeps {
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
 }
 
+/** An entry's pick to win a bracket's final, and how that pick stands (#877, #1753). */
+export interface BracketChampionPick {
+  sportEventParticipantId: string;
+  name: string;
+  /** The team's seed in the event; null where the event seeds no field, or this team. */
+  seedNumber: number | null;
+  /** BUSTED once the team is out. */
+  outcome: PickOutcome;
+}
+
 export interface BracketEntryStanding {
   entry: ContestEntryWithSquad;
   score: BracketScore;
   /** The team the entry picks to win the final, and how that pick stands; null with no final pick standing. */
-  champion: { name: string; outcome: PickOutcome } | null;
+  champion: BracketChampionPick | null;
   position: number;
   displayPosition: string;
 }
@@ -104,15 +114,20 @@ export async function loadBracketStandings(
   }
 
   const final = bracketFinal(games);
-  const nameOf = new Map(field.map((row) => [row.entry.id, row.participant.name]));
+  const rowOf = new Map(field.map((row) => [row.entry.id, row]));
   const scored = entries.map((entry) => {
     // A bracket pick names a team (#792): a tie pick is never one.
     const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf, withdrawn);
     const score = scoreBracketPicks(games, kept, seedOf, settings, withdrawn);
     const finalPick = final ? kept.find((pick) => pick.sportEventMatchId === final.id) : undefined;
-    const name = finalPick ? nameOf.get(finalPick.sportEventParticipantId) : undefined;
-    const champion = final && name !== undefined
-      ? { name, outcome: score.picks.get(final.id)?.outcome ?? PickOutcome.PENDING }
+    const row = finalPick ? rowOf.get(finalPick.sportEventParticipantId) : undefined;
+    const champion: BracketChampionPick | null = final && row
+      ? {
+        sportEventParticipantId: row.entry.id,
+        name: row.participant.name,
+        seedNumber: row.entry.seedNumber ?? null,
+        outcome: score.picks.get(final.id)?.outcome ?? PickOutcome.PENDING,
+      }
       : null;
     return { entry, score, champion };
   });
