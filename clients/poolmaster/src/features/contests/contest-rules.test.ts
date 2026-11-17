@@ -229,7 +229,7 @@ describe('squares rules', () => {
     expect(formatSelectionTypeName(SelectionType.SQUARES)).toBe('Squares');
     expect(suggestContestName('Super Bowl LXI', SelectionType.SQUARES, null, 0)).toBe('Super Bowl LXI Squares');
     expect(formatContestRules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 0, TEAM)).toBe(
-      'Claim up to 10 boxes on a 10x10 grid. Once the numbers are drawn, the box matching the last digit of each team\'s score wins each quarter and the final score.',
+      'Claim up to 10 boxes on a 10x10 grid. The numbers are drawn when the grid fills or 5 minutes before kickoff, and the box matching the last digit of each team\'s score wins each quarter and the final score.',
     );
   });
 

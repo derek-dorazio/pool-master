@@ -11,7 +11,7 @@ import type {
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
 import { forgettingReads, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
@@ -111,6 +111,30 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'alreadyDrawn';
       throw error;
     }
+  }
+
+  async findDueForAutoDraw(kickoffBy: Date): Promise<string[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        selectionType: SelectionType.SQUARES,
+        status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
+        squaresDraw: { is: null },
+        squaresGame: {
+          is: {
+            sportEventMatch: {
+              OR: [
+                { status: MatchStatus.IN_PROGRESS },
+                { status: MatchStatus.SCHEDULED, scheduledDate: { lte: kickoffBy } },
+                { status: MatchStatus.SCHEDULED, scheduledDate: null, sportEvent: { startDate: { lte: kickoffBy } } },
+              ],
+            },
+          },
+        },
+      },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    return rows.map((row) => row.id);
   }
 
   async findWinners(contestId: string): Promise<ContestSquaresWinner[]> {

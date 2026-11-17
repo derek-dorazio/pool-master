@@ -46,6 +46,12 @@ export interface ContestSquaresRepository {
    * under the contest row lock. 'alreadyDrawn' when the contest has its digits: nothing is written.
    */
   recordDraw(draw: ContestSquaresDrawWrite): Promise<'drawn' | 'alreadyDrawn'>;
+  /**
+   * The squares contests the automatic draw looks at (#1760): open or live, with no digits, whose
+   * game is under way or kicks off (its own time, else its event's start) by `kickoffBy`. The
+   * draw itself checks the rest, such as a first quarter already scored.
+   */
+  findDueForAutoDraw(kickoffBy: Date): Promise<string[]>;
   /** The contest's frozen winners, by period. */
   findWinners(contestId: string): Promise<ContestSquaresWinner[]>;
   /** Replaces the contest's frozen winners: settlement's one write. */

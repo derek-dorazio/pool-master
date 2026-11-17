@@ -14,6 +14,10 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
+  ContestStatus,
+  MatchStatus,
+  SelectionType,
+  type SportEventMatch,
   type ContestEntrySquare,
   type ContestSquaresDraw,
   type ContestSquaresWinner,
@@ -27,7 +31,12 @@ export class InMemorySquares {
   readonly draws = new Map<string, ContestSquaresDraw>();
   readonly winners = new Map<string, ContestSquaresWinner[]>();
 
-  constructor(private readonly world: InMemoryContestWorld, private readonly claimedAt: Date = new Date('2026-09-01T00:00:00.000Z')) {}
+  constructor(
+    private readonly world: InMemoryContestWorld,
+    private readonly claimedAt: Date = new Date('2026-09-01T00:00:00.000Z'),
+    /** The games the contests are played on, which the automatic draw's read looks at (#1760). */
+    private readonly games: { matches: ReadonlyMap<string, SportEventMatch> } = { matches: new Map() },
+  ) {}
 
   /** Puts a box straight in the store, as a claim made before the test. */
   addBox(contestId: string, contestEntryId: string, rowIndex: number, columnIndex: number): ContestEntrySquare {
@@ -49,12 +58,29 @@ export class InMemorySquares {
       clear: (box) => Promise.resolve(this.clear(box)),
       findDraw: (contestId) => Promise.resolve(this.draws.get(contestId) ?? null),
       recordDraw: (draw) => Promise.resolve(this.recordDraw(draw)),
+      findDueForAutoDraw: (kickoffBy) => Promise.resolve(this.findDueForAutoDraw(kickoffBy)),
       findWinners: (contestId) => Promise.resolve([...(this.winners.get(contestId) ?? [])]),
       replaceWinners: (contestId, winners) => {
         this.winners.set(contestId, [...winners]);
         return Promise.resolve();
       },
     };
+  }
+
+  /** As the Prisma read: open or live squares contests with no digits whose game is under way or kicks off by `kickoffBy`. */
+  private findDueForAutoDraw(kickoffBy: Date): string[] {
+    return [...this.world.contests.values()]
+      .filter((contest) => contest.selectionType === SelectionType.SQUARES
+        && (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE)
+        && !this.draws.has(contest.id))
+      .filter((contest) => {
+        const game = contest.squaresGameMatchId === undefined ? undefined : this.games.matches.get(contest.squaresGameMatchId);
+        if (!game) return false;
+        if (game.status === MatchStatus.IN_PROGRESS) return true;
+        const kickoff = game.scheduledDate ?? this.world.sportEvents.get(game.sportEventId)?.startDate;
+        return game.status === MatchStatus.SCHEDULED && kickoff !== undefined && kickoff <= kickoffBy;
+      })
+      .map((contest) => contest.id);
   }
 
   private claim(claim: ContestEntrySquareClaim): ContestEntrySquareClaimResult {
