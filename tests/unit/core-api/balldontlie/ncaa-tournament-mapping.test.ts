@@ -280,7 +280,7 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
       [7, 'East', team(1, 7), team(1, 10)],
       [8, 'East', team(1, 2), team(1, 15)],
     ]);
-    expect(firstRound?.map((match) => match[1])).toEqual([...Array(8).fill('East'), ...Array(8).fill('West'), ...Array(8).fill('South'), ...Array(8).fill('Midwest')]);
+    expect(firstRound?.map((match) => match[1])).toEqual(['East', 'West', 'South', 'Midwest'].flatMap((region) => Array.from({ length: 8 }, () => region)));
     expect(firstRound?.[16]).toEqual([17, 'South', team(3, 1), southSixteen]);
   });
 
