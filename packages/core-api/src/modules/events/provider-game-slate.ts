@@ -125,6 +125,13 @@ export class ProviderGameSlateService {
           { sportEventId: event.id, providerId: input.providerId, externalId: input.externalId, matchCount: load.length, replaced: stored.length },
           'Loaded a synced event\'s games from its provider',
         );
+        const pairings = crossRegionPairings(load);
+        if (pairings.length > 0) {
+          this.deps.logger?.info(
+            { sportEventId: event.id, externalId: input.externalId, crossRegionPairings: pairings },
+            'The provider\'s bracket pairs these regions; check them against the official bracket before release',
+          );
+        }
         return { outcome: 'LOADED', sportEventId: event.id, matchCount: load.length };
       }
       return this.updateMatches(event, draft, stored, slate, []);
@@ -284,6 +291,26 @@ function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExter
       scheduledDate: game.scheduledAt,
       advancesTo: null,
     }));
+}
+
+/**
+ * Each match whose two feeders come from different regions, with the regions in it: an NCAA
+ * national semifinal, which the provider's bracket pairs by a guess an admin checks (#1728).
+ */
+function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<{ matchNumber: number; regions: string[] }> {
+  const regionsByMatch = new Map<number, string[]>();
+  for (const match of bracket) {
+    if (match.advancesTo === null || match.regionLabel === undefined || match.regionLabel === null) continue;
+    const target = bracket.find((candidate) => candidate.matchNumber === match.advancesTo?.matchNumber);
+    if (target === undefined || target.regionLabel === match.regionLabel) continue;
+    const regions = regionsByMatch.get(target.matchNumber) ?? [];
+    if (!regions.includes(match.regionLabel)) regions.push(match.regionLabel);
+    regionsByMatch.set(target.matchNumber, regions);
+  }
+  return [...regionsByMatch]
+    .filter(([, regions]) => regions.length > 1)
+    .map(([matchNumber, regions]) => ({ matchNumber, regions }))
+    .sort((left, right) => left.matchNumber - right.matchNumber);
 }
 
 /** The provider's bracket as the event's, each named side its team's field row. */

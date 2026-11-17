@@ -258,13 +258,17 @@ region's round of 64 in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 
 games linked into the next round, the first two regions' champions meeting in semifinal 61 and the
 last two in 62, the championship 63, all at neutral sites. **Which regions meet in the
 semifinals is read from `region_id` order, which the vendor's document does not promise; check it
-against a real bracket before a live tournament.** The games are those from the round of 64 on
+against a real bracket before a live tournament.** Each bracket load logs the regions it pairs
+(`crossRegionPairings`), and the release checklist in `EVENT-SETUP-PROCEDURES.md` *Knockout
+brackets* has an admin check them. The games are those from the round of 64 on
 with both teams, a First Four team's round of 64 game left out until its place is filled
 (`toNcaaScheduledGames`). The women's bracket names no region (`NCAAWBracket` has no
 `region_id`), so it carries games but no bracket, and an admin builds it. Games without a bracket
 never load into an event of more than one round: they would replace the admin's bracket with one
 round's games, so a draft only takes their kickoffs (the same holds for the NFL postseason before
-the standings seed anyone).
+the standings seed anyone). A draft still unreleased when its First Four games end keeps its bracket as
+last loaded, and its places stay empty: the live-score fill that puts each winner in its place
+runs only on a released event, so an admin releases the tournament before the First Four ends.
 
 ## 3. Triggers
 

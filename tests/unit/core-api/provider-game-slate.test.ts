@@ -363,6 +363,26 @@ describe('ProviderGameSlateService', () => {
       expect(byNumber.get(1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 
+    it('logs which regions meet in each match fed from two regions when it loads a bracket, so an admin can check them before release', async () => {
+      const { sync, logger, event } = playoffSetup();
+      const twoRegions = BRACKET.map((match) => (match.matchNumber === 5 ? { ...match, regionLabel: 'NFC' } : match));
+
+      await sync(WILD_CARD, twoRegions);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ sportEventId: event.id, crossRegionPairings: [{ matchNumber: 6, regions: ['AFC', 'NFC'] }] }),
+        expect.any(String),
+      );
+    });
+
+    it('logs no region pairing for a bracket whose every feeder shares its next match\'s region', async () => {
+      const { sync, logger } = playoffSetup();
+
+      await sync(WILD_CARD, BRACKET.map((match) => ({ ...match, regionLabel: 'AFC' })));
+
+      expect(logger.info).not.toHaveBeenCalledWith(expect.objectContaining({ crossRegionPairings: expect.anything() }), expect.any(String));
+    });
+
     it('dates each round of a loaded playoff by its earliest kickoff, and leaves a round with no kickoff yet where it is', async () => {
       const { sync, roundDates } = playoffSetup();
 
