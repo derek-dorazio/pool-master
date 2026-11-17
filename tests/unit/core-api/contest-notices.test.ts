@@ -288,7 +288,7 @@ describe('ContestNotices', () => {
       expect(text).toContain('Contest is live\nNFL Week 1 (PGA Tour), ');
       expect(text).toContain('Good luck, everyone. Week 1 Pick\'em is live with 1 entry.');
       expect(text).toContain('Entries: 1\nFormat: Pick’em\nEvent: 2 games\nPick the winner of every game.');
-      expect(text).toContain(`Watch the leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      expect(text).toContain(`Watch the leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
       expect(text).not.toContain('You didn\'t enter this one');
       expect(textTo(drafting.user.id)).toContain('You didn\'t enter this one');
       expect(textTo(onlooker.user.id)).toContain('You didn\'t enter this one');
@@ -353,7 +353,7 @@ describe('ContestNotices', () => {
       return { entryId: `entry-${entryName}`, entryName, squadId: squad.id, squadName: squad.name, position, displayPosition, score };
     }
 
-    it('tells every active member who won, the final leaders in the contest\'s own scoring and where their entries finished, once each', async () => {
+    it('tells every active member who won, the final leaders in the contest\'s own scoring and where their entries finished, each of their own entries linked, once each', async () => {
       const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const masters = world.addSportEvent({ startDate: STARTS_AT });
       const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
@@ -381,13 +381,15 @@ describe('ContestNotices', () => {
       expect(toDana).toContain('Final top 10 of 12:');
       expect(toDana).toContain('1. Green Jackets, -14');
       expect(toDana).not.toContain('Long Shots');
-      expect(toDana).toContain('Your entry:\n11. Dana 10, yours, E');
+      const contestUrl = `https://app.example.test/league/OFFICE24/contests/${contest.id}`;
+      expect(toDana).toContain(`Your entry:\n11. Dana 10, yours, E <${contestUrl}?entry=entry-Dana%2010>`);
       expect(toDana).not.toContain('Congratulations');
-      expect(toDana).toContain(`Final leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      expect(toDana).toContain(`Final leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
       const toNora = textTo(nora.user.id);
-      expect(toNora).toContain('Congratulations, Nora\'s Squad won Masters Pick 6 with Green Jackets!');
+      expect(toNora).toContain(`Congratulations, Nora's Squad won Masters Pick 6 with Green Jackets! <${contestUrl}?entry=entry-Green%20Jackets>`);
       expect(toNora).toContain('Your entry:');
-      expect(toNora).toContain('12. Long Shots, yours, +3');
+      expect(toNora).toContain(`12. Long Shots, yours, +3 <${contestUrl}?entry=entry-Long%20Shots>`);
+      expect(toNora).not.toContain('?entry=entry-Dana');
       expect(textTo(onlooker.user.id)).not.toContain('Your entr');
     });
 
@@ -436,7 +438,7 @@ describe('ContestNotices', () => {
       const text = textTo(entrant.user.id);
       expect(outbox.rows[0]?.subject).toBe('Masters Pick 6 ended with no scores');
       expect(text).toContain('Every event was cancelled, so Masters Pick 6 ends with no scores.');
-      expect(text).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      expect(text).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
     it('says only that the contest ended with no scores when some of its events were played', async () => {
@@ -507,7 +509,7 @@ describe('ContestNotices', () => {
       expect(toNora?.fromName).toBe('Office League');
       expect(toNora?.subject).toBe('Masters Pick 6 ended with no scores');
       expect(textTo(entrant.user.id)).toContain('The Masters was cancelled, so Masters Pick 6 ends with no scores.');
-      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
     it('sends no event changed email when a cancelled event was the last of a contest\'s events still to play, and the no-scores result is the only email', async () => {

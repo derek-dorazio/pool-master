@@ -5,6 +5,7 @@ import { Button, Chip, Text, cn, type DataGridDetailRow } from '@/features/share
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { entryColumn, isMySquadsEntry, type BoardRow } from './leaderboard-columns';
 import { ScoreboardGrid } from './leaderboard-kit';
+import { useLandOnEntry, useLinkedEntry } from './use-linked-entry';
 import { useOpenEntryRows } from './use-open-entry-rows';
 
 /**
@@ -94,6 +95,21 @@ export function SeasonWeeksGrid<Row extends BoardRow, Week>({
   const openRows = useOpenEntryRows(data.filter(isMine).map((row) => row.entryId));
   const detailsOf = (row: Row) => details?.(row) ?? [];
   const openableIds = data.filter((row) => detailsOf(row).length > 0).map((row) => row.entryId);
+  // #1762 — an entry a link names (`?entry=`) opens its rows, once, when the board has rows for it.
+  const linkedEntry = useLinkedEntry();
+  const landOn = useLandOnEntry();
+  const linkedId = openableIds.find((id) => id === linkedEntry.entryId) ?? null;
+  landOn(linkedId, () => {
+    if (linkedId !== null) {
+      openRows.open(linkedId);
+    }
+  });
+  const toggle = (entryId: string) => {
+    if (entryId === linkedEntry.entryId && openRows.isOpen(entryId)) {
+      linkedEntry.clear();
+    }
+    openRows.toggle(entryId);
+  };
 
   const entry: ColumnDef<Row> = {
     ...entryColumn<Row>(testIdPrefix, {
@@ -110,7 +126,7 @@ export function SeasonWeeksGrid<Row extends BoardRow, Week>({
             <OpenToggle
               entryName={row.entryName}
               isOpen={openRows.isOpen(row.entryId)}
-              onToggle={() => openRows.toggle(row.entryId)}
+              onToggle={() => toggle(row.entryId)}
               testId={`${testIdPrefix}-toggle-${row.entryId}`}
             />
           ) : <span aria-hidden className="w-7 flex-none" />}

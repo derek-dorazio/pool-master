@@ -11,7 +11,7 @@ import type {
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, MatchStatus, SelectionType, SQUARES_GRID_SIZE, type ContestEntrySquare, type ContestSquaresDraw, type ContestSquaresWinner } from '@poolmaster/shared/domain';
 import { forgettingReads, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow } from './contest-row-lock';
 
@@ -111,6 +111,38 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'alreadyDrawn';
       throw error;
     }
+  }
+
+  async findDueForAutoDraw(kickoffBy: Date): Promise<string[]> {
+    const undrawn = {
+      selectionType: SelectionType.SQUARES,
+      status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
+      squaresDraw: { is: null },
+    } satisfies Prisma.ContestWhereInput;
+    const [kickoffDue, full] = await Promise.all([this.prisma.contest.findMany({
+      where: {
+        ...undrawn,
+        squaresGame: {
+          is: {
+            sportEventMatch: {
+              OR: [
+                { status: MatchStatus.IN_PROGRESS },
+                { status: MatchStatus.SCHEDULED, scheduledDate: { lte: kickoffBy } },
+                { status: MatchStatus.SCHEDULED, scheduledDate: null, sportEvent: { startDate: { lte: kickoffBy } } },
+              ],
+            },
+          },
+        },
+      },
+      select: { id: true },
+    }),
+    // A full board whose draw at the claim that filled it failed (#1760).
+    this.prisma.contestEntrySquare.groupBy({
+      by: ['contestId'],
+      where: { contest: undrawn },
+      having: { contestId: { _count: { equals: SQUARES_GRID_SIZE * SQUARES_GRID_SIZE } } },
+    })]);
+    return [...new Set([...kickoffDue.map((row) => row.id), ...full.map((row) => row.contestId)])].sort();
   }
 
   async findWinners(contestId: string): Promise<ContestSquaresWinner[]> {

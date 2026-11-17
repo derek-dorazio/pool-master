@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { pickEmBoardGames, pickEmShownWeeks, pickEmWeekCell, pickLabel, teamNameIn, teamNamesOf } from './pick-em-board';
+import { describe, expect, it, vi } from 'vitest';
+import { logger } from '@/lib/logger';
+import { pickEmBoardGames, pickEmPlacedCounts, pickEmShownWeeks, pickEmWeekCell, pickLabel, reportMissingTeam, teamNameIn, teamNamesOf } from './pick-em-board';
 import { pickEmEventFieldFixture, pickEmLeaderboardFixture, week2EventGamesFixture } from './test/pick-em-fixtures';
 
 const teamName = teamNameIn(teamNamesOf(pickEmEventFieldFixture('week-2')));
@@ -43,13 +44,19 @@ describe('pickEmShownWeeks', () => {
   });
 });
 
+describe('pickEmPlacedCounts', () => {
+  it('counts, once per week, the entries the week has placed, leaving out an entry not placed in it', () => {
+    expect(pickEmPlacedCounts(pickEmLeaderboardFixture())).toEqual(new Map([['week-1', 1], ['week-2', 2]]));
+  });
+});
+
 describe('pickEmWeekCell', () => {
   const board = pickEmLeaderboardFixture();
   const [week1, week2] = board.weeks;
   const leader = board.entries[0];
 
   it('counts a week\'s picks right, with a medal for the top three and a peek with the place among the entries placed and the teams missed', () => {
-    expect(pickEmWeekCell(board, week1, leader.weeks[0])).toEqual({
+    expect(pickEmWeekCell(week1, 1, leader.weeks[0])).toEqual({
       text: '2',
       medal: '🥇',
       peek: { title: 'Week 1', facts: [{ label: 'Right', value: '2 of 3' }, { label: 'Place', value: '1st of 1' }, { label: 'Missed', value: 'BUF' }] },
@@ -59,19 +66,45 @@ describe('pickEmWeekCell', () => {
   it('marks a shared place as tied, names a missed tie pick "Tie", says when nothing was missed, and gives no medal below third', () => {
     const cell = { ...leader.weeks[1], position: 4, displayPosition: 'T4', missedPicks: [{ teamName: null }] };
 
-    expect(pickEmWeekCell(board, week2, cell)).toMatchObject({ medal: null, peek: { facts: [{ value: '1 of 3' }, { value: 'T4th of 2' }, { value: 'Tie' }] } });
-    expect(pickEmWeekCell(board, week2, { ...cell, missedPicks: [] }).peek?.facts.at(-1)).toEqual({ label: 'Missed', value: 'None' });
+    expect(pickEmWeekCell(week2, 2, cell)).toMatchObject({ medal: null, peek: { facts: [{ value: '1 of 3' }, { value: 'T4th of 2' }, { value: 'Tie' }] } });
+    expect(pickEmWeekCell(week2, 2, { ...cell, missedPicks: [] }).peek?.facts.at(-1)).toEqual({ label: 'Missed', value: 'None' });
   });
 
   it('leaves the place out of the peek of a week not placed yet', () => {
-    expect(pickEmWeekCell(board, week2, { ...leader.weeks[1], position: null, displayPosition: null }).peek?.facts.map((fact) => fact.label)).toEqual(['Right', 'Missed']);
+    expect(pickEmWeekCell(week2, 2, { ...leader.weeks[1], position: null, displayPosition: null }).peek?.facts.map((fact) => fact.label)).toEqual(['Right', 'Missed']);
   });
 
   it('shows a dash, with no medal or peek, for a week the entry did not submit or that has not started', () => {
     const missed = board.entries[1].weeks[0];
 
-    expect(pickEmWeekCell(board, week1, missed)).toEqual({ text: '—', medal: null, peek: null });
-    expect(pickEmWeekCell(board, week1, undefined)).toEqual({ text: '—', medal: null, peek: null });
+    expect(pickEmWeekCell(week1, 1, missed)).toEqual({ text: '—', medal: null, peek: null });
+    expect(pickEmWeekCell(week1, 1, undefined)).toEqual({ text: '—', medal: null, peek: null });
+  });
+});
+
+describe('teamNameIn', () => {
+  it('names a side not decided yet "To be decided", but shows a team the field does not hold as a dash and reports it', () => {
+    const onMissing = vi.fn();
+    const name = teamNameIn(new Map([['sep-chiefs', 'KC']]), onMissing);
+
+    expect(name(null)).toBe('To be decided');
+    expect(onMissing).not.toHaveBeenCalled();
+    expect(name('sep-unknown')).toBe('—');
+    expect(onMissing).toHaveBeenCalledWith('sep-unknown');
+    expect(name('sep-chiefs')).toBe('KC');
+  });
+});
+
+describe('reportMissingTeam', () => {
+  it('logs a team missing from an event\'s field once, however many polls name it again', () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+
+    reportMissingTeam('week-9')('sep-gone');
+    reportMissingTeam('week-9')('sep-gone');
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith({ action: 'pickEm.team.missingFromField', data: { sportEventId: 'week-9', fieldRowId: 'sep-gone' } }, expect.any(String));
+    warn.mockRestore();
   });
 });
 

@@ -82,11 +82,11 @@ function EntryDestination() {
   return <div data-testid="entry-destination">{entryId}</div>;
 }
 
-function renderLeaderboard() {
+function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/contest-1/leaderboard']}>
+      <MemoryRouter initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1/leaderboard', search }]}>
         <Routes>
           <Route element={<ContestLeaderboardPage />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
           <Route element={<EntryDestination />} path="/league/:leagueCode/contests/:contestId/entries/:entryId" />
@@ -142,6 +142,18 @@ describe('Pick\'em contest leaderboard', () => {
     expect(screen.getByTestId('pick-em-leaderboard-total-entry-2')).toHaveTextContent('3 pts');
     expect(screen.getByTestId('pick-em-leaderboard-mode')).toHaveTextContent('Straight up');
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
+  });
+
+  it('highlights the row of the entry a link names (?entry=) and scrolls it into view', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks();
+    renderLeaderboard('?entry=entry-1');
+
+    const row = await screen.findByTestId('pick-em-leaderboard-row-entry-1');
+    expect(row).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByTestId('pick-em-leaderboard-row-entry-2')).not.toHaveAttribute('aria-current');
+    expect(scroll).toHaveBeenCalledTimes(1);
+    scroll.mockRestore();
   });
 
   it('shows each week\'s picks right with a medal for the week\'s top three, a dash for a week not submitted, and the viewer\'s best place', async () => {

@@ -44,6 +44,7 @@ import { contestRosterParticipantNoun } from './contest-sport';
 import { lineupSpend, useLineupPickValues, type LineupPickValues } from './use-lineup-pick-values';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
+import { useLandOnEntry, useLinkedEntry } from './use-linked-entry';
 import { MineMarker } from './mine-marker';
 import { areContestEntriesOpen } from './contest-status';
 import { SELECTION_TYPE_ICONS } from './selection-type-icons';
@@ -178,6 +179,7 @@ function EntryRow({
   return (
     <Tile
       className={cn('overflow-clip', isMine ? 'border-primary/40' : undefined)}
+      data-entry-id={entry.id}
       data-mine={isMine || undefined}
       data-testid={`contest-board-entry-${entry.id}`}
       padding="none"
@@ -211,7 +213,9 @@ function EntryRow({
  * names only. Other teams' entries are listed once submitted (the server leaves their drafts
  * out); the viewer's own come first, highlighted, open to their picks, with ✎ to the pick screen.
  * The header's button starts another entry straight on its pick screen while more are allowed;
- * once the contest is full a notice stands there instead.
+ * once the contest is full a notice stands there instead. A link naming one of the viewer's own
+ * entries (`?entry=`, #1762) opens it and scrolls to it; another team's id does nothing, since
+ * their picks are hidden until the contest locks.
  */
 export function ContestEntryListPage() {
   const logger = getLogger().child({ feature: 'contest-page' });
@@ -226,6 +230,8 @@ export function ContestEntryListPage() {
     .filter((entry) => myTeamId !== null && entry.squadId === myTeamId)
     .map((entry) => entry.id);
   const openRows = useOpenEntryRows(myEntryIds);
+  const linkedEntry = useLinkedEntry();
+  const landOn = useLandOnEntry();
   // Each event takes its own submitted picks (#713): an entry's status is the current event's.
   const currentEventId = contestQuery.data ? currentContestEvent(contestQuery.data)?.sportEventId : undefined;
   const lineupValues = useLineupPickValues(
@@ -258,6 +264,13 @@ export function ContestEntryListPage() {
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
   const hasMine = myEntryIds.length > 0;
   const expandableIds = opensToPicks(contest) ? myEntryIds : [];
+  const linkedMineId = myEntryIds.find((entryId) => entryId === linkedEntry.entryId) ?? null;
+  // A squares board lands on its own linked entry once its boxes load.
+  landOn(contest.selectionType === SelectionType.SQUARES ? null : linkedMineId, () => {
+    if (linkedMineId !== null && expandableIds.includes(linkedMineId)) {
+      openRows.open(linkedMineId);
+    }
+  });
   const countFigure = entryCap === null
     ? formatNumber(entryCount, locale)
     : `${formatNumber(entryCount, locale)} of ${formatPlanLimit(entryCap, locale)}`;
@@ -333,7 +346,13 @@ export function ContestEntryListPage() {
 
       {/* A squares contest's board is its entry list (#1758): every entry is on it by its boxes. */}
       {contest.selectionType === SelectionType.SQUARES ? (
-        <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={contest.myEntryIds ?? []} />
+        <SquaresBoardView
+          canManage={viewer.isCommissioner || viewer.isRootAdmin}
+          contest={contest}
+          // Before lock only the viewer's own entry is linked: its boxes shade as theirs do anyway.
+          linkedEntryId={linkedMineId}
+          myEntryIds={contest.myEntryIds ?? []}
+        />
       ) : (
       <SectionCard bare testId="contest-board-entries-section" title="Entries">
         {expandableIds.length > 0 ? (
@@ -364,7 +383,13 @@ export function ContestEntryListPage() {
                 key={entry.id}
                 leagueCode={leagueCode}
                 lineupValues={lineupValues}
-                onToggle={() => openRows.toggle(entry.id)}
+                onToggle={() => {
+                  // Closing the linked entry drops it from the address, so a reload doesn't open it again.
+                  if (entry.id === linkedMineId && openRows.isOpen(entry.id)) {
+                    linkedEntry.clear();
+                  }
+                  openRows.toggle(entry.id);
+                }}
               />
             ))
           )}

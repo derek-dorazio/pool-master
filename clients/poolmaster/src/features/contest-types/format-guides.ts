@@ -67,7 +67,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     summary: 'Claim squares on a 10 × 10 grid.',
     steps: [
       'Claim your squares on the grid.',
-      'Once the grid is full, the numbers for each row and column are drawn.',
+      'The numbers for each row and column are drawn when the grid fills, or 5 minutes before kickoff.',
       'The last digit of each team’s score picks the winning square.',
     ],
   },

@@ -12,7 +12,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Fragment, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { Link } from "react-router";
 import { Button } from "./button";
@@ -143,6 +143,12 @@ export type DataGridProps<TData> = {
    * closed. The caller decides which rows are open.
    */
   detailRows?: (row: TData) => readonly DataGridDetailRow[];
+  /**
+   * A row to open the grid on, such as the entry a link names: once it is among the rows, the
+   * grid turns to its page, highlights it as a jump does and scrolls it into view, once per id.
+   * An id the grid doesn't hold is ignored.
+   */
+  landOnRowId?: string | null;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -253,6 +259,7 @@ export function DataGrid<TData>({
   toolbarEnd,
   pageResetKey,
   detailRows,
+  landOnRowId = null,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
@@ -266,6 +273,16 @@ export function DataGrid<TData>({
   // The last row jumped to: it stays highlighted until the next jump.
   const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's page alone.
+  const [landedRowId, setLandedRowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (landedRowId === null) {
+      return;
+    }
+    tableRef.current
+      ?.querySelector(`[data-row-id="${CSS.escape(landedRowId)}"]`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [landedRowId]);
 
   const resetPageIndex = () =>
     setPagination((current) => ({ ...current, pageIndex: 0 }));
@@ -353,6 +370,15 @@ export function DataGrid<TData>({
       ?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
+
+  if (landOnRowId !== null && landOnRowId !== landedRowId) {
+    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === landOnRowId);
+    if (index >= 0) {
+      setLandedRowId(landOnRowId);
+      setJumpedRowId(landOnRowId);
+      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
+    }
+  }
 
   const matchingRowCount = table.getFilteredRowModel().rows.length;
   const pageCount = table.getPageCount();

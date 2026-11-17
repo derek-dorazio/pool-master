@@ -11,6 +11,8 @@ import { SELECTION_TYPE_ICONS } from './selection-type-icons';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { useContestLeague } from './use-contest-league';
 import { useBracketLeaderboardQuery } from './use-contest-leaderboard';
+import { useLandOnEntry, useLinkedEntry } from './use-linked-entry';
+import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 
 /** The prefix of the board's test ids. */
 const TEST_ID = 'bracket-leaderboard';
@@ -101,7 +103,7 @@ function bracketColumns({
 /**
  * A bracket contest's leaderboard (#721, #1753): place, the entry, its champion, points, right
  * picks and the most it can still reach. Each entry's bracket icon opens its whole bracket in a
- * dialog; the tiebreaker is there too. It opens when the event starts, like every contest board;
+ * dialog; the tiebreaker is there too, and a link naming an entry (`?entry=`) opens it there. It opens when the event starts, like every contest board;
  * before then the server refuses it and the page says picks are not revealed yet. Polled while
  * the contest is live, so places move with the results; once the contest settles the same read
  * serves the frozen standings.
@@ -112,6 +114,9 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   const { leagueCode, viewer } = useContestLeague(contest.leagueId);
   const fallback = useLeaderboardFallback(leaderboardQuery, { action: 'bracketLeaderboard.load.failed', contestId });
   const [openEntryId, setOpenEntryId] = useState<string | null>(null);
+  const myEntriesFilter = useMyEntriesFilter();
+  const linkedEntry = useLinkedEntry();
+  const landOn = useLandOnEntry();
 
   if (fallback || !leaderboardQuery.data) {
     return fallback;
@@ -121,6 +126,10 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
   const mySquadId = viewer.mySquadId;
   // The row is read from the board each poll, so the dialog's line moves with the results.
   const openRow = board.entries.find((entry) => entry.entryId === openEntryId) ?? null;
+  // #1762 — an entry a link names opens in the dialog, once, when the board shows it.
+  const shownEntries = narrowToMyEntries(board.entries, isMySquadsEntry(mySquadId), myEntriesFilter.isOn).rows;
+  const linkedRow = shownEntries.find((entry) => entry.entryId === linkedEntry.entryId);
+  landOn(linkedRow?.entryId ?? null, () => setOpenEntryId(linkedRow?.entryId ?? null));
 
   return (
     <LeaderboardFrame
@@ -153,7 +162,10 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
       <BracketEntryDialog
         contest={contest}
         isMine={openRow !== null && isMySquadsEntry(mySquadId)(openRow)}
-        onClose={() => setOpenEntryId(null)}
+        onClose={() => {
+          setOpenEntryId(null);
+          linkedEntry.clear();
+        }}
         row={openRow}
         sportEventId={board.sportEventId}
       />

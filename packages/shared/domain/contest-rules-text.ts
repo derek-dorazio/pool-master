@@ -136,9 +136,9 @@ export function describeSurvivorRules(reuseTeamsOnceAllUsed: boolean | null, liv
   return `Pick one team to win each week${once}. ${losing}`;
 }
 
-/** A squares contest's rules (#711) as a sentence. */
+/** A squares contest's rules (#711) as a sentence, with when its numbers are drawn (#1760). */
 export function describeSquaresRules(maxSquaresPerEntry: number) {
-  return `Claim up to ${pluralize(maxSquaresPerEntry, 'box', 'boxes')} on a 10x10 grid. Once the numbers are drawn, the box matching the last digit of each team's score wins each quarter and the final score.`;
+  return `Claim up to ${pluralize(maxSquaresPerEntry, 'box', 'boxes')} on a 10x10 grid. The numbers are drawn when the grid fills or 5 minutes before kickoff, and the box matching the last digit of each team's score wins each quarter and the final score.`;
 }
 
 /** A round of a knockout event by its number, in the event's words: "Sweet 16", "Divisional Round". */

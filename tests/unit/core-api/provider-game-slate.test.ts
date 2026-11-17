@@ -363,6 +363,26 @@ describe('ProviderGameSlateService', () => {
       expect(byNumber.get(1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 
+    it('logs which regions meet in each match fed from two regions when it loads a bracket, so an admin can check them before release', async () => {
+      const { sync, logger, event } = playoffSetup();
+      const twoRegions = BRACKET.map((match) => (match.matchNumber === 5 ? { ...match, regionLabel: 'NFC' } : match));
+
+      await sync(WILD_CARD, twoRegions);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ sportEventId: event.id, crossRegionPairings: [{ matchNumber: 6, regions: ['AFC', 'NFC'] }] }),
+        expect.any(String),
+      );
+    });
+
+    it('logs no region pairing for a bracket whose every feeder shares its next match\'s region', async () => {
+      const { sync, logger } = playoffSetup();
+
+      await sync(WILD_CARD, BRACKET.map((match) => ({ ...match, regionLabel: 'AFC' })));
+
+      expect(logger.info).not.toHaveBeenCalledWith(expect.objectContaining({ crossRegionPairings: expect.anything() }), expect.any(String));
+    });
+
     it('dates each round of a loaded playoff by its earliest kickoff, and leaves a round with no kickoff yet where it is', async () => {
       const { sync, roundDates } = playoffSetup();
 
@@ -382,6 +402,18 @@ describe('ProviderGameSlateService', () => {
 
       await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[]))
         .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
+    });
+
+    it('keeps an admin\'s draft bracket when the provider sends games but no bracket, only moving a kickoff the provider moved', async () => {
+      const { sync, service, sides, store, event } = playoffSetup();
+      await sync(WILD_CARD);
+      const before = sides();
+      const idsBefore = store.matchRows.map((match) => match.id);
+
+      await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: [playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[] }))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
+      expect(sides()).toEqual(before);
       expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
     });
 
@@ -437,6 +469,15 @@ describe('ProviderGameSlateService', () => {
         .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
       expect(propose).not.toHaveBeenCalled();
       expect(sides()[4]).toEqual([5, null, null]);
+    });
+
+    it('reads no bracket on a released playoff, so a side the bracket names that has left the field (a filled play-in place) holds up no games', async () => {
+      const { sync, store, event } = playoffSetup();
+      await sync(WILD_CARD);
+      await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+
+      await expect(sync([playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[], BRACKET.map((match) => (match.matchNumber === 4 ? slot(4, 2, 8, null) : match))))
+        .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [1] });
     });
 
     it('leaves the bracket unloaded while a team the bracket names is not in the field yet', async () => {

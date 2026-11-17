@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -64,6 +64,12 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
+/** The page's address and how it last moved, so a test can tell a replace from a push. */
+function AddressProbe() {
+  const location = useLocation();
+  return <div data-testid="address">{`${location.search}|${useNavigationType()}`}</div>;
+}
+
 function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -77,7 +83,7 @@ function renderLeaderboard(search = '') {
       >
         <Routes>
           <Route
-            element={<ContestLeaderboardPage />}
+            element={<><ContestLeaderboardPage /><AddressProbe /></>}
             path="/league/:leagueCode/contests/:contestId"
           />
           <Route
@@ -1292,6 +1298,52 @@ describe('ContestLeaderboardPage', () => {
     });
     expect(screen.queryByTestId('contest-leaderboard-my-entries')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+  });
+
+  it('opens the entry a link names (?entry=) on its page, scrolled into view, and drops ?entry= by replace once it is closed', async () => {
+    const scrolled: Element[] = [];
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
+      scrolled.push(this);
+    });
+    primeMocks({ leaderboard: leaderboardWithEntries(30) });
+
+    renderLeaderboard('?entry=entry-28');
+
+    const toggle = await screen.findByTestId('contest-leaderboard-entry-toggle-entry-28');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
+    expect(scrolled).toEqual([screen.getByTestId('contest-leaderboard-entry-entry-28')]);
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\|REPLACE$/);
+    scroll.mockRestore();
+  });
+
+  it('ignores a linked entry the board doesn\'t show, another team\'s under My entries or an unknown id, staying on the first page', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
+
+    renderLeaderboard('?mine=1&entry=entry-2');
+
+    expect(await screen.findByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.queryByTestId('contest-leaderboard-entry-entry-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-3')).toHaveAttribute('aria-expanded', 'true');
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
+  });
+
+  it('ignores an entry id the contest doesn\'t hold, showing the first page with every row as it starts', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    primeMocks({ leaderboard: leaderboardWithEntries(30) });
+
+    renderLeaderboard('?entry=entry-unknown');
+
+    expect(await screen.findByTestId('contest-leaderboard-entry-toggle-entry-1')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('contest-leaderboard-entry-toggle-entry-2')).toHaveAttribute('aria-expanded', 'false');
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
   });
 
   it('shows a server failure with no refusal code under the generic error, and logs it', async () => {

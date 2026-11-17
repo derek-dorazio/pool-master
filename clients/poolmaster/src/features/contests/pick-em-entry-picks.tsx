@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestDto } from '@/lib/api';
 import { Text, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
-import { pickEmBoardGames, pickLabel, teamNameIn, teamNamesOf } from './pick-em-board';
+import { pickEmBoardGames, pickLabel, reportMissingTeam, teamNameIn, teamNamesOf } from './pick-em-board';
 import { eventFieldQueryOptions, eventGamesQueryOptions } from './use-event-games';
 import { gamePicksQueryOptions } from './use-game-picks';
 
@@ -29,7 +29,7 @@ export function PickEmEntryPicks({
   if (!names || !gamesQuery.data || !picksQuery.data) {
     return null;
   }
-  const teamName = teamNameIn(names);
+  const teamName = teamNameIn(names, reportMissingTeam(sportEventId));
   const picks = new Map(picksQuery.data.games.flatMap((game) => (game.pick ? [[game.sportEventMatchId, game.pick] as const] : [])));
   const games = pickEmBoardGames(gamesQuery.data, teamName, (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences));
   return (
