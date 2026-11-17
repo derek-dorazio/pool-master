@@ -1359,7 +1359,12 @@ export class ContestService {
     const gameOf = (pick: SurvivorSeasonPick): SurvivorLeaderboardPickGameRow | null => {
       const game = gameById.get(pick.sportEventMatchId)?.game;
       const opponentRow = opponentRowOf(pick);
-      const opponent = opponentRow === null ? undefined : participantById.get(participantOfRow.get(opponentRow) ?? '');
+      const opponentId = opponentRow === null ? undefined : participantOfRow.get(opponentRow);
+      const opponent = opponentId === undefined ? undefined : participantById.get(opponentId);
+      if (game && opponentRow !== null && !opponent) {
+        // A data gap, not a side still to be decided: the team shows, its game does not.
+        this.logger.warn({ contestId, sportEventMatchId: game.id, participantId: opponentId ?? null, fieldRowId: opponentRow }, 'survivor leaderboard pick game opponent missing');
+      }
       if (!game || !opponent) return null;
       const side = game.homeSportEventParticipantId === pick.sportEventParticipantId ? MatchSide.HOME : MatchSide.AWAY;
       return {

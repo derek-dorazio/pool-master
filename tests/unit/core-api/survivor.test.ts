@@ -12,6 +12,7 @@
  * - Cara picks the Jets: out in week 1.
  * - Dan picks the Bills, then leaves week 2 in draft: out in week 2.
  */
+import { fakeLogger } from '../../support/fake-logger';
 import { expect, jest } from '@jest/globals';
 import {
   MatchEnding,
@@ -615,6 +616,21 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     });
     // A pick not yet kicked off shows neither its team nor its game.
     expect(weekOf('Alice', 1)).toMatchObject({ team: null, teamShortName: null, game: null });
+  });
+
+  it('shows a pick\'s team without its game, and warns, when the opponent\'s team is missing from the participants', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.setNow(later(WEEK_2, 2));
+    context.games.participants.delete(context.team.Raiders);
+    const logger = fakeLogger();
+    const read = await new ContestService({ ...context.deps, logger }).getSurvivorLeaderboard(context.contest.id, context.userOf('Bob'));
+
+    expect(expectDefined(read.board.entries.find((entry) => entry.entryName === 'Bob')).weeks[0]).toMatchObject({ team: 'Chiefs', game: null });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ contestId: context.contest.id, participantId: context.team.Raiders }),
+      'survivor leaderboard pick game opponent missing',
+    );
   });
 
   it('keeps the stored board only until the next game kicks off, then shows the team picked for it (#1435)', async () => {
