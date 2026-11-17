@@ -12585,6 +12585,8 @@ export interface components {
                 /** @description M: how many picks a full entry holds under the contest's rules, so a client can state "best N of M" once (#1740). A tiered entry's is its tiers in play times its picks per tier. Null where it is not known, such as a tiered event not yet tiered. */
                 pickCount: number | null;
             };
+            /** @description Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest. */
+            upsetBonus: boolean;
             /** @description The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId. */
             participants: {
                 /**

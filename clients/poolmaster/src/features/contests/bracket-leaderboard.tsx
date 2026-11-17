@@ -141,6 +141,7 @@ export function BracketLeaderboard({ contest }: { contest: ContestDto }) {
         trailing={<YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.points} testId="bracket-leaderboard-my-best" />}
         columns={bracketColumns({ contestId, leagueCode, leagueId: contest.leagueId, mySquadId, onOpen: (row) => setOpenEntryId(row.entryId) })}
         data={board.entries}
+        isMine={isMySquadsEntry(mySquadId)}
         emptyMessage="No brackets were submitted in this contest."
         rowTestIdPrefix="bracket-leaderboard-row"
         tableTestId="bracket-leaderboard-table"

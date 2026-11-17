@@ -12,6 +12,7 @@ import {
   buildContestEntryStanding,
   participantScoreDetailFor,
   rankContestEntryStandings,
+  hasUpsetBonus,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   resolveLineupSize,
@@ -223,6 +224,20 @@ describe('contest counting rule', () => {
   it('has no counting rule when the configuration has no rules, or there is no configuration', () => {
     expect(resolveContestCountingRule(config(null))).toBeNull();
     expect(resolveContestCountingRule(null)).toBeNull();
+  });
+});
+
+describe('whether a contest scores an upset bonus', () => {
+  it('is true for a knockout contest whose bonus rule is the seed difference', () => {
+    expect(hasUpsetBonus({ participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2], upsetBonus: { rule: 'SEED_DIFFERENCE', multiplier: 1 } } })).toBe(true);
+  });
+
+  it('is false for a knockout contest with the bonus off', () => {
+    expect(hasUpsetBonus({ participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2], upsetBonus: { rule: 'NONE' } } })).toBe(false);
+  });
+
+  it('is false for every other scoring definition, which has no upset bonus', () => {
+    expect(hasUpsetBonus({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} })).toBe(false);
   });
 });
 

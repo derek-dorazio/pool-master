@@ -154,6 +154,7 @@ export function SurvivorLeaderboard({ contest }: { contest: ContestDto }) {
       <ScoreboardGrid
         columns={survivorColumns(contestId, leagueCode, contest.leagueId, viewer.mySquadId, board.weeks, weekName)}
         data={board.entries}
+        isMine={isMySquadsEntry(viewer.mySquadId)}
         emptyMessage="No entry has submitted a week yet."
         rowTestIdPrefix="survivor-leaderboard-row"
         tableTestId="survivor-leaderboard-table"

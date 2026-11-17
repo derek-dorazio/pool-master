@@ -139,6 +139,7 @@ function liveLeaderboard(contestId: string, entries: ReturnType<typeof standing>
     sport: 'GOLF',
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+    upsetBonus: false,
     participants: [],
     asOf: null,
     entries,
@@ -369,6 +370,7 @@ describe('League Home', () => {
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+      upsetBonus: false,
       participants: [],
       asOf: null,
       entries: [
@@ -466,6 +468,7 @@ describe('League Home', () => {
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+      upsetBonus: false,
       participants: [],
       asOf: null,
       entries: [standing(1, 'team-1', 'Casey Crushers', -5)],

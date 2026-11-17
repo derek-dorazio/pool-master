@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { refetchFailed } from '@/features/shared/ui';
-import { getEventBracket, listEventParticipants, type SportEventDto, type SportEventMatchDto } from '@/lib/api';
+import { listEventParticipants, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { squaresGameChoices, teamNamesById } from './squares-board';
 import { sportLeagueQueryOptions } from './use-bracket-round-label';
+import { eventGamesQueryOptions } from './use-event-games';
 
 /**
  * The games a squares contest can be played on, for the chosen event (#711): its games still to
@@ -14,18 +15,7 @@ import { sportLeagueQueryOptions } from './use-bracket-round-label';
  */
 export function useSquaresGameChoices(event: SportEventDto | null, now: Date) {
   const eventId = event?.id ?? '';
-  const gamesQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.games(eventId),
-    queryFn: async (): Promise<SportEventMatchDto[]> => {
-      const response = await getEventBracket({ path: { eventId } });
-      if (!response.data?.matches) {
-        throwApiError(response.error, 'Event games response is missing data.');
-      }
-      return response.data.matches;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const gamesQuery = useQuery(eventGamesQueryOptions(eventId));
   const fieldQuery = useQuery({
     queryKey: QueryKeys.sportEvents.field(eventId),
     queryFn: async () => {

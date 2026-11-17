@@ -528,9 +528,9 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
     await expect(page.getByTestId('contest-leaderboard-upset-bonus-header')).toBeVisible();
     const fever = pickOf(read, state.fieldEntryIds, 6);
     const storm = pickOf(read, state.fieldEntryIds, 7);
-    await expect(page.getByTestId(`contest-leaderboard-pick-upset-bonus-${state.entryId}-${fever.pickId}`)).toHaveText('3');
-    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${fever.pickId}`)).toHaveText('Alive');
-    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${storm.pickId}`)).toHaveText('Eliminated');
+    await expect(page.getByTestId(`contest-leaderboard-pick-upset-bonus-${state.entryId}-${fever.pickId}`)).toHaveText('+3');
+    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${fever.pickId}`)).toHaveText('In');
+    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${storm.pickId}`)).toHaveText(/^Out · /);
     await expect(page.getByTestId('contest-leaderboard-settled-note')).toHaveCount(0);
   });
 
@@ -572,7 +572,7 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
     const mercury = pickOf(read, state.fieldEntryIds, 4);
     await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${aces.pickId}`)).toHaveText('Champion');
     await expect(page.getByTestId(`contest-leaderboard-pick-wins-${state.entryId}-${aces.pickId}`)).toHaveText('3');
-    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${mercury.pickId}`)).toHaveText('Eliminated');
+    await expect(page.getByTestId(`contest-leaderboard-pick-status-${state.entryId}-${mercury.pickId}`)).toHaveText(/^Out · /);
   });
 
   await test.step('root admin logs out', async () => {

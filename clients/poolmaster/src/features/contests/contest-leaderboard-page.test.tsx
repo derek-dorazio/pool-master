@@ -19,6 +19,8 @@ const {
   getContestMock,
   getCurrentUserMock,
   getContestLeaderboardMock,
+  getEventBracketMock,
+  getEventMock,
   getLeagueMock,
   mockLogger,
   refreshTokenMock,
@@ -38,6 +40,8 @@ const {
     getContestMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
     getContestLeaderboardMock: vi.fn(),
+    getEventBracketMock: vi.fn(),
+    getEventMock: vi.fn(),
     getLeagueMock: vi.fn(),
     mockLogger: logger,
     refreshTokenMock: vi.fn(),
@@ -48,6 +52,8 @@ bindApiMocks({
   getContest: getContestMock,
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
+  getEvent: getEventMock,
+  getEventBracket: getEventBracketMock,
   getLeague: getLeagueMock,
   refreshToken: refreshTokenMock,
 });
@@ -58,7 +64,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function renderLeaderboard() {
+function renderLeaderboard(search = '') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -67,7 +73,7 @@ function renderLeaderboard() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
       <MemoryRouter
-        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1' }]}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1', search }]}
       >
         <Routes>
           <Route
@@ -196,6 +202,7 @@ function leaderboardResponse(entryTotalScore = -5) {
       sport: 'GOLF',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+      upsetBonus: false,
       participants: [
         participant({
           id: 'sep-1',
@@ -492,6 +499,73 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-toggle-all-stats')).not.toBeInTheDocument();
   });
 
+  function teamPicksBoard() {
+    const base = leaderboardResponse().data;
+    const teamRow = (id: string, name: string) => ({ ...participant({ id, name }), standing: null, rounds: [] });
+    const knockoutPick = (pickId: string, sportEventParticipantId: string, knockout: Record<string, unknown>) => ({
+      ...base.entries[0].picks[0], pickId, sportEventParticipantId, golf: null, knockout,
+    });
+    return {
+      ...base,
+      sport: 'BASKETBALL',
+      scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+      upsetBonus: true,
+      participants: [teamRow('sep-1', 'Vermont'), teamRow('sep-2', 'Gonzaga'), teamRow('sep-3', 'Arizona'), teamRow('sep-4', 'Duke')],
+      entries: [{
+        ...base.entries[0],
+        totalScore: 7,
+        picks: [
+          knockoutPick('pick-1', 'sep-1', { points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false }),
+          knockoutPick('pick-2', 'sep-4', { points: 6, wins: 1, upsetBonusPoints: 3, isAlive: true }),
+        ],
+      }],
+    };
+  }
+
+  function primeTeamPicksGames() {
+    const match = (matchNumber: number, roundNumber: number, homeId: string, awayId: string, result: Record<string, unknown>) => ({
+      id: `match-${String(matchNumber)}`, sportEventId: 'event-1', roundNumber, matchNumber,
+      homeSportEventParticipantId: homeId, awaySportEventParticipantId: awayId, isNeutralSite: true,
+      scheduledDate: '2026-03-21T18:00:00.000Z', status: 'SCHEDULED', winnerSide: null, homeScore: null, awayScore: null,
+      homeShootoutScore: null, awayShootoutScore: null, ending: 'PLAYED', resultSource: null, advancesToMatchId: null,
+      advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], ...result,
+    });
+    getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: null, rounds: 6 } } });
+    getEventBracketMock.mockResolvedValue({ data: { matches: [
+      match(1, 1, 'sep-1', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 81, awayScore: 76 }),
+      match(9, 2, 'sep-1', 'sep-3', { status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 74 }),
+      match(2, 1, 'sep-4', 'sep-2', { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 90, awayScore: 60 }),
+    ] } });
+  }
+
+  it('shows a team-picks board\'s Status as In or Out with the round it went out in, its upset bonus as +N, and its latest game under its name', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    // With no sport league to name them, the rounds take basketball's own names.
+    expect(await screen.findByText('Out · Second Round')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-status-entry-1-pick-2')).toHaveTextContent('In');
+    expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('Upset');
+    expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-2')).toHaveTextContent('+3');
+    expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-1')).toHaveTextContent('—');
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–\u206074');
+  });
+
+  it('opens a team\'s Wins to every game it played', async () => {
+    primeMocks({ leaderboard: teamPicksBoard() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek'));
+
+    const callout = screen.getByTestId('contest-leaderboard-pick-wins-entry-1-pick-1-peek-callout');
+    expect(callout).toHaveTextContent('First Roundbeat Gonzaga 81–\u206076');
+    expect(callout).toHaveTextContent('Second Roundlost to Arizona 70–\u206074');
+  });
+
   it('tints a hovered pick row\'s pinned cells too, over their opaque background', async () => {
     primeMocks();
 
@@ -767,6 +841,7 @@ describe('ContestLeaderboardPage', () => {
       leaderboard: {
         ...board,
         countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+        upsetBonus: false,
         entries: board.entries.map((entry) => ({
           ...entry,
           countingPickLimit: 4,
@@ -854,8 +929,10 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByTestId('contest-leaderboard-position-entry-1');
+    // A golf board reads no games, so it passes no games context.
     expect(buildLeaderboardView).toHaveBeenCalledWith(
       expect.objectContaining({ contestId: 'contest-1', scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' }),
+      undefined,
     );
     buildLeaderboardView.mockRestore();
   });
@@ -868,6 +945,7 @@ describe('ContestLeaderboardPage', () => {
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+        upsetBonus: false,
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -892,6 +970,7 @@ describe('ContestLeaderboardPage', () => {
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
+        upsetBonus: false,
         participants: [],
         entries: [],
         asOf: null,
@@ -1149,43 +1228,61 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
-  it('jumps to the page holding the viewer\'s best-placed entry, clearing the search, and marks it as theirs', async () => {
-    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
+  /** Thirty entries, of which the viewer's team (squad-mine) holds those placed 3, 17 and 28. */
+  function boardWithMyEntriesAt(places: number[]) {
+    const board = leaderboardWithEntries(30);
+    return {
+      ...board,
+      entries: board.entries.map((entry) => (places.includes(entry.position)
+        ? { ...entry, squadId: 'squad-mine', squadName: 'My Team', entryName: `My Team Entry ${String(entry.position)}` }
+        : entry)),
+    };
+  }
+
+  it('narrows the board to the viewer\'s entries with My entries on, each at its real place, and writes ?mine=1', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
 
     renderLeaderboard();
+    // The switch needs the viewer's team, which the league context read brings after the contest.
+    fireEvent.click(await screen.findByTestId('contest-leaderboard-my-entries'));
 
-    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find an entry' }), { target: { value: 'Team 3' } });
-    // The button needs the viewer's team, which the league context read brings after the contest.
-    fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+    expect(screen.getByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/).map((row) => row.getAttribute('data-testid')))
+      .toEqual(['contest-leaderboard-entry-entry-3', 'contest-leaderboard-entry-entry-17', 'contest-leaderboard-entry-entry-28']);
+    expect(screen.getByTestId('contest-leaderboard-position-entry-28')).toHaveTextContent('28');
+  });
 
-    const mine = screen.getByTestId('contest-leaderboard-entry-entry-28');
-    expect(mine).toHaveTextContent('Yours');
-    expect(screen.getByRole('searchbox', { name: 'Find an entry' })).toHaveValue('');
+  it('keeps My entries on across a reload, from ?mine=1 in the address', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
+
+    renderLeaderboard('?mine=1');
+
+    expect(await screen.findByTestId('contest-leaderboard-my-entries')).toBeChecked();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-28')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
   });
 
-  it('scrolls the viewer\'s entry into view on the page Jump to my entry turns to', async () => {
-    primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
-    const scrolledElements: Element[] = [];
-    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
-      scrolledElements.push(this);
-    });
+  it('searches within the viewer\'s entries while My entries is on, and shows the whole board, theirs marked, once it is off', async () => {
+    primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
 
-    try {
-      renderLeaderboard();
-      fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
+    renderLeaderboard('?mine=1');
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find an entry' }), { target: { value: 'Entry 17' } });
 
-      expect(scrolledElements).toHaveLength(1);
-      expect(scrolledElements[0]).toContainElement(screen.getByTestId('contest-leaderboard-entry-entry-28'));
-    } finally {
-      scrollSpy.mockRestore();
-    }
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/)).toHaveLength(1);
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-17')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find an entry' }), { target: { value: '' } });
+    fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
+
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-3')).toHaveTextContent('Yours');
+    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
   });
 
-  it('offers no Jump to my entry when the viewer has no entry on the leaderboard', async () => {
+  it('offers no My entries switch when the viewer has no entry on the leaderboard, and shows the whole board even with ?mine=1', async () => {
     primeMocks({ mySquadId: 'squad-elsewhere' });
 
-    renderLeaderboard();
+    renderLeaderboard('?mine=1');
 
     await screen.findByTestId('contest-leaderboard-entry-entry-1');
     // The viewer's team comes from the league context; the answer is only meaningful once it has.
@@ -1193,7 +1290,8 @@ describe('ContestLeaderboardPage', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(screen.queryByTestId('contest-leaderboard-jump-to-mine')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-my-entries')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
   it('shows a server failure with no refusal code under the generic error, and logs it', async () => {

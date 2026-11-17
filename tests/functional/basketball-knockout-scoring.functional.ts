@@ -255,6 +255,8 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 72 } });
     const board = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('KNOCKOUT_ROUND_POINTS');
+    // The contest has its upset bonus on, so a member's board knows to show the Upset column.
+    expect(board.upsetBonus).toBe(true);
     const picks = Object.fromEntries(board.entries.flatMap((entry) => entry.picks).map((pick) => [nameOf(pick.sportEventParticipantId), pick.knockout]));
     expect(picks).toEqual({
       Duke: { points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false },

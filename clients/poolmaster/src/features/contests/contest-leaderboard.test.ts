@@ -123,6 +123,7 @@ function responseFixture(
     scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 2, pickCount: 6 },
+    upsetBonus: false,
     participants: [],
     entries: [],
     asOf: null,

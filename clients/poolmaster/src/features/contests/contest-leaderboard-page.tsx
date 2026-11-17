@@ -1,6 +1,6 @@
 import { Trophy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { flushSync } from 'react-dom';
 import { useParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
@@ -29,7 +29,7 @@ import {
   type LeaderboardPickRow,
   type LeaderboardView,
 } from './contest-leaderboard';
-import { ContestStatus, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, ScoringFamily, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { SquaresLeaderboard } from './squares-pages';
@@ -41,12 +41,17 @@ import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
 import { LeaderboardFrame, LeaderboardSection } from './leaderboard-kit';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
+import { MyEntriesToggle } from './my-entries-toggle';
+import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
 import { EntryDetailsToggle } from './entry-details-toggle';
 import { useOpenEntryRows } from './use-open-entry-rows';
 import { useLeaderboardFallback } from './use-leaderboard-fallback';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
 import { upperFirst } from '@/lib/upper-first';
+import { useEventRoundName } from './use-bracket-round-label';
+import { sportEventQueryOptions } from './use-contest-schedule';
+import { useLeaderboardEventGames } from './use-event-games';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -86,10 +91,6 @@ function leaderboardKeyFor(contestId: string, selectionType: SelectionType) {
 
 /** An unscored cell. A participant with nothing posted is not a zero. */
 const NO_SCORE = '—';
-
-function entryBlockId(entryId: string) {
-  return `contest-leaderboard-entry-${entryId}`;
-}
 
 /** Whether an entry matches the "Find an entry" box: its entry name or its squad's name. */
 function matchesSearch(entry: LeaderboardEntryRow, search: string) {
@@ -187,6 +188,8 @@ function PickRow({
               >
                 <PeekCard facts={cell.peek.facts} title={cell.peek.title} />
               </DetailsPeek>
+            ) : cell.chip && cell.text ? (
+              <Chip className="whitespace-nowrap px-2 py-0.5" tone={cell.chip}>{cell.text}</Chip>
             ) : (cell.text ?? NO_SCORE)}
           </span>
         ))}
@@ -237,7 +240,6 @@ function EntryBlock({
       className={cn('overflow-clip', isMine ? 'border-primary/40' : undefined)}
       data-mine={isMine || undefined}
       data-testid={`contest-leaderboard-entry-${entry.entryId}`}
-      id={entryBlockId(entry.entryId)}
       padding="none"
       variant="subtle"
     >
@@ -329,6 +331,7 @@ export function ContestLeaderboardPage() {
 
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
+  const myEntriesFilter = useMyEntriesFilter();
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
 
@@ -358,6 +361,13 @@ export function ContestLeaderboardPage() {
   const openRows = useOpenEntryRows(myEntryIds);
   // #1747 — which entries show their picks' stat lines: the viewer's own start on, as they start open.
   const statsRows = useOpenEntryRows(myEntryIds);
+  // #1748 — a team-picks board describes each team's games, read from the shown event's bracket.
+  const shownEventId = leaderboardQuery.data?.sportEventId ?? '';
+  const isTeamPicks = leaderboardQuery.data !== undefined
+    && eventSportDefinition(leaderboardQuery.data).scoringFamily === ScoringFamily.HEAD_TO_HEAD;
+  const gamesQuery = useLeaderboardEventGames(shownEventId, contestQuery.data?.status, isTeamPicks);
+  const shownEventQuery = useQuery({ ...sportEventQueryOptions(shownEventId), enabled: isTeamPicks && shownEventId !== '' });
+  const roundName = useEventRoundName(shownEventQuery.data ?? null);
   const leaderboardFallback = useLeaderboardFallback(leaderboardQuery, { action: 'contestLeaderboard.load.failed', contestId });
 
   if (contestQuery.isLoading) {
@@ -393,7 +403,12 @@ export function ContestLeaderboardPage() {
   }
 
   const contest = contestQuery.data;
-  const view = buildLeaderboardView(leaderboardQuery.data);
+  // Until its games load (or if their read fails) a team-picks board shows what the leaderboard says alone.
+  const view = buildLeaderboardView(leaderboardQuery.data, gamesQuery.data ? {
+    games: gamesQuery.data,
+    roundName,
+    formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
+  } : undefined);
   const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));
@@ -416,7 +431,10 @@ export function ContestLeaderboardPage() {
 
   const allEntryIds = view.entries.map((entry) => entry.entryId);
   const openEntryIds = allEntryIds.filter(openRows.isOpen);
-  const matchingEntries = view.entries.filter((entry) => matchesSearch(entry, search));
+  // #1750 — "My entries" narrows the board to the viewer's own, each at its real place; search and
+  // paging then work within them.
+  const myEntries = narrowToMyEntries(view.entries, isMySquadsEntry(mySquadId), myEntriesFilter.isOn);
+  const matchingEntries = myEntries.rows.filter((entry) => matchesSearch(entry, search));
   const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
   // A refetch or a narrower search can leave fewer pages than the one being shown.
   const currentPage = Math.min(pageIndex, pageCount - 1);
@@ -424,24 +442,6 @@ export function ContestLeaderboardPage() {
     currentPage * LEADERBOARD_PAGE_SIZE,
     (currentPage + 1) * LEADERBOARD_PAGE_SIZE,
   );
-  // The server ranks best first, so the team's first entry is its best placed.
-  const myBestIndex = mySquadId === null
-    ? -1
-    : view.entries.findIndex((entry) => entry.squadId === mySquadId);
-  const jumpToMyTeam = () => {
-    // at(-1) would be the last entry, so a team with no entry is ruled out first.
-    const target = myBestIndex < 0 ? undefined : view.entries.at(myBestIndex);
-    if (!target) {
-      return;
-    }
-    // The page holding the entry renders first, so the entry is there to scroll to.
-    flushSync(() => {
-      setSearch('');
-      setPageIndex(Math.floor(myBestIndex / LEADERBOARD_PAGE_SIZE));
-      openRows.open(target.entryId);
-    });
-    document.getElementById(entryBlockId(target.entryId))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  };
 
   return (
     <LeaderboardFrame
@@ -484,15 +484,14 @@ export function ContestLeaderboardPage() {
                 type="search"
                 value={search}
               />
-              {myBestIndex >= 0 ? (
-                <Button
-                  data-testid="contest-leaderboard-jump-to-mine"
-                  onClick={jumpToMyTeam}
-                  size="sm"
-                  variant="secondary"
-                >
-                  Jump to my entry
-                </Button>
+              {myEntries.hasMine ? (
+                <MyEntriesToggle
+                  checked={myEntries.showsMineOnly}
+                  onCheckedChange={(on) => {
+                    myEntriesFilter.setOn(on);
+                    setPageIndex(0);
+                  }}
+                />
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">

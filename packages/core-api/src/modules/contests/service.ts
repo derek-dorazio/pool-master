@@ -100,6 +100,7 @@ import {
   applySettledContestTotals,
   rankContestTotals,
   resolveContestCountingRule,
+  hasUpsetBonus,
   resolveLineupSize,
   resolveContestScoringDefinition,
   type ContestEntryEventScore,
@@ -983,6 +984,8 @@ export class ContestService {
       scoringDefinitionId,
       // #1740 — M of "best N of M": the picks a full entry holds, said once in the header.
       countingRule: { ...shownCountingRule, pickCount: resolveLineupSize(configuration?.configJson, shown.field) },
+      // #1748 — whether the board has an Upset column, which members cannot read from the settings.
+      upsetBonus: hasUpsetBonus(scoring.scoring),
       participants: shown.field,
       entries: leaderboardEntries,
       asOf: shown.asOf,

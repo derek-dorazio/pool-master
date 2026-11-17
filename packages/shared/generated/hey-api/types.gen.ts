@@ -12055,6 +12055,10 @@ export type ContestLeaderboardResponse = {
         pickCount: number | null;
     };
     /**
+     * Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest.
+     */
+    upsetBonus: boolean;
+    /**
      * The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.
      */
     participants: Array<{

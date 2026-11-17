@@ -371,8 +371,12 @@ administration area (root admin included), reusing the same shared components.
    row list: a settings row is a `SectionRow` too, never a component of its own.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
-   the same `Pager`. A long ranked list also offers a way to jump to the
-   viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
+   the same `Pager`. A contest leaderboard stays sorted by place, with the viewer's
+   entries marked where they fall, and offers a **My entries** switch while the viewer
+   has an entry on it: on, the board lists only theirs, each at its real place, with
+   search and paging within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
+   in `ScoreboardGrid` and the lineup board alike). Any other long ranked list offers a
+   way to jump to the viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
    clicks, its first cell is the link a keyboard reaches), with no per-row Manage
    button. Quick actions that need no page of their own sit in a `RowActionsMenu`
@@ -409,7 +413,11 @@ administration area (root admin included), reusing the same shared components.
    game under their name ("G4: 15 pts · 6 reb · 4 ast", struck through too when the
    pick does not count). A series has one column of scores per game, each score a
    `DetailsPeek` on that game's stats, and DNP for a game missed; a single game has
-   Tot only. No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
+   Tot only. A team-picks board's Status is a chip, "In" or "Out · <round>" with
+   the round's full name; the same Stats switch puts each team's latest game under
+   its name ("Elite Eight: beat Tennessee 69–50"); Wins is a `DetailsPeek` on every
+   game played and, for a team still in, its next one; the Upset column shows only
+   when the contest has the bonus on, as "+3". No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
    viewer's own start open, and "Show all details" / "Hide all details" above the
    list opens or closes every row that has details. The old `/leaderboard`
    address redirects to it. **Buttons never land on the contest page**: Make

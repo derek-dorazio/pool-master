@@ -99,6 +99,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
         trailing={<YourBestNote entries={board.entries} mySquadId={mySquadId} points={(entry) => entry.totalPoints} testId="pick-em-leaderboard-my-best" />}
         columns={pickEmColumns(contestId, leagueCode, contest.leagueId, mySquadId, board.weeks)}
         data={board.entries}
+        isMine={isMySquadsEntry(mySquadId)}
         emptyMessage="No entry has submitted a week yet."
         rowTestIdPrefix="pick-em-leaderboard-row"
         tableTestId="pick-em-leaderboard-table"

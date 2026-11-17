@@ -125,6 +125,7 @@ describe('toContestLeaderboardResponse', () => {
       scoringFamily: null,
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+      upsetBonus: false,
       participants: [],
       entries: [],
       asOf: null,
@@ -143,6 +144,7 @@ describe('toContestLeaderboardResponse', () => {
       scoringFamily: null,
       scoringDefinitionId: 'FINISH_POSITION_POINTS',
       countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
+      upsetBonus: false,
       participants: [],
       entries: [{
         entryId: 'entry-1',
@@ -190,6 +192,7 @@ describe('toContestLeaderboardResponse', () => {
       scoringFamily: ScoringFamily.COMPOSITE,
       scoringDefinitionId: 'COMPOSITE_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+      upsetBonus: false,
       participants: [],
       entries: [{
         entryId: 'entry-1',
@@ -240,6 +243,7 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+    upsetBonus: false,
     participants: [],
     entries: [{
       entryId: 'entry-1',

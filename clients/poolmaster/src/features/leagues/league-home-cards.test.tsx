@@ -101,6 +101,7 @@ describe('LiveStandingsCard', () => {
         sport: 'GOLF',
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
+        upsetBonus: false,
         participants: [],
         asOf: null,
         entries: [{
