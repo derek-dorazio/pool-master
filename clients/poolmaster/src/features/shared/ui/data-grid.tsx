@@ -110,6 +110,11 @@ export type DataGridProps<TData> = {
   headerTone?: "plain" | "scoreboard";
   /** The list's views, which put the views and the search in a header inside the grid's card. */
   views?: DataGridViews;
+  /**
+   * A control for the whole list drawn at the right end of the search row, such as a
+   * leaderboard's "My entries" switch. The caller narrows `data` itself.
+   */
+  toolbarEnd?: ReactNode;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -186,6 +191,7 @@ export function DataGrid<TData>({
   jumpToRow,
   headerTone = "plain",
   views,
+  toolbarEnd,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
@@ -315,10 +321,13 @@ export function DataGrid<TData>({
 
   return (
     <div className="grid gap-3">
-      {!views && (search || canJump) ? (
-        <div className="flex flex-wrap items-center gap-3">
-          {searchBox}
-          {jumpButton}
+      {!views && (search || canJump || toolbarEnd) ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            {searchBox}
+            {jumpButton}
+          </div>
+          {toolbarEnd}
         </div>
       ) : null}
       <Tile className="overflow-hidden" padding="none">
@@ -330,10 +339,11 @@ export function DataGrid<TData>({
               <ViewFilter aria-label={views.label} onChange={views.onChange} options={views.options} value={views.value} />
               {views.end ? <div className="flex items-center pb-1.5" data-testid={tableTestId ? `${tableTestId}-views-end` : undefined}>{views.end}</div> : null}
             </div>
-            {searchBox || jumpButton ? (
+            {searchBox || jumpButton || toolbarEnd ? (
               <div className="flex w-full items-center gap-2 pb-2 sm:w-auto sm:pt-2 max-sm:pt-1">
                 {searchBox ? <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">{searchBox}</div> : null}
                 {jumpButton}
+                {toolbarEnd}
               </div>
             ) : null}
           </div>

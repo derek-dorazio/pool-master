@@ -491,6 +491,27 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(onChange).toHaveBeenCalledWith("history");
   });
 
+  it("draws the caller's toolbar control after the search, with or without views", () => {
+    const grid = (views?: { label: string; onChange: () => void; options: { label: string; value: string }[]; value: string }) => (
+      <DataGrid
+        columns={columns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        emptyMessage="No rows matched."
+        search={{ label: "Find a row", testId: "grid-search" }}
+        showColumnFilters={false}
+        toolbarEnd={<button data-testid="grid-toolbar-end" type="button">Mine</button>}
+        views={views}
+      />
+    );
+    const { rerender } = render(grid());
+
+    expect(screen.getByTestId("grid-search").compareDocumentPosition(screen.getByTestId("grid-toolbar-end")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    rerender(grid({ label: "Rows to show", onChange: vi.fn(), options: [{ label: "Active", value: "active" }], value: "active" }));
+
+    expect(screen.getByTestId("grid-search").compareDocumentPosition(screen.getByTestId("grid-toolbar-end")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("draws a view's loading or error state in the card in place of the table and pager, keeping the views", () => {
     render(
       <DataGrid

@@ -6,6 +6,8 @@ import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
 import { formatPoints } from './bracket-layout';
 import { ContestPageFrame } from './contest-header';
 import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
+import { MyEntriesToggle } from './my-entries-toggle';
+import { useMyEntriesFilter } from './use-my-entries-filter';
 
 /**
  * The pieces every contest leaderboard is built from (#1277): the frame with its notes and the
@@ -28,11 +30,16 @@ export function LeaderboardSection({ children, trailing }: { children: ReactNode
   );
 }
 
-/** A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a page at a time. */
+/**
+ * A board's standings: the scoreboard grid in the Leaderboard section, searchable by entry, a
+ * page at a time, with the "My entries" switch (#1750) while the viewer has an entry on it. With
+ * the switch on, the rows are the viewer's alone, each still at its real place.
+ */
 export function ScoreboardGrid<Row extends BoardRow>({
   columns,
   data,
   emptyMessage,
+  isMine,
   rowTestIdPrefix,
   tableTestId,
   trailing,
@@ -40,17 +47,22 @@ export function ScoreboardGrid<Row extends BoardRow>({
   columns: ColumnDef<Row>[];
   data: Row[];
   emptyMessage: string;
+  /** Whether a row is one of the viewer's entries, as the Entry column marks them. */
+  isMine: (row: Row) => boolean;
   rowTestIdPrefix: string;
   tableTestId: string;
   /** The title bar's trailing slot: the viewer's best place (`YourBestNote`). */
   trailing?: ReactNode;
 }) {
+  const myEntries = useMyEntriesFilter();
+  const mine = data.filter(isMine);
+  const showsMineOnly = myEntries.isOn && mine.length > 0;
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
         headerTone="scoreboard"
         columns={columns}
-        data={data}
+        data={showsMineOnly ? mine : data}
         emptyMessage={emptyMessage}
         getRowId={(row) => row.entryId}
         pageSize={LEADERBOARD_PAGE_SIZE}
@@ -58,6 +70,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
         search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
         showColumnFilters={false}
         tableTestId={tableTestId}
+        toolbarEnd={mine.length > 0 ? <MyEntriesToggle checked={showsMineOnly} onCheckedChange={myEntries.setOn} /> : undefined}
       />
     </LeaderboardSection>
   );
