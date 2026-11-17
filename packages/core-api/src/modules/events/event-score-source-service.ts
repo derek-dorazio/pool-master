@@ -24,6 +24,7 @@ import { MANUAL_ADMIN_PROVIDER_ID, SportEventSyncScope, type Sport } from '@pool
 import { isLeagueTour } from '../ingestion/core/league-keyword';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
+  ProviderLeagueRefusedError,
   supportsLiveSimulation,
   type DateRange,
   type LiveSimulationOptions,
@@ -125,7 +126,8 @@ export class EventScoreSourceService {
    * #385 — a tour's slate for one year, for the bulk import. A provider event belongs to the
    * tour when its `metadata.tour` equals the sport league's matchKeyword, ignoring case, so
    * "PGA TOUR" never picks up "LPGA Tour" the way a name substring would. The year is the
-   * event's UTC start date.
+   * event's UTC start date. The provider is asked for the tour alone, and a refusal of it by the
+   * provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
    */
   async listTourEventsForYear(
     providerId: string,
@@ -155,6 +157,12 @@ export class EventScoreSourceService {
     const events = await provider.getUpcomingEvents(sportLeague.sport.sport, {
       from: new Date(Date.UTC(eventYear, 0, 1)),
       to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
+    }, { tour }).catch((error: unknown) => {
+      // #1797 — the provider's plan leaves this league out: say so, not "something went wrong".
+      if (error instanceof ProviderLeagueRefusedError) {
+        throw new EventScoreSourceError(error.message, 'PROVIDER_LEAGUE_REFUSED', 422);
+      }
+      throw error;
     });
     return events
       .filter((event) => isTourEvent(event, tour))
