@@ -1,9 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { ContestStatus, SelectionType, formatSelectionTypeName } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { describeContestNextStep } from '@/features/contests/my-contest-entry';
 import { StartEntryButton } from '@/features/contests/start-entry-button';
 import type { MyContestEntries } from '@/features/contests/use-contest-entries';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
+import { eventGamesQueryOptions } from '@/features/contests/use-event-games';
 import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
 import {
   Countdown,
@@ -24,6 +26,7 @@ import {
 import {
   buildBracketTopStandings,
   buildTopStandings,
+  countsEventGames,
   describeLiveProgress,
   type StandingRow,
 } from './league-home';
@@ -79,9 +82,9 @@ export function ContestHeroes({
   );
 }
 
-/** One row on a computer whatever the count, so one or two heroes are not stretched thin or wide. */
+/** One row on a computer whatever the count: a lone hero takes the whole row, two or three share it. */
 const HERO_COLUMNS: Record<number, string> = {
-  1: 'lg:grid-cols-2',
+  1: '',
   2: 'md:grid-cols-2',
   3: 'md:grid-cols-2 lg:grid-cols-3',
 };
@@ -120,12 +123,20 @@ function LiveHero({
   const myBestRow = standings && bestPlace
     ? [...standings.rows, ...standings.myRowsBelow].find((row) => row.entryId === bestPlace.entryId)
     : undefined;
-  const progress = describeLiveProgress(contest);
+  // A one-event prediction contest counts its event's games (#1763), the shared games read.
+  const gamesQuery = useQuery(eventGamesQueryOptions(countsEventGames(contest) ? contest.sportEvents[0]?.sportEventId ?? '' : ''));
+  const progress = describeLiveProgress(contest, gamesQuery.data);
+  // A viewer with no entry in it watches it (the approved mock); one in it reads their leaderboard.
+  const isIn = Boolean(myEntries.entriesByContestId.get(contest.id)?.length) || bestPlace !== undefined;
   const entered = formatNumber(contest.entryCount ?? 0, locale);
 
   return (
     <HeroTile
-      actions={<LinkButton data-testid={`${testId}-leaderboard`} size="sm" to={buildLeagueContestPath(leagueCode, contest.id)}>Leaderboard</LinkButton>}
+      actions={(
+        <LinkButton data-testid={`${testId}-leaderboard`} size="sm" to={buildLeagueContestPath(leagueCode, contest.id)}>
+          {isIn ? 'Leaderboard' : 'Watch'}
+        </LinkButton>
+      )}
       edge="live"
       eyebrow={(
         <div className="flex flex-wrap items-center gap-2">

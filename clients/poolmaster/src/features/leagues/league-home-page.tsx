@@ -15,6 +15,7 @@ import { plural } from '@/lib/plural';
 import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
 import { splitHomeContests } from './league-home';
+import { useRecentlyFinalContests } from './use-recently-final-contests';
 import { CupsCard, MoreContestsCard } from './league-home-cards';
 import { ContestHeroes } from './league-home-heroes';
 import { LeagueIcon } from './league-icon';
@@ -37,9 +38,10 @@ function useMinuteClock() {
 }
 
 /**
- * League Home: the league's identity once, then its contests (#1763): every current contest with
- * the viewer's next step on its row, live standings with a tab per live contest, and the year's
- * cups. It is the league's one list of contests; finished ones are on My team's Past contests.
+ * League Home: the league's identity once, then its contests (#1763): up to three hero tiles for
+ * the contests that matter now (live first, then open by soonest close), then More contests, every
+ * other current contest with the viewer's next step on its row and those gone final in the last
+ * few days, and the year's cups. Older finished contests are on My team's Past contests.
  * `?focus={contestId}` tints and scrolls to the contest a contest page's breadcrumb came from.
  */
 export function LeagueHomePage() {
@@ -76,6 +78,7 @@ export function LeagueHomePage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const myEntries = useMyContestEntries(leagueId, viewer.mySquadId !== null);
+  const finals = useRecentlyFinalContests(leagueId, viewer.mySquadId, now);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading league...' });
   if (leagueContext.state === 'blocked' || !league) {
@@ -137,10 +140,11 @@ export function LeagueHomePage() {
             />
           ) : null}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-            {more.length || !heroes.length ? (
+            {more.length || finals.length || !heroes.length ? (
               <MoreContestsCard
                 canExpand={viewer.isCommissioner}
                 contests={more}
+                finals={finals}
                 focusContestId={focusContestId}
                 hasHeroes={heroes.length > 0}
                 hasTeam={hasTeam}

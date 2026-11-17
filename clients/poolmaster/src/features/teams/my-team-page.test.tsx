@@ -344,6 +344,25 @@ describe('My team › Past contests', () => {
     }));
   });
 
+  it('fills the latest three from last year early in a year, newest first', async () => {
+    primeTeam();
+    listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026, 2025] }));
+    listContestResultsMock.mockImplementation(({ query }: { query: { year: number } }) => apiSuccess({
+      contests: query.year === 2026 ? [finished(1)] : [finished(7), finished(8), finished(9)],
+    }));
+
+    renderTeamRoutes();
+
+    const section = within(await screen.findByTestId('my-team-past-contests'));
+    await section.findByTestId('my-team-past-contest-past-8');
+    expect(section.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Week 1 Pick'),
+      expect.stringContaining('Week 7 Pick'),
+      expect.stringContaining('Week 8 Pick'),
+    ]);
+    expect(section.queryByTestId('my-team-past-contest-past-9')).not.toBeInTheDocument();
+  });
+
   it('opens the full list at the year and contest a final contest\'s breadcrumb named, with a season picker and no All link', async () => {
     primeTeam();
     listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [2026, 2025] }));

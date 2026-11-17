@@ -16,8 +16,9 @@ import {
   getLeagueByCodeData,
   getLeagueSquadFrom,
 } from './test/fixtures';
-import type { CupDto } from '@/lib/api';
-import { buildRunningCup } from '@/features/championships/test/fixtures';
+import type { ContestResultSummaryDto, CupDto } from '@/lib/api';
+import { week2EventGamesFixture } from '@/features/contests/test/pick-em-fixtures';
+import { buildContestResult, buildRunningCup } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 const getCurrentUserMock = vi.fn();
@@ -27,6 +28,8 @@ const getYearReviewMock = vi.fn();
 const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listCupsMock = vi.fn();
+const listContestResultsMock = vi.fn();
+const getEventBracketMock = vi.fn();
 const getLeagueSquadMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
@@ -38,6 +41,8 @@ bindApiMocks({
   listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
   listCups: listCupsMock,
+  listContestResults: listContestResultsMock,
+  getEventBracket: getEventBracketMock,
   getLeagueSquad: getLeagueSquadMock,
   refreshToken: refreshTokenMock,
 });
@@ -158,8 +163,11 @@ function primeMocks({
   features = Object.values(PlanFeature),
   description = null,
   places = [],
+  finals = [],
 }: {
   description?: string | null;
+  /** The championship year's finished contests, as the results read lists them. */
+  finals?: ContestResultSummaryDto[];
   places?: { entryId: string; position: number; displayPosition: string }[];
   features?: PlanFeature[];
   contests?: ReturnType<typeof contest>[];
@@ -193,6 +201,7 @@ function primeMocks({
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
   ));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
+  listContestResultsMock.mockResolvedValue(apiSuccess({ contests: finals }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   // The viewer's team's entries across the league's current contests, in one read (#1197).
   listMyContestEntriesMock.mockResolvedValue(apiSuccess({ entries: Object.values(entriesByContest).flat(), places }));
@@ -208,6 +217,7 @@ afterEach(() => {
   for (const mock of [
     getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock, getYearReviewMock,
     listMyContestEntriesMock, listContestsMock, listCupsMock, getLeagueSquadMock, refreshTokenMock,
+    listContestResultsMock, getEventBracketMock,
   ]) {
     mock.mockReset();
   }
@@ -412,7 +422,7 @@ describe('League Home', () => {
     expect(hero.getByRole('link', { name: 'Leaderboard' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 
-  it('draws a live contest the team is not in with the top three and Leaderboard, no place and no row of its own', async () => {
+  it('draws a live contest the team is not in with the top three and Watch, no place and no row of its own', async () => {
     primeMocks({ contests: [contest('live-1', 'Masters Pick 6', 'ACTIVE')] });
     getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('live-1', [standing(1, 'team-a', 'Bogey Men', -14)])));
 
@@ -422,7 +432,7 @@ describe('League Home', () => {
     expect(await hero.findByText('1 · Bogey Men')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-hero-live-1-place')).not.toBeInTheDocument();
     expect(hero.queryByText(/\(you\)/)).not.toBeInTheDocument();
-    expect(hero.getByRole('link', { name: 'Leaderboard' })).toBeInTheDocument();
+    expect(hero.getByRole('link', { name: 'Watch' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/live-1');
   });
 
   it('makes one request each for the league, its contests and the team\'s entries, and one leaderboard per live hero', async () => {
@@ -442,6 +452,33 @@ describe('League Home', () => {
     expect(listContestsMock).toHaveBeenCalledTimes(1);
     expect(listMyContestEntriesMock).toHaveBeenCalledTimes(1);
     expect(getContestLeaderboardMock).toHaveBeenCalledTimes(2);
+    // One results read, for the contests gone final lately; no games read for a roster contest.
+    expect(listContestResultsMock).toHaveBeenCalledTimes(1);
+    expect(getEventBracketMock).not.toHaveBeenCalled();
+  });
+
+  it('counts a one-week pick\'em hero\'s games played from its event\'s games', async () => {
+    const week = { ...contest('week-1', 'Week 12 Pick\'em', 'ACTIVE'), contestFormat: 'PREDICTION', selectionType: 'PICK_EM' };
+    primeMocks({ contests: [week] });
+    getContestLeaderboardMock.mockResolvedValue(apiSuccess(liveLeaderboard('week-1', [standing(1, 'team-a', 'Bogey Men', 3)])));
+    getEventBracketMock.mockResolvedValue(apiSuccess({
+      matches: week2EventGamesFixture({ 1: { status: 'COMPLETED' }, 2: { status: 'COMPLETED' }, 3: { status: 'SCHEDULED' } }),
+    }));
+
+    renderLeagueHome();
+
+    expect(await screen.findByTestId('league-home-hero-week-1-progress')).toHaveTextContent('2 of 3 games played');
+  });
+
+  it('keeps a contest gone final in the last few days in More contests with the team\'s finish', async () => {
+    primeMocks({
+      contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')],
+      finals: [buildContestResult({ completedAt: '2026-04-09T12:00:00.000Z', contestId: 'week-11', name: 'Week 11 Pick\'em', rankedEntryCount: 14, squadFinish: { displayPlace: '5', place: 5, points: 0 } })],
+    });
+
+    renderLeagueHome();
+
+    expect(await screen.findByTestId('league-home-final-week-11')).toHaveTextContent('Final · you were 5th of 14');
   });
 
   it('shows no Up next, Live standings or Your team card any more', async () => {

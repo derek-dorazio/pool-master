@@ -2,7 +2,7 @@
  * League Home's derivations: which contests are heroes, a live hero's progress line, and the top
  * of a live leaderboard. Pure, so each rule is testable on its own.
  */
-import { ContestFormat, ContestStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import type { BracketLeaderboardResponse, ContestDto, ContestLeaderboardResponse } from '@/lib/api';
 import { buildLeaderboardView } from '@/features/contests/contest-leaderboard';
 import { areContestEntriesOpen } from '@/features/contests/contest-status';
@@ -43,17 +43,36 @@ export function splitHomeContests(
 }
 
 /**
- * A live hero's progress line: how many of a contest's events are played, "9 of 14 games played"
- * for a pick'em's games, or null for a contest of one event, whose progress is its leaderboard.
+ * A live hero's progress line, in the unit the contest is played in: a season of several events
+ * counts them ("11 of 18 weeks played" for a pick'em or survivor season, "events" for a roster
+ * contest over several tournaments); a prediction contest on one event counts that event's games
+ * ("9 of 14 games played", cancelled games left out) once they are read. Null where no count
+ * says more than the leaderboard: one roster event, a single game, or games not read yet.
  */
-export function describeLiveProgress(contest: Pick<ContestDto, 'contestFormat' | 'sportEvents'>): string | null {
-  const total = contest.sportEvents.length;
-  if (total < 2) {
+export function describeLiveProgress(
+  contest: Pick<ContestDto, 'contestFormat' | 'sportEvents'>,
+  games?: readonly { status: MatchStatus }[],
+): string | null {
+  const isPrediction = contest.contestFormat === ContestFormat.PREDICTION;
+  const events = contest.sportEvents;
+  if (events.length > 1) {
+    const played = events.filter((event) => event.status === SportEventStatus.COMPLETED).length;
+    return `${String(played)} of ${String(events.length)} ${isPrediction ? 'weeks' : 'events'} played`;
+  }
+  if (!isPrediction || !games) {
     return null;
   }
-  const played = contest.sportEvents.filter((event) => event.status === SportEventStatus.COMPLETED).length;
-  const noun = contest.contestFormat === ContestFormat.PREDICTION ? 'games' : 'events';
-  return `${String(played)} of ${String(total)} ${noun} played`;
+  const counted = games.filter((game) => game.status !== MatchStatus.CANCELLED);
+  if (counted.length < 2) {
+    return null;
+  }
+  const played = counted.filter((game) => game.status === MatchStatus.COMPLETED).length;
+  return `${String(played)} of ${String(counted.length)} games played`;
+}
+
+/** Whether a live hero's progress line counts its one event's games, which it reads for them. */
+export function countsEventGames(contest: Pick<ContestDto, 'contestFormat' | 'sportEvents'>): boolean {
+  return contest.contestFormat === ContestFormat.PREDICTION && contest.sportEvents.length === 1;
 }
 
 export type StandingRow = {

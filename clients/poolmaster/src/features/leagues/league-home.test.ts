@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import { buildBracketTopStandings, buildTopStandings, describeLiveProgress, splitHomeContests } from './league-home';
+import { MatchStatus } from '@poolmaster/shared/domain';
+import { buildBracketTopStandings, buildTopStandings, countsEventGames, describeLiveProgress, splitHomeContests } from './league-home';
 import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixtures';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
@@ -105,14 +106,34 @@ describe('describeLiveProgress', () => {
     return { sportEventId: id, sequence: 1, name: id, startDate: '2026-04-10T12:00:00.000Z', endDate: null, status, participantType: null, scoringFamily: null };
   }
 
-  it("counts a pick'em's games played", () => {
+  it("counts a season pick'em or survivor in weeks played, never calling a week a game", () => {
     const contest = contestFixture({
       id: 'pickem',
       contestFormat: 'PREDICTION',
       sportEvents: [event('a', 'COMPLETED'), event('b', 'COMPLETED'), event('c', 'IN_PROGRESS')],
     });
 
-    expect(describeLiveProgress(contest)).toBe('2 of 3 games played');
+    expect(describeLiveProgress(contest)).toBe('2 of 3 weeks played');
+    expect(countsEventGames(contest)).toBe(false);
+  });
+
+  it("counts a one-week pick'em's games played, leaving cancelled games out", () => {
+    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
+    const games = [
+      ...Array.from({ length: 9 }, () => ({ status: MatchStatus.COMPLETED })),
+      ...Array.from({ length: 5 }, () => ({ status: MatchStatus.SCHEDULED })),
+      { status: MatchStatus.CANCELLED },
+    ];
+
+    expect(countsEventGames(contest)).toBe(true);
+    expect(describeLiveProgress(contest, games)).toBe('9 of 14 games played');
+  });
+
+  it("says nothing for a one-event prediction contest until its games are read, or when it is a single game", () => {
+    const contest = contestFixture({ id: 'week', contestFormat: 'PREDICTION', sportEvents: [event('a', 'IN_PROGRESS')] });
+
+    expect(describeLiveProgress(contest)).toBeNull();
+    expect(describeLiveProgress(contest, [{ status: MatchStatus.IN_PROGRESS }])).toBeNull();
   });
 
   it('counts events played for a contest of several events that are not games', () => {

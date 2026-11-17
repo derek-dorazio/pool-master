@@ -1,19 +1,22 @@
-import type { ContestDto } from '@/lib/api';
+import type { ContestDto, ContestResultSummaryDto } from '@/lib/api';
 import { CurrentContestList } from '@/features/contests/current-contest-list';
 import type { MyContestEntries } from '@/features/contests/use-contest-entries';
-import { SectionCard, SectionRow, SectionRows } from '@/features/shared/ui';
+import { SectionCard, SectionRow, SectionRows, useDisplayPreferences } from '@/features/shared/ui';
 import { cupProgress, cupsOnShow, describeCupStanding } from '@/features/championships/cup-view';
 import { useSeasonCupsQuery } from '@/features/championships/use-cups-query';
-import { buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from './league-routing';
+import { buildLeagueContestPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from './league-routing';
+import { describeRecentlyFinal } from './recently-final';
 
 /**
  * League Home's More contests (#1763): every current contest that is not a hero, entered or not,
- * each with the viewer's next step, in the shared row that shows every state. Titled Contests,
- * with one italic line, when there are no heroes and nothing else to list.
+ * each with the viewer's next step, in the shared row that shows every state, then the contests
+ * gone final in the last few days with the viewer's finish. Titled Contests, with one italic
+ * line, when there are no heroes and nothing else to list.
  */
 export function MoreContestsCard({
   canExpand,
   contests,
+  finals,
   focusContestId,
   hasHeroes,
   hasTeam,
@@ -23,6 +26,8 @@ export function MoreContestsCard({
 }: {
   canExpand: boolean;
   contests: readonly ContestDto[];
+  /** Contests gone final in the last few days, newest first. */
+  finals: readonly ContestResultSummaryDto[];
   focusContestId: string | null;
   hasHeroes: boolean;
   hasTeam: boolean;
@@ -30,9 +35,11 @@ export function MoreContestsCard({
   myEntries: MyContestEntries;
   now: Date;
 }) {
+  const { locale } = useDisplayPreferences();
   return (
     <SectionCard testId="league-home-more-contests" title={hasHeroes ? 'More contests' : 'Contests'}>
-      <CurrentContestList
+      {contests.length || !finals.length ? (
+        <CurrentContestList
         canExpand={canExpand}
         contests={contests}
         emptyBody="No open or live contests."
@@ -42,7 +49,22 @@ export function MoreContestsCard({
         myEntries={myEntries}
         now={now}
         testIdPrefix="league-home-contest"
-      />
+        />
+      ) : null}
+      {finals.length ? (
+        <SectionRows>
+          {finals.map((contest) => (
+            <SectionRow
+              facts={describeRecentlyFinal(contest, locale)}
+              isHighlighted={contest.contestId === focusContestId}
+              key={contest.contestId}
+              name={contest.name}
+              testId={`league-home-final-${contest.contestId}`}
+              to={buildLeagueContestPath(leagueCode, contest.contestId)}
+            />
+          ))}
+        </SectionRows>
+      ) : null}
     </SectionCard>
   );
 }

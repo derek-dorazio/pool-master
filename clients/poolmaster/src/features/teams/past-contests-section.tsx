@@ -35,9 +35,16 @@ export function PastContestsSection({
   const resultsQuery = useChampionshipContestsQuery(leagueId, year, null, squadId);
   // The year's results narrowed to the ones the team finished in (#1763).
   const finished = (resultsQuery.data ?? []).filter((contest) => contest.squadFinish);
-  const shown = showAll ? finished : finished.slice(0, LATEST_PAST_CONTESTS);
+  // Early in a year the latest few run back into last year's, read only when this year is short.
+  const previousYear = !showAll && resultsQuery.data && finished.length < LATEST_PAST_CONTESTS
+    // poolmaster-allow-list-lookup: the finished-years read already on screen; a year number, not a row.
+    ? years.find((candidate) => year !== null && candidate < year) ?? null
+    : null;
+  const previousQuery = useChampionshipContestsQuery(leagueId, previousYear, null, squadId);
+  const latest = [...finished, ...(previousQuery.data ?? []).filter((contest) => contest.squadFinish)];
+  const shown = showAll ? finished : latest.slice(0, LATEST_PAST_CONTESTS);
   // All only when it would show more: a contest past the latest few, or another year.
-  const hasMore = finished.length > LATEST_PAST_CONTESTS || years.length > 1;
+  const hasMore = latest.length > LATEST_PAST_CONTESTS || years.length > 1;
   const chooseYear = (next: number) => setSearchParams((current) => {
     const params = new URLSearchParams(current);
     params.set(PAST_CONTESTS_PARAMS.year, String(next));

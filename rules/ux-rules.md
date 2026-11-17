@@ -325,8 +325,9 @@ administration area (root admin included), reusing the same shared components.
    Championships, the viewer's own squad by its
    name — **Yours** until they have one — and Members; `LeagueMenu`). There is
    no Contests item: Home is the league's one list of current contests (up to
-   three hero tiles, then More contests) and a contest's pages keep Home lit;
-   finished contests are My team's Past contests (#1763). Commissioners also see a
+   three hero tiles, then More contests, where a contest gone final stays for
+   three days) and a contest's pages keep Home lit; finished contests are My
+   team's Past contests (#1763). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
    app bar. An administration area replaces the league menu with its own frame.
    Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
