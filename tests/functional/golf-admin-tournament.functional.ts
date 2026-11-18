@@ -518,6 +518,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const started = expectDefined(first.data).skipped;
     expect(started.every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
     expect(imported.length + started.length).toBeGreaterThan(20);
+    // Fails once the mock's whole 2027 season is past: move this test to the mock's next year then.
+    expect(imported.length).toBeGreaterThan(0);
     for (const event of imported) {
       expect(event).toMatchObject({ sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed', syncScope: 'SCORES_ONLY', loadedParticipantCount: 0 });
       expect(event.externalId.startsWith('lpga-tour-2027-')).toBe(true);

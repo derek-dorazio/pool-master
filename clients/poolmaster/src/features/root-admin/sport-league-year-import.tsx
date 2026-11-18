@@ -119,10 +119,11 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   );
 }
 
-/** "Created 3 tournaments; skipped 2 already here", and how many already started when any did. */
+/** "Created 3 tournaments; skipped 2 already here", and how many already started when any did, leaving out a zero "already here" then. */
 function importSummary(result: ImportSportEventYearFromProviderResponse, event: { one: string; many: string }): string {
   const started = result.skipped.filter((row) => row.reason === 'ALREADY_STARTED').length;
   const here = result.skipped.length - started;
   const created = `Created ${result.created.length} ${result.created.length === 1 ? event.one : event.many}`;
-  return started === 0 ? `${created}; skipped ${here} already here.` : `${created}; skipped ${here} already here and ${started} already started.`;
+  if (started === 0) return `${created}; skipped ${here} already here.`;
+  return here === 0 ? `${created}; skipped ${started} already started.` : `${created}; skipped ${here} already here and ${started} already started.`;
 }

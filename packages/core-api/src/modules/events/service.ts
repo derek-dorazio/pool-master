@@ -255,7 +255,7 @@ export class SportEventService {
         409,
       );
     }
-    if (this.providerEventStarted(input.providerEvent)) {
+    if (providerEventStarted(input.providerEvent, this.now())) {
       throw new SportEventError(
         `Provider event ${input.providerId}/${input.externalId} started at ${input.providerEvent.startDate.toISOString()}; an event is created from a provider only before it starts.`,
         'SPORT_EVENT_ALREADY_STARTED',
@@ -291,11 +291,12 @@ export class SportEventService {
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const now = this.now();
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     )).map((event) => event.externalId));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !this.providerEventStarted(providerEvent));
+    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
     const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
     const seriesWithEdition = new Set(unlinked.length === 0
       ? []
@@ -309,7 +310,7 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      if (this.providerEventStarted(providerEvent)) {
+      if (providerEventStarted(providerEvent, now)) {
         skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
         continue;
       }
@@ -698,15 +699,6 @@ export class SportEventService {
     return { sportLeague, sport };
   }
 
-  /**
-   * Whether a provider event's start has passed (#1821), the one test every path that creates an
-   * event from a provider applies: such an event is never created. A start of exactly now counts
-   * as started, as `hasSportEventStarted` counts it.
-   */
-  private providerEventStarted(providerEvent: Pick<ProviderEventDetail, 'startDate'>): boolean {
-    return providerEvent.startDate.getTime() <= this.now().getTime();
-  }
-
   private now(): Date {
     return this.deps.now?.() ?? new Date();
   }
@@ -834,4 +826,13 @@ function providerDetailUpdates(
     ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),
     ...(providerEvent.endDate !== null && providerEvent.endDate.getTime() !== event.endDate?.getTime() && { endDate: providerEvent.endDate }),
   };
+}
+
+/**
+ * Whether a provider event's start has passed (#1821), the one test every path that creates an
+ * event from a provider applies: such an event is never created. A start of exactly now counts
+ * as started, as `hasSportEventStarted` counts it.
+ */
+function providerEventStarted(providerEvent: Pick<ProviderEventDetail, 'startDate'>, now: Date): boolean {
+  return providerEvent.startDate.getTime() <= now.getTime();
 }
