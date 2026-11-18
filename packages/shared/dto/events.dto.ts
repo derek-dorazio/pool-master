@@ -53,6 +53,13 @@ export const SportEventAdminCountsDtoSchema = z.object({
 }).describe('What only a root admin reads of an event: what still stops its release, and how many contests run on it.');
 export type SportEventAdminCountsDto = z.infer<typeof SportEventAdminCountsDtoSchema>;
 
+/** The season event a Clutch Card event is rounds of (#1820). */
+export const SportEventParentDtoSchema = z.object({
+  id: z.uuid().describe('The parent event\'s identifier.'),
+  name: z.string().describe('The parent event\'s name, such as "MLB Postseason".'),
+}).describe('The season event a Clutch Card event is rounds of.');
+export type SportEventParentDto = z.infer<typeof SportEventParentDtoSchema>;
+
 /**
  * The canonical SportEvent — the row plus the three things every reader of an event
  * needs and the row does not store: how many participants are loaded, and whether the
@@ -84,6 +91,8 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   participantType: z.enum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series\' sport league.'),
   scoringFamily: z.enum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf\'s shape with each game a round. Null scores as the sport does. Read through the series\' sport league.'),
+  parentEvent: SportEventParentDtoSchema.nullable().describe('A Clutch Card event\'s season event: the event of its sport league\'s parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.'),
+  parentRoundNumbers: z.array(z.number().int()).describe('The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.'),
   syncScope: z.enum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
@@ -135,6 +144,7 @@ export const CreateSportEventRequestSchema = z.object({
   endDate: DateTimeSchema.optional(),
   rounds: z.number().int().min(1).optional().describe('Round count; omitted, the sport\'s default round count (4 for golf).'),
   autoLifecycleEnabled: z.boolean().optional(),
+  parentEventId: z.uuid().optional().describe('A Clutch Card event\'s season event, an event of its sport league\'s parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.'),
 }).describe('An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
@@ -169,8 +179,8 @@ export const ImportSportEventYearFromProviderRequestSchema = z.object({
 }).describe('Creates each of the provider\'s events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded.');
 export type ImportSportEventYearFromProviderRequest = z.infer<typeof ImportSportEventYearFromProviderRequestSchema>;
 
-export const ImportSportEventSkipReasonDtoSchema = z.enum(['ALREADY_LINKED', 'ALREADY_STARTED', 'EDITION_EXISTS'])
-  .describe('ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event\'s start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).');
+export const ImportSportEventSkipReasonDtoSchema = z.enum(['ALREADY_LINKED', 'ALREADY_STARTED', 'EDITION_EXISTS', 'NO_PARENT_EVENT'])
+  .describe('ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event\'s start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.');
 export type ImportSportEventSkipReasonDto = z.infer<typeof ImportSportEventSkipReasonDtoSchema>;
 
 export const ImportSportEventYearFromProviderResponseSchema = z.object({

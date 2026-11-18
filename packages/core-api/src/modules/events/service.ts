@@ -40,6 +40,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
+import { findClutchCardParents, parentOrThrow } from './clutch-card-parents';
 import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
@@ -93,6 +94,11 @@ export interface CreateSportEventInput {
   rounds?: number;
   roundsPar?: number;
   autoLifecycleEnabled?: boolean;
+  /**
+   * A Clutch Card event's parent, when the caller knows it (#1820); omitted, it is the event of the
+   * league's parent league under way at the start (`findClutchCardParents`).
+   */
+  parentEventId?: string;
 }
 
 export interface ProviderEventDetail {
@@ -105,7 +111,11 @@ export interface ProviderEventDetail {
 /** What a provider event-year import (#385) created, and what it left alone and why. */
 export interface ProviderEventYearImport {
   created: SportEventAdminSummary[];
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' }>;
+  /**
+   * NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not
+   * one event (#1820); a later import creates it once its parent is there.
+   */
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -202,6 +212,7 @@ export class SportEventService {
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [input], { parentEventId: input.parentEventId }))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
@@ -221,12 +232,13 @@ export class SportEventService {
         eventYear: input.eventYear,
         syncScope: SportEventSyncScope.NONE,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+        parentEvent,
       },
       rounds: dailyRoundSchedule(rounds, input.startDate),
     }]));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds, parentEventId: parentEvent?.id },
       'Created sport event',
     );
     return summary;
@@ -262,8 +274,9 @@ export class SportEventService {
         409,
       );
     }
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [{ startDate: input.providerEvent.startDate, eventYear: input.eventYear }]))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
-    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId });
+    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId }, parentEvent);
     const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
 
     this.deps.logger?.info(
@@ -302,6 +315,9 @@ export class SportEventService {
       ? []
       : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, eventYear: input.eventYear })).map((event) => event.eventSeriesId));
 
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, unlinked.map((providerEvent) => ({ startDate: providerEvent.startDate, eventYear: input.eventYear })));
+    const parentByExternalId = new Map(unlinked.map((providerEvent, index) => [providerEvent.externalId, parents[index]]));
+
     const editions: NewEdition[] = [];
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
@@ -319,8 +335,17 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
         continue;
       }
+      const parent = parentByExternalId.get(externalId);
+      if (parent !== undefined && 'refusal' in parent) {
+        this.deps.logger?.warn(
+          { sportLeagueId: sportLeague.id, externalId, name, code: parent.refusal.code, reason: parent.refusal.message },
+          'Skipped a provider Clutch Card event with no parent event yet',
+        );
+        skipped.push({ externalId, name, reason: 'NO_PARENT_EVENT' });
+        continue;
+      }
       seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }));
+      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }, parent?.parentEvent));
     }
     const created = await this.createEditions(sportLeague, editions);
 
@@ -425,9 +450,11 @@ export class SportEventService {
       );
     }
 
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, sourceEvents.map((event) => ({ startDate: shiftYears(event.startDate, shift), eventYear: targetYear })));
+    const parentEvents = parents.map(parentOrThrow);
     const seriesIdByName = await this.resolveSeries(sportLeague, sourceEvents.map((event) => event.name));
     const defaultRounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event) => {
+    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event, index) => {
       const startDate = shiftYears(event.startDate, shift);
       const rounds = event.rounds ?? defaultRounds;
       return {
@@ -447,6 +474,7 @@ export class SportEventService {
           eventYear: targetYear,
           syncScope: SportEventSyncScope.NONE,
           autoLifecycleEnabled: event.autoLifecycleEnabled,
+          parentEvent: parentEvents[index],
         },
         rounds: dailyRoundSchedule(rounds, startDate),
       };
@@ -573,7 +601,10 @@ export class SportEventService {
     return this.requireAdminSummary(sportEventId);
   }
 
-  /** Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. */
+  /**
+   * Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs
+   * on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its parent (#1820).
+   */
   async deleteEvent(sportEventId: string): Promise<void> {
     await this.requireEvent(sportEventId);
     const contests = (await this.deps.sportEvents.countContests([sportEventId])).get(sportEventId) ?? 0;
@@ -581,6 +612,14 @@ export class SportEventService {
       throw new SportEventError(
         `Sport event ${sportEventId} has ${contests} contest(s) and cannot be deleted.`,
         'EVENT_HAS_CONTESTS',
+        409,
+      );
+    }
+    const clutchCardEvents = (await this.deps.sportEvents.countClutchCardEvents([sportEventId])).get(sportEventId) ?? 0;
+    if (clutchCardEvents > 0) {
+      throw new SportEventError(
+        `Sport event ${sportEventId} is the parent of ${clutchCardEvents} Clutch Card event(s) and cannot be deleted.`,
+        'EVENT_HAS_CLUTCH_CARD_EVENTS',
         409,
       );
     }
@@ -791,6 +830,7 @@ function providerEdition(
   sport: Sport,
   seriesIdByName: ReadonlyMap<string, string>,
   input: ProviderEventDetail & { externalId: string; eventYear: number; providerId: string; rounds?: number },
+  parentEvent: SportEventCreate['parentEvent'],
 ): NewEdition {
   const schedule = input.rounds === undefined
     ? deriveGolfTournamentRounds(input.startDate, input.endDate)
@@ -810,6 +850,7 @@ function providerEdition(
       eventYear: input.eventYear,
       syncScope: SportEventSyncScope.SCORES_ONLY,
       autoLifecycleEnabled: true,
+      parentEvent,
     },
     rounds: schedule,
   };

@@ -44,6 +44,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     scoringFamily: sportLeague.scoringFamily,
     displayOrder: sportLeague.displayOrder,
     parentSportLeagueId: sportLeague.parentSportLeagueId,
+    parentRoundNumbers: [...sportLeague.parentRoundNumbers],
     affiliationCount: sportLeague.affiliationCount,
     sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),

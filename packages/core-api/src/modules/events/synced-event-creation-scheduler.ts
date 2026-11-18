@@ -28,6 +28,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportLeagueRepository } from '@poolmaster/shared/db';
+import { isClutchCardLeague } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
 import { errorMessage } from '../../core/error-message';
@@ -95,7 +96,11 @@ export class SyncedEventCreationScheduler {
 
   private async sweep(): Promise<void> {
     const thisYear = this.now().getUTCFullYear();
-    const leagues = await this.options.sportLeagues.findEventSynced();
+    // A Clutch Card league's events are rounds of its parent league's season event, which they
+    // link to when created (#1820), so every season league goes first: a new season event is on
+    // the site by the time its rounds are imported.
+    const leagues = [...await this.options.sportLeagues.findEventSynced()]
+      .sort((left, right) => Number(isClutchCardLeague(left)) - Number(isClutchCardLeague(right)));
     const imports: LeagueYearImport[] = [];
     let failedCount = 0;
     for (const league of leagues) {
