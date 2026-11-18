@@ -58,7 +58,6 @@ export type {
   MembershipRepositories,
   MembershipTransaction,
   ParticipantProviderMappingRepository,
-  AmbiguousFeedParticipantRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
   SquadDetails,

@@ -1220,8 +1220,8 @@ describe('Every seeded sport league\'s test data', () => {
   it('has a test data file of its last season as played for every sport league the migrations seed, so no league reaches QA with nothing to try', async () => {
     const covered = new Set(readdirSync(SPORT_DATA_DIR)
       .filter((name) => name.endsWith('.json'))
-      .map((name) => parseSportDataFile(JSON.parse(readFileSync(join(SPORT_DATA_DIR, name), 'utf8')) as unknown, { allowTestData: true }))
-      .filter((file) => file.testData && !isTestSlate(file))
+      .map((name) => parseSportDataFile(JSON.parse(readFileSync(join(SPORT_DATA_DIR, name), 'utf8')) as unknown))
+      .filter((file) => !isTestSlate(file))
       .flatMap((file) => file.scope.sportLeagues.map((league) => `${file.scope.sport} ${league}`)));
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
 

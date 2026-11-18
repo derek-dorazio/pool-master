@@ -35,47 +35,29 @@ under *Sports*, and its three lists are **Races**, **Horses** and **Circuits**.
 - **Contests settle once, when the race moves to Completed.** A settled contest keeps its
   standings, so enter and check the official finishing order *before* completing the race.
 
-## Load the race and its field, don't type them
+## Where races come from
 
-The circuit, horses, race and runners come from data files through the *Load sport data*
-workflow, the same way golf's schedules and fields do
-([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Loading sport data*; the `load-sport-data`
-skill gathers and writes the files). Only the numbered steps below need an admin signed in.
+No provider syncs horse racing, so its sport league stays off on a live site and no file loads
+real races (#1850, [`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)). On QA, races to try contests
+on come from the racing test seeds through *Load test data* (*Seeded 2026 races* there), each
+created as a draft with *Races* `1` and automatic lifecycle **off**: no feed sends a finishing
+order, so a race that completed itself would settle its contests on no result. A test seed's
+field is listed in post order with made-up odds, so it tiers and prices from the odds.
 
-- **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
-  holds the 2027 US Thoroughbred races announced so far: the Pegasus World Cup and the three
-  Triple Crown races (the Preakness is on a Sunday in 2027). Run the workflow with it, dry
-  run first. The **US Thoroughbred** circuit is reference data (#1716), so every site has it;
-  the workflow creates each race as a **draft**, with *Races* `1` and automatic lifecycle **off**: no feed sends a
-  finishing order, so a race that completed itself would settle its contests on no result.
-- **Post time.** Until the file gives one, a race starts at noon UTC on its day, which closes
-  picks early that morning. Once the track announces post time, add it to the race as
-  `startsAt` with its offset (`"2027-01-30T17:40:00-05:00"`) and run the file again: it moves
-  *Starts*, and so the release, contest and picks cutoff. A late change on race day (a delayed
-  post) is the *Details* card's **Edit** on the race's page. The Workflow card's *Edit
-  schedule* only moves the dates on the *Races* list, not *Starts*, so it does not move the
-  cutoff.
-- **The field.** After the post-position draw, a field file (`contents` `PLAYERS` and
-  `FIELDS`) lists the runners **in morning-line order, favourite first**, each with its place
-  in that order as `ranking`. Horses the site has never seen are added. The file's order
-  becomes each horse's seed, so the field is seeded in market order and prices correctly
-  from seed alone; post position is entered with the result (step 4). Run it again after
-  scratches: a horse it no longer lists is marked scratched.
-
-A race no file covers can still be built on the same screens (*Races → New race*, then *Field
+A race can also be built on the same screens (*Races → New race*, then *Field
 → Add more participants*). Untick *Move this race through Live and Completed automatically*
-when you create it, for the reason under *The schedule* above, and do not use *Seed field from circuit
+when you create it, for the reason above, and do not use *Seed field from circuit
 roster*: it adds every horse on the circuit's roster, not only this race's runners.
 
 ## 1. Odds, tiers, prices and release
 
-A loaded field is already ranked and seeded in morning-line order, so it tiers and prices
-without any odds. Enter the odds only if you want them shown or tiered from.
+A test seed's field already carries odds, so it tiers and prices from them. On a field built by
+hand, enter the odds first.
 
 ### Morning-line odds
 
 In the field grid, give every horse its morning-line odds in the **Odds** column, then press
-*Save changes*. Leave **Seed** as the field file set it, or blank on a field built by hand.
+*Save changes*. Leave **Seed** as the load set it, or blank on a field built by hand.
 
 - Enter odds as a number "to 1": 5-2 is `2.5`, 8-1 is `8`, 30-1 is `30`. Lower is shorter.
 - Odds set the tiers (next step) and the budget prices, from the shortest odds down, once every
@@ -213,8 +195,8 @@ Win / Place / Show preset an entry holding the winner and the third-placed horse
 
 ## Later races
 
-The circuit and the horses already exist, so a later race only needs its line in the schedule
-file and its field file. Each race is its own event (a Derby-day undercard race is a separate race).
+The circuit and the horses already exist, so a later race only needs the race and its field.
+Each race is its own event (a Derby-day undercard race is a separate race).
 
 
 ## Auto racing

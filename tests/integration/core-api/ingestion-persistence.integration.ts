@@ -597,54 +597,6 @@ describe('IngestionPersistence', () => {
     await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
   });
 
-  // The wiring against real Postgres; every branch of the name match is a unit test.
-  it('links a provider participant to the site\'s one of the same name and sport instead of creating it twice, and creates one the site lacks', async () => {
-    const prisma = getPrisma();
-    const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    // Loaded from a sport data file: no mapping from the provider.
-    const loaded = await prisma.participant.create({ data: { sportId: golf.id, name: 'Linkable Loaded', participantType: 'INDIVIDUAL' } });
-    const golfer = (externalId: string, name: string) => ({ ...rankedGolfer(externalId), name });
-    const detail = rankedFieldDetail('integration-linked-by-name', [
-      golfer('ingestion-link-loaded', 'Linkable Loaded'),
-      golfer('ingestion-link-new', 'Linkable New'),
-    ]);
-    await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
-
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
-
-    const mappingOf = (externalId: string) => prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } });
-    await expect(mappingOf('ingestion-link-loaded')).resolves.toMatchObject({ participantId: loaded.id, confidence: 'HIGH' });
-    await expect(mappingOf('ingestion-link-new')).resolves.toMatchObject({ confidence: 'EXACT' });
-    const countNamed = (name: string) => prisma.participant.count({ where: { sportId: golf.id, name } });
-    await expect(countNamed('Linkable Loaded')).resolves.toBe(1);
-    await expect(countNamed('Linkable New')).resolves.toBe(1);
-  });
-
-  // The league narrowing against real Postgres: the candidates' leagues are read through their
-  // affiliations. Two of the site's golfers share a name, each in its own sport league.
-  it('links a provider participant naming its sport league to the site\'s one of that name in that league, where the name alone is shared', async () => {
-    const prisma = getPrisma();
-    const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    const inLeague = async (keyword: string) => {
-      const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: `Linkable ${keyword}`, matchKeyword: keyword } });
-      return prisma.participant.create({
-        data: { sportId: golf.id, name: 'Linkable Twin', participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id } } },
-      });
-    };
-    const first = await inLeague('LINKTEST-A');
-    const second = await inLeague('LINKTEST-B');
-    const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: 'Linkable Twin', metadata: { tour } });
-    const detail = rankedFieldDetail('integration-linked-by-league', [golfer('ingestion-league-a', 'LINKTEST-A'), golfer('ingestion-league-b', 'linktest-b')]);
-    await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
-
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
-
-    const mappingOf = (externalId: string) => prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } });
-    await expect(mappingOf('ingestion-league-a')).resolves.toMatchObject({ participantId: first.id, confidence: 'HIGH' });
-    await expect(mappingOf('ingestion-league-b')).resolves.toMatchObject({ participantId: second.id, confidence: 'HIGH' });
-    await expect(prisma.participant.count({ where: { sportId: golf.id, name: 'Linkable Twin' } })).resolves.toBe(2);
-  });
-
   // A team the feed brings that the site lacks joins the league its tour names, so it is on the
   // league's roster and not a guest in the field; one already linked without it is put right by
   // the next sync.

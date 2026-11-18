@@ -1,5 +1,5 @@
 /**
- * Fetches public sources for the load-sport-data skill and saves them, so a cloud session
+ * Fetches public sources for writing test data files and saves them, so a cloud session
  * that cannot reach those sites can read and cross-check them from the branch.
  *
  * Run by the "Fetch sport sources" workflow, which commits the output folder to the branch it

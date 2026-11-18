@@ -2,15 +2,15 @@ import { Sport } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
 import { isTestSlate, parseSportDataFile, SportDataFileError } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
-// A sport data file carries its scope in an envelope; the loader refuses a file whose data
-// strays outside it, before it reads or writes the site.
+// A test data file carries its scope in an envelope; the loader refuses a file whose data
+// strays outside it, before it reads or writes the site. Every file is test data (#1850).
 
-function realFile(): Record<string, unknown> {
+function golfTestSeed(): Record<string, unknown> {
   return {
     schemaVersion: 1,
-    scope: { sport: 'GOLF', season: 2027, sportLeagues: ['PGA TOUR'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS'] },
-    testData: false,
-    provenance: { gatheredAt: '2026-10-13', gatheredBy: 'load-sport-data skill', sources: [{ name: 'PGA TOUR schedule', url: 'https://www.pgatour.com/schedule' }] },
+    scope: { sport: 'GOLF', season: 2027, sportLeagues: ['PGA TOUR'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
+    testData: true,
+    provenance: { gatheredAt: '2026-10-13', gatheredBy: 'test data', sources: [{ name: 'PGA TOUR schedule', url: 'https://www.pgatour.com/schedule' }] },
     sportLeagues: [{
       name: 'PGA TOUR',
       players: [{ key: 'pga-a', name: 'Golfer A', countryCode: 'US', ranking: 1 }],
@@ -23,7 +23,7 @@ function realFile(): Record<string, unknown> {
         location: 'St. Simons Island, GA, US',
         rounds: 4,
         roundsPar: 70,
-        field: [{ player: 'pga-a', ranking: 1 }],
+        field: [{ player: 'pga-a', ranking: 1, oddsToWin: 6.5, rounds: [71, 65, 70, 64] }],
       }],
     }],
   };
@@ -38,9 +38,9 @@ interface HorseRacingFile {
 function horseRacingFile(): HorseRacingFile {
   const file = {
     schemaVersion: 1,
-    scope: { sport: 'HORSE_RACING', season: 2027, sportLeagues: ['US Thoroughbred'], contents: ['SCHEDULE'] },
-    testData: false,
-    provenance: { gatheredAt: '2026-10-14', gatheredBy: 'load-sport-data skill', sources: [{ name: 'Pegasus World Cup', url: 'https://www.pegasusworldcup.com/' }] },
+    scope: { sport: 'HORSE_RACING', season: 2027, sportLeagues: ['US Thoroughbred'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
+    testData: true,
+    provenance: { gatheredAt: '2026-10-14', gatheredBy: 'test data', sources: [{ name: 'Pegasus World Cup', url: 'https://www.pegasusworldcup.com/' }] },
     sportLeagues: [{
       name: 'US Thoroughbred',
       players: [],
@@ -73,8 +73,6 @@ interface RaceTestSeed {
 /** A played race as a test seed: four runners, two sharing second in a dead heat, one not finishing. */
 function raceTestSeed(): RaceTestSeed {
   const file = horseRacingFile() as unknown as RaceTestSeed;
-  file.testData = true;
-  file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
   const runners = ['a', 'b', 'c', 'd'];
   file.sportLeagues[0].players = runners.map((runner, index) => ({ key: `race-${runner}`, name: `Horse ${runner.toUpperCase()}`, countryCode: 'US', ranking: index + 1 }));
   const places = [2, 1, 2, null];
@@ -91,9 +89,9 @@ function raceTestSeed(): RaceTestSeed {
   return file;
 }
 
-function problemsOf(json: unknown, allowTestData = false): readonly string[] {
+function problemsOf(json: unknown): readonly string[] {
   try {
-    parseSportDataFile(json, { allowTestData });
+    parseSportDataFile(json);
   } catch (error) {
     if (error instanceof SportDataFileError) return error.problems;
     throw error;
@@ -108,29 +106,50 @@ interface EditableFile {
 }
 
 function edited(edit: (file: EditableFile) => void): unknown {
-  const file = realFile() as unknown as EditableFile;
+  const file = golfTestSeed() as unknown as EditableFile;
   edit(file);
   return file;
 }
 
 describe('sport data file envelope', () => {
-  it('reads a real golf file and types its sport from the registry', () => {
-    const file = parseSportDataFile(realFile(), { allowTestData: false });
+  it('reads a golf test seed and types its sport from the registry', () => {
+    const file = parseSportDataFile(golfTestSeed());
 
     expect(file.scope.sport).toBe(Sport.GOLF);
-    expect(file.sportLeagues[0].events[0].field).toEqual([{ player: 'pga-a', ranking: 1 }]);
+    expect(file.sportLeagues[0].events[0].field).toEqual([{ player: 'pga-a', ranking: 1, oddsToWin: 6.5, rounds: [71, 65, 70, 64] }]);
+  });
+
+  it('refuses a file that is not test data, since real events and fields come from the provider sync (#1850)', () => {
+    expect(problemsOf(edited((file) => { file.testData = false; }))).toEqual([expect.stringMatching(/^testData: /)]);
+  });
+
+  it('reads a player\'s feed id at each provider, and refuses one feed id on two players of a league (#1850)', () => {
+    const feedIds = { balldontlie: '1001' };
+    const withFeedIds = golfTestSeed() as { sportLeagues: Array<{ players: Array<Record<string, unknown>> }> };
+    withFeedIds.sportLeagues[0].players[0]['feedIds'] = feedIds;
+
+    expect(parseSportDataFile(withFeedIds).sportLeagues[0].players[0].feedIds).toEqual(feedIds);
+
+    withFeedIds.sportLeagues[0].players.push({ key: 'pga-b', name: 'Golfer B', countryCode: 'US', ranking: 2, feedIds });
+    expect(problemsOf(withFeedIds)).toEqual(['PGA TOUR: feed id balldontlie 1001 is on more than one player.']);
+  });
+
+  it('refuses a feed id on an event, which a test event never carries: a real one would let the live-score poll write real results onto it (#1850)', () => {
+    const problems = problemsOf(edited((file) => { Object.assign(file.sportLeagues[0].events[0], { feedIds: { balldontlie: '40' } }); }));
+
+    expect(problems.some((problem) => problem.includes('feedIds'))).toBe(true);
   });
 
   it('refuses a schema version it does not know rather than misread it', () => {
-    expect(problemsOf({ ...realFile(), schemaVersion: 2 })).toEqual(['schemaVersion is 2; this loader reads version 1.']);
+    expect(problemsOf({ ...golfTestSeed(), schemaVersion: 2 })).toEqual(['schemaVersion is 2; this loader reads version 1.']);
   });
 
   it('refuses a sport that is not in the sport registry', () => {
-    expect(problemsOf(edited((file) => { file.scope.sport = 'CURLING'; }))).toEqual(['scope.sport CURLING is not a sport in the sport registry.']);
+    expect(problemsOf(edited((file) => { file.scope.sport = 'CURLING'; }))).toContain('scope.sport CURLING is not a sport in the sport registry.');
   });
 
-  it('reads a real horse racing schedule whose race has a post time and no par', () => {
-    const file = parseSportDataFile(horseRacingFile(), { allowTestData: false });
+  it('reads a horse racing test seed whose race has a post time and no par', () => {
+    const file = parseSportDataFile(horseRacingFile());
 
     expect(file.scope.sport).toBe(Sport.HORSE_RACING);
     expect(file.sportLeagues[0].events[0]).toMatchObject({ name: 'Pegasus World Cup', startsAt: '2027-01-30T17:40:00-05:00', roundsPar: null });
@@ -149,7 +168,7 @@ describe('sport data file envelope', () => {
   });
 
   it('reads a race test seed whose runners carry the real finishing order, a dead heat sharing a place', () => {
-    const file = parseSportDataFile(raceTestSeed(), { allowTestData: true });
+    const file = parseSportDataFile(raceTestSeed());
 
     expect(file.sportLeagues[0].events[0].field.map((entry) => entry.raceResult)).toEqual([
       { status: 'FINISHED', finishPosition: 2, startPosition: 1, riderName: 'Jockey A' },
@@ -167,7 +186,7 @@ describe('sport data file envelope', () => {
     fourth.raceResult = { status: 'DID_NOT_FINISH', finishPosition: 3 };
     second.rounds = [70];
 
-    expect(problemsOf(file, true)).toEqual([
+    expect(problemsOf(file)).toEqual([
       'US Thoroughbred, Pegasus World Cup: race-a needs raceResult in test data.',
       'US Thoroughbred, Pegasus World Cup: race-b carries rounds, which only a golf test seed has.',
       'US Thoroughbred, Pegasus World Cup: race-d has a finishing place only if it finished, and needs one if it did.',
@@ -175,27 +194,12 @@ describe('sport data file envelope', () => {
     ]);
   });
 
-  it('refuses a race result on a golf test seed and in a real file', () => {
+  it('refuses a race result on a golf test seed', () => {
     const golf = edited((file) => {
-      file.testData = true;
-      file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
-      Object.assign(file.sportLeagues[0].events[0].field[0], { oddsToWin: 5, rounds: [70, 70, 70, 70], raceResult: { status: 'FINISHED', finishPosition: 1 } });
-    });
-    const real = horseRacingFile() as unknown as RaceTestSeed;
-    real.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
-    real.sportLeagues[0].players = [{ key: 'race-a', name: 'Horse A', countryCode: 'US', ranking: 1 }];
-    real.sportLeagues[0].events[0].field = [{ player: 'race-a', raceResult: { status: 'FINISHED', finishPosition: 1 } }];
-
-    expect(problemsOf(golf, true)).toEqual(['PGA TOUR, The RSM Classic: pga-a carries raceResult, which only a race\'s test seed has.']);
-    expect(problemsOf(real)).toEqual(['US Thoroughbred, Pegasus World Cup: race-a carries raceResult, which only test data may.']);
-  });
-
-  it('refuses a real file whose event is named like a test event, so a real load can never create one', () => {
-    const real = edited((file) => {
-      file.sportLeagues[0].events[0].name = 'Test- The RSM Classic';
+      Object.assign(file.sportLeagues[0].events[0].field[0], { raceResult: { status: 'FINISHED', finishPosition: 1 } });
     });
 
-    expect(problemsOf(real)).toEqual(['PGA TOUR, Test- The RSM Classic: is named like a test event ("Test-"), which only test data may be.']);
+    expect(problemsOf(golf)).toEqual(['PGA TOUR, The RSM Classic: pga-a carries raceResult, which only a race\'s test seed has.']);
   });
 
   it('refuses a contents value outside the closed list and a key the shape does not have', () => {
@@ -222,43 +226,26 @@ describe('sport data file envelope', () => {
   });
 
   it('refuses a field entry whose player is not in its league players list', () => {
-    expect(problemsOf(edited((file) => { file.sportLeagues[0].events[0].field.push({ player: 'pga-zz' }); }))).toEqual([
+    expect(problemsOf(edited((file) => { file.sportLeagues[0].events[0].field.push({ player: 'pga-zz', oddsToWin: 9, rounds: [70, 70, 70, 70] }); }))).toEqual([
       "PGA TOUR, The RSM Classic: pga-zz is not in PGA TOUR's players.",
     ]);
   });
 
   it('refuses a field in a file whose contents leave out FIELDS, and FIELDS without PLAYERS', () => {
-    expect(problemsOf(edited((file) => { file.scope.contents = ['SCHEDULE', 'PLAYERS']; }))).toEqual([
+    expect(problemsOf(edited((file) => { file.scope.contents = ['SCHEDULE', 'PLAYERS', 'RESULTS']; }))).toEqual([
+      'testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing FIELDS.',
       'PGA TOUR, The RSM Classic: has a field, but the scope\'s contents leave out FIELDS.',
     ]);
-    expect(problemsOf(edited((file) => { file.scope.contents = ['SCHEDULE', 'FIELDS']; }))).toEqual([
+    expect(problemsOf(edited((file) => { file.scope.contents = ['SCHEDULE', 'FIELDS', 'RESULTS']; }))).toEqual([
       'scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.',
+      'testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing PLAYERS.',
     ]);
   });
 
-  it('refuses made-up odds, scores and winners in a real file, and RESULTS in its contents', () => {
-    expect(problemsOf(edited((file) => {
-      file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
-      file.sportLeagues[0].events[0].winner = 'generated';
-      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', oddsToWin: 5, rounds: [70] };
-    }))).toEqual([
-      'scope.contents has RESULTS, which only test data may.',
-      'PGA TOUR, The RSM Classic: pga-a carries oddsToWin, rounds, which only test data may.',
-      'PGA TOUR, The RSM Classic: carries a winner, which only test data may.',
-    ]);
-  });
-
-  it('refuses test data on a target that does not take it, and test data without a test seed\'s contents', () => {
-    const testFile = edited((file) => {
-      file.testData = true;
-      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', ranking: 1, oddsToWin: 5, rounds: [70, 71, 72, 73] };
-    });
-
-    expect(problemsOf(testFile, false)).toEqual([
+  it('refuses a test seed without a test seed\'s contents', () => {
+    expect(problemsOf(edited((file) => { file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS']; }))).toEqual([
       'testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.',
-      'testData is true, and this target does not take test data.',
     ]);
-    expect(problemsOf(testFile, true)).toEqual(['testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.']);
   });
 });
 
@@ -282,9 +269,9 @@ describe('sport data bracket', () => {
     const team = (key: string, name: string) => ({ key, name, countryCode: 'US', ranking: 1 });
     const file = {
       schemaVersion: 1,
-      scope: { sport: 'BASKETBALL', season: 2027, sportLeagues: ['NCAA Men'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET'] },
-      testData: false,
-      provenance: { gatheredAt: '2027-03-14', gatheredBy: 'load-sport-data skill', sources: [{ name: 'NCAA bracket', url: 'https://www.ncaa.com/brackets' }] },
+      scope: { sport: 'BASKETBALL', season: 2027, sportLeagues: ['NCAA Men'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET', 'RESULTS'] },
+      testData: true,
+      provenance: { gatheredAt: '2027-03-14', gatheredBy: 'test data', sources: [{ name: 'NCAA bracket', url: 'https://www.ncaa.com/brackets' }] },
       sportLeagues: [{
         name: 'NCAA Men',
         players: [team('ncaa-duke', 'Duke'), team('ncaa-vermont', 'Vermont'), team('ncaa-houston', 'Houston'), team('ncaa-texas-xavier', 'Texas / Xavier')],
@@ -298,10 +285,10 @@ describe('sport data bracket', () => {
           rounds: 2,
           roundsPar: null,
           field: [
-            { player: 'ncaa-duke', seed: 1 },
-            { player: 'ncaa-vermont', seed: 16 },
-            { player: 'ncaa-houston', seed: 1 },
-            { player: 'ncaa-texas-xavier', seed: 16, isPlayInPlace: true },
+            { player: 'ncaa-duke', seed: 1, oddsToWin: 3 },
+            { player: 'ncaa-vermont', seed: 16, oddsToWin: 4 },
+            { player: 'ncaa-houston', seed: 1, oddsToWin: 5 },
+            { player: 'ncaa-texas-xavier', seed: 16, isPlayInPlace: true, oddsToWin: 6 },
           ],
           matches: [
             { matchNumber: 1, roundNumber: 1, home: 'ncaa-duke', away: 'ncaa-vermont', isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { matchNumber: 3, side: 'HOME' } },
@@ -315,7 +302,7 @@ describe('sport data bracket', () => {
   }
 
   it('reads a basketball file whose events carry a bracket, region seeds and a play-in place', () => {
-    const file = parseSportDataFile(bracketFile(), { allowTestData: false });
+    const file = parseSportDataFile(bracketFile());
     const event = file.sportLeagues[0].events[0];
 
     expect(event.matches?.map((match) => [match.matchNumber, match.home, match.away, match.advancesTo?.matchNumber ?? null])).toEqual([
@@ -353,29 +340,25 @@ describe('sport data bracket', () => {
 
   it('refuses a bracket the scope\'s contents leave out, and BRACKET without FIELDS', () => {
     const withoutBracket = bracketFile();
-    withoutBracket.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
-    expect(problemsOf(withoutBracket)).toEqual(['NCAA Men, Tournament: has a bracket, but the scope\'s contents leave out BRACKET.']);
+    withoutBracket.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+    expect(problemsOf(withoutBracket)).toContain('NCAA Men, Tournament: has a bracket, but the scope\'s contents leave out BRACKET.');
 
     const withoutField = bracketFile();
-    withoutField.scope.contents = ['SCHEDULE', 'BRACKET'];
+    withoutField.scope.contents = ['SCHEDULE', 'BRACKET', 'RESULTS'];
     withoutField.sportLeagues[0].events[0].field = [];
     withoutField.sportLeagues[0].events[0].matches = [];
-    expect(problemsOf(withoutField)).toEqual(['scope.contents has BRACKET without FIELDS: a bracket names field places, so the file carries the field.']);
+    expect(problemsOf(withoutField)).toContain('scope.contents has BRACKET without FIELDS: a bracket names field places, so the file carries the field.');
   });
 
-  /** The bracket as a test seed: made-up odds on every team and a result on every match. */
+  /** The bracket test seed with a result on every match. */
   function bracketTestSeed(): BracketFile {
     const file = bracketFile();
-    file.testData = true;
-    file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET', 'RESULTS'];
-    const event = file.sportLeagues[0].events[0];
-    event.field = event.field.map((entry, index) => ({ ...(entry as object), oddsToWin: 3 + index }));
-    for (const match of event.matches) match.result = { winner: 'HOME', homeScore: 70, awayScore: 61 };
+    for (const match of file.sportLeagues[0].events[0].matches) match.result = { winner: 'HOME', homeScore: 70, awayScore: 61 };
     return file;
   }
 
   it('reads a bracket test seed: made-up odds on the field and a result on each match', () => {
-    const event = parseSportDataFile(bracketTestSeed(), { allowTestData: true }).sportLeagues[0].events[0];
+    const event = parseSportDataFile(bracketTestSeed()).sportLeagues[0].events[0];
 
     expect(event.field.map((entry) => entry.oddsToWin)).toEqual([3, 4, 5, 6]);
     expect(event.matches?.map((match) => match.result?.winner)).toEqual(['HOME', 'HOME', 'HOME']);
@@ -387,7 +370,7 @@ describe('sport data bracket', () => {
     first.result = { winner: 'AWAY', homeScore: 1, awayScore: 0, ending: 'RETIREMENT' };
     second.result = { winner: 'HOME', homeScore: null, awayScore: null, ending: 'WALKOVER' };
 
-    const matches = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0].matches;
+    const matches = parseSportDataFile(file).sportLeagues[0].events[0].matches;
 
     expect(matches?.map((match) => match.result?.ending)).toEqual(['RETIREMENT', 'WALKOVER', undefined]);
   });
@@ -405,7 +388,7 @@ describe('sport data bracket', () => {
     const file = weekTestSeed();
     file.sportLeagues[0].events[0].matches[0].result = { winner: null, homeScore: 1, awayScore: 1 };
 
-    const matches = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0].matches;
+    const matches = parseSportDataFile(file).sportLeagues[0].events[0].matches;
 
     expect(matches?.map((match) => match.result?.winner)).toEqual([null, 'HOME']);
   });
@@ -413,13 +396,13 @@ describe('sport data bracket', () => {
   it('refuses no winner on a bracket match, on unequal scores, with a shoot-out or with an ending', () => {
     const bracket = bracketTestSeed();
     bracket.sportLeagues[0].events[0].matches[0].result = { winner: null, homeScore: 1, awayScore: 1 };
-    expect(problemsOf(bracket, true)).toContain('NCAA Men, Tournament: match 1 has no winner, but a bracket match always has one.');
+    expect(problemsOf(bracket)).toContain('NCAA Men, Tournament: match 1 has no winner, but a bracket match always has one.');
 
     const week = weekTestSeed();
     const [first, second] = week.sportLeagues[0].events[0].matches;
     first.result = { winner: null, homeScore: 2, awayScore: 1 };
     second.result = { winner: null, homeScore: 1, awayScore: 1, homeShootoutScore: 4, awayShootoutScore: 3 };
-    expect(problemsOf(week, true)).toEqual([
+    expect(problemsOf(week)).toEqual([
       'NCAA Men, Tournament: match 1 has no winner, so it needs level scores, played to its end with no shoot-out.',
       'NCAA Men, Tournament: match 2 has no winner, so it needs level scores, played to its end with no shoot-out.',
     ]);
@@ -429,7 +412,7 @@ describe('sport data bracket', () => {
     const week = weekTestSeed();
     week.sportLeagues[0].events[0].matches = week.sportLeagues[0].events[0].matches.slice(0, 1);
 
-    expect(problemsOf(week, true)).toEqual([
+    expect(problemsOf(week)).toEqual([
       'NCAA Men, Tournament: ncaa-houston is in the field but in no match, and the release refuses a field member left out of the games.',
       'NCAA Men, Tournament: ncaa-texas-xavier is in the field but in no match, and the release refuses a field member left out of the games.',
     ]);
@@ -441,41 +424,33 @@ describe('sport data bracket', () => {
     delete second.result;
     second.cancelled = true;
 
-    const matches = parseSportDataFile(week, { allowTestData: true }).sportLeagues[0].events[0].matches;
+    const matches = parseSportDataFile(week).sportLeagues[0].events[0].matches;
 
     expect(matches?.map((match) => [match.matchNumber, match.cancelled, match.result?.winner])).toEqual([[1, undefined, 'HOME'], [2, true, undefined]]);
   });
 
-  it('refuses a cancelled game in a real file, with a result or period scores, and in a bracket, which cannot lose a game', () => {
-    const real = weekTestSeed();
-    real.testData = false;
-    real.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET'];
-    real.sportLeagues[0].events[0].field = real.sportLeagues[0].events[0].field.map((entry) => ({ ...(entry as object), oddsToWin: undefined }));
-    for (const match of real.sportLeagues[0].events[0].matches) delete match.result;
-    Object.assign(real.sportLeagues[0].events[0].matches[1], { cancelled: true });
-    expect(problemsOf(real)).toEqual(['NCAA Men, Tournament: cancels match 2, which only test data may.']);
-
+  it('refuses a cancelled game with a result or period scores, and in a bracket, which cannot lose a game', () => {
     const played = weekTestSeed();
     Object.assign(played.sportLeagues[0].events[0].matches[1], { cancelled: true });
-    expect(problemsOf(played, true)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.']);
+    expect(problemsOf(played)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.']);
 
     const scored = weekTestSeed();
     const scoredGame = scored.sportLeagues[0].events[0].matches[1];
     delete scoredGame.result;
     Object.assign(scoredGame, { cancelled: true, periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 0 }] });
-    expect(problemsOf(scored, true)).toContain('NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.');
+    expect(problemsOf(scored)).toContain('NCAA Men, Tournament: match 2 is cancelled, so it has no result and no period scores.');
 
     const bracket = bracketTestSeed();
     delete bracket.sportLeagues[0].events[0].matches[1].result;
     Object.assign(bracket.sportLeagues[0].events[0].matches[1], { cancelled: true });
-    expect(problemsOf(bracket, true)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, but only a week\'s game can be: a bracket cannot lose a game.']);
+    expect(problemsOf(bracket)).toEqual(['NCAA Men, Tournament: match 2 is cancelled, but only a week\'s game can be: a bracket cannot lose a game.']);
   });
 
   it('refuses a result with an ending that is not one', () => {
     const file = bracketTestSeed();
     file.sportLeagues[0].events[0].matches[0].result = { winner: 'HOME', homeScore: 1, awayScore: 0, ending: 'ABANDONED' };
 
-    expect(problemsOf(file, true).join(' ')).toMatch(/ending/);
+    expect(problemsOf(file).join(' ')).toMatch(/ending/);
   });
 
   it('refuses a bracket test seed without odds, with golf\'s stroke rounds, or without its bracket', () => {
@@ -485,7 +460,7 @@ describe('sport data bracket', () => {
     field[1].rounds = [70];
     file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
 
-    expect(problemsOf(file, true)).toEqual([
+    expect(problemsOf(file)).toEqual([
       'A bracket sport\'s test seed needs BRACKET: its results are the bracket\'s match results.',
       'NCAA Men, Tournament: has a bracket, but the scope\'s contents leave out BRACKET.',
       'NCAA Men, Tournament: ncaa-duke needs oddsToWin in test data.',
@@ -498,43 +473,20 @@ describe('sport data bracket', () => {
     file.sportLeagues[0].events[0].field[3] = { ...(file.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-xavier' };
     (file.sportLeagues[0] as unknown as { players: unknown[] }).players.push({ key: 'ncaa-xavier', name: 'Xavier', countryCode: 'US', ranking: 1 });
 
-    const event = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0];
+    const event = parseSportDataFile(file).sportLeagues[0].events[0];
 
     expect(event.field.map((entry) => entry.playInWinner ?? null)).toEqual([null, null, null, 'ncaa-xavier']);
   });
 
-  it('refuses a play-in winner in a real file, on a place that is not a play-in place, or naming a team outside the league or already in the field', () => {
-    const real = bracketFile();
-    real.sportLeagues[0].events[0].field[3] = { ...(real.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-duke' };
-    expect(problemsOf(real)).toEqual([
-      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-duke is already in the field.',
-      'NCAA Men, Tournament: ncaa-texas-xavier carries playInWinner, which only test data may.',
-    ]);
-
+  it('refuses a play-in winner on a place that is not a play-in place, or naming a team outside the league or already in the field', () => {
     const seed = bracketTestSeed();
     const field = seed.sportLeagues[0].events[0].field;
     field[0] = { ...(field[0] as object), playInWinner: 'ncaa-houston' };
     field[3] = { ...(field[3] as object), playInWinner: 'ncaa-gonzaga' };
-    expect(problemsOf(seed, true)).toEqual([
+    expect(problemsOf(seed)).toEqual([
       'NCAA Men, Tournament: ncaa-duke names a play-in winner, but is not a play-in place.',
       'NCAA Men, Tournament: ncaa-duke\'s play-in winner ncaa-houston is already in the field.',
       'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-gonzaga is not in NCAA Men\'s players.',
-    ]);
-  });
-
-  it('refuses match results in a real file', () => {
-    const file = bracketFile();
-    file.sportLeagues[0].events[0].matches[0].result = { winner: 'AWAY', homeScore: 60, awayScore: 64 };
-
-    expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: carries match results, which only test data may.']);
-  });
-
-  it('refuses period scores in a real file, and on a match with no result', () => {
-    const real = bracketFile();
-    real.sportLeagues[0].events[0].matches[0].periodScores = [{ periodNumber: 1, homeScore: 30, awayScore: 28 }];
-    expect(problemsOf(real)).toEqual([
-      'NCAA Men, Tournament: carries period scores, which only test data may.',
-      'NCAA Men, Tournament: match 1 carries period scores but no result, and they are entered with its result.',
     ]);
   });
 
@@ -543,13 +495,13 @@ describe('sport data bracket', () => {
     (file.scope as { sport?: string }).sport = 'AMERICAN_FOOTBALL';
     const matches = file.sportLeagues[0].events[0].matches;
     matches[0].periodScores = [{ periodNumber: 1, homeScore: 7, awayScore: 0 }, { periodNumber: 3, homeScore: 14, awayScore: 7 }];
-    expect(problemsOf(file, true)).toEqual([]);
+    expect(problemsOf(file)).toEqual([]);
 
     matches[0].periodScores = [{ periodNumber: 4, homeScore: 21, awayScore: 7 }];
     matches[1].periodScores = [{ periodNumber: 2, homeScore: 7, awayScore: 0 }, { periodNumber: 1, homeScore: 0, awayScore: 0 }];
     delete matches[2].result;
     matches[2].periodScores = [{ periodNumber: 1, homeScore: 0, awayScore: 0 }];
-    expect(problemsOf(file, true)).toEqual([
+    expect(problemsOf(file)).toEqual([
       'NCAA Men, Tournament: match 1 has a score for quarter 4 or later, which is the result\'s final score.',
       'NCAA Men, Tournament: match 2\'s period scores are not in period order, once each.',
       'NCAA Men, Tournament: match 3 carries period scores but no result, and they are entered with its result.',
@@ -563,7 +515,7 @@ describe('sport data bracket', () => {
     file.sportLeagues[0].events[0].matches[0].advancesTo = null;
     file.sportLeagues[0].events[0].matches[1].advancesTo = null;
 
-    const league = parseSportDataFile(file, { allowTestData: false }).sportLeagues[0];
+    const league = parseSportDataFile(file).sportLeagues[0];
 
     expect(league.bracketAdvancement).toBe('RESEED_BY_SEED');
     expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [3, 'East', null]]);
@@ -587,7 +539,7 @@ describe('sport data bracket', () => {
   it('refuses a bracket, a seed or a play-in place for a sport not played as a bracket', () => {
     const golf = edited((file) => {
       file.scope.contents.push('BRACKET');
-      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', seed: 1, isPlayInPlace: true };
+      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', seed: 1, isPlayInPlace: true, oddsToWin: 6.5, rounds: [71, 65, 70, 64] };
       (file.sportLeagues[0].events[0] as { matches?: unknown[] }).matches = [
         { matchNumber: 1, roundNumber: 1, home: 'pga-a', away: null, isNeutralSite: true, advancesTo: null },
       ];
@@ -616,9 +568,9 @@ describe('sport data stat pool box scores (#935)', () => {
   function worldSeries(): StatPoolFile {
     const file = {
       schemaVersion: 1,
-      scope: { sport: 'BASEBALL', season: 2025, sportLeagues: ['World Series'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS'] },
-      testData: false,
-      provenance: { gatheredAt: '2026-10-24', gatheredBy: 'load-sport-data skill', sources: [{ name: 'MLB Stats API', url: 'https://statsapi.mlb.com' }] },
+      scope: { sport: 'BASEBALL', season: 2025, sportLeagues: ['World Series'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'] },
+      testData: true,
+      provenance: { gatheredAt: '2026-10-24', gatheredBy: 'test data', sources: [{ name: 'MLB Stats API', url: 'https://statsapi.mlb.com' }] },
       sportLeagues: [{
         name: 'World Series',
         players: [
@@ -645,8 +597,8 @@ describe('sport data stat pool box scores (#935)', () => {
     return file as StatPoolFile;
   }
 
-  it('reads a real stat pool file: players with their team and position, and each game\'s box score', () => {
-    const file = parseSportDataFile(worldSeries(), { allowTestData: false });
+  it('reads a stat pool test seed: players with their team and position, and each game\'s box score', () => {
+    const file = parseSportDataFile(worldSeries());
 
     expect(file.sportLeagues[0].players[0]).toMatchObject({ team: 'Los Angeles Dodgers', position: 'DH' });
     expect(file.sportLeagues[0].events[0].games?.map((game) => [game.gameNumber, game.lines.length])).toEqual([[1, 1], [2, 2]]);
@@ -654,19 +606,15 @@ describe('sport data stat pool box scores (#935)', () => {
 
   it('reads a stat pool test seed tiered by its ranking, with no made-up odds and no bracket', () => {
     const seed = worldSeries();
-    seed.testData = true;
-    seed.scope.contents.push('RESULTS');
 
-    expect(problemsOf(seed, true)).toEqual([]);
+    expect(problemsOf(seed)).toEqual([]);
   });
 
   it('refuses a stat pool test seed entry with no ranking to tier it by', () => {
     const seed = worldSeries();
-    seed.testData = true;
-    seed.scope.contents.push('RESULTS');
     delete seed.sportLeagues[0].events[0].field[1]['ranking'];
 
-    expect(problemsOf(seed, true)).toEqual(['World Series, World Series: mlb-bo-bichette needs a ranking in test data, to tier the field by.']);
+    expect(problemsOf(seed)).toEqual(['World Series, World Series: mlb-bo-bichette needs a ranking in test data, to tier the field by.']);
   });
 
   it('refuses a game beyond the series or given twice, a line off the field or twice in a game, and a stat the Box Score does not count', () => {
@@ -693,11 +641,11 @@ describe('sport data stat pool box scores (#935)', () => {
 
   it('refuses box scores the scope\'s contents leave out, STATS without FIELDS, and STATS for a sport with no stat pool', () => {
     const unscoped = worldSeries();
-    unscoped.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
-    expect(problemsOf(unscoped)).toEqual(['World Series, World Series: has box scores, but the scope\'s contents leave out STATS.']);
+    unscoped.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+    expect(problemsOf(unscoped)).toContain('World Series, World Series: has box scores, but the scope\'s contents leave out STATS.');
 
     const fieldless = worldSeries();
-    fieldless.scope.contents = ['SCHEDULE', 'STATS'];
+    fieldless.scope.contents = ['SCHEDULE', 'STATS', 'RESULTS'];
     expect(problemsOf(fieldless)).toContain('scope.contents has STATS without FIELDS: a box score names field players, so the file carries the field.');
 
     const golf = edited((file) => file.scope.contents.push('STATS'));
@@ -731,47 +679,44 @@ describe('sport data test slate', () => {
   }
 
   it('reads a test slate of any registry sport, with players and no events, as a slate', () => {
-    const file = parseSportDataFile(slate(), { allowTestData: true });
+    const file = parseSportDataFile(slate());
 
     expect(file.scope.sport).toBe(Sport.AUTO_RACING);
     expect(isTestSlate(file)).toBe(true);
   });
 
-  it('does not treat a test seed or a real field file as a slate', () => {
-    expect(isTestSlate({ testData: true, scope: { contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] } })).toBe(false);
-    expect(isTestSlate({ testData: false, scope: { contents: ['PLAYERS', 'FIELDS'] } })).toBe(false);
+  it('does not treat a test seed, which carries a schedule, as a slate', () => {
+    expect(isTestSlate({ scope: { contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] } })).toBe(false);
   });
 
-  it('refuses a slate with events, with no players, or with more than one sport league, and one on a target without test data', () => {
+  it('refuses a slate with events, with no players, or or with more than one sport league', () => {
     const withEvents = slate() as { sportLeagues: Array<{ name: string; players: unknown[]; events: unknown[] }>; scope: { season: number; sportLeagues: string[] } };
     withEvents.sportLeagues[0].events.push({
       key: 'bahrain', name: 'Bahrain Grand Prix', startDate: '2025-04-11', endDate: '2025-04-13', venue: null, location: null, rounds: 1, roundsPar: null, field: [],
     });
-    expect(problemsOf(withEvents, true)).toContain('Formula 1: a test slate has no events; the run names the event it fills.');
+    expect(problemsOf(withEvents)).toContain('Formula 1: a test slate has no events; the run names the event it fills.');
 
     const empty = slate() as { sportLeagues: Array<{ players: unknown[] }> };
     empty.sportLeagues[0].players = [];
-    expect(problemsOf(empty, true)).toEqual(['Formula 1: a test slate needs players.']);
+    expect(problemsOf(empty)).toEqual(['Formula 1: a test slate needs players.']);
 
     const two = slate() as { scope: { sportLeagues: string[] }; sportLeagues: Array<Record<string, unknown>> };
     two.scope.sportLeagues.push('IndyCar');
     two.sportLeagues.push({ name: 'IndyCar', players: [{ key: 'indy-a', name: 'Driver B', countryCode: 'US', ranking: 1 }], events: [] });
-    expect(problemsOf(two, true)).toEqual(['A test slate holds one sport league; this one has 2.']);
-
-    expect(problemsOf(slate(), false)).toEqual(['testData is true, and this target does not take test data.']);
+    expect(problemsOf(two)).toEqual(['A test slate holds one sport league; this one has 2.']);
   });
 });
 
 describe('sport data load report', () => {
   it('counts every row and lists only the changes, with the file scope and where the data came from', () => {
-    const file = parseSportDataFile(realFile(), { allowTestData: false });
+    const file = parseSportDataFile(golfTestSeed());
     const report = formatLoadReport(file, LoadMode.DRY_RUN, [
       { sportLeague: 'PGA TOUR', subject: LoadSubject.PLAYER, action: LoadAction.SKIP, name: 'Golfer A', detail: null },
       { sportLeague: 'PGA TOUR', subject: LoadSubject.EVENT, action: LoadAction.UPDATE, name: 'The RSM Classic', detail: 'venue A → B' },
     ]);
 
     expect(report).toContain('dry run, nothing written');
-    expect(report).toContain('GOLF 2027: PGA TOUR. Contents: SCHEDULE, PLAYERS, FIELDS.');
+    expect(report).toContain('GOLF 2027: PGA TOUR. Contents: SCHEDULE, PLAYERS, FIELDS, RESULTS.');
     expect(report).toContain('[PGA TOUR schedule](https://www.pgatour.com/schedule)');
     expect(report).toContain('| Player | 0 | 0 | 1 | 0 |');
     expect(report).toContain('| PGA TOUR | Event | UPDATE | The RSM Classic | venue A → B |');
@@ -779,7 +724,7 @@ describe('sport data load report', () => {
   });
 
   it('says the site already matches when a run has nothing but skips', () => {
-    const file = parseSportDataFile(realFile(), { allowTestData: false });
+    const file = parseSportDataFile(golfTestSeed());
 
     expect(formatLoadReport(file, LoadMode.APPLY, [])).toContain('Nothing to change: the site already matches the file.');
   });

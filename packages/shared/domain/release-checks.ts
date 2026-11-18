@@ -14,9 +14,8 @@ export const ReleaseCheckKey = {
   /** Its field is loaded. Value: how many participants are in it. */
   FIELD_LOADED: 'FIELD_LOADED',
   /**
-   * Every active field participant is linked to the event's provider, so its scores reach them,
-   * and no name the provider sent for its field is waiting in Needs linking (#1824). Only a
-   * provider-synced event has it. Value: how many of each there are.
+   * Every active field participant is linked to the event's provider by its feed id, so its
+   * scores reach them. Only a provider-synced event has it. Value: how many are not.
    */
   FIELD_LINKED: 'FIELD_LINKED',
   /** Every active field participant is in a tier. Value: how many are not. */
@@ -49,20 +48,12 @@ export function blocksManualRelease(key: ReleaseCheckKey): boolean {
   return !AUTOMATIC_RELEASE_ONLY_CHECKS.has(key);
 }
 
-/** What the field-linked check counts: both must be 0 for it to pass. */
-export interface FieldLinkCounts {
-  /** Active field participants the event's provider has no mapping for. */
-  unlinkedParticipants: number;
-  /** Names the provider sent for the event's field that are waiting in Needs linking, unmatched (#1824). */
-  needsLinking: number;
-}
-
 /** One ready check's verdict and the value it was judged on, typed by the check. */
 export type ReleaseCheck =
   | { key: typeof ReleaseCheckKey.NOT_STARTED; passed: boolean; value: Date }
   | { key: typeof ReleaseCheckKey.ROUNDS_SCHEDULED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.FIELD_LOADED; passed: boolean; value: number }
-  | { key: typeof ReleaseCheckKey.FIELD_LINKED; passed: boolean; value: FieldLinkCounts }
+  | { key: typeof ReleaseCheckKey.FIELD_LINKED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.TIERS_ASSIGNED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.TIERS_FILLED; passed: boolean; value: string[] }
   | { key: typeof ReleaseCheckKey.PRICES_ASSIGNED; passed: boolean; value: number | null }

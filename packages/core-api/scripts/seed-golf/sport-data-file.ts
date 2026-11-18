@@ -1,15 +1,17 @@
 /**
- * A sport data file: what the "Load sport data" workflow loads into a running PoolMaster.
+ * A test data file: what the "Load test data" workflow loads into a running PoolMaster (#1850).
+ * Every file is test data: real events and fields reach the site through the provider sync
+ * (docs/LIVE-SPORTS-DATA-SYNC.md), never through a file.
  *
  * The file carries its own scope in an envelope (sport, season, sport leagues, which kinds of
  * data it holds) ahead of the data. The loader checks the envelope and the data against it
  * before it reads the site, so a file whose data strays outside its scope writes nothing.
  * The filename is for people and is never parsed.
  *
- * Every sport in the registry loads a real schedule and fields in the one event shape below:
- * name, dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an
- * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
- * seed carries results of the kind its sport is scored by: golf's made-up stroke rounds, a
+ * Every sport in the registry loads a schedule and fields in the one event shape below: name,
+ * dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an optional
+ * start time for a sport whose cutoff is a set moment (a race's post time). A test seed carries
+ * results of the kind its sport is scored by: golf's made-up stroke rounds, a
  * played bracket's match results (entered after release round by round, each play-in place
  * first taking its winner), or a race's real finishing order (entered after release).
  *
@@ -20,8 +22,13 @@
  *
  * A test slate is the one file any sport in the registry may have: one sport league's players
  * and no events, loaded as the field of an event already on the site that the run names
- * (isTestSlate). It is test data, for trying contests on an event before its real field is
- * announced.
+ * (isTestSlate), for trying contests on an event before its real field is announced.
+ *
+ * A player may carry the provider's feed id for it (`feedIds`): the loader binds it to the
+ * player's participant, so the provider sync and the test data share one participant row and
+ * never make a duplicate. A test event never carries one (#1850): it is a date-shifted copy of
+ * last season, and a real event or game id would let the live-score poll write real results
+ * onto it.
  */
 
 import { z } from 'zod';
@@ -57,6 +64,13 @@ const IsoDaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be a YYYY-MM-
 const PlayerSchema = z.object({
   /** Stored as the participant's externalId; how a later run finds the player again. */
   key: z.string().min(1),
+  /**
+   * The player's feed id at each provider, keyed by provider id (`balldontlie`), as that
+   * provider's sync maps it ("nfl-team-17"; a PGA golfer's bare vendor id). The loader finds the
+   * participant by it, or binds it to the one it finds or creates, so the sync fields that same
+   * participant (#1850). Left out where no provider serves the league yet.
+   */
+  feedIds: z.record(z.string().min(1), z.string().min(1)).optional(),
   name: z.string().min(1),
   countryCode: z.string().length(2),
   /** The player's ranking on the sport league, set when they join it. */
@@ -216,8 +230,8 @@ const SportDataFileSchema = z.object({
     sportLeagues: z.array(z.string().min(1)).min(1),
     contents: z.array(z.enum(SportDataContent)).min(1),
   }).strict(),
-  /** Turns on the made-up parts of a test seed. Refused outside local and QA. */
-  testData: z.boolean(),
+  /** Every file is test data (#1850): its made-up parts load only into a local or QA site. */
+  testData: z.literal(true),
   provenance: z.object({
     gatheredAt: IsoDaySchema,
     gatheredBy: z.string().min(1),
@@ -246,12 +260,6 @@ export class SportDataFileError extends Error {
   }
 }
 
-export interface ParseSportDataFileOptions {
-  /** Whether this target may take made-up data; only local and QA may. */
-  allowTestData: boolean;
-}
-
-const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'playInWinner', 'rounds', 'finish', 'withdrawnThru', 'raceResult'] as const;
 const GOLF_ONLY_FIELD_KEYS = ['rounds', 'finish', 'withdrawnThru'] as const;
 
 const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
@@ -269,8 +277,8 @@ export const TEST_SEED_CONTENTS: readonly SportDataContent[] = [
 
 /**
  * What every event a test seed creates is named with: "Test- Super Bowl LX". Test events then
- * stand apart from real ones on a site holding both, and the loader never matches one with the
- * other (#1524). A real file's event never carries it.
+ * stand apart from the real ones the provider sync creates on a site holding both, and the
+ * loader never matches one with the other (#1524).
  */
 export const TEST_EVENT_NAME_PREFIX = 'Test- ';
 
@@ -283,9 +291,8 @@ export function isTestEventName(name: string): boolean {
  * A test slate: test data that holds only PLAYERS and FIELDS. Its one sport league's players,
  * in file order, become the field of the event a run names (`--event`).
  */
-export function isTestSlate(file: { testData: boolean; scope: { contents: readonly SportDataContent[] } }): boolean {
-  return file.testData
-    && file.scope.contents.length === TEST_SLATE_CONTENTS.length
+export function isTestSlate(file: { scope: { contents: readonly SportDataContent[] } }): boolean {
+  return file.scope.contents.length === TEST_SLATE_CONTENTS.length
     && TEST_SLATE_CONTENTS.every((content) => file.scope.contents.includes(content));
 }
 
@@ -352,6 +359,10 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
   for (const key of duplicates(league.players.map((player) => player.key))) {
     problems.push(`${league.name}: player key ${key} appears more than once.`);
   }
+  // One feed id is one participant to the sync: two players carrying it would be merged into one.
+  for (const id of duplicates(league.players.flatMap((player) => Object.entries(player.feedIds ?? {}).map(([provider, externalId]) => `${provider} ${externalId}`)))) {
+    problems.push(`${league.name}: feed id ${id} is on more than one player.`);
+  }
   for (const name of duplicates(league.events.map((event) => event.name.toLowerCase()))) {
     problems.push(`${league.name}: event ${name} appears more than once.`);
   }
@@ -392,12 +403,12 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         if (!playerKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is not in ${league.name}'s players.`);
         if (fieldKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is already in the field.`);
       }
-      if (file.testData && results === SeedResults.STROKE_ROUNDS) {
+      if (results === SeedResults.STROKE_ROUNDS) {
         if (entry.oddsToWin === undefined || entry.rounds === undefined) {
           problems.push(`${where}: ${entry.player} needs oddsToWin and rounds in test data.`);
         }
         if (entry.raceResult !== undefined) problems.push(`${where}: ${entry.player} carries raceResult, which only a race's test seed has.`);
-      } else if (file.testData) {
+      } else {
         // A stat pool's field is tiered by its ranking (the regular season's composite), never odds.
         if (results === SeedResults.STAT_LINES && entry.ranking === undefined) problems.push(`${where}: ${entry.player} needs a ranking in test data, to tier the field by.`);
         if (results !== SeedResults.STAT_LINES && entry.oddsToWin === undefined) problems.push(`${where}: ${entry.player} needs oddsToWin in test data.`);
@@ -409,24 +420,17 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         if (result !== undefined && (result.status === RaceResultStatus.FINISHED) !== (result.finishPosition !== null)) {
           problems.push(`${where}: ${entry.player} has a finishing place only if it finished, and needs one if it did.`);
         }
-      } else {
-        const madeUp = TEST_ONLY_FIELD_KEYS.filter((key) => entry[key] !== undefined);
-        if (madeUp.length > 0) problems.push(`${where}: ${entry.player} carries ${madeUp.join(', ')}, which only test data may.`);
       }
     }
-    if (!file.testData && isTestEventName(event.name)) problems.push(`${where}: is named like a test event ("${TEST_EVENT_NAME_PREFIX.trim()}"), which only test data may be.`);
-    if (!file.testData && event.winner !== undefined) problems.push(`${where}: carries a winner, which only test data may.`);
-    if (file.testData && results === SeedResults.STROKE_ROUNDS && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
-    if (file.testData && results === SeedResults.FINISHING_ORDER) {
+    if (results === SeedResults.STROKE_ROUNDS && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
+    if (results === SeedResults.FINISHING_ORDER) {
       const places = event.field.flatMap((entry) => {
         const place = entry.raceResult?.finishPosition;
         return place === undefined || place === null ? [] : [place];
       });
       if (!placesFormFinishingOrder(places)) problems.push(`${where}: the finishing places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next).`);
     }
-    if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
-    if (!file.testData && matches.some((match) => match.periodScores !== undefined)) problems.push(`${where}: carries period scores, which only test data may.`);
-    for (const problem of cancelledGameProblems(file.testData, matches)) problems.push(`${where}: ${problem}.`);
+    for (const problem of cancelledGameProblems(matches)) problems.push(`${where}: ${problem}.`);
     for (const key of unplacedFieldMembers(event, matches)) {
       problems.push(`${where}: ${key} is in the field but in no match, and the release refuses a field member left out of the games.`);
     }
@@ -464,13 +468,12 @@ function gameProblems(event: SportDataEvent, fieldKeys: ReadonlySet<string>, loa
 }
 
 /**
- * What is wrong with the cancelled games: one in a real file, one with a result or period scores,
- * or one in a bracket, which the server refuses to cancel (`cancelMatch`).
+ * What is wrong with the cancelled games: one with a result or period scores, or one in a
+ * bracket, which the server refuses to cancel (`cancelMatch`).
  */
-function cancelledGameProblems(testData: boolean, matches: readonly SportDataMatch[]): string[] {
+function cancelledGameProblems(matches: readonly SportDataMatch[]): string[] {
   const cancelled = matches.filter((match) => match.cancelled === true);
   if (cancelled.length === 0) return [];
-  if (!testData) return cancelled.map((match) => `cancels match ${match.matchNumber}, which only test data may`);
   const isWeek = formsNoBracket(matches, (match) => match.advancesTo !== null);
   return cancelled.flatMap((match) => {
     if (!isWeek) return [`match ${match.matchNumber} is cancelled, but only a week's game can be: a bracket cannot lose a game`];
@@ -528,10 +531,10 @@ function periodScoreProblems(sport: string, matches: readonly SportDataMatch[]):
 
 /**
  * Reads a parsed JSON file as sport data, or throws SportDataFileError listing every problem:
- * an unknown schema version, a sport outside the registry, data outside
- * the envelope's scope, made-up data in a real file, or test data where it is not allowed.
+ * an unknown schema version, a sport outside the registry, a file that is not test data, or
+ * data outside the envelope's scope.
  */
-export function parseSportDataFile(json: unknown, options: ParseSportDataFileOptions): SportDataFile {
+export function parseSportDataFile(json: unknown): SportDataFile {
   const version = (json as { schemaVersion?: unknown } | null)?.schemaVersion;
   if (version !== SPORT_DATA_SCHEMA_VERSION) {
     throw new SportDataFileError([`schemaVersion is ${JSON.stringify(version)}; this loader reads version ${SPORT_DATA_SCHEMA_VERSION}.`]);
@@ -575,17 +578,12 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
       if (league.players.length === 0) problems.push(`${league.name}: a test slate needs players.`);
     }
   }
-  if (file.testData) {
-    const missing = TEST_SEED_CONTENTS.filter((content) => !contents.has(content));
-    if (!slate && missing.length > 0) {
-      problems.push(`testData needs ${TEST_SEED_CONTENTS.join(', ')} (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
-    }
-    if (!slate && playsBracket && !contents.has(SportDataContent.BRACKET)) {
-      problems.push('A bracket sport\'s test seed needs BRACKET: its results are the bracket\'s match results.');
-    }
-    if (!options.allowTestData) problems.push('testData is true, and this target does not take test data.');
-  } else if (contents.has(SportDataContent.RESULTS)) {
-    problems.push('scope.contents has RESULTS, which only test data may.');
+  const missing = TEST_SEED_CONTENTS.filter((content) => !contents.has(content));
+  if (!slate && missing.length > 0) {
+    problems.push(`testData needs ${TEST_SEED_CONTENTS.join(', ')} (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
+  }
+  if (!slate && playsBracket && !contents.has(SportDataContent.BRACKET)) {
+    problems.push('A bracket sport\'s test seed needs BRACKET: its results are the bracket\'s match results.');
   }
 
   const scopeLeagues = new Set(file.scope.sportLeagues);

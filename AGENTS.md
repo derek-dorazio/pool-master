@@ -78,10 +78,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `add-event-page` | Adding an event page and its link preview: settle the offers, seed them by migration, write the copy, draw the preview image, check it on QA |
 | `add-email` | Adding or redesigning a system email: settle audience and timing, the key and migration, the renderer from the shared pieces, the notice that queues it, tests, and a preview in a real inbox |
 | `update-pictures` | Adding or changing a sport photo, a contest type picture or a link preview image: check, crop, note the source, redraw, and see it live on QA |
-| `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
-| `load-new-season` | Next season's schedules for every sport league at once: take stock of what has published, one file per sport, dry-run together, apply on the user's yes |
 | `add-clutch-card-league` | A Clutch Card on a new playoff round: the stat pool league and its three setups by migration, last season's box scores as test data, and the lists that name every round |
-| `clutch-card-round` | One playoff round's Clutch Card: load the event and both teams' stars when the matchups are announced, then each game's box score so standings settle |
 | `release-check` | Before a push or PR, and when a gate fails |
 | `fix-broken-ci` | CI is red: find the run that matters, match the known causes, fix the cause |
 | `land-a-pr` | Merging an approved, green PR: trial-merge main, settle generated files and migrations, re-run lint, squash with the right closing keywords, close out |

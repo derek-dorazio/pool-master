@@ -10,7 +10,6 @@ export { PrismaMembershipTransaction } from './prisma-membership-transaction';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
-export { PrismaAmbiguousFeedParticipantRepository } from './prisma-ambiguous-feed-participant-repository';
 export { PrismaEmailMessageRepository } from './prisma-email-message-repository';
 export { PrismaBackgroundJobRepository, insertBackgroundJobs } from './prisma-background-job-repository';
 export { PrismaEmailOptOutRepository } from './prisma-email-opt-out-repository';

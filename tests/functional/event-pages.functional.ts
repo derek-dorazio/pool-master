@@ -53,7 +53,7 @@ afterAll(async () => {
 
 /** The Conference Championships seed moved to a future season: its schedule, players and field, no results. */
 function upcomingSeed(): SportDataFile {
-  const file = parseSportDataFile(JSON.parse(readFileSync(SEED, 'utf8')) as unknown, { allowTestData: true });
+  const file = parseSportDataFile(JSON.parse(readFileSync(SEED, 'utf8')) as unknown);
   file.scope.season = YEAR;
   file.scope.sportLeagues = ['Championship Weekend'];
   file.scope.contents = file.scope.contents.filter((content) => ['SCHEDULE', 'PLAYERS', 'FIELDS'].includes(content));
