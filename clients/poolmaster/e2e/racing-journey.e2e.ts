@@ -39,14 +39,14 @@ const TIER_OF_HORSE: readonly number[] = [1, 1, 1, 2, 2, 2, 3, 3];
 const PICKED_HORSES: readonly number[] = [2, 4, 8];
 
 /**
- * The commissioner replaces the preset's 5, 3, 1 with this table, so the settled total can only
- * come out right if the edited table, not the preset, reached the contest.
+ * The commissioner types this table in (the circuit has no setup to start from), so the settled
+ * total can only come out right if the typed table reached the contest.
  */
 const POINTS_TABLE: readonly number[] = [10, 6, 4, 2];
 
 /**
  * The official result, by horse number: its place, or how its race ended. Horse 4 wins, horse 2
- * is third and horse 8 fourth, so the member's entry scores 10 + 4 + 2 = 16. On the preset's
+ * is third and horse 8 fourth, so the member's entry scores 10 + 4 + 2 = 16. On the usual
  * 5, 3, 1 it would have scored 5 + 1 + 0 = 6.
  */
 const FINISHING_ORDER: ReadonlyArray<{ horse: number; place: number | null; status: string }> = [
@@ -307,7 +307,7 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
     await expect(page.getByTestId('league-home')).toBeVisible();
   });
 
-  await test.step('choose horse racing and the race; the Win / Place / Show preset fills in 5, 3, 1', async () => {
+  await test.step('choose horse racing and the race; the run\'s own circuit has no contest setups, so no preset fills the rules', async () => {
     await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
     await page.getByTestId('contest-sport-HORSE_RACING').click();
@@ -315,11 +315,14 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
     await expect(raceChoice).toContainText(run.tournamentName);
     await raceChoice.click();
     await expect(raceChoice).toBeChecked();
-    await expect(page.getByTestId('contest-scoring-points-table')).toHaveValue('5, 3, 1');
-    await expect(page.getByTestId('contest-tiered-picks-per-tier')).toHaveValue('1');
+    // Every setup is one sport league's, seeded by migration (#1825); a circuit an admin adds has none.
+    await expect(page.getByTestId('contest-scoring-points-table')).toHaveValue('');
   });
 
-  await test.step(`replace the points table with ${POINTS_TABLE.join(', ')}, name the contest, and create it`, async () => {
+  await test.step(`set one horse a tier, all three count, nothing for not finishing, the points table ${POINTS_TABLE.join(', ')}, name the contest, and create it`, async () => {
+    await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
+    await page.getByTestId('contest-tiered-counted-scores').fill('3');
+    await page.getByTestId('contest-scoring-did-not-finish-points').fill('0');
     await page.getByTestId('contest-scoring-points-table').fill(POINTS_TABLE.join(', '));
     await page.getByTestId('contest-name').fill(run.contestName);
     const created = await submitAndRead<{ contest: { id: string; sport?: string | null } }>(
