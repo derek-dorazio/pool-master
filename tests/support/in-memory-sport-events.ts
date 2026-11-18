@@ -102,6 +102,8 @@ export class InMemorySportEvents {
   readonly providerNotifications: ProviderNotificationReceipt[] = [];
   /** The jobs each status move or edit wrote with it (#1448, #1464). */
   backgroundJobs: BackgroundJobRequest[] = [];
+  /** Active contest setups each sport league offers (#1823); a league not listed offers one. */
+  contestSetupCounts = new Map<string, number>();
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -117,7 +119,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -191,7 +193,7 @@ export class InMemorySportEvents {
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -390,6 +392,24 @@ export class InMemorySportEvents {
       recordProviderNotification: async (receipt) => {
         this.providerNotifications.push(receipt);
       },
+      findReleaseFacts: async (event) => ({
+        scheduledRoundCount: this.roundRows.filter((round) => round.sportEventId === event.id).length,
+        unlinkedParticipantCount: event.linkProviderId === null ? null : this.field.filter((entry) => (
+          entry.sportEventId === event.id
+          && entry.isActive
+          && !this.mappings.some((mapping) => mapping.participantId === entry.participantId && mapping.providerId === event.linkProviderId)
+        )).length,
+        contestSetupCount: this.contestSetupCounts.get(event.sportLeagueId) ?? 1,
+      }),
+      findAutoReleaseCandidates: async (now, horizon) => this.events.flatMap((row) => {
+        const league = this.sportLeagues.find((candidate) => candidate.id === row.sportLeagueId);
+        if (row.status !== 'DRAFT' || row.startDate <= now || row.startDate > horizon) return [];
+        if (!league?.isActive || league.eventSyncProviderId === null || league.autoReleaseDaysBeforeStart === null) return [];
+        return [{
+          id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope,
+          eventSyncProviderId: league.eventSyncProviderId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
+        }];
+      }),
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')

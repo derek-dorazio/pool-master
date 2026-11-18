@@ -130,7 +130,9 @@ A sport league whose `event_sync_provider_id` a root admin has set (the sport le
 details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreationScheduler`
 (`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
 ingestion scheduler) runs the year import below for this calendar year and the next, for each
-active synced league. New events are born `DRAFT` and wait for an admin's release, for now. Setting
+active synced league. New events are born `DRAFT`; each releases itself once every ready check
+passes, within its league's `autoReleaseDaysBeforeStart` window (#1823, the `RELEASE_SPORT_EVENT`
+job in `docs/BACKGROUND-JOBS.md`), or by an admin's press before then. Setting
 the provider is refused unless it is registered and covers the league's sport, and the league has
 a match keyword. One league's failed read is logged and the sweep goes on.
 

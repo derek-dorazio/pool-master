@@ -18986,6 +18986,15 @@
               "null"
             ]
           },
+          "autoReleaseDaysBeforeStart": {
+            "description": "How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 30
+          },
           "bracketAdvancement": {
             "type": "string",
             "enum": [
@@ -19116,6 +19125,7 @@
           "currentEventYear",
           "isActive",
           "eventSyncProviderId",
+          "autoReleaseDaysBeforeStart",
           "bracketAdvancement",
           "roundNames",
           "matchPeriodLayout",
@@ -19227,6 +19237,15 @@
                     "string",
                     "null"
                   ]
+                },
+                "autoReleaseDaysBeforeStart": {
+                  "description": "How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 30
                 },
                 "bracketAdvancement": {
                   "type": "string",
@@ -19358,6 +19377,7 @@
                 "currentEventYear",
                 "isActive",
                 "eventSyncProviderId",
+                "autoReleaseDaysBeforeStart",
                 "bracketAdvancement",
                 "roundNames",
                 "matchPeriodLayout",
@@ -19448,6 +19468,15 @@
                   "string",
                   "null"
                 ]
+              },
+              "autoReleaseDaysBeforeStart": {
+                "description": "How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 30
               },
               "bracketAdvancement": {
                 "type": "string",
@@ -19579,6 +19608,7 @@
               "currentEventYear",
               "isActive",
               "eventSyncProviderId",
+              "autoReleaseDaysBeforeStart",
               "bracketAdvancement",
               "roundNames",
               "matchPeriodLayout",
@@ -19665,6 +19695,15 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "autoReleaseDaysBeforeStart": {
+            "description": "Days before an event's start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 30
           },
           "eventSyncProviderId": {
             "description": "Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way.",
@@ -20554,6 +20593,258 @@
         "additionalProperties": false,
         "description": "What only a root admin reads of an event: what still stops its release, and how many contests run on it."
       },
+      "ReleaseCheckDto": {
+        "description": "One ready check of a draft event's release, keyed by which check it is.",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "NOT_STARTED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "string",
+                "format": "date-time",
+                "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "ROUNDS_SCHEDULED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "FIELD_LOADED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "FIELD_LINKED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "TIERS_ASSIGNED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "TIERS_FILLED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "PRICES_ASSIGNED"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BRACKET_COMPLETE"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "CONTEST_SETUPS_ON"
+                ]
+              },
+              "passed": {
+                "type": "boolean",
+                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+              },
+              "value": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
+              }
+            },
+            "required": [
+              "key",
+              "passed",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -20810,6 +21101,265 @@
             "maximum": 9007199254740991,
             "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
           },
+          "releaseChecks": {
+            "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "description": "One ready check of a draft event's release, keyed by which check it is.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "ROUNDS_SCHEDULED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "FIELD_LOADED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "FIELD_LINKED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "TIERS_ASSIGNED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "TIERS_FILLED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "PRICES_ASSIGNED"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BRACKET_COMPLETE"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "CONTEST_SETUPS_ON"
+                      ]
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "passed",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
           "adminCounts": {
             "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
             "type": [
@@ -20905,6 +21455,7 @@
           "providerSynced",
           "autoLifecycleEnabled",
           "tierCount",
+          "releaseChecks",
           "adminCounts",
           "allowedTransitions",
           "createdAt",
@@ -21228,6 +21779,265 @@
                   "maximum": 9007199254740991,
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
+                "releaseChecks": {
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "description": "One ready check of a draft event's release, keyed by which check it is.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "NOT_STARTED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "ROUNDS_SCHEDULED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "FIELD_LOADED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "FIELD_LINKED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "TIERS_ASSIGNED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "TIERS_FILLED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "PRICES_ASSIGNED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "BRACKET_COMPLETE"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "CONTEST_SETUPS_ON"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -21323,6 +22133,7 @@
                 "providerSynced",
                 "autoLifecycleEnabled",
                 "tierCount",
+                "releaseChecks",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -21633,6 +22444,265 @@
                 "maximum": 9007199254740991,
                 "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
               },
+              "releaseChecks": {
+                "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "description": "One ready check of a draft event's release, keyed by which check it is.",
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "NOT_STARTED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "ROUNDS_SCHEDULED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "FIELD_LOADED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "FIELD_LINKED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "TIERS_ASSIGNED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "TIERS_FILLED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "PRICES_ASSIGNED"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "BRACKET_COMPLETE"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "enum": [
+                            "CONTEST_SETUPS_ON"
+                          ]
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "passed",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
               "adminCounts": {
                 "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                 "type": [
@@ -21728,6 +22798,7 @@
               "providerSynced",
               "autoLifecycleEnabled",
               "tierCount",
+              "releaseChecks",
               "adminCounts",
               "allowedTransitions",
               "createdAt",
@@ -22159,6 +23230,265 @@
                   "maximum": 9007199254740991,
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
+                "releaseChecks": {
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "description": "One ready check of a draft event's release, keyed by which check it is.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "NOT_STARTED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "ROUNDS_SCHEDULED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "FIELD_LOADED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "FIELD_LINKED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "TIERS_ASSIGNED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "TIERS_FILLED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "PRICES_ASSIGNED"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "BRACKET_COMPLETE"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "CONTEST_SETUPS_ON"
+                            ]
+                          },
+                          "passed": {
+                            "type": "boolean",
+                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "passed",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -22254,6 +23584,7 @@
                 "providerSynced",
                 "autoLifecycleEnabled",
                 "tierCount",
+                "releaseChecks",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -79733,7 +81064,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. Root admin only.",
+        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

@@ -42,6 +42,9 @@ fallback for leagues with no feed and for corrections.**
   to commissioners by an explicit step (the draft-and-release decision of 2026-10-07). Whether
   that step stays an admin's press or becomes automatic for a synced league is decided with the
   follow-up work, not here.
+  *Since decided (Derek, 2026-11-18, #1823):* a synced draft is released automatically once every
+  ready check passes, within its sport league's window before the start; the admin's press stays
+  for the rest. See `rules/architecture-rules.md` §4 *A live provider sync is the source of its league's events*.
 - **The admin.** The root admin event pages become mainly read and browse for synced leagues:
   what the sync created, its field, its sync history, its scores. Creating, editing and entering
   results by hand remain for leagues with no feed (racing, cycling, marathons and the other

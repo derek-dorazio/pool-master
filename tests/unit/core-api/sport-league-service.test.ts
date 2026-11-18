@@ -37,6 +37,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     currentEventYear: null,
     isActive: true,
     eventSyncProviderId: null,
+    autoReleaseDaysBeforeStart: 7,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

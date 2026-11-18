@@ -65,6 +65,7 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     currentEventYear: null,
     isActive: true,
     eventSyncProviderId: null,
+    autoReleaseDaysBeforeStart: 7,
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],
     tierCount: null,

@@ -765,3 +765,83 @@ async function createContestFixture(sportEventId: string) {
   });
   return { contestId: contest.id, entryId: entry.id };
 }
+
+describe('SportEventRepository — automatic release reads (#1823)', () => {
+  const NOW = new Date('2026-06-01T12:00:00.000Z');
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  /** A golf sport league of its own, synced by `providerId` unless null, with this release window. */
+  async function syncedLeague(providerId: string | null, autoReleaseDaysBeforeStart: number | null = 7) {
+    return getPrisma().sportLeague.create({
+      data: { sportId: await golfSportId(), name: `Auto Release Tour ${randomUUID()}`, matchKeyword: 'AUTO', eventSyncProviderId: providerId, autoReleaseDaysBeforeStart },
+    });
+  }
+
+  async function draftIn(sportLeagueId: string, daysAhead: number, providerId = 'balldontlie', status: 'DRAFT' | 'SCHEDULED' = 'DRAFT') {
+    const series = await seriesNamed(repos().eventSeries, sportLeagueId, `Series ${randomUUID()}`);
+    return createSportEventRow(repos().events, {
+      eventSeriesId: series.id,
+      eventYear: 2026,
+      externalId: `auto-${randomUUID()}`,
+      providerId,
+      sport: Sport.GOLF,
+      name: 'Auto Release Open',
+      startDate: new Date(NOW.getTime() + daysAhead * DAY_MS),
+      status,
+      syncScope: 'SCORES_ONLY',
+      autoLifecycleEnabled: true,
+    });
+  }
+
+  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window, in a fixed three indexed statements', async () => {
+    const synced = await syncedLeague('balldontlie', 5);
+    const unsynced = await syncedLeague(null);
+    const off = await syncedLeague('balldontlie', null);
+    const soon = await draftIn(synced.id, 3);
+    const later = await draftIn(synced.id, 20);
+    await draftIn(synced.id, 40);
+    await draftIn(synced.id, -1);
+    await draftIn(synced.id, 3, 'balldontlie', 'SCHEDULED');
+    await draftIn(unsynced.id, 3);
+    await draftIn(off.id, 3);
+
+    const { result, statements } = await recordStatements(() => repos().events.findAutoReleaseCandidates(NOW, new Date(NOW.getTime() + 30 * DAY_MS)));
+
+    expect(result).toEqual([
+      { id: soon.id, startDate: soon.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: later.id, startDate: later.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+    ]);
+    // The events, then their series and leagues in one read each, however many events there are.
+    expect(statements).toHaveLength(3);
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
+  });
+
+  it('counts an event\'s rounds, its active golfers the provider has no mapping for, and the active setups its league offers, in three statements', async () => {
+    const league = await syncedLeague('balldontlie');
+    const event = await draftIn(league.id, 3);
+    const { rounds, field, mappings } = repos();
+    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
+    const [linked, unlinked, withdrawn] = await createParticipants(['Linked Golfer', 'Unlinked Golfer', 'Withdrawn Golfer']);
+    await field.createMany(event.id, [{ participantId: linked.id }, { participantId: unlinked.id }, { participantId: withdrawn.id }]);
+    await getPrisma().sportEventParticipant.updateMany({ where: { sportEventId: event.id, participantId: withdrawn.id }, data: { isActive: false } });
+    await mappings.bind({ participantId: linked.id, providerId: 'balldontlie', externalId: `bdl-${randomUUID()}`, confidence: 'EXACT', mappedAt: NOW });
+    const template = { sport: Sport.GOLF, contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
+    await getPrisma().contestConfigTemplate.createMany({
+      data: [
+        { ...template, sportLeagueId: league.id, templateKey: `own-${randomUUID()}` },
+        { ...template, sportLeagueId: league.id, templateKey: `off-${randomUUID()}`, active: false },
+      ],
+    });
+
+    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sport: Sport.GOLF, sportLeagueId: league.id, linkProviderId: 'balldontlie' }));
+
+    expect(result.scheduledRoundCount).toBe(2);
+    expect(result.unlinkedParticipantCount).toBe(1);
+    // Its own active setup, and whatever sport-wide golf setups the catalog seeds.
+    const sportWide = await getPrisma().contestConfigTemplate.count({ where: { sport: Sport.GOLF, sportLeagueId: null, active: true } });
+    expect(result.contestSetupCount).toBe(1 + sportWide);
+    expect(statements).toHaveLength(3);
+    await expect(repos().events.findReleaseFacts({ id: event.id, sport: Sport.GOLF, sportLeagueId: league.id, linkProviderId: null }))
+      .resolves.toMatchObject({ unlinkedParticipantCount: null });
+  });
+});

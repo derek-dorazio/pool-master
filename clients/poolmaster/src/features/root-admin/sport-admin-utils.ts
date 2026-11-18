@@ -11,7 +11,7 @@ import type {
   SportEventParticipantDto,
   SportEventRoundDto,
 } from '@/lib/api';
-import { SportEventStatus, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
+import { SportEventStatus, assertNever, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -126,52 +126,46 @@ export function resolveEventLifecycleStage(status: SportEventDtoStatus): EventLi
 // --- Release (#431) ---
 
 /**
- * What still stops a draft tournament being released, in the admin's words: the same checks
- * the server makes. Empty when it is ready, or when it is not a draft. The tier and price checks
- * read the root admin's counts, which only a root admin's read carries (#1198).
+ * What still stops a draft event's release, one sentence per failed ready check, in the sport's
+ * words. The server judges the checks (#1823) and the event read carries them; this only words
+ * them. Empty once the event is released, or when every check passes.
  */
-export function describeEventReleaseBlockers(
-  tournament: Pick<SportEventDto, 'sport' | 'status' | 'startDate' | 'loadedParticipantCount' | 'adminCounts' | 'pricing'>,
-  now: Date = new Date(),
+export function describeFailedReleaseChecks(
+  tournament: Pick<SportEventDto, 'sport' | 'status' | 'releaseChecks'>,
 ): string[] {
   if (tournament.status !== SportEventStatus.DRAFT) {
     return [];
   }
+  // Without the checks nothing says the event is ready, so the release waits for them.
+  if (tournament.releaseChecks === null) {
+    return ['Its ready checks have not loaded yet.'];
+  }
   const { participant } = getSportDefinition(tournament.sport).vocabulary;
-  const blockers: string[] = [];
-  if (new Date(tournament.startDate).getTime() <= now.getTime()) {
-    blockers.push('Its start time has passed, so it can no longer be released.');
-  }
-  if (tournament.loadedParticipantCount === 0) {
-    blockers.push('Load the field.');
-  }
-  const counts = tournament.adminCounts;
-  // Without the counts nothing says the tiers and prices are ready, so the release waits for them.
-  if (counts === null) {
-    blockers.push('Its tier and price checks have not loaded yet.');
-    return blockers;
-  }
-  if (counts.untieredParticipantCount > 0) {
-    blockers.push(
-      counts.untieredParticipantCount === 1
-        ? `Put the 1 active ${participant.one} without a tier into a tier.`
-        : `Put the ${counts.untieredParticipantCount} active ${participant.many} without a tier into tiers.`,
-    );
-  }
-  // No entry could pick from a tier nobody is in, so a tiered contest on it could never be completed.
-  for (const label of counts.emptyTierLabels) {
-    blockers.push(`${label} has no ${participant.many}. Move ${participant.many} into it or delete it.`);
-  }
-  if (!tournament.pricing) {
-    blockers.push('Assign prices on the Tiers page.');
-  } else if (counts.unpricedParticipantCount > 0) {
-    blockers.push(
-      counts.unpricedParticipantCount === 1
-        ? `Price the 1 active ${participant.one} without a price.`
-        : `Price the ${counts.unpricedParticipantCount} active ${participant.many} without a price.`,
-    );
-  }
-  return blockers;
+  const some = (count: number): string => (count === 1 ? `1 active ${participant.one}` : `${count} active ${participant.many}`);
+  return tournament.releaseChecks.filter((check) => !check.passed).flatMap((check): string[] => {
+    switch (check.key) {
+      case 'NOT_STARTED':
+        return ['Its start time has passed, so it can no longer be released.'];
+      case 'ROUNDS_SCHEDULED':
+        return ['Schedule its rounds.'];
+      case 'FIELD_LOADED':
+        return ['Load the field.'];
+      case 'FIELD_LINKED':
+        return [`Link the ${some(check.value)} the provider does not know yet.`];
+      case 'TIERS_ASSIGNED':
+        return [check.value === 1 ? `Put the ${some(1)} without a tier into a tier.` : `Put the ${some(check.value)} without a tier into tiers.`];
+      case 'TIERS_FILLED':
+        return check.value.map((label) => `${label} has no ${participant.many}. Move ${participant.many} into it or delete it.`);
+      case 'PRICES_ASSIGNED':
+        return [check.value === null ? 'Assign prices on the Tiers page.' : `Price the ${some(check.value)} without a price.`];
+      case 'BRACKET_COMPLETE':
+        return check.value.map((missing) => `${missing.charAt(0).toUpperCase()}${missing.slice(1)}.`);
+      case 'CONTEST_SETUPS_ON':
+        return ['Turn on a contest setup for its sport league.'];
+      default:
+        return assertNever(check);
+    }
+  });
 }
 
 /** Tiers and prices lock when the tournament is released (#431). */

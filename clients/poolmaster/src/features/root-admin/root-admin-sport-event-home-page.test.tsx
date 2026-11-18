@@ -7,7 +7,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventEditPage } from './root-admin-sport-event-edit-page';
 import { RootAdminSportEventHomePage } from './root-admin-sport-event-home-page';
 import { RootAdminSportEventSchedulePage } from './root-admin-sport-event-schedule-page';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { passingReleaseChecks, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // plans/124 §6.3 — tournament Overview: header + details + workflow rail + score source
 // (pool-master-3dg).
@@ -184,7 +184,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
   });
 
   describe('Release for contests', () => {
-    // The release checks compare against the start time, so the clock is pinned before it.
+    // The page's start-relative hints read the clock, so it is pinned before the start.
     beforeEach(() => {
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-04-01T00:00:00.000Z'));
@@ -196,7 +196,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('lists what is missing and keeps the button disabled while a draft has untiered golfers', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({
-        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], adminCounts: { untieredParticipantCount: 3, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 } }) },
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks({ key: 'TIERS_ASSIGNED', passed: false, value: 3 }) }) },
       });
       renderPage();
 
@@ -209,7 +209,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('names an empty tier and keeps the button disabled while a draft race has a tier with no drivers', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({
-        data: { event: tournament({ sport: 'AUTO_RACING', status: 'DRAFT', allowedTransitions: ['CANCELLED'], tierCount: 4, adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: ['Tier 4'], contestCount: 0 } }) },
+        data: { event: tournament({ sport: 'AUTO_RACING', status: 'DRAFT', allowedTransitions: ['CANCELLED'], tierCount: 4, releaseChecks: passingReleaseChecks({ key: 'TIERS_FILLED', passed: false, value: ['Tier 4'] }) }) },
       });
       renderPage();
 

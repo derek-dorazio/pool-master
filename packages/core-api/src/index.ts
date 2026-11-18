@@ -87,6 +87,7 @@ import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
+import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import {
@@ -295,6 +296,13 @@ export function buildApp() {
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
   // One set of event services for the admin routes and the synced event creation sweep.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
+  // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
+  const sportEventAutoReleaseScheduler = new SportEventAutoReleaseScheduler({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    jobs: backgroundJobs,
+    jobLock,
+    logger: app.log,
+  });
   // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
   const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -336,6 +344,7 @@ export function buildApp() {
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+      RELEASE_SPORT_EVENT: async (payload) => { await sportEventServices.sportEvents.autoReleaseEvent(payload.sportEventId); },
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -446,6 +455,9 @@ export function buildApp() {
     // The automatic squares draw always runs, like the lifecycle sweep: it follows game times, not a provider.
     squaresAutoDrawScheduler.start();
 
+    // The automatic event release always runs, like the lifecycle sweep: each league's window turns it on or off.
+    sportEventAutoReleaseScheduler.start();
+
     // The clock-driven emails always run, each on its own timer, as the lifecycle sweep does.
     for (const scheduler of dueNotificationsSchedulers) scheduler.start();
 
@@ -465,6 +477,7 @@ export function buildApp() {
     syncedEventCreationScheduler.stop();
     eventLifecycleScheduler.stop();
     squaresAutoDrawScheduler.stop();
+    sportEventAutoReleaseScheduler.stop();
     for (const scheduler of dueNotificationsSchedulers) scheduler.stop();
     emailSender.stop();
     nightlyCleanupScheduler.stop();

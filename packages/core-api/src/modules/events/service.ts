@@ -29,7 +29,15 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
+  eventPlaysMatches,
   eventSportDefinition,
+  isProviderSyncedEvent,
+  isWithinAutoReleaseWindow,
+  ReleaseAttemptOutcome,
+  type ReleaseAttemptResult,
+  ReleaseAttemptSkipReason,
+  type ReleaseCheck,
+  ReleaseCheckKey,
   sportLeagueDefinitionOf,
   MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
@@ -40,7 +48,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
-import { hasSportEventStarted } from './operational-timing';
+import { describeFailedReleaseCheck, evaluateReleaseChecks, failedReleaseChecks } from './release-checks';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
 import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
@@ -70,6 +78,12 @@ export interface SportEventSummary {
   tierCount: number;
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
   adminCounts: SportEventAdminCounts | null;
+  /**
+   * A DRAFT event's ready checks (#1823), on a root admin's read of the one event and every admin
+   * action's answer; absent on lists (its bracket check reads each event's bracket) and for a
+   * released event.
+   */
+  releaseChecks?: ReleaseCheck[];
 }
 
 /** An event summary with the root admin's counts filled in. */
@@ -509,7 +523,8 @@ export class SportEventService {
         409,
       );
     }
-    if (hasSportEventStarted(event, this.now())) {
+    const failed = failedReleaseChecks(summary.releaseChecks ?? await this.releaseChecksFor(summary));
+    if (failed.some((check) => check.key === ReleaseCheckKey.NOT_STARTED)) {
       this.deps.logger?.warn(
         { sportEventId, startDate: event.startDate.toISOString() },
         'Refused to release a sport event whose start time has passed',
@@ -520,26 +535,62 @@ export class SportEventService {
         409,
       );
     }
-    const missing = await this.releaseBlockersFor(summary);
-    if (missing.length > 0) {
+    if (failed.length > 0) {
       this.deps.logger?.warn(
-        {
-          sportEventId,
-          loadedParticipantCount: summary.loadedParticipantCount,
-          untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
-          unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
-          emptyTierLabels: summary.adminCounts.emptyTierLabels,
-          isPriced: summary.event.pricingConfig !== undefined,
-        },
+        { sportEventId, failedChecks: failed.map((check) => ({ key: check.key, value: check.value })) },
         'Refused to release a sport event that is not ready',
       );
       throw new SportEventError(
-        `Sport event ${sportEventId} is not ready to release: ${missing.join('; ')}.`,
+        `Sport event ${sportEventId} is not ready to release: ${this.describeFailed(event, failed).join('; ')}.`,
         'SPORT_EVENT_NOT_READY',
         422,
       );
     }
+    await this.release(sportEventId);
+    return this.requireAdminSummary(sportEventId);
+  }
 
+  /**
+   * One automatic release attempt (#1823), the RELEASE_SPORT_EVENT job's handler: the event is
+   * judged again as it stands now. Every ready check passing releases it through the same path as
+   * the manual button; any failing holds it as a draft for the next sweep. Either way the result
+   * carries every check and its value. An event that has since been released, stopped being
+   * synced, or left its league's window is skipped.
+   */
+  async autoReleaseEvent(sportEventId: string): Promise<ReleaseAttemptResult> {
+    const summary = await this.requireAdminSummary(sportEventId);
+    const skipReason = await this.autoReleaseSkipReason(summary.event);
+    if (skipReason !== null) {
+      this.deps.logger?.info({ action: 'events.autoRelease.skipped', data: { sportEventId, reason: skipReason } }, 'Skipped an automatic event release');
+      return { outcome: ReleaseAttemptOutcome.SKIPPED, reason: skipReason };
+    }
+    const checks = summary.releaseChecks ?? await this.releaseChecksFor(summary);
+    const failed = failedReleaseChecks(checks);
+    if (failed.length > 0) {
+      this.deps.logger?.info(
+        { action: 'events.autoRelease.held', data: { sportEventId, failedChecks: failed.map((check) => check.key) } },
+        'Held an automatic event release: a ready check failed',
+      );
+      return { outcome: ReleaseAttemptOutcome.HELD, checks };
+    }
+    await this.release(sportEventId);
+    this.deps.logger?.info({ action: 'events.autoRelease.released', data: { sportEventId } }, 'Released a sport event automatically');
+    return { outcome: ReleaseAttemptOutcome.RELEASED, checks };
+  }
+
+  /** Why the event is no longer one to release on its own, or null when it still is. */
+  private async autoReleaseSkipReason(event: SportEvent): Promise<ReleaseAttemptSkipReason | null> {
+    if (event.status !== SportEventStatus.DRAFT) return ReleaseAttemptSkipReason.NOT_DRAFT;
+    if (!isProviderSyncedEvent(event)) return ReleaseAttemptSkipReason.NOT_SYNCED;
+    const sportLeague = await this.deps.sportLeagues.findById(event.sportLeagueId);
+    const days = sportLeague?.isActive ? sportLeague.autoReleaseDaysBeforeStart : null;
+    if (days === null) return ReleaseAttemptSkipReason.AUTO_RELEASE_OFF;
+    if (!isWithinAutoReleaseWindow(event.startDate, days, this.now())) return ReleaseAttemptSkipReason.OUTSIDE_WINDOW;
+    return null;
+  }
+
+  /** DRAFT → SCHEDULED through the one status path, whether a root admin or the sweep released it. */
+  private async release(sportEventId: string): Promise<void> {
     await this.deps.lifecycle.applySportEventStatusTransition({
       sportEventId,
       toStatus: SportEventStatus.SCHEDULED,
@@ -547,7 +598,6 @@ export class SportEventService {
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
-    return this.requireAdminSummary(sportEventId);
   }
 
   /** Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. */
@@ -571,11 +621,49 @@ export class SportEventService {
    * lists them.
    */
   async releaseBlockersOf(sportEventId: string): Promise<string[]> {
-    return this.releaseBlockersFor(await this.requireAdminSummary(sportEventId));
+    const summary = await this.requireAdminSummary(sportEventId);
+    const checks = summary.releaseChecks ?? await this.releaseChecksFor(summary);
+    // The email is about what to do before the start, so the start itself is not one of them.
+    const failed = failedReleaseChecks(checks).filter((check) => check.key !== ReleaseCheckKey.NOT_STARTED);
+    return this.describeFailed(summary.event, failed);
   }
 
-  private async releaseBlockersFor(summary: SportEventAdminSummary): Promise<string[]> {
-    return [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(summary.event)];
+  /** The event's ready checks as it stands now (#1823): its admin counts, its release facts and its bracket. */
+  private async releaseChecksFor(summary: SportEventAdminSummary): Promise<ReleaseCheck[]> {
+    const { event } = summary;
+    const [facts, bracketBlockers] = await Promise.all([
+      this.deps.sportEvents.findReleaseFacts({
+        id: event.id,
+        sport: event.sport,
+        sportLeagueId: event.sportLeagueId,
+        linkProviderId: isProviderSyncedEvent(event) ? event.providerId : null,
+      }),
+      eventPlaysMatches(event) ? this.deps.bracket.releaseBlockers(event) : Promise.resolve(null),
+    ]);
+    return evaluateReleaseChecks({
+      startDate: event.startDate,
+      now: this.now(),
+      scheduledRoundCount: facts.scheduledRoundCount,
+      loadedParticipantCount: summary.loadedParticipantCount,
+      unlinkedParticipantCount: facts.unlinkedParticipantCount,
+      untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
+      emptyTierLabels: summary.adminCounts.emptyTierLabels,
+      isPriced: event.pricingConfig !== undefined,
+      unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
+      bracketBlockers,
+      contestSetupCount: facts.contestSetupCount,
+    });
+  }
+
+  private describeFailed(event: SportEvent, failed: readonly ReleaseCheck[]): string[] {
+    const { participant } = eventSportDefinition(event).vocabulary;
+    return failed.flatMap((check) => describeFailedReleaseCheck(check, participant));
+  }
+
+  /** A root admin's summary, with a DRAFT event's ready checks. */
+  private async withReleaseChecks(summary: SportEventAdminSummary): Promise<SportEventAdminSummary> {
+    if (summary.event.status !== SportEventStatus.DRAFT) return summary;
+    return { ...summary, releaseChecks: await this.releaseChecksFor(summary) };
   }
 
   /**
@@ -587,14 +675,15 @@ export class SportEventService {
     options: SportEventReadOptions & { releasedOnly?: boolean },
   ): Promise<SportEventSummary> {
     const event = await this.requireEvent(sportEventId, options);
-    const [summary] = options.adminCounts ? await this.summarizeForAdmin([event]) : await this.summarize([event]);
-    return summary;
+    if (!options.adminCounts) return (await this.summarize([event]))[0];
+    const [summary] = await this.summarizeForAdmin([event]);
+    return this.withReleaseChecks(summary);
   }
 
   /** The event with a root admin's counts: what every admin action answers with. */
   async requireAdminSummary(sportEventId: string): Promise<SportEventAdminSummary> {
     const [summary] = await this.summarizeForAdmin([await this.requireEvent(sportEventId)]);
-    return summary;
+    return this.withReleaseChecks(summary);
   }
 
   /**
@@ -715,28 +804,6 @@ export class SportEventService {
       },
     }));
   }
-}
-
-/** What still stops a DRAFT event being released, in words an admin can act on. */
-function describeReleaseBlockers(summary: SportEventAdminSummary): string[] {
-  const blockers: string[] = [];
-  const { untieredParticipantCount, unpricedParticipantCount, emptyTierLabels } = summary.adminCounts;
-  if (summary.loadedParticipantCount === 0) {
-    blockers.push('its field is not loaded');
-  }
-  if (untieredParticipantCount > 0) {
-    blockers.push(`${untieredParticipantCount} active participant(s) have no tier`);
-  }
-  const { participant } = eventSportDefinition(summary.event).vocabulary;
-  for (const label of emptyTierLabels) {
-    blockers.push(`${label} has no ${participant.many}`);
-  }
-  if (!summary.event.pricingConfig) {
-    blockers.push('its prices have not been assigned');
-  } else if (unpricedParticipantCount > 0) {
-    blockers.push(`${unpricedParticipantCount} active participant(s) have no price`);
-  }
-  return blockers;
 }
 
 /** One new edition to create: the event, and its round schedule. */

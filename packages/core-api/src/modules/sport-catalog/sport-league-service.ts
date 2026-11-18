@@ -131,7 +131,7 @@ export class SportLeagueService {
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId'> & { currentEventYear?: number },
+    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart'> & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
     await this.assertEventSyncFits(sportLeague, updates);
@@ -158,9 +158,13 @@ export class SportLeagueService {
       currentEventYear: updates.currentEventYear,
       bracketAdvancement: updates.bracketAdvancement,
       eventSyncProviderId: updates.eventSyncProviderId,
+      autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
     });
     if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== sportLeague.eventSyncProviderId) {
       this.deps.logger?.info({ sportLeagueId, eventSyncProviderId: updates.eventSyncProviderId }, 'Set sport league event sync');
+    }
+    if (updates.autoReleaseDaysBeforeStart !== undefined && updates.autoReleaseDaysBeforeStart !== sportLeague.autoReleaseDaysBeforeStart) {
+      this.deps.logger?.info({ sportLeagueId, autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }, 'Set sport league automatic release window');
     }
     if (updates.currentEventYear !== undefined) {
       this.deps.logger?.info({ sportLeagueId, currentEventYear: updates.currentEventYear }, 'Set current event year');

@@ -17,6 +17,7 @@ import {
 import { SettleSportEventContestsJobPayloadSchema } from '../contests/settle-sport-event-job-requests';
 import { SettleGameContestsJobPayloadSchema } from '../contests/settle-game-job-requests';
 import { RebuildLeaderboardsJobPayloadSchema } from '../contests/leaderboard-rebuild-job-requests';
+import { ReleaseSportEventJobPayloadSchema } from '../events/release-sport-event-job';
 
 export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.MANUAL_EVENT_SYNC]: ManualEventSyncJobPayloadSchema,
@@ -29,6 +30,7 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: SettleGameContestsJobPayloadSchema,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: RebuildLeaderboardsJobPayloadSchema,
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: AddReleasedEditionToContestJobPayloadSchema,
+  [BackgroundJobType.RELEASE_SPORT_EVENT]: ReleaseSportEventJobPayloadSchema,
 } as const satisfies Record<BackgroundJobType, z.ZodType>;
 
 /** What a job of type `T` carries. */

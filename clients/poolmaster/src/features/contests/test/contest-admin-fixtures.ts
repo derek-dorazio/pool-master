@@ -43,6 +43,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     tierCount: 6,
     // A commissioner's read: only a root admin's carries the admin counts (#1198).
     adminCounts: null,
+    releaseChecks: null,
     allowedTransitions: [],
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',

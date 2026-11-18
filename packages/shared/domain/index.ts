@@ -25,6 +25,7 @@ export * from './league-plans';
 export * from './event-pages';
 export * from './time-zones';
 export * from './brand';
+export * from './release-checks';
 export { assertNever, type AssertTrue } from './assert-never';
 export {
   compareScores,

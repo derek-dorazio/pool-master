@@ -1033,6 +1033,8 @@ export const BackgroundJobType = {
   REBUILD_LEADERBOARDS: 'REBUILD_LEADERBOARDS',
   /** Adds a released edition to one contest made from a template covering its series, a majors pool's major (#1318). */
   ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
+  /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */
+  RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 

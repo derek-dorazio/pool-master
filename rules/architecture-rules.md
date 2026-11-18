@@ -281,9 +281,14 @@ Building toward ADR-0011:
 
 - Sync-driven creation goes through the event service the year import uses (series, rounds and
   default tiers seeded the same way), and every new event is born `DRAFT`, as any event is.
-  For now, on QA, an admin releases it (Derek, 2026-11-13). That is an interim step, not a lasting
-  decision: the aim is automatic release once sync is tested and stable, so do not build
-  anything that assumes release stays manual.
+  **A synced draft releases itself once every ready check passes** (Derek, 2026-11-18, #1823,
+  superseding the October rule that release is always an admin's press): an hourly sweep queues
+  one `RELEASE_SPORT_EVENT` job per synced draft inside its sport league's
+  `autoReleaseDaysBeforeStart` window (7 days unless changed; null turns it off), and the job
+  releases through the same path as the manual button. The ready checks are judged on the server
+  only (`modules/events/release-checks.ts`) and carried on the event read as `releaseChecks`; the
+  web app words them and never recomputes them. Each attempt's checks and values are the job's
+  result, released or held. The manual "Release for contests" stays, gated by the same checks.
 - **On a synced event the provider wins.** A field the provider feeds for the event itself
   (name, dates, venue, participants, games) is overwritten by the next sync, an admin's edit
   included. There is no admin-correction marker for event details (Derek, 2026-11-13, choosing

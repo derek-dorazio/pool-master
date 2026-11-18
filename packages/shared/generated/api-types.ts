@@ -2882,7 +2882,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -9511,6 +9511,8 @@ export interface components {
             isActive: boolean;
             /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
             eventSyncProviderId: string | null;
+            /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
+            autoReleaseDaysBeforeStart: number | null;
             /**
              * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
              * @enum {string}
@@ -9603,6 +9605,8 @@ export interface components {
                 isActive: boolean;
                 /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
                 eventSyncProviderId: string | null;
+                /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
+                autoReleaseDaysBeforeStart: number | null;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -9686,6 +9690,8 @@ export interface components {
                 isActive: boolean;
                 /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
                 eventSyncProviderId: string | null;
+                /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
+                autoReleaseDaysBeforeStart: number | null;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -9763,6 +9769,8 @@ export interface components {
             /** @description null clears it. */
             matchKeyword?: string | null;
             isActive?: boolean;
+            /** @description Days before an event's start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league. */
+            autoReleaseDaysBeforeStart?: number | null;
             /** @description Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way. */
             eventSyncProviderId?: string | null;
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
@@ -10152,6 +10160,74 @@ export interface components {
             /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
             contestCount: number;
         };
+        /** @description One ready check of a draft event's release, keyed by which check it is. */
+        ReleaseCheckDto: {
+            /** @enum {string} */
+            key: "NOT_STARTED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /**
+             * Format: date-time
+             * @description NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+             */
+            value: string;
+        } | {
+            /** @enum {string} */
+            key: "ROUNDS_SCHEDULED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes. */
+            value: number;
+        } | {
+            /** @enum {string} */
+            key: "FIELD_LOADED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
+            value: number;
+        } | {
+            /** @enum {string} */
+            key: "FIELD_LINKED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes. */
+            value: number;
+        } | {
+            /** @enum {string} */
+            key: "TIERS_ASSIGNED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description TIERS_ASSIGNED: how many active field participants have no tier; 0 passes. */
+            value: number;
+        } | {
+            /** @enum {string} */
+            key: "TIERS_FILLED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+            value: string[];
+        } | {
+            /** @enum {string} */
+            key: "PRICES_ASSIGNED";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes. */
+            value: number | null;
+        } | {
+            /** @enum {string} */
+            key: "BRACKET_COMPLETE";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes. */
+            value: string[];
+        } | {
+            /** @enum {string} */
+            key: "CONTEST_SETUPS_ON";
+            /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+            passed: boolean;
+            /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
+            value: number;
+        };
         /** @description A real-world event a contest can be run on — a golf tournament, a race, a match. */
         SportEventDto: {
             /**
@@ -10254,6 +10330,74 @@ export interface components {
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
             tierCount: number;
+            /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released. */
+            releaseChecks: ({
+                /** @enum {string} */
+                key: "NOT_STARTED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /**
+                 * Format: date-time
+                 * @description NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+                 */
+                value: string;
+            } | {
+                /** @enum {string} */
+                key: "ROUNDS_SCHEDULED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes. */
+                value: number;
+            } | {
+                /** @enum {string} */
+                key: "FIELD_LOADED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
+                value: number;
+            } | {
+                /** @enum {string} */
+                key: "FIELD_LINKED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes. */
+                value: number;
+            } | {
+                /** @enum {string} */
+                key: "TIERS_ASSIGNED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description TIERS_ASSIGNED: how many active field participants have no tier; 0 passes. */
+                value: number;
+            } | {
+                /** @enum {string} */
+                key: "TIERS_FILLED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                value: string[];
+            } | {
+                /** @enum {string} */
+                key: "PRICES_ASSIGNED";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes. */
+                value: number | null;
+            } | {
+                /** @enum {string} */
+                key: "BRACKET_COMPLETE";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes. */
+                value: string[];
+            } | {
+                /** @enum {string} */
+                key: "CONTEST_SETUPS_ON";
+                /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                passed: boolean;
+                /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
+                value: number;
+            })[] | null;
             /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
             adminCounts: {
                 /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -10401,6 +10545,74 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released. */
+                releaseChecks: ({
+                    /** @enum {string} */
+                    key: "NOT_STARTED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /**
+                     * Format: date-time
+                     * @description NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+                     */
+                    value: string;
+                } | {
+                    /** @enum {string} */
+                    key: "ROUNDS_SCHEDULED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LOADED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LINKED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_ASSIGNED: how many active field participants have no tier; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_FILLED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "PRICES_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes. */
+                    value: number | null;
+                } | {
+                    /** @enum {string} */
+                    key: "BRACKET_COMPLETE";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "CONTEST_SETUPS_ON";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
+                    value: number;
+                })[] | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -10543,6 +10755,74 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released. */
+                releaseChecks: ({
+                    /** @enum {string} */
+                    key: "NOT_STARTED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /**
+                     * Format: date-time
+                     * @description NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+                     */
+                    value: string;
+                } | {
+                    /** @enum {string} */
+                    key: "ROUNDS_SCHEDULED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LOADED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LINKED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_ASSIGNED: how many active field participants have no tier; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_FILLED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "PRICES_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes. */
+                    value: number | null;
+                } | {
+                    /** @enum {string} */
+                    key: "BRACKET_COMPLETE";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "CONTEST_SETUPS_ON";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
+                    value: number;
+                })[] | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -10741,6 +11021,74 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released. */
+                releaseChecks: ({
+                    /** @enum {string} */
+                    key: "NOT_STARTED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /**
+                     * Format: date-time
+                     * @description NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+                     */
+                    value: string;
+                } | {
+                    /** @enum {string} */
+                    key: "ROUNDS_SCHEDULED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LOADED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "FIELD_LINKED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants have no mapping from the event's provider, so its scores would not reach them; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_ASSIGNED: how many active field participants have no tier; 0 passes. */
+                    value: number;
+                } | {
+                    /** @enum {string} */
+                    key: "TIERS_FILLED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "PRICES_ASSIGNED";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes. */
+                    value: number | null;
+                } | {
+                    /** @enum {string} */
+                    key: "BRACKET_COMPLETE";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes. */
+                    value: string[];
+                } | {
+                    /** @enum {string} */
+                    key: "CONTEST_SETUPS_ON";
+                    /** @description Whether the check passed. The event is released, by hand or automatically, only when every check passes. */
+                    passed: boolean;
+                    /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
+                    value: number;
+                })[] | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
