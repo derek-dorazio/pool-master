@@ -27054,6 +27054,169 @@ export type UnmappedProviderParticipantListResponse = {
 };
 
 /**
+ * A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: "needs linking" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here.
+ */
+export type AmbiguousFeedParticipantDto = {
+    /**
+     * UUID string.
+     */
+    id: string;
+    /**
+     * The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it.
+     */
+    sportLeagueId: string;
+    /**
+     * The provider whose feed sent it.
+     */
+    providerId: string;
+    /**
+     * The provider's id for it. Resolving maps this id, so the next sync links it on its own.
+     */
+    externalId: string;
+    /**
+     * Its name as the feed spells it, at the latest sync that found it ambiguous.
+     */
+    feedName: string;
+    /**
+     * The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out.
+     */
+    candidates: Array<{
+        /**
+         * UUID string.
+         */
+        participantId: string;
+        name: string;
+    }>;
+    /**
+     * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's "every participant linked" ready check fails while it is open.
+     */
+    events: Array<{
+        /**
+         * UUID string.
+         */
+        sportEventId: string;
+        name: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        startDate: string;
+    }>;
+    /**
+     * When it was linked or created. Null while it needs linking.
+     */
+    resolvedAt: string | null;
+    /**
+     * The participant it was linked to or created as. Null while open, or once that participant is deleted.
+     */
+    resolvedParticipantId: string | null;
+    /**
+     * When a sync first found it ambiguous.
+     */
+    createdAt: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Filters for the needs-linking list.
+ */
+export type AmbiguousFeedParticipantListQuery = {
+    /**
+     * Only the ones of this sport league. Without it, every sport league's.
+     */
+    sportLeagueId?: string;
+};
+
+/**
+ * The feed participants that still need linking, oldest first. Never paged.
+ */
+export type AmbiguousFeedParticipantListResponse = {
+    participants: Array<{
+        /**
+         * UUID string.
+         */
+        id: string;
+        /**
+         * The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it.
+         */
+        sportLeagueId: string;
+        /**
+         * The provider whose feed sent it.
+         */
+        providerId: string;
+        /**
+         * The provider's id for it. Resolving maps this id, so the next sync links it on its own.
+         */
+        externalId: string;
+        /**
+         * Its name as the feed spells it, at the latest sync that found it ambiguous.
+         */
+        feedName: string;
+        /**
+         * The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out.
+         */
+        candidates: Array<{
+            /**
+             * UUID string.
+             */
+            participantId: string;
+            name: string;
+        }>;
+        /**
+         * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's "every participant linked" ready check fails while it is open.
+         */
+        events: Array<{
+            /**
+             * UUID string.
+             */
+            sportEventId: string;
+            name: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            startDate: string;
+        }>;
+        /**
+         * When it was linked or created. Null while it needs linking.
+         */
+        resolvedAt: string | null;
+        /**
+         * The participant it was linked to or created as. Null while open, or once that participant is deleted.
+         */
+        resolvedParticipantId: string | null;
+        /**
+         * When a sync first found it ambiguous.
+         */
+        createdAt: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * How a root admin resolves a feed participant that needs linking.
+ */
+export type ResolveAmbiguousFeedParticipantRequest = {
+    /**
+     * Link it to one of its candidates.
+     */
+    resolution: 'LINK';
+    /**
+     * The candidate it is: one of `candidates`, or 422 FEED_PARTICIPANT_NOT_A_CANDIDATE.
+     */
+    participantId: string;
+} | {
+    /**
+     * None of the candidates is it.
+     */
+    resolution: 'CREATE';
+};
+
+/**
  * An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.
  */
 export type ProviderEventDto = {
@@ -34592,6 +34755,83 @@ export type ListUnmappedProviderParticipantsResponses = {
 };
 
 export type ListUnmappedProviderParticipantsResponse = ListUnmappedProviderParticipantsResponses[keyof ListUnmappedProviderParticipantsResponses];
+
+export type ListAmbiguousFeedParticipantsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Only the ones of this sport league. Without it, every sport league's.
+         */
+        sportLeagueId?: string;
+    };
+    url: '/api/v1/ingestion/ambiguous-participants';
+};
+
+export type ListAmbiguousFeedParticipantsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListAmbiguousFeedParticipantsError = ListAmbiguousFeedParticipantsErrors[keyof ListAmbiguousFeedParticipantsErrors];
+
+export type ListAmbiguousFeedParticipantsResponses = {
+    /**
+     * The feed participants that still need linking, oldest first. Never paged.
+     */
+    200: AmbiguousFeedParticipantListResponse;
+};
+
+export type ListAmbiguousFeedParticipantsResponse = ListAmbiguousFeedParticipantsResponses[keyof ListAmbiguousFeedParticipantsResponses];
+
+export type ResolveAmbiguousFeedParticipantData = {
+    body: ResolveAmbiguousFeedParticipantRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/ambiguous-participants/{id}/resolve';
+};
+
+export type ResolveAmbiguousFeedParticipantErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ResolveAmbiguousFeedParticipantError = ResolveAmbiguousFeedParticipantErrors[keyof ResolveAmbiguousFeedParticipantErrors];
+
+export type ResolveAmbiguousFeedParticipantResponses = {
+    /**
+     * A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: "needs linking" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here.
+     */
+    200: AmbiguousFeedParticipantDto;
+};
+
+export type ResolveAmbiguousFeedParticipantResponse = ResolveAmbiguousFeedParticipantResponses[keyof ResolveAmbiguousFeedParticipantResponses];
 
 export type ListProviderCatalogEventsData = {
     body?: never;

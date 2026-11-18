@@ -139,9 +139,15 @@ export class IngestionPersistence {
    * one's internal id by provider identity (#1183). The mappings are read in one query; a
    * mapped participant is updated only when a value changed, all in one transaction; an
    * unmapped one is linked to the site's participant of the same name (`matchByName`, #1496) or
-   * created, with its mapping, all in one transaction.
+   * created, with its mapping, all in one transaction. One whose name two or more of the site's
+   * participants could be is neither linked nor created: it waits as "needs linking" (#1824) for
+   * the event it was seen in (`holdAmbiguous`), and its field row is written once a root admin
+   * resolves it. With no linked event (`seenIn` null) it is only left unlinked.
    */
-  private async persistParticipants(participants: readonly ProviderParticipant[]): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
+  private async persistParticipants(
+    participants: readonly ProviderParticipant[],
+    seenIn: AmbiguousSighting | null,
+  ): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
     this.logger?.debug({
       count: participants.length,
       participants: participants.slice(0, 10).map((participant) => ({
@@ -180,6 +186,7 @@ export class IngestionPersistence {
 
     let linkedCount = 0;
     let createdCount = 0;
+    let ambiguousCount = 0;
     const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
     for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
       // poolmaster-allow-query-in-loop: once per distinct sport among new participants
@@ -206,7 +213,13 @@ export class IngestionPersistence {
       return participantId === undefined ? [] : leagues.idsOf(participant).map((sportLeagueId) => ({ participantId, sportLeagueId }));
     });
     if (unmapped.length > 0) {
-      const { linked, toCreate } = await this.matchByName(unmapped, sportIdOf, leagues);
+      const { linked, toCreate, ambiguous } = await this.matchByName(unmapped, sportIdOf, leagues);
+      // The needs-linking rows of the feed ids not mapped yet, in one read by the rows' unique key:
+      // one the sync now links or creates is resolved with it, and one still ambiguous is updated.
+      const heldByKey = new Map((await this.prisma.ambiguousFeedParticipant.findMany({
+        where: { OR: byProvider(unmapped) },
+        select: { id: true, providerId: true, externalId: true, resolvedAt: true },
+      })).map((row) => [providerKey(row), row]));
       const created = await this.prisma.$transaction(async (tx) => {
         const rows = toCreate.length === 0 ? [] : await tx.participant.createManyAndReturn({
           data: toCreate.map((participant) => {
@@ -239,11 +252,20 @@ export class IngestionPersistence {
         for (const mapping of createdMappings) ids.set(providerKey(mapping), mapping.participantId);
         const affiliations = affiliationsOf(ids);
         if (affiliations.length > 0) await tx.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
+        const settledAt = new Date();
+        for (const mapping of createdMappings) {
+          const held = heldByKey.get(providerKey(mapping));
+          if (!held || held.resolvedAt !== null) continue;
+          // poolmaster-allow-query-in-loop: the needs-linking rows a sync now answers (rare: each answered once, per-row participant, one transaction)
+          await tx.ambiguousFeedParticipant.update({ where: { id: held.id }, data: { resolvedAt: settledAt, resolvedParticipantId: mapping.participantId } });
+        }
         return createdMappings;
       });
+      if (ambiguous.length > 0 && seenIn) await this.holdAmbiguous(ambiguous, seenIn, heldByKey);
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
       linkedCount = linked.length;
       createdCount = toCreate.length;
+      ambiguousCount = ambiguous.length;
     } else {
       // A participant the feed already links joins the leagues it names too, so one created
       // before the sync affiliated new teams is put right by the next sync.
@@ -251,8 +273,65 @@ export class IngestionPersistence {
       if (affiliations.length > 0) await this.prisma.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
     }
 
-    this.logger?.info({ count: latestByKey.size, updated: updates.length, linked: linkedCount, created: createdCount }, 'Persisted participants from ingestion');
+    this.logger?.info({ count: latestByKey.size, updated: updates.length, linked: linkedCount, created: createdCount, needsLinking: ambiguousCount }, 'Persisted participants from ingestion');
     return { count: latestByKey.size, participantIdByKey };
+  }
+
+  /**
+   * Holds each ambiguous feed participant as "needs linking" (#1824): one row per feed id, created
+   * the first time and brought up to date (name, candidates, reopened) after, and one sighting of
+   * it in this event carrying the participant as the field sent it. In one transaction: the new
+   * rows in one statement, each held one updated (few: a field's ambiguous names), and the
+   * event's sightings of them replaced in two.
+   */
+  private async holdAmbiguous(
+    ambiguous: readonly AmbiguousMatch[],
+    seenIn: AmbiguousSighting,
+    heldByKey: ReadonlyMap<string, { id: string }>,
+  ): Promise<void> {
+    const fresh = ambiguous.filter(({ participant }) => !heldByKey.has(providerKey(participant)));
+    const held = ambiguous.flatMap((match) => {
+      const row = heldByKey.get(providerKey(match.participant));
+      return row ? [{ ...match, id: row.id }] : [];
+    });
+    await this.prisma.$transaction(async (tx) => {
+      const created = fresh.length === 0 ? [] : await tx.ambiguousFeedParticipant.createManyAndReturn({
+        data: fresh.map(({ participant, candidateIds }) => ({
+          sportLeagueId: seenIn.sportLeagueId,
+          providerId: participant.providerId,
+          externalId: participant.externalId,
+          feedName: participant.name,
+          candidateParticipantIds: [...candidateIds],
+        })),
+        select: { id: true, providerId: true, externalId: true },
+      });
+      for (const { id, participant, candidateIds } of held) {
+        // poolmaster-allow-query-in-loop: the held ambiguous names of one event's field (per-row values, one transaction)
+        await tx.ambiguousFeedParticipant.update({
+          where: { id },
+          data: { feedName: participant.name, candidateParticipantIds: [...candidateIds], resolvedAt: null },
+        });
+      }
+      const createdIdByKey = new Map(created.map((row) => [providerKey(row), row.id]));
+      const sightings = [
+        ...fresh.map(({ participant }) => ({ id: createdIdByKey.get(providerKey(participant)) as string, participant })),
+        ...held.map(({ id, participant }) => ({ id, participant })),
+      ];
+      await tx.ambiguousFeedParticipantSighting.deleteMany({
+        where: { sportEventId: seenIn.sportEventId, ambiguousFeedParticipantId: { in: sightings.map(({ id }) => id) } },
+      });
+      await tx.ambiguousFeedParticipantSighting.createMany({
+        data: sightings.map(({ id, participant }) => ({
+          ambiguousFeedParticipantId: id,
+          sportEventId: seenIn.sportEventId,
+          feedParticipant: toPrismaJson(participant),
+        })),
+      });
+    });
+    this.logger?.info({
+      sportEventId: seenIn.sportEventId,
+      needsLinking: ambiguous.map(({ participant, candidateIds }) => ({ externalId: participant.externalId, name: participant.name, candidates: candidateIds.length })),
+    }, 'Held ambiguous feed participants as needing linking');
   }
 
   /** The sport events linked to these provider events, in one query grouped by provider. */
@@ -301,8 +380,11 @@ export class IngestionPersistence {
   /**
    * The unmapped provider participants the site already has: a participant of the same sport and
    * name with no mapping from this provider yet (a team or golfer loaded from a sport data file,
-   * say) is linked rather than created a second time. A name two of the site's participants
-   * share, or two of the feed's, is never guessed at: those are created.
+   * say) is linked rather than created a second time. A participant the provider already maps
+   * is some other feed id's, so it is no candidate. A name two of the site's candidates share,
+   * or two of the feed's where the site has a candidate, is never guessed at: it is returned as
+   * ambiguous, with its candidates, and neither linked nor created (#1824). One no candidate
+   * shares is created.
    *
    * A provider participant that names its sport league (`metadata.tour`, the league's match
    * keyword: a college team is a men's or a women's team) is matched only among the site's
@@ -359,22 +441,26 @@ export class IngestionPersistence {
 
     const linked: Array<{ participant: ProviderParticipant; existing: (typeof candidates)[number] }> = [];
     const toCreate: ProviderParticipant[] = [];
+    const ambiguous: AmbiguousMatch[] = [];
     for (const participant of unmapped) {
       const tour = tourOf(participant);
       const folded = foldParticipantName(participant.name);
       const sameName = (candidatesBySportId.get(sportIdOf(participant)) ?? []).filter((candidate) => tour === undefined
         ? candidate.name === participant.name
         : sameParticipantName(foldParticipantName(candidate.name), folded) && candidate.leagueAffiliations.some(({ sportLeague }) => isLeagueTour(tour, sportLeague.matchKeyword)));
-      const spelledAlike = sameName.length === 1 ? sameName : sameName.filter((candidate) => candidate.name === participant.name);
-      const unique = spelledAlike.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1;
-      const existing = unique ? spelledAlike[0] : undefined;
-      if (existing && !existing.providerMappings.some((mapping) => mapping.providerId === participant.providerId)) {
-        linked.push({ participant, existing });
-      } else {
+      const open = sameName.filter((candidate) => !candidate.providerMappings.some((mapping) => mapping.providerId === participant.providerId));
+      const spelledAlike = open.filter((candidate) => candidate.name === participant.name);
+      // Of several folded matches, the one spelled exactly as the feed spells it is the answer.
+      const answers = open.length > 1 && spelledAlike.length === 1 ? spelledAlike : open;
+      if (answers.length === 0) {
         toCreate.push(participant);
+      } else if (answers.length === 1 && feedNameCounts.get(feedKeyOf(participant)) === 1) {
+        linked.push({ participant, existing: answers[0] });
+      } else {
+        ambiguous.push({ participant, candidateIds: answers.map((candidate) => candidate.id) });
       }
     }
-    return { linked, toCreate };
+    return { linked, toCreate, ambiguous };
   }
 
   /** The provider mappings of these participants, with their participant, in one query. */
@@ -404,9 +490,6 @@ export class IngestionPersistence {
     }, 'Persisting event detail from ingestion');
     const eventResult = await this.persistEventsWithDiagnostics([detail]);
     const eventsPersisted = eventResult.count;
-    const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants);
-    const detailRows: SyncWriteDetailRow[] = [];
-
     const persistedEvent = await this.prisma.sportEvent.findUnique({
       where: {
         providerId_externalId: {
@@ -414,8 +497,12 @@ export class IngestionPersistence {
           externalId: detail.externalId,
         },
       },
-      include: { eventSeries: { select: { sportLeague: { select: { participantType: true, scoringFamily: true } } } } },
+      include: { eventSeries: { select: { sportLeagueId: true, sportLeague: { select: { participantType: true, scoringFamily: true } } } } },
     });
+    const seenIn = persistedEvent ? { sportEventId: persistedEvent.id, sportLeagueId: persistedEvent.eventSeries.sportLeagueId } : null;
+    const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, seenIn);
+    const detailRows: SyncWriteDetailRow[] = [];
+
     if (!persistedEvent) {
       // No event is linked to this provider event, so there is no field to write
       // (persistEventsWithDiagnostics above skipped it too).
@@ -428,9 +515,7 @@ export class IngestionPersistence {
     }
 
     let sportEventParticipantsPersisted: number;
-    // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
-    const { sportLeague } = persistedEvent.eventSeries;
-    const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && persistedEvent.status !== SportEventStatus.DRAFT;
+    const seedsLocked = seedsLockedOn(persistedEvent);
 
     try {
       sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows);
@@ -465,6 +550,81 @@ export class IngestionPersistence {
   }
 
   /**
+   * Resolves a "needs linking" feed participant (#1824): links its feed id to the root admin's
+   * pick of its candidates (`participantId`), or creates the participant from the feed's latest
+   * sighting of it (`participantId` null), and then writes its field row in every event it was
+   * seen in, as that event's field sent it, so it is on the field without waiting for the next
+   * sync. The mapping (MANUAL for a pick, EXACT for one created from the feed), the participant's
+   * affiliation with the row's sport league, and the row's resolution are one transaction; each
+   * event's field row is written as a sync writes one (`persistEventField`), with its leaderboard
+   * rebuild. The service has checked the row is open, the pick is a candidate and the feed id is
+   * unmapped. Answers the linked participant's id and how many field rows it wrote.
+   */
+  async resolveAmbiguousFeedParticipant(id: string, participantId: string | null): Promise<{ participantId: string; fieldRowsWritten: number }> {
+    const row = await this.prisma.ambiguousFeedParticipant.findUniqueOrThrow({
+      where: { id },
+      include: {
+        sportLeague: { select: { sportId: true, sport: { select: { sport: true, participantType: true } } } },
+        sightings: {
+          orderBy: { updatedAt: 'desc' },
+          include: { sportEvent: { include: { eventSeries: { select: { sportLeague: { select: { participantType: true, scoringFamily: true } } } } } } },
+        },
+      },
+    });
+    const sightings = row.sightings.map((sighting) => ({ event: sighting.sportEvent, participant: feedParticipantOf(sighting.feedParticipant) }));
+    const latest: ProviderParticipant = sightings.at(0)?.participant ?? {
+      providerId: row.providerId,
+      externalId: row.externalId,
+      sport: row.sportLeague.sport.sport,
+      name: row.feedName,
+      active: true,
+      metadata: {},
+    };
+    const linkedId = await this.prisma.$transaction(async (tx) => {
+      const linkedTo = participantId ?? (await tx.participant.create({
+        data: {
+          sportId: row.sportLeague.sportId,
+          participantType: row.sportLeague.sport.participantType,
+          externalId: row.externalId,
+          ...participantValues(latest),
+        },
+        select: { id: true },
+      })).id;
+      await tx.participantProviderMapping.create({
+        data: {
+          participantId: linkedTo,
+          providerId: row.providerId,
+          externalId: row.externalId,
+          confidence: participantId === null ? MappingConfidence.EXACT : MappingConfidence.MANUAL,
+        },
+      });
+      await tx.participantLeagueAffiliation.createMany({ data: [{ participantId: linkedTo, sportLeagueId: row.sportLeagueId }], skipDuplicates: true });
+      await tx.ambiguousFeedParticipant.update({ where: { id }, data: { resolvedAt: new Date(), resolvedParticipantId: linkedTo } });
+      return linkedTo;
+    });
+
+    let fieldRowsWritten = 0;
+    for (const { event, participant } of sightings) {
+      const participantIdByKey = new Map([[providerKey(participant), linkedId]]);
+      try {
+        // The events one feed participant was seen in (a handful), each its own field write and rebuild.
+        fieldRowsWritten += await this.persistEventField(
+          { providerId: row.providerId, externalId: event.externalId, participants: [participant] },
+          event.id,
+          seedsLockedOn(event),
+          participantIdByKey,
+          [],
+        );
+      } finally {
+        this.fieldCache?.forget(event.id);
+      }
+    }
+    if (sightings.length > 0) this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
+    this.logger?.info({ ambiguousFeedParticipantId: id, participantId: linkedId, created: participantId === null, fieldRowsWritten }, 'Resolved feed participant needing linking');
+    return { participantId: linkedId, fieldRowsWritten };
+  }
+
+  /**
    * The event's ranked participants with no mapping from its provider, best rank first (#1664): a
    * star loaded from a data file whom the provider's field named some other way, or not at all.
    * The provider's scores never reach them, so the sync run lists them for the root admin to merge
@@ -486,7 +646,7 @@ export class IngestionPersistence {
    * written, and the new and changed ones are written in one transaction.
    */
   private async persistEventField(
-    detail: SportEventDetail,
+    detail: FieldFeed,
     sportEventId: string,
     seedsLocked: boolean,
     participantIdByKey: ReadonlyMap<string, string>,
@@ -570,6 +730,57 @@ export class IngestionPersistence {
     }
     return plans.length;
   }
+}
+
+/** What a field write reads of a provider's event detail: whose field it is, and its participants. */
+type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participants'>;
+
+/** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
+function seedsLockedOn(event: {
+  sport: Sport;
+  status: SportEventStatus;
+  eventSeries: { sportLeague: { participantType: ParticipantType | null; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily'] } };
+}): boolean {
+  const { sportLeague } = event.eventSeries;
+  return eventPlaysMatches({ sport: event.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
+}
+
+/**
+ * A sighting's stored feed participant, as the sync stored it (`holdAmbiguous`). Only the sync
+ * writes the column, so a row that is not one is a defect, and resolving it fails loudly rather
+ * than writing a field row from a guess.
+ */
+function feedParticipantOf(stored: Prisma.JsonValue): ProviderParticipant {
+  if (!isStoredFeedParticipant(stored)) throw new Error('A needs-linking sighting holds no feed participant.');
+  return stored;
+}
+
+function isStoredFeedParticipant(value: unknown): value is ProviderParticipant {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const field = (key: keyof ProviderParticipant): unknown => Reflect.get(value, key);
+  return (['externalId', 'providerId', 'name', 'sport'] as const).every((key) => typeof field(key) === 'string')
+    && typeof field('active') === 'boolean' && typeof field('metadata') === 'object' && field('metadata') !== null;
+}
+
+/** The event a field sync's ambiguous participants were seen in, and its sport league. */
+interface AmbiguousSighting {
+  sportEventId: string;
+  sportLeagueId: string;
+}
+
+/** A feed participant two or more of the site's participants could be (`matchByName`), with them. */
+interface AmbiguousMatch {
+  participant: ProviderParticipant;
+  candidateIds: readonly string[];
+}
+
+/** The `OR` that reads rows keyed by provider identity: one arm per provider, its ids in one `IN`. */
+function byProvider(identities: readonly { providerId: string; externalId: string }[]) {
+  const externalIdsByProvider = new Map<string, string[]>();
+  for (const identity of identities) {
+    externalIdsByProvider.set(identity.providerId, [...(externalIdsByProvider.get(identity.providerId) ?? []), identity.externalId]);
+  }
+  return [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } }));
 }
 
 /** The sport leagues a feed's participants name (`leaguesNamedBy`). */

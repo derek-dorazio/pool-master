@@ -66897,6 +66897,316 @@
         "additionalProperties": false,
         "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked."
       },
+      "AmbiguousFeedParticipantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID string."
+          },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it."
+          },
+          "providerId": {
+            "type": "string",
+            "description": "The provider whose feed sent it."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The provider's id for it. Resolving maps this id, so the next sync links it on its own."
+          },
+          "feedName": {
+            "type": "string",
+            "description": "Its name as the feed spells it, at the latest sync that found it ambiguous."
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "participantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUID string."
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "participantId",
+                "name"
+              ],
+              "additionalProperties": false,
+              "description": "One of the site's participants it could be."
+            },
+            "description": "The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportEventId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUID string."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                }
+              },
+              "required": [
+                "sportEventId",
+                "name",
+                "startDate"
+              ],
+              "additionalProperties": false,
+              "description": "An event whose field sent it."
+            },
+            "description": "The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's \"every participant linked\" ready check fails while it is open."
+          },
+          "resolvedAt": {
+            "description": "When it was linked or created. Null while it needs linking.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolvedParticipantId": {
+            "description": "The participant it was linked to or created as. Null while open, or once that participant is deleted.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a sync first found it ambiguous."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          }
+        },
+        "required": [
+          "id",
+          "sportLeagueId",
+          "providerId",
+          "externalId",
+          "feedName",
+          "candidates",
+          "events",
+          "resolvedAt",
+          "resolvedParticipantId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: \"needs linking\" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here."
+      },
+      "AmbiguousFeedParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "sportLeagueId": {
+            "description": "Only the ones of this sport league. Without it, every sport league's.",
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters for the needs-linking list."
+      },
+      "AmbiguousFeedParticipantListResponse": {
+        "type": "object",
+        "properties": {
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUID string."
+                },
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it."
+                },
+                "providerId": {
+                  "type": "string",
+                  "description": "The provider whose feed sent it."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "The provider's id for it. Resolving maps this id, so the next sync links it on its own."
+                },
+                "feedName": {
+                  "type": "string",
+                  "description": "Its name as the feed spells it, at the latest sync that found it ambiguous."
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "participantId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID string."
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "participantId",
+                      "name"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One of the site's participants it could be."
+                  },
+                  "description": "The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out."
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportEventId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID string."
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "startDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 datetime string."
+                      }
+                    },
+                    "required": [
+                      "sportEventId",
+                      "name",
+                      "startDate"
+                    ],
+                    "additionalProperties": false,
+                    "description": "An event whose field sent it."
+                  },
+                  "description": "The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's \"every participant linked\" ready check fails while it is open."
+                },
+                "resolvedAt": {
+                  "description": "When it was linked or created. Null while it needs linking.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "resolvedParticipantId": {
+                  "description": "The participant it was linked to or created as. Null while open, or once that participant is deleted.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When a sync first found it ambiguous."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                }
+              },
+              "required": [
+                "id",
+                "sportLeagueId",
+                "providerId",
+                "externalId",
+                "feedName",
+                "candidates",
+                "events",
+                "resolvedAt",
+                "resolvedParticipantId",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: \"needs linking\" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here."
+            }
+          }
+        },
+        "required": [
+          "participants"
+        ],
+        "additionalProperties": false,
+        "description": "The feed participants that still need linking, oldest first. Never paged."
+      },
+      "ResolveAmbiguousFeedParticipantRequest": {
+        "description": "How a root admin resolves a feed participant that needs linking.",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "resolution": {
+                "type": "string",
+                "enum": [
+                  "LINK"
+                ],
+                "description": "Link it to one of its candidates."
+              },
+              "participantId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The candidate it is: one of `candidates`, or 422 FEED_PARTICIPANT_NOT_A_CANDIDATE."
+              }
+            },
+            "required": [
+              "resolution",
+              "participantId"
+            ],
+            "additionalProperties": false,
+            "description": "Link the feed participant to one of the site's participants it could be."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "resolution": {
+                "type": "string",
+                "enum": [
+                  "CREATE"
+                ],
+                "description": "None of the candidates is it."
+              }
+            },
+            "required": [
+              "resolution"
+            ],
+            "additionalProperties": false,
+            "description": "Create a new participant from the feed's latest copy of it, in its sport league."
+          }
+        ]
+      },
       "ProviderEventDto": {
         "type": "object",
         "properties": {
@@ -81799,6 +82109,153 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/ambiguous-participants": {
+      "get": {
+        "operationId": "listAmbiguousFeedParticipants",
+        "summary": "List feed participants that need linking",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Every feed participant the sync could not link on its own because its name matches two or more of the site's participants, still open, oldest first; never paged. `sportLeagueId` keeps one sport league's. Each names its candidates and the events whose fields sent it; it is on none of those fields until resolved with resolveAmbiguousFeedParticipant.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": false,
+            "description": "Only the ones of this sport league. Without it, every sport league's."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The feed participants that still need linking, oldest first. Never paged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbiguousFeedParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/ambiguous-participants/{id}/resolve": {
+      "post": {
+        "operationId": "resolveAmbiguousFeedParticipant",
+        "summary": "Resolve a feed participant that needs linking",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Links the feed participant to one of its candidates (LINK, with MANUAL confidence) or creates it as a new participant from the feed's latest copy (CREATE), in its sport league. Either maps its feed id, so the next sync links it on its own, and writes its field row in every event that sent it at once. Answers the row, resolved. 404 FEED_PARTICIPANT_LINK_NOT_FOUND; 409 FEED_PARTICIPANT_LINK_RESOLVED when it was resolved already, FEED_PARTICIPANT_ALREADY_MAPPED when its feed id was bound some other way since; 422 FEED_PARTICIPANT_NOT_A_CANDIDATE when the pick is not a candidate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveAmbiguousFeedParticipantRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: \"needs linking\" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbiguousFeedParticipantDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
