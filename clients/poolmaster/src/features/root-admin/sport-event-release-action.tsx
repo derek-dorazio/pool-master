@@ -6,14 +6,14 @@ import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/li
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { describeEventReleaseBlockers } from './sport-admin-utils';
+import { describeFailedReleaseChecks } from './sport-admin-utils';
 import type { SportEventDto } from '@/lib/api';
 
-function releaseCodeMessages(event: SportNoun, participant: SportNoun): ErrorCodeMessages {
+function releaseCodeMessages(event: SportNoun): ErrorCodeMessages {
   return {
     SPORT_EVENT_NOT_DRAFT: `This ${event.one} has already been released.`,
     SPORT_EVENT_ALREADY_STARTED: `This ${event.one} has already started, so it can no longer be released.`,
-    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: load its field, put every active ${participant.one} in a tier, leave no tier empty and assign prices.`,
+    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: one of its ready checks no longer passes. Reload it to see which.`,
   };
 }
 
@@ -31,8 +31,8 @@ export function SportEventReleaseAction({
 }) {
   const logger = getLogger().child({ feature: 'root-admin-sport-event-release' });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const blockers = describeEventReleaseBlockers(tournament);
-  const { event, participant } = getSportDefinition(tournament.sport).vocabulary;
+  const { manual: blockers, automaticOnly } = describeFailedReleaseChecks(tournament);
+  const { event } = getSportDefinition(tournament.sport).vocabulary;
 
   const releaseMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -74,6 +74,16 @@ export function SportEventReleaseAction({
           </ul>
         </Notice>
       ) : null}
+      {automaticOnly.length > 0 ? (
+        <Notice tone="info">
+          <p>It will not be released on its own until:</p>
+          <ul className="mt-1 list-disc pl-5" data-testid="root-admin-sport-event-release-automatic-waiting">
+            {automaticOnly.map((waiting) => (
+              <li key={waiting}>{waiting}</li>
+            ))}
+          </ul>
+        </Notice>
+      ) : null}
       <Button
         data-testid="root-admin-sport-event-release"
         disabled={blockers.length > 0}
@@ -90,7 +100,7 @@ export function SportEventReleaseAction({
         error={
           releaseMutation.isError
             ? extractErrorMessage(releaseMutation.error, {
-                codeMessages: releaseCodeMessages(event, participant),
+                codeMessages: releaseCodeMessages(event),
                 fallback: 'The release was rejected.',
               })
             : undefined

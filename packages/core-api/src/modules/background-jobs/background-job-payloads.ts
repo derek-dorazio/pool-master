@@ -18,6 +18,7 @@ import {
 import { SettleSportEventContestsJobPayloadSchema } from '../contests/settle-sport-event-job-requests';
 import { SettleGameContestsJobPayloadSchema } from '../contests/settle-game-job-requests';
 import { LeaderboardRebuildSubject, RebuildLeaderboardsJobPayloadSchema } from '../contests/leaderboard-rebuild-job-requests';
+import { ReleaseSportEventJobPayloadSchema } from '../events/release-sport-event-job';
 
 export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.MANUAL_EVENT_SYNC]: ManualEventSyncJobPayloadSchema,
@@ -31,6 +32,7 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.REBUILD_LEADERBOARDS]: RebuildLeaderboardsJobPayloadSchema,
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: AddReleasedEditionToContestJobPayloadSchema,
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: SyncLeagueEventsJobPayloadSchema,
+  [BackgroundJobType.RELEASE_SPORT_EVENT]: ReleaseSportEventJobPayloadSchema,
 } as const satisfies Record<BackgroundJobType, z.ZodType>;
 
 /** What a job of type `T` carries. */
@@ -55,5 +57,6 @@ export const BACKGROUND_JOB_SCOPES: {
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.REBUILD_LEADERBOARDS]: ({ subject, id }) => (subject === LeaderboardRebuildSubject.EVENT ? { sportEventId: id } : {}),
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: ({ sportEventId }) => ({ sportEventId }),
+  [BackgroundJobType.RELEASE_SPORT_EVENT]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: ({ sportLeagueId }) => ({ sportLeagueId }),
 };

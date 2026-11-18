@@ -6,6 +6,8 @@
 
 import {
   isProviderSyncedEvent,
+  ReleaseCheckKey,
+  type ReleaseCheck,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SportEventStatus,
   type SportEventRound,
@@ -13,6 +15,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type {
   ImportSportEventYearFromProviderResponse,
+  ReleaseCheckDto,
   SportEventDto,
   SportEventLiveSimulationResponse,
   SportEventRoundDto,
@@ -38,6 +41,7 @@ export function mapSportEventToDto({
   loadedParticipantCount,
   tierCount,
   adminCounts,
+  releaseChecks,
 }: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
     status: event.status,
@@ -76,10 +80,16 @@ export function mapSportEventToDto({
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
     adminCounts,
+    releaseChecks: releaseChecks?.map(mapReleaseCheckToDto) ?? null,
     allowedTransitions: genericTransitionsFrom(event.status),
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };
+}
+
+/** A ready check for the wire: the start as an ISO string, every other value as it is. */
+export function mapReleaseCheckToDto(check: ReleaseCheck): ReleaseCheckDto {
+  return check.key === ReleaseCheckKey.NOT_STARTED ? { ...check, value: check.value.toISOString() } : { ...check };
 }
 
 export function mapSportEventYearsToResponse(years: readonly number[]): SportEventYearListResponse {

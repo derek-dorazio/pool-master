@@ -136,7 +136,9 @@ same job. `LeagueEventsSync.run` (`events/league-events-sync.ts`) runs the year 
 this calendar year and the next (or the one year Sync now names), recording one `EVENTS` sync run
 with its trigger, progress and what it created and updated (`docs/BACKGROUND-JOBS.md`). Sync now
 replaces the Year import action below, which stays until the admin UI moves to it. New events are
-born `DRAFT` and wait for an admin's release, for now. A provider event whose start has already
+born `DRAFT`; each releases itself once every ready check passes, within its league's
+`autoReleaseDaysBeforeStart` window (#1823, the `RELEASE_SPORT_EVENT` job in
+`docs/BACKGROUND-JOBS.md`), or by an admin's press before then. A provider event whose start has already
 passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
 as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
 league's sport, and the league has a match keyword. One league's failed read fails only its own

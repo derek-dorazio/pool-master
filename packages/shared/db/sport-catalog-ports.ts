@@ -44,7 +44,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart'>>;
 
 /**
  * What still uses a sport league, each a reason it cannot be deleted (#1400). Its affiliations
@@ -198,6 +198,24 @@ export interface ProviderNotificationReceipt {
   receivedAt: Date;
 }
 
+/** The counts a release's ready checks read of one event besides its admin counts (#1823). */
+export interface SportEventReleaseFacts {
+  scheduledRoundCount: number;
+  /** Null when no provider syncs the event. */
+  unlinkedParticipantCount: number | null;
+  contestSetupCount: number;
+}
+
+/** A DRAFT event the automatic release sweep may try (#1823). */
+export interface SportEventAutoReleaseCandidate {
+  id: string;
+  startDate: Date;
+  providerId: string;
+  syncScope: SportEventSyncScope;
+  eventSyncProviderId: string;
+  autoReleaseDaysBeforeStart: number;
+}
+
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
   /** The events with these ids, in no particular order; an unknown id is left out. */
@@ -252,6 +270,19 @@ export interface SportEventRepository {
    * pick from them.
    */
   findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
+  /**
+   * What only a release's ready checks read of one event (#1823), each a count: its scheduled
+   * rounds; its active field participants with no mapping from `linkProviderId` (null for an
+   * event no provider syncs, which skips the count); and the active contest setups its sport
+   * league offers.
+   */
+  findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts>;
+  /**
+   * The automatic release sweep's candidates (#1823): DRAFT events starting after `now` and by
+   * `horizon`, of an active sport league whose event sync names a provider and whose automatic
+   * release is on, each with what the sweep needs to judge its own window.
+   */
+  findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Clutch Card events that name each event as their parent (#1820), for each id asked about (0 where none). */

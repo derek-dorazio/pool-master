@@ -3,7 +3,7 @@ import type { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 import {
   deriveEventAutoTransition,
   deriveSportEventReadiness,
-  describeEventReleaseBlockers,
+  describeFailedReleaseChecks,
   formatSportEventStatus,
   syncScopeLabel,
   syncScopeTone,
@@ -15,8 +15,8 @@ import {
   golfRoundScoreRows,
   sportProviderOptions,
 } from './sport-admin-utils';
-import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
-import type { SportEventRoundDto } from '@/lib/api';
+import { fieldEntryFixture, participantFixture, passingReleaseChecks } from './sport-test-fixtures';
+import type { ReleaseCheckDto, SportEventRoundDto } from '@/lib/api';
 
 // plans/124 §6.3/§6.4 — pure helpers backing the golf admin keystone screens (pool-master-3dg).
 
@@ -69,71 +69,62 @@ describe('sport-admin-utils: resolveEventLifecycleStage', () => {
 
 const STANDARD_PRICING = { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
-describe('sport-admin-utils: describeEventReleaseBlockers', () => {
-  const now = new Date('2026-04-01T00:00:00.000Z');
-  const ready = {
-    sport: 'GOLF' as const,
-    status: 'DRAFT' as const,
-    startDate: '2026-05-07T12:00:00.000Z',
-    loadedParticipantCount: 120,
-    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [] as string[], contestCount: 0 },
-    pricing: STANDARD_PRICING,
-  };
+describe('sport-admin-utils: describeFailedReleaseChecks', () => {
+  const ready = { sport: 'GOLF' as const, status: 'DRAFT' as const, releaseChecks: passingReleaseChecks() };
+  const failing = (check: ReleaseCheckDto, sport: 'GOLF' | 'AUTO_RACING' = 'GOLF') => describeFailedReleaseChecks({ ...ready, sport, releaseChecks: passingReleaseChecks(check) });
+  const blocking = (check: ReleaseCheckDto, sport?: 'GOLF' | 'AUTO_RACING') => failing(check, sport).manual;
+  const waiting = (check: ReleaseCheckDto) => failing(check).automaticOnly;
 
-  it('lists nothing for a draft with a loaded, fully tiered field before its start', () => {
-    expect(describeEventReleaseBlockers(ready, now)).toEqual([]);
+  it('lists nothing for a draft whose every ready check passes', () => {
+    expect(describeFailedReleaseChecks(ready)).toEqual({ manual: [], automaticOnly: [] });
   });
 
-  it('lists nothing once the tournament is released, whatever its field', () => {
-    expect(describeEventReleaseBlockers({ ...ready, status: 'SCHEDULED', loadedParticipantCount: 0 }, now)).toEqual([]);
+  it('lists nothing once the event is released, whatever its checks said', () => {
+    expect(describeFailedReleaseChecks({ ...ready, status: 'SCHEDULED', releaseChecks: null })).toEqual({ manual: [], automaticOnly: [] });
   });
 
-  it('asks for the field to be loaded when the draft has none', () => {
-    expect(describeEventReleaseBlockers({ ...ready, loadedParticipantCount: 0 }, now)).toEqual(['Load the field.']);
-  });
-
-  it('counts the active golfers still without a tier', () => {
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, untieredParticipantCount: 1 } }, now)).toEqual([
-      'Put the 1 active golfer without a tier into a tier.',
-    ]);
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, untieredParticipantCount: 3 } }, now)).toEqual([
-      'Put the 3 active golfers without a tier into tiers.',
-    ]);
-  });
-
-  it('asks for prices to be assigned when the draft was never priced (#93)', () => {
-    expect(describeEventReleaseBlockers({ ...ready, pricing: null }, now)).toEqual(['Assign prices on the Tiers page.']);
-  });
-
-  it('counts the active golfers still without a price once the draft is priced (#93)', () => {
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, unpricedParticipantCount: 1 } }, now)).toEqual([
-      'Price the 1 active golfer without a price.',
-    ]);
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, unpricedParticipantCount: 2 } }, now)).toEqual([
-      'Price the 2 active golfers without a price.',
-    ]);
-  });
-
-  it('names each tier no active participant is in, in the sport\'s words, so a race with an empty Tier 4 cannot be released', () => {
-    expect(describeEventReleaseBlockers({ ...ready, sport: 'AUTO_RACING', adminCounts: { ...ready.adminCounts, emptyTierLabels: ['Tier 4'] } }, now)).toEqual([
-      'Tier 4 has no drivers. Move drivers into it or delete it.',
-    ]);
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: { ...ready.adminCounts, emptyTierLabels: ['Tier 5', 'Tier 6'] } }, now)).toEqual([
-      'Tier 5 has no golfers. Move golfers into it or delete it.',
-      'Tier 6 has no golfers. Move golfers into it or delete it.',
-    ]);
+  it('keeps a draft whose checks are missing from looking releasable, saying they have not loaded', () => {
+    expect(describeFailedReleaseChecks({ ...ready, releaseChecks: null }).manual).toEqual(['Its ready checks have not loaded yet.']);
   });
 
   it('says a draft whose start time has passed can no longer be released', () => {
-    expect(describeEventReleaseBlockers({ ...ready, startDate: '2026-03-01T00:00:00.000Z' }, now)).toEqual([
+    expect(blocking({ key: 'NOT_STARTED', passed: false, value: '2026-03-01T00:00:00.000Z' })).toEqual([
       'Its start time has passed, so it can no longer be released.',
     ]);
   });
 
-  it('keeps a draft whose admin counts are missing from looking releasable, saying its checks have not loaded', () => {
-    expect(describeEventReleaseBlockers({ ...ready, adminCounts: null }, now)).toEqual([
-      'Its tier and price checks have not loaded yet.',
+  it('asks for the field to be loaded before an admin can release it', () => {
+    expect(blocking({ key: 'FIELD_LOADED', passed: false, value: 0 })).toEqual(['Load the field.']);
+  });
+
+  it('lists unscheduled rounds, unlinked golfers and a league with no setups as what only the automatic release waits for, not as blockers', () => {
+    expect(failing({ key: 'ROUNDS_SCHEDULED', passed: false, value: 0 })).toEqual({ manual: [], automaticOnly: ['Schedule its rounds.'] });
+    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 1, needsLinking: 0 } })).toEqual(['Link the 1 active golfer the provider does not know yet.']);
+    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 4, needsLinking: 1 } }))
+      .toEqual(['Link the 4 active golfers the provider does not know yet.', 'Link the 1 name from the provider\'s field waiting in Needs linking.']);
+    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 0, needsLinking: 2 } }))
+      .toEqual(['Link the 2 names from the provider\'s field waiting in Needs linking.']);
+    expect(waiting({ key: 'CONTEST_SETUPS_ON', passed: false, value: 0 })).toEqual(['Turn on a contest setup for its sport league.']);
+  });
+
+  it('counts the active golfers still without a tier', () => {
+    expect(blocking({ key: 'TIERS_ASSIGNED', passed: false, value: 1 })).toEqual(['Put the 1 active golfer without a tier into a tier.']);
+    expect(blocking({ key: 'TIERS_ASSIGNED', passed: false, value: 3 })).toEqual(['Put the 3 active golfers without a tier into tiers.']);
+  });
+
+  it('names each empty tier in the sport\'s words, so a race with an empty Tier 4 cannot be released', () => {
+    expect(blocking({ key: 'TIERS_FILLED', passed: false, value: ['Tier 4'] }, 'AUTO_RACING')).toEqual([
+      'Tier 4 has no drivers. Move drivers into it or delete it.',
     ]);
+  });
+
+  it('asks for prices to be assigned before any are, then counts the golfers still without one', () => {
+    expect(blocking({ key: 'PRICES_ASSIGNED', passed: false, value: null })).toEqual(['Assign prices on the Tiers page.']);
+    expect(blocking({ key: 'PRICES_ASSIGNED', passed: false, value: 2 })).toEqual(['Price the 2 active golfers without a price.']);
+  });
+
+  it('turns each thing a bracket lacks into a sentence that blocks the release', () => {
+    expect(blocking({ key: 'BRACKET_COMPLETE', passed: false, value: ['its bracket is not loaded'] })).toEqual(['Its bracket is not loaded.']);
   });
 });
 

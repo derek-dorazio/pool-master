@@ -83,6 +83,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     }),
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
+    needsLinking: store.needsLinkingRepo(),
     leaderboards,
     logger,
     now: () => NOW,
@@ -440,6 +441,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     priced: number | null = golfers,
   ) {
     const event = store.addEvent({ status: SportEventStatus.DRAFT, ...overrides });
+    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
     await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
     const tierId = store.tierRows[0].id;
     const entries = Array.from({ length: golfers }, (_, index) => store.addToField(event.id, `participant-${index}`));
@@ -484,7 +486,6 @@ describe('SportEventService.releaseEvent (#431)', () => {
   it('releases a basketball draft once its bracket holds every active team', async () => {
     const { store, service, sportLeague } = setup(Sport.BASKETBALL);
     const event = await draftWithField(store, 2, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id });
-    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
     const [home, away] = store.field;
     await store.matchRepo().replaceBracket(event.id, [{
       id: 'final', roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,

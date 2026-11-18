@@ -7968,6 +7968,10 @@ export type SportLeagueDto = {
      */
     eventSyncProviderId: string | null;
     /**
+     * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
+     */
+    autoReleaseDaysBeforeStart: number | null;
+    /**
      * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
      */
     bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8084,6 +8088,10 @@ export type SportLeagueListResponse = {
          */
         eventSyncProviderId: string | null;
         /**
+         * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
+         */
+        autoReleaseDaysBeforeStart: number | null;
+        /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8187,6 +8195,10 @@ export type SportLeagueResponse = {
          */
         eventSyncProviderId: string | null;
         /**
+         * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
+         */
+        autoReleaseDaysBeforeStart: number | null;
+        /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
@@ -8281,6 +8293,10 @@ export type UpdateSportLeagueRequest = {
      */
     matchKeyword?: string | null;
     isActive?: boolean;
+    /**
+     * Days before an event's start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league.
+     */
+    autoReleaseDaysBeforeStart?: number | null;
     /**
      * Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way.
      */
@@ -8778,6 +8794,110 @@ export type SportEventAdminCountsDto = {
 };
 
 /**
+ * One ready check of a draft event's release, keyed by which check it is.
+ */
+export type ReleaseCheckDto = {
+    key: 'NOT_STARTED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+     */
+    value: string;
+} | {
+    key: 'ROUNDS_SCHEDULED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.
+     */
+    value: number;
+} | {
+    key: 'FIELD_LOADED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * FIELD_LOADED: how many participants are in the field; at least one passes.
+     */
+    value: number;
+} | {
+    key: 'FIELD_LINKED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes.
+     */
+    value: {
+        /**
+         * How many active field participants have no mapping from the event's provider, so its scores would not reach them.
+         */
+        unlinkedParticipants: number;
+        /**
+         * How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet.
+         */
+        needsLinking: number;
+    };
+} | {
+    key: 'TIERS_ASSIGNED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.
+     */
+    value: number;
+} | {
+    key: 'TIERS_FILLED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+     */
+    value: Array<string>;
+} | {
+    key: 'PRICES_ASSIGNED';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.
+     */
+    value: number | null;
+} | {
+    key: 'BRACKET_COMPLETE';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.
+     */
+    value: Array<string>;
+} | {
+    key: 'CONTEST_SETUPS_ON';
+    /**
+     * Whether the check passed.
+     */
+    passed: boolean;
+    /**
+     * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
+     */
+    value: number;
+};
+
+/**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
 export type SportEventDto = {
@@ -8931,6 +9051,109 @@ export type SportEventDto = {
      * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
      */
     tierCount: number;
+    /**
+     * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+     */
+    releaseChecks: Array<{
+        key: 'NOT_STARTED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+         */
+        value: string;
+    } | {
+        key: 'ROUNDS_SCHEDULED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.
+         */
+        value: number;
+    } | {
+        key: 'FIELD_LOADED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * FIELD_LOADED: how many participants are in the field; at least one passes.
+         */
+        value: number;
+    } | {
+        key: 'FIELD_LINKED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes.
+         */
+        value: {
+            /**
+             * How many active field participants have no mapping from the event's provider, so its scores would not reach them.
+             */
+            unlinkedParticipants: number;
+            /**
+             * How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet.
+             */
+            needsLinking: number;
+        };
+    } | {
+        key: 'TIERS_ASSIGNED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.
+         */
+        value: number;
+    } | {
+        key: 'TIERS_FILLED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+         */
+        value: Array<string>;
+    } | {
+        key: 'PRICES_ASSIGNED';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.
+         */
+        value: number | null;
+    } | {
+        key: 'BRACKET_COMPLETE';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.
+         */
+        value: Array<string>;
+    } | {
+        key: 'CONTEST_SETUPS_ON';
+        /**
+         * Whether the check passed.
+         */
+        passed: boolean;
+        /**
+         * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
+         */
+        value: number;
+    }> | null;
     /**
      * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
      */
@@ -9151,6 +9374,109 @@ export type SportEventListResponse = {
          */
         tierCount: number;
         /**
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         */
+        releaseChecks: Array<{
+            key: 'NOT_STARTED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+             */
+            value: string;
+        } | {
+            key: 'ROUNDS_SCHEDULED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LOADED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LOADED: how many participants are in the field; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LINKED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes.
+             */
+            value: {
+                /**
+                 * How many active field participants have no mapping from the event's provider, so its scores would not reach them.
+                 */
+                unlinkedParticipants: number;
+                /**
+                 * How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet.
+                 */
+                needsLinking: number;
+            };
+        } | {
+            key: 'TIERS_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.
+             */
+            value: number;
+        } | {
+            key: 'TIERS_FILLED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+             */
+            value: Array<string>;
+        } | {
+            key: 'PRICES_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.
+             */
+            value: number | null;
+        } | {
+            key: 'BRACKET_COMPLETE';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.
+             */
+            value: Array<string>;
+        } | {
+            key: 'CONTEST_SETUPS_ON';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
+             */
+            value: number;
+        }> | null;
+        /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
         adminCounts: {
@@ -9364,6 +9690,109 @@ export type SportEventResponse = {
          * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
+        /**
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         */
+        releaseChecks: Array<{
+            key: 'NOT_STARTED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+             */
+            value: string;
+        } | {
+            key: 'ROUNDS_SCHEDULED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LOADED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LOADED: how many participants are in the field; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LINKED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes.
+             */
+            value: {
+                /**
+                 * How many active field participants have no mapping from the event's provider, so its scores would not reach them.
+                 */
+                unlinkedParticipants: number;
+                /**
+                 * How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet.
+                 */
+                needsLinking: number;
+            };
+        } | {
+            key: 'TIERS_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.
+             */
+            value: number;
+        } | {
+            key: 'TIERS_FILLED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+             */
+            value: Array<string>;
+        } | {
+            key: 'PRICES_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.
+             */
+            value: number | null;
+        } | {
+            key: 'BRACKET_COMPLETE';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.
+             */
+            value: Array<string>;
+        } | {
+            key: 'CONTEST_SETUPS_ON';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
+             */
+            value: number;
+        }> | null;
         /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
@@ -9653,6 +10082,109 @@ export type ImportSportEventYearFromProviderResponse = {
          * Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier.
          */
         tierCount: number;
+        /**
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         */
+        releaseChecks: Array<{
+            key: 'NOT_STARTED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.
+             */
+            value: string;
+        } | {
+            key: 'ROUNDS_SCHEDULED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LOADED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LOADED: how many participants are in the field; at least one passes.
+             */
+            value: number;
+        } | {
+            key: 'FIELD_LINKED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes.
+             */
+            value: {
+                /**
+                 * How many active field participants have no mapping from the event's provider, so its scores would not reach them.
+                 */
+                unlinkedParticipants: number;
+                /**
+                 * How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet.
+                 */
+                needsLinking: number;
+            };
+        } | {
+            key: 'TIERS_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.
+             */
+            value: number;
+        } | {
+            key: 'TIERS_FILLED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.
+             */
+            value: Array<string>;
+        } | {
+            key: 'PRICES_ASSIGNED';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.
+             */
+            value: number | null;
+        } | {
+            key: 'BRACKET_COMPLETE';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.
+             */
+            value: Array<string>;
+        } | {
+            key: 'CONTEST_SETUPS_ON';
+            /**
+             * Whether the check passed.
+             */
+            passed: boolean;
+            /**
+             * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
+             */
+            value: number;
+        }> | null;
         /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
@@ -27486,7 +28018,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS';
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -27571,7 +28103,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -27633,7 +28165,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -32249,7 +32781,7 @@ export type ReleaseEventErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete.
+     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete. The rounds, provider-link and contest-setup ready checks hold only the automatic release (#1823).
      */
     422: ErrorEnvelope;
 };

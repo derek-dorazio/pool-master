@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BracketAdvancement, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, BracketAdvancement, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
@@ -13,7 +13,10 @@ import {
   PrismaSportEventRoundRepository,
   PrismaSportEventTierRepository,
   PrismaSportLeagueRepository,
+  PrismaBackgroundJobRepository,
 } from '../../../packages/core-api/src/adapters';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { SportEventAutoReleaseScheduler } from '../../../packages/core-api/src/modules/events/sport-event-auto-release-scheduler';
 import {
   cleanupTestData,
   createTestUser,
@@ -765,3 +768,142 @@ async function createContestFixture(sportEventId: string) {
   });
   return { contestId: contest.id, entryId: entry.id };
 }
+
+describe('SportEventRepository — automatic release reads (#1823)', () => {
+  const NOW = new Date('2026-06-01T12:00:00.000Z');
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const LEAGUE_PREFIX = 'Auto Release Tour';
+
+  // A setup pins its sport league past cleanupTestData, and a sweep's jobs outlive the test.
+  afterEach(async () => {
+    await getPrisma().contestConfigTemplate.deleteMany({ where: { sportLeague: { name: { startsWith: LEAGUE_PREFIX } } } });
+    await getPrisma().backgroundJob.deleteMany({ where: { type: BackgroundJobType.RELEASE_SPORT_EVENT } });
+  });
+
+  function sweeper() {
+    const jobs = new PrismaBackgroundJobRepository(getAppPrisma());
+    return {
+      jobs,
+      scheduler: new SportEventAutoReleaseScheduler({
+        sportEvents: repos().events,
+        jobs: new BackgroundJobQueue({ jobs }),
+        jobLock: { runExclusive: async (_key, work) => { await work(); return true; } },
+        now: () => NOW,
+      }),
+    };
+  }
+
+  const releaseJobs = () => getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.RELEASE_SPORT_EVENT }, orderBy: { createdAt: 'asc' } });
+
+  /** A golf sport league of its own, synced by `providerId` unless null, with this release window. */
+  async function syncedLeague(providerId: string | null, autoReleaseDaysBeforeStart: number | null = 7) {
+    return getPrisma().sportLeague.create({
+      data: { sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, matchKeyword: 'AUTO', eventSyncProviderId: providerId, autoReleaseDaysBeforeStart },
+    });
+  }
+
+  async function draftIn(sportLeagueId: string, daysAhead: number, providerId = 'balldontlie', status: 'DRAFT' | 'SCHEDULED' = 'DRAFT') {
+    const series = await seriesNamed(repos().eventSeries, sportLeagueId, `Series ${randomUUID()}`);
+    return createSportEventRow(repos().events, {
+      eventSeriesId: series.id,
+      eventYear: 2026,
+      externalId: `auto-${randomUUID()}`,
+      providerId,
+      sport: Sport.GOLF,
+      name: 'Auto Release Open',
+      startDate: new Date(NOW.getTime() + daysAhead * DAY_MS),
+      status,
+      syncScope: 'SCORES_ONLY',
+      autoLifecycleEnabled: true,
+    });
+  }
+
+  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window, in a fixed three indexed statements', async () => {
+    const synced = await syncedLeague('balldontlie', 5);
+    const unsynced = await syncedLeague(null);
+    const off = await syncedLeague('balldontlie', null);
+    const soon = await draftIn(synced.id, 3);
+    const later = await draftIn(synced.id, 20);
+    await draftIn(synced.id, 40);
+    await draftIn(synced.id, -1);
+    await draftIn(synced.id, 3, 'balldontlie', 'SCHEDULED');
+    await draftIn(unsynced.id, 3);
+    await draftIn(off.id, 3);
+
+    const { result, statements } = await recordStatements(() => repos().events.findAutoReleaseCandidates(NOW, new Date(NOW.getTime() + 30 * DAY_MS)));
+
+    expect(result).toEqual([
+      { id: soon.id, startDate: soon.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: later.id, startDate: later.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+    ]);
+    // The events, then their series and leagues in one read each, however many events there are.
+    expect(statements).toHaveLength(3);
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
+  });
+
+  it('counts an event\'s rounds, its active golfers the provider has no mapping for, and the active setups its league offers, in three statements', async () => {
+    const league = await syncedLeague('balldontlie');
+    const event = await draftIn(league.id, 3);
+    const { rounds, field, mappings } = repos();
+    await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
+    const [linked, unlinked, withdrawn] = await createParticipants(['Linked Golfer', 'Unlinked Golfer', 'Withdrawn Golfer']);
+    await field.createMany(event.id, [{ participantId: linked.id }, { participantId: unlinked.id }, { participantId: withdrawn.id }]);
+    await getPrisma().sportEventParticipant.updateMany({ where: { sportEventId: event.id, participantId: withdrawn.id }, data: { isActive: false } });
+    await mappings.bind({ participantId: linked.id, providerId: 'balldontlie', externalId: `bdl-${randomUUID()}`, confidence: 'EXACT', mappedAt: NOW });
+    const template = { sport: Sport.GOLF, contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
+    await getPrisma().contestConfigTemplate.createMany({
+      data: [
+        { ...template, sportLeagueId: league.id, templateKey: `own-${randomUUID()}` },
+        { ...template, sportLeagueId: league.id, templateKey: `off-${randomUUID()}`, active: false },
+      ],
+    });
+
+    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: 'balldontlie' }));
+
+    expect(result.scheduledRoundCount).toBe(2);
+    expect(result.unlinkedParticipantCount).toBe(1);
+    // Its own active setup; the retired one is not counted.
+    expect(result.contestSetupCount).toBe(1);
+    expect(statements).toHaveLength(3);
+    await expect(repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: null }))
+      .resolves.toMatchObject({ unlinkedParticipantCount: null });
+  });
+
+  it('sweeps 20 events in its window in the same statements as 2: one candidates read and one insert of every job', async () => {
+    const league = await syncedLeague('balldontlie');
+    const sweep = async () => (await recordStatements(() => sweeper().scheduler.runSweep())).statements;
+    await Promise.all([1, 2].map((day) => draftIn(league.id, day)));
+    const small = await sweep();
+    await getPrisma().backgroundJob.deleteMany({ where: { type: BackgroundJobType.RELEASE_SPORT_EVENT } });
+    await Promise.all(Array.from({ length: 18 }, (_, index) => draftIn(league.id, 1 + (index % 6))));
+
+    const large = await sweep();
+
+    expect(await releaseJobs()).toHaveLength(20);
+    // The insert grows its VALUES list, never its statement count.
+    expect(large).toHaveLength(small.length);
+    expect(large.filter(({ sql }) => sql.startsWith('INSERT'))).toHaveLength(1);
+  });
+
+  it('queues one job per event, scoped to that event, however often it sweeps, until a worker claims it, then the next sweep queues a fresh try', async () => {
+    const league = await syncedLeague('balldontlie');
+    const event = await draftIn(league.id, 3);
+    const { scheduler, jobs } = sweeper();
+
+    await scheduler.runSweep();
+    await scheduler.runSweep();
+    expect(await releaseJobs()).toHaveLength(1);
+
+    // A job is due from when it was written, on the real clock.
+    const claimedAt = new Date();
+    await jobs.claimDue({ now: claimedAt, limit: 5, leaseUntil: new Date(claimedAt.getTime() + 5 * 60 * 1000) });
+    await scheduler.runSweep();
+
+    const queued = await releaseJobs();
+    expect(queued).toHaveLength(2);
+    expect(queued.map((job) => job.payload)).toEqual([{ sportEventId: event.id, trigger: 'SCHEDULE' }, { sportEventId: event.id, trigger: 'SCHEDULE' }]);
+    // Each job is scoped to its event, so Activity finds it on the event and on its league.
+    expect(queued.map((job) => job.sportEventId)).toEqual([event.id, event.id]);
+  });
+
+});

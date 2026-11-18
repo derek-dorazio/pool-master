@@ -26,6 +26,8 @@ import type {
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
   SportEventProviderSummary,
+  SportEventAutoReleaseCandidate,
+  SportEventReleaseFacts,
   ProviderNotifiedEvent,
   ProviderNotifiedEventQuery,
   ProviderNotificationReceipt,
@@ -149,6 +151,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
         ...(updates.eventSyncProviderId !== undefined && { eventSyncProviderId: updates.eventSyncProviderId }),
+        ...(updates.autoReleaseDaysBeforeStart !== undefined && { autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }),
       },
     });
     // A sport event's read carries its sport league's settings, so those are forgotten too.
@@ -505,6 +508,47 @@ export class PrismaSportEventRepository implements SportEventRepository {
       labels.get(row.sportEventId)?.push(row.label);
     }
     return labels;
+  }
+
+  async findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts> {
+    const [scheduledRoundCount, unlinkedParticipantCount, contestSetupCount] = await Promise.all([
+      this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
+      event.linkProviderId === null
+        ? Promise.resolve(null)
+        : this.prisma.sportEventParticipant.count({
+          where: {
+            sportEventId: event.id,
+            isActive: true,
+            participant: { providerMappings: { none: { providerId: event.linkProviderId } } },
+          },
+        }),
+      // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
+      this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
+    ]);
+    return { scheduledRoundCount, unlinkedParticipantCount, contestSetupCount };
+  }
+
+  async findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]> {
+    const rows = await this.prisma.sportEvent.findMany({
+      where: {
+        status: SportEventStatus.DRAFT,
+        startDate: { gt: now, lte: horizon },
+        eventSeries: { sportLeague: { isActive: true, eventSyncProviderId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
+      },
+      select: {
+        id: true,
+        startDate: true,
+        providerId: true,
+        syncScope: true,
+        eventSeries: { select: { sportLeague: { select: { eventSyncProviderId: true, autoReleaseDaysBeforeStart: true } } } },
+      },
+      orderBy: { startDate: 'asc' },
+    });
+    return rows.flatMap((row) => {
+      const { eventSyncProviderId, autoReleaseDaysBeforeStart } = row.eventSeries.sportLeague;
+      if (eventSyncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
+      return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, eventSyncProviderId, autoReleaseDaysBeforeStart }];
+    });
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
@@ -1143,6 +1187,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     currentEventYear: row.currentEventYear,
     isActive: row.isActive,
     eventSyncProviderId: row.eventSyncProviderId,
+    autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
     tierCount: row.tierCount,

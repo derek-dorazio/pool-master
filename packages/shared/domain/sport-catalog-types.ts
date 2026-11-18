@@ -28,6 +28,11 @@ export interface SportLeague extends DomainEntity {
    * configured.
    */
   eventSyncProviderId: string | null;
+  /**
+   * How many days before its start a synced DRAFT event is released on its own once every ready
+   * check passes (#1823); null releases only by hand. 1 to 30, 7 for a new league.
+   */
+  autoReleaseDaysBeforeStart: number | null;
   /** How its bracket winners reach their next match; read only for a sport played as a bracket. */
   bracketAdvancement: BracketAdvancement;
   /**

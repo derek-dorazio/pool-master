@@ -7,6 +7,7 @@ import {
   ParticipantType,
   ParticipantStandingStatus,
   RaceResultStatus,
+  ReleaseCheckKey,
   ScoringFamily,
   Sport,
   SportEventStatus,
@@ -53,6 +54,29 @@ export const SportEventAdminCountsDtoSchema = z.object({
 }).describe('What only a root admin reads of an event: what still stops its release, and how many contests run on it.');
 export type SportEventAdminCountsDto = z.infer<typeof SportEventAdminCountsDtoSchema>;
 
+/** One ready check of a DRAFT event's release (#1823): whether it passed, and the value it was judged on. */
+const releaseCheck = <K extends ReleaseCheckKey, V extends z.ZodType>(key: K, value: V, meaning: string) => z.object({
+  key: z.literal(key),
+  passed: z.boolean().describe('Whether the check passed.'),
+  value: value.describe(meaning),
+});
+
+export const ReleaseCheckDtoSchema = z.discriminatedUnion('key', [
+  releaseCheck(ReleaseCheckKey.NOT_STARTED, DateTimeSchema, 'NOT_STARTED: the event\'s start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.'),
+  releaseCheck(ReleaseCheckKey.ROUNDS_SCHEDULED, z.number().int(), 'ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.'),
+  releaseCheck(ReleaseCheckKey.FIELD_LOADED, z.number().int(), 'FIELD_LOADED: how many participants are in the field; at least one passes.'),
+  releaseCheck(ReleaseCheckKey.FIELD_LINKED, z.object({
+    unlinkedParticipants: z.number().int().describe('How many active field participants have no mapping from the event\'s provider, so its scores would not reach them.'),
+    needsLinking: z.number().int().describe('How many names the provider sent for the event\'s field wait in Needs linking, matched to no participant yet.'),
+  }), 'FIELD_LINKED, only on a provider-synced event: what is not linked to the event\'s provider yet; both 0 passes.'),
+  releaseCheck(ReleaseCheckKey.TIERS_ASSIGNED, z.number().int(), 'TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.'),
+  releaseCheck(ReleaseCheckKey.TIERS_FILLED, z.array(z.string()), 'TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.'),
+  releaseCheck(ReleaseCheckKey.PRICES_ASSIGNED, z.number().int().nullable(), 'PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.'),
+  releaseCheck(ReleaseCheckKey.BRACKET_COMPLETE, z.array(z.string()), 'BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes.'),
+  releaseCheck(ReleaseCheckKey.CONTEST_SETUPS_ON, z.number().int(), 'CONTEST_SETUPS_ON: how many active contest setups the event\'s sport league offers; at least one passes.'),
+]).describe('One ready check of a draft event\'s release, keyed by which check it is.');
+export type ReleaseCheckDto = z.infer<typeof ReleaseCheckDtoSchema>;
+
 /** The season event a Clutch Card event is rounds of (#1820). */
 export const SportEventParentDtoSchema = z.object({
   id: z.uuid().describe('The parent event\'s identifier.'),
@@ -97,6 +121,7 @@ export const SportEventDtoSchema = z.object({
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
+  releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
@@ -517,6 +542,7 @@ registerSchema('EventStatusDto', EventStatusDtoSchema);
 registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
 registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
 registerSchema('SportEventAdminCountsDto', SportEventAdminCountsDtoSchema);
+registerSchema('ReleaseCheckDto', ReleaseCheckDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);

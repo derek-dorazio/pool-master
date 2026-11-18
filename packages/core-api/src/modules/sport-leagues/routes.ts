@@ -109,7 +109,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
         + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
         + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. '
         + 'eventSyncProviderId turns the league\'s event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, '
-        + '422 PROVIDER_SPORT_MISMATCH for one not covering the league\'s sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. Root admin only.',
+        + '422 PROVIDER_SPORT_MISMATCH for one not covering the league\'s sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. '
+        + 'autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),

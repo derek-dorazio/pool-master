@@ -7,6 +7,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  PrismaAmbiguousFeedParticipantRepository,
   PrismaContestConfigurationRepository,
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestRepository,
@@ -269,6 +270,7 @@ export function createSportEventServices(
       bracket,
       lifecycle,
       contests: new PrismaContestRepository(prisma),
+      needsLinking: new PrismaAmbiguousFeedParticipantRepository(prisma),
       leaderboards,
       logger,
     }),

@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, SportLeagueNoun, TournamentFormat } from '../domain/enums';
 import { ScoringFamily } from '../domain/sports/scoring-family';
+import { AUTO_RELEASE_DAYS_MAX } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -34,6 +35,9 @@ export type SportListResponse = z.infer<typeof SportListResponseSchema>;
 
 // --- SportLeague ---------------------------------------------------------------
 
+/** The automatic release window, in days before an event's start (#1823); the database checks the same range. */
+const AutoReleaseDaysSchema = z.number().int().min(1).max(AUTO_RELEASE_DAYS_MAX);
+
 export const SportLeagueDtoSchema = z.object({
   id: z.uuid().describe('Sport league identifier.'),
   sportId: z.uuid().describe('The sport this sport league belongs to.'),
@@ -43,6 +47,7 @@ export const SportLeagueDtoSchema = z.object({
   currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   eventSyncProviderId: z.string().nullable().describe('The provider whose sync creates and keeps the sport league\'s events (ADR 0011): once a day it imports the provider\'s events for the league\'s tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year\'s edition. null when an admin authors its events.'),
+  autoReleaseDaysBeforeStart: AutoReleaseDaysSchema.nullable().describe('How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.'),
   bracketAdvancement: z.enum(BracketAdvancement).describe('How the sport league\'s bracket winners reach their next match: FIXED by each match\'s link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.'),
   roundNames: z.array(z.string()).describe('What the sport league calls its bracket\'s rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport\'s round names are used. Set with the league\'s reference data, never by a request.'),
   matchPeriodLayout: z.enum(MatchPeriodLayout).nullable().describe('The periods the sport league\'s games are played in, when not its sport\'s: HALVES for men\'s college basketball. Null plays the sport\'s layout. Set with the league\'s reference data, never by a request.'),
@@ -90,6 +95,7 @@ export const UpdateSportLeagueRequestSchema = z.object({
   name: z.string().min(1).optional(),
   matchKeyword: z.string().nullable().optional().describe('null clears it.'),
   isActive: z.boolean().optional(),
+  autoReleaseDaysBeforeStart: AutoReleaseDaysSchema.nullable().optional().describe('Days before an event\'s start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league.'),
   eventSyncProviderId: z.string().min(1).nullable().optional().describe('Turns the sport league\'s event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league\'s sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league\'s events by it. Clearing the keyword of a synced league is refused the same way.'),
   currentEventYear: z.number().int().optional().describe('Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.'),
   bracketAdvancement: z.enum(BracketAdvancement).optional().describe('RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.'),

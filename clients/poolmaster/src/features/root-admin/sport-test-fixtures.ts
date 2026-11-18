@@ -1,6 +1,7 @@
 import type {
   ParticipantDto,
   ParticipantLeagueAffiliationDto,
+  ReleaseCheckDto,
   SettingsGroup,
   SportDto,
   SportEventDto,
@@ -47,11 +48,30 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     autoLifecycleEnabled: true,
     tierCount: 6,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
+    releaseChecks: passingReleaseChecks(),
     allowedTransitions: ['CANCELLED'],
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
     ...overrides,
   };
+}
+
+/**
+ * A draft's ready checks as the server answers them (#1823), every one passing; a test replaces
+ * the one it is about with `failingReleaseCheck`.
+ */
+export function passingReleaseChecks(...replacements: ReleaseCheckDto[]): ReleaseCheckDto[] {
+  const passing: ReleaseCheckDto[] = [
+    { key: 'NOT_STARTED', passed: true, value: '2026-05-07T12:00:00.000Z' },
+    { key: 'ROUNDS_SCHEDULED', passed: true, value: 4 },
+    { key: 'FIELD_LOADED', passed: true, value: 120 },
+    { key: 'TIERS_ASSIGNED', passed: true, value: 0 },
+    { key: 'TIERS_FILLED', passed: true, value: [] },
+    { key: 'PRICES_ASSIGNED', passed: true, value: 0 },
+    { key: 'CONTEST_SETUPS_ON', passed: true, value: 3 },
+  ];
+  return passing.map((check) => replacements.find((replacement) => replacement.key === check.key) ?? check)
+    .concat(replacements.filter((replacement) => !passing.some((check) => check.key === replacement.key)));
 }
 
 export function sportEventRoundFixture(overrides: Partial<SportEventRoundDto> = {}): SportEventRoundDto {
@@ -142,6 +162,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     name: 'PGA Tour',
     matchKeyword: 'PGA',
     eventSyncProviderId: null,
+    autoReleaseDaysBeforeStart: 7,
     bracketAdvancement: 'FIXED',
     roundNames: [],
     matchPeriodLayout: null,

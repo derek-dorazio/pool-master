@@ -70,6 +70,7 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: BackgroundJobKind.SETTLEMENT,
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: BackgroundJobKind.SETTLEMENT,
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: BackgroundJobKind.RELEASE,
+  [BackgroundJobType.RELEASE_SPORT_EVENT]: BackgroundJobKind.RELEASE,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: BackgroundJobKind.OTHER,
 } as const satisfies Record<BackgroundJobType, BackgroundJobKind>;
 

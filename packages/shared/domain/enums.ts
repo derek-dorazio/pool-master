@@ -1057,6 +1057,8 @@ export const BackgroundJobType = {
   ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
   /** Syncs one sport league's events from the provider that creates them, for one or more years (#1819). */
   SYNC_LEAGUE_EVENTS: 'SYNC_LEAGUE_EVENTS',
+  /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */
+  RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 
