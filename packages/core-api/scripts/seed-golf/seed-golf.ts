@@ -102,6 +102,7 @@ import {
   type StoredTestEvent,
   testEventTransitions,
   testSeedEventNameOf,
+  testSeedParentEventId,
   type TestSeedSelection,
 } from './seed-golf-data';
 import {
@@ -377,6 +378,8 @@ class Loader {
   readonly rows: LoadRow[] = [];
   /** Each sport league's definition on the site, by name: its sport's, with what the league overrides. */
   private readonly leagueDefinitions = new Map<string, SportDefinition>();
+  /** Each Clutch Card league's parent league and the rounds of it the league covers, by name (#1820). */
+  private readonly leagueParents = new Map<string, { parentSportLeagueId: string; parentRoundNumbers: readonly number[] }>();
   private readonly apply: boolean;
   private readonly contents: ReadonlySet<SportDataContent>;
   private readonly offsetDays: number;
@@ -444,6 +447,9 @@ class Loader {
       throw new Error(`${name} is not a stat pool sport league on the site; box scores load only onto one.`);
     }
     this.leagueDefinitions.set(name, existing ? sportLeagueDefinitionOf(this.sport, existing) : getSportDefinition(this.sport));
+    if (existing?.parentSportLeagueId && existing.parentRoundNumbers.length > 0) {
+      this.leagueParents.set(name, { parentSportLeagueId: existing.parentSportLeagueId, parentRoundNumbers: existing.parentRoundNumbers });
+    }
     if (existing) {
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
       const change = `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}`;
@@ -521,6 +527,17 @@ class Loader {
       await must(applyParticipantLeagueAffiliationUpload({ client, path: { sportLeagueId: found(sportLeagueId ?? undefined, `${league.name}'s id`) }, body: { rows: joins } }), `Add players to ${league.name}`);
     }
     return ids;
+  }
+
+  /**
+   * For a test seed's event of a Clutch Card league, the test season event it names as its parent
+   * (`testSeedParentEventId`), or null when none is on the site; undefined for any other league.
+   */
+  private async testSeedParentEventId(client: Client, league: SportDataLeague): Promise<string | null | undefined> {
+    const parent = this.leagueParents.get(league.name);
+    if (!parent) return undefined;
+    const { events } = await must(listEvents({ client, query: { sportLeagueId: parent.parentSportLeagueId } }), `List ${league.name}'s season events`);
+    return testSeedParentEventId(events, parent.parentRoundNumbers);
   }
 
   private async loadLeague(league: SportDataLeague): Promise<void> {
@@ -720,6 +737,12 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
+      // A test Clutch Card event names its season event itself: its moved dates no longer fall in it.
+      const parentEventId = this.testSeed ? await this.testSeedParentEventId(client, league) : undefined;
+      if (parentEventId === null) {
+        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not added: no test season event of its parent league is on the site yet, so load that league\'s test data first' });
+        return;
+      }
       const releases = this.releasesRealEvent(event, loadsField);
       this.report({
         ...at,
@@ -745,6 +768,7 @@ class Loader {
           ...shiftedEventDates(event, this.offsetDays),
           rounds: event.rounds,
           ...(this.file.testData || this.resultsEnteredByHand ? { autoLifecycleEnabled: false } : {}),
+          ...(parentEventId !== undefined && { parentEventId }),
         },
       }), `Create ${event.name}`);
       if (event.roundsPar !== null) {

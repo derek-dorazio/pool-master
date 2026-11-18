@@ -10,6 +10,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { createSeasonEvent, deleteSeasonEvents } from './season-events';
 
 // The public event pages end to end over HTTP (#1007): a visitor with no session reads
 // Championship Weekend while its Clutch Card edition is still a draft (NOT_YET), then once the
@@ -21,6 +22,8 @@ const SEED = join(__dirname, '../../packages/core-api/scripts/seed-golf/american
 const YEAR = 2099;
 
 let sportLeagueId = '';
+/** The NFL playoffs events this run created for its Clutch Card editions to name as their parent. */
+const seasonEventIds: string[] = [];
 
 /** Every event of the Championship Weekend sport league, and this run's players. */
 async function cleanup(): Promise<void> {
@@ -44,6 +47,7 @@ async function cleanup(): Promise<void> {
 afterAll(async () => {
   await cleanupFunctionalData();
   await cleanup();
+  await deleteSeasonEvents(seasonEventIds);
   await disconnectFunctionalPrisma();
 });
 
@@ -89,6 +93,11 @@ describe('SDK Functional: event pages (#1007)', () => {
     expect((await readPage(visitor)).offers.some((offer) => offer.isPrimary)).toBe(false);
 
     // --- A draft edition: the offer shows when it is expected ---------------------------------
+    // Its season event first, which the edition names as its parent (#1820).
+    seasonEventIds.push(await createSeasonEvent(a, {
+      sport: Sport.AMERICAN_FOOTBALL, sportLeague: 'NFL', name: `NFL Playoffs ${RUN}`, eventYear: YEAR,
+      startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4,
+    }));
     const draft = await createEvent({
       client: a,
       body: { sportLeagueId, eventYear: YEAR, name: 'Conference Championships', startDate: `${YEAR}-01-24T20:00:00.000Z`, rounds: 1, autoLifecycleEnabled: false },
