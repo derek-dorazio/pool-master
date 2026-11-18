@@ -510,7 +510,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return labels;
   }
 
-  async findReleaseFacts(event: { id: string; sport: Sport; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts> {
+  async findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts> {
     const [scheduledRoundCount, unlinkedParticipantCount, contestSetupCount] = await Promise.all([
       this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
       event.linkProviderId === null
@@ -522,10 +522,8 @@ export class PrismaSportEventRepository implements SportEventRepository {
             participant: { providerMappings: { none: { providerId: event.linkProviderId } } },
           },
         }),
-      // The setups a commissioner could make a contest on the event from: the league's own and its sport's sport-wide ones.
-      this.prisma.contestConfigTemplate.count({
-        where: { active: true, sport: event.sport, OR: [{ sportLeagueId: event.sportLeagueId }, { sportLeagueId: null }] },
-      }),
+      // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
+      this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
     ]);
     return { scheduledRoundCount, unlinkedParticipantCount, contestSetupCount };
   }

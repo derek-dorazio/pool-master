@@ -14,6 +14,8 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
+/** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
+const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -27,28 +29,35 @@ export interface EventEdition {
 
 export async function freshEventEdition(
   prisma: Db,
-  options: { name?: string; eventYear?: number } = {},
+  options: { name?: string; eventYear?: number; onPgaTour?: boolean } = {},
 ): Promise<EventEdition> {
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
     create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await prisma.sportLeague.upsert({
-    where: { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } },
-    create: { sportId: sport.id, name: FIXTURE_TOUR_NAME },
-    update: {},
-  });
+  // Every contest setup is one sport league's (#1825), and the fixture tour has none: an event a
+  // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league.
+  const tour = options.onPgaTour
+    ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
+    : await prisma.sportLeague.upsert({
+      where: { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } },
+      create: { sportId: sport.id, name: FIXTURE_TOUR_NAME },
+      update: {},
+    });
   const series = await prisma.eventSeries.create({
-    data: { sportLeagueId: tour.id, name: `${options.name ?? 'Fixture series'} ${randomUUID()}` },
+    data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
   });
   return { eventSeriesId: series.id, eventYear: options.eventYear ?? new Date().getUTCFullYear() };
 }
 
-/** Removes the fixture tour's series that no event uses any more. */
+/** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */
 export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'eventSeries'>): Promise<void> {
   await prisma.eventSeries.deleteMany({
-    where: { sportLeague: { name: FIXTURE_TOUR_NAME }, sportEvents: { none: {} } },
+    where: {
+      OR: [{ sportLeague: { name: FIXTURE_TOUR_NAME } }, { name: { startsWith: FIXTURE_SERIES_PREFIX } }],
+      sportEvents: { none: {} },
+    },
   });
 }
 

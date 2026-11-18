@@ -136,7 +136,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
-    // The series' templates come with the sport-wide ones, and never IndyCar's.
+    // The series' own templates, never IndyCar's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
       query: { sport: Sport.AUTO_RACING, sportLeagueId: nascar.id, active: true },

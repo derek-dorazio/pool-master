@@ -272,9 +272,9 @@ export interface SportEventRepository {
    * What only a release's ready checks read of one event (#1823), each a count: its scheduled
    * rounds; its active field participants with no mapping from `linkProviderId` (null for an
    * event no provider syncs, which skips the count); and the active contest setups its sport
-   * league offers, its own and its sport's sport-wide ones.
+   * league offers.
    */
-  findReleaseFacts(event: { id: string; sport: Sport; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts>;
+  findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts>;
   /**
    * The automatic release sweep's candidates (#1823): DRAFT events starting after `now` and by
    * `horizon`, of an active sport league whose event sync names a provider and whose automatic

@@ -1395,7 +1395,7 @@ export const listContestResults = <ThrowOnError extends boolean = false>(options
 /**
  * List contest configuration templates
  *
- * The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones) and kind of event.
+ * The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (every template is one league's) and kind of event.
  */
 export const listContestConfigTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListContestConfigTemplatesData, ThrowOnError>): RequestResult<ListContestConfigTemplatesResponses, ListContestConfigTemplatesErrors, ThrowOnError> => (options?.client ?? client).get<ListContestConfigTemplatesResponses, ListContestConfigTemplatesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

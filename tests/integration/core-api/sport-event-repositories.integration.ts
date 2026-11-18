@@ -858,15 +858,14 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
       ],
     });
 
-    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sport: Sport.GOLF, sportLeagueId: league.id, linkProviderId: 'balldontlie' }));
+    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: 'balldontlie' }));
 
     expect(result.scheduledRoundCount).toBe(2);
     expect(result.unlinkedParticipantCount).toBe(1);
-    // Its own active setup, and whatever sport-wide golf setups the catalog seeds.
-    const sportWide = await getPrisma().contestConfigTemplate.count({ where: { sport: Sport.GOLF, sportLeagueId: null, active: true } });
-    expect(result.contestSetupCount).toBe(1 + sportWide);
+    // Its own active setup; the retired one is not counted.
+    expect(result.contestSetupCount).toBe(1);
     expect(statements).toHaveLength(3);
-    await expect(repos().events.findReleaseFacts({ id: event.id, sport: Sport.GOLF, sportLeagueId: league.id, linkProviderId: null }))
+    await expect(repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: null }))
       .resolves.toMatchObject({ unlinkedParticipantCount: null });
   });
 

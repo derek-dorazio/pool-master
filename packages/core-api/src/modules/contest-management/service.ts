@@ -231,13 +231,14 @@ export class ContestManagementService {
     );
     await this.assertSquaresGame(input, sportEvents);
     const sportEvent = this.assertOneSportLeague(sportEvents);
-    const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
-    if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
+    // Every template is one sport league's (#1825), offered only on that league's events.
+    const template = resolvedConfiguration.template;
+    if (template && template.sportLeagueId !== sportEvent.sportLeagueId) {
       this.logger.warn({
         sportEventId: sportEvent.id,
         eventSportLeagueId: sportEvent.sportLeagueId,
-        templateId: resolvedConfiguration.template?.id,
-        templateSportLeagueId: templateLeagueId,
+        templateId: template.id,
+        templateSportLeagueId: template.sportLeagueId,
       }, 'contest management create contest rejected for another league\'s template');
       throw new ContestManagementError(
         'That template is another sport league\'s preset; it is offered only for that league\'s events.',

@@ -1462,9 +1462,10 @@ model ContestConfiguration {
 model ContestConfigTemplate {
   id               String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sport            PrismaSport
-  /// The sport league whose events this template is offered for — a league's own official
-  /// preset (NASCAR, IndyCar, F1 points). Null offers it for every league of its sport.
-  sportLeagueId    String?                         @map("sport_league_id") @db.Uuid
+  /// The sport league whose events this template is offered for. Every setup belongs to one
+  /// league (#1825): golf's PGA TOUR and LPGA Tour each have their own copy of the same setups,
+  /// seeded by migration, so a league's setups can change without touching another's.
+  sportLeagueId    String                          @map("sport_league_id") @db.Uuid
   /// The kind of event the template is offered for (#802): KNOCKOUT or WEEK for a sport played as
   /// matches. Null offers it for every event of its sport.
   eventType        PrismaContestTemplateEventType? @map("event_type")
@@ -1486,13 +1487,14 @@ model ContestConfigTemplate {
   createdAt        DateTime                        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime                        @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague     SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
+  sportLeague     SportLeague            @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
   configurations  ContestConfiguration[]
   eventPageOffers EventPageOffer[]
 
-  @@unique([sport, eventType, contestFormat, selectionType, templateKey])
+  /// Two leagues' copies of one setup share its template key. Postgres treats a null event type as
+  /// distinct, so the key is enforced unique only among a league's templates for one event type.
+  @@unique([sportLeagueId, eventType, contestFormat, selectionType, templateKey])
   @@index([sport, contestFormat, active, sortOrder])
-  @@index([sportLeagueId])
   @@map("contest_config_templates")
 }
 

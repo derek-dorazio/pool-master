@@ -1006,10 +1006,10 @@ describe('Commissioner tools › Contests › Create contest', () => {
     listEventsMock.mockClear();
     const byLeague: Record<string, string> = { 'event-1': 'pga-tour', 'event-2': 'lpga-tour', 'event-3': 'lpga-tour' };
     listEventsMock.mockResolvedValue({ data: { events: data.events.map((event) => ({ ...event, sportLeagueId: byLeague[event.id] })) } });
-    // Its templates are golf's every-tournament ones, in no tour.
+    // Its templates are the LPGA Tour's own copies of golf's every-tournament ones.
     const templates = await (listContestConfigTemplatesMock() as Promise<{ data: { templates: object[] } }>);
     listContestConfigTemplatesMock.mockClear();
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: templates.data.templates.map((template) => ({ ...template, sportLeagueId: null })) } });
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: templates.data.templates.map((template) => ({ ...template, sportLeagueId: 'lpga-tour' })) } });
     renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=33333333-3333-4333-8333-333333333333&sportLeague=lpga-tour');
 
     await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toBeChecked());
@@ -1086,31 +1086,34 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
 describe('Commissioner tools › Contests › Create contest › a sport league\'s own presets', () => {
   const LPGA_LEAGUE_ID = '62400000-0000-4000-8000-000000000001';
-  const SPORT_WIDE_DEFAULT = {
+  const PGA_LEAGUE_ID = '62400000-0000-4000-8000-000000000003';
+  // The PGA TOUR's copy of golf's tiered pick 6 (#1825): the list answers it only unnarrowed.
+  const PGA_DEFAULT = {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
-    sportLeagueId: null,
+    sportLeagueId: PGA_LEAGUE_ID,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
-    description: 'Sport-wide golf default',
+    description: 'The PGA TOUR\'s golf default',
     sortOrder: 1,
     isDefault: true,
     active: true,
     schemaVersion: 1,
     configuration: { maxEntriesPerSquad: 1, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
   };
+  // The LPGA Tour's own copy of the same setup, never its default here.
+  const LPGA_PICK_6 = { ...PGA_DEFAULT, id: '62400000-0000-4000-8000-000000000004', sportLeagueId: LPGA_LEAGUE_ID, isDefault: false };
   const leaguePreset = (isDefault: boolean) => ({
-    ...SPORT_WIDE_DEFAULT,
+    ...PGA_DEFAULT,
     id: '62400000-0000-4000-8000-000000000002',
     sportLeagueId: LPGA_LEAGUE_ID,
     templateKey: 'lpga-tiered-pick-12',
     name: 'Select two from each tier, 8 count',
     description: 'The LPGA-style tour\'s own preset',
-    // A league default is listed after the sport-wide default and a league non-default before it,
-    // so which one starts checked is the default rule, not the list order.
-    sortOrder: isDefault ? 2 : 0,
+    // Listed after the league's pick 6, so which one starts checked is the default rule, not the list order.
+    sortOrder: 2,
     isDefault,
     configuration: { maxEntriesPerSquad: 1, selectionType: 'TIERED', picksPerTier: 2, countedScores: 8 },
   });
@@ -1122,8 +1125,8 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
     listContestConfigTemplatesMock.mockImplementation((options: { query?: { sportLeagueId?: string } }) => ({
       data: {
         templates: options.query?.sportLeagueId === LPGA_LEAGUE_ID
-          ? [leaguePreset(leagueDefault), SPORT_WIDE_DEFAULT].sort((left, right) => left.sortOrder - right.sortOrder)
-          : [SPORT_WIDE_DEFAULT],
+          ? [LPGA_PICK_6, leaguePreset(leagueDefault)]
+          : [PGA_DEFAULT, LPGA_PICK_6, leaguePreset(leagueDefault)],
       },
     }));
   }
@@ -1135,7 +1138,7 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
     listEventsMock.mockReset();
   });
 
-  it('asks for the chosen event\'s sport league\'s presets and starts on that league\'s default over the sport-wide default', async () => {
+  it('asks for the chosen event\'s sport league\'s presets and starts on that league\'s default, even listed after another preset', async () => {
     primeLeagueMocks(true);
 
     renderCreateContestPage();
@@ -1148,13 +1151,15 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
   });
 
-  it('starts on the sport-wide default when the event\'s league has presets but no default of its own', async () => {
+  it('starts on the league\'s first preset when it has no default, and never on another league\'s copy of it', async () => {
     primeLeagueMocks(false);
 
     renderCreateContestPage();
 
     await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked());
     expect(screen.getByTestId('contest-template-lpga-tiered-pick-12')).not.toBeChecked();
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(4);
+    expect(screen.getAllByTestId('contest-template-golf-tiered-pick-6')).toHaveLength(1);
   });
 });
 

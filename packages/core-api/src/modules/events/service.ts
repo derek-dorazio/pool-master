@@ -699,7 +699,6 @@ export class SportEventService {
     const [facts, bracketBlockers] = await Promise.all([
       this.deps.sportEvents.findReleaseFacts({
         id: event.id,
-        sport: event.sport,
         sportLeagueId: event.sportLeagueId,
         linkProviderId: isProviderSyncedEvent(event) ? event.providerId : null,
       }),

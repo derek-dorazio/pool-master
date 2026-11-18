@@ -264,8 +264,10 @@ down: a lesson that was true mid-series may not be by the end.
   roster formats are played on a knockout, and its week templates are its only defaults.
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
-  (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Give each league's
-  templates their own keys and one default per format and kind of event, named and described
+  (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Every template
+  names its sport league, so a setup each league of the sport plays is one row per league with
+  the same key, never one row for the whole sport. Give each league its templates and one
+  default per format and kind of event, named and described
   as `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12) says. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.

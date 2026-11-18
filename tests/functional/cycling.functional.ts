@@ -134,7 +134,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
-    // The tour's templates come with the sport-wide ones, and never the women's tour's.
+    // The tour's own templates, never the women's tour's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
       query: { sport: Sport.CYCLING, sportLeagueId: worldTour.id, active: true },
