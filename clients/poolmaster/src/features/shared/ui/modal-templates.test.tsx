@@ -146,6 +146,28 @@ describe("pool-master-3ew: shared modal templates", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
+  it("offers Edit beside Close when the read-only modal can turn into its form, and each button does its own thing", () => {
+    const handleCancel = vi.fn();
+    const handleEdit = vi.fn();
+
+    render(
+      <ReadOnlyDetailModal
+        detailContent={<p>Used by two sport leagues</p>}
+        editTestId="detail-edit"
+        onCancel={handleCancel}
+        onEdit={handleEdit}
+        onOpenChange={vi.fn()}
+        open
+        title="Standard"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("detail-edit"));
+    expect(handleEdit).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(handleCancel).toHaveBeenCalledTimes(1);
+  });
+
   it("shows a whole page unboxed in an xl read-only modal that fills a phone's screen, and boxes a payload otherwise", () => {
     const { rerender } = render(
       <ReadOnlyDetailModal

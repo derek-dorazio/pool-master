@@ -628,6 +628,11 @@ Platform-level definitions each sport league names one of (#1844; `rules/domain-
 requests a minute on each route (`@fastify/rate-limit`, per process); more answer 429
 `PROFILE_RATE_LIMITED`.
 
+The root admin edits them on Manage › Sports › Profiles (`/manage/sports/profiles`, #1849): a
+grid of each kind, a row opening its dialog (see it, then Edit) with the sport leagues naming it,
+New on each grid, and Delete in each row's menu, which shows the server's refusal while a league
+names the profile.
+
 | Operation | Role | Notes |
 |---|---|---|
 | List, read one | `rootAdmin` | `listTierProfiles`, `getTierProfile`, `listPricingProfiles`, `getPricingProfile`: by name, each with `sportLeagueCount`, the leagues naming it (two reads however many profiles). 404 `TIER_PROFILE_NOT_FOUND` / `PRICING_PROFILE_NOT_FOUND` |

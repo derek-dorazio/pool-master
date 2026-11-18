@@ -262,6 +262,12 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
   /** Fills a phone's screen, for a dialog that holds a whole page. */
   isFullScreenOnPhone?: boolean;
   /**
+   * "See it, then Edit": an Edit button beside Close, for a dialog that opens in view and turns
+   * into its form on Edit (Cancel and Save go back to the view).
+   */
+  onEdit?: () => void;
+  editTestId?: string;
+  /**
    * `sm` for a sentence or two, such as why an action isn't available. `xl` for a whole page,
    * such as a pick screen's preview: the content sits unboxed and the dialog itself scrolls.
    */
@@ -274,8 +280,10 @@ export function ReadOnlyDetailModal({
   description,
   detailContent,
   details,
+  editTestId,
   isFullScreenOnPhone = false,
   onCancel,
+  onEdit,
   onOpenChange,
   open,
   size = "lg",
@@ -288,9 +296,13 @@ export function ReadOnlyDetailModal({
       footer={
         <>
           {copyText === undefined ? null : <CopyButton label={copyLabel} text={copyText} />}
-          <Button onClick={onCancel} type="button">
-            Close
-          </Button>
+          {onEdit ? (
+            <DialogActions actionLabel="Edit" actionTestId={editTestId} cancelLabel="Close" isPending={false} onAction={onEdit} onCancel={onCancel} />
+          ) : (
+            <Button onClick={onCancel} type="button">
+              Close
+            </Button>
+          )}
         </>
       }
       isFullScreenOnPhone={isFullScreenOnPhone}
