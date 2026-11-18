@@ -141,7 +141,10 @@ with its trigger, progress and what it created and updated (`docs/BACKGROUND-JOB
 replaces the Year import action below, which stays until the admin UI moves to it. New events are
 born `DRAFT`; each releases itself once every ready check passes, within its league's
 `autoReleaseDaysBeforeStart` window (#1823, the `RELEASE_SPORT_EVENT` job in
-`docs/BACKGROUND-JOBS.md`), or by an admin's press before then. A provider event whose start has already
+`docs/BACKGROUND-JOBS.md`), or by an admin's press before then. Each automatic check that holds
+or releases the event is stored on it (#1847: `auto_release_checked_at`, `auto_release_outcome`,
+`auto_release_failed_checks`), overwriting the one before, and an admin's release clears it; the
+Sports page counts the drafts a check held as `RELEASE` issues. A provider event whose start has already
 passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
 as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
 league's sport, and the league has a match keyword. One league's failed read fails only its own
@@ -384,9 +387,18 @@ on how it started:
 |---|---|---|---|
 | League events sync (`SYNC_LEAGUE_EVENTS`, an `EVENTS` run outside this ledger) | yes | no | yes |
 | Manual sync | when its provider event is linked | when linked | yes |
-| Webhook sync | no | yes | yes |
-| Scheduled sweep and field loop | no | no | no |
+| Webhook sync | when its provider event is linked | yes | yes |
+| Scheduled sweep and field loop | when its provider event is linked | when linked | no |
 | Runs from before #1819 (backfilled by the migration from their provider event) | yes, when linked | yes, when linked | no |
+
+Since #1847 the ledger fills in a field or scores run's event and sport league whenever its
+caller named no league: it looks up the event of ours the provider event is linked to
+(`ProviderSyncRunLedger`, given the event repository), and the #1847 migration did the same for
+the runs written before it. The root admin's Sports page (`GET /api/v1/sport-leagues/overview`)
+reads each sport league's latest run of each kind by that league, through the
+`(sport_league_id, kind, created_at DESC)` index: a failed one is its league's sync health
+`ERROR` and a `SYNC` issue. A Clutch Card league takes its parent's `EVENTS` run, since its
+parent's event list sync creates its events.
 
 The scheduled sweep and field loop still run on their own timers, outside the job table; moving
 them onto jobs, with their scope, is the next step.

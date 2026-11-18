@@ -5,6 +5,7 @@
  */
 
 import type {
+  AutoReleaseCheck,
   BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
@@ -14,6 +15,10 @@ import type {
   ParticipantInactiveReason,
   Participant,
   ParticipantLeagueAffiliation,
+  ProviderSyncKind,
+  ProviderSyncRunStatus,
+  ReleaseCheckKey,
+  ScoringFamily,
   Sport,
   SportConfig,
   SportEvent,
@@ -288,6 +293,11 @@ export interface SportEventRepository {
    * release is on, each with what the sweep needs to judge its own window.
    */
   findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]>;
+  /**
+   * Stores the event's latest automatic release check (#1847) in place of the one before, or
+   * clears it with null (a root admin's release by hand).
+   */
+  recordAutoReleaseCheck(sportEventId: string, check: AutoReleaseCheck | null): Promise<void>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Clutch Card events that name each event as their parent (#1820), for each id asked about (0 where none). */
@@ -528,6 +538,77 @@ export interface ParticipantMatchQuery {
   name?: string;
 }
 
+
+// --- Sport league overview (#1847) ---------------------------------------------
+
+/** One sport league as the overview reads it. */
+export interface SportLeagueOverviewLeague {
+  id: string;
+  sport: Sport;
+  name: string;
+  parentSportLeagueId: string | null;
+  /** Null: its sport's family. A Clutch Card's is COMPOSITE. */
+  scoringFamily: ScoringFamily | null;
+  eventSyncProviderId: string | null;
+  isActive: boolean;
+}
+
+/** The latest finished (COMPLETED or FAILED) run of one sync kind for one sport league. */
+export interface SportLeagueLatestSyncRun {
+  id: string;
+  sportLeagueId: string;
+  kind: ProviderSyncKind;
+  status: ProviderSyncRunStatus;
+  createdAt: Date;
+  /** The run's outcome summary as the sync history shows it; null when it has none. */
+  summary: string | null;
+}
+
+/** A DRAFT event whose latest automatic release check held it. */
+export interface SportLeagueHeldEvent {
+  id: string;
+  sportLeagueId: string;
+  name: string;
+  checkedAt: Date;
+  failedChecks: ReleaseCheckKey[];
+}
+
+/** One sport league's events of one event year, not cancelled: how many and their dates. */
+export interface SportLeagueEventYearSpan {
+  sportLeagueId: string;
+  eventYear: number;
+  firstStart: Date;
+  lastStart: Date;
+  /** The latest end date among them; null when none has one. */
+  lastEnd: Date | null;
+}
+
+/** A Clutch Card event (#1820) with its parent event's rounds, every one of them. */
+export interface SportLeagueClutchCardEvent {
+  sportLeagueId: string;
+  eventYear: number;
+  /** The parent event's rounds this event covers. */
+  parentRoundNumbers: number[];
+  parentRounds: { roundNumber: number; scheduledDate: Date; scheduledEndAt: Date | null }[];
+}
+
+/** Everything the overview is computed from, read in a fixed number of grouped queries. */
+export interface SportLeagueOverviewFacts {
+  leagues: SportLeagueOverviewLeague[];
+  latestSyncRuns: SportLeagueLatestSyncRun[];
+  heldEvents: SportLeagueHeldEvent[];
+  /** Every event, cancelled ones too, per sport league. */
+  eventCounts: Map<string, number>;
+  eventYearSpans: SportLeagueEventYearSpan[];
+  /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
+  nextEventStarts: Map<string, Date>;
+  clutchCardEvents: SportLeagueClutchCardEvent[];
+}
+
+export interface SportLeagueOverviewReader {
+  /** Every sport league's facts, as of `now`. */
+  readFacts(now: Date): Promise<SportLeagueOverviewFacts>;
+}
 
 /** A profile write: its name and values. */
 export type TierProfileWrite = Pick<TierProfile, 'name'> & TierLayoutValues;

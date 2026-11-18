@@ -41,6 +41,7 @@ import type {
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
+  AutoReleaseCheck,
   BackgroundJobRequest,
   SportEventParticipantStatLine,
   GolfRoundResult,
@@ -96,6 +97,8 @@ export class InMemorySportEvents {
   affiliationRows: Array<Omit<ParticipantLeagueAffiliation, 'participant'>> = [];
   eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
+  /** Each event's latest automatic release check (#1847); absent when none is stored. */
+  autoReleaseChecks = new Map<string, AutoReleaseCheck>();
   contestsByEvent = new Map<string, number>();
   picksByEntry = new Map<string, number>();
   roundRows: SportEventRound[] = [];
@@ -428,6 +431,10 @@ export class InMemorySportEvents {
           eventSyncProviderId: league.eventSyncProviderId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),
+      recordAutoReleaseCheck: async (sportEventId, check) => {
+        if (check === null) this.autoReleaseChecks.delete(sportEventId);
+        else this.autoReleaseChecks.set(sportEventId, check);
+      },
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
