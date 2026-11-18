@@ -685,7 +685,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 Every sport league left on is one a provider syncs. The leagues no provider covers yet are
 **inactive** (`sport_leagues.is_active = false`) by the migration
-`20271125000000_switch_off_unsynced_sport_leagues`, so a reset database and a new environment keep
+`20271126000000_switch_off_unsynced_sport_leagues`, so a reset database and a new environment keep
 them off. They are not deleted: their rows, contest setups, round names and copy stay, and bringing
 one back is one flip (root admin **Activate**, or a migration) once it has a source. Existing events
 and contests on them are left as they are.
