@@ -44,7 +44,7 @@ export type OneEventSeed = (tag: string, season: number) => SportDataFile;
  */
 export function oneEventOf(fileName: string, leagueName: string, eventName: string, options: { withoutResults?: boolean } = {}): OneEventSeed {
   return (tag, season) => {
-    const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown, { allowTestData: true });
+    const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown);
     const league = expectDefined(file.sportLeagues.find((row) => row.name === leagueName), leagueName);
     const event = expectDefined(league.events.find((row) => row.name === eventName), eventName);
     const tagged = (key: string) => `${tag}-${key}`;
@@ -79,12 +79,12 @@ export function inSeason(file: SportDataFile, season: number): SportDataFile {
   const years = season - file.scope.season;
   const sportLeagues = JSON.stringify(file.sportLeagues)
     .replace(/"(\d{4})-(\d{2}-\d{2})/g, (_match, year: string, rest: string) => `"${Number(year) + years}-${rest}`);
-  return parseSportDataFile({ ...file, scope: { ...file.scope, season }, sportLeagues: JSON.parse(sportLeagues) as unknown }, { allowTestData: true });
+  return parseSportDataFile({ ...file, scope: { ...file.scope, season }, sportLeagues: JSON.parse(sportLeagues) as unknown });
 }
 
 /** The seed file's event as it was played, results included: what `placeSeedRound` and `enterSeedRound` read. */
 export function playedSeedEvent(fileName: string, leagueName: string, eventName: string): SportDataEvent {
-  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown, { allowTestData: true });
+  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown);
   const league = expectDefined(file.sportLeagues.find((row) => row.name === leagueName), leagueName);
   return expectDefined(league.events.find((row) => row.name === eventName), eventName);
 }

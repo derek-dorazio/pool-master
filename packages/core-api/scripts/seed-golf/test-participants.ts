@@ -301,7 +301,6 @@ class ParticipantLoader {
  * or in a dry run reports what loading them would do.
  */
 export async function loadTestParticipants(file: SportDataFile, options: LoadTestParticipantsOptions): Promise<LoadRow[]> {
-  if (!file.testData) throw new Error('Test players go with a test data file only.');
   const loader = new ParticipantLoader(file, options);
   await loader.run();
   return loader.rows;

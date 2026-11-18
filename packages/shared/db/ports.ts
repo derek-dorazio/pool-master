@@ -501,6 +501,8 @@ export interface ParticipantProviderMappingRepository {
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
   /** Every mapping a provider has for these of its identifiers. */
   findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
+  /** Every mapping a provider has for the participants of one sport, in one read (#1850). Never paged. */
+  findByProviderAndSport(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]>;
   /**
    * Binds a provider identity to a participant. A provider identity maps to one participant,
    * so an identity already bound elsewhere moves to this one.

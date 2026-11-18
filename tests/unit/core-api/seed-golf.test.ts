@@ -103,7 +103,6 @@ describe('golf seed round scores', () => {
 describe('golf-2026.json', () => {
   const seed = parseSportDataFile(
     JSON.parse(readFileSync(join(__dirname, '../../../packages/core-api/scripts/seed-golf/golf-2026.json'), 'utf8')) as unknown,
-    { allowTestData: true },
   );
 
   it('is a 2026 golf test seed whose envelope names both tours and a test seed\'s contents', () => {
@@ -135,97 +134,16 @@ describe('golf-2026.json', () => {
 
 const SEED_DIR = join(__dirname, '../../../packages/core-api/scripts/seed-golf');
 
-function readDataFile(name: string, allowTestData: boolean) {
-  return parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, name), 'utf8')) as unknown, { allowTestData });
+function readDataFile(name: string) {
+  return parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, name), 'utf8')) as unknown);
 }
 
 function eventRows(file: SportDataFile, league = 0) {
   return file.sportLeagues[league].events.map((event) => [event.name, event.startDate, event.endDate, event.rounds, event.roundsPar]);
 }
 
-describe('horse-racing-2027.json', () => {
-  it('is a real 2027 US Thoroughbred schedule: the Pegasus World Cup and the three Triple Crown races, each a one-race event with no par', () => {
-    const file = readDataFile('horse-racing-2027.json', false);
-
-    expect(file.scope).toEqual({ sport: Sport.HORSE_RACING, season: 2027, sportLeagues: ['US Thoroughbred'], contents: [SportDataContent.SCHEDULE] });
-    expect(eventRows(file)).toEqual([
-      ['Pegasus World Cup', '2027-01-30', '2027-01-30', 1, null],
-      ['Kentucky Derby', '2027-05-01', '2027-05-01', 1, null],
-      ['Preakness Stakes', '2027-05-23', '2027-05-23', 1, null],
-      ['Belmont Stakes', '2027-06-05', '2027-06-05', 1, null],
-    ]);
-  });
-});
-
-describe('auto-racing-2027-formula-1.json', () => {
-  it('is a real 2027 Formula 1 schedule of 24 one-day Grands Prix, Bahrain on March 14 to Abu Dhabi on December 12', () => {
-    const file = readDataFile('auto-racing-2027-formula-1.json', false);
-    const events = file.sportLeagues[0].events;
-
-    expect(file.scope).toEqual({ sport: Sport.AUTO_RACING, season: 2027, sportLeagues: ['Formula 1'], contents: [SportDataContent.SCHEDULE] });
-    expect(events).toHaveLength(24);
-    expect([events[0].name, events[0].startDate]).toEqual(['Bahrain Grand Prix', '2027-03-14']);
-    expect([events[23].name, events[23].startDate]).toEqual(['Abu Dhabi Grand Prix', '2027-12-12']);
-    expect(events.every((event) => event.startDate === event.endDate && event.rounds === 1 && event.field.length === 0)).toBe(true);
-  });
-});
-
-describe('auto-racing-2027-nascar.json', () => {
-  it('is a real 2027 NASCAR Cup Series schedule of the 34 points races both sources agree on, Daytona 500 first and Homestead last', () => {
-    const file = readDataFile('auto-racing-2027-nascar.json', false);
-    const events = file.sportLeagues[0].events;
-
-    expect(file.scope).toEqual({ sport: Sport.AUTO_RACING, season: 2027, sportLeagues: ['NASCAR Cup Series'], contents: [SportDataContent.SCHEDULE] });
-    expect(events).toHaveLength(34);
-    expect([events[0].name, events[0].startDate, events[0].venue]).toEqual(['Daytona 500', '2027-02-21', 'Daytona International Speedway']);
-    expect([events[33].startDate, events[33].venue]).toEqual(['2027-11-14', 'Homestead–Miami Speedway']);
-    expect(events.map((event) => event.venue)).not.toContain('Richmond Raceway');
-    expect(events.map((event) => event.venue)).not.toContain('New Hampshire Motor Speedway');
-  });
-});
-
-describe('cycling-2027.json', () => {
-  it('holds the 2027 WorldTour races two sources date alike, Grand Tours as one race spanning every stage', () => {
-    const file = readDataFile('cycling-2027.json', false);
-
-    expect(file.scope).toEqual({ sport: Sport.CYCLING, season: 2027, sportLeagues: ['UCI WorldTour', "UCI Women's WorldTour"], contents: [SportDataContent.SCHEDULE] });
-    expect(eventRows(file, 0)).toEqual([
-      ['Strade Bianche', '2027-03-06', '2027-03-06', 1, null],
-      ['Tirreno-Adriatico', '2027-03-08', '2027-03-14', 1, null],
-      ['Milano-Sanremo', '2027-03-20', '2027-03-20', 1, null],
-      ["Giro d'Italia", '2027-05-08', '2027-05-30', 1, null],
-      ['Tour de France', '2027-07-02', '2027-07-25', 1, null],
-      ['Il Lombardia', '2027-10-09', '2027-10-09', 1, null],
-    ]);
-    expect(eventRows(file, 1)).toEqual([["Giro d'Italia Women", '2027-05-29', '2027-06-06', 1, null]]);
-  });
-});
-
-describe('running-2027.json', () => {
-  it("gives the men's and women's World Marathon Majors the same seven announced 2027 races, London over both days of its weekend", () => {
-    const file = readDataFile('running-2027.json', false);
-
-    expect(file.scope).toEqual({
-      sport: Sport.RUNNING,
-      season: 2027,
-      sportLeagues: ['World Marathon Majors (men)', 'World Marathon Majors (women)'],
-      contents: [SportDataContent.SCHEDULE],
-    });
-    expect(eventRows(file, 0)).toEqual([
-      ['Tokyo Marathon', '2027-03-07', '2027-03-07', 1, null],
-      ['Boston Marathon', '2027-04-19', '2027-04-19', 1, null],
-      ['London Marathon', '2027-04-24', '2027-04-25', 1, null],
-      ['Cape Town Marathon', '2027-05-23', '2027-05-23', 1, null],
-      ['Sydney Marathon', '2027-08-29', '2027-08-29', 1, null],
-      ['Berlin Marathon', '2027-09-26', '2027-09-26', 1, null],
-      ['Chicago Marathon', '2027-10-10', '2027-10-10', 1, null],
-    ]);
-    expect(eventRows(file, 1)).toEqual(eventRows(file, 0));
-  });
-});
-
 describe('american-football-2026-nfl-playoffs-test.json', () => {
-  const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+  const file = readDataFile('american-football-2026-nfl-playoffs-test.json');
   const [nfl] = file.sportLeagues;
   const [playoffs] = nfl.events;
   const matches = playoffs.matches ?? [];
@@ -267,7 +185,7 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
 });
 
 describe('basketball-2025-nba-playoffs-test.json', () => {
-  const file = readDataFile('basketball-2025-nba-playoffs-test.json', true);
+  const file = readDataFile('basketball-2025-nba-playoffs-test.json');
   const [nba] = file.sportLeagues;
   const [playoffs] = nba.events;
   const matches = playoffs.matches ?? [];
@@ -302,7 +220,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
 });
 
 describe('basketball-2025-wnba-playoffs-test.json', () => {
-  const file = readDataFile('basketball-2025-wnba-playoffs-test.json', true);
+  const file = readDataFile('basketball-2025-wnba-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
   const matches = playoffs.matches ?? [];
 
@@ -319,7 +237,7 @@ describe('basketball-2025-wnba-playoffs-test.json', () => {
 });
 
 describe('american-football-2025-cfp-test.json', () => {
-  const file = readDataFile('american-football-2025-cfp-test.json', true);
+  const file = readDataFile('american-football-2025-cfp-test.json');
   const [playoff] = file.sportLeagues[0].events;
   const matches = playoff.matches ?? [];
 
@@ -341,7 +259,7 @@ describe('american-football-2025-cfp-test.json', () => {
 });
 
 describe('american-football-2026-cfp-semifinals-and-championship-test.json', () => {
-  const file = readDataFile('american-football-2026-cfp-semifinals-and-championship-test.json', true);
+  const file = readDataFile('american-football-2026-cfp-semifinals-and-championship-test.json');
   const [semifinals, championship] = file.sportLeagues;
 
   it('is a stat pool seed of the 2025-26 College Football Playoff\'s semifinals and National Championship, each one round of players\' box scores', () => {
@@ -366,7 +284,7 @@ describe('american-football-2026-cfp-semifinals-and-championship-test.json', () 
 });
 
 describe('basketball-2026-mens-final-four-test.json', () => {
-  const file = readDataFile('basketball-2026-mens-final-four-test.json', true);
+  const file = readDataFile('basketball-2026-mens-final-four-test.json');
   const [semifinals, championship] = file.sportLeagues;
 
   it('is a stat pool seed of the 2026 men\'s Final Four\'s semifinals and National Championship, each one round of players\' box scores', () => {
@@ -393,7 +311,7 @@ describe('basketball-2026-mens-final-four-test.json', () => {
 });
 
 describe('basketball-2026-nba-conference-finals-test.json', () => {
-  const file = readDataFile('basketball-2026-nba-conference-finals-test.json', true);
+  const file = readDataFile('basketball-2026-nba-conference-finals-test.json');
   const [conferenceFinals] = file.sportLeagues;
   const games = conferenceFinals.events[0].games ?? [];
   const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
@@ -422,7 +340,7 @@ describe('basketball-2026-nba-conference-finals-test.json', () => {
 });
 
 describe('basketball-2026-wnba-semifinals-and-finals-test.json', () => {
-  const file = readDataFile('basketball-2026-wnba-semifinals-and-finals-test.json', true);
+  const file = readDataFile('basketball-2026-wnba-semifinals-and-finals-test.json');
   const [semifinals, finals] = file.sportLeagues;
   const semifinalGames = semifinals.events[0].games ?? [];
   const finalsGames = finals.events[0].games ?? [];
@@ -456,7 +374,7 @@ describe('basketball-2026-wnba-semifinals-and-finals-test.json', () => {
 });
 
 describe('hockey-2026-nhl-conference-finals-test.json', () => {
-  const file = readDataFile('hockey-2026-nhl-conference-finals-test.json', true);
+  const file = readDataFile('hockey-2026-nhl-conference-finals-test.json');
   const [conferenceFinals] = file.sportLeagues;
   const games = conferenceFinals.events[0].games ?? [];
   const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
@@ -482,7 +400,7 @@ describe('hockey-2026-nhl-conference-finals-test.json', () => {
 });
 
 describe('hockey-2026-mens-frozen-four-test.json', () => {
-  const file = readDataFile('hockey-2026-mens-frozen-four-test.json', true);
+  const file = readDataFile('hockey-2026-mens-frozen-four-test.json');
   const [semifinals, championship] = file.sportLeagues;
 
   it('is a stat pool seed of the 2026 men\'s Frozen Four\'s semifinals and National Championship, each one round of skaters\' box scores', () => {
@@ -510,7 +428,7 @@ describe('hockey-2026-mens-frozen-four-test.json', () => {
 });
 
 describe('soccer-2026-champions-league-semifinals-and-final-test.json', () => {
-  const file = readDataFile('soccer-2026-champions-league-semifinals-and-final-test.json', true);
+  const file = readDataFile('soccer-2026-champions-league-semifinals-and-final-test.json');
   const [semifinals, final] = file.sportLeagues;
   const semifinalGames = semifinals.events[0].games ?? [];
   const lineIn = (games: typeof semifinalGames, gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
@@ -541,7 +459,7 @@ describe('soccer-2026-champions-league-semifinals-and-final-test.json', () => {
 });
 
 describe('soccer-2023-womens-world-cup-semifinals-and-final-test.json', () => {
-  const file = readDataFile('soccer-2023-womens-world-cup-semifinals-and-final-test.json', true);
+  const file = readDataFile('soccer-2023-womens-world-cup-semifinals-and-final-test.json');
   const [semifinals, final] = file.sportLeagues;
 
   it('is a stat pool seed of the 2023 Women\'s World Cup\'s semifinals and final, each one game for each side', () => {
@@ -568,7 +486,7 @@ describe('soccer-2023-womens-world-cup-semifinals-and-final-test.json', () => {
 });
 
 describe('baseball-2026-league-championship-series-test.json', () => {
-  const file = readDataFile('baseball-2026-league-championship-series-test.json', true);
+  const file = readDataFile('baseball-2026-league-championship-series-test.json');
   const [championshipSeries] = file.sportLeagues;
   const games = championshipSeries.events[0].games ?? [];
   const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
@@ -597,7 +515,7 @@ describe('baseball-2026-league-championship-series-test.json', () => {
 });
 
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
-  const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
+  const file = readDataFile('basketball-2026-ncaa-tournaments-test.json');
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of the 2026 men\'s and women\'s tournaments, each a six-round bracket of 64 places seeded 1 to 16 in four regions', () => {
@@ -634,7 +552,7 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
 });
 
 describe('hockey-2026-nhl-playoffs-test.json', () => {
-  const file = readDataFile('hockey-2026-nhl-playoffs-test.json', true);
+  const file = readDataFile('hockey-2026-nhl-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
   const matches = playoffs.matches ?? [];
 
@@ -654,7 +572,7 @@ describe('hockey-2026-nhl-playoffs-test.json', () => {
 });
 
 describe('hockey-2026-pwhl-playoffs-test.json', () => {
-  const file = readDataFile('hockey-2026-pwhl-playoffs-test.json', true);
+  const file = readDataFile('hockey-2026-pwhl-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
   const matches = playoffs.matches ?? [];
 
@@ -668,7 +586,7 @@ describe('hockey-2026-pwhl-playoffs-test.json', () => {
 });
 
 describe('hockey-2026-ncaa-tournaments-test.json', () => {
-  const file = readDataFile('hockey-2026-ncaa-tournaments-test.json', true);
+  const file = readDataFile('hockey-2026-ncaa-tournaments-test.json');
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of the men\'s 16-team tournament in four regions seeded 1 to 4, every game at a neutral site', () => {
@@ -704,7 +622,7 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
 });
 
 describe('baseball-2025-mlb-postseason-test.json', () => {
-  const file = readDataFile('baseball-2025-mlb-postseason-test.json', true);
+  const file = readDataFile('baseball-2025-mlb-postseason-test.json');
   const [postseason] = file.sportLeagues[0].events;
   const matches = postseason.matches ?? [];
 
@@ -734,7 +652,7 @@ describe('soccer international knockout test seeds', () => {
     ['soccer-2024-uefa-euro-test.json', 2024, 'UEFA European Championship', 16, { winner: 'HOME', homeScore: 2, awayScore: 1 }],
     ['soccer-2024-copa-america-test.json', 2024, 'Copa América', 8, { winner: 'HOME', homeScore: 1, awayScore: 0 }],
   ] as const)('%s is a test seed of a fixed bracket of neutral-site matches seeded by FIFA ranking, ending with its real final', (fileName, season, league, teams, final) => {
-    const file = readDataFile(fileName, true);
+    const file = readDataFile(fileName);
     const [tournament] = file.sportLeagues[0].events;
     const matches = tournament.matches ?? [];
 
@@ -748,7 +666,7 @@ describe('soccer international knockout test seeds', () => {
 
   it('settles every level match on its shoot-out, and gives a match with a winner none', () => {
     const files = ['soccer-2022-fifa-world-cup-test.json', 'soccer-2023-fifa-womens-world-cup-test.json', 'soccer-2024-uefa-euro-test.json', 'soccer-2024-copa-america-test.json'];
-    const results = files.flatMap((name) => (readDataFile(name, true).sportLeagues[0].events[0].matches ?? []).map((match) => expectDefined(match.result)));
+    const results = files.flatMap((name) => (readDataFile(name).sportLeagues[0].events[0].matches ?? []).map((match) => expectDefined(match.result)));
 
     for (const result of results) {
       const level = result.homeScore === result.awayScore;
@@ -761,7 +679,7 @@ describe('soccer international knockout test seeds', () => {
 });
 
 describe('soccer-2026-uefa-champions-league-test.json', () => {
-  const file = readDataFile('soccer-2026-uefa-champions-league-test.json', true);
+  const file = readDataFile('soccer-2026-uefa-champions-league-test.json');
   const [knockouts] = file.sportLeagues[0].events;
   const matches = knockouts.matches ?? [];
 
@@ -789,7 +707,7 @@ describe('soccer-2026-uefa-champions-league-test.json', () => {
 
 // #787: the US and college leagues. MLS's round one is a best-of-three series, scored in games won.
 describe('soccer-2025-mls-cup-playoffs-test.json', () => {
-  const file = readDataFile('soccer-2025-mls-cup-playoffs-test.json', true);
+  const file = readDataFile('soccer-2025-mls-cup-playoffs-test.json');
   const [playoffs] = file.sportLeagues[0].events;
   const matches = playoffs.matches ?? [];
 
@@ -815,7 +733,7 @@ describe('soccer-2025-mls-cup-playoffs-test.json', () => {
 
 describe('soccer-2025-nwsl-playoffs-test.json', () => {
   it('is a test seed of the 2025 NWSL playoffs, eight seeds on a fixed bracket, Gotham beating Washington 1-0 in the championship at a neutral site', () => {
-    const file = readDataFile('soccer-2025-nwsl-playoffs-test.json', true);
+    const file = readDataFile('soccer-2025-nwsl-playoffs-test.json');
     const [playoffs] = file.sportLeagues[0].events;
     const matches = playoffs.matches ?? [];
 
@@ -829,7 +747,7 @@ describe('soccer-2025-nwsl-playoffs-test.json', () => {
 });
 
 describe('soccer-2025-ncaa-tournaments-test.json', () => {
-  const file = readDataFile('soccer-2025-ncaa-tournaments-test.json', true);
+  const file = readDataFile('soccer-2025-ncaa-tournaments-test.json');
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of both 2025 NCAA tournaments, six rounds each, the College Cup at a neutral site', () => {
@@ -881,7 +799,7 @@ describe('2026 racing test seeds', () => {
     ['cycling-2026-test.json', Sport.CYCLING, [['UCI WorldTour', 3, 'Tadej Pogačar'], ["UCI Women's WorldTour", 1, 'Demi Vollering']]],
     ['running-2026-test.json', Sport.RUNNING, [['World Marathon Majors (men)', 6, 'Amos Kipruto'], ['World Marathon Majors (women)', 6, 'Hawi Feysa']]],
   ] as const)('%s holds each sport league\'s 2026 races as run, every runner with a result and the last race won by its real winner', (fileName, sport, leagues) => {
-    const file = readDataFile(fileName, true);
+    const file = readDataFile(fileName);
 
     expect([file.scope.sport, file.scope.season, file.scope.contents]).toEqual([sport, 2026, TEST_SEED_CONTENTS]);
     expect(file.sportLeagues.map((league) => league.name)).toEqual(leagues.map(([name]) => name));
@@ -898,7 +816,7 @@ describe('2026 racing test seeds', () => {
 
 // #715: each NFL regular-season week is its own event, its games forming no bracket.
 describe('american-football-2025-nfl-weeks-test.json', () => {
-  const file = readDataFile('american-football-2025-nfl-weeks-test.json', true);
+  const file = readDataFile('american-football-2025-nfl-weeks-test.json');
   const [nfl] = file.sportLeagues;
 
   it('is a test seed of the 2025 NFL season\'s first three weeks, each one round of sixteen played games that link nowhere', () => {
@@ -926,7 +844,7 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
   });
 
   it('ranks its 32 teams 1 to 32, the playoff teams as the playoffs test seed does, so loading either keeps the other\'s rankings', () => {
-    const playoffs = readDataFile('american-football-2026-nfl-playoffs-test.json', true).sportLeagues[0].players;
+    const playoffs = readDataFile('american-football-2026-nfl-playoffs-test.json').sportLeagues[0].players;
     expect(nfl.players.map((player) => player.ranking).sort((left, right) => left - right)).toEqual(Array.from({ length: 32 }, (_, index) => index + 1));
     const rankingOf = new Map(nfl.players.map((player) => [player.key, player.ranking]));
     expect(playoffs.map((player) => [player.key, rankingOf.get(player.key)])).toEqual(playoffs.map((player) => [player.key, player.ranking]));
@@ -934,8 +852,8 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
 });
 
 describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
-  const autumn = readDataFile('soccer-2025-premier-league-weeks-test.json', true);
-  const spring = readDataFile('soccer-2026-premier-league-weeks-test.json', true);
+  const autumn = readDataFile('soccer-2025-premier-league-weeks-test.json');
+  const spring = readDataFile('soccer-2026-premier-league-weeks-test.json');
   const weeks = [...autumn.sportLeagues[0].events, ...spring.sportLeagues[0].events];
 
   it('is a test seed of the 2025-26 Premier League\'s 38 matchweeks, split by the year each starts in, each one round of games that link nowhere, its field all 20 clubs', () => {
@@ -990,7 +908,7 @@ describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
 });
 
 describe('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', () => {
-  const file = readDataFile('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', true);
+  const file = readDataFile('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json');
   const [worldCup] = file.sportLeagues;
 
   it('is a test seed of the 2023 Women\'s World Cup group stage: three matchdays of 16 neutral-site games, each team playing once a matchday', () => {
@@ -1012,7 +930,7 @@ describe('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', () => {
   });
 
   it('ranks its teams as the knockout test seed does, so loading either keeps the other\'s rankings', () => {
-    const knockout = readDataFile('soccer-2023-fifa-womens-world-cup-test.json', true).sportLeagues[0].players;
+    const knockout = readDataFile('soccer-2023-fifa-womens-world-cup-test.json').sportLeagues[0].players;
     const rankingOf = new Map(worldCup.players.map((player) => [player.key, player.ranking]));
     expect(knockout.map((player) => [player.key, rankingOf.get(player.key)])).toEqual(knockout.map((player) => [player.key, player.ranking]));
   });
@@ -1020,7 +938,7 @@ describe('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', () => {
 
 describe('test seed match times', () => {
   it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
-    const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+    const file = readDataFile('american-football-2026-nfl-playoffs-test.json');
     const shifted = shiftedMatchTimes(file, 280);
 
     expect(shifted.sportLeagues[0].events[0].matches?.[0].scheduledAt).toBe('2026-10-19T01:15:00.000Z');
@@ -1040,7 +958,7 @@ describe('test slates', () => {
     ['world-marathon-majors-men.json', Sport.RUNNING, 'World Marathon Majors (men)'],
     ['world-marathon-majors-women.json', Sport.RUNNING, 'World Marathon Majors (women)'],
   ])('%s is test data for %s %s: players ranked 1 to n in order, no events, so it only fills a field already on the site', (name, sport, league) => {
-    const file = readDataFile(`test-slates/${name}`, true);
+    const file = readDataFile(`test-slates/${name}`);
 
     expect(file.testData).toBe(true);
     expect(file.scope.sport).toBe(sport);

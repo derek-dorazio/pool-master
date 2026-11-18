@@ -1,29 +1,29 @@
-# Load a sport data file into QA: a real schedule and fields gathered by the load-sport-data
-# skill, or a test seed for manual league and contest testing (the 2026 PGA TOUR and LPGA
-# Tour, or a played playoff bracket: the NFL, the College Football Playoff, the NBA or WNBA).
+# Load test data into QA (#1850): the test seeds, rolling "Test-" events made from last season's
+# with their made-up odds, tiers, prices and results, or a test slate. Real events and fields
+# never come from a file: the provider sync creates them. Rebuilding QA goes reset, then turn on
+# each sport league's sync (its events and fields arrive), then this run
+# (docs/SPORT-DATA-LOADING.md, "Rebuilding QA").
 #
-# workflow_dispatch only: sport data never rides a migration or a deploy. It goes in through
+# workflow_dispatch only: test data never rides a migration or a deploy. It goes in through
 # QA's public admin API as the E2E root admin, the same way the Manage screens write it, so
 # nothing touches the database directly. The file's envelope says what it holds and what a
-# run may change (packages/core-api/scripts/seed-golf/sport-data-file.ts).
+# run may change (packages/core-api/scripts/seed-golf/sport-data-file.ts). A test player
+# carrying a provider's feed id is matched to, or bound to, the participant the sync uses.
 #
 # Dry run is the default: it reads QA and lists what applying would add, update, skip or
 # leave as a conflict, and writes nothing. Apply compares and fills in, so running the same
-# file again reports everything as a skip, including straight after "Reset QA database".
-# QA is the only target, so it takes test data; a prod target will not.
+# file again reports everything as a skip. The loader reads the site's environment first and
+# refuses anything but a test target.
 #
 # A test slate (test-slates/<sport league>.json) fills the field of one event already on the
 # site, named in `event`, for trying contests before the real field is out. With
 # `replace_field` it removes every field row the slate does not list rather than withdrawing
 # it; a row a contest entry has picked is withdrawn instead.
-# `release` (on by default) releases a real file's events whose field it carries, so a "Load"
-# leaves them open for contests; an event the site refuses stays a draft and is reported.
-# `all_test_data` loads every test data file in the folder in one run, in place of `file`.
+# `all_test_data` loads every test seed in the folder in one run, in place of `file`.
 # `with_participants` also loads test players, a league per sport league, contests on its next
-# events and a submitted entry from each player. Both are QA only: the loader reads the site's
-# environment first and refuses anything else. Like every load, both are safe to run again.
-# See docs/SPORT-DATA-LOADING.md, "Loading sport data".
-name: Load sport data
+# events and a submitted entry from each player. Like every load, both are safe to run again.
+# See docs/SPORT-DATA-LOADING.md.
+name: Load test data
 
 on:
   workflow_dispatch:
@@ -48,17 +48,13 @@ on:
         type: boolean
         default: false
       all_test_data:
-        description: Load every test data file (not the test slates); file is ignored
+        description: Load every test seed (not the test slates); file is ignored
         type: boolean
         default: false
       with_participants:
         description: Also load test players, leagues, contests and entries (QA only)
         type: boolean
         default: false
-      release:
-        description: Real files, release each event whose field is loaded (tiers by ranking, default prices)
-        type: boolean
-        default: true
       events_per_league:
         description: Test seeds only, how many "Test-" events each sport league gets per run
         type: string
@@ -89,7 +85,6 @@ jobs:
       LOAD_ALL_TEST_DATA: ${{ inputs.all_test_data }}
       LOAD_WITH_PARTICIPANTS: ${{ inputs.with_participants }}
       LOAD_EVENTS_PER_LEAGUE: ${{ inputs.events_per_league }}
-      LOAD_RELEASE: ${{ inputs.release }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -104,7 +99,7 @@ jobs:
       - name: Load into QA
         shell: bash
         run: |
-          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md --events-per-league "$LOAD_EVENTS_PER_LEAGUE")
+          args=(--mode "$LOAD_MODE" --report load-report.md --events-per-league "$LOAD_EVENTS_PER_LEAGUE")
           if [ "$LOAD_ALL_TEST_DATA" = "true" ]; then
             args+=(--all-test-data)
           else
@@ -113,7 +108,6 @@ jobs:
             if [ "$LOAD_REPLACE_FIELD" = "true" ]; then args+=(--replace-field); fi
           fi
           if [ "$LOAD_WITH_PARTICIPANTS" = "true" ]; then args+=(--with-participants); fi
-          if [ "$LOAD_RELEASE" = "true" ]; then args+=(--release); fi
           npm run seed:golf -- "${args[@]}" 2>&1 | tee load.log
       - name: Summary
         if: always()
@@ -123,7 +117,7 @@ jobs:
             cat load-report.md >> "$GITHUB_STEP_SUMMARY"
           else
             {
-              echo "### Load sport data failed"
+              echo "### Load test data failed"
               echo ""
               echo '```'
               tail -n 40 load.log 2>/dev/null || echo "(no output)"

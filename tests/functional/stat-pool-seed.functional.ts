@@ -51,7 +51,7 @@ afterAll(async () => {
 
 /** The seed with its players tagged with this run, so they never meet another suite's. */
 function taggedSeed(fileName: string): SportDataFile {
-  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown, { allowTestData: true });
+  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown);
   for (const league of file.sportLeagues) {
     for (const player of league.players) {
       player.key = `${RUN}-${player.key}`;

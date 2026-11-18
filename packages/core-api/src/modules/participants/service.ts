@@ -219,6 +219,20 @@ export class ParticipantService {
   }
 
   /**
+   * Every identity a provider has for a sport's participants (#1850): how the Load test data run
+   * finds the participant a test player's feed id is already mapped to, so it never makes a
+   * second one beside the sync's.
+   */
+  async listSportProviderMappings(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]> {
+    const mappings = await this.providerMappingRepo.findByProviderAndSport(providerId, sportId);
+    this.logger?.info(
+      { action: 'participants.service.listSportProviderMappings.success', data: { providerId, sportId, count: mappings.length } },
+      'Listed a provider\'s participant identities in a sport',
+    );
+    return mappings;
+  }
+
+  /**
    * A root admin binding a provider identity to this participant by hand — how a competitor
    * the provider could not match gets their synced data. An identity already bound to another
    * participant moves here.

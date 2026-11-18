@@ -82,7 +82,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     const a = admin.client;
 
     // --- The test seed, its Super Bowl not yet played ---------------------------------------------
-    const file = parseSportDataFile(JSON.parse(readFileSync(SEED_FILE, 'utf8')) as unknown, { allowTestData: true });
+    const file = parseSportDataFile(JSON.parse(readFileSync(SEED_FILE, 'utf8')) as unknown);
     const tagged = (key: string | null) => (key === null ? null : `${RUN}-${key}`);
     const [playoffs] = file.sportLeagues[0].events;
     playoffs.name = `NFL Playoffs ${RUN}`;

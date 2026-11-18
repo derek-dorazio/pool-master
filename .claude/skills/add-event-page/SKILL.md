@@ -94,8 +94,8 @@ curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/pl
 ```
 
 and paste the link into Slack or iMessage. An offer shows only while its series has an edition
-on QA that is not over: load that series' test seed or its real schedule with the
-`load-sport-data` skill, then read the page.
+on QA that is not over: the series' synced events, or its test seed through *Load test data*
+on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
 
 ## Traps
 
@@ -115,4 +115,4 @@ on QA that is not over: load that series' test seed or its real schedule with th
   `?t=1` to see the new one.
 - **Offers missing on QA.** An offer is left out while its series has no edition that is not
   over. A test seed's dates are moved forward when it loads, so loading the series' test seed
-  (or its real schedule) brings the offer back; an old load whose dates have passed does not.
+  (or its sync) brings the offer back; an old load whose dates have passed does not.

@@ -48,8 +48,8 @@ function adapter() {
 
 /**
  * An NBA Finals Clutch Card linked to the provider's round, keyed as the migration keys the
- * seeded league, whose field already holds Jayson Tatum, loaded from a sport data file: affiliated
- * with the league, ranked first, and with no provider mapping.
+ * seeded league, whose field already holds Jayson Tatum as the test data load leaves him:
+ * affiliated with the league, ranked first, and his feed id bound by hand (#1850).
  */
 async function finalsWithLoadedStar() {
   const prisma = getPrisma();
@@ -81,13 +81,17 @@ async function finalsWithLoadedStar() {
     data: [1, 2, 3, 4, 5, 6, 7].map((roundNumber) => ({ sportEventId: event.id, roundNumber, scheduledDate: new Date(Date.UTC(2024, 5, 1 + roundNumber * 2)) })),
   });
   const tatum = await prisma.participant.create({
-    data: { sportId: basketball.id, name: 'Jayson Tatum', participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id, ranking: 1 } } },
+    data: {
+      sportId: basketball.id, name: 'Jayson Tatum', participantType: 'INDIVIDUAL',
+      leagueAffiliations: { create: { sportLeagueId: league.id, ranking: 1 } },
+      providerMappings: { create: { providerId: PROVIDER, externalId: 'nba-player-3202', confidence: 'MANUAL' } },
+    },
   });
   const tatumEntry = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: tatum.id, ranking: 1 } });
   return { event, league, tatum, tatumEntry };
 }
 
-/** A star a sport data file loaded into the Clutch Card's field: affiliated with its league and ranked, with no provider mapping. */
+/** A star loaded into the Clutch Card's field with no feed id: affiliated with its league and ranked, with no provider mapping. */
 async function loadedStar(eventId: string, league: { id: string; sportId: string }, name: string, ranking: number) {
   const prisma = getPrisma();
   const star = await prisma.participant.create({
@@ -98,7 +102,7 @@ async function loadedStar(eventId: string, league: { id: string; sportId: string
 }
 
 describe('a Clutch Card\'s stars and box scores from the provider', () => {
-  it('loads the round\'s field, linking the star already loaded to his provider player and keeping his ranking, and adding the rest of both rosters', async () => {
+  it('loads the round\'s field onto the star whose feed id is bound, keeping his ranking, and adds the rest of both rosters', async () => {
     const { event, tatum, tatumEntry } = await finalsWithLoadedStar();
     const detail = await roundDetail(adapter());
 
@@ -106,7 +110,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
 
     const prisma = getPrisma();
     await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-3202' } } }))
-      .resolves.toMatchObject({ participantId: tatum.id, confidence: 'HIGH' });
+      .resolves.toMatchObject({ participantId: tatum.id, confidence: 'MANUAL' });
     await expect(prisma.participant.count({ where: { name: 'Jayson Tatum' } })).resolves.toBe(1);
     const field = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true }, orderBy: { participant: { name: 'asc' } } });
     expect(field.map((entry) => [entry.participant.name, entry.ranking])).toEqual([
@@ -119,7 +123,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
     expect(field.find((entry) => entry.participantId === tatum.id)?.id).toBe(tatumEntry.id);
   });
 
-  it('links a star the data file spells with accents to the provider player the feed spells without, and lists the ranked star the feed did not name (#1664)', async () => {
+  it('never links a ranked star with no feed id by name: the feed\'s player is a new row beside him, and he is listed as unlinked (#1850)', async () => {
     const { event, league } = await finalsWithLoadedStar();
     const doncic = await loadedStar(event.id, league, 'Luka Dončić', 2);
     const porzingis = await loadedStar(event.id, league, 'Kristaps Porziņģis', 3);
@@ -128,12 +132,15 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
 
     const prisma = getPrisma();
     await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-132' } } }))
-      .resolves.toMatchObject({ participantId: doncic.id, confidence: 'HIGH' });
-    await expect(prisma.participant.count({ where: { name: { in: ['Luka Doncic', 'Luka Dončić'] } } })).resolves.toBe(1);
-    expect(result.unlinkedRankedParticipants).toEqual([{ participantId: porzingis.id, name: 'Kristaps Porziņģis', ranking: 3 }]);
+      .resolves.toMatchObject({ participantId: expect.not.stringMatching(doncic.id) as unknown, confidence: 'EXACT' });
+    await expect(prisma.participant.count({ where: { name: { in: ['Luka Doncic', 'Luka Dončić'] } } })).resolves.toBe(2);
+    expect(result.unlinkedRankedParticipants).toEqual([
+      { participantId: doncic.id, name: 'Luka Dončić', ranking: 2 },
+      { participantId: porzingis.id, name: 'Kristaps Porziņģis', ranking: 3 },
+    ]);
   });
 
-  it('then writes each played game\'s lines from a live sync, the live game\'s in progress, under the stars the load linked', async () => {
+  it('then writes each played game\'s lines from a live sync, the live game\'s in progress, under the star whose feed id is bound', async () => {
     const { event, tatumEntry } = await finalsWithLoadedStar();
     const provider = adapter();
     await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(provider));

@@ -226,7 +226,7 @@ reset must never be pointed at it.
 - **Roll it out on QA with a reset.** QA records the old names, so the deploy's migrate step
   stops and names the Reset QA database workflow (`run-migrations.mjs`). The order after merge:
   Reset QA database (the owner's approval), deploy QA (`docs/CI-AND-QUALITY-GATES.md` *Deploying
-  QA*), Load sport data.
+  QA*), turn on the league syncs, Load test data.
 - **Tests that replayed a deleted migration go with it.** A test that reads an old
   `migration.sql` to check its one-time backfill has nothing left to test.
 

@@ -48,7 +48,7 @@ to fix, never a reason to add a sample payload or a "local mode" branch (`rules/
 Load test data through the admin API with the loader, never through SQL
 (`rules/architecture-rules.md` §6 *Manual-testing seed data goes through the admin API*):
 `npm run seed:golf` with `POOLMASTER_SEED_BASE_URL`, `POOLMASTER_SEED_ADMIN_IDENTIFIER` and
-`POOLMASTER_SEED_ADMIN_PASSWORD` set, `--mode apply --allow-test-data`, and either one `--file`
+`POOLMASTER_SEED_ADMIN_PASSWORD` set, `--mode apply`, and either one `--file`
 or `--all-test-data`. Add `--with-participants` for test players with entries in each league's
 test pool, so leaderboards have rows. Every sport takes more than nine minutes; load only the
 sports the screen needs. `docs/SPORT-DATA-LOADING.md` *Loading every test file, with test

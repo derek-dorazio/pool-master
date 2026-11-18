@@ -10,8 +10,8 @@ allowed-tools: [Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch]
 A Clutch Card round is a sport league of players scored by the composite family, one league per
 playoff round (`rules/ux-rules.md` §13 *Event Pages* item 3: *A stat pool covers one playoff
 round*). Adding one needs no new code when its sport already has a composite: it is a migration,
-a last-season data file, and the lists of rounds that copy and tests keep. Running a round once
-the league exists is the `clutch-card-round` skill; this skill makes the league.
+a last-season data file, and the lists of rounds that copy and tests keep. Once the league
+exists, its real rounds come from the provider's sync, or the league stays off.
 
 A sport with no composite yet (as soccer's Hat Trick once was) needs the composite first, in the
 same PR as its first leagues. The composite family already exists, so this is not a new scoring
@@ -69,10 +69,26 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
 ## Step 3 — last season's data file
 
 Every sport league has a test seed of its last season as played
-(`rules/architecture-rules.md` §6 *Manual-testing seed data goes through the admin API*). Build it
-with the `load-sport-data` skill (its *Box scores* row) and the `clutch-card-round` skill for what
-is particular to a Clutch Card: the field of stars ranked by their regular-season composite
-total, every game's box score, and each line checked against a second source.
+(`rules/architecture-rules.md` §6 *Manual-testing seed data goes through the admin API*).
+`docs/SPORT-DATA-LOADING.md` *Writing a test data file* says what a stat pool's file carries; the
+league's sibling rounds' files are the shape to copy. What is particular to a Clutch Card:
+
+- **One round, one event.** A Clutch Card never spans playoff rounds. A round of several series
+  (both conference finals) is one event whose field is every team's stars; its rounds are the
+  games as played.
+- **The stars.** Who is in the field is fixed per sport, and the sibling files show it: every
+  NBA or WNBA player on the roster; NHL skaters, not goalies; MLB position players, not
+  pitchers; an American football team's quarterbacks, running backs, wide receivers and tight
+  ends; every player in a college basketball team's box score. Take the roster for the round,
+  not a current-roster feed, which drops a player traded since. Give each player's `team` and
+  `position`.
+- **The ranking** is each star's regular-season composite total (1 is the highest), which tiers
+  and budget prices come from. Points per game, salary or a fantasy ranking tier the field
+  differently from what the setups promise.
+- **The box scores**, every game's, checked player by player against a second source: match on
+  team and surname, settle a shared name by the rest of the line, and list any line you cannot
+  match. A player who did not play has no line.
+- **Feed ids**, on each star the provider serves today (*Feed ids* in the same doc).
 
 - The file is `packages/core-api/scripts/seed-golf/<sport>-<season>-<round>-test.json`; one file
   may carry two rounds of the same competition (semifinals and final).
@@ -104,7 +120,8 @@ If the work is tracked in a narrative plan, record the league there too.
 
 Run the `release-check` skill. The PR body names the league, its display order, its three
 template keys, the season of the test data and the two sources that agreed. After merge, the
-league is on QA; its test data loads only on the user's say-so (the `load-sport-data` skill, Step 5).
+league is on QA; its test data loads through *Load test data* only on the user's say-so
+(`docs/SPORT-DATA-LOADING.md` *Loading test data*).
 
 ## Traps
 

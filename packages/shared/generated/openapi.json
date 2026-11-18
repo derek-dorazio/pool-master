@@ -18034,6 +18034,27 @@
         "additionalProperties": false,
         "description": "Binds a provider identity to this participant. An identity already bound to another participant moves here."
       },
+      "SportProviderMappingListQuery": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The provider whose identities to list."
+          },
+          "sportId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Only the identities of this sport's participants."
+          }
+        },
+        "required": [
+          "providerId",
+          "sportId"
+        ],
+        "additionalProperties": false,
+        "description": "Whose provider identities to list: one provider's, in one sport."
+      },
       "ParticipantProviderMappingResponse": {
         "type": "object",
         "properties": {
@@ -82590,6 +82611,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ParticipantResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/participants/provider-mappings": {
+      "get": {
+        "operationId": "listSportProviderMappings",
+        "summary": "List a provider's identities for a sport's participants",
+        "tags": [
+          "Participants"
+        ],
+        "description": "Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to, so it never makes a second one beside the sync's (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "providerId",
+            "required": true,
+            "description": "The provider whose identities to list."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "sportId",
+            "required": true,
+            "description": "Only the identities of this sport's participants."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A participant's provider identities.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParticipantProviderMappingListResponse"
                 }
               }
             }

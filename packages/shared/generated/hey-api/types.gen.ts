@@ -7381,6 +7381,20 @@ export type BindParticipantProviderMappingRequest = {
 };
 
 /**
+ * Whose provider identities to list: one provider's, in one sport.
+ */
+export type SportProviderMappingListQuery = {
+    /**
+     * The provider whose identities to list.
+     */
+    providerId: string;
+    /**
+     * Only the identities of this sport's participants.
+     */
+    sportId: string;
+};
+
+/**
  * A single provider identity of a participant.
  */
 export type ParticipantProviderMappingResponse = {
@@ -34733,6 +34747,40 @@ export type CreateParticipantResponses = {
 };
 
 export type CreateParticipantResponse = CreateParticipantResponses[keyof CreateParticipantResponses];
+
+export type ListSportProviderMappingsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The provider whose identities to list.
+         */
+        providerId: string;
+        /**
+         * Only the identities of this sport's participants.
+         */
+        sportId: string;
+    };
+    url: '/api/v1/participants/provider-mappings';
+};
+
+export type ListSportProviderMappingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListSportProviderMappingsError = ListSportProviderMappingsErrors[keyof ListSportProviderMappingsErrors];
+
+export type ListSportProviderMappingsResponses = {
+    /**
+     * A participant's provider identities.
+     */
+    200: ParticipantProviderMappingListResponse;
+};
+
+export type ListSportProviderMappingsResponse = ListSportProviderMappingsResponses[keyof ListSportProviderMappingsResponses];
 
 export type DeleteParticipantData = {
     body?: never;

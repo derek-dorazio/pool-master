@@ -11,6 +11,7 @@ import type {
   CreateParticipantRequest,
   ParticipantListQuery,
   ParticipantListResponse,
+  SportProviderMappingListQuery,
   UpdateParticipantRequest,
 } from '@poolmaster/shared/dto/participants.dto';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
@@ -29,6 +30,7 @@ export function createParticipantHandlers(
     updateParticipant,
     deleteParticipant,
     listProviderMappings,
+    listSportProviderMappings,
     bindProviderMapping,
   };
 
@@ -71,6 +73,12 @@ export function createParticipantHandlers(
   async function deleteParticipant(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     await participantService.delete(request.params.id);
     return reply.status(204).send();
+  }
+
+  async function listSportProviderMappings(request: FastifyRequest<{ Querystring: SportProviderMappingListQuery }>) {
+    const { providerId, sportId } = request.query;
+    const providerMappings = await participantService.listSportProviderMappings(providerId, sportId);
+    return { providerMappings: providerMappings.map(mapParticipantProviderMappingToDto) };
   }
 
   async function bindProviderMapping(

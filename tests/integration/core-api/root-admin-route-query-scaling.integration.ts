@@ -132,6 +132,22 @@ async function seedProviderMappings(mappings: number) {
   return { participant, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
+/** A root admin, and `mappings` golfers each bound to one feed id of a provider of their own. */
+async function seedSportProviderMappings(mappings: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const providerId = `provider-${randomUUID().slice(0, 8)}`;
+  for (let index = 0; index < mappings; index += 1) {
+    await prisma.participant.create({
+      data: {
+        sportId: sport.id, name: `${providerId} Golfer ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
+        providerMappings: { create: { providerId, externalId: `golfer-${String(index)}` } },
+      },
+    });
+  }
+  return { providerId, sportId: sport.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 /**
  * A root admin, and `changes` saved changes to the plan settings, each by an admin of their own.
  * The history shows the newest 20, so a second seed's changes are the ones the read returns.
@@ -276,6 +292,15 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       route: 'GET /api/v1/participants/{id}/provider-mappings',
       seed: seedProviderMappings,
       call: ({ participant, rootAdmin }) => get(`/api/v1/participants/${participant.id}/provider-mappings`, rootAdmin),
+      rowsShown: (response) => okBody(response, ParticipantProviderMappingListResponseSchema).providerMappings.length,
+    });
+  });
+
+  it("GET a provider's feed ids for a sport: the same statements for 2 mapped golfers as for 20", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/participants/provider-mappings',
+      seed: seedSportProviderMappings,
+      call: ({ providerId, sportId, rootAdmin }) => get(`/api/v1/participants/provider-mappings?providerId=${providerId}&sportId=${sportId}`, rootAdmin),
       rowsShown: (response) => okBody(response, ParticipantProviderMappingListResponseSchema).providerMappings.length,
     });
   });

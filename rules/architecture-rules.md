@@ -633,16 +633,22 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
   predates the other sports) and the script that writes them with the generated SDK as a root
   admin, so every rule the Manage screens apply applies to it too and nothing writes the
   database behind the service.
+- **Every file is test data** (#1850). Real events, fields and results come only from a
+  provider's sync; a league no sync covers stays off. No file loads real data, so there is no
+  real-data path in the loader to keep correct.
 - **Every sport league goes through the same pipeline**: the *Fetch sport sources* workflow
-  gathers the source pages, a data file is written from them, and the one *Load sport data*
-  workflow applies it (the season's schedule, then each event's field). Only the source sites
-  differ per league (`docs/SPORT-DATA-SOURCES.md`). A league never gets its own loader or its
-  own workflow.
-- It runs only when someone asks: `npm run seed:golf` locally, the *Load sport data*
-  workflow on QA. Never from a migration, a deploy, a reset, or a Prisma seed.
+  gathers last season's source pages, a test data file is written from them, and the one *Load
+  test data* workflow applies it. A league never gets its own loader or its own workflow.
+- It runs only when someone asks, and only on QA or a local or test site, which every run checks
+  first: `npm run seed:golf` locally, the *Load test data* workflow on QA. Never from a
+  migration, a deploy, a reset, or a Prisma seed. Rebuilding QA is reset, the league syncs, then
+  *Load test data* (`docs/SPORT-DATA-LOADING.md` *Loading test data*).
 - A data file carries its scope in an envelope (schema version, sport, season, sport
-  leagues, contents, `testData`), checked before any write; the filename is never parsed.
-  Made-up data is allowed only when the envelope says `testData`, and only on local and QA.
+  leagues, contents, `testData: true`), checked before any write; the filename is never parsed.
+- **A test participant carries the provider's feed id wherever the provider serves it**, so the
+  sync and the test data share one participant row and never make a duplicate. A "Test-" event
+  never carries a provider id: a real one would let the live score poll write real results
+  onto it.
 - It is re-entrant by comparing and filling in: what is missing is added, what differs is
   updated while the event has not started, a dropped field entry is withdrawn, and nothing is
   deleted. What release locks (a bracket event's field and pairings) is reported, not
@@ -652,8 +658,7 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
   then. No automated test may depend on seeded rows; tests build their own.
 - **Every sport league has a test seed of its last season as played**: its real events, fields
   and results (made-up odds aside), loaded through the same workflow, so every sport can be
-  tried by hand end to end. A future season's schedule and fields are an admin's routine work
-  with the same loader, not a ticket. The seeded-template integration test fails for any sport
+  tried by hand end to end. The seeded-template integration test fails for any sport
   league the migrations seed that no test data file names, so a new league lands with its file.
 
 ### There is deliberately no Prisma seed

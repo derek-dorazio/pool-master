@@ -236,7 +236,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const a = admin.client;
 
     // Week 1 only, its teams and event tagged with this run.
-    const file = parseSportDataFile(JSON.parse(readFileSync(SEED_FILE, 'utf8')) as unknown, { allowTestData: true });
+    const file = parseSportDataFile(JSON.parse(readFileSync(SEED_FILE, 'utf8')) as unknown);
     const [nflLeague] = file.sportLeagues;
     const week = expectDefined(nflLeague.events[0]);
     nflLeague.events = [week];

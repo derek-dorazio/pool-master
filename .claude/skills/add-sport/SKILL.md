@@ -174,31 +174,22 @@ In order:
    odds in the field grid, then auto-assign tiers from odds.
 10. **Docs and gates.** Update the docs the change touches in the same PR, then run the
     `release-check` skill.
-11. **Go live.** Put the sport's first real event on the site through the data pipeline, not
-    the Manage pages: gather its schedule with the `load-sport-data` skill and commit the data
-    file in this PR, so the sport league and event are loaded, and the field later, without
-    anyone signing in to type them. Then write down what stays an admin's job as a procedure
-    in `docs/` (odds, tiers, prices, release, results: screen names, paths, buttons, what to do
-    when a result changes). Walking it is how a missing admin step shows up before the first
-    real event does. If the event needs something the loader's one event shape cannot carry,
-    add it to the loader here rather than sending an admin to type it. Pipeline support for a
-    sport is three things, all in this PR: its row in `docs/SPORT-DATA-SOURCES.md` with each
-    source checked by one fetch, its first season's schedule file, and a test slate per sport
-    league in `test-slates/` so contests can be tried before a real field is out. Each sport
-    league also gets a test data file of its last season as played
-    (`rules/architecture-rules.md` §5 *Manual-testing seed data goes through the admin API*).
-    Every league goes through the same two workflows: "Fetch sport sources" gathers the
-    source pages (a cloud session cannot reach the source sites), and "Load sport data" applies
-    a file, the season's schedule once, then each event's field as it is set. Only the source
-    sites differ per league, so the workflows need no change for a new sport.
-    A knockout differs. Its field and pairings exist only once the bracket is set (the NFL
-    playoffs' at the end of the regular season), so there is no bracket to write ahead, and a
-    slate fills a field but no bracket; its test data is the last real bracket, played out, and
-    it needs no schedule file or slate. A sport league whose last edition was a while ago (a
-    World Cup every four years) uses its last edition played, whatever the year. A
-    regular season of games is a schedule like any other: each week is an event with its
-    games, which link nowhere, written once the league publishes them (the NFL's in May); its
-    test data is last season's weeks as played (the `load-sport-data` skill, *Test slates*).
+11. **Go live.** A sport's real events and fields come only from its provider's sync; a sport
+    league no sync covers stays off (`rules/architecture-rules.md` §6 *Manual-testing seed data
+    goes through the admin API*). Turn the league's sync on, then write down what stays an
+    admin's job as a procedure in `docs/` (odds, tiers, prices, release, results: screen names,
+    paths, buttons, what to do when a result changes). Walking it is how a missing admin step
+    shows up before the first real event does. Each sport league also gets, in this PR, a test
+    data file of its last season as played (`docs/SPORT-DATA-LOADING.md` *Writing a test data
+    file*), its players carrying the provider's feed ids wherever the provider serves them
+    today, and its sources in `docs/SPORT-DATA-SOURCES.md`, each checked by one fetch. A roster
+    sport league also gets a test slate in `test-slates/`. The "Fetch sport sources" workflow
+    gathers the source pages (a cloud session cannot reach the source sites), and "Load test
+    data" applies the file; neither needs a change for a new sport. A knockout's test data is
+    its last real bracket, played out, and it needs no slate. A sport league whose last edition
+    was a while ago (a World Cup every four years) uses its last edition played, whatever the
+    year. A regular season of games is last season's weeks as played, each week an event whose
+    games link nowhere.
 
 ## Step 3 — reflect
 

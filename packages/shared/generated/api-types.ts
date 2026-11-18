@@ -3039,6 +3039,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/participants/provider-mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a provider's identities for a sport's participants
+         * @description Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to, so it never makes a second one beside the sync's (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         */
+        get: operations["listSportProviderMappings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/participants/{id}": {
         parameters: {
             query?: never;
@@ -9103,6 +9123,13 @@ export interface components {
             providerId: string;
             /** @description The provider's identifier for the competitor — from the unmapped-competitor list. */
             externalId: string;
+        };
+        /** @description Whose provider identities to list: one provider's, in one sport. */
+        SportProviderMappingListQuery: {
+            /** @description The provider whose identities to list. */
+            providerId: string;
+            /** @description Only the identities of this sport's participants. */
+            sportId: string;
         };
         /** @description A single provider identity of a participant. */
         ParticipantProviderMappingResponse: {
@@ -34063,6 +34090,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParticipantResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportProviderMappings: {
+        parameters: {
+            query: {
+                /** @description The provider whose identities to list. */
+                providerId: string;
+                /** @description Only the identities of this sport's participants. */
+                sportId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A participant's provider identities. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParticipantProviderMappingListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

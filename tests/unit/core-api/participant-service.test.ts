@@ -30,6 +30,15 @@ describe('ParticipantService reads', () => {
 
     await expect(service.getProviderMappings('participant-1')).resolves.toEqual([mapping]);
   });
+
+  it('lists the feed ids one provider has mapped among one sport\'s participants', async () => {
+    const mapping = { participantId: 'participant-1', providerId: 'feed', externalId: 'ext-9' };
+    const mappings = fakeParticipantProviderMappingRepo({ findByProviderAndSport: jest.fn().mockResolvedValue([mapping]) });
+    const service = new ParticipantService(fakeParticipantRepo(), mappings, fakeLogger());
+
+    await expect(service.listSportProviderMappings('feed', 'sport-1')).resolves.toEqual([mapping]);
+    expect(mappings.findByProviderAndSport).toHaveBeenCalledWith('feed', 'sport-1');
+  });
 });
 
 describe('ParticipantService writes', () => {

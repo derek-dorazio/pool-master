@@ -128,6 +128,12 @@ export const ParticipantProviderMappingListResponseSchema = z.object({
 }).describe('A participant\'s provider identities.');
 export type ParticipantProviderMappingListResponse = z.infer<typeof ParticipantProviderMappingListResponseSchema>;
 
+export const SportProviderMappingListQuerySchema = z.object({
+  providerId: z.string().min(1).describe('The provider whose identities to list.'),
+  sportId: z.string().min(1).describe('Only the identities of this sport\'s participants.'),
+}).describe('Whose provider identities to list: one provider\'s, in one sport.');
+export type SportProviderMappingListQuery = z.infer<typeof SportProviderMappingListQuerySchema>;
+
 export const BindParticipantProviderMappingRequestSchema = z.object({
   providerId: z.string().min(1).describe('The provider whose identifier this binds.'),
   externalId: z.string().min(1).describe('The provider\'s identifier for the competitor — from the unmapped-competitor list.'),
@@ -143,6 +149,7 @@ export type ParticipantProviderMappingResponse = z.infer<typeof ParticipantProvi
 registerSchema('ParticipantProviderMappingDto', ParticipantProviderMappingDtoSchema);
 registerSchema('ParticipantProviderMappingListResponse', ParticipantProviderMappingListResponseSchema);
 registerSchema('BindParticipantProviderMappingRequest', BindParticipantProviderMappingRequestSchema);
+registerSchema('SportProviderMappingListQuery', SportProviderMappingListQuerySchema);
 registerSchema('ParticipantProviderMappingResponse', ParticipantProviderMappingResponseSchema);
 registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);

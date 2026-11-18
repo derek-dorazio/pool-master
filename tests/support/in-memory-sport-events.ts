@@ -226,6 +226,8 @@ export class InMemorySportEvents {
     return {
       findByParticipant: async (participantId) => this.mappings.filter((row) => row.participantId === participantId),
       findByProviderExternalIds: async (providerId, externalIds) => this.mappings.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
+      findByProviderAndSport: async (providerId, sportId) => this.mappings.filter((row) => row.providerId === providerId
+        && this.participants.some((participant) => participant.id === row.participantId && participant.sportId === sportId)),
       bind: async (mapping) => {
         this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId));
         const row = stamp({ id: this.id('mapping'), ...mapping });

@@ -102,7 +102,7 @@ function golfEvent(tag: string, season: number): SportDataFile {
         })),
       }],
     }],
-  })) as unknown, { allowTestData: true }), season);
+  })) as unknown), season);
 }
 
 const SPORTS: readonly SportScenario[] = [
