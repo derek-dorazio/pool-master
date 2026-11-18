@@ -14,7 +14,6 @@ import {
   PeekCard,
   LoadingState,
   PendingPage,
-  Pager,
   Switch,
   Text,
   Tile,
@@ -37,7 +36,7 @@ import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
-import { LEADERBOARD_PAGE_SIZE, isMySquadsEntry } from './leaderboard-columns';
+import { isMySquadsEntry } from './leaderboard-columns';
 import { LeaderboardFrame, LeaderboardSection } from './leaderboard-kit';
 import { EntryDetailsPeek } from './entry-details-peek';
 import { MineMarker } from './mine-marker';
@@ -332,9 +331,8 @@ export function ContestLeaderboardPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
 
   const [search, setSearch] = useState('');
-  const [pageIndex, setPageIndex] = useState(0);
   const myEntriesFilter = useMyEntriesFilter();
-  // #1762 — an entry a link names (`?entry=`) opens on its page and scrolls into view.
+  // #1762 — an entry a link names (`?entry=`) opens and scrolls into view.
   const linkedEntry = useLinkedEntry();
   const landOn = useLandOnEntry();
   // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
@@ -436,22 +434,14 @@ export function ContestLeaderboardPage() {
 
   const allEntryIds = view.entries.map((entry) => entry.entryId);
   const openEntryIds = allEntryIds.filter(openRows.isOpen);
-  // #1750 — "My entries" narrows the board to the viewer's own, each at its real place; search and
-  // paging then work within them.
+  // #1750 — "My entries" narrows the board to the viewer's own, each at its real place; search
+  // then works within them.
   const myEntries = narrowToMyEntries(view.entries, isMySquadsEntry(mySquadId), myEntriesFilter.isOn);
   const matchingEntries = myEntries.rows.filter((entry) => matchesSearch(entry, search));
-  const pageCount = Math.max(1, Math.ceil(matchingEntries.length / LEADERBOARD_PAGE_SIZE));
-  // A refetch or a narrower search can leave fewer pages than the one being shown.
-  const currentPage = Math.min(pageIndex, pageCount - 1);
   const linkedIndex = matchingEntries.findIndex((entry) => entry.entryId === linkedEntry.entryId);
   landOn(linkedIndex >= 0 ? linkedEntry.entryId : null, () => {
     openRows.open(matchingEntries[linkedIndex].entryId);
-    setPageIndex(Math.floor(linkedIndex / LEADERBOARD_PAGE_SIZE));
   });
-  const pageEntries = matchingEntries.slice(
-    currentPage * LEADERBOARD_PAGE_SIZE,
-    (currentPage + 1) * LEADERBOARD_PAGE_SIZE,
-  );
 
   return (
     <LeaderboardFrame
@@ -479,7 +469,6 @@ export function ContestLeaderboardPage() {
         events={revealedEvents}
         onChange={(sportEventId) => {
           setRequestedEventId(sportEventId);
-          setPageIndex(0);
         }}
         testId="contest-leaderboard-event-switcher"
         value={leaderboardQuery.data.sportEventId}
@@ -493,10 +482,7 @@ export function ContestLeaderboardPage() {
                 aria-label="Find an entry"
                 className="max-w-xs"
                 data-testid="contest-leaderboard-search"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPageIndex(0);
-                }}
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder="Find an entry"
                 type="search"
                 value={search}
@@ -504,10 +490,7 @@ export function ContestLeaderboardPage() {
               {myEntries.hasMine ? (
                 <MyEntriesToggle
                   checked={myEntries.showsMineOnly}
-                  onCheckedChange={(on) => {
-                    myEntriesFilter.setOn(on);
-                    setPageIndex(0);
-                  }}
+                  onCheckedChange={myEntriesFilter.setOn}
                 />
               ) : null}
             </div>
@@ -562,7 +545,7 @@ export function ContestLeaderboardPage() {
               ) : matchingEntries.length === 0 ? (
                 <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
               ) : (
-                pageEntries.map((entry) => (
+                matchingEntries.map((entry) => (
                   <EntryBlock
                     entry={entry}
                     contestEvents={contestEvents}
@@ -591,16 +574,6 @@ export function ContestLeaderboardPage() {
               )}
             </div>
           </div>
-        </div>
-        <div>
-          <Pager
-            onNext={() => setPageIndex(currentPage + 1)}
-            onPrevious={() => setPageIndex(currentPage - 1)}
-            pageCount={pageCount}
-            pageIndex={currentPage}
-            pageSize={LEADERBOARD_PAGE_SIZE}
-            total={matchingEntries.length}
-          />
         </div>
         {view.footnote ? (
           <p className="text-xs text-muted-foreground" data-testid={view.footnote.testId}>

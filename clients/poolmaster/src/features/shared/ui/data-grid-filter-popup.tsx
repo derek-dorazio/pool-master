@@ -28,6 +28,18 @@ type DataGridFilterPopupProps = {
  * so nothing moves. Apply sets the filter and closes it, Cancel closes it unchanged, Clear removes
  * the column's filter. Escape is Cancel and Enter is Apply. Focus goes back to the funnel.
  */
+/**
+ * The popup opens with focus in the input a filter marks `data-autofocus` (the text, number or
+ * span box), so the viewer can type at once; a list filter keeps Radix's own first focus.
+ */
+function focusTheInput(event: Event) {
+  const input = event.currentTarget instanceof HTMLElement ? event.currentTarget.querySelector<HTMLElement>("[data-autofocus]") : null;
+  if (input) {
+    event.preventDefault();
+    input.focus();
+  }
+}
+
 export function DataGridFilterPopup({
   canApply,
   children,
@@ -73,6 +85,7 @@ export function DataGridFilterPopup({
           collisionPadding={16}
           data-testid={`${testId}-popup`}
           onKeyDown={applyOnEnter}
+          onOpenAutoFocus={focusTheInput}
           sideOffset={6}
         >
           <div className="grid gap-2 p-3">

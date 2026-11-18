@@ -63,18 +63,21 @@ export function CupStandingsGrid({
       }),
       {
         id: 'wins',
+        meta: { type: { kind: 'number' } },
         header: 'Wins',
         accessorFn: (row) => row.wins,
         enableGlobalFilter: false,
       },
       {
         id: 'contests',
+        meta: { type: { kind: 'number' } },
         header: 'Contests',
         accessorFn: (row) => row.contestsCounted,
         enableGlobalFilter: false,
       },
       ...(projection ? [{
         id: 'projected',
+        meta: { type: { kind: 'number' as const } },
         header: 'If it ended now',
         accessorFn: (row: CupStandingRowDto) => projection.get(row.squadId)?.position ?? Number.MAX_SAFE_INTEGER,
         enableGlobalFilter: false,

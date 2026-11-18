@@ -20,6 +20,8 @@ import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cache';
 import { ReadCache } from '../../core/read-cache';
 import { createSportEventServices, eventFieldCache } from '../events/wiring';
+import { PrismaSportLeagueOverviewReader } from '../../adapters/prisma-sport-league-overview-reader';
+import { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import { createSportLeagueHandlers } from './handler';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
@@ -46,7 +48,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   void fastify.register(schemaComponentsPlugin);
   const services = createSportEventServices(getAppPrisma(fastify), fastify.log, undefined, undefined, opts.providerRegistry);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
-  const handler = createSportLeagueHandlers(services.sportLeagues, lists);
+  const overviews = new SportLeagueOverviewService({ reader: new PrismaSportLeagueOverviewReader(getAppPrisma(fastify)) });
+  const handler = createSportLeagueHandlers(services.sportLeagues, lists, overviews);
   const write = { onRequest: requireRootAdmin };
 
   // A ranking write changes the participants every event of the sport league shows on its field
@@ -67,12 +70,27 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'List sport leagues',
-      description: 'Every sport league, or one sport\'s, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport\'s leagues from it.',
+      description: 'Every sport league, or one sport\'s, each with its participant and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport\'s leagues from it.',
       operationId: 'listSportLeagues',
       querystring: schemaRef('SportLeagueListQuery'),
       response: { 200: schemaRef('SportLeagueListResponse'), ...errors(404) },
     },
     handler: handler.listSportLeagues,
+  });
+
+  fastify.get('/overview', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List every sport league with its health, issues and season',
+      description: 'The root admin\'s Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, '
+        + 'each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, '
+        + 'its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. '
+        + 'No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.',
+      operationId: 'listSportLeagueOverviews',
+      response: { 200: schemaRef('SportLeagueOverviewListResponse'), ...errors(401, 403) },
+    },
+    handler: handler.listSportLeagueOverviews,
   });
 
   fastify.get('/:sportLeagueId', {
@@ -125,7 +143,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'Delete a sport league',
-      description: 'Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league\'s muted sport leagues. '
+      description: 'Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league\'s muted sport leagues. '
         + '409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league\'s cup or a playoff round naming it as its season league: '
         + 'delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.',
       operationId: 'deleteSportLeague',

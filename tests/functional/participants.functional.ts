@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createParticipant, updateParticipant } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { leagueProfiles } from '../support/league-profiles';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -22,7 +23,7 @@ async function golfTourId(): Promise<string> {
     create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await database.sportLeague.create({ data: { sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  const tour = await database.sportLeague.create({ data: { ...(await leagueProfiles(database)), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
   createdSportLeagueIds.push(tour.id);
   return tour.id;
 }

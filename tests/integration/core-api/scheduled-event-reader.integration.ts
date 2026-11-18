@@ -12,6 +12,7 @@ import { createScheduledEventReader } from '../../../packages/core-api/src/modul
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 
 const PROVIDER = 'integration-test';
@@ -207,7 +208,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const league = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `${name} ${randomUUID()}`, eventSyncProviderId, isActive } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${name} ${randomUUID()}`, eventSyncProviderId, isActive } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `${name} series ${randomUUID()}` } });
     return { eventSeriesId: series.id };
   }

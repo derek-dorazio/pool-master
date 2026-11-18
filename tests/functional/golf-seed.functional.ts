@@ -22,6 +22,7 @@ import {
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { leagueProfiles } from '../support/league-profiles';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
@@ -305,7 +306,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
-    const sportLeague = await db.sportLeague.create({ data: { sportId: golfSportId, name: league, matchKeyword: league } });
+    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league, matchKeyword: league } });
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL', externalId: `${RUN}-synced` } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: provider, externalId: feedId('golfer-2'), confidence: 'EXACT' } });
 

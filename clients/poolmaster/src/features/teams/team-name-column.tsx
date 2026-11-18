@@ -13,6 +13,7 @@ export function teamNameColumn<Row extends TeamDirectoryRow>(
 ): ColumnDef<Row, string> {
   return {
     id: 'team',
+    meta: { type: { kind: 'text' } },
     header: 'Name',
     accessorFn: (row) => row.team.name,
     cell: ({ row }) => (

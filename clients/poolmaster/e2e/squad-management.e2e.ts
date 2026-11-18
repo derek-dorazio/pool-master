@@ -186,6 +186,11 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
 
       await owner.goto(`/league/${run.leagueCode}/teams`);
       await expect(owner.getByTestId(`league-team-home-link-${squadId}`)).toHaveText(run.renamedSquadName);
+      // #1842 — the directory's sort is kept in its link: opening one sorted by name, Z to A,
+      // shows it sorted that way.
+      await owner.goto(`/league/${run.leagueCode}/teams?grid=${encodeURIComponent(JSON.stringify({ s: '-team' }))}`);
+      await expect(owner.getByTestId(`league-team-home-link-${squadId}`)).toHaveText(run.renamedSquadName);
+      await expect(owner.getByTestId('data-grid-sort-team')).toHaveAttribute('data-sorted', 'desc');
       await owner.goto(`/league/${run.leagueCode}/team`);
     });
 

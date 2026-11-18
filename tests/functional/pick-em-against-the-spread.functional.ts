@@ -40,7 +40,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -127,7 +127,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const a = admin.client;
 
     // --- A released week of four games ------------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

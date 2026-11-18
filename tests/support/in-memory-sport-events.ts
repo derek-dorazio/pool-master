@@ -35,10 +35,13 @@ import type {
   SportEventUpdate,
   SportLeagueRepository,
   SportRepository,
+  PricingProfileRepository,
+  TierProfileRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
+  AutoReleaseCheck,
   BackgroundJobRequest,
   SportEventParticipantStatLine,
   GolfRoundResult,
@@ -58,9 +61,15 @@ import type {
   SportEventRound,
   SportEventTier,
   SportLeague,
+  PricingProfile,
+  TierProfile,
 } from '@poolmaster/shared/domain';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
+
+/** The profiles every in-memory sport league names (#1844); `tierProfileRepo` and `pricingProfileRepo` serve them. */
+export const IN_MEMORY_TIER_PROFILE_ID = 'tier-profile-default';
+export const IN_MEMORY_PRICING_PROFILE_ID = 'pricing-profile-default';
 
 function stamp<T extends object>(row: T): T & { createdAt: Date; updatedAt: Date } {
   return { createdAt: T0, updatedAt: T0, ...row };
@@ -82,10 +91,15 @@ export class InMemorySportEvents {
   private sequence = 0;
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
+  /** The profiles sport leagues name (#1844): golf's six tiers of ten, and Standard pricing. */
+  tierProfiles: TierProfile[] = [stamp({ id: IN_MEMORY_TIER_PROFILE_ID, name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
+  pricingProfiles: PricingProfile[] = [stamp({ id: IN_MEMORY_PRICING_PROFILE_ID, name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
+  /** Each event's latest automatic release check (#1847); absent when none is stored. */
+  autoReleaseChecks = new Map<string, AutoReleaseCheck>();
   contestsByEvent = new Map<string, number>();
   picksByEntry = new Map<string, number>();
   roundRows: SportEventRound[] = [];
@@ -120,7 +134,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -206,7 +220,7 @@ export class InMemorySportEvents {
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -352,7 +366,7 @@ export class InMemorySportEvents {
       countUntieredActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
         row.sportEventId === id
         && row.isActive
-        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.sportEventTierId)
+        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && (valuation.sportEventTierId || valuation.tierAssignedSource))
       )).length),
       countUnpricedActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
         row.sportEventId === id
@@ -414,6 +428,10 @@ export class InMemorySportEvents {
           eventSyncProviderId: league.eventSyncProviderId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),
+      recordAutoReleaseCheck: async (sportEventId, check) => {
+        if (check === null) this.autoReleaseChecks.delete(sportEventId);
+        else this.autoReleaseChecks.set(sportEventId, check);
+      },
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
@@ -571,6 +589,7 @@ export class InMemorySportEvents {
           if (valuation.sportEventTierId && removed.has(valuation.sportEventTierId)) {
             valuation.sportEventTierId = target?.id ?? null;
             valuation.tierOrderIndex = null;
+            if (!target) valuation.tierAssignedSource = null;
           }
         }
         this.tierRows = this.tierRows.filter((row) => !removed.has(row.id));
@@ -580,6 +599,44 @@ export class InMemorySportEvents {
         .map((tier): [string, number] => [tier.id, this.valuationRows.filter((valuation) => valuation.sportEventTierId === tier.id).length])
         .filter(([, count]) => count > 0)),
     };
+  }
+
+  /** The tier profile each sport league names, by league id: what the tier service reads. */
+  tierProfileRepo(): Pick<TierProfileRepository, 'findBySportLeague' | 'findById'> {
+    return {
+      findBySportLeague: async (sportLeagueId) => this.profileOf(this.tierProfiles, sportLeagueId, 'tierProfileId'),
+      findById: async (id) => {
+        const profile = this.tierProfiles.find((row) => row.id === id);
+        return profile ? { ...profile } : null;
+      },
+    };
+  }
+
+  /** The pricing profile each sport league names, by league id. */
+  pricingProfileRepo(): Pick<PricingProfileRepository, 'findBySportLeague'> {
+    return { findBySportLeague: async (sportLeagueId) => this.profileOf(this.pricingProfiles, sportLeagueId, 'pricingProfileId') };
+  }
+
+  /** A league the store doesn't hold (an event's placeholder league) names the default profiles. */
+  private profileOf<T extends { id: string }>(profiles: T[], sportLeagueId: string, key: 'tierProfileId' | 'pricingProfileId'): T | null {
+    const league = this.sportLeagues.find((row) => row.id === sportLeagueId);
+    const profileId = league ? league[key] : { tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID }[key];
+    const profile = profiles.find((row) => row.id === profileId);
+    return profile ? { ...profile } : null;
+  }
+
+  /** A sport league of its own naming a new tier profile of this layout (#1844), for events to sit in. */
+  addLeagueWithTierProfile(layout: Pick<TierProfile, 'tierCount' | 'tierSize'> & Partial<Pick<TierProfile, 'lastTier' | 'lastTierMax'>>): SportLeague {
+    const profile: TierProfile = stamp({ id: this.id('tier-profile'), name: `${layout.tierCount} tiers of ${layout.tierSize}`, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
+    this.tierProfiles.push(profile);
+    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { tierProfileId: profile.id });
+  }
+
+  /** A sport league of its own naming a new pricing profile with these values (#1844). */
+  addLeagueWithPricingProfile(values: Omit<PricingProfile, 'id' | 'createdAt' | 'updatedAt'>): SportLeague {
+    const profile: PricingProfile = stamp({ id: this.id('pricing-profile'), ...values });
+    this.pricingProfiles.push(profile);
+    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { pricingProfileId: profile.id });
   }
 
   valuationRepo(): SportEventParticipantValuationRepository {
@@ -608,6 +665,16 @@ export class InMemorySportEvents {
             tierAssignedSource: assignment.source,
           });
         }
+      },
+      assignEventTiers: async ({ sportEventId, tierConfig, assignments }) => {
+        for (const assignment of assignments) {
+          Object.assign(valuationFor(assignment.sportEventParticipantId), {
+            sportEventTierId: assignment.sportEventTierId,
+            tierOrderIndex: assignment.tierOrderIndex,
+            tierAssignedSource: assignment.source,
+          });
+        }
+        Object.assign(this.events.find((row) => row.id === sportEventId) as SportEvent, { tierConfig });
       },
       assignEventPrices: async ({ sportEventId, pricingConfig, assignments }) => {
         for (const assignment of assignments) {

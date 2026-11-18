@@ -1,7 +1,8 @@
-import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createLeague, listPricingProfiles, listTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import type { ContestSelectionConfig, SelectionType } from '@poolmaster/shared/domain';
+import { SPORT_TIER_PROFILE_NAME } from '../support/league-profiles';
+import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -268,4 +269,18 @@ export async function attachContestEvent(contestId: string, sportEventId: string
     data: entries.map((entry) => ({ contestEntryId: entry.id, sportEventId })),
     skipDuplicates: true,
   });
+}
+
+/**
+ * The profile ids a functional test's new sport league names (#1844), read through the API as an
+ * admin would: its sport's tier layout (`SPORT_TIER_PROFILE_NAME`) and Standard pricing.
+ */
+export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ tierProfileId: string; pricingProfileId: string }> {
+  const [tiers, prices] = await Promise.all([listTierProfiles({ client }), listPricingProfiles({ client })]);
+  const tierProfile = tiers.data?.tierProfiles.find((profile) => profile.name === SPORT_TIER_PROFILE_NAME[sport]);
+  const pricingProfile = prices.data?.pricingProfiles.find((profile) => profile.name === 'Standard');
+  if (!tierProfile || !pricingProfile) {
+    throw new Error(`The ${SPORT_TIER_PROFILE_NAME[sport]} tier profile or the Standard pricing profile is missing.`);
+  }
+  return { tierProfileId: tierProfile.id, pricingProfileId: pricingProfile.id };
 }

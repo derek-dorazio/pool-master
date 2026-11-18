@@ -4,7 +4,8 @@
 -- ids as the next round's. No data is preserved beyond what applies cleanly: every site's data is
 -- test data and QA is rebuilt after this (Derek, 2026-11-18). A participant takes one of its
 -- leagues (its best-ranked affiliation), or its sport's first league by name when it has none; a
--- sport with participants and no league gets an inactive "Participants" league to hold them.
+-- sport with participants and no league gets an inactive "Participants" league to hold them, naming
+-- the first tier and pricing profiles by name (#1844), since it is never offered.
 
 ALTER TABLE "participants" ADD COLUMN "sport_league_id" UUID, ADD COLUMN "ranking" INTEGER;
 
@@ -17,8 +18,11 @@ FROM (
 ) AS a
 WHERE a."participant_id" = p."id";
 
-INSERT INTO "sport_leagues" ("sport_id", "name", "is_active", "updated_at")
-SELECT DISTINCT p."sport_id", 'Participants', false, now()
+INSERT INTO "sport_leagues" ("sport_id", "name", "is_active", "tier_profile_id", "pricing_profile_id", "updated_at")
+SELECT DISTINCT p."sport_id", 'Participants', false,
+  (SELECT "id" FROM "tier_profiles" ORDER BY "name", "id" LIMIT 1),
+  (SELECT "id" FROM "pricing_profiles" ORDER BY "name", "id" LIMIT 1),
+  now()
 FROM "participants" AS p
 WHERE p."sport_league_id" IS NULL
   AND NOT EXISTS (SELECT 1 FROM "sport_leagues" AS l WHERE l."sport_id" = p."sport_id");
@@ -63,3 +67,13 @@ CREATE INDEX "participants_sport_league_id_ranking_idx" ON "participants"("sport
 -- AddForeignKey
 ALTER TABLE "participants" ADD CONSTRAINT "participants_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "participant_provider_mappings" ADD CONSTRAINT "participant_provider_mappings_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- The FIELD_LINKED ready check goes: every field participant is the event league's, made by the
+-- sync with its feed id, so there is nothing left to link. A stored hold forgets it.
+UPDATE "sport_events" SET "auto_release_failed_checks" = array_remove("auto_release_failed_checks", 'FIELD_LINKED');
+ALTER TYPE "PrismaReleaseCheckKey" RENAME TO "PrismaReleaseCheckKey_old";
+CREATE TYPE "PrismaReleaseCheckKey" AS ENUM ('NOT_STARTED', 'ROUNDS_SCHEDULED', 'FIELD_LOADED', 'TIERS_ASSIGNED', 'TIERS_FILLED', 'PRICES_ASSIGNED', 'BRACKET_COMPLETE', 'CONTEST_SETUPS_ON');
+ALTER TABLE "sport_events" ALTER COLUMN "auto_release_failed_checks" DROP DEFAULT;
+ALTER TABLE "sport_events" ALTER COLUMN "auto_release_failed_checks" TYPE "PrismaReleaseCheckKey"[] USING ("auto_release_failed_checks"::text[]::"PrismaReleaseCheckKey"[]);
+ALTER TABLE "sport_events" ALTER COLUMN "auto_release_failed_checks" SET DEFAULT ARRAY[]::"PrismaReleaseCheckKey"[];
+DROP TYPE "PrismaReleaseCheckKey_old";

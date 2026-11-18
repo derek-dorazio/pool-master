@@ -602,6 +602,25 @@ enum PrismaProviderSyncKind {
   SCORES
 }
 
+/// How a sport event's latest automatic release check ended (#1847).
+enum PrismaAutoReleaseCheckOutcome {
+  RELEASED
+  HELD
+}
+
+/// A ready check a DRAFT sport event must pass before release (#1823): ReleaseCheckKey, in its
+/// declared order. Stored as the checks that held an automatic release (#1847).
+enum PrismaReleaseCheckKey {
+  NOT_STARTED
+  ROUNDS_SCHEDULED
+  FIELD_LOADED
+  TIERS_ASSIGNED
+  TIERS_FILLED
+  PRICES_ASSIGNED
+  BRACKET_COMPLETE
+  CONTEST_SETUPS_ON
+}
+
 /// What started a provider sync run (#1819).
 enum PrismaProviderSyncTrigger {
   SCHEDULE
@@ -1102,10 +1121,13 @@ model SportLeague {
   /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
   /// Reference data, set by the migration that seeds the league.
   roundNames                 String[]                 @default([]) @map("round_names")
-  /// How many tiers a new event of the sport league starts with (#707: the College Football
-  /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
-  /// data, set by the migration that seeds the league.
-  tierCount                  Int?                     @map("tier_count")
+  /// The tier profile a new event of the sport league is tiered with (#1844): how many tiers it
+  /// starts with, how many participants auto-tiering puts in each, and what the last tier takes.
+  /// Every league names one; a new league gets its profile from the migration that seeds it.
+  tierProfileId              String                   @map("tier_profile_id") @db.Uuid
+  /// The pricing profile an event of the sport league is priced with after a field sync (#1844),
+  /// until an admin prices it with other values. Every league names one.
+  pricingProfileId           String                   @map("pricing_profile_id") @db.Uuid
   /// The periods its games are played in, when not its sport's (#786: men's college basketball
   /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
   /// league.
@@ -1166,19 +1188,72 @@ model SportLeague {
   createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport                  Sport                        @relation(fields: [sportId], references: [id])
-  parentSportLeague      SportLeague?                 @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
-  rounds                 SportLeague[]                @relation("SportLeagueRounds")
-  participants           Participant[]
-  providerMappings       ParticipantProviderMapping[]
-  eventSeries            EventSeries[]
-  contestConfigTemplates ContestConfigTemplate[]
-  cups                   Cup[]
-  eventPageOffers        EventPageOffer[]
+  sport                     Sport                          @relation(fields: [sportId], references: [id])
+  tierProfile               TierProfile                    @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
+  pricingProfile            PricingProfile                 @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
+  parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
+  rounds                    SportLeague[]                  @relation("SportLeagueRounds")
+  participants              Participant[]
+  providerMappings          ParticipantProviderMapping[]
+  eventSeries               EventSeries[]
+  contestConfigTemplates    ContestConfigTemplate[]
+  cups                      Cup[]
+  eventPageOffers           EventPageOffer[]
 
   @@unique([sportId, name])
   @@index([parentSportLeagueId])
+  @@index([tierProfileId])
+  @@index([pricingProfileId])
   @@map("sport_leagues")
+}
+
+/// What a tier profile's last tier takes (#1844).
+enum PrismaTierProfileLastTier {
+  /// Everyone left after the tiers before it are filled.
+  ALL_REMAINING
+  /// At most `lastTierMax`; anyone beyond is in no tier and can't be picked.
+  CAPPED
+}
+
+/// A tier layout, defined once for the platform (#1844): each sport league names one, and a new
+/// event of the league starts with its tiers and is auto-tiered by it. Nothing is set per sport.
+/// A field too small to reach the last tier is split evenly over the tiers, a rule fixed in code.
+model TierProfile {
+  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String                    @unique @db.VarChar(50)
+  tierCount   Int                       @map("tier_count")
+  /// Participants auto-tiering puts in each tier before the last.
+  tierSize    Int                       @map("tier_size")
+  lastTier    PrismaTierProfileLastTier @default(ALL_REMAINING) @map("last_tier")
+  /// The most the last tier takes when it is CAPPED; null when it takes all remaining.
+  lastTierMax Int?                      @map("last_tier_max")
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagues SportLeague[]
+
+  @@map("tier_profiles")
+}
+
+/// A set of budget pricing values (#93), defined once for the platform (#1844): each sport league
+/// names one, which prices its events' fields after a sync. Replaced the Budget pricing app
+/// settings list.
+model PricingProfile {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String   @unique @db.VarChar(50)
+  /// Whole dollars: the cap prices are a share of.
+  salaryCap         Int      @map("salary_cap")
+  /// Whole dollars: every price is rounded to a multiple of it.
+  unit              Int
+  topSharePercent   Float    @map("top_share_percent")
+  floorSharePercent Float    @map("floor_share_percent")
+  steepness         Float
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagues SportLeague[]
+
+  @@map("pricing_profiles")
 }
 
 /// A recurring, named tournament that repeats year after year under one
@@ -1938,61 +2013,74 @@ model ContestEntryPick {
 // =============================================================================
 
 model SportEvent {
-  id                         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalId                 String                    @map("external_id") @db.VarChar(255)
-  providerId                 String                    @map("provider_id") @db.VarChar(100)
+  id                         String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalId                 String                         @map("external_id") @db.VarChar(255)
+  providerId                 String                         @map("provider_id") @db.VarChar(100)
   sport                      PrismaSport
-  name                       String                    @db.VarChar(500)
-  venue                      String?                   @db.VarChar(500)
-  location                   String?                   @db.VarChar(500)
-  startDate                  DateTime                  @map("start_date") @db.Timestamptz
-  endDate                    DateTime?                 @map("end_date") @db.Timestamptz
-  status                     PrismaSportEventStatus    @default(SCHEDULED)
+  name                       String                         @db.VarChar(500)
+  venue                      String?                        @db.VarChar(500)
+  location                   String?                        @db.VarChar(500)
+  startDate                  DateTime                       @map("start_date") @db.Timestamptz
+  endDate                    DateTime?                      @map("end_date") @db.Timestamptz
+  status                     PrismaSportEventStatus         @default(SCHEDULED)
   rounds                     Int?
   // Par for every round of the event (#478), set by an admin. Null derives each
   // round's par from the field's finished rounds (strokes minus to-par). Read
   // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
-  roundsPar                  Int?                      @map("rounds_par")
-  participantCount           Int?                      @map("participant_count")
-  metadata                   Json                      @default("{}")
+  roundsPar                  Int?                           @map("rounds_par")
+  participantCount           Int?                           @map("participant_count")
+  metadata                   Json                           @default("{}")
   // The series this is one edition of — the event's only parent, and its only
   // path to a sport league (plans/147). Auto-resolved by find-or-create on
   // (sportLeagueId, name) at tournament creation, never an admin decision
   // (plans/124 §4.3a).
-  eventSeriesId              String                    @map("event_series_id") @db.Uuid
+  eventSeriesId              String                         @map("event_series_id") @db.Uuid
   // The year the edition is branded with — "the 2026 Masters" — which is not
   // always the year it starts in; startDate carries the real dates (plans/147
   // decision 3).
-  eventYear                  Int                       @map("event_year")
+  eventYear                  Int                            @map("event_year")
   // Sync eligibility, separate from providerId/externalId identity: NONE for an
   // unlinked event, SCORES_ONLY once an admin links it to a provider event. Every
   // event is admin-owned; a provider never owns one (ADR-0009, #435).
-  syncScope                  PrismaSportEventSyncScope @default(NONE) @map("sync_scope")
+  syncScope                  PrismaSportEventSyncScope      @default(NONE) @map("sync_scope")
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
-  autoLifecycleEnabled       Boolean                   @default(true) @map("auto_lifecycle_enabled")
+  autoLifecycleEnabled       Boolean                        @default(true) @map("auto_lifecycle_enabled")
   // The values the field was last priced with for budget contests (#93), typed by
   // EventPricingConfigSchema. Null until prices are assigned; written with the
   // prices in one transaction and locked with them at release.
-  pricingConfig              Json?                     @map("pricing_config")
+  pricingConfig              Json?                          @map("pricing_config")
+  // The tier layout the field was last auto-tiered with (#1844), typed by EventTierConfigSchema:
+  // its sport league's tier profile at the time, with any tier size an admin sent instead. Null
+  // until the field is first auto-tiered; written with the tiers in one transaction.
+  tierConfig                 Json?                          @map("tier_config")
   // When the event's provider last sent a webhook notification about it (#1499). Null until one
   // arrives. The scheduler warns when play is underway and none has arrived for a while.
-  lastProviderNotificationAt DateTime?                 @map("last_provider_notification_at") @db.Timestamptz
+  lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
   // A Clutch Card event's parent (#1820): the season event of its sport league's parent league
   // whose rounds it covers (the World Series round of the MLB Postseason). Set on every Clutch
   // Card event created since #1820 and on no other event; the service picks the parent when the
   // event is created and refuses one without. A check constraint keeps the two columns together:
   // both set or neither. An event a Clutch Card event names cannot be deleted.
-  parentEventId              String?                   @map("parent_event_id") @db.Uuid
+  parentEventId              String?                        @map("parent_event_id") @db.Uuid
   // The parent event's rounds this Clutch Card event covers, from its sport league's
   // `parentRoundNumbers`; empty when it has no parent.
-  parentRoundNumbers         Int[]                     @default([]) @map("parent_round_numbers")
-  createdAt                  DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                  DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+  parentRoundNumbers         Int[]                          @default([]) @map("parent_round_numbers")
+  // The latest automatic release check (#1847): when the release job last judged the event,
+  // whether it released or held it, and the checks that held it. Null and empty until the first
+  // check; each check overwrites the one before, and a root admin's release by hand clears it. A
+  // check that skips the event is not stored. Check constraints keep the time and outcome
+  // together, and a RELEASED check with no failed checks. The Sports page counts the DRAFT
+  // events a check HELD.
+  autoReleaseCheckedAt       DateTime?                      @map("auto_release_checked_at") @db.Timestamptz
+  autoReleaseOutcome         PrismaAutoReleaseCheckOutcome? @map("auto_release_outcome")
+  autoReleaseFailedChecks    PrismaReleaseCheckKey[]        @default([]) @map("auto_release_failed_checks")
+  createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
-  parentEvent                SportEvent?                 @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
-  clutchCardEvents           SportEvent[]                @relation("ClutchCardParentEvent")
+  parentEvent                SportEvent?                        @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
+  clutchCardEvents           SportEvent[]                       @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
   pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
@@ -2326,8 +2414,9 @@ model ProviderSyncRun {
   /// What the run syncs and what started it (#1819).
   kind            PrismaProviderSyncKind
   trigger         PrismaProviderSyncTrigger
-  /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run, the
-  /// event of a FIELD or SCORES run. Null on runs from before #1819 and where it is not known.
+  /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run; the
+  /// event of a FIELD or SCORES run and that event's sport league (#1847). Null where the run's
+  /// provider event is linked to no event of ours.
   sportLeagueId   String?                     @map("sport_league_id") @db.Uuid
   sportEventId    String?                     @map("sport_event_id") @db.Uuid
   /// The background job that ran it, so Activity opens a job's runs (#1819). Kept after the job is deleted.
@@ -2348,6 +2437,8 @@ model ProviderSyncRun {
   @@index([sport, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@index([backgroundJobId])
+  /// The Sports page's latest finished run of each sync kind per sport league (#1847).
+  @@index([sportLeagueId, kind, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
 }
 

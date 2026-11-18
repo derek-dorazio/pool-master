@@ -17,6 +17,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { recordStatements } from '../statement-log';
+import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 
 const SMALL = 2;
@@ -50,7 +51,7 @@ async function golfSportId(): Promise<string> {
 }
 
 async function tour(sportId: string): Promise<string> {
-  const row = await getPrisma().sportLeague.create({ data: { sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  const row = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(row.id);
   return row.id;
 }
@@ -147,7 +148,7 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     const prisma = getPrisma();
     const sportId = await golfSportId();
     const season = await tour(sportId);
-    const round = await prisma.sportLeague.create({ data: { sportId, name: `Delete Guard Final ${randomUUID().slice(0, 8)}`, parentSportLeagueId: season } });
+    const round = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: `Delete Guard Final ${randomUUID().slice(0, 8)}`, parentSportLeagueId: season } });
     made.sportLeagueIds.add(round.id);
 
     const response = await remove(`/api/v1/sport-leagues/${season}`, admin);

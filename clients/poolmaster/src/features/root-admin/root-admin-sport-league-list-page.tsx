@@ -4,7 +4,7 @@ import { DataGrid, LinkButton, QueryState, StatusBadge } from '@/features/shared
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { useSportLeaguesQuery } from './use-sport-catalog';
-import { MANAGE_LIST_PAGE_SIZE, buildSportLeagueListPath, buildSportLeaguePath } from './manage-navigation';
+import { buildSportLeagueListPath, buildSportLeaguePath } from './manage-navigation';
 import { SportSectionMenu } from './sport-section-menu';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -25,33 +25,34 @@ export function RootAdminSportLeagueListPage() {
     () => [
       columnHelper.accessor('name', {
         header: upperFirst(sportLeague.one),
+        meta: { info: "The sport league's name.", type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('matchKeyword', {
         header: 'Match keyword',
+        meta: { info: 'The keyword used to match provider data to this sport league.', type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('participantCount', {
         header: 'Roster size',
-        cell: ({ getValue }) => getValue(),
+        meta: { info: "How many participants are on the sport league's roster.", type: { kind: 'number' } },
       }),
       columnHelper.accessor('sportEventCount', {
         header: upperFirst(event.many),
-        cell: ({ getValue }) => getValue(),
+        meta: { info: 'How many events the sport league has.', type: { kind: 'number' } },
       }),
       columnHelper.accessor('currentEventYear', {
         header: 'Current year',
-        cell: ({ getValue }) => getValue() ?? '—',
+        meta: { info: 'The season year the sport league is in now.', type: { kind: 'number' } },
       }),
-      columnHelper.accessor((league) => (league.isActive ? 'Active' : 'Inactive'), {
-        id: 'isActive',
+      columnHelper.accessor('isActive', {
         header: 'Active',
-        meta: { options: {} },
+        meta: { info: 'Whether the sport league is active.', type: { kind: 'boolean' } },
         cell: ({ getValue }) => (
-          <StatusBadge tone={getValue() === 'Active' ? 'active' : 'inactive'}>
-            {getValue()}
+          <StatusBadge tone={getValue() ? 'active' : 'inactive'}>
+            {getValue() ? 'Active' : 'Inactive'}
           </StatusBadge>
         ),
       }),
@@ -89,7 +90,6 @@ export function RootAdminSportLeagueListPage() {
             filterTestIdPrefix="root-admin-sport-league-list-filter"
             getRowId={(league) => league.id}
             getRowLink={(league) => buildSportLeaguePath(sport, league.id)}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(league) => `root-admin-sport-league-row-${league.id}`}
             search={{ label: `Find a ${sportLeague.one}`, testId: 'root-admin-sport-league-list-search' }}
             tableTestId="root-admin-sport-league-list-table"

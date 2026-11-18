@@ -10,11 +10,13 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRanking,
   ParticipantRepository,
+  PricingProfileRepository,
   SportEventRepository,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportLeagueUses,
   SportRepository,
+  TierProfileRepository,
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
@@ -67,7 +69,16 @@ export interface SportLeagueServiceDeps {
   participants: ParticipantRepository;
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
+  /** The profiles a sport league names one of each (#1844). */
+  tierProfiles: Pick<TierProfileRepository, 'findById'>;
+  pricingProfiles: Pick<PricingProfileRepository, 'findById'>;
   logger?: FastifyBaseLogger;
+}
+
+/** The two profiles a sport league names (#1844). */
+export interface SportLeagueProfileIds {
+  tierProfileId: string;
+  pricingProfileId: string;
 }
 
 export class SportLeagueService {
@@ -84,10 +95,17 @@ export class SportLeagueService {
     return sportLeague ? (await this.summarize([sportLeague]))[0] : null;
   }
 
-  /** 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket. */
-  async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string; bracketAdvancement?: BracketAdvancement }): Promise<SportLeagueSummary> {
+  /**
+   * 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket;
+   * 404 TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for a profile that does not exist.
+   */
+  async createSportLeague(
+    sport: Sport,
+    input: { name: string; matchKeyword?: string; bracketAdvancement?: BracketAdvancement } & SportLeagueProfileIds,
+  ): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
     this.assertAdvancementFits(sport, input.bracketAdvancement);
+    await this.assertProfilesExist(input);
     if (await this.deps.sportLeagues.findBySportAndName(sportRow.id, input.name)) {
       throw new SportCatalogError(
         `A sport league named "${input.name}" already exists for ${sport}.`,
@@ -100,6 +118,8 @@ export class SportLeagueService {
       name: input.name,
       matchKeyword: input.matchKeyword ?? null,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
+      tierProfileId: input.tierProfileId,
+      pricingProfileId: input.pricingProfileId,
     });
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
     return (await this.summarize([sportLeague]))[0];
@@ -124,13 +144,20 @@ export class SportLeagueService {
    * PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one that
    * does not cover the league's sport, and 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced
    * league would be left without the keyword its events are found by.
+   *
+   * `tierProfileId` and `pricingProfileId` pick the league's profiles (#1844): 404
+   * TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for one that does not exist. An event
+   * already made keeps its tiers; its next auto-tiering and a never-priced field's next pricing
+   * read the new profile.
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart'> & { currentEventYear?: number },
+    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>
+      & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
     await this.assertEventSyncFits(sportLeague, updates);
+    await this.assertProfilesExist(updates);
     if (updates.bracketAdvancement !== undefined) {
       const sportRow = await this.deps.sports.findById(sportLeague.sportId);
       if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
@@ -155,7 +182,15 @@ export class SportLeagueService {
       bracketAdvancement: updates.bracketAdvancement,
       eventSyncProviderId: updates.eventSyncProviderId,
       autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
+      tierProfileId: updates.tierProfileId,
+      pricingProfileId: updates.pricingProfileId,
     });
+    if (updates.tierProfileId !== undefined && updates.tierProfileId !== sportLeague.tierProfileId) {
+      this.deps.logger?.info({ sportLeagueId, tierProfileId: updates.tierProfileId }, 'Set sport league tier profile');
+    }
+    if (updates.pricingProfileId !== undefined && updates.pricingProfileId !== sportLeague.pricingProfileId) {
+      this.deps.logger?.info({ sportLeagueId, pricingProfileId: updates.pricingProfileId }, 'Set sport league pricing profile');
+    }
     if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== sportLeague.eventSyncProviderId) {
       this.deps.logger?.info({ sportLeagueId, eventSyncProviderId: updates.eventSyncProviderId }, 'Set sport league event sync');
     }
@@ -225,6 +260,20 @@ export class SportLeagueService {
       );
     }
     this.deps.logger?.info({ action: 'sportLeagueService.deleteSportLeague.success', data: { sportLeagueId } }, 'Deleted sport league');
+  }
+
+  /** 404 TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for a named profile that does not exist. */
+  private async assertProfilesExist(ids: Partial<SportLeagueProfileIds>): Promise<void> {
+    const [tierProfile, pricingProfile] = await Promise.all([
+      ids.tierProfileId === undefined ? undefined : this.deps.tierProfiles.findById(ids.tierProfileId),
+      ids.pricingProfileId === undefined ? undefined : this.deps.pricingProfiles.findById(ids.pricingProfileId),
+    ]);
+    if (tierProfile === null) {
+      throw new SportCatalogError(`Tier profile ${ids.tierProfileId} was not found.`, 'TIER_PROFILE_NOT_FOUND', 404);
+    }
+    if (pricingProfile === null) {
+      throw new SportCatalogError(`Pricing profile ${ids.pricingProfileId} was not found.`, 'PRICING_PROFILE_NOT_FOUND', 404);
+    }
   }
 
   /** A reseeded bracket is a bracket's rule: only a sport played as a bracket takes one. */

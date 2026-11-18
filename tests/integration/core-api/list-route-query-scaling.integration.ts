@@ -41,6 +41,7 @@ import { PrismaContestRepository } from '../../../packages/core-api/src/adapters
 import { createContestRow } from '../../support/contest-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // No mocks.
 
@@ -126,7 +127,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
       seriesByIndex.set(index, edition.eventSeriesId);
       if (cupPerContest && recurringSeriesId === undefined) {
         const { sportId } = await prisma.sportLeague.findFirstOrThrow({ where: { eventSeries: { some: { id: edition.eventSeriesId } } } });
-        const tour = await prisma.sportLeague.create({ data: { sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
+        const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
         await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
       }
       const event = await prisma.sportEvent.create({
@@ -180,7 +181,7 @@ async function seedSportLeagueWithYears(years: number) {
     create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Scaling Years Tour ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Scaling Years Tour ${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Years Open ${suffix}` } });
   for (let offset = 0; offset < years; offset += 1) {
     const year = LAST_SEEDED_YEAR - offset;

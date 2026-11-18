@@ -38,6 +38,7 @@ import { recordStatements, statementsOn, StatementVerb } from '../statement-log'
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -65,7 +66,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { sportId: sport.id, name: 'NFL' },
+    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });

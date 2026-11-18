@@ -65,12 +65,8 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     expect(getValidContestFormatsForTournamentFormat(definition.tournamentFormat).length).toBeGreaterThan(0);
   });
 
-  it('gives a new event at least one round and at least one tier of at least one participant', () => {
-    const { tierCount, tierSize } = definition.defaultTierLayout;
-
-    for (const count of [definition.defaultRounds, tierCount, tierSize]) {
-      expect(Number.isInteger(count) && count >= 1).toBe(true);
-    }
+  it('gives a new event at least one round', () => {
+    expect(Number.isInteger(definition.defaultRounds) && definition.defaultRounds >= 1).toBe(true);
   });
 
   it('says what its pick\'em pools can be exactly when it offers pick\'em (#792)', () => {
@@ -146,14 +142,11 @@ describe('sport registry', () => {
     expect(golf.vocabulary.sportLeague).toEqual({ one: 'tour', many: 'tours' });
   });
 
-  it('gives a new horse race one round labelled Race, and three tiers so an eight-runner field fills each', () => {
+  it('gives a new horse race one round labelled Race', () => {
     const horseRacing = getSportDefinition(Sport.HORSE_RACING);
 
     expect(horseRacing.defaultRounds).toBe(1);
     expect(horseRacing.roundLabel(1, 1)).toBe('Race');
-    const { tierCount, tierSize } = horseRacing.defaultTierLayout;
-    expect(tierCount).toBe(3);
-    expect(tierSize * (tierCount - 1)).toBeLessThan(8);
   });
 
   it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider, top places or eliminated', () => {
@@ -177,7 +170,6 @@ describe('sport registry', () => {
 
     expect(autoRacing.defaultRounds).toBe(1);
     expect(autoRacing.roundLabel(1, 1)).toBe('Race');
-    expect(autoRacing.defaultTierLayout).toEqual({ tierCount: 5, tierSize: 8 });
     expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -202,7 +194,6 @@ describe('sport registry', () => {
 
     expect(cycling.defaultRounds).toBe(1);
     expect(cycling.roundLabel(1, 1)).toBe('Race');
-    expect(cycling.defaultTierLayout).toEqual({ tierCount: 5, tierSize: 10 });
     expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -228,15 +219,13 @@ describe('sport registry', () => {
 
     expect(running.defaultRounds).toBe(1);
     expect(running.roundLabel(1, 1)).toBe('Race');
-    expect(running.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 6 });
     expect(running.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
-  it('gives a new golf event four rounds and six tiers of ten golfers', () => {
+  it('gives a new golf event four rounds', () => {
     const golf = getSportDefinition(Sport.GOLF);
 
     expect(golf.defaultRounds).toBe(4);
-    expect(golf.defaultTierLayout).toEqual({ tierCount: 6, tierSize: 10 });
   });
 });
 
@@ -261,9 +250,8 @@ describe('basketball', () => {
     expect(sportPlaysMatches(Sport.BASKETBALL)).toBe(true);
   });
 
-  it('gives a new tournament six rounds and the four seed lines as four tiers of 16', () => {
+  it('gives a new tournament six rounds', () => {
     expect(basketball.defaultRounds).toBe(6);
-    expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
   });
 
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
@@ -307,9 +295,8 @@ describe('American football', () => {
     expect(sportPlaysMatches(Sport.AMERICAN_FOOTBALL)).toBe(true);
   });
 
-  it('gives new playoffs four rounds and seven tiers of two, one for each pair of the 14 teams', () => {
+  it('gives new playoffs four rounds', () => {
     expect(americanFootball.defaultRounds).toBe(4);
-    expect(americanFootball.defaultTierLayout).toEqual({ tierCount: 7, tierSize: 2 });
   });
 
   it('labels a four-round bracket Wild Card through Super Bowl, and a stored round past the count Round N', () => {
@@ -349,9 +336,8 @@ describe('hockey', () => {
     expect(sportPlaysMatches(Sport.HOCKEY)).toBe(true);
   });
 
-  it('gives new playoffs four rounds and four tiers of four, for a 16-team bracket', () => {
+  it('gives new playoffs four rounds, for a 16-team bracket', () => {
     expect(hockey.defaultRounds).toBe(4);
-    expect(hockey.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 4 });
   });
 
   it('labels a four-round bracket Regional Semifinals through National Championship, and a stored round past the count Round N', () => {
@@ -386,9 +372,8 @@ describe('baseball', () => {
     expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
   });
 
-  it('gives a new postseason four rounds and four tiers of three, for a 12-team bracket', () => {
+  it('gives a new postseason four rounds, for a 12-team bracket', () => {
     expect(baseball.defaultRounds).toBe(4);
-    expect(baseball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 3 });
   });
 
   it('labels a four-round postseason Wild Card Series through World Series, and a stored round past the count Round N', () => {
@@ -426,9 +411,8 @@ describe('soccer', () => {
     expect(soccer.vocabulary.overtime).toBe('extra time');
   });
 
-  it('gives a new tournament four rounds and four tiers of four, for a 16-team knockout stage', () => {
+  it('gives a new tournament four rounds, for a 16-team knockout stage', () => {
     expect(soccer.defaultRounds).toBe(4);
-    expect(soccer.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 4 });
   });
 
   it('labels a four-round knockout Round of 16 through Final, a five-round one from the Round of 32, and a stored round past the count Round N', () => {
@@ -467,9 +451,8 @@ describe('tennis', () => {
     expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
   });
 
-  it('gives a new draw seven rounds and six tiers of eight, so the first four tiers are the 32 seeds', () => {
+  it('gives a new draw seven rounds', () => {
     expect(tennis.defaultRounds).toBe(7);
-    expect(tennis.defaultTierLayout).toEqual({ tierCount: 6, tierSize: 8 });
   });
 
   it('labels a Slam\'s seven rounds First round through Final, a six-round draw with no Fourth round, and a stored round past the count Round N', () => {

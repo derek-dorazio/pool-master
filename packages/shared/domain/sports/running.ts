@@ -19,9 +19,6 @@ export const runningSportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.FINISH_POSITION,
   tournamentFormat: TournamentFormat.RACE,
   defaultRounds: 1,
-  // Four tiers of six: three tiers of favourites hold 18 runners, and the last tier takes the rest
-  // of an elite field of 20 to 40.
-  defaultTierLayout: { tierCount: 4, tierSize: 6 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   shootout: null,

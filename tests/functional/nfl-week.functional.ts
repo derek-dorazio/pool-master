@@ -32,7 +32,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -115,7 +115,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
     const nfl = await createSportLeague({
       client: a,
-      body: { sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
     });
     const sportLeagueId = expectDefined(nfl.data, JSON.stringify(nfl.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

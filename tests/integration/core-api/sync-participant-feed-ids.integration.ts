@@ -15,6 +15,7 @@ import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import type { ProviderParticipant, SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { linkedProviderEvent } from '../../support/event-edition';
+import { leagueProfiles } from '../../support/league-profiles';
 
 const PROVIDER = 'TEST_PROVIDER_1850';
 const NAME_PREFIX = 'Feed Id 1850 ';
@@ -53,7 +54,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
   };
   const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
   // Each event on a sport league of its own, so a test sees only the participants it makes.
-  const league = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
+  const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
   await prisma.eventSeries.update({ where: { id: event.eventSeriesId }, data: { sportLeagueId: league.id } });
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }

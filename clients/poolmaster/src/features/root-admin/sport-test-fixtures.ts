@@ -1,5 +1,6 @@
 import type {
   ParticipantDto,
+  PricingProfileDto,
   ReleaseCheckDto,
   SettingsGroup,
   SportDto,
@@ -9,6 +10,9 @@ import type {
   SportEventTierDto,
   SportLeagueDto,
 } from '@/lib/api';
+
+/** The Standard pricing profile's id, which `sportLeagueFixture` names. */
+export const STANDARD_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
 
 /**
  * #236 — fixtures for the golf admin tests, typed by the generated DTOs the screens read.
@@ -32,6 +36,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     participantCount: null,
     loadedParticipantCount: 0,
     pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    tierLayout: null,
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
     contestEligible: false,
@@ -163,6 +168,8 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     matchKeyword: 'PGA',
     eventSyncProviderId: null,
     autoReleaseDaysBeforeStart: 7,
+    tierProfileId: '00000000-0000-4000-8000-0000000000a1',
+    pricingProfileId: STANDARD_PRICING_PROFILE_ID,
     bracketAdvancement: 'FIXED',
     roundNames: [],
     matchPeriodLayout: null,
@@ -194,22 +201,13 @@ export const GOLF_SPORT_FIXTURE: SportDto = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-/** The Budget pricing settings group with the app's two default profiles, Standard first (#93). */
-export function budgetPricingGroupFixture(): Extract<SettingsGroup, { key: 'BUDGET_PRICING_CONFIG' }> {
-  const profiles = [
-    { name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
-    { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+/** The platform's two pricing profiles as the migration made them (#1844), by name. */
+export function pricingProfilesFixture(): PricingProfileDto[] {
+  const stamps = { sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' };
+  return [
+    { id: '00000000-0000-4000-8000-0000000000b1', name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps, sportLeagueCount: 0 },
+    { id: STANDARD_PRICING_PROFILE_ID, name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps },
   ];
-  return {
-    key: 'BUDGET_PRICING_CONFIG',
-    title: 'Budget pricing',
-    description: 'The pricing profiles an event\'s field is priced with for budget contests.',
-    source: 'defaults',
-    updatedAt: null,
-    updatedBy: null,
-    value: { profiles },
-    defaults: { profiles },
-  };
 }
 
 /** The Plans settings group at its code defaults (the plan matrix, #986), never changed. */

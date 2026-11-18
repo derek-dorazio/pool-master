@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
   EventPricingConfigSchema,
@@ -22,7 +23,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { useSettingsGroupQuery } from './use-settings-groups';
+import { sportLeagueQueryOptions } from '@/features/contests/use-bracket-round-label';
+import { usePricingProfilesQuery } from './use-profiles';
 import type { EventFieldEntry } from './event-field-patch';
 import { describeFieldOrder } from './field-order-copy';
 
@@ -69,8 +71,8 @@ function parseDraft(profileName: string, draft: PricingDraft): { pricing: EventP
 
 /**
  * Tiers page › Auto-assign prices (#93): prices the tournament's active field for budget contests
- * on the pricing curve, best seed first. The admin picks a Budget pricing profile (the default
- * first), may change any of its five values, and sees what the best and worst golfer will cost
+ * on the pricing curve, best seed first. The admin picks a pricing profile (#1844: the sport
+ * league's own first), may change any of its five values, and sees what the best and worst golfer will cost
  * before assigning. Repeatable until release; the values used are stored on the tournament.
  */
 export function PriceAssignAction({
@@ -79,6 +81,7 @@ export function PriceAssignAction({
   eventId,
   field,
   sport,
+  sportLeagueId,
 }: {
   /** The values the tournament was last priced with, if any: the dialog starts from them. */
   current: EventPricingConfig | null;
@@ -87,13 +90,16 @@ export function PriceAssignAction({
   /** The event's field: its active participants are priced, in the order the dialog names (#1807). */
   field: readonly EventFieldEntry[];
   sport: Sport;
+  /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
+  sportLeagueId: string;
 }) {
   const activeParticipantCount = field.filter((entry) => entry.isActive).length;
   const { vocabulary } = getSportDefinition(sport);
   const { event, participant } = vocabulary;
   const logger = getLogger().child({ feature: 'root-admin-sport-event-tiers-page' });
-  const pricingQuery = useSettingsGroupQuery('BUDGET_PRICING_CONFIG');
-  const profiles = pricingQuery.data?.value.profiles ?? [];
+  const pricingQuery = usePricingProfilesQuery();
+  const profiles = pricingQuery.data ?? [];
+  const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
   const [open, setOpen] = useState(false);
   const [profileName, setProfileName] = useState('');
   const [draft, setDraft] = useState<PricingDraft | null>(null);
@@ -124,7 +130,8 @@ export function PriceAssignAction({
       setProfileName(current.profileName);
       setDraft(toDraft(current));
     } else {
-      const defaultProfile = profiles.at(0);
+      // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
+      const defaultProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.pricingProfileId);
       setProfileName(defaultProfile?.name ?? '');
       setDraft(defaultProfile ? toDraft(defaultProfile) : null);
     }
@@ -132,6 +139,7 @@ export function PriceAssignAction({
   }
 
   function chooseProfile(name: string) {
+    // poolmaster-allow-list-lookup: the name was picked from this list, shown in the dialog
     const profile = profiles.find((candidate) => candidate.name === name);
     setProfileName(name);
     if (profile) {
@@ -154,7 +162,7 @@ export function PriceAssignAction({
     <>
       <Button
         data-testid="root-admin-tier-auto-prices"
-        disabled={disabled || !profiles.length}
+        disabled={disabled || !profiles.length || !sportLeagueQuery.data}
         onClick={openDialog}
         size="sm"
         variant="secondary"

@@ -160,7 +160,9 @@ a Team On Screen*.
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
-| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and start its events on its own tier count (`tierCount`: the College Football Playoff's six). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
+| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and names one tier profile and one pricing profile (`tierProfileId`, `pricingProfileId`, #1844). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
+| `TierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event records the layout it was last auto-tiered with (`SportEvent.tierConfig`) | The event's own `SportEventTier` rows, which an admin may still add or delete |
+| `PricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event records the values it was priced with (`SportEvent.pricingConfig`) | The event's recorded values, which a later profile edit never moves |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
@@ -171,6 +173,16 @@ a Team On Screen*.
 | `SportEventMatch` | match, game, bracket | One game of an event played as matches (#698): a knockout bracket's, or an NFL week's: its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, the match and side its winner advances to, and its region or conference. A playoff series is one match whose score is games won. Only a sport whose tournament format is `MATCHES` has them; whether they form a bracket is read from their links (#715) | A `Contest`, and a `SportEventRound`, the round it is played in |
 | `SportEventMatchPeriodScore` | quarter score | Both sides' score at the end of one period of a game but the last (#772): the end of a quarter in American football or a period in hockey, as the scoreboard shows it, earlier periods included. Only a sport whose definition names a `matchPeriodLayout` keeps them, in its sport league's own layout when it has one (`SportLeague.matchPeriodLayout`, #786: men's college basketball plays two halves; read through `matchPeriodsOf`). The final score, overtime included, is the match's own `homeScore`/`awayScore`, never a period row. Squares pools read them | The points scored in that period alone, which nothing stores |
 | `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
+
+**Platform definitions, league picks; nothing at sport level** (Derek, 2026-11-18, #1844). A
+setting that varies between real-world leagues is a named definition the root admin keeps once
+for the platform (a tier profile, a pricing profile), and each `SportLeague` names one by
+foreign key. It is never a per-sport value in the sport registry, nor a per-league copy of the
+numbers: two leagues that play alike name the same definition, and changing a definition changes
+every league naming it from then on. What a sport is (its scoring, its words, its rounds) stays
+in the registry; what a league chooses does not. A definition any league names can't be deleted,
+and a record made with it (an event's tiers and prices) keeps the values it was made with.
+Rules that are not choices (the small-field even split) stay in code, not in a definition.
 
 ### Contests and entries
 

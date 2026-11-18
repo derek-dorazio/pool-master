@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Sport } from '@poolmaster/shared/domain';
+import { leagueProfiles } from './league-profiles';
 
 /** What a participant's test sport league is named in each sport. */
 export const TEST_PARTICIPANT_LEAGUE_NAME = 'Test participants';
@@ -16,7 +17,7 @@ export async function participantLeagueId(prisma: PrismaClient, sportId: string)
   try {
     const league = await prisma.sportLeague.upsert({
       where,
-      create: { sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
+      create: { ...(await leagueProfiles(prisma)), sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
       update: {},
       select: { id: true },
     });

@@ -29,7 +29,6 @@ export const tennisSportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 7,
-  defaultTierLayout: { tierCount: 6, tierSize: 8 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A tennis match always has a winner: no level score to settle.

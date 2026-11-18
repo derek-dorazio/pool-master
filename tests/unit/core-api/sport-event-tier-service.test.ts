@@ -1,6 +1,6 @@
-import { Sport, SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { IN_MEMORY_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 
 // Tier and valuation rules against an in-memory store: defaults, the fill order of
@@ -34,31 +34,40 @@ function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
     valuations: store.valuationRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
+    tierProfiles: store.tierProfileRepo(),
+    pricingProfiles: store.pricingProfileRepo(),
   });
   return { store, event, service };
 }
 
 describe('SportEventTierService — tiers', () => {
-  it('creates each new event\'s default tiers (six for golf, the league\'s count where it sets one), and answers them as written', async () => {
+  it('creates each new event\'s default tiers, as many as its sport league\'s tier profile names, and answers them as written', async () => {
     const { store, event, service } = setup();
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL });
+    const league = store.addLeagueWithTierProfile({ tierCount: 4, tierSize: 3 });
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: league.id });
 
-    const written = await service.createDefaultTiers([
-      { sportEventId: event.id, definition: getSportDefinition(Sport.GOLF), leagueTierCount: null },
-      { sportEventId: playoff.id, definition: getSportDefinition(Sport.AMERICAN_FOOTBALL), leagueTierCount: 4 },
-    ]);
+    const golf = await service.createDefaultTiers({ id: event.sportLeagueId, tierProfileId: IN_MEMORY_TIER_PROFILE_ID }, [event.id]);
+    const written = await service.createDefaultTiers(league, [playoff.id]);
 
-    expect(written.get(event.id)?.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
+    expect(golf.get(event.id)?.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
     expect(written.get(playoff.id)?.map((tier) => tier.label)).toEqual(['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4']);
     expect((await service.listTiers(playoff.id)).map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect(store.tierRows).toHaveLength(10);
   });
 
-  it('starts an event with its sport league\'s tier count where the league sets one, and spreads 12 playoff teams two to a tier over its six', async () => {
+  it('refuses default tiers on a tier profile that is gone with 404 TIER_PROFILE_NOT_FOUND, writing none', async () => {
     const { store, service } = setup();
-    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL });
 
-    await service.createDefaultTiers([{ sportEventId: playoff.id, definition: getSportDefinition(Sport.AMERICAN_FOOTBALL), leagueTierCount: 6 }]);
+    await expect(service.createDefaultTiers({ id: 'sport-league-x', tierProfileId: 'tier-profile-gone' }, ['event-x'])).rejects.toMatchObject({ code: 'TIER_PROFILE_NOT_FOUND', statusCode: 404 });
+    expect(store.tierRows).toEqual([]);
+  });
+
+  it('starts an event with its league\'s six tiers of two (the College Football Playoff\'s profile) and places 12 playoff teams two to a tier', async () => {
+    const { store, service } = setup();
+    const league = store.addLeagueWithTierProfile({ tierCount: 6, tierSize: 2 });
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: league.id });
+
+    await service.createDefaultTiers(league, [playoff.id]);
     addFieldByOdds(store, playoff.id, 12);
     const groups = await service.autoAssignTiers({ sportEventId: playoff.id });
 
@@ -114,7 +123,7 @@ describe('SportEventTierService — assignment', () => {
     expect(store.valuationRows[0].tierAssignedSource).toBe('AUTO_RANKING');
   });
 
-  it('places the sport\'s default tier size (ten for golf) in each tier when no size is sent and the event keeps the sport\'s six tiers, the last tier taking the rest', async () => {
+  it('places the league\'s tier profile size (ten for golf) in each tier when no size is sent and the event keeps the profile\'s six tiers, the last tier taking the rest', async () => {
     const { store, event, service } = setup();
     await store.addTiers(event.id, tierDefinitions(6));
     addFieldByOdds(store, event.id, 62);
@@ -124,9 +133,9 @@ describe('SportEventTierService — assignment', () => {
     expect(groups.map((group) => group.participants.length)).toEqual([10, 10, 10, 10, 10, 12]);
   });
 
-  it('keeps horse racing\'s three-three-rest layout when no size is sent and the race keeps its three default tiers', async () => {
+  it('keeps a three-tiers-of-three profile\'s three-three-rest layout when no size is sent and the race keeps its three default tiers', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING });
+    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 14);
 
@@ -135,20 +144,22 @@ describe('SportEventTierService — assignment', () => {
     expect(groups.map((group) => group.participants.length)).toEqual([3, 3, 8]);
   });
 
-  // Each sport's own default tiers, created as a new event gets them, on the field sizes its
-  // definition was designed around: the layout where it reaches every tier, else an even spread.
+  // The layouts the migration made from each sport's former default (#1844), created as a new
+  // event gets them, on the field sizes they were designed around: the layout where it reaches
+  // every tier, else an even spread.
   it.each([
-    { sport: Sport.AUTO_RACING, fieldSize: 40, expected: [8, 8, 8, 8, 8], what: 'a full 40-car NASCAR field fills five tiers of eight exactly' },
-    { sport: Sport.AUTO_RACING, fieldSize: 33, expected: [8, 8, 8, 8, 1], what: 'the 33-car Indy 500 field leaves the fifth tier the short one' },
-    { sport: Sport.AUTO_RACING, fieldSize: 24, expected: [5, 5, 5, 5, 4], what: 'a 24-car field, too small for five tiers of eight, is spread evenly' },
-    { sport: Sport.CYCLING, fieldSize: 176, expected: [10, 10, 10, 10, 136], what: 'a Grand Tour field of 176 puts ten contenders in each of four tiers and the rest in the fifth' },
-    { sport: Sport.CYCLING, fieldSize: 35, expected: [7, 7, 7, 7, 7], what: 'a 35-rider field, too small for four tiers of ten, is spread evenly' },
-    { sport: Sport.RUNNING, fieldSize: 30, expected: [6, 6, 6, 12], what: 'an elite marathon field of 30 puts six favourites in each of three tiers and the rest in the fourth' },
-    { sport: Sport.RUNNING, fieldSize: 15, expected: [4, 4, 4, 3], what: 'a 15-runner field, too small for three tiers of six, is spread evenly' },
-  ])('auto-assigns a $sport event\'s default tiers when no size is sent: $what', async ({ sport, fieldSize, expected }) => {
+    { tierCount: 5, tierSize: 8, fieldSize: 40, expected: [8, 8, 8, 8, 8], what: 'a full 40-car NASCAR field fills five tiers of eight exactly' },
+    { tierCount: 5, tierSize: 8, fieldSize: 33, expected: [8, 8, 8, 8, 1], what: 'the 33-car Indy 500 field leaves the fifth tier the short one' },
+    { tierCount: 5, tierSize: 8, fieldSize: 24, expected: [5, 5, 5, 5, 4], what: 'a 24-car field, too small for five tiers of eight, is spread evenly' },
+    { tierCount: 5, tierSize: 10, fieldSize: 176, expected: [10, 10, 10, 10, 136], what: 'a Grand Tour field of 176 puts ten contenders in each of four tiers and the rest in the fifth' },
+    { tierCount: 5, tierSize: 10, fieldSize: 35, expected: [7, 7, 7, 7, 7], what: 'a 35-rider field, too small for four tiers of ten, is spread evenly' },
+    { tierCount: 4, tierSize: 6, fieldSize: 30, expected: [6, 6, 6, 12], what: 'an elite marathon field of 30 puts six favourites in each of three tiers and the rest in the fourth' },
+    { tierCount: 4, tierSize: 6, fieldSize: 15, expected: [4, 4, 4, 3], what: 'a 15-runner field, too small for three tiers of six, is spread evenly' },
+  ])('auto-assigns the default tiers of a league profiled $tierCount tiers of $tierSize when no size is sent: $what', async ({ tierCount, tierSize, fieldSize, expected }) => {
     const { store, service } = setup();
-    const event = store.addEvent({ status: SportEventStatus.DRAFT, sport });
-    await service.createDefaultTiers([{ sportEventId: event.id, definition: getSportDefinition(sport), leagueTierCount: null }]);
+    const league = store.addLeagueWithTierProfile({ tierCount, tierSize });
+    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    await service.createDefaultTiers(league, [event.id]);
     addFieldByOdds(store, event.id, fieldSize);
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id });
@@ -170,9 +181,9 @@ describe('SportEventTierService — assignment', () => {
     expect(store.valuationRows[0].tierAssignedSource).toBe('AUTO_ODDS');
   });
 
-  it('spreads a field too small for the sport\'s layout evenly on the default tiers so release finds no empty tier: 6 horses on three tiers is 2/2/2, 30 golfers on six is 5 each', async () => {
+  it('spreads a field too small for the league\'s tier profile evenly on the default tiers so release finds no empty tier: 6 horses on three tiers is 2/2/2, 30 golfers on six is 5 each', async () => {
     const { store, event, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING });
+    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 6);
 
@@ -188,9 +199,9 @@ describe('SportEventTierService — assignment', () => {
     expect(golfGroups.map((group) => group.participants.length)).toEqual([5, 5, 5, 5, 5, 5]);
   });
 
-  it('keeps the sport\'s layout when it just fills every default tier: 7 horses on three tiers is 3/3/1', async () => {
+  it('keeps the profile\'s layout when it just fills every default tier: 7 horses on three tiers is 3/3/1', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING });
+    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithTierProfile({ tierCount: 3, tierSize: 3 }).id });
     await store.addTiers(race.id, tierDefinitions(3));
     addFieldByOdds(store, race.id, 7);
 
@@ -201,7 +212,7 @@ describe('SportEventTierService — assignment', () => {
 
   it('spreads a 22-driver field over a race set to four tiers as 6/6/5/5 when no size is sent, leaving no tier empty', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING });
+    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithTierProfile({ tierCount: 5, tierSize: 8 }).id });
     await store.addTiers(race.id, tierDefinitions(4));
     addFieldByOdds(store, race.id, 22);
 
@@ -242,13 +253,67 @@ describe('SportEventTierService — assignment', () => {
 
   it('fills a sent tier size exactly as before, even when that leaves the last tier empty (22 drivers in fours of 8 is 8/8/6/0)', async () => {
     const { store, service } = setup();
-    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING });
+    const race = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithTierProfile({ tierCount: 5, tierSize: 8 }).id });
     await store.addTiers(race.id, tierDefinitions(4));
     addFieldByOdds(store, race.id, 22);
 
     const groups = await service.autoAssignTiers({ sportEventId: race.id, tierSize: 8 });
 
     expect(groups.map((group) => group.participants.length)).toEqual([8, 8, 6, 0]);
+  });
+
+  it('leaves the participants beyond a capped last tier in no tier, still in order, and records the capped layout on the event', async () => {
+    const { store, service } = setup();
+    const league = store.addLeagueWithTierProfile({ tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2 });
+    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    await service.createDefaultTiers(league, [event.id]);
+    addFieldByOdds(store, event.id, 9);
+
+    const groups = await service.autoAssignTiers({ sportEventId: event.id });
+
+    expect(groups.map((group) => group.participants.map((placement) => placement.participantId))).toEqual([
+      ['p-01', 'p-02'], ['p-03', 'p-04'], ['p-05', 'p-06'],
+    ]);
+    const outOfTiers = store.valuationRows.filter((row) => row.sportEventTierId === null);
+    expect(outOfTiers).toHaveLength(3);
+    expect(outOfTiers.every((row) => row.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
+      profileName: '3 tiers of 2', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
+    });
+    await expect(store.sportEventRepo().countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 0]]));
+  });
+
+  it('tiers with the profile its own sport league names, not the first profile there is', async () => {
+    const { store, service } = setup();
+    const league = store.addLeagueWithTierProfile({ tierCount: 2, tierSize: 1 });
+    const event = store.addEvent({ status: SportEventStatus.DRAFT, sportLeagueId: league.id });
+    await store.addTiers(event.id, TWO_TIERS);
+    addFieldByOdds(store, event.id, 5);
+
+    const groups = await service.autoAssignTiers({ sportEventId: event.id });
+
+    expect(groups.map((group) => group.participants.length)).toEqual([1, 4]);
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig?.profileName).toBe('2 tiers of 1');
+  });
+
+  it('records the tier size an admin sent on the event\'s layout, with the league\'s profile name', async () => {
+    const { store, event, service } = setup();
+    await store.addTiers(event.id, TWO_TIERS);
+    addFieldByOdds(store, event.id, 4);
+
+    await service.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
+
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toMatchObject({ profileName: '6 tiers of 10', tierSize: 3 });
+  });
+
+  it('refuses to auto-tier an event whose sport league names no tier profile with 404 SPORT_LEAGUE_NOT_FOUND, tiering no one', async () => {
+    const { store, event, service } = setup();
+    await store.addTiers(event.id, TWO_TIERS);
+    addFieldByOdds(store, event.id, 4);
+    store.tierProfiles = [];
+
+    await expect(service.autoAssignTiers({ sportEventId: event.id })).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+    expect(store.valuationRows).toEqual([]);
   });
 
   it('does nothing for an event with no tiers yet', async () => {
@@ -417,7 +482,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
     const tiers = store.tierRepo();
     const findTiers = jest.spyOn(tiers, 'findBySportEvent');
-    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field, participants: store.participantRepo() });
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field, participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() });
     const heldField = await store.fieldRepo().findBySportEvent(event.id);
 
     const both = await service.getEffectiveTiersAndValuations(event.id, heldField);
@@ -451,7 +516,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
       jest.spyOn(valuations, 'findBySportEvents'),
       jest.spyOn(field, 'findBySportEvents'),
     ];
-    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field, participants: store.participantRepo() });
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field, participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() });
 
     const byEvent = await service.getEffectiveTiersForSportEvents([event.id, second.id, untiered.id]);
 

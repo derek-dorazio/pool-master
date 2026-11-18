@@ -19,7 +19,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -94,7 +94,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const a = admin.client;
 
     // --- A tour, a draw in it, its field, tiers and prices --------------------------------------
-    const tour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
+    const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
     expect(tour.response?.status).toBe(201);
     const sportLeagueId = expectDefined(tour.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
@@ -152,7 +152,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     expect([released.data?.event.status, released.error]).toEqual(['SCHEDULED', undefined]);
 
     // --- The lucky loser is the tour's participant; a women's tour player is not, so is refused -----
-    const womensTour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
+    const womensTour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
     const womensTourId = expectDefined(womensTour.data).sportLeague.id;
     created.sportLeagueIds.add(womensTourId);
     const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportLeagueId: womensTourId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;

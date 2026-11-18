@@ -32,6 +32,7 @@ import {
   withBackgroundJobsFailing,
 } from '../helpers';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
+import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
 
 // The composite family (#934) against real Postgres: a World Series stat pool scored from its
 // players' stat lines (Box Score: total bases + runs + RBI + walks + stolen bases each game),
@@ -61,7 +62,7 @@ async function seedSeries(status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS') {
     update: {},
   });
   const worldSeries = await prisma.sportLeague.create({
-    data: { sportId: baseball.id, name: `World Series ${suffix}`, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' },
+    data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: baseball.id, name: `World Series ${suffix}`, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' },
   });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: worldSeries.id, name: `World Series ${suffix}` } });
   const event = await prisma.sportEvent.create({
@@ -274,7 +275,7 @@ describe('A stat pool sport league', () => {
     const { prisma, event } = await seedSeries();
     const repository = new PrismaSportLeagueRepository(getAppPrisma());
     const baseball = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASEBALL } });
-    const mlb = await prisma.sportLeague.create({ data: { sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
+    const mlb = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
 
     const worldSeries = await repository.findById((await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId);
 
@@ -494,7 +495,7 @@ describe('applyEventGameStatLines (#935)', () => {
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const tour = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `Tour ${randomUUID().slice(0, 8)}` } });
+    const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: `Tour ${randomUUID().slice(0, 8)}` } });
     const golfEvent = await prisma.sportEvent.create({
       data: {
         eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: tour.id, name: `Open ${randomUUID().slice(0, 8)}` } })).id,
@@ -526,7 +527,7 @@ describe('applyEventGameStatLines (#935)', () => {
     const { prisma, event } = await seedSeries();
     const admin = await createTestUser({ displayName: 'Stat Pool Reader', isRootAdmin: true });
     const baseball = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASEBALL } });
-    const mlb = await prisma.sportLeague.create({ data: { sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
+    const mlb = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
     const worldSeriesId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId;
 
     const leagues = SportLeagueListResponseSchema.parse((await getApp().inject({ method: 'GET', url: '/api/v1/sport-leagues?sport=BASEBALL', headers: admin.headers })).json());

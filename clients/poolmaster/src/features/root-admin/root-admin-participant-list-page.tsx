@@ -1,24 +1,22 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { ParticipantStatusOrder } from '@poolmaster/shared/domain';
 import {
   DataGrid,
   ErrorState,
   LinkButton,
   FilterPicker,
   StatusBadge,
-  optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
-  PARTICIPANT_STATUS_LABELS,
   participantStatusLabel,
   participantStatusTone,
   type ManagedParticipantStatus,
 } from './sport-admin-utils';
 import {
-  MANAGE_LIST_PAGE_SIZE,
   buildSportParticipantListPath,
   buildSportParticipantPath,
 } from './manage-navigation';
@@ -54,26 +52,30 @@ export function RootAdminParticipantListPage() {
     () => [
       columnHelper.accessor('name', {
         header: 'Name',
+        meta: { info: "The participant's full name.", type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('ranking', {
         header: 'Ranking',
+        meta: { info: 'The participant\'s rank in the sport league, not a world ranking.', type: { kind: 'number' } },
         cell: ({ getValue }) => getValue() ?? '—',
         enableColumnFilter: false,
       }),
       columnHelper.accessor('shortName', {
         header: 'Short name',
+        meta: { info: "The participant's shorter name, used where space is tight.", type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('nationality', {
         header: 'Nationality',
+        meta: { info: 'The country the participant represents.', type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        meta: { options: { values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
+        meta: { info: 'Whether the participant is active in the sport league.', type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}
@@ -98,25 +100,25 @@ export function RootAdminParticipantListPage() {
         current="participants"
         tabsEnd={(
           <div className="flex flex-wrap gap-2">
-          <FilterPicker
-            label={upperFirst(sportLeague.one)}
-            onChange={setChosenLeagueId}
-            options={(leaguesQuery.data ?? []).map((league) => ({ label: league.name, value: league.id }))}
-            testId="root-admin-participant-list-league"
-            value={sportLeagueId}
-          />
-          <FilterPicker
-            label="Status"
-            onChange={(value) => {
-              const next = PARTICIPANT_STATUSES.find((candidate) => candidate === value);
-              if (next) {
-                setStatus(next);
-              }
-            }}
-            options={PARTICIPANT_STATUSES.map((value) => ({ label: participantStatusLabel(value), value }))}
-            testId="root-admin-participant-list-status"
-            value={status}
-          />
+            <FilterPicker
+              label={upperFirst(sportLeague.one)}
+              onChange={setChosenLeagueId}
+              options={(leaguesQuery.data ?? []).map((league) => ({ label: league.name, value: league.id }))}
+              testId="root-admin-participant-list-league"
+              value={sportLeagueId}
+            />
+            <FilterPicker
+              label="Status"
+              onChange={(value) => {
+                const next = PARTICIPANT_STATUSES.find((candidate) => candidate === value);
+                if (next) {
+                  setStatus(next);
+                }
+              }}
+              options={PARTICIPANT_STATUSES.map((value) => ({ label: participantStatusLabel(value), value }))}
+              testId="root-admin-participant-list-status"
+              value={status}
+            />
           </div>
         )}
       />
@@ -139,7 +141,6 @@ export function RootAdminParticipantListPage() {
         filterTestIdPrefix="root-admin-participant-list-filter"
         getRowId={(player) => player.id}
         getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
         search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search' }}
         tableTestId="root-admin-participant-list-table"

@@ -65,6 +65,7 @@ export function mapSportEventToDto({
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     pricing: event.pricingConfig ?? null,
+    tierLayout: event.tierConfig ?? null,
     readinessStatus: operationalState.readinessStatus,
     readinessReasons: operationalState.readinessReasons,
     contestEligible: operationalState.contestEligible,

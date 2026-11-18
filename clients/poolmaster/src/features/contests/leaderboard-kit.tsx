@@ -8,7 +8,7 @@ import { ContestPageFrame } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { describeFinalStandings, type FinalRow } from './final-standings';
 import { contestSchedule } from './use-contest-schedule';
-import { LEADERBOARD_PAGE_SIZE, SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
+import { SETTLED_NOTE, type BoardRow } from './leaderboard-columns';
 import { MyEntriesToggle } from './my-entries-toggle';
 import { useLinkedEntry } from './use-linked-entry';
 import { narrowToMyEntries, useMyEntriesFilter } from './use-my-entries-filter';
@@ -71,18 +71,17 @@ export function ScoreboardGrid<Row extends BoardRow>({
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
+        urlKey="board"
         headerTone="scoreboard"
         columns={columns}
         data={myEntries.rows}
         emptyMessage={emptyMessage}
         getRowId={(row) => row.entryId}
         landOnRowId={linkedEntry.entryId}
-        pageSize={LEADERBOARD_PAGE_SIZE}
         rowTestId={(row) => `${rowTestIdPrefix}-${row.entryId}`}
         search={{ label: 'Find an entry', placeholder: 'Find an entry', testId: 'contest-leaderboard-search' }}
         showColumnFilters={false}
         // Flipping the filter starts the board again from its first page, as the lineup board does.
-        pageResetKey={myEntries.showsMineOnly ? 'mine' : 'all'}
         tableTestId={tableTestId}
         detailRows={detailRows}
         toolbarEnd={myEntries.hasMine || toolbarActions ? (

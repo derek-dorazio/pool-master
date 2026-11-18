@@ -47,7 +47,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -148,7 +148,7 @@ async function releasedKnockout(options: {
 
   const sportLeague = await createSportLeague({
     client: a,
-    body: { sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
+    body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
   });
   const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);

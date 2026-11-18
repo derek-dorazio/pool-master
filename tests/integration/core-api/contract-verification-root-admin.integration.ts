@@ -35,6 +35,7 @@ import {
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
   SportLeagueRankingUploadPreviewResponseSchema,
+  SportLeagueOverviewListResponseSchema,
   SportLeagueResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -115,6 +116,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 import { participantLeagueId } from '../../support/participant-league';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -1340,7 +1342,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { sport: 'GOLF', name: `Z3L Contract Tour ${stamp}`, matchKeyword: `Z3L${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Z3L Contract Tour ${stamp}`, matchKeyword: `Z3L${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
@@ -1363,6 +1365,13 @@ describe('Contract verification (root admin)', () => {
       const sportListRes = await getApp().inject({ method: 'GET', url: '/api/v1/sports', headers: rootAdmin.headers });
       expect(sportListRes.statusCode).toBe(200);
       expect(SportListResponseSchema.safeParse(sportListRes.json()).success).toBe(true);
+
+      // --- listSportLeagueOverviews (200) — the Sports page (#1847) -----------
+      const overviewRes = await getApp().inject({ method: 'GET', url: '/api/v1/sport-leagues/overview', headers: rootAdmin.headers });
+      expect(overviewRes.statusCode).toBe(200);
+      const overview = SportLeagueOverviewListResponseSchema.safeParse(overviewRes.json());
+      expect(overview.success).toBe(true);
+      expect(overview.data?.sportLeagues.some((row) => row.id === leagueId)).toBe(true);
 
       // --- createParticipant (201) x3 — golf players are participants of the tour (#1853) ---
       for (let i = 0; i < 3; i += 1) {
@@ -1789,7 +1798,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { sport: 'GOLF', name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1884,7 +1893,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { sport: 'GOLF', name: `Live Sim Contract Tour ${stamp}`, matchKeyword: `LSIM${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Live Sim Contract Tour ${stamp}`, matchKeyword: `LSIM${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1994,7 +2003,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { sport: 'GOLF', name: `Import Contract Tour ${stamp}`, matchKeyword: tour.toLowerCase() },
+        payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Import Contract Tour ${stamp}`, matchKeyword: tour.toLowerCase() },
       });
       expect(leagueRes.statusCode).toBe(201);
       const sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -2031,7 +2040,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
       });
       created.sportLeagueIds.push(bareRes.json<SportLeagueResponse>().sportLeague.id);
       const noKeywordRes = await app.inject({
@@ -2065,8 +2074,8 @@ describe('Contract verification (root admin)', () => {
       create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Sync Now Tour ${stamp}`, matchKeyword: tour, eventSyncProviderId: 'contract-provider' } });
-    const unsynced = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Sync Now Manual Tour ${stamp}`, matchKeyword: `${tour}M` } });
+    const synced = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Sync Now Tour ${stamp}`, matchKeyword: tour, eventSyncProviderId: 'contract-provider' } });
+    const unsynced = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}`, matchKeyword: `${tour}M` } });
 
     try {
       const syncRes = await app.inject({

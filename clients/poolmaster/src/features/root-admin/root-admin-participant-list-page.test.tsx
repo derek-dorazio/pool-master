@@ -158,7 +158,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
-  it('narrows the tour\'s golfers with the search box and shows 25 a page', async () => {
+  it('narrows the tour\'s golfers with the search box and shows all of them', async () => {
     listSportLeagueParticipantsMock.mockResolvedValue({
       data: {
         participants: Array.from({ length: 30 }, (_, index) =>
@@ -168,8 +168,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     renderPage();
 
     expect(await screen.findByText('Golfer 01')).toBeInTheDocument();
-    expect(screen.getByText('Golfer 25')).toBeInTheDocument();
-    expect(screen.queryByText('Golfer 26')).not.toBeInTheDocument();
+    expect(screen.getByText('Golfer 30')).toBeInTheDocument();
 
     searchFor('Golfer 3');
     expect(await screen.findByText('Golfer 30')).toBeInTheDocument();

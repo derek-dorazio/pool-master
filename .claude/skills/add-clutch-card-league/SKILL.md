@@ -59,6 +59,9 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
    season league's first round (the World Series is `{4}` of the MLB Postseason, the Men's Final
    Four `{5}` of the NCAA tournament). Without it no event of the league can be created
    (`rules/architecture-rules.md` §4 *Sport extension*): each event names its season event.
+   Set `tier_profile_id` to the "6 tiers of 5" tier profile and `pricing_profile_id` to
+   "Standard", each looked up by name; both are required (`rules/domain-model-concepts.md` §2,
+   "Platform definitions, league picks").
 3. Insert its three default setups, one per format, in this order: Tiered (six tiers, one pick
    each, best four count), Budget (six stars under the cap, best four) and Quick pick (three stars,
    all count), each `is_default`, scored by `COMPOSITE_TOTAL`. Template keys are

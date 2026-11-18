@@ -540,6 +540,92 @@ export const ProviderSyncKindOrder = explicitOrder<ProviderSyncKind>({
   [ProviderSyncKind.SCORES]: 2,
 });
 
+/**
+ * How a sport event's latest automatic release check ended (#1847), as stored on the event. A
+ * check that skips the event (released already, unsynced, outside its window) is not stored.
+ */
+export const AutoReleaseCheckOutcome = {
+  /** Every ready check passed and the event was released. */
+  RELEASED: 'RELEASED',
+  /** A ready check failed: the event stays a draft until a later check passes. */
+  HELD: 'HELD',
+} as const;
+export type AutoReleaseCheckOutcome = (typeof AutoReleaseCheckOutcome)[keyof typeof AutoReleaseCheckOutcome];
+/** The order the values are declared in. */
+export const AutoReleaseCheckOutcomeOrder = explicitOrder<AutoReleaseCheckOutcome>({
+  [AutoReleaseCheckOutcome.RELEASED]: 0,
+  [AutoReleaseCheckOutcome.HELD]: 1,
+});
+
+/** What a sport league is, on the root admin's Sports page (#1847). */
+export const SportLeagueKind = {
+  /** A real league, tour or championship whose events are synced from a provider. */
+  REAL: 'REAL',
+  /** A Clutch Card's stat pool league: its events are rounds of its parent league's season event (#1820). */
+  CLUTCH_CARD: 'CLUTCH_CARD',
+} as const;
+export type SportLeagueKind = (typeof SportLeagueKind)[keyof typeof SportLeagueKind];
+/** The order the values are declared in. */
+export const SportLeagueKindOrder = explicitOrder<SportLeagueKind>({
+  [SportLeagueKind.REAL]: 0,
+  [SportLeagueKind.CLUTCH_CARD]: 1,
+});
+
+/**
+ * A sport league's sync health on the root admin's Sports page (#1847), from the latest finished
+ * run of each of its syncs: its event list (a Clutch Card's parent's), and its events' fields and
+ * scores.
+ */
+export const SportLeagueSyncHealth = {
+  /** The latest finished run of every sync it has run worked. */
+  OK: 'OK',
+  /** The latest finished run of at least one sync failed; its SYNC issue names which. */
+  ERROR: 'ERROR',
+  /** It is on and has a provider, but no sync has finished a run yet. */
+  NOT_RUN_YET: 'NOT_RUN_YET',
+  /** It is off, or no provider syncs it: nothing runs. */
+  OFF: 'OFF',
+} as const;
+export type SportLeagueSyncHealth = (typeof SportLeagueSyncHealth)[keyof typeof SportLeagueSyncHealth];
+/** Derek's order (#1847): healthy first, off last. */
+export const SportLeagueSyncHealthOrder = explicitOrder<SportLeagueSyncHealth>({
+  [SportLeagueSyncHealth.OK]: 0,
+  [SportLeagueSyncHealth.ERROR]: 1,
+  [SportLeagueSyncHealth.NOT_RUN_YET]: 2,
+  [SportLeagueSyncHealth.OFF]: 3,
+});
+
+/**
+ * What needs a root admin on a sport league (#1847): one chip per type on the Sports page. No
+ * linking type: the sync matches participants by feed id alone (#1850), so none waits for a link.
+ */
+export const SportLeagueIssueType = {
+  /** A sync whose latest finished run failed. */
+  SYNC: 'SYNC',
+  /** A draft event whose latest automatic release check held it. */
+  RELEASE: 'RELEASE',
+} as const;
+export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
+/** The fixed order the chips show in (#1847). */
+export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
+  [SportLeagueIssueType.SYNC]: 0,
+  [SportLeagueIssueType.RELEASE]: 1,
+});
+
+/** What an issue item opens (#1847). */
+export const SportLeagueIssueTargetType = {
+  /** A provider sync run, on the run log. */
+  SYNC_RUN: 'SYNC_RUN',
+  /** A sport event, on its event page. */
+  SPORT_EVENT: 'SPORT_EVENT',
+} as const;
+export type SportLeagueIssueTargetType = (typeof SportLeagueIssueTargetType)[keyof typeof SportLeagueIssueTargetType];
+/** Lined up with the issue types they belong to. */
+export const SportLeagueIssueTargetTypeOrder = explicitOrder<SportLeagueIssueTargetType>({
+  [SportLeagueIssueTargetType.SYNC_RUN]: 0,
+  [SportLeagueIssueTargetType.SPORT_EVENT]: 1,
+});
+
 /** What started a provider sync run (#1819). Each kind has all three. */
 export const ProviderSyncTrigger = {
   /** The sync's own timer. */
@@ -1713,4 +1799,18 @@ export const ChampionshipTileOrder = explicitOrder<ChampionshipTile>({
   [ChampionshipTile.MOST_PODIUMS]: 3,
   [ChampionshipTile.MOST_TOP_TENS]: 4,
   [ChampionshipTile.MOST_PLAYED]: 5,
+});
+
+/** What a tier profile's last tier takes (#1844). */
+export const TierProfileLastTier = {
+  /** Everyone left once the tiers before it are filled. */
+  ALL_REMAINING: 'ALL_REMAINING',
+  /** At most the profile's `lastTierMax`; anyone beyond is in no tier and can't be picked. */
+  CAPPED: 'CAPPED',
+} as const;
+export type TierProfileLastTier = (typeof TierProfileLastTier)[keyof typeof TierProfileLastTier];
+/** Uncapped first, as the profile form offers them. */
+export const TierProfileLastTierOrder = explicitOrder<TierProfileLastTier>({
+  [TierProfileLastTier.ALL_REMAINING]: 0,
+  [TierProfileLastTier.CAPPED]: 1,
 });

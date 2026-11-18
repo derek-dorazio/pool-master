@@ -6,10 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportLeagueCreatePage } from './root-admin-sport-league-create-page';
 import { RootAdminSportLeagueListPage } from './root-admin-sport-league-list-page';
+import { pricingProfilesFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
 
 // /manage/sports/golf/leagues, the tours list, and its New tour page (pool-master-qqs).
 
-const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
+const { listSportLeaguesMock, createSportLeagueMock, listTierProfilesMock, listPricingProfilesMock, mockLogger } = vi.hoisted(
   () => {
     const logger = {
       debug: vi.fn(),
@@ -23,6 +24,8 @@ const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
     return {
       listSportLeaguesMock: vi.fn(),
       createSportLeagueMock: vi.fn(),
+      listTierProfilesMock: vi.fn(),
+      listPricingProfilesMock: vi.fn(),
       mockLogger: logger,
     };
   },
@@ -31,7 +34,32 @@ const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
 bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
   createSportLeague: createSportLeagueMock,
+  listTierProfiles: listTierProfilesMock,
+  listPricingProfiles: listPricingProfilesMock,
 });
+
+const GOLF_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
+
+/** The platform's profiles the New tour page offers. */
+function seedProfiles() {
+  listTierProfilesMock.mockResolvedValue({
+    data: {
+      tierProfiles: [{
+        id: GOLF_TIER_PROFILE_ID, name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+        sportLeagueCount: 2, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+      }],
+    },
+  });
+  listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+}
+
+/** Picks the golf layout and Standard pricing, which the page asks for before it creates. */
+async function chooseProfiles() {
+  await screen.findByRole('option', { name: '6 tiers of 10' });
+  await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-list-new-tier-profile'), '6 tiers of 10');
+  await screen.findByRole('option', { name: 'Standard' });
+  await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-list-new-pricing-profile'), 'Standard');
+}
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -122,7 +150,8 @@ describe('pool-master-qqs RootAdminSportLeagueListPage', () => {
     expect(await screen.findByText('Tour index offline')).toBeInTheDocument();
   });
 
-  it('pool-master-qqs creates a tour on the New tour page, then returns to the list showing it', async () => {
+  it('pool-master-qqs creates a tour on the New tour page with the profiles chosen, then returns to the list showing it', async () => {
+    seedProfiles();
     listSportLeaguesMock
       .mockResolvedValueOnce({ data: { sportLeagues: [] } })
       .mockResolvedValue({ data: { sportLeagues: [league({ id: 'new', name: 'DP World Tour' })] } });
@@ -142,17 +171,41 @@ describe('pool-master-qqs RootAdminSportLeagueListPage', () => {
       screen.getByTestId('root-admin-sport-league-list-new-keyword'),
       'DP World',
     );
+    await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
     await waitFor(() =>
       expect(createSportLeagueMock).toHaveBeenCalledWith(
-        expect.objectContaining({ body: { sport: 'GOLF', name: 'DP World Tour', matchKeyword: 'DP World' } }),
+        expect.objectContaining({
+          body: {
+            sport: 'GOLF',
+            name: 'DP World Tour',
+            matchKeyword: 'DP World',
+            tierProfileId: GOLF_TIER_PROFILE_ID,
+            pricingProfileId: STANDARD_PRICING_PROFILE_ID,
+          },
+        }),
       ),
     );
     expect(await screen.findByTestId('root-admin-sport-league-row-new')).toBeInTheDocument();
   });
 
+  it('keeps Create disabled until both a tier profile and a pricing profile are chosen', async () => {
+    seedProfiles();
+    renderPage('/manage/sports/golf/leagues/new');
+
+    await userEvent.type(await screen.findByTestId('root-admin-sport-league-list-new-name'), 'DP World Tour');
+    await screen.findByRole('option', { name: '6 tiers of 10' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-list-new-tier-profile'), '6 tiers of 10');
+    expect(screen.getByTestId('root-admin-sport-league-list-new-save')).toBeDisabled();
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-list-new-pricing-profile'), 'Standard');
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-list-new-save')).toBeEnabled());
+    expect(createSportLeagueMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the New tour page open with the server\'s reason when creating the tour is refused', async () => {
+    seedProfiles();
     createSportLeagueMock.mockResolvedValue({
       error: { error: { code: 'CONFLICT', message: 'A tour with this name already exists.' } },
       response: { status: 409 },
@@ -163,6 +216,7 @@ describe('pool-master-qqs RootAdminSportLeagueListPage', () => {
       await screen.findByTestId('root-admin-sport-league-list-new-name'),
       'PGA Tour',
     );
+    await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
     expect(await screen.findByText('A tour with this name already exists.')).toBeInTheDocument();

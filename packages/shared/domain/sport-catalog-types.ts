@@ -41,10 +41,12 @@ export interface SportLeague extends DomainEntity {
    */
   roundNames: readonly string[];
   /**
-   * How many tiers a new event of the league starts with; null takes the sport's default (#707:
-   * the College Football Playoff's six). Reference data, set where the league is seeded.
+   * The tier profile a new event of the league starts with and is auto-tiered by (#1844): the
+   * College Football Playoff's six tiers of two. Every league names one.
    */
-  tierCount: number | null;
+  tierProfileId: string;
+  /** The pricing profile its events' fields are priced with after a sync (#1844). Every league names one. */
+  pricingProfileId: string;
   /**
    * The periods its games are played in, when not its sport's (#786: men's college basketball's
    * halves); null plays the sport's layout. Read through `matchPeriodsOf`. Reference data, set

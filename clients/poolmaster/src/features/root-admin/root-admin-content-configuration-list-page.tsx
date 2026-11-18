@@ -10,7 +10,6 @@ import {
 import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
@@ -27,6 +26,7 @@ export function RootAdminContentConfigurationListPage() {
       columnHelper.accessor((template) => `${template.name} ${template.templateKey}`, {
         id: 'template',
         header: 'Template',
+        meta: { info: "The contest template's name and key, with what it sets up underneath.", type: { kind: 'text' } },
         cell: ({ row }) => (
           <div>
             <div className="text-sm font-semibold text-primary">
@@ -46,7 +46,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'scope',
           header: 'Scope',
-          meta: { options: {} },
+          meta: { info: 'The sport and contest format the template is for.', type: { kind: 'enum' } },
           cell: ({ getValue }) => (
             <span className="text-muted-foreground">{getValue()}</span>
           ),
@@ -54,7 +54,7 @@ export function RootAdminContentConfigurationListPage() {
       ),
       columnHelper.accessor('selectionType', {
         header: 'Selection',
-        meta: { options: {} },
+        meta: { info: 'How members pick in contests built from the template.', type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -65,7 +65,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'status',
           header: 'Status',
-          meta: { options: {} },
+          meta: { info: 'Whether the template is active, and whether it is the default for its scope.', type: { kind: 'enum' } },
           cell: ({ row }) => (
             <div className="flex flex-wrap gap-2">
               <StatusBadge tone={row.original.active ? 'active' : 'neutral'}>
@@ -126,7 +126,6 @@ export function RootAdminContentConfigurationListPage() {
                 );
               },
             })}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             searchTerm={searchTerm}
           />
         )}

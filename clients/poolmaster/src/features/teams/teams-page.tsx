@@ -3,19 +3,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { DataGrid, ErrorState, formatDateDisplay, Input, LoadingState, PageHeader, Text, useDisplayPreferences } from '@/features/shared/ui';
+import { DataGrid, ErrorState, Input, LoadingState, PageHeader, Text } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { plural } from '@/lib/plural';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
 import { teamNameColumn } from './team-name-column';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
-const TEAMS_PER_PAGE = 25;
 const SEARCH_LABEL = 'Find a member or owner';
 
 /** Teams: the league's directory of teams and their owners, for every member. */
 export function TeamsPage() {
-  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'teams-page' });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const { query: leagueQuery, league } = useLeagueContext(leagueCode);
@@ -39,6 +37,7 @@ export function TeamsPage() {
       teamNameColumn<TeamDirectoryRow>(leagueCode),
       {
         id: 'owners',
+        meta: { type: { kind: 'text' } },
         header: 'Owners',
         accessorFn: (row) => row.ownerNames,
         cell: ({ getValue }) => getValue() || <Text variant="meta">No owners</Text>,
@@ -49,12 +48,10 @@ export function TeamsPage() {
         header: 'Joined',
         accessorFn: (row) => row.team.createdAt,
         enableGlobalFilter: false,
-        cell: ({ getValue }) => (
-          <Text variant="meta">{formatDateDisplay(getValue(), displayPreferences)}</Text>
-        ),
+        meta: { type: { kind: 'date', direction: 'past' } },
       },
     ],
-    [displayPreferences, leagueCode],
+    [leagueCode],
   );
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading members...' });
@@ -100,7 +97,6 @@ export function TeamsPage() {
           data={rows}
           emptyMessage={rows.length ? 'No members match that search.' : 'No one has joined this league yet.'}
           getRowId={(row) => row.team.id}
-          pageSize={TEAMS_PER_PAGE}
           rowTestId={(row) => `league-team-${row.team.id}`}
           searchTerm={searchTerm}
           showColumnFilters={false}

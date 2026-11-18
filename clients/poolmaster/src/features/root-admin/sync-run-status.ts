@@ -11,15 +11,6 @@ import type { SyncRunEvidenceRow } from './sync-run-detail';
 // How a sync run reads in the Sync lists and its detail dialog: its status words and tone, its
 // event, its sort time and the rows it wrote.
 
-export function toSortableTimestamp(isoString: string | null | undefined) {
-  if (!isoString) {
-    return 0;
-  }
-
-  const parsed = Date.parse(isoString);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
 export function formatEventValue(eventId: string | null | undefined) {
   if (!eventId || eventId.trim().length === 0) {
     return 'No event';

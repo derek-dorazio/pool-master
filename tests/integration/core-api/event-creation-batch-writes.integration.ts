@@ -5,6 +5,7 @@ import { createSportEventServices } from '../../../packages/core-api/src/modules
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // Creating, cloning and importing events against real Postgres (#1253): each writes its events,
 // their series, rounds and default tiers in a fixed number of queries however many events, and
@@ -28,7 +29,7 @@ async function golfTour() {
     create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  return prisma.sportLeague.create({ data: { sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
+  return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
 }
 
 /** `count` provider events a week apart in `year`, each played Thursday to Sunday. */
@@ -136,10 +137,10 @@ describe('Creating one event (#1253)', () => {
     );
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and
-    // every read is pinned too, so an added read shows.
+    // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
     expect(statementCounts(statements)).toEqual([
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1], ['SELECT tier_profiles', 1],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);

@@ -8,9 +8,6 @@ import { Text, cn } from '@/features/shared/ui';
 
 /** The columns every contest leaderboard shares (#1277), each test id under the board's prefix. */
 
-/** Entries per page. A league can have hundreds; one page stays readable on a phone. */
-export const LEADERBOARD_PAGE_SIZE = 25;
-
 /** What a board says once its contest settles, unless it has words of its own. */
 export const SETTLED_NOTE = 'Final result: these standings are frozen at settlement.';
 

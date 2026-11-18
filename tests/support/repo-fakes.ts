@@ -313,6 +313,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findAutoLifecycleCandidates: many(),
     findReleaseFacts: jest.fn().mockResolvedValue({ scheduledRoundCount: 4, contestSetupCount: 1 }),
     findAutoReleaseCandidates: many(),
+    recordAutoReleaseCheck: nothing(),
     ...overrides,
   };
 }

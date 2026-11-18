@@ -23,7 +23,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -96,7 +96,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const a = admin.client;
 
     // --- The race and its field ------------------------------------------------------------
-    const circuit = await createSportLeague({ client: a, body: { sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
+    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.HORSE_RACING)), sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
     expect(circuit.response?.status).toBe(201);
     const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

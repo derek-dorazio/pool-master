@@ -30,13 +30,13 @@ const americanFootballComposite: SportComposite<AmericanFootballStat> = {
  * (BracketAdvancement.RESEED_BY_SEED, #722), so the best seed left always hosts.
  *
  * The NFL playoffs are 14 teams in four rounds, seven seeds in each conference with the 1 seed on
- * a bye; a bye scores nothing. The field falls into seven tiers of two, assigned like any sport's
- * from odds or ranking.
+ * a bye; a bye scores nothing. Its tier profile is seven tiers of two (#1844), assigned like any
+ * sport's from odds or ranking.
  *
  * The College Football Playoff is a second sport league (#707): a fixed bracket of 12 teams in
  * four rounds, the top four seeds on byes into the quarterfinals. It names its own rounds and
- * starts its events on six tiers of two (`SportLeague.roundNames`, `SportLeague.tierCount`), so
- * the names and tier layout below are the NFL's.
+ * names a tier profile of six tiers of two (`SportLeague.roundNames`, `SportLeague.tierProfileId`),
+ * so the names below are the NFL's.
  */
 export const americanFootballSportDefinition: SportDefinition = {
   sport: Sport.AMERICAN_FOOTBALL,
@@ -45,7 +45,6 @@ export const americanFootballSportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
-  defaultTierLayout: { tierCount: 7, tierSize: 2 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   shootout: null,

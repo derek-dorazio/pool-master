@@ -15,9 +15,6 @@ export const horseRacingSportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.FINISH_POSITION,
   tournamentFormat: TournamentFormat.RACE,
   defaultRounds: 1,
-  // Favourites, the middle of the market, and the longshots: three tiers, three horses in each of
-  // the first two and the rest of the field in the last, so an 8-runner field fills all three.
-  defaultTierLayout: { tierCount: 3, tierSize: 3 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   shootout: null,

@@ -1,7 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportOrder } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import type { ProviderSummaryDto } from '@/lib/api';
-import { Button, DataGrid, formatDateTimeDisplay, QueryState, SectionCard, StatusBadge, Text, useDisplayPreferences } from '@/features/shared/ui';
+import { DataGrid, QueryState, SectionCard, StatusBadge, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   buildCompactStatsSummary,
@@ -11,8 +12,7 @@ import {
   getProviderName,
   type ProviderSyncRun,
 } from './root-admin-sync-utils';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
-import { formatEventValue, getRunStatusLabel, getRunStatusTone, toSortableTimestamp } from './sync-run-status';
+import { formatEventValue, getRunStatusLabel, getRunStatusTone } from './sync-run-status';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 
@@ -26,42 +26,24 @@ export function SyncRunHistory({
   providers: readonly ProviderSummaryDto[] | undefined;
   runsQuery: { data: ProviderSyncRun[] | undefined; error: Error | null; isError: boolean; refetch: () => unknown };
 }) {
-  const displayPreferences = useDisplayPreferences();
-
   const syncHistoryColumns = useMemo(
     () => [
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt, displayPreferences),
-        {
-          id: 'started',
-          header: 'Started',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.startedAt ?? left.original.createdAt)
-            - toSortableTimestamp(right.original.startedAt ?? right.original.createdAt),
-          cell: ({ getValue }) => (
-            <Text>{getValue()}</Text>
-          ),
-        },
-      ),
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.completedAt, displayPreferences),
-        {
-          id: 'completed',
-          header: 'Completed',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.completedAt)
-            - toSortableTimestamp(right.original.completedAt),
-          cell: ({ getValue }) => (
-            <Text tone="muted">{getValue()}</Text>
-          ),
-        },
-      ),
+      syncRunColumnHelper.accessor((run) => run.startedAt ?? run.createdAt, {
+        id: 'started',
+        header: 'Started',
+        meta: { info: 'When the sync run started, in your time zone.', type: { kind: 'datetime', direction: 'past' } },
+      }),
+      syncRunColumnHelper.accessor((run) => run.completedAt ?? null, {
+        id: 'completed',
+        header: 'Completed',
+        meta: { info: 'When the sync run finished, in your time zone; blank while it is still running.', type: { kind: 'datetime', direction: 'past' } },
+      }),
       syncRunColumnHelper.accessor(
         (run) => run.providerId,
         {
           id: 'provider',
           header: 'Provider',
-          meta: { options: { label: (providerId) => getProviderName(providerId, providers) } },
+          meta: { info: 'The data provider the run read from.', type: { kind: 'enum', label: (providerId) => getProviderName(providerId, providers) } },
           cell: ({ row }) => (
             <div className="flex flex-col gap-1">
               <Text variant="strong">{getProviderName(row.original.providerId, providers)}</Text>
@@ -72,7 +54,7 @@ export function SyncRunHistory({
       ),
       syncRunColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { options: {} },
+        meta: { info: 'The sport the run synced.', type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -80,7 +62,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
         id: 'feed',
         header: 'Feed',
-        meta: { options: {} },
+        meta: { info: 'Which provider feed the run asked for.', type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -88,6 +70,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
         id: 'event',
         header: 'Event',
+        meta: { info: 'The one event the run synced, if it was limited to one.', type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <Text tone="muted">{getValue()}</Text>
         ),
@@ -95,7 +78,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => getRunStatusLabel(run), {
         id: 'status',
         header: 'Status',
-        meta: { options: {} },
+        meta: { info: 'How the run ended, or that it is still running.', type: { kind: 'enum' } },
         cell: ({ row }) => (
           <StatusBadge tone={getRunStatusTone(row.original)}>
             {getRunStatusLabel(row.original)}
@@ -105,6 +88,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => buildPayloadSummary(run.payload), {
         id: 'summary',
         header: 'Summary',
+        meta: { info: 'What the run changed, and any warnings it raised.', type: { kind: 'text' } },
         cell: ({ row }) => (
           <div className="flex flex-col items-start gap-1">
             <Text tone="muted">{buildPayloadSummary(row.original.payload)}</Text>
@@ -115,19 +99,11 @@ export function SyncRunHistory({
                 {getPayloadWarnings(row.original.payload).length === 1 ? '' : 's'}
               </StatusBadge>
             ) : null}
-            <Button
-              className="mt-1"
-              onClick={() => onOpenRun(row.original)}
-              type="button"
-              variant="link"
-            >
-              View details
-            </Button>
           </div>
         ),
       }),
     ],
-    [displayPreferences, onOpenRun, providers],
+    [providers],
   );
 
   return (
@@ -141,11 +117,12 @@ export function SyncRunHistory({
       >
         {(runs) => (
           <DataGrid
+            urlKey="runs"
             columns={syncHistoryColumns}
             data={runs}
             emptyMessage="No sync runs matched the current filters."
             getRowId={(run) => run.id}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
+            openRowDialog={onOpenRun}
             rowTestId={(run) => `root-admin-sync-run-${run.id}`}
             tableTestId="root-admin-sync-history-table"
           />

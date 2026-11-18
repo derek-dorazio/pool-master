@@ -41,6 +41,7 @@ import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { contestStartedEmailsJob, createContestEmailJobs, createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
+import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
@@ -978,8 +979,8 @@ describe('ContestConfigTemplateRepository', () => {
     });
     const suffix = randomUUID().slice(0, 8);
     const [pga, lpga] = await Promise.all([
-      prisma.sportLeague.create({ data: { sportId: sport.id, name: `PGA-style ${suffix}` } }),
-      prisma.sportLeague.create({ data: { sportId: sport.id, name: `LPGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `PGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
     ]);
     return { pga, lpga };
   }
@@ -1134,7 +1135,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const prisma = getPrisma();
     const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
-      data: { sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
+      data: { ...(await leagueProfiles(prisma)), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
