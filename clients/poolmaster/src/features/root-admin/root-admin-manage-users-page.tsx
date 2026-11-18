@@ -1,3 +1,4 @@
+import { ActiveStatusBadge } from "./active-status-badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -76,15 +77,7 @@ export function RootAdminManageUsersPage() {
         id: "account",
         header: "Account",
         meta: { type: { kind: "enum" } },
-        cell: ({ getValue }) => {
-          const isActive = getValue() === "Active";
-
-          return (
-            <StatusBadge tone={isActive ? "active" : "inactive"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
       }),
       columnHelper.accessor("isRootAdmin", {
         id: "rootAdmin",

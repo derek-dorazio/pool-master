@@ -1,3 +1,4 @@
+import { ActiveStatusBadge } from "./active-status-badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -12,7 +13,6 @@ import {
   Input,
   PageHeader,
   SectionCard,
-  StatusBadge,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -79,15 +79,7 @@ export function RootAdminManageLeaguesPage() {
           id: "lifecycle",
           header: "Lifecycle",
           meta: { type: { kind: "enum" } },
-          cell: ({ getValue }) => {
-            const isActive = getValue() === "Active";
-
-            return (
-              <StatusBadge tone={isActive ? "active" : "inactive"}>
-                {getValue()}
-              </StatusBadge>
-            );
-          },
+          cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
         },
       ),
       columnHelper.accessor((league) => league.planEntitlements.plan, {
