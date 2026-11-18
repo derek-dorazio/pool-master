@@ -3,6 +3,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
 import {
+  DetailEditModal,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
@@ -216,5 +217,65 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByTestId("status-detail-value")).toHaveTextContent(
       "Completed",
     );
+  });
+
+  describe("DetailEditModal", () => {
+    const facts = [{ id: "status", label: "Status", value: "On", testId: "status-fact" }];
+
+    function showDetailEdit(mode: "view" | "edit", overrides: { canSave?: boolean; error?: Error } = {}) {
+      const handlers = { onCancel: vi.fn(), onCancelEdit: vi.fn(), onEdit: vi.fn(), onSave: vi.fn() };
+      render(
+        <DetailEditModal
+          canSave={overrides.canSave}
+          error={overrides.error}
+          errorFallback="We could not save these settings."
+          facts={facts}
+          mode={mode}
+          onOpenChange={vi.fn()}
+          open
+          saveLabel="Save"
+          testId="settings"
+          title="MLB settings"
+          {...handlers}
+        >
+          <input aria-label="Days" data-testid="days-input" />
+        </DetailEditModal>,
+      );
+      return handlers;
+    }
+
+    it("opens in view mode showing the facts with Close and Edit, and no form", () => {
+      const handlers = showDetailEdit("view");
+
+      expect(screen.getByTestId("status-fact")).toHaveTextContent("On");
+      expect(screen.queryByTestId("days-input")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("settings-edit"));
+      expect(handlers.onEdit).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+      expect(handlers.onCancel).toHaveBeenCalled();
+    });
+
+    it("in edit mode shows the form with Cancel and Save instead of the facts", () => {
+      const handlers = showDetailEdit("edit");
+
+      expect(screen.getByTestId("days-input")).toBeInTheDocument();
+      expect(screen.queryByTestId("status-fact")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("settings-save"));
+      expect(handlers.onSave).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(handlers.onCancelEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it("disables Save while the form cannot be saved", () => {
+      showDetailEdit("edit", { canSave: false });
+
+      expect(screen.getByTestId("settings-save")).toBeDisabled();
+    });
+
+    it("shows a failed save above the actions in edit mode", () => {
+      showDetailEdit("edit", { error: new Error("boom") });
+
+      expect(screen.getByText("Save failed")).toBeInTheDocument();
+    });
   });
 });

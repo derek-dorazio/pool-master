@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { Breadcrumbs, ToolsArea } from "@/features/shared/ui";
 import {
-  buildManageSportTabs,
+  buildManageSubTabs,
   buildManageTabs,
   getManageBreadcrumbLabel,
   MANAGE_LANDING_PATH,
@@ -47,7 +47,7 @@ export function ManageLandingRedirect() {
 
 /**
  * The root-admin area on the commissioner tools frame (#1620): the slim band with the way out,
- * Manage's tools as top tabs, one tab per sport under Sports, then the page, which opens with
+ * Manage's tools as top tabs, a second row under Sports and Customers, then the page, which opens with
  * its own `PageHeader`. A page deeper than its tab also shows the trail back up to it.
  */
 export function RootAdminManageLayout() {
@@ -79,14 +79,14 @@ export function RootAdminManageLayout() {
   );
 
   const breadcrumbs = buildBreadcrumbs(location.pathname, overrides);
-  const sportTabs = buildManageSportTabs(location.pathname);
+  const subTabs = buildManageSubTabs(location.pathname);
 
   return (
     <ManageBreadcrumbContext.Provider value={contextValue}>
       <ToolsArea
         back={{ label: "Exit Manage", testId: "root-admin-manage-exit", to: "/" }}
         eyebrow="Root admin"
-        subTabs={sportTabs ? { items: sportTabs, label: "Sports" } : undefined}
+        subTabs={subTabs ?? undefined}
         tabs={buildManageTabs(location.pathname)}
         tabsLabel="Manage"
         testId="root-admin-manage-layout"

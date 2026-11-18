@@ -3,13 +3,17 @@ import type { PageLinkTab } from '@/features/shared/ui';
 import { upperFirst } from '@/lib/upper-first';
 
 type ManageSectionDefinition = {
-  /** The tab's selector suffix and its path segment under `/manage`. */
+  /** The tab's selector suffix. */
   key: string;
   title: string;
   to: string;
+  /**
+   * Every path the tab stays lit under (#1848). Where two tabs' paths nest, the longest match
+   * wins, so Providers lights for Run event sync while Activity keeps the rest of `/manage/sync`.
+   */
+  paths: readonly string[];
 };
 
-/** The supported sport a URL segment names, or null when it names none. */
 export function parseSportPathSegment(segment: string | undefined): Sport | null {
   return SUPPORTED_SPORTS.find((sport) => sportPathSegment(sport) === segment) ?? null;
 }
@@ -41,31 +45,41 @@ export function buildSportParticipantPath(sport: Sport, participantId: string) {
   return `${buildSportParticipantListPath(sport)}/${participantId}`;
 }
 
-export function buildSportLeagueListPath(sport: Sport) {
-  return `${buildSportPath(sport)}/leagues`;
-}
-
+/** A sport league's page; the sport's leagues are listed together on the Sports page (#1848). */
 export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
-  return `${buildSportLeagueListPath(sport)}/${sportLeagueId}`;
+  return `${buildSportPath(sport)}/leagues/${sportLeagueId}`;
 }
 
-/** Where `/manage/sports` itself lands: the first supported sport's events. */
-export const SPORTS_LANDING_PATH = buildSportEventListPath(SUPPORTED_SPORTS[0]);
+/** Where a new sport league is made. */
+export function buildSportLeagueCreatePath(sport: Sport) {
+  return `${buildSportPath(sport)}/leagues/new`;
+}
 
-/** Manage's tools, one top tab each, in order (#1620). */
+/** The old event list and contest template pages, reached from Sports' second row until the League page's tabs replace them. */
+export const EVENTS_PATH = '/manage/events';
+export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
+
+/**
+ * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
+ * Plans. Activity, Notifications and Providers have no pages of their own yet, so each opens
+ * today's page for it: the sync runs, the settings and Run event sync.
+ */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
-  { key: 'leagues', title: 'Leagues', to: '/manage/leagues' },
-  { key: 'users', title: 'Users', to: '/manage/users' },
-  { key: 'plans', title: 'Plans', to: '/manage/plans' },
-  { key: 'sports', title: 'Sports', to: SPORTS_PATH },
-  { key: 'events', title: 'Events', to: '/manage/events' },
-  { key: 'sync', title: 'Sync', to: '/manage/sync' },
-  { key: 'settings', title: 'Settings', to: '/manage/settings' },
-  { key: 'content-configuration', title: 'Content', to: '/manage/content-configuration' },
+  { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
+  { key: 'activity', title: 'Activity', to: '/manage/sync', paths: ['/manage/sync'] },
+  { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
+  {
+    key: 'providers',
+    title: 'Providers',
+    to: '/manage/sync/run-event-sync',
+    paths: ['/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
+  },
+  { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
+  { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
 ];
 
-/** Where `/manage` itself lands: the first section of the menu. */
-export const MANAGE_LANDING_PATH = '/manage/leagues';
+/** Where `/manage` itself lands: Sports, every sport league in one grid. */
+export const MANAGE_LANDING_PATH = SPORTS_PATH;
 
 /** How long a server-searched Manage list waits after the last key before it asks (#1180). */
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -92,10 +106,17 @@ function isAtOrUnder(pathname: string, path: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-/** Manage's top tabs; a tool's sub-pages keep its tab lit. */
+/** The longest of `paths` the page sits at or under; 0 when none. */
+function matchLength(pathname: string, paths: readonly string[]): number {
+  return Math.max(0, ...paths.filter((path) => isAtOrUnder(pathname, path)).map((path) => path.length));
+}
+
+/** Manage's top tabs; a tool's sub-pages keep its tab lit, the tab with the longest matching path. */
 export function buildManageTabs(pathname: string): PageLinkTab[] {
-  return MANAGE_SECTION_DEFINITIONS.map((section) => ({
-    isActive: isAtOrUnder(pathname, section.to),
+  const lengths = MANAGE_SECTION_DEFINITIONS.map((section) => matchLength(pathname, section.paths));
+  const best = Math.max(...lengths);
+  return MANAGE_SECTION_DEFINITIONS.map((section, index) => ({
+    isActive: best > 0 && lengths[index] === best,
     label: section.title,
     testId: `root-admin-manage-menu-${section.key}`,
     to: section.to,
@@ -103,22 +124,56 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
 }
 
 /**
- * Under Sports, the second row: one tab per supported sport, in enum order, named by its
- * definition. Null anywhere else.
+ * Manage's second row (#1848), null where a tool has none. Under Sports: Sport leagues (the Sports
+ * page and each league's pages), the old Events and Contest templates pages until the League
+ * page's tabs replace them, then one tab per supported sport for its events and participants.
+ * Under Customers: Leagues and Users.
  */
-export function buildManageSportTabs(pathname: string): PageLinkTab[] | null {
-  if (!isAtOrUnder(pathname, SPORTS_PATH)) {
-    return null;
+export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
+  if (MANAGE_SECTION_DEFINITIONS[0].paths.some((path) => isAtOrUnder(pathname, path))) {
+    const sport = parseSportPathSegment(pathname.split('/')[3]);
+    const onLeaguePage = sport !== null && isAtOrUnder(pathname, `${buildSportPath(sport)}/leagues`);
+    return {
+      label: 'Sports',
+      items: [
+        { isActive: pathname === SPORTS_PATH || onLeaguePage, label: 'Sport leagues', testId: 'root-admin-manage-menu-sport-leagues', to: SPORTS_PATH },
+        { isActive: isAtOrUnder(pathname, EVENTS_PATH), label: 'Events', testId: 'root-admin-manage-menu-events', to: EVENTS_PATH },
+        {
+          isActive: isAtOrUnder(pathname, CONTEST_TEMPLATES_PATH),
+          label: 'Contest templates',
+          testId: 'root-admin-manage-menu-contest-templates',
+          to: CONTEST_TEMPLATES_PATH,
+        },
+        ...SUPPORTED_SPORTS.map((candidate) => ({
+          isActive: candidate === sport && !onLeaguePage,
+          label: getSportDefinition(candidate).name,
+          testId: `root-admin-manage-menu-${sportPathSegment(candidate)}`,
+          to: buildSportEventListPath(candidate),
+        })),
+      ],
+    };
   }
-  return SUPPORTED_SPORTS.map((sport) => ({
-    isActive: isAtOrUnder(pathname, buildSportPath(sport)),
-    label: getSportDefinition(sport).name,
-    testId: `root-admin-manage-menu-${sportPathSegment(sport)}`,
-    to: buildSportPath(sport),
-  }));
+  if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
+    return {
+      label: 'Customers',
+      items: [
+        { isActive: isAtOrUnder(pathname, '/manage/leagues'), label: 'Leagues', testId: 'root-admin-manage-menu-leagues', to: '/manage/leagues' },
+        { isActive: isAtOrUnder(pathname, '/manage/users'), label: 'Users', testId: 'root-admin-manage-menu-users', to: '/manage/users' },
+      ],
+    };
+  }
+  return null;
 }
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
+  sports: 'Sports',
+  events: 'Events',
+  'content-configuration': 'Contest templates',
+  sync: 'Activity',
+  settings: 'Notifications',
+  leagues: 'Leagues',
+  users: 'Users',
+  plans: 'Plans',
   'run-event-sync': 'Run Event Sync',
   'unmapped-participants': 'Unmapped Competitors',
   map: 'Map competitor',
@@ -132,11 +187,10 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   schedule: 'Schedule',
 };
 
-/** A sport's three lists, labelled in the sport's own words: "Tournaments", "Golfers", "Tours". */
+/** A sport's two lists, labelled in the sport's own words: "Tournaments", "Golfers". */
 const SPORT_LIST_LABELS = {
   events: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.event.many),
   participants: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.participant.many),
-  leagues: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.sportLeague.many),
 } as const satisfies Record<string, (sport: Sport) => string>;
 
 function isSportListSegment(segment: string): segment is keyof typeof SPORT_LIST_LABELS {
@@ -155,6 +209,9 @@ export function getManageBreadcrumbLabel(segments: readonly string[], index: num
   }
   if (sport && index === 2 && isSportListSegment(segment)) {
     return SPORT_LIST_LABELS[segment](sport);
+  }
+  if (sport && index === 2 && segment === 'leagues') {
+    return 'Sport leagues';
   }
 
   const staticLabel = STATIC_BREADCRUMB_LABELS[segment];

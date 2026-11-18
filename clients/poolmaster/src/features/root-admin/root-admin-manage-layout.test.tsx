@@ -21,6 +21,8 @@ function renderManage(path: string) {
           <Route element={<ManageLandingRedirect />} index />
           <Route element={<ManageLandingRedirect />} path="legacy" />
           <Route element={<LocationProbe />} path="leagues" />
+          <Route element={<LocationProbe />} path="sports" />
+          <Route element={<div>Plans body</div>} path="plans" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
           <Route element={<div>Ingestion schedule body</div>} path="settings/ingestion-schedule" />
           <Route element={<EntityHomeProbe />} path="users/:userId" />
@@ -33,47 +35,45 @@ function renderManage(path: string) {
 }
 
 describe('RootAdminManageLayout', () => {
-  it('opens the Leagues section when a root admin goes to /manage itself', () => {
+  it('opens the Sports page when a root admin goes to /manage itself', () => {
     renderManage('/manage');
 
-    expect(screen.getByTestId('location')).toHaveTextContent('/manage/leagues');
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports');
   });
 
-  it('sends an old Manage link to the Leagues section', () => {
+  it('sends an old Manage link to the Sports page', () => {
     renderManage('/manage/legacy');
 
-    expect(screen.getByTestId('location')).toHaveTextContent('/manage/leagues');
+    expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports');
   });
 
-  it('shows Manage on the tools frame: a band with the way out, then every tool as one row of top tabs, marking the open one', () => {
-    renderManage('/manage/leagues');
+  it('shows Manage on the tools frame: a band with the way out, then the menu Sports to Plans as top tabs, marking the open one', () => {
+    renderManage('/manage/plans');
 
     const band = screen.getByTestId('root-admin-manage-layout-band');
     expect(within(band).getByText('Root admin')).toBeInTheDocument();
     expect(within(band).getByText('Manage')).toBeInTheDocument();
     const tabs = screen.getByRole('navigation', { name: 'Manage' });
     expect(within(tabs).getAllByRole('link').map((link) => link.textContent)).toEqual([
-      'Leagues',
-      'Users',
-      'Plans',
       'Sports',
-      'Events',
-      'Sync',
-      'Settings',
-      'Content',
+      'Activity',
+      'Notifications',
+      'Providers',
+      'Customers',
+      'Plans',
     ]);
-    expect(screen.getByTestId('root-admin-manage-menu-leagues')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('root-admin-manage-menu-users')).not.toHaveAttribute('aria-current');
+    expect(screen.getByTestId('root-admin-manage-menu-plans')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-manage-menu-sports')).not.toHaveAttribute('aria-current');
     expect(screen.getByTestId('root-admin-manage-exit')).toHaveAttribute('href', '/');
     expect(screen.queryByRole('navigation', { name: 'Sports' })).not.toBeInTheDocument();
   });
 
-  it('under Sports, adds a second row with one tab per sport, marking the sport being managed', () => {
+  it('under Sports, adds a second row of Sport leagues, Events, Contest templates and one tab per sport, marking the sport being managed', () => {
     renderManage('/manage/sports/golf/events');
 
     expect(screen.getByTestId('root-admin-manage-menu-sports')).toHaveAttribute('aria-current', 'page');
     const sports = screen.getByRole('navigation', { name: 'Sports' });
-    expect(within(sports).getAllByRole('link')).toHaveLength(11);
+    expect(within(sports).getAllByRole('link')).toHaveLength(14);
     expect(screen.getByTestId('root-admin-manage-menu-golf')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('root-admin-manage-menu-tennis')).not.toHaveAttribute('aria-current');
   });
@@ -106,22 +106,23 @@ describe('RootAdminManageLayout', () => {
 
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
     expect(within(breadcrumbNav).queryByText('Manage')).not.toBeInTheDocument();
-    expect(within(breadcrumbNav).getByRole('link', { name: 'Content' })).toHaveAttribute(
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Contest templates' })).toHaveAttribute(
       'href',
       '/manage/content-configuration',
     );
     expect(within(breadcrumbNav).getByText('golf-tiered-pick-6')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('root-admin-manage-menu-content-configuration')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-manage-menu-sports')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-manage-menu-contest-templates')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('Detail body')).toBeInTheDocument();
   });
 
-  it('keeps Settings lit for the ingestion schedule, with the trail back to Settings', () => {
+  it('keeps Notifications lit for the ingestion schedule, with the trail back to the settings page', () => {
     renderManage('/manage/settings/ingestion-schedule');
 
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
-    expect(within(breadcrumbNav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/manage/settings');
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Notifications' })).toHaveAttribute('href', '/manage/settings');
     expect(within(breadcrumbNav).getByText('Global Ingestion Schedule')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('root-admin-manage-menu-settings')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-manage-menu-notifications')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('Ingestion schedule body')).toBeInTheDocument();
   });
 
