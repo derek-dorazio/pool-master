@@ -189,6 +189,15 @@ describe('SportEventService.createEventFromProviderEvent', () => {
     await expect(service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', providerEvent }))
       .rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
   });
+
+  it('refuses a provider event whose start has already passed with 409 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+    const { store, service, sportLeague } = setup();
+    const started = { ...providerEvent, startDate: new Date(NOW.getTime() - 60 * 1000), endDate: new Date(NOW.getTime() + 3 * 24 * 60 * 60 * 1000) };
+
+    await expect(service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', providerEvent: started }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 409 });
+    expect(await store.sportEventRepo().findByProviderRef('feed', 'ev-1')).toBeNull();
+  });
 });
 
 // #385: a tour's provider slate for a year, imported in one action and safe to run again.
@@ -231,6 +240,32 @@ describe('SportEventService.importProviderEventYear', () => {
 
     expect(again.created).toEqual([]);
     expect(again.skipped.map((row) => row.reason)).toEqual(['ALREADY_LINKED', 'ALREADY_LINKED', 'ALREADY_LINKED']);
+  });
+
+  it('creates only the provider events that have not started, reporting each one that already started as skipped', async () => {
+    const { service, sportLeague } = setup();
+    const past = { externalId: 'pga-2026-past', name: 'Winter Open', venue: null, startDate: new Date('2026-01-08T12:00:00.000Z'), endDate: new Date('2026-01-11T23:00:00.000Z') };
+    const startingNow = { externalId: 'pga-2026-now', name: 'Noon Open', venue: null, startDate: NOW, endDate: new Date('2026-01-18T23:00:00.000Z') };
+    const future = slate[0];
+
+    const result = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [past, startingNow, future] });
+
+    expect(result.created.map(({ event }) => event.externalId)).toEqual(['pga-2026-a']);
+    expect(result.skipped).toEqual([
+      { externalId: 'pga-2026-past', name: 'Winter Open', reason: 'ALREADY_STARTED' },
+      { externalId: 'pga-2026-now', name: 'Noon Open', reason: 'ALREADY_STARTED' },
+    ]);
+  });
+
+  it('reports a started provider event that is already linked as already linked, so the linked event keeps updating', async () => {
+    const { store, service, sportLeague } = setup();
+    store.addEvent({ providerId: 'feed', externalId: 'pga-2026-past' });
+    const past = { externalId: 'pga-2026-past', name: 'Winter Open', venue: null, startDate: new Date('2026-01-08T12:00:00.000Z'), endDate: null };
+
+    const result = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [past] });
+
+    expect(result.created).toEqual([]);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-past', name: 'Winter Open', reason: 'ALREADY_LINKED' }]);
   });
 });
 
