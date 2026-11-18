@@ -624,7 +624,9 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 Platform-level definitions each sport league names one of (#1844; `rules/domain-model-concepts.md`
 §2, "Platform definitions, league picks"). Mounted at `/api/v1/tier-profiles` and
-`/api/v1/pricing-profiles`; every operation is root admin only.
+`/api/v1/pricing-profiles`; every operation is root admin only. One address may make 120
+requests a minute on each route (`@fastify/rate-limit`, per process); more answer 429
+`PROFILE_RATE_LIMITED`.
 
 | Operation | Role | Notes |
 |---|---|---|

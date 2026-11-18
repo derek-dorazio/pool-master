@@ -82747,7 +82747,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "Every tier profile, by name, each with how many sport leagues name it. Root admin only.",
+        "description": "Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "responses": {
           "200": {
             "description": "Every tier profile.",
@@ -82778,6 +82778,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -82787,7 +82797,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only.",
+        "description": "409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82858,6 +82868,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -82869,7 +82889,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.",
+        "description": "404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -82921,6 +82941,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -82930,7 +82960,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only.",
+        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -83022,6 +83052,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -83031,7 +83071,7 @@
         "tags": [
           "Tier profiles"
         ],
-        "description": "409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.",
+        "description": "409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -83086,6 +83126,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -83097,7 +83147,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only.",
+        "description": "Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "responses": {
           "200": {
             "description": "Every pricing profile.",
@@ -83128,6 +83178,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -83137,7 +83197,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only.",
+        "description": "409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -83208,6 +83268,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -83219,7 +83289,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.",
+        "description": "404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -83271,6 +83341,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -83280,7 +83360,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only.",
+        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -83372,6 +83452,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       },
@@ -83381,7 +83471,7 @@
         "tags": [
           "Pricing profiles"
         ],
-        "description": "409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.",
+        "description": "409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -83428,6 +83518,16 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

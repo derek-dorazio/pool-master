@@ -2984,13 +2984,13 @@ export interface paths {
         };
         /**
          * List tier profiles
-         * @description Every tier profile, by name, each with how many sport leagues name it. Root admin only.
+         * @description Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         get: operations["listTierProfiles"];
         put?: never;
         /**
          * Create a tier profile
-         * @description 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only.
+         * @description 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         post: operations["createTierProfile"];
         delete?: never;
@@ -3008,18 +3008,18 @@ export interface paths {
         };
         /**
          * Get a tier profile
-         * @description 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+         * @description 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         get: operations["getTierProfile"];
         /**
          * Update a tier profile
-         * @description Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only.
+         * @description Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         put: operations["updateTierProfile"];
         post?: never;
         /**
          * Delete a tier profile
-         * @description 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+         * @description 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         delete: operations["deleteTierProfile"];
         options?: never;
@@ -3036,13 +3036,13 @@ export interface paths {
         };
         /**
          * List pricing profiles
-         * @description Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only.
+         * @description Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         get: operations["listPricingProfiles"];
         put?: never;
         /**
          * Create a pricing profile
-         * @description 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only.
+         * @description 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         post: operations["createPricingProfile"];
         delete?: never;
@@ -3060,18 +3060,18 @@ export interface paths {
         };
         /**
          * Get a pricing profile
-         * @description 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+         * @description 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         get: operations["getPricingProfile"];
         /**
          * Update a pricing profile
-         * @description Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only.
+         * @description Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         put: operations["updatePricingProfile"];
         post?: never;
         /**
          * Delete a pricing profile
-         * @description 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+         * @description 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
         delete: operations["deletePricingProfile"];
         options?: never;
@@ -34365,6 +34365,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     createTierProfile: {
@@ -34434,6 +34443,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     getTierProfile: {
@@ -34476,6 +34494,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34563,6 +34590,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     deleteTierProfile: {
@@ -34619,6 +34655,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     listPricingProfiles: {
@@ -34650,6 +34695,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34726,6 +34780,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     getPricingProfile: {
@@ -34768,6 +34831,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34855,6 +34927,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     deletePricingProfile: {
@@ -34904,6 +34985,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

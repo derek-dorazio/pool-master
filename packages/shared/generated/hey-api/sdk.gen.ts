@@ -2232,7 +2232,7 @@ export const applyParticipantLeagueAffiliationUpload = <ThrowOnError extends boo
 /**
  * List tier profiles
  *
- * Every tier profile, by name, each with how many sport leagues name it. Root admin only.
+ * Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const listTierProfiles = <ThrowOnError extends boolean = false>(options?: Options<ListTierProfilesData, ThrowOnError>): RequestResult<ListTierProfilesResponses, ListTierProfilesErrors, ThrowOnError> => (options?.client ?? client).get<ListTierProfilesResponses, ListTierProfilesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2243,7 +2243,7 @@ export const listTierProfiles = <ThrowOnError extends boolean = false>(options?:
 /**
  * Create a tier profile
  *
- * 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only.
+ * 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const createTierProfile = <ThrowOnError extends boolean = false>(options: Options<CreateTierProfileData, ThrowOnError>): RequestResult<CreateTierProfileResponses, CreateTierProfileErrors, ThrowOnError> => (options.client ?? client).post<CreateTierProfileResponses, CreateTierProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2258,7 +2258,7 @@ export const createTierProfile = <ThrowOnError extends boolean = false>(options:
 /**
  * Delete a tier profile
  *
- * 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+ * 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const deleteTierProfile = <ThrowOnError extends boolean = false>(options: Options<DeleteTierProfileData, ThrowOnError>): RequestResult<DeleteTierProfileResponses, DeleteTierProfileErrors, ThrowOnError> => (options.client ?? client).delete<DeleteTierProfileResponses, DeleteTierProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2269,7 +2269,7 @@ export const deleteTierProfile = <ThrowOnError extends boolean = false>(options:
 /**
  * Get a tier profile
  *
- * 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+ * 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const getTierProfile = <ThrowOnError extends boolean = false>(options: Options<GetTierProfileData, ThrowOnError>): RequestResult<GetTierProfileResponses, GetTierProfileErrors, ThrowOnError> => (options.client ?? client).get<GetTierProfileResponses, GetTierProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2280,7 +2280,7 @@ export const getTierProfile = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update a tier profile
  *
- * Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only.
+ * Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const updateTierProfile = <ThrowOnError extends boolean = false>(options: Options<UpdateTierProfileData, ThrowOnError>): RequestResult<UpdateTierProfileResponses, UpdateTierProfileErrors, ThrowOnError> => (options.client ?? client).put<UpdateTierProfileResponses, UpdateTierProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2295,7 +2295,7 @@ export const updateTierProfile = <ThrowOnError extends boolean = false>(options:
 /**
  * List pricing profiles
  *
- * Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only.
+ * Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const listPricingProfiles = <ThrowOnError extends boolean = false>(options?: Options<ListPricingProfilesData, ThrowOnError>): RequestResult<ListPricingProfilesResponses, ListPricingProfilesErrors, ThrowOnError> => (options?.client ?? client).get<ListPricingProfilesResponses, ListPricingProfilesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2306,7 +2306,7 @@ export const listPricingProfiles = <ThrowOnError extends boolean = false>(option
 /**
  * Create a pricing profile
  *
- * 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only.
+ * 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const createPricingProfile = <ThrowOnError extends boolean = false>(options: Options<CreatePricingProfileData, ThrowOnError>): RequestResult<CreatePricingProfileResponses, CreatePricingProfileErrors, ThrowOnError> => (options.client ?? client).post<CreatePricingProfileResponses, CreatePricingProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2321,7 +2321,7 @@ export const createPricingProfile = <ThrowOnError extends boolean = false>(optio
 /**
  * Delete a pricing profile
  *
- * 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+ * 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const deletePricingProfile = <ThrowOnError extends boolean = false>(options: Options<DeletePricingProfileData, ThrowOnError>): RequestResult<DeletePricingProfileResponses, DeletePricingProfileErrors, ThrowOnError> => (options.client ?? client).delete<DeletePricingProfileResponses, DeletePricingProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2332,7 +2332,7 @@ export const deletePricingProfile = <ThrowOnError extends boolean = false>(optio
 /**
  * Get a pricing profile
  *
- * 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.
+ * 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const getPricingProfile = <ThrowOnError extends boolean = false>(options: Options<GetPricingProfileData, ThrowOnError>): RequestResult<GetPricingProfileResponses, GetPricingProfileErrors, ThrowOnError> => (options.client ?? client).get<GetPricingProfileResponses, GetPricingProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2343,7 +2343,7 @@ export const getPricingProfile = <ThrowOnError extends boolean = false>(options:
 /**
  * Update a pricing profile
  *
- * Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only.
+ * Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
  */
 export const updatePricingProfile = <ThrowOnError extends boolean = false>(options: Options<UpdatePricingProfileData, ThrowOnError>): RequestResult<UpdatePricingProfileResponses, UpdatePricingProfileErrors, ThrowOnError> => (options.client ?? client).put<UpdatePricingProfileResponses, UpdatePricingProfileErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -34871,6 +34871,10 @@ export type ListTierProfilesErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type ListTierProfilesError = ListTierProfilesErrors[keyof ListTierProfilesErrors];
@@ -34912,6 +34916,10 @@ export type CreateTierProfileErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type CreateTierProfileError = CreateTierProfileErrors[keyof CreateTierProfileErrors];
@@ -34951,6 +34959,10 @@ export type DeleteTierProfileErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type DeleteTierProfileError = DeleteTierProfileErrors[keyof DeleteTierProfileErrors];
@@ -34986,6 +34998,10 @@ export type GetTierProfileErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type GetTierProfileError = GetTierProfileErrors[keyof GetTierProfileErrors];
@@ -35033,6 +35049,10 @@ export type UpdateTierProfileErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type UpdateTierProfileError = UpdateTierProfileErrors[keyof UpdateTierProfileErrors];
@@ -35062,6 +35082,10 @@ export type ListPricingProfilesErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type ListPricingProfilesError = ListPricingProfilesErrors[keyof ListPricingProfilesErrors];
@@ -35103,6 +35127,10 @@ export type CreatePricingProfileErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type CreatePricingProfileError = CreatePricingProfileErrors[keyof CreatePricingProfileErrors];
@@ -35142,6 +35170,10 @@ export type DeletePricingProfileErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type DeletePricingProfileError = DeletePricingProfileErrors[keyof DeletePricingProfileErrors];
@@ -35177,6 +35209,10 @@ export type GetPricingProfileErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type GetPricingProfileError = GetPricingProfileErrors[keyof GetPricingProfileErrors];
@@ -35224,6 +35260,10 @@ export type UpdatePricingProfileErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type UpdatePricingProfileError = UpdatePricingProfileErrors[keyof UpdatePricingProfileErrors];
