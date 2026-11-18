@@ -61,6 +61,13 @@ describe('ActivityService', () => {
     });
   });
 
+  it('refuses a window whose from is after its to with ACTIVITY_WINDOW_INVALID, reading nothing', async () => {
+    const { service, findActivity } = build();
+
+    await expect(service.list({ from: NOW, to: new Date(NOW.getTime() - HOUR) })).rejects.toMatchObject({ statusCode: 400, code: 'ACTIVITY_WINDOW_INVALID' });
+    expect(findActivity).not.toHaveBeenCalled();
+  });
+
   it('names each job\'s sync runs, read in one call for every job, and none for a job that ran none', async () => {
     const { service, findByBackgroundJobIds } = build([job('job-1'), job('job-2')]);
 

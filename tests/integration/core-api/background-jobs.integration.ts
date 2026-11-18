@@ -5,6 +5,7 @@
  */
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { randomUUID } from 'node:crypto';
+import type { PrismaClient } from '@prisma/client';
 import { BackgroundJobStatus, BackgroundJobType, Sport } from '@poolmaster/shared/domain';
 import {
   getAppPrisma,
@@ -243,6 +244,35 @@ describe('Activity reads and job results (#1819)', () => {
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(1);
   });
 
+  it('writes the request\'s own job when a worker claims the waiting one between the skipped insert and its read', async () => {
+    const plain = repository();
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced'), dedupeKey: 'raced-key' };
+    const waiting = await plain.enqueueReturning(request);
+    let claimedBetween = false;
+    // A client whose first skipped insert is followed by a worker's claim, which frees the key.
+    const racing = getAppPrisma().$extends({
+      query: {
+        backgroundJob: {
+          async createManyAndReturn({ args, query }) {
+            const written = await query(args);
+            if (written.length === 0 && !claimedBetween) {
+              claimedBetween = true;
+              await plain.claimDue({ now: soonAfterQueued(), limit: 1, leaseUntil: new Date(Date.now() + MINUTE) });
+            }
+            return written;
+          },
+        },
+      },
+    });
+
+    const job = await new PrismaBackgroundJobRepository(racing as unknown as PrismaClient).enqueueReturning(request);
+
+    expect(claimedBetween).toBe(true);
+    expect(job.id).not.toBe(waiting.id);
+    expect(job.status).toBe(BackgroundJobStatus.QUEUED);
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(2);
+  });
+
   it('keeps a succeeded job\'s reported result', async () => {
     const jobs = repository();
     await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result') });
@@ -291,7 +321,7 @@ describe('Activity reads and job results (#1819)', () => {
       .resolves.toEqual([expect.objectContaining({ id: job.id, sportLeagueId: empty.id })]);
   });
 
-  it('reads the sync runs each job ran, in one read', async () => {
+  it('finds only the sync runs the named jobs ran, leaving out a run with no job, and answers none for no jobs', async () => {
     const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({

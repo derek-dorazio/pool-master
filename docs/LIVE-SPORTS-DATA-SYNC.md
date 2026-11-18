@@ -347,11 +347,21 @@ checks the source and actor agree.
 | Webhook | `WEBHOOK` / `SYSTEM:webhook` | `WEBHOOK_EVENT_SYNC` | `POST /api/v1/provider-webhooks/balldontlie` → `ProviderNotificationService.receive` → `PROVIDER_EVENT_SYNC` job → `IngestionScheduler.runNotifiedEventSync` | See below. |
 | Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
 
-Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`), its **trigger** (`SCHEDULE`,
-`WEBHOOK` or `ADMIN`), the league or event it covers, and the background job that ran it, so
-Activity (`GET /api/v1/activity`) shows each job with its runs (#1819). The league events sync is
-an `EVENTS` run outside this ledger, on the `SYNC_LEAGUE_EVENTS` job. The field and live-score
-loops still run on their own timers; their runs carry no job yet.
+Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`) and its **trigger**
+(`SCHEDULE`, `WEBHOOK` or `ADMIN`), and a run a background job ran names that job, so Activity
+(`GET /api/v1/activity`) shows each job with its runs (#1819). What scope a run records depends
+on how it started:
+
+| Run | League | Event | Job |
+|---|---|---|---|
+| League events sync (`SYNC_LEAGUE_EVENTS`, an `EVENTS` run outside this ledger) | yes | no | yes |
+| Manual sync | when its provider event is linked | when linked | yes |
+| Webhook sync | no | yes | yes |
+| Scheduled sweep and field loop | no | no | no |
+| Runs from before #1819 (backfilled by the migration from their provider event) | yes, when linked | yes, when linked | no |
+
+The scheduled sweep and field loop still run on their own timers, outside the job table; moving
+them onto jobs, with their scope, is the next step.
 
 ### The webhook path (#1498)
 

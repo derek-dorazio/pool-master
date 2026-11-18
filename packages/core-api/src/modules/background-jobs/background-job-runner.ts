@@ -38,6 +38,12 @@ export interface BackgroundJobContext {
   /** 1 on the first try. */
   attempt: number;
   logger?: FastifyBaseLogger;
+  /**
+   * Holds this try's claim for another lease from now (#1819). A handler whose work can outlast
+   * one lease calls it between steps; false means another task has claimed the job, and this try
+   * should stop.
+   */
+  renewLease: () => Promise<boolean>;
 }
 
 /** What a handler's promise resolves to: a result to keep on the job, or nothing. */
@@ -64,7 +70,7 @@ export class PermanentBackgroundJobError extends Error {
 }
 
 export interface BackgroundJobRunnerOptions {
-  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'markRetry' | 'markFailed'>;
+  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed'>;
   handlers: BackgroundJobHandlers;
   pollMs?: number;
   concurrency?: number;
@@ -231,7 +237,12 @@ export class BackgroundJobRunner {
       const startedAt = this.now().getTime();
       // The registry is exhaustive over the type, so the handler for `job.type` reads this payload.
       const handler = this.options.handlers[job.type] as (payload: unknown, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
-      const result = await handler(parsed.data, { jobId: job.id, attempt: job.attempts, logger: this.options.logger });
+      const result = await handler(parsed.data, {
+        jobId: job.id,
+        attempt: job.attempts,
+        logger: this.options.logger,
+        renewLease: () => this.options.jobs.renewLease(job, new Date(this.now().getTime() + BACKGROUND_JOB_LEASE_MS)),
+      });
       if (!await this.options.jobs.markSucceeded(job, this.now(), result ?? undefined)) {
         this.lostClaim(job);
         return;

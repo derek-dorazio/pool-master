@@ -75,6 +75,39 @@ describe('background job runner (#1440)', () => {
     expect(job.leaseUntil).toBeUndefined();
   });
 
+  it('lets a long handler renew its lease to a full lease from now, so no other task claims it mid-run (#1819)', async () => {
+    let leaseAfterRenewal: Date | undefined;
+    let renewed: boolean | undefined;
+    const { jobs, runner, queue, time } = setup({
+      handler: async (_payload, context) => {
+        time.advance(4 * MINUTE);
+        renewed = await context.renewLease();
+        leaseAfterRenewal = jobs.rows[0].leaseUntil;
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(renewed).toBe(true);
+    expect(leaseAfterRenewal).toEqual(new Date(START + 4 * MINUTE + BACKGROUND_JOB_LEASE_MS));
+  });
+
+  it('answers false to a renewal once another task has claimed the job, and writes no lease', async () => {
+    let renewed: boolean | undefined;
+    const { jobs, runner, queue } = setup({
+      handler: async (_payload, context) => {
+        jobs.rows[0].attempts += 1;
+        renewed = await context.renewLease();
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(renewed).toBe(false);
+  });
+
   it('keeps what a handler reports it did on the SUCCEEDED job, for Activity to show (#1819)', async () => {
     const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ created: 2, updated: 1 }) });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());

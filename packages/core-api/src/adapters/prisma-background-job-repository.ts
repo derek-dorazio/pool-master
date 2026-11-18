@@ -27,14 +27,20 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
   }
 
   async enqueueReturning(request: BackgroundJobRequest): Promise<BackgroundJob> {
-    // A dedupe key a waiting job holds writes, and answers, no row.
-    const written = await this.prisma.backgroundJob.createManyAndReturn({ data: [toCreateData(request)], skipDuplicates: true });
-    if (written.length > 0) return toBackgroundJob(written[0]);
-    const waiting = request.dedupeKey === undefined
-      ? null
-      : await this.prisma.backgroundJob.findUnique({ where: { dedupeKey: request.dedupeKey } });
-    if (!waiting) throw new Error(`A ${request.type} job was neither written nor found waiting`);
-    return toBackgroundJob(waiting);
+    // A dedupe key a waiting job holds writes no row and answers that job. A worker may claim
+    // it, which frees the key, between the insert and the read: then the key is free, and a
+    // second insert writes this request's own job.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      // poolmaster-allow-query-in-loop: at most two tries, the second only when a claim freed the key
+      const written = await this.prisma.backgroundJob.createManyAndReturn({ data: [toCreateData(request)], skipDuplicates: true });
+      if (written.length > 0) return toBackgroundJob(written[0]);
+      const waiting = request.dedupeKey === undefined
+        ? null
+        // poolmaster-allow-query-in-loop: at most two tries, as above
+        : await this.prisma.backgroundJob.findUnique({ where: { dedupeKey: request.dedupeKey } });
+      if (waiting) return toBackgroundJob(waiting);
+    }
+    throw new Error(`A ${request.type} job was neither written nor found waiting`);
   }
 
   async findActivity(filter: BackgroundJobActivityFilter): Promise<BackgroundJob[]> {
@@ -100,6 +106,10 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
       leaseUntil: null,
       ...(result !== undefined && { result: result as Prisma.InputJsonObject }),
     });
+  }
+
+  async renewLease(claim: BackgroundJobClaim, leaseUntil: Date): Promise<boolean> {
+    return this.markClaimed(claim, { leaseUntil });
   }
 
   async markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean> {

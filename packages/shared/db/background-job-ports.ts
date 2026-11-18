@@ -41,6 +41,11 @@ export interface BackgroundJobRepository {
    */
   /** SUCCEEDED at `completedAt`, with what its handler reported it did, if anything (#1819). */
   markSucceeded(claim: BackgroundJobClaim, completedAt: Date, result?: BackgroundJobResult): Promise<boolean>;
+  /**
+   * Holds a long try's claim until `leaseUntil` (#1819), so no other task claims the job while
+   * it is still working; false when the claim is no longer this try's.
+   */
+  renewLease(claim: BackgroundJobClaim, leaseUntil: Date): Promise<boolean>;
   /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed. */
   markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean>;
   /** FAILED for good at `completedAt`. */

@@ -84,6 +84,9 @@ function build(options: {
   return { sync, runner, jobs, syncRuns, scoreSource, sportEvents, logger };
 }
 
+/** A lease renewal for a try that still holds its claim. */
+const stillHeld = () => Promise.resolve(true);
+
 function syncedLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return buildSportLeague({ id: randomUUID(), name: 'PGA TOUR', matchKeyword: 'PGA TOUR', eventSyncProviderId: 'balldontlie', ...overrides });
 }
@@ -138,7 +141,7 @@ describe('LeagueEventsSync', () => {
       expect(jobs.rows[0]?.payload).toMatchObject({ eventYears: [2026, 2027] });
     });
 
-    it('answers the job already waiting for the league rather than queueing a second', async () => {
+    it('answers the job already waiting for the league\'s same years rather than queueing a second', async () => {
       const pga = syncedLeague();
       const { sync, jobs } = build({ leagues: [pga], wakes: false });
       await sync.queueScheduled();
@@ -148,6 +151,19 @@ describe('LeagueEventsSync', () => {
 
       expect(job.id).toBe(waiting.id);
       expect(jobs.rows).toHaveLength(1);
+    });
+
+    it('queues a job of its own for another year while the scheduled sync waits, so last season is not dropped', async () => {
+      const pga = syncedLeague();
+      const { sync, jobs } = build({ leagues: [pga], wakes: false });
+      await sync.queueScheduled();
+      const waiting = jobs.rows[0];
+
+      const job = await sync.syncNow({ sportLeagueId: pga.id, eventYear: 2025, requestedByUserId: randomUUID() });
+
+      expect(job.id).not.toBe(waiting.id);
+      expect(job.payload).toMatchObject({ eventYears: [2025], trigger: ProviderSyncTrigger.ADMIN });
+      expect(jobs.rows).toHaveLength(2);
     });
 
     it('refuses a league that does not exist with SPORT_LEAGUE_NOT_FOUND and one no provider syncs with SPORT_LEAGUE_NOT_SYNCED', async () => {
@@ -273,19 +289,39 @@ describe('LeagueEventsSync', () => {
         startedAt: NOW, completedAt: null, payload: {},
       });
 
-      await sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId, attempt: 2 });
+      await sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId, attempt: 2, renewLease: stillHeld });
 
       expect(syncRuns.rows.map((run) => [run.id === stale.id, run.status])).toEqual([[true, ProviderSyncRunStatus.FAILED], [false, ProviderSyncRunStatus.COMPLETED]]);
       expect(syncRuns.rows[0]?.payload).toMatchObject({ detail: expect.stringContaining('Interrupted') });
+    });
+
+    it('stops before importing when another task has claimed the job, and marks its own run FAILED', async () => {
+      const pga = syncedLeague();
+      const { sync, syncRuns, sportEvents } = build({ leagues: [pga] });
+
+      await expect(sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease: () => Promise.resolve(false) }))
+        .rejects.toThrow('Another try took over');
+      expect(sportEvents.importProviderEventYear).not.toHaveBeenCalled();
+      expect(syncRuns.rows.map((run) => run.status)).toEqual([ProviderSyncRunStatus.FAILED]);
+    });
+
+    it('renews its lease before each year, so a sync slowed by the provider keeps its claim', async () => {
+      const pga = syncedLeague();
+      const { sync } = build({ leagues: [pga] });
+      const renewLease = jest.fn(stillHeld);
+
+      await sync.run({ sportLeagueId: pga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease });
+
+      expect(renewLease).toHaveBeenCalledTimes(2);
     });
 
     it('fails at once, recording no run, for a league gone or no longer synced', async () => {
       const unsynced = syncedLeague({ eventSyncProviderId: null });
       const { sync, syncRuns } = build({ leagues: [unsynced] });
 
-      await expect(sync.run({ sportLeagueId: randomUUID(), eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1 }))
+      await expect(sync.run({ sportLeagueId: randomUUID(), eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld }))
         .rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
-      await expect(sync.run({ sportLeagueId: unsynced.id, eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1 }))
+      await expect(sync.run({ sportLeagueId: unsynced.id, eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld }))
         .rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
       expect(syncRuns.rows).toHaveLength(0);
     });

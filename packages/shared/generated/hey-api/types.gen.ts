@@ -35010,6 +35010,10 @@ export type ListActivityErrors = {
     /**
      * Standard API error envelope.
      */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     401: ErrorEnvelope;
     /**
      * Standard API error envelope.

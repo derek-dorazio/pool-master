@@ -15,11 +15,23 @@ import {
   type BackgroundJobKind,
   type BackgroundJobStatus,
 } from '@poolmaster/shared/domain';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { FINISHED_BACKGROUND_JOBS_KEPT_DAYS } from '../background-jobs/background-job-retention';
 
 const HOUR_MS = 60 * 60_000;
 /** The unnarrowed grid's window: the last day. */
 export const ACTIVITY_DEFAULT_WINDOW_HOURS = 24;
+
+/** A window that ends before it starts: it could only ever answer nothing, so it is refused. */
+export class ActivityWindowError extends Error {
+  readonly statusCode = 400;
+  readonly code: ApiErrorCode = 'ACTIVITY_WINDOW_INVALID';
+
+  constructor() {
+    super('The Activity window\'s `from` is after its `to`.');
+    this.name = 'ActivityWindowError';
+  }
+}
 
 export interface ActivityFilters {
   kind?: BackgroundJobKind;
@@ -48,6 +60,7 @@ export class ActivityService {
     const narrowed = filters.sportLeagueId !== undefined || filters.sportEventId !== undefined;
     const windowHours = narrowed ? FINISHED_BACKGROUND_JOBS_KEPT_DAYS * 24 : ACTIVITY_DEFAULT_WINDOW_HOURS;
     const createdFrom = filters.from ?? new Date(createdTo.getTime() - windowHours * HOUR_MS);
+    if (createdFrom > createdTo) throw new ActivityWindowError();
     const jobs = await this.deps.jobs.findActivity({
       ...(filters.kind !== undefined && { types: backgroundJobTypesOfKind(filters.kind) }),
       status: filters.status,

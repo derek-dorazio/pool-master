@@ -29,7 +29,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { PermanentBackgroundJobError } from '../background-jobs/background-job-runner';
+import { PermanentBackgroundJobError, type BackgroundJobContext } from '../background-jobs/background-job-runner';
 import { EventScoreSourceError, type EventScoreSourceService } from './event-score-source-service';
 import { SportEventError } from './errors';
 import { syncLeagueEventsJob, type SyncLeagueEventsJobPayload } from './league-events-sync-job';
@@ -110,7 +110,7 @@ export class LeagueEventsSync {
   }
 
   /** The SYNC_LEAGUE_EVENTS job. */
-  async run(payload: SyncLeagueEventsJobPayload, context: { jobId: string; attempt: number }): Promise<BackgroundJobResult> {
+  async run(payload: SyncLeagueEventsJobPayload, context: Pick<BackgroundJobContext, 'jobId' | 'attempt' | 'renewLease'>): Promise<BackgroundJobResult> {
     if (context.attempt > 1) await this.failInterruptedRuns(context.jobId);
 
     const sportLeague = await this.options.sportLeagues.findById(payload.sportLeagueId);
@@ -141,6 +141,9 @@ export class LeagueEventsSync {
     const years: YearSync[] = [];
     try {
       for (const eventYear of payload.eventYears) {
+        // A year's reads can wait on the provider's rate limit, so each year starts on a fresh
+        // lease; a try whose job another task has claimed stops here.
+        if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
         years.push(await this.syncYear(sportLeague.id, providerId, eventYear));
         // poolmaster-allow-query-in-loop: the run's progress after each year
         await this.options.syncRuns.update(run.id, {

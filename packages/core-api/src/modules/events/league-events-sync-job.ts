@@ -20,8 +20,9 @@ export const SyncLeagueEventsJobPayloadSchema = z.object({
 export type SyncLeagueEventsJobPayload = z.infer<typeof SyncLeagueEventsJobPayloadSchema>;
 
 /**
- * The job syncing one league's events. Its dedupe key holds one such job waiting per league, so
- * a schedule pass and an admin's press close together sync once.
+ * The job syncing one league's events. Its dedupe key holds one such job waiting per league and
+ * set of years, so a schedule pass and an admin's press close together sync once, while an admin
+ * asking for another year (last season, say) gets a job of their own.
  */
 export function syncLeagueEventsJob(
   jobs: Pick<BackgroundJobQueue, 'request'>,
@@ -30,6 +31,6 @@ export function syncLeagueEventsJob(
 ): BackgroundJobRequest {
   return jobs.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, payload, {
     ...options,
-    dedupeKey: `${BackgroundJobType.SYNC_LEAGUE_EVENTS}:${payload.sportLeagueId}`,
+    dedupeKey: `${BackgroundJobType.SYNC_LEAGUE_EVENTS}:${payload.sportLeagueId}:${[...payload.eventYears].sort((a, b) => a - b).join(',')}`,
   });
 }
