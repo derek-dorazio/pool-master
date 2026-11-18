@@ -14,6 +14,7 @@ import {
   SectionCard,
   StatusBadge,
   formatDateDisplay,
+  optionsFromLabels,
   useDisplayPreferences,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -77,6 +78,7 @@ export function RootAdminManageLeaguesPage() {
         {
           id: "lifecycle",
           header: "Lifecycle",
+          meta: { options: {} },
           cell: ({ getValue }) => {
             const isActive = getValue() === "Active";
 
@@ -88,11 +90,12 @@ export function RootAdminManageLeaguesPage() {
           },
         },
       ),
-      columnHelper.accessor((league) => LEAGUE_PLAN_LABEL[league.planEntitlements.plan], {
+      columnHelper.accessor((league) => league.planEntitlements.plan, {
         id: "plan",
         header: "Plan",
+        meta: { options: { values: optionsFromLabels(LEAGUE_PLAN_LABEL) } },
         cell: ({ getValue }) => (
-          <span className="font-medium text-foreground">{getValue()}</span>
+          <span className="font-medium text-foreground">{LEAGUE_PLAN_LABEL[getValue()]}</span>
         ),
       }),
       columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt, displayPreferences), {

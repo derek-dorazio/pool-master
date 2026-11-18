@@ -458,7 +458,10 @@ A table that needs search, sorting or paging.
 - **Props that matter:** `search` (one box over every text column) or the header's `searchTerm`;
   `views` (a `ViewFilter` in the card's header, `end` for a filter of the chosen view, `status`
   standing in while the chosen view loads or fails); `pageSize`; `showColumnFilters` (on by
-  default). A list that can grow to hundreds of rows uses `search` and `pageSize`.
+  default: each filterable header shows a funnel). A list that can grow to hundreds of rows uses
+  `search` and `pageSize`. A column whose values come from a fixed set gives
+  `meta.options` (`values` in their natural order, `initial` for a starting filter, `manyPerCell`
+  for a cell holding a list), so its filter ticks values instead of matching text.
 - **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx)
 
 ### `SimpleTable`

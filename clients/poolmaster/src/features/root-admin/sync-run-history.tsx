@@ -57,10 +57,11 @@ export function SyncRunHistory({
         },
       ),
       syncRunColumnHelper.accessor(
-        (run) => `${getProviderName(run.providerId, providers)} ${run.providerId}`,
+        (run) => run.providerId,
         {
           id: 'provider',
           header: 'Provider',
+          meta: { options: { label: (providerId) => getProviderName(providerId, providers) } },
           cell: ({ row }) => (
             <div className="flex flex-col gap-1">
               <Text variant="strong">{getProviderName(row.original.providerId, providers)}</Text>
@@ -71,6 +72,7 @@ export function SyncRunHistory({
       ),
       syncRunColumnHelper.accessor('sport', {
         header: 'Sport',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -78,6 +80,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
         id: 'feed',
         header: 'Feed',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -89,8 +92,10 @@ export function SyncRunHistory({
           <Text tone="muted">{getValue()}</Text>
         ),
       }),
-      syncRunColumnHelper.accessor('status', {
+      syncRunColumnHelper.accessor((run) => getRunStatusLabel(run), {
+        id: 'status',
         header: 'Status',
+        meta: { options: {} },
         cell: ({ row }) => (
           <StatusBadge tone={getRunStatusTone(row.original)}>
             {getRunStatusLabel(row.original)}
