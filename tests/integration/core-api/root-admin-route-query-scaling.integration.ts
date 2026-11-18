@@ -50,7 +50,7 @@ import {
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { linkedProviderEvent } from '../../support/event-edition';
-import { leagueProfiles } from '../../support/league-profiles';
+import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -308,7 +308,7 @@ async function seedSportLeagueOverviews(leagues: number) {
   const suffix = randomUUID().slice(0, 8);
   for (let index = 0; index < leagues; index += 1) {
     const name = `Overview Tour ${suffix} ${String(index)}`;
-    const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name, matchKeyword: `OV${suffix}${String(index)}`, eventSyncProviderId: provider.providerId } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name, matchKeyword: `OV${suffix}${String(index)}`, eventSyncProviderId: provider.providerId } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${name} Open` } });
     const event = (key: string, eventYear: number, extra: Pick<Prisma.SportEventUncheckedCreateInput, 'status' | 'autoReleaseCheckedAt' | 'autoReleaseOutcome' | 'autoReleaseFailedChecks'> = {}) => prisma.sportEvent.create({
       data: {
@@ -328,7 +328,7 @@ async function seedSportLeagueOverviews(leagues: number) {
       ],
     });
     const clutchCard = await prisma.sportLeague.create({
-      data: { sportId: sport.id, name: `${name} Clutch Card`, matchKeyword: `OVC${suffix}${String(index)}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id, parentRoundNumbers: [1] },
+      data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: sport.id, name: `${name} Clutch Card`, matchKeyword: `OVC${suffix}${String(index)}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id, parentRoundNumbers: [1] },
     });
     const clutchSeries = await prisma.eventSeries.create({ data: { sportLeagueId: clutchCard.id, name: `${name} Clutch Card` } });
     await prisma.sportEvent.create({

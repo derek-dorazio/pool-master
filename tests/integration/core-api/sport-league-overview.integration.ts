@@ -14,6 +14,7 @@ import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/in
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
+import { leagueProfiles } from '../../support/league-profiles';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -37,7 +38,7 @@ async function golfSportId(): Promise<string> {
 
 async function sportLeague(name: string, extra: { scoringFamily?: 'COMPOSITE'; parentSportLeagueId?: string; parentRoundNumbers?: number[]; eventSyncProviderId?: string } = {}) {
   return getPrisma().sportLeague.create({
-    data: { sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, matchKeyword: randomUUID().slice(0, 8), ...extra },
+    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, matchKeyword: randomUUID().slice(0, 8), ...extra },
   });
 }
 
