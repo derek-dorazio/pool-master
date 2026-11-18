@@ -5009,9 +5009,9 @@ export type ContestConfigTemplateDto = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+     * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
      */
-    sportLeagueId: string | null;
+    sportLeagueId: string;
     /**
      * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
      */
@@ -5774,7 +5774,7 @@ export type ListContestConfigTemplatesQuery = {
      */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
+     * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
      */
     sportLeagueId?: string;
     /**
@@ -5801,9 +5801,9 @@ export type ContestConfigTemplateListResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+         * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
-        sportLeagueId: string | null;
+        sportLeagueId: string;
         /**
          * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
          */
@@ -6814,9 +6814,9 @@ export type ContestConfigTemplateResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+         * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
-        sportLeagueId: string | null;
+        sportLeagueId: string;
         /**
          * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
          */
@@ -21875,9 +21875,9 @@ export type EventPageOfferDto = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+         * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
-        sportLeagueId: string | null;
+        sportLeagueId: string;
         /**
          * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
          */
@@ -22485,9 +22485,9 @@ export type EventPageDto = {
              */
             sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+             * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
              */
-            sportLeagueId: string | null;
+            sportLeagueId: string;
             /**
              * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
              */
@@ -23100,9 +23100,9 @@ export type EventPageResponse = {
                  */
                 sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
                 /**
-                 * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
-                sportLeagueId: string | null;
+                sportLeagueId: string;
                 /**
                  * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                  */
@@ -23730,9 +23730,9 @@ export type EventPageListResponse = {
                  */
                 sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
                 /**
-                 * Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
-                sportLeagueId: string | null;
+                sportLeagueId: string;
                 /**
                  * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                  */
@@ -31247,7 +31247,7 @@ export type ListContestConfigTemplatesData = {
          */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
+         * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
          */
         sportLeagueId?: string;
         /**

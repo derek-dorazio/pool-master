@@ -508,10 +508,12 @@ administration area (root admin included), reusing the same shared components.
     league gets "+ Create" on its own row at the card's bottom right. The
     Contest types page switches sport with the same column and chips, and has a
     section per active sport league listing every contest type a contest in it
-    can start from: its own templates and its sport's every-event ones, its own
-    leading their format, and no "every event" section, since a contest is
-    always created in a sport league; Create from a section starts on that
-    league (#1716). The Clutch Card is one more card
+    can start from: its own templates, each format led by its default, and no
+    "every event" section, since a contest is always created in a sport league;
+    Create from a section starts on that league (#1716). Every template is one
+    sport league's (#1825), seeded by migration: a setup two leagues share, such
+    as golf's on the PGA TOUR and the LPGA Tour, is a copy per league, and there
+    is no create or copy-from in the UI. The Clutch Card is one more card
     among them, shown while a shown league is a stat pool's: its line and steps,
     each sport's stat line (Box Score, Redzone) as a small tile, and a link to
     `/play/clutch-card` for the rest; no per-league formula list. An open card

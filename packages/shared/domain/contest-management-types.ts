@@ -135,10 +135,10 @@ export interface ContestConfiguration extends DomainEntity {
 export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
   /**
-   * The sport league whose events this template is offered for (a league's own official preset).
-   * Null means sport-wide: offered for every league of its sport.
+   * The sport league whose events this template is offered for. Every template belongs to one
+   * (#1825); two leagues offering the same setup each have their own copy.
    */
-  sportLeagueId: string | null;
+  sportLeagueId: string;
   /** The kind of event the template is offered for (#802); null offers it for every event of its sport. */
   eventType?: ContestTemplateEventType | null;
   contestFormat: ContestFormat;

@@ -25,7 +25,6 @@ import type {
 } from '@poolmaster/shared/dto';
 import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
@@ -47,6 +46,7 @@ describe('Contest management integration', () => {
   let ownerHeaders: Record<string, string>;
   let leagueId: string;
   let sportId: string;
+  let pgaTourId: string;
   let sportEventId: string;
   let contestId: string;
   let topParticipantId: string;
@@ -124,9 +124,15 @@ describe('Contest management integration', () => {
     });
     secondParticipantId = secondParticipant.id;
 
+    // On the PGA TOUR, whose own seeded setups (#1825: every setup is one league's) the
+    // template tests create from.
+    const pgaTour = await prisma.sportLeague.findFirstOrThrow({ where: { sportId: sport.id, name: 'PGA TOUR' } });
+    pgaTourId = pgaTour.id;
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: pgaTour.id, name: `Masters fixture ${randomUUID()}` } });
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma)),
+        eventSeriesId: series.id,
+        eventYear: eventTiming.startDate.getUTCFullYear(),
         externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
         providerId: 'PGA',
         sport: Sport.GOLF,
@@ -333,7 +339,7 @@ describe('Contest management integration', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&active=true`,
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&sportLeagueId=${pgaTourId}&active=true`,
       headers: ownerHeaders,
     });
 
@@ -545,7 +551,7 @@ describe('Contest management integration', () => {
     await addContestReadyGolfField(80);
     const templatesRes = await getApp().inject({
       method: 'GET',
-      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&active=true`,
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&sportLeagueId=${pgaTourId}&active=true`,
       headers: ownerHeaders,
     });
     const defaultTemplate = templatesRes.json<ContestConfigTemplateListResponse>().templates.find(

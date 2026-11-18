@@ -24,7 +24,7 @@ const OFFER: EventPageOffer = {
   template: {
     id: 'cw-tiered',
     sport: Sport.AMERICAN_FOOTBALL,
-    sportLeagueId: null,
+    sportLeagueId: 'cw',
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'cw-tiered',

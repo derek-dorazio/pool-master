@@ -28,6 +28,7 @@ import { awaitSentMailTo, linksIn, sentMailTo, sentMailWithSubject } from './mai
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { seededSportLeagueId } from '../support/contest-setups';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
 // #442 — every system email the app sends, proven end to end: the functional server sends
@@ -66,7 +67,7 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   const prisma = getFunctionalPrisma();
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
-  const edition = await freshEventEdition(prisma);
+  const edition = await freshEventEdition(prisma, { onPgaTour: true });
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...edition,
@@ -160,7 +161,7 @@ async function enteredContest() {
   const event = await seedScheduledGolfEvent(`Email Open ${randomUUID().slice(0, 6)}`);
   const templates = await listContestConfigTemplates({
     client: commissioner.client,
-    query: { sport: Sport.GOLF, active: true },
+    query: { sport: Sport.GOLF, sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'), active: true },
   });
   const template = templates.data?.templates.find((candidate) => candidate.contestFormat === ContestFormat.ROSTER && candidate.isDefault);
   expect(template).toBeDefined();

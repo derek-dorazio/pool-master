@@ -845,10 +845,13 @@ belongs to a league through its contest.
 
 ### ContestConfigTemplate
 
-A seeded starting configuration for a contest. Keyed by sport, contest format, selection type
-and an optional event type. An optional `sportLeagueId` (#624) makes it one sport league's own
-preset — the NASCAR, IndyCar or F1 points table, an LPGA template — offered only for that
-league's events; null, as every template before #624 is, offers it for every league of its sport.
+A seeded starting configuration for a contest. Keyed by sport league, contest format, selection
+type, an optional event type and its template key. Every template belongs to one sport league
+(#1825; `sportLeagueId` is required) and is offered only for that league's events: the NASCAR,
+IndyCar or F1 points table, an LPGA template. A setup two leagues both offer, such as golf's
+tiered pick 6, is one row per league with the same key, so each league's copy changes on its own.
+Templates are seeded by migration; there is no create or copy in the API or the UI, so a new
+sport league gets its setups from the migration that adds it.
 The league's FK is `ON DELETE RESTRICT`: a league with templates is retired, not deleted.
 An optional `eventSeriesNames` list (#714) names the event series a template covers, by the name a
 series takes: a contest made from it takes each of those series' editions of its year as the
@@ -856,7 +859,7 @@ edition is released (see *Set events*). The PGA TOUR's "Majors pool" names the f
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `public` | `listContestConfigTemplates` (#245; public since #803, see A11). Every filter optional — `sport`, `sportLeagueId`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type, and a `sportLeagueId` to that league's templates plus the sport-wide ones, never another league's. The create flow asks for the chosen event's league and starts on that league's default over the sport-wide default. One read for the create flow, the How to Play and Contest types pages, and the root-admin screens |
+| List | `public` | `listContestConfigTemplates` (#245; public since #803, see A11). Every filter optional — `sport`, `sportLeagueId`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type, and a `sportLeagueId` to that league's own templates, never another league's: every template belongs to one sport league (#1825), so golf's setups are copied to the PGA TOUR and the LPGA Tour, each league's to change on its own. The create flow asks for the chosen event's league and starts on that league's default. One read for the create flow, the How to Play and Contest types pages, and the root-admin screens |
 | Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. The rules keep the template's selection type: a body of another type is 422 `CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH` (#93). Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Making one the default clears the default of the others with its sport, selection type, event type and sport league exactly, so each sport league keeps its own default for each format (#624, #802). Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
 
 ### EventPage — `event-pages`

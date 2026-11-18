@@ -128,11 +128,13 @@ describe('test participants: which template a test contest is built from', () =>
     expect(chooseContestTemplate(nflTemplates, playoffs)?.templateKey).toBe('nfl-budget-doubling');
   });
 
-  it('prefers the sport league\'s own template to a sport-wide one for a sport whose events are all one kind', () => {
-    const golf = (templateKey: string, sportLeagueId: string | null, isDefault: boolean) =>
+  it('builds a test contest from the event\'s own sport league\'s default, never another league\'s copy of the same setup', () => {
+    const PGA = 'pga-league';
+    const LPGA = 'lpga-league';
+    const golf = (templateKey: string, sportLeagueId: string, isDefault: boolean) =>
       template(templateKey, { sport: Sport.GOLF, sportLeagueId, eventType: null, isDefault });
-    const tournament = { sport: Sport.GOLF, sportLeagueId: NFL, rounds: 4 };
+    const tournament = { sport: Sport.GOLF, sportLeagueId: LPGA, rounds: 4 };
 
-    expect(chooseContestTemplate([golf('golf-tiered-pick-6', null, true), golf('tour-tiered', NFL, false)], tournament)?.templateKey).toBe('tour-tiered');
+    expect(chooseContestTemplate([golf('pga-default', PGA, true), golf('lpga-other', LPGA, false), golf('lpga-default', LPGA, true)], tournament)?.templateKey).toBe('lpga-default');
   });
 });

@@ -56,7 +56,7 @@ describe('Seeded event pages', () => {
       ...page.offers.flatMap((offer) => [
         ...(offer.template.active ? [] : [`${page.slug}: ${offer.template.templateKey} is inactive`]),
         ...(offer.sportLeague.sport.sport === page.sport && offer.template.sport === page.sport ? [] : [`${page.slug}: ${offer.template.templateKey} is another sport's`]),
-        ...(offer.template.sportLeagueId === null || offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.slug}: ${offer.template.templateKey} is another sport league's`]),
+        ...(offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.slug}: ${offer.template.templateKey} is another sport league's`]),
         ...(offer.bracketStartRound === null || offer.template.selectionType === SelectionType.BRACKET ? [] : [`${page.slug}: a starting round on ${offer.template.templateKey}, not a bracket`]),
       ]),
     ]);
@@ -158,7 +158,7 @@ describe('Event page offers', () => {
     const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
     const switchedOff = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
-    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF, sportLeagueId: null } });
+    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF } });
     try {
       await prisma.eventPageOffer.create({
         data: { eventPageId: page.id, sportLeagueId: switchedOff.id, eventSeriesName: 'Scratch', templateId: template.id, sortOrder: 1, isPrimary: true },

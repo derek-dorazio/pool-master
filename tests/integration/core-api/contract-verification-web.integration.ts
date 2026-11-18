@@ -569,9 +569,13 @@ describe('Contract verification (web)', () => {
       },
     });
 
+    // On the PGA TOUR, whose own seeded setups the contest is created from (#1825).
+    const pgaTour = await getPrisma().sportLeague.findFirstOrThrow({ where: { name: 'PGA TOUR', sport: { sport: Sport.GOLF } } });
+    const series = await getPrisma().eventSeries.create({ data: { sportLeagueId: pgaTour.id, name: `Contract fixture ${randomUUID()}` } });
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
-        ...(await freshEventEdition(getPrisma())),
+        eventSeriesId: series.id,
+        eventYear: eventTiming.startDate.getUTCFullYear(),
         externalId: `contract-event-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,
@@ -613,7 +617,7 @@ describe('Contract verification (web)', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/contest-config-templates/?sport=GOLF&active=true',
+      url: `/api/v1/contest-config-templates/?sport=GOLF&sportLeagueId=${pgaTour.id}&active=true`,
       headers: owner.headers,
     });
 

@@ -116,14 +116,9 @@ export class PrismaContestConfigTemplateRepository
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
         ...(input.sport !== undefined && { sport: input.sport }),
-        AND: [
-          // An event type narrows to that type's templates plus the ones for any event type.
-          ...(input.eventType !== undefined ? [{ OR: [{ eventType: input.eventType }, { eventType: null }] }] : []),
-          // A sport league narrows to that league's templates plus the sport-wide ones.
-          ...(input.sportLeagueId !== undefined
-            ? [{ OR: [{ sportLeagueId: input.sportLeagueId }, { sportLeagueId: null }] }]
-            : []),
-        ],
+        // An event type narrows to that type's templates plus the ones for any event type.
+        ...(input.eventType !== undefined && { OR: [{ eventType: input.eventType }, { eventType: null }] }),
+        ...(input.sportLeagueId !== undefined && { sportLeagueId: input.sportLeagueId }),
         ...(input.active !== undefined && { active: input.active }),
       },
       orderBy: [
@@ -234,7 +229,7 @@ function mapContestConfiguration(row: {
 export function mapContestConfigTemplate(row: {
   id: string;
   sport: Sport;
-  sportLeagueId: string | null;
+  sportLeagueId: string;
   eventType: ContestTemplateEventType | null;
   contestFormat: ContestFormat;
   selectionType: SelectionType;

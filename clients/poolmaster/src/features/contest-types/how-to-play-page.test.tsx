@@ -36,7 +36,7 @@ function template(templateKey: string, overrides: Record<string, unknown>) {
   return {
     id: `id-${templateKey}`,
     sport: 'GOLF',
-    sportLeagueId: null,
+    sportLeagueId: 'pga',
     eventType: null,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
@@ -69,9 +69,14 @@ function renderPage(entry = '/how-to-play') {
   );
 }
 
+/** One setup copied to each of these sport leagues (#1825): the same key, a template id each. */
+function copiesFor(sportLeagueIds: string[], templateKey: string, overrides: Record<string, unknown>) {
+  return sportLeagueIds.map((sportLeagueId) => template(templateKey, { id: `id-${templateKey}-${sportLeagueId}`, sportLeagueId, ...overrides }));
+}
+
 const GOLF_AND_FOOTBALL = [
-  template('golf-tiered-pick-6', {}),
-  template('golf-tiered-pick-12', { isDefault: false, sortOrder: 2 }),
+  ...copiesFor(['pga', 'lpga'], 'golf-tiered-pick-6', {}),
+  ...copiesFor(['pga', 'lpga'], 'golf-tiered-pick-12', { isDefault: false, sortOrder: 2 }),
   template('nfl-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl' }),
   template('nfl-squares', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl', selectionType: 'SQUARES', contestFormat: 'SQUARES', configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 } }),
   template('cfp-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'cfp' }),
@@ -187,7 +192,7 @@ describe('How to Play', () => {
   });
 
   it('names a sport\'s first three leagues on its Play it on row and counts the rest, so a sport with many leagues keeps one short line', async () => {
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...GOLF_AND_FOOTBALL, ...copiesFor(['dpw', 'liv'], 'golf-tiered-pick-6', {})] } });
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
       ...SPORT_LEAGUES,
       sportLeagueFixture({ id: 'dpw', sport: 'GOLF', name: 'DP World Tour', displayOrder: 30 }),
@@ -257,7 +262,7 @@ describe('How to Play', () => {
   });
 
   it('caps each sport at four lines with every sport shown, and counts the rest as "+ N more", which chooses that sport', async () => {
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...GOLF_AND_FOOTBALL, ...copiesFor(['dpw', 'liv', 'kft'], 'golf-tiered-pick-6', {})] } });
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
       ...SPORT_LEAGUES,
       sportLeagueFixture({ id: 'dpw', sport: 'GOLF', name: 'DP World Tour', displayOrder: 30 }),
@@ -340,9 +345,9 @@ describe('How to Play', () => {
   });
 
   describe('a championship stat pool league', () => {
-    // Baseball's sport-wide bracket, the MLB postseason's own survivor, and the World Series' stat pool setups.
+    // The MLB postseason's bracket and the World Series' stat pool setups.
     const BASEBALL = [
-      template('mlb-bracket', { sport: 'BASEBALL', selectionType: 'BRACKET', contestFormat: 'BRACKET', configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 } }),
+      template('mlb-bracket', { sport: 'BASEBALL', sportLeagueId: 'mlb', selectionType: 'BRACKET', contestFormat: 'BRACKET', configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 } }),
       template('world-series-tiered', { sport: 'BASEBALL', sportLeagueId: 'world-series' }),
     ];
     const BASEBALL_LEAGUES = [
@@ -463,10 +468,10 @@ describe('How to Play', () => {
   });
 
   describe('a season league with playoff rounds', () => {
-    // The NHL's own tiered and hockey's survivor, and the Stanley Cup Final's stat pool tiered.
+    // The NHL's own tiered, the NHL's and the PWHL's survivor, and the Stanley Cup Final's stat pool tiered.
     const HOCKEY = [
       template('nhl-tiered', { sport: 'HOCKEY', sportLeagueId: 'nhl' }),
-      template('hockey-survivor', { sport: 'HOCKEY', selectionType: 'SURVIVOR', contestFormat: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } }),
+      ...copiesFor(['nhl', 'pwhl'], 'hockey-survivor', { sport: 'HOCKEY', selectionType: 'SURVIVOR', contestFormat: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } }),
       template('stanley-cup-final-tiered', { sport: 'HOCKEY', sportLeagueId: 'stanley-cup-final' }),
     ];
     // Display order puts the rounds after every season league; the parent link still lists them under the NHL.
@@ -568,8 +573,8 @@ describe('How to Play', () => {
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
         template('golf-tiered', {}),
         template('nfl-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl' }),
-        template('nba-tiered', { sport: 'BASKETBALL' }),
-        template('nhl-tiered', { sport: 'HOCKEY' }),
+        template('nba-tiered', { sport: 'BASKETBALL', sportLeagueId: 'nba' }),
+        template('nhl-tiered', { sport: 'HOCKEY', sportLeagueId: 'nhl' }),
       ] } });
       renderPage();
 
