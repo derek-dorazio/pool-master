@@ -7,11 +7,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type {
-  AmbiguousFeedParticipantListQuery,
   ProviderCatalogEventListQuery,
   UnmappedProviderParticipantListQuery,
   ProviderSyncRunListQuery,
-  ResolveAmbiguousFeedParticipantRequest,
 } from '@poolmaster/shared/dto';
 import type { IngestionService } from './ingestion-service';
 import type { EventSyncRequest } from './core/ingestion-scheduler';
@@ -25,8 +23,6 @@ import {
 } from './ingestion-service';
 import type { EventScoreSourceService } from '../events/event-score-source-service';
 import { EventScoreSourceError } from '../events/event-score-source-service';
-import type { FeedParticipantLinkService } from './feed-participant-links';
-import { FeedParticipantLinkError } from './feed-participant-links';
 import { sendError } from '../../core/error-handler';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import {
@@ -36,17 +32,13 @@ import {
   toProviderSyncRunDetailDto,
   toProviderSyncRunDto,
   toUnmappedProviderParticipantDto,
-  toAmbiguousFeedParticipantDto,
 } from '../../mappers';
 
 export function createIngestionHandlers(
   ingestionService: IngestionService,
   eventScoreSourceService: EventScoreSourceService,
-  feedParticipantLinks: FeedParticipantLinkService,
 ) {
   return {
-    listAmbiguousFeedParticipants,
-    resolveAmbiguousFeedParticipant,
     listProviders,
     listSyncRuns,
     getSyncRun,
@@ -178,39 +170,6 @@ export function createIngestionHandlers(
     const unmapped = await ingestionService.getUnmappedParticipants(request.query);
     logger.info({ count: unmapped.length }, 'Listed unmapped provider participants');
     return reply.send({ participants: unmapped.map(toUnmappedProviderParticipantDto) });
-  }
-
-  // --- Feed participants needing linking (#1824) ---
-
-  async function listAmbiguousFeedParticipants(
-    request: FastifyRequest<{ Querystring: AmbiguousFeedParticipantListQuery }>,
-    reply: FastifyReply,
-  ) {
-    const logger = request.contextLogger ?? request.log;
-    const { sportLeagueId } = request.query;
-    logger.debug({ sportLeagueId }, 'Listing feed participants needing linking');
-    const rows = await feedParticipantLinks.listOpen({ sportLeagueId });
-    logger.info({ sportLeagueId, count: rows.length }, 'Listed feed participants needing linking');
-    return reply.send({ participants: rows.map(toAmbiguousFeedParticipantDto) });
-  }
-
-  async function resolveAmbiguousFeedParticipant(
-    request: FastifyRequest<{ Params: { id: string }; Body: ResolveAmbiguousFeedParticipantRequest }>,
-    reply: FastifyReply,
-  ) {
-    const logger = request.contextLogger ?? request.log;
-    const { id } = request.params;
-    logger.debug({ ambiguousFeedParticipantId: id, resolution: request.body.resolution }, 'Resolving feed participant needing linking');
-    try {
-      const resolved = await feedParticipantLinks.resolve(id, request.body);
-      return reply.send(toAmbiguousFeedParticipantDto(resolved));
-    } catch (err) {
-      if (err instanceof FeedParticipantLinkError) {
-        logger.warn({ ambiguousFeedParticipantId: id, code: err.code }, 'Refused to resolve feed participant needing linking');
-        return sendError(reply, err.statusCode, err.code, err.message);
-      }
-      throw err;
-    }
   }
 
   // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---

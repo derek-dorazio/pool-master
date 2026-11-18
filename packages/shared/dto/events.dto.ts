@@ -65,10 +65,7 @@ export const ReleaseCheckDtoSchema = z.discriminatedUnion('key', [
   releaseCheck(ReleaseCheckKey.NOT_STARTED, DateTimeSchema, 'NOT_STARTED: the event\'s start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not.'),
   releaseCheck(ReleaseCheckKey.ROUNDS_SCHEDULED, z.number().int(), 'ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes.'),
   releaseCheck(ReleaseCheckKey.FIELD_LOADED, z.number().int(), 'FIELD_LOADED: how many participants are in the field; at least one passes.'),
-  releaseCheck(ReleaseCheckKey.FIELD_LINKED, z.object({
-    unlinkedParticipants: z.number().int().describe('How many active field participants have no mapping from the event\'s provider, so its scores would not reach them.'),
-    needsLinking: z.number().int().describe('How many names the provider sent for the event\'s field wait in Needs linking, matched to no participant yet.'),
-  }), 'FIELD_LINKED, only on a provider-synced event: what is not linked to the event\'s provider yet; both 0 passes.'),
+  releaseCheck(ReleaseCheckKey.FIELD_LINKED, z.number().int(), 'FIELD_LINKED, only on a provider-synced event: how many active field participants the event\'s provider maps no feed id to, so its scores would not reach them; 0 passes.'),
   releaseCheck(ReleaseCheckKey.TIERS_ASSIGNED, z.number().int(), 'TIERS_ASSIGNED: how many active field participants have no tier; 0 passes.'),
   releaseCheck(ReleaseCheckKey.TIERS_FILLED, z.array(z.string()), 'TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier.'),
   releaseCheck(ReleaseCheckKey.PRICES_ASSIGNED, z.number().int().nullable(), 'PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.'),

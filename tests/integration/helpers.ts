@@ -84,8 +84,6 @@ import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/cont
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
-import { IngestionPersistence } from '../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
-import { eventFieldCache } from '../../packages/core-api/src/modules/events/wiring';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
   BackgroundJobQueue,
@@ -362,7 +360,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
-  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync, ingestionPersistence: new IngestionPersistence(prisma, testApp.log, eventFieldCache, cdn, leaderboards) });
+  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync });
   testApp.register(activityModule, {
     prefix: '/api/v1/activity',
     activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),

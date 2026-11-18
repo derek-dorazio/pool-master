@@ -1167,15 +1167,14 @@ model SportLeague {
   createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport                     Sport                          @relation(fields: [sportId], references: [id])
-  parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
-  rounds                    SportLeague[]                  @relation("SportLeagueRounds")
-  affiliations              ParticipantLeagueAffiliation[]
-  eventSeries               EventSeries[]
-  contestConfigTemplates    ContestConfigTemplate[]
-  cups                      Cup[]
-  eventPageOffers           EventPageOffer[]
-  ambiguousFeedParticipants AmbiguousFeedParticipant[]
+  sport                  Sport                          @relation(fields: [sportId], references: [id])
+  parentSportLeague      SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
+  rounds                 SportLeague[]                  @relation("SportLeagueRounds")
+  affiliations           ParticipantLeagueAffiliation[]
+  eventSeries            EventSeries[]
+  contestConfigTemplates ContestConfigTemplate[]
+  cups                   Cup[]
+  eventPageOffers        EventPageOffer[]
 
   @@unique([sportId, name])
   @@index([parentSportLeagueId])
@@ -1253,10 +1252,9 @@ model Participant {
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
   leagueAffiliations     ParticipantLeagueAffiliation[]
-  resolvedFeedLinks      AmbiguousFeedParticipant[]
 
   @@index([sportId, status])
-  /// The provider name match (#1537): a sync's unmapped participants, looked up by sport and name.
+  /// A sport's participants by name: the catalog list's filter and order.
   @@index([sportId, name])
   /// Trigram indexes serve the participant search across sports, a substring match on each column (#1180).
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_name_trgm_idx")
@@ -1282,66 +1280,6 @@ model ParticipantProviderMapping {
   @@unique([providerId, externalId])
   @@index([participantId])
   @@map("participant_provider_mappings")
-}
-
-/// A participant a provider's feed sent that the sync could not link on its own (#1824): its name
-/// matches two or more of the site's participants with no mapping from that provider, so linking
-/// it would be a guess. "Needs linking" on screen. It is open while `resolvedAt` is null; a root
-/// admin resolves it by linking it to one of the candidates or creating a new participant, which
-/// maps the feed id so the next sync links it on its own. One row per feed id: a later sync that
-/// still finds it ambiguous updates the row rather than adding one. A plain open/resolved pair is
-/// a timestamp, not a status (domain-model-conventions-rules §1 *Start with the simplest lifecycle*).
-model AmbiguousFeedParticipant {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  /// The sport league of the event it was first seen in, where the admin's list finds it.
-  sportLeagueId           String    @map("sport_league_id") @db.Uuid
-  providerId              String    @map("provider_id") @db.VarChar(100)
-  /// The provider's id for it, which resolving maps (ParticipantProviderMapping.externalId).
-  externalId              String    @map("external_id") @db.VarChar(255)
-  /// Its name as the feed spells it, at the latest sync that found it ambiguous.
-  feedName                String    @map("feed_name") @db.VarChar(255)
-  /// The site's participants it could be, as of the latest sync: same sport, same name (folded
-  /// within the league its feed names), none mapped from this provider. Not foreign keys: a
-  /// candidate deleted since is dropped where the row is read, and refused where it is resolved.
-  candidateParticipantIds String[]  @map("candidate_participant_ids") @db.Uuid
-  resolvedAt              DateTime? @map("resolved_at") @db.Timestamptz
-  /// The participant it was linked to, or created as, when resolved: by a root admin, by a later
-  /// sync that found one answer, or by binding its feed id by hand. Null while open, and once that
-  /// participant is deleted.
-  resolvedParticipantId   String?   @map("resolved_participant_id") @db.Uuid
-  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  sportLeague         SportLeague                        @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
-  resolvedParticipant Participant?                       @relation(fields: [resolvedParticipantId], references: [id], onDelete: SetNull)
-  sightings           AmbiguousFeedParticipantSighting[]
-
-  @@unique([providerId, externalId])
-  @@index([sportLeagueId, resolvedAt])
-  @@index([resolvedAt])
-  @@index([resolvedParticipantId])
-  @@map("ambiguous_feed_participants")
-}
-
-/// An event whose field the feed sent an ambiguous participant in (#1824), with the participant as
-/// the field sent it: resolving writes its field row from `feedParticipant` straight away, and the
-/// event's "every participant linked" ready check fails while an open row has a sighting in it.
-model AmbiguousFeedParticipantSighting {
-  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ambiguousFeedParticipantId String   @map("ambiguous_feed_participant_id") @db.Uuid
-  sportEventId               String   @map("sport_event_id") @db.Uuid
-  /// The provider participant as this event's field sent it, at the latest sync: its name,
-  /// ranking, status and metadata (seed, odds), the values its field row is written from.
-  feedParticipant            Json     @map("feed_participant")
-  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  ambiguousFeedParticipant AmbiguousFeedParticipant @relation(fields: [ambiguousFeedParticipantId], references: [id], onDelete: Cascade)
-  sportEvent               SportEvent               @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
-
-  @@unique([ambiguousFeedParticipantId, sportEventId])
-  @@index([sportEventId])
-  @@map("ambiguous_feed_participant_sightings")
 }
 
 // =============================================================================
@@ -2062,14 +2000,13 @@ model SportEvent {
   clutchCardEvents           SportEvent[]                @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
-  pendingDrawReceipts        ContestDraw[]                      @relation("ContestDrawReceiptsPending")
+  pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
   contestEntryEventStandings ContestEntryEventStanding[]
   sportEventParticipants     SportEventParticipant[]
   tiers                      SportEventTier[]
   roundSchedule              SportEventRound[]
   matches                    SportEventMatch[]
-  ambiguousFeedSightings     AmbiguousFeedParticipantSighting[]
-  eventSeries                EventSeries                        @relation(fields: [eventSeriesId], references: [id])
+  eventSeries                EventSeries                 @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
   // One edition of a series per year: there is one 2026 Masters (plans/147 decision 5).
@@ -2387,29 +2324,29 @@ model SportEventParticipantValuation {
 }
 
 model ProviderSyncRun {
-  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerId  String                      @map("provider_id") @db.VarChar(100)
-  sport       PrismaSport
-  eventId     String?                     @map("event_id") @db.VarChar(255)
+  id              String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId      String                      @map("provider_id") @db.VarChar(100)
+  sport           PrismaSport
+  eventId         String?                     @map("event_id") @db.VarChar(255)
   /// What the run syncs and what started it (#1819).
-  kind        PrismaProviderSyncKind
-  trigger     PrismaProviderSyncTrigger
+  kind            PrismaProviderSyncKind
+  trigger         PrismaProviderSyncTrigger
   /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run, the
   /// event of a FIELD or SCORES run. Null on runs from before #1819 and where it is not known.
-  sportLeagueId   String?                 @map("sport_league_id") @db.Uuid
-  sportEventId    String?                 @map("sport_event_id") @db.Uuid
+  sportLeagueId   String?                     @map("sport_league_id") @db.Uuid
+  sportEventId    String?                     @map("sport_event_id") @db.Uuid
   /// The background job that ran it, so Activity opens a job's runs (#1819). Kept after the job is deleted.
-  backgroundJobId String?                 @map("background_job_id") @db.Uuid
-  status      PrismaProviderSyncRunStatus
-  startedAt   DateTime?                   @map("started_at") @db.Timestamptz
-  completedAt DateTime?                   @map("completed_at") @db.Timestamptz
+  backgroundJobId String?                     @map("background_job_id") @db.Uuid
+  status          PrismaProviderSyncRunStatus
+  startedAt       DateTime?                   @map("started_at") @db.Timestamptz
+  completedAt     DateTime?                   @map("completed_at") @db.Timestamptz
   /// The run's summary: request, feed, outcome and stats. The sync history lists it.
-  payloadJson Json                        @default("{}") @map("payload_json")
+  payloadJson     Json                        @default("{}") @map("payload_json")
   /// The run's detailed diagnostics: the changed rows, the job record and the raw provider
   /// payload. Read one run at a time; the nightly cleanup clears it 30 days after submission
   /// and deletes the run after a year (#1174).
-  detailsJson Json?                       @map("details_json")
-  createdAt   DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+  detailsJson     Json?                       @map("details_json")
+  createdAt       DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([createdAt(sort: Desc)])
   @@index([providerId, createdAt(sort: Desc)])
@@ -2437,28 +2374,28 @@ model PlatformRuntimeConfig {
 /// Durable work a request handed off (#1439), claimed and run by any server task. Written in
 /// the transaction of the change that caused it; the nightly cleanup deletes finished jobs.
 model BackgroundJob {
-  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type        PrismaBackgroundJobType
-  payload     Json
-  status      PrismaBackgroundJobStatus @default(QUEUED)
-  runAt       DateTime                  @default(now()) @map("run_at") @db.Timestamptz
-  attempts    Int                       @default(0)
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type          PrismaBackgroundJobType
+  payload       Json
+  status        PrismaBackgroundJobStatus @default(QUEUED)
+  runAt         DateTime                  @default(now()) @map("run_at") @db.Timestamptz
+  attempts      Int                       @default(0)
   /// While RUNNING, until when the claiming task holds it; past this the job is due again.
-  leaseUntil  DateTime?                 @map("lease_until") @db.Timestamptz
-  lastError   String?                   @map("last_error")
+  leaseUntil    DateTime?                 @map("lease_until") @db.Timestamptz
+  lastError     String?                   @map("last_error")
   /// One job waiting for its first try per subject: an enqueue with a key such a job holds
   /// writes nothing. Cleared for good when the job is claimed, so a later enqueue (even while
   /// the job waits to be retried) queues a fresh job.
-  dedupeKey   String?                   @unique @map("dedupe_key") @db.VarChar(200)
+  dedupeKey     String?                   @unique @map("dedupe_key") @db.VarChar(200)
   /// The job's scope (#1819), set from its payload when queued (`BACKGROUND_JOB_SCOPES`), so
   /// Activity filters by sport league and event on indexed columns. A job on an event carries the
   /// event; its league is read through the event.
-  sportLeagueId String?                 @map("sport_league_id") @db.Uuid
-  sportEventId  String?                 @map("sport_event_id") @db.Uuid
+  sportLeagueId String?                   @map("sport_league_id") @db.Uuid
+  sportEventId  String?                   @map("sport_event_id") @db.Uuid
   /// What a SUCCEEDED job's handler reported it did (#1819), shown on Activity; null when it reported nothing.
-  result      Json?
-  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  completedAt DateTime?                 @map("completed_at") @db.Timestamptz
+  result        Json?
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  completedAt   DateTime?                 @map("completed_at") @db.Timestamptz
 
   @@index([status, runAt])
   @@index([status, leaseUntil])

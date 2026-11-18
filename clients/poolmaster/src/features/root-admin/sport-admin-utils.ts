@@ -164,12 +164,7 @@ export function describeFailedReleaseChecks(
       case 'FIELD_LOADED':
         return ['Load the field.'];
       case 'FIELD_LINKED':
-        return [
-          ...(check.value.unlinkedParticipants === 0 ? [] : [`Link the ${some(check.value.unlinkedParticipants)} the provider does not know yet.`]),
-          ...(check.value.needsLinking === 0 ? [] : [check.value.needsLinking === 1
-            ? 'Link the 1 name from the provider\'s field waiting in Needs linking.'
-            : `Link the ${check.value.needsLinking} names from the provider's field waiting in Needs linking.`]),
-        ];
+        return [`Link the ${some(check.value)} the provider does not know yet.`];
       case 'TIERS_ASSIGNED':
         return [check.value === 1 ? `Put the ${some(1)} without a tier into a tier.` : `Put the ${some(check.value)} without a tier into tiers.`];
       case 'TIERS_FILLED':

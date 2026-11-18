@@ -66,7 +66,6 @@ function setup() {
     }),
     lifecycle,
     contests: { recheckReminders: async () => undefined },
-    needsLinking: store.needsLinkingRepo(),
     // Before every event's start here: an event is created from a provider only before it starts.
     now: () => new Date('2025-09-01T12:00:00.000Z'),
   });

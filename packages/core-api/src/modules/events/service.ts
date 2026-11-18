@@ -18,7 +18,6 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  AmbiguousFeedParticipantRepository,
   ContestRepository,
   EventSeriesRepository,
   SportEventCreate,
@@ -186,8 +185,6 @@ export interface SportEventServiceDeps {
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduledJobs'>;
   /** A new start moves the event's contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
-  /** The names a synced event's field sent that wait in Needs linking hold its field-linked ready check (#1824). */
-  needsLinking: Pick<AmbiguousFeedParticipantRepository, 'countOpenForEvent'>;
   /** An edit can move what the event's contests' boards show, so it carries their rebuild (#1466). */
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
   logger?: FastifyBaseLogger;
@@ -700,13 +697,12 @@ export class SportEventService {
   private async releaseChecksFor(summary: SportEventAdminSummary): Promise<ReleaseCheck[]> {
     const { event } = summary;
     const synced = isProviderSyncedEvent(event);
-    const [facts, needsLinking, bracketBlockers] = await Promise.all([
+    const [facts, bracketBlockers] = await Promise.all([
       this.deps.sportEvents.findReleaseFacts({
         id: event.id,
         sportLeagueId: event.sportLeagueId,
         linkProviderId: synced ? event.providerId : null,
       }),
-      synced ? this.deps.needsLinking.countOpenForEvent(event.id) : Promise.resolve(0),
       eventPlaysMatches(event) ? this.deps.bracket.releaseBlockers(event) : Promise.resolve(null),
     ]);
     return evaluateReleaseChecks({
@@ -714,7 +710,7 @@ export class SportEventService {
       now: this.now(),
       scheduledRoundCount: facts.scheduledRoundCount,
       loadedParticipantCount: summary.loadedParticipantCount,
-      fieldLinks: facts.unlinkedParticipantCount === null ? null : { unlinkedParticipants: facts.unlinkedParticipantCount, needsLinking },
+      unlinkedParticipantCount: facts.unlinkedParticipantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
       emptyTierLabels: summary.adminCounts.emptyTierLabels,
       isPriced: event.pricingConfig !== undefined,
