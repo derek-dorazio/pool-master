@@ -288,7 +288,9 @@ Building toward ADR-0011:
   releases through the same path as the manual button. The ready checks are judged on the server
   only (`modules/events/release-checks.ts`) and carried on the event read as `releaseChecks`; the
   web app words them and never recomputes them. Each attempt's checks and values are the job's
-  result, released or held. The manual "Release for contests" stays, gated by the same checks.
+  result, released or held. The manual "Release for contests" stays, refused by the same checks
+  less the three only the automatic release waits for (`blocksManualRelease`: rounds, provider
+  links, contest setups).
 - **On a synced event the provider wins.** A field the provider feeds for the event itself
   (name, dates, venue, participants, games) is overwritten by the next sync, an admin's edit
   included. There is no admin-correction marker for event details (Derek, 2026-11-13, choosing

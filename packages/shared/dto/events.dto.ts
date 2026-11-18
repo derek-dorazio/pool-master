@@ -57,7 +57,7 @@ export type SportEventAdminCountsDto = z.infer<typeof SportEventAdminCountsDtoSc
 /** One ready check of a DRAFT event's release (#1823): whether it passed, and the value it was judged on. */
 const releaseCheck = <K extends ReleaseCheckKey, V extends z.ZodType>(key: K, value: V, meaning: string) => z.object({
   key: z.literal(key),
-  passed: z.boolean().describe('Whether the check passed. The event is released, by hand or automatically, only when every check passes.'),
+  passed: z.boolean().describe('Whether the check passed.'),
   value: value.describe(meaning),
 });
 
@@ -109,7 +109,7 @@ export const SportEventDtoSchema = z.object({
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
-  releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin\'s read of the one event and on every admin action\'s answer; null on lists, for anyone but a root admin, and once the event is released.'),
+  releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),

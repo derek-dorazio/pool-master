@@ -188,34 +188,42 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
 });
 
 describe('SportEventService ready checks on a root admin\'s read (#1823)', () => {
-  it('carries a draft\'s checks on its admin summary and none once it is released', async () => {
+  it('carries a draft\'s checks on a root admin\'s read of it, none on a member\'s read or once it is released', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
 
-    expect((await service.requireAdminSummary(event.id)).releaseChecks).toHaveLength(8);
+    expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toHaveLength(8);
+    expect((await service.requireSummary(event.id, { adminCounts: false })).releaseChecks).toBeUndefined();
     await service.releaseEvent(event.id);
-    expect((await service.requireAdminSummary(event.id)).releaseChecks).toBeUndefined();
+    expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toBeUndefined();
   });
 
   it('leaves the provider link check off an event no provider syncs', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3, { providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE });
 
-    const keys = (await service.requireAdminSummary(event.id)).releaseChecks?.map((check) => check.key);
+    const keys = (await service.requireSummary(event.id, { adminCounts: true })).releaseChecks?.map((check) => check.key);
 
     expect(keys).not.toContain(ReleaseCheckKey.FIELD_LINKED);
   });
 
-  it('refuses a manual release while its league has no active contest setup, naming it', async () => {
+  it('lets a root admin release a draft the automatic release would hold for its rounds, provider links or league setups', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
     store.contestSetupCounts.set(sportLeague.id, 0);
+    store.mappings.splice(0, 1);
+    store.roundRows = store.roundRows.filter((round) => round.sportEventId !== event.id);
 
-    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
-      code: 'SPORT_EVENT_NOT_READY',
-      statusCode: 422,
-      message: expect.stringContaining('its sport league has no active contest setup'),
-    });
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD });
+    await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });
+  });
+
+  it('still refuses a manual release of a draft with an untiered golfer, as before', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.addToField(event.id, 'participant-untiered');
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_READY', statusCode: 422, message: expect.stringContaining('have no tier') });
   });
 
   it('refuses a manual release of a started draft with 409 SPORT_EVENT_ALREADY_STARTED, as before', async () => {

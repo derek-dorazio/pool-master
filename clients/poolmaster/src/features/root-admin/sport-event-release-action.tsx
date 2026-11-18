@@ -31,7 +31,7 @@ export function SportEventReleaseAction({
 }) {
   const logger = getLogger().child({ feature: 'root-admin-sport-event-release' });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const blockers = describeFailedReleaseChecks(tournament);
+  const { manual: blockers, automaticOnly } = describeFailedReleaseChecks(tournament);
   const { event } = getSportDefinition(tournament.sport).vocabulary;
 
   const releaseMutation = useInvalidatingMutation({
@@ -70,6 +70,16 @@ export function SportEventReleaseAction({
           <ul className="mt-1 list-disc pl-5" data-testid="root-admin-sport-event-release-missing">
             {blockers.map((blocker) => (
               <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        </Notice>
+      ) : null}
+      {automaticOnly.length > 0 ? (
+        <Notice tone="info">
+          <p>It will not be released on its own until:</p>
+          <ul className="mt-1 list-disc pl-5" data-testid="root-admin-sport-event-release-automatic-waiting">
+            {automaticOnly.map((waiting) => (
+              <li key={waiting}>{waiting}</li>
             ))}
           </ul>
         </Notice>

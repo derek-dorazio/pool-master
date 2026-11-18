@@ -219,6 +219,20 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
       expect(screen.getByTestId('root-admin-sport-event-release')).toBeDisabled();
     });
 
+    it('lets an admin release a draft the automatic release still waits on, listing what it waits for apart from the blockers', async () => {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks({ key: 'CONTEST_SETUPS_ON', passed: false, value: 0 }) }) },
+      });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-sport-event-release-automatic-waiting')).toHaveTextContent(
+        'Turn on a contest setup for its sport league.',
+      );
+      expect(screen.queryByTestId('root-admin-sport-event-release-missing')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-sport-event-release')).toBeEnabled();
+    });
+
     it('releases a ready draft after the admin confirms', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({

@@ -36,6 +36,7 @@ import {
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
+  blocksManualRelease,
   type ReleaseCheck,
   ReleaseCheckKey,
   sportLeagueDefinitionOf,
@@ -79,9 +80,9 @@ export interface SportEventSummary {
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
   adminCounts: SportEventAdminCounts | null;
   /**
-   * A DRAFT event's ready checks (#1823), on a root admin's read of the one event and every admin
-   * action's answer; absent on lists (its bracket check reads each event's bracket) and for a
-   * released event.
+   * A DRAFT event's ready checks (#1823), on a root admin's read of the one event only: absent on
+   * lists (its bracket check reads each event's bracket), on an admin action's answer (the page
+   * reads the event again) and for a released event.
    */
   releaseChecks?: ReleaseCheck[];
 }
@@ -510,7 +511,9 @@ export class SportEventService {
    * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty, any active participant
    * has no tier, any tier has no active participant (no entry could pick from it), its
    * prices are not assigned or miss an active participant (#93), or, for a sport that plays a
-   * bracket, its bracket is incomplete (#698).
+   * bracket, its bracket is incomplete (#698). These are the ready checks `blocksManualRelease`
+   * names (#1823); the rounds, provider-link and contest-setup checks hold only the automatic
+   * release.
    */
   async releaseEvent(sportEventId: string): Promise<SportEventAdminSummary> {
     const summary = await this.requireAdminSummary(sportEventId);
@@ -523,7 +526,8 @@ export class SportEventService {
         409,
       );
     }
-    const failed = failedReleaseChecks(summary.releaseChecks ?? await this.releaseChecksFor(summary));
+    // The checks only the automatic release waits for leave the root admin's judgement alone.
+    const failed = failedReleaseChecks(await this.releaseChecksFor(summary)).filter((check) => blocksManualRelease(check.key));
     if (failed.some((check) => check.key === ReleaseCheckKey.NOT_STARTED)) {
       this.deps.logger?.warn(
         { sportEventId, startDate: event.startDate.toISOString() },
@@ -558,13 +562,12 @@ export class SportEventService {
    * synced, or left its league's window is skipped.
    */
   async autoReleaseEvent(sportEventId: string): Promise<ReleaseAttemptResult> {
-    const summary = await this.requireAdminSummary(sportEventId);
-    const skipReason = await this.autoReleaseSkipReason(summary.event);
+    const skipReason = await this.autoReleaseSkipReason(await this.requireEvent(sportEventId));
     if (skipReason !== null) {
       this.deps.logger?.info({ action: 'events.autoRelease.skipped', data: { sportEventId, reason: skipReason } }, 'Skipped an automatic event release');
       return { outcome: ReleaseAttemptOutcome.SKIPPED, reason: skipReason };
     }
-    const checks = summary.releaseChecks ?? await this.releaseChecksFor(summary);
+    const checks = await this.releaseChecksFor(await this.requireAdminSummary(sportEventId));
     const failed = failedReleaseChecks(checks);
     if (failed.length > 0) {
       this.deps.logger?.info(
@@ -622,7 +625,7 @@ export class SportEventService {
    */
   async releaseBlockersOf(sportEventId: string): Promise<string[]> {
     const summary = await this.requireAdminSummary(sportEventId);
-    const checks = summary.releaseChecks ?? await this.releaseChecksFor(summary);
+    const checks = await this.releaseChecksFor(summary);
     // The email is about what to do before the start, so the start itself is not one of them.
     const failed = failedReleaseChecks(checks).filter((check) => check.key !== ReleaseCheckKey.NOT_STARTED);
     return this.describeFailed(summary.event, failed);
@@ -683,7 +686,7 @@ export class SportEventService {
   /** The event with a root admin's counts: what every admin action answers with. */
   async requireAdminSummary(sportEventId: string): Promise<SportEventAdminSummary> {
     const [summary] = await this.summarizeForAdmin([await this.requireEvent(sportEventId)]);
-    return this.withReleaseChecks(summary);
+    return summary;
   }
 
   /**

@@ -245,7 +245,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
         200: schemaRef('SportEventResponse'),
         ...errors(401, 403, 404),
         409: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
-        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event\'s bracket is incomplete.' },
+        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event\'s bracket is incomplete. The rounds, provider-link and contest-setup ready checks hold only the automatic release (#1823).' },
       },
     },
     handler: handler.releaseEvent,

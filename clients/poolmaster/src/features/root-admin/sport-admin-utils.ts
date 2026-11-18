@@ -7,11 +7,12 @@ import type {
   GolfRoundScoreUploadRequest,
   ParticipantDto,
   ParticipantLeagueAffiliationUploadRequest,
+  ReleaseCheckDto,
   SportEventDto,
   SportEventParticipantDto,
   SportEventRoundDto,
 } from '@/lib/api';
-import { SportEventStatus, assertNever, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
+import { SportEventStatus, assertNever, blocksManualRelease, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -125,24 +126,35 @@ export function resolveEventLifecycleStage(status: SportEventDtoStatus): EventLi
 
 // --- Release (#431) ---
 
+/** A draft event's failed ready checks, worded: what stops a root admin's release, and what only the automatic release waits for. */
+export interface FailedReleaseChecks {
+  /** Each refuses "Release for contests" until fixed. */
+  manual: string[];
+  /** The automatic release waits for these too; the button does not (#1823). */
+  automaticOnly: string[];
+}
+
+const NO_FAILED_CHECKS: FailedReleaseChecks = { manual: [], automaticOnly: [] };
+
 /**
  * What still stops a draft event's release, one sentence per failed ready check, in the sport's
  * words. The server judges the checks (#1823) and the event read carries them; this only words
- * them. Empty once the event is released, or when every check passes.
+ * them and sorts them by `blocksManualRelease`. Nothing once the event is released, or when every
+ * check passes.
  */
 export function describeFailedReleaseChecks(
   tournament: Pick<SportEventDto, 'sport' | 'status' | 'releaseChecks'>,
-): string[] {
+): FailedReleaseChecks {
   if (tournament.status !== SportEventStatus.DRAFT) {
-    return [];
+    return NO_FAILED_CHECKS;
   }
   // Without the checks nothing says the event is ready, so the release waits for them.
   if (tournament.releaseChecks === null) {
-    return ['Its ready checks have not loaded yet.'];
+    return { manual: ['Its ready checks have not loaded yet.'], automaticOnly: [] };
   }
   const { participant } = getSportDefinition(tournament.sport).vocabulary;
   const some = (count: number): string => (count === 1 ? `1 active ${participant.one}` : `${count} active ${participant.many}`);
-  return tournament.releaseChecks.filter((check) => !check.passed).flatMap((check): string[] => {
+  const words = (check: ReleaseCheckDto): string[] => {
     switch (check.key) {
       case 'NOT_STARTED':
         return ['Its start time has passed, so it can no longer be released.'];
@@ -165,7 +177,12 @@ export function describeFailedReleaseChecks(
       default:
         return assertNever(check);
     }
-  });
+  };
+  const failed = tournament.releaseChecks.filter((check) => !check.passed);
+  return {
+    manual: failed.filter((check) => blocksManualRelease(check.key)).flatMap(words),
+    automaticOnly: failed.filter((check) => !blocksManualRelease(check.key)).flatMap(words),
+  };
 }
 
 /** Tiers and prices lock when the tournament is released (#431). */

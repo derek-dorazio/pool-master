@@ -31,6 +31,23 @@ export const ReleaseCheckKey = {
 } as const;
 export type ReleaseCheckKey = (typeof ReleaseCheckKey)[keyof typeof ReleaseCheckKey];
 
+/**
+ * The checks only the automatic release waits for (#1823). A root admin's "Release for contests"
+ * is refused by the others alone, as it was before the automatic release: the admin judges an
+ * event whose rounds, provider links or league setups are not in place yet, which the sweep never
+ * does on its own.
+ */
+const AUTOMATIC_RELEASE_ONLY_CHECKS: ReadonlySet<ReleaseCheckKey> = new Set([
+  ReleaseCheckKey.ROUNDS_SCHEDULED,
+  ReleaseCheckKey.FIELD_LINKED,
+  ReleaseCheckKey.CONTEST_SETUPS_ON,
+]);
+
+/** Whether a failing check of this key refuses a root admin's manual release, not only the automatic one. */
+export function blocksManualRelease(key: ReleaseCheckKey): boolean {
+  return !AUTOMATIC_RELEASE_ONLY_CHECKS.has(key);
+}
+
 /** One ready check's verdict and the value it was judged on, typed by the check. */
 export type ReleaseCheck =
   | { key: typeof ReleaseCheckKey.NOT_STARTED; passed: boolean; value: Date }
