@@ -12,13 +12,20 @@ export const TEST_PARTICIPANT_LEAGUE_NAME = 'Test participants';
  * which league a participant is in makes its own league instead.
  */
 export async function participantLeagueId(prisma: PrismaClient, sportId: string): Promise<string> {
-  const league = await prisma.sportLeague.upsert({
-    where: { sportId_name: { sportId, name: TEST_PARTICIPANT_LEAGUE_NAME } },
-    create: { sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
-    update: {},
-    select: { id: true },
-  });
-  return league.id;
+  const where = { sportId_name: { sportId, name: TEST_PARTICIPANT_LEAGUE_NAME } };
+  try {
+    const league = await prisma.sportLeague.upsert({
+      where,
+      create: { sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
+      update: {},
+      select: { id: true },
+    });
+    return league.id;
+  } catch (error) {
+    // Two of a test's reads made it at once (a Promise.all): the one that lost finds the winner's.
+    if ((error as { code?: string }).code !== 'P2002') throw error;
+    return (await prisma.sportLeague.findUniqueOrThrow({ where, select: { id: true } })).id;
+  }
 }
 
 /** `participantLeagueId` for a sport named by its enum value; the sport's row must exist. */

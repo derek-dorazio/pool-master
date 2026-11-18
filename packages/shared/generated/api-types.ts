@@ -3067,7 +3067,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a participant
-         * @description Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         * @description Deletes a participant no event field holds, with their provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
          */
         delete: operations["deleteParticipant"];
         options?: never;

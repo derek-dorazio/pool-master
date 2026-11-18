@@ -318,7 +318,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate`, `EventPage` and its offers |
+| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate`, `EventPage` and its offers |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -436,7 +436,7 @@ and `listLeaguePlans`. The list is `PUBLIC_CACHED_READS` in `core/public-cache.t
   string, the Authorization header and the access cookie, so visitors without a session share one
   copy and a signed-in request never shares one (`infrastructure/terraform/cloudfront.tf`).
 - **Invalidation.** A write that lands clears what it changed: a sport league write (and its
-  affiliations, but not an upload preview) the sport league list and the event pages; a template
+  participants' ranks, but not an upload preview) the sport league list and the event pages; a template
   update the templates and the event pages; any event write, and a provider sync that writes an
   event's field, the event pages; a save or reset of `PLAN_CONFIG` or `BILLING_CONFIG` the Plans
   page. Writes share one CreateInvalidation once 5 seconds pass with no further write (at most 60
@@ -579,7 +579,7 @@ link with `maxUses` / `currentUses`.
 Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `SportEventMatch`, `Participant`,
-`ParticipantProviderMapping`, `ParticipantLeagueAffiliation`.
+`ParticipantProviderMapping`. A `Participant` belongs to one `SportLeague` (#1853).
 The tree is `SportLeague → EventSeries → SportEvent`: an event is one edition of a series, in
 one event year, and the series is its only parent.
 
@@ -612,10 +612,10 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its `displayOrder` (its place among its sport's leagues, major professional leagues first; reference data), its `parentSportLeagueId` (the season league a playoff round belongs to, the NHL for the Stanley Cup Final, so How to Play and Contest types list the round under it; reference data), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
+| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its `displayOrder` (its place among its sport's leagues, major professional leagues first; reference data), its `parentSportLeagueId` (the season league a playoff round belongs to, the NHL for the Stanley Cup Final, so How to Play and Contest types list the round under it; reference data), its participant and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
 | Read one | `authenticated` | `getSportLeague` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
-| Delete | `rootAdmin` | `deleteSportLeague` (#1400) deletes a sport league nothing uses, with its affiliations and its series that have no events, and takes it out of every league's `mutedSportLeagueIds` (checked when set, not a foreign key: an id left there would refuse the league's next event email settings save). 409 `SPORT_LEAGUE_IN_USE`, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league. One transaction locks the sport league and its series `FOR UPDATE` before counting, so a cup (which would cascade) or event made meanwhile is either counted or fails cleanly |
+| Delete | `rootAdmin` | `deleteSportLeague` (#1400) deletes a sport league nothing uses, with its participants that no field holds and their provider identities, and its series that have no events, and takes it out of every league's `mutedSportLeagueIds` (checked when set, not a foreign key: an id left there would refuse the league's next event email settings save). 409 `SPORT_LEAGUE_IN_USE`, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league. One transaction locks the sport league and its series `FOR UPDATE` before counting, so a cup (which would cascade) or event made meanwhile is either counted or fails cleanly |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
 | Turn event sync on or off | `rootAdmin` | `updateSportLeague` with `eventSyncProviderId` (ADR-0011, #1725): the provider whose sync creates the league's events, or null for off. 404 `PROVIDER_NOT_FOUND` for a provider not registered; 422 `PROVIDER_SPORT_MISMATCH` for one not covering the league's sport; 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` while a synced league has no match keyword, so clearing a synced league's keyword is refused too. Turning it off is always allowed |
 | Set how brackets advance | `rootAdmin` | `bracketAdvancement` on create or update (#722): `FIXED` (the default) sends each winner to the match its link names; `RESEED_BY_SEED` lets a round's matches link nowhere, so the admin places their winners by seed (the NFL after Wild Card weekend). 422 `SPORT_LEAGUE_NOT_BRACKET` for `RESEED_BY_SEED` on a sport not played as a bracket. A change is 409 `SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED` while any event of the sport league, in any year, has its bracket loaded (#730): the bracket's links were drawn for the rule it has, and a fixed rule would strand the winners of games that link nowhere. Sending the rule it already has changes nothing |
@@ -629,16 +629,18 @@ The recurring tournament — "The Masters" — that each year's `SportEvent` is 
 |---|---|---|
 | Find or create | (internal) | Event creation resolves the series by `(sportLeagueId, name)` and creates it on first use — never an admin decision. No route reaches a series on its own |
 
-### ParticipantLeagueAffiliation — the Participant↔SportLeague edge
+### A sport league's participants and their ranks
 
-Who competes on a tour, with their current `ranking` — the tour's ranking, not a world ranking.
+A participant belongs to one sport league (#1853), its `sportLeagueId`; the sport is the league's.
+A Clutch Card league owns its players, so the World Series and the ALCS each have their own row
+for one player. The participant's `ranking` is its rank in that league, not a world ranking.
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for a sport league | `authenticated` | Embeds the canonical `Participant` |
-| Add, remove | `rootAdmin` | Unique on `(sportLeagueId, participantId)`. 409 `SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS`, 404 `SPORT_LEAGUE_AFFILIATION_NOT_FOUND` |
-| Update rankings | `rootAdmin` | One write for the set |
-| Preview / apply an upload | `rootAdmin` | Rows resolve by participant id, then external id, then exact name, within the sport league's sport — one resolver, shared with the golf score upload. Apply refuses any unresolved or ambiguous row and writes nothing (422 `SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS`) |
+| List for a sport league | `authenticated` | `listSportLeagueParticipants`: best rank first, unranked last, then by name |
+| Add | `rootAdmin` | `createParticipant` with the league's `sportLeagueId`. There is no remove: a participant leaves a league only by being deleted |
+| Update rankings | `rootAdmin` | One write for the set, all or none: every participant must be the league's |
+| Preview / apply an upload | `rootAdmin` | Rows resolve by participant id, then external id, then exact name, among the sport league's participants — one resolver, shared with the golf score upload. Apply refuses any unresolved or ambiguous row and writes nothing (422 `SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS`) |
 
 The six golf-named roster operations these replace (`adminGetGolfLeagueRoster` and siblings)
 are gone (#236).
@@ -679,7 +681,7 @@ Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWi
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows, and a race's result (`race`). One read serves the field grid, the tier board and the score corrections. The field is one repository call (`findFieldForEvent`, #1163): every row with all its relations, whatever the event's scoring family. Each API task keeps the field it read for 30 seconds (`EVENT_FIELD_CACHE_TTL_MS`), keyed by event, and this read and every contest leaderboard on the event share it; a non-GET request to an `/events/{eventId}` route, and ingestion's writes to an event, forget the event's field in that task, and a write to a participant (`/participants`) or a sport league's affiliations (`/sport-leagues`) forgets every event's field in that task, since it reaches every event the participant or league is on; other tasks catch up within 30 seconds. Settlement, the emails and every write's answer read the field afresh. A write to one row (a golf score correction, `setEventPlayInWinner`, `replaceEventParticipant`) answers with that row alone |
+| List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows, and a race's result (`race`). One read serves the field grid, the tier board and the score corrections. The field is one repository call (`findFieldForEvent`, #1163): every row with all its relations, whatever the event's scoring family. Each API task keeps the field it read for 30 seconds (`EVENT_FIELD_CACHE_TTL_MS`), keyed by event, and this read and every contest leaderboard on the event share it; a non-GET request to an `/events/{eventId}` route, and ingestion's writes to an event, forget the event's field in that task, and a write to a participant (`/participants`) or a sport league's ranks (`/sport-leagues`) forgets every event's field in that task, since it reaches every event the participant or league is on; other tasks catch up within 30 seconds. Settlement, the emails and every write's answer read the field afresh. A write to one row (a golf score correction, `setEventPlayInWinner`, `replaceEventParticipant`) answers with that row alone |
 | Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included, until release: 409 `SPORT_EVENT_TIERS_LOCKED` after; on a released bracket event a changed seed is 409 `SPORT_EVENT_SEEDS_LOCKED`, and a provider sync keeps the stored seed; `isPlayInPlace` marks or unmarks a row as a play-in place only on a bracket event, 422 `SPORT_EVENT_NOT_BRACKET` otherwise, and only before release, 409 `SPORT_EVENT_BRACKET_LOCKED` after), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it, 409 `EVENT_PARTICIPANT_IN_BRACKET` while a match names it |
 | Fill a play-in place | `rootAdmin` | `setEventPlayInWinner` repoints a field row marked as a play-in place ("Texas / Xavier") to the winner, which keeps the row's seed, tier, price, picks and bracket place; the pairing's participant is inactivated and the row is a play-in place no more, so a place is filled once. 422 `SPORT_EVENT_NOT_BRACKET`; 404 `EVENT_PARTICIPANT_NOT_FOUND`, or `PARTICIPANT_NOT_FOUND` for a winner that is not an active participant of the sport; 409 `PARTICIPANT_NOT_IN_SPORT_LEAGUE` for a winner off the event's league roster once the league has one (#830); 409 `EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE` for a row that is not (or no longer) a play-in place, `EVENT_PARTICIPANT_ALREADY_ON_FIELD`, or `PLAY_IN_SLOT_ALREADY_PLAYED` once the row's match has started |
 | Replace a withdrawn participant | `rootAdmin` | `replaceEventParticipant` puts a replacement (a tennis lucky loser) in the first-round bracket place of a field row that withdrew before its first match, before or after release, in any sport. The replacement gets its own field row, unseeded, last in the event's last tier at its lowest price; the withdrawn row stays on the field, inactive as `WITHDRAWN`, and every pick of it scores as a first-round loss (no round points, a bracket pick busted from its first game on, a new bracket pick of it refused). 422 `SPORT_EVENT_NOT_BRACKET`; 404 `EVENT_PARTICIPANT_NOT_FOUND`, or `PARTICIPANT_NOT_FOUND` for a replacement that is not an active participant of the sport; 409 `PARTICIPANT_NOT_IN_SPORT_LEAGUE` for a replacement off the event's league roster once the league has one (#830: a WTA player in an ATP draw); 409 `EVENT_PARTICIPANT_IS_PLAY_IN_PLACE` (fill it instead), `EVENT_PARTICIPANT_NOT_IN_BRACKET` for a row no match names, `BRACKET_PARTICIPANT_ALREADY_PLAYED` once its match has started, `BRACKET_PLACE_NOT_FIRST_ROUND` for a place after the first round (a bye), or `EVENT_PARTICIPANT_ALREADY_ON_FIELD` |
@@ -803,7 +805,7 @@ event's, by the ruling above, and so is its salary cap: a budget contest copies 
 | List / search | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` (#1348): only the admin screens browse the catalog; a league reads participants through an event's field. Filtered by sport, status, `role` and more, unpaged (§16). `role` is the playing role ("GOLFER"); it was `position` until #246, which left `position` meaning rank alone |
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
-| Delete | `rootAdmin` | `deleteParticipant` (#1400) deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 `PARTICIPANT_IN_USE` while any event's field, in any year, has them: the field row is what picks and scores hang from. The participant row is locked `FOR UPDATE` before the count, in the delete's transaction |
+| Delete | `rootAdmin` | `deleteParticipant` (#1400) deletes a participant no event field holds, with their provider identities. 409 `PARTICIPANT_IN_USE` while any event's field, in any year, has them: the field row is what picks and scores hang from. The participant row is locked `FOR UPDATE` before the count, in the delete's transaction |
 
 ### ParticipantProviderMapping
 
@@ -816,7 +818,7 @@ participant held it; 404 `PROVIDER_NOT_FOUND` for a provider that is not registe
 replaced `adminMapParticipant`, which took both ids in the body under `/admin/providers`.
 
 `ParticipantRankingSnapshot` and the `PARTICIPANTRANKINGS` feed that wrote it were retired in
-#125. A golfer's current ranking is `ParticipantLeagueAffiliation.ranking`, owned by the root
+#125. A golfer's current ranking is `Participant.ranking`, its rank in its sport league (#1853),, owned by the root
 admin; an event participant's ranking comes from the provider's field (#384), and a field that
 carries none leaves the ranking already on the row.
 

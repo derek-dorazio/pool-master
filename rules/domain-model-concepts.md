@@ -24,8 +24,8 @@ User                                         Sport                (golf)
  └─→ SquadMembership ─→ Squad                            └─→ SportEvent (the 2026 Masters)
        (an owner; one per user per league)                     ├─→ SportEventRound   (Round 1..4)
                           │                                    ├─→ SportEventTier    (Tier A..)
-League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─→ SportEventParticipant ─→ Participant
-             │        (sequence: 1, 2, ...)                          (the field)          (a golfer, or a team)
+League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─→ SportEventParticipant ─→ Participant ─→ SportLeague
+             │        (sequence: 1, 2, ...)                          (the field)          (a golfer, or a team; one league's)
              └─→ ContestEntry ←── Squad
                     (entryNumber: a squad may hold several)
                     ├─→ ContestEntryEvent[]  (DRAFT | SUBMITTED, one per contest event)
@@ -164,7 +164,7 @@ a Team On Screen*.
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
-| `Participant` | golfer, horse, team (the sport's word) | A real competitor in a sport: a golfer, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`) | A league member (a person in the pool), and a `SportEventParticipant` |
+| `Participant` | golfer, horse, team (the sport's word) | A real competitor in one sport league (#1853): a golfer on the PGA Tour, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`). Its sport is its league's, and its `ranking` is its rank there. A Clutch Card league owns its players, so one real player in the World Series and the ALCS is two participants; a playoff field's teams are its season league's. A provider's feed id names one participant per sport league | A league member (a person in the pool), and a `SportEventParticipant` |
 | `SportEventParticipant` | the field, a field member | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
@@ -210,7 +210,7 @@ a Team On Screen*.
 - **Player / golfer**: a `Participant`, never a league member.
 - **Horse, runner**: a horse racing `Participant`, and on a race's field a `SportEventParticipant`.
   The jockey is the result's `riderName`, not a participant.
-- **Driver**: an auto racing `Participant`, one per person whichever series they race in. An
+- **Driver**: an auto racing `Participant`, one per person in each series they race in. An
   auto racing result names only the driver, so its `riderName` stays empty.
 - **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1),
   and running too (World Marathon Majors (men), World Marathon Majors (women)). Not
@@ -316,7 +316,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **load test data** | The "Load test data" workflow applies a test data file to QA or a local site: a few re-dated "Test-" events of last season as played, with made-up odds, and their test players, matched to the sync's participants by feed id. Real events and fields come only from the sync (`docs/SPORT-DATA-LOADING.md`) |
 | **cancel an event**, **cancel a game** | Admin moves a `SportEvent` to `CANCELLED`, or cancels one `SportEventMatch` (a postponed NFL game). A cancelled event counts for nothing (*Not in the model* below); a cancelled game is dropped from its week |
 | **postpone a game** | Admin (or the provider's sync) marks one `SportEventMatch` `POSTPONED` before it begins: still to be played, at its new time once set, and its pick locks at that time as a scheduled game's does |
-| **seed / load / refresh the field** | Seed adds golfers from the tour's affiliations. Load/refresh queues a provider field sync that adds golfers and replaces the ranking, odds, seed and withdrawal of every golfer the provider reports, admin-set values included. All act on `SportEventParticipant` rows |
+| **seed / load / refresh the field** | Seed adds golfers from the tour's participants. Load/refresh queues a provider field sync that adds golfers and replaces the ranking, odds, seed and withdrawal of every golfer the provider reports, admin-set values included. All act on `SportEventParticipant` rows |
 | **settle** | When an event completes, each contest on it freezes a `ContestEntryEventStanding` for every entry that submitted it. When the contest's last event has completed, each entry's total (the sum of its event results) is frozen as its `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie. In a pick'em contest each week's settled place 1 is that **week's winner** (#717) |
 | **inactivate / delete a squad** | §3 above |
 

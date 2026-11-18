@@ -34,7 +34,9 @@ import {
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
+  SportLeagueRankingUploadPreviewResponseSchema,
   SportLeagueResponseSchema,
+  SportListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateListResponse,
@@ -482,7 +484,7 @@ describe('Contract verification (root admin)', () => {
     const member = await createTestUser({ displayName: 'Contract Non Admin Catalog Reader' });
     const sportLeagueId = randomUUID();
     const refused = [
-      '/api/v1/participants?sportId=GOLF',
+      `/api/v1/participants?sportLeagueId=${sportLeagueId}`,
       '/api/v1/participants?q=scheffler',
       `/api/v1/participants/${randomUUID()}/provider-mappings`,
       '/api/v1/events?sport=GOLF',
@@ -1357,15 +1359,19 @@ describe('Contract verification (root admin)', () => {
         leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l) => l.id === leagueId),
       ).toBe(true);
 
-      // --- createParticipant (201) x3 — golf players are participants -------
-      const golf = await getPrisma().sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
+      // --- listSports (200) ------------------------------------------------------
+      const sportListRes = await getApp().inject({ method: 'GET', url: '/api/v1/sports', headers: rootAdmin.headers });
+      expect(sportListRes.statusCode).toBe(200);
+      expect(SportListResponseSchema.safeParse(sportListRes.json()).success).toBe(true);
+
+      // --- createParticipant (201) x3 — golf players are participants of the tour (#1853) ---
       for (let i = 0; i < 3; i += 1) {
         const playerRes = await getApp().inject({
           method: 'POST',
           url: '/api/v1/participants',
           headers: rootAdmin.headers,
           payload: {
-            sportId: golf.id,
+            sportLeagueId: leagueId,
             participantType: 'INDIVIDUAL',
             name: `Z3L Contract Golfer ${stamp}-${i}`,
             shortName: `Z${stamp}${i}`,
@@ -1383,12 +1389,54 @@ describe('Contract verification (root admin)', () => {
       // --- listParticipants, the golf player list (200) ----------------------
       const playerListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/participants?sportId=${golf.id}&q=Z3L+Contract+Golfer+${stamp}`,
+        url: `/api/v1/participants?sportLeagueId=${leagueId}&q=Z3L+Contract+Golfer+${stamp}`,
         headers: rootAdmin.headers,
       });
       expect(playerListRes.statusCode).toBe(200);
       expect(ParticipantListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
       expect(playerListRes.json<ParticipantListResponse>().participants).toHaveLength(3);
+
+      // --- listSportLeagueParticipants: the tour's roster (200) -----------------
+      const rosterRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/sport-leagues/${leagueId}/participants`,
+        headers: rootAdmin.headers,
+      });
+      expect(rosterRes.statusCode).toBe(200);
+      expect(ParticipantListResponseSchema.safeParse(rosterRes.json()).success).toBe(true);
+      expect(rosterRes.json<ParticipantListResponse>().participants.map((p) => p.id).sort((a, b) => a.localeCompare(b)))
+        .toEqual([...created.participantIds].sort((a, b) => a.localeCompare(b)));
+
+      // --- updateSportLeagueParticipantRankings (200) ---------------------------
+      const rankRes = await getApp().inject({
+        method: 'PATCH',
+        url: `/api/v1/sport-leagues/${leagueId}/participants/rankings`,
+        headers: rootAdmin.headers,
+        payload: { rankings: [{ participantId: created.participantIds[0], ranking: 1 }] },
+      });
+      expect(rankRes.statusCode).toBe(200);
+      expect(ParticipantListResponseSchema.safeParse(rankRes.json()).success).toBe(true);
+      expect(rankRes.json<ParticipantListResponse>().participants.find((p) => p.id === created.participantIds[0])?.ranking).toBe(1);
+
+      // --- previewSportLeagueRankingUpload (200), then apply (200) ---------------
+      const rankUpload = { rows: [{ externalId: `z3l-contract-${stamp}-p1`, ranking: 2 }, { playerName: 'Nobody Of This Tour', ranking: 3 }] };
+      const rankPreviewRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/sport-leagues/${leagueId}/participants/rankings/upload/preview`,
+        headers: rootAdmin.headers,
+        payload: rankUpload,
+      });
+      expect(rankPreviewRes.statusCode).toBe(200);
+      expect(SportLeagueRankingUploadPreviewResponseSchema.safeParse(rankPreviewRes.json()).success).toBe(true);
+      expect(rankPreviewRes.json<{ rows: { resolution: string }[] }>().rows.map((row) => row.resolution)).toEqual(['MATCHED', 'UNRESOLVED']);
+      const rankApplyRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/sport-leagues/${leagueId}/participants/rankings/upload`,
+        headers: rootAdmin.headers,
+        payload: { rows: [rankUpload.rows[0]] },
+      });
+      expect(rankApplyRes.statusCode).toBe(200);
+      expect(ParticipantListResponseSchema.safeParse(rankApplyRes.json()).success).toBe(true);
 
       // #1180 — the search is trimmed before it reaches the repository: a leading space still
       // finds names that start with the term, without a sport.

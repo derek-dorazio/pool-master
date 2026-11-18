@@ -159,6 +159,16 @@ layers are still shaped like the old model, the slice remains `In Progress`.
   - expected indexes/constraints
 - Do not keep editing a migration repair path without confirming that the code
   path still runs for the target database state.
+- A migration that moves rows from one shape to another (fills a new NOT NULL column from an old
+  table, then drops it) gets an integration test that applies it to a database holding the rows the
+  old model allowed, edge cases included: a scratch database migrated to the migration before,
+  the old rows inserted, this migration applied, the result read back with the new client.
+  A test database that is reset empty never runs the migration's `UPDATE`s, so a NOT NULL that
+  fails on real rows passes every other gate. `tests/integration/core-api/participants-one-sport-league-migration.integration.ts`
+  is the pattern (#1853).
+- A migration may drop data the no-data rule below allows it to, but it must still apply to any
+  database it reaches: when a fill has no source (a sport with participants and no league), it
+  creates what it needs rather than failing.
 
 ---
 

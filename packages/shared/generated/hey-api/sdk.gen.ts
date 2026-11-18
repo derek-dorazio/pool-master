@@ -2265,7 +2265,7 @@ export const listSportLeagueProviderMappings = <ThrowOnError extends boolean = f
 /**
  * Delete a participant
  *
- * Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+ * Deletes a participant no event field holds, with their provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
  */
 export const deleteParticipant = <ThrowOnError extends boolean = false>(options: Options<DeleteParticipantData, ThrowOnError>): RequestResult<DeleteParticipantResponses, DeleteParticipantErrors, ThrowOnError> => (options.client ?? client).delete<DeleteParticipantResponses, DeleteParticipantErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

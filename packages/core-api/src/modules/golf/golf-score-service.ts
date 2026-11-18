@@ -7,7 +7,7 @@
  * refreshed. The admin correction
  * surface — preview, apply, single-cell update — resolves each uploaded row against the
  * event's field with the shared participant-row resolver, the same precedence a sport
- * league's affiliation upload uses (#236; each had its own copy before).
+ * league's ranking upload uses (#236; each had its own copy before).
  *
  * Nothing is scored after the 18th hole of the event's last scheduled round (#375): a round
  * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update
