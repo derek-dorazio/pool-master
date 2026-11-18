@@ -18,6 +18,8 @@ import {
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
+import type { FeedParticipantLinkService } from '../../../packages/core-api/src/modules/ingestion/feed-participant-links';
+import { FeedParticipantLinkError } from '../../../packages/core-api/src/modules/ingestion/feed-participant-links';
 
 const AT = new Date('2026-04-10T12:00:00.000Z');
 const boom = new Error('feed down');
@@ -37,7 +39,9 @@ function service(overrides: Record<string, unknown> = {}) {
   };
 }
 const scoreSources = (listCandidateEvents: unknown) => ({ listCandidateEvents }) as unknown as EventScoreSourceService;
-const handlersOver = (fake: ReturnType<typeof service>, sources = scoreSources(jest.fn())) => createIngestionHandlers(fake as unknown as IngestionService, sources);
+const feedLinks = (overrides: Partial<Record<'listOpen' | 'resolve', unknown>> = {}) => ({ listOpen: jest.fn(), resolve: jest.fn(), ...overrides }) as unknown as FeedParticipantLinkService;
+const handlersOver = (fake: ReturnType<typeof service>, sources = scoreSources(jest.fn()), links = feedLinks()) =>
+  createIngestionHandlers(fake as unknown as IngestionService, sources, links);
 
 describe('ingestion provider and run handlers', () => {
   it('lists the registered providers', async () => {
@@ -175,5 +179,34 @@ describe('provider catalog browse handler', () => {
 
     expect(await callHandler(refused.listProviderCatalogEvents, request())).toMatchObject({ statusCode: 404, body: { error: { code: 'PROVIDER_NOT_FOUND' } } });
     await expect(callHandler(broken.listProviderCatalogEvents, request())).rejects.toBe(boom);
+  });
+});
+
+describe('feed participants needing linking handlers (#1824)', () => {
+  const held = {
+    id: 'held-1', sportLeagueId: 'league-pga', providerId: 'feed', externalId: 'x1', feedName: 'Tom Kim',
+    candidates: [{ participantId: 'site-a', name: 'Tom Kim' }],
+    events: [{ sportEventId: 'event-1', name: 'The Open', startDate: AT }],
+    resolvedAt: null, resolvedParticipantId: null, createdAt: AT, updatedAt: AT,
+  };
+
+  it('lists the open rows of the query\'s sport league, each with its dates as ISO strings', async () => {
+    const listOpen = jest.fn((..._args: unknown[]) => Promise.resolve([held]));
+
+    const reply = await callHandler(handlersOver(service(), undefined, feedLinks({ listOpen })).listAmbiguousFeedParticipants, stubRequest({ query: { sportLeagueId: 'league-pga' } }));
+
+    expect(listOpen).toHaveBeenCalledWith({ sportLeagueId: 'league-pga' });
+    expect(reply.body).toEqual({ participants: [{ ...held, events: [{ sportEventId: 'event-1', name: 'The Open', startDate: AT.toISOString() }], createdAt: AT.toISOString(), updatedAt: AT.toISOString() }] });
+  });
+
+  it('answers a resolved row with its resolution, a refusal with its own status and code, and passes any other failure on', async () => {
+    const request = () => stubRequest({ params: { id: 'held-1' }, body: { resolution: 'CREATE' }, contextLogger: false });
+    const resolved = handlersOver(service(), undefined, feedLinks({ resolve: () => Promise.resolve({ ...held, resolvedAt: AT, resolvedParticipantId: 'created-1' }) }));
+    const refused = handlersOver(service(), undefined, feedLinks({ resolve: () => Promise.reject(new FeedParticipantLinkError('resolved', 'FEED_PARTICIPANT_LINK_RESOLVED', 409)) }));
+    const broken = handlersOver(service(), undefined, feedLinks({ resolve: () => Promise.reject(boom) }));
+
+    expect(await callHandler(resolved.resolveAmbiguousFeedParticipant, request())).toMatchObject({ statusCode: 200, body: { resolvedAt: AT.toISOString(), resolvedParticipantId: 'created-1' } });
+    expect(await callHandler(refused.resolveAmbiguousFeedParticipant, request())).toMatchObject({ statusCode: 409, body: { error: { code: 'FEED_PARTICIPANT_LINK_RESOLVED' } } });
+    await expect(callHandler(broken.resolveAmbiguousFeedParticipant, request())).rejects.toBe(boom);
   });
 });

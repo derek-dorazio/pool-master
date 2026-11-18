@@ -83,6 +83,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     }),
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
+    needsLinking: store.needsLinkingRepo(),
     leaderboards,
     logger,
     now: () => NOW,

@@ -405,7 +405,7 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
-  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
+  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, ingestionPersistence });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
   app.register(providerWebhooksModule, {
     prefix: '/api/v1/provider-webhooks',

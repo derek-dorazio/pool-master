@@ -58,6 +58,7 @@ function setup() {
     }),
     lifecycle,
     contests: { recheckReminders: async () => undefined },
+    needsLinking: store.needsLinkingRepo(),
     now: () => NOW,
   });
   const jobRows = inMemoryBackgroundJobs(() => NOW);
@@ -118,7 +119,7 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
         { key: ReleaseCheckKey.NOT_STARTED, passed: true, value: event.startDate },
         { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: true, value: 1 },
         { key: ReleaseCheckKey.FIELD_LOADED, passed: true, value: 3 },
-        { key: ReleaseCheckKey.FIELD_LINKED, passed: true, value: 0 },
+        { key: ReleaseCheckKey.FIELD_LINKED, passed: true, value: { unlinkedParticipants: 0, needsLinking: 0 } },
         { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: true, value: 0 },
         { key: ReleaseCheckKey.TIERS_FILLED, passed: true, value: [] },
         { key: ReleaseCheckKey.PRICES_ASSIGNED, passed: true, value: 0 },
@@ -136,7 +137,19 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
     const result = await service.autoReleaseEvent(event.id);
 
     expect(result.outcome).toBe(ReleaseAttemptOutcome.HELD);
-    expect(result).toMatchObject({ checks: expect.arrayContaining([{ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: 1 }]) });
+    expect(result).toMatchObject({ checks: expect.arrayContaining([{ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: { unlinkedParticipants: 1, needsLinking: 0 } }]) });
+    expect(statusOf(store, event.id)).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('holds a draft whose every golfer is linked while a name its field sent still waits in Needs linking, and leaves it a draft', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.needsLinkingCounts.set(event.id, 2);
+
+    const result = await service.autoReleaseEvent(event.id);
+
+    expect(result.outcome).toBe(ReleaseAttemptOutcome.HELD);
+    expect(result).toMatchObject({ checks: expect.arrayContaining([{ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: { unlinkedParticipants: 0, needsLinking: 2 } }]) });
     expect(statusOf(store, event.id)).toBe(SportEventStatus.DRAFT);
   });
 

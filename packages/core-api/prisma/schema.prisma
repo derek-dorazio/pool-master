@@ -1152,14 +1152,15 @@ model SportLeague {
   createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport                  Sport                          @relation(fields: [sportId], references: [id])
-  parentSportLeague      SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
-  rounds                 SportLeague[]                  @relation("SportLeagueRounds")
-  affiliations           ParticipantLeagueAffiliation[]
-  eventSeries            EventSeries[]
-  contestConfigTemplates ContestConfigTemplate[]
-  cups                   Cup[]
-  eventPageOffers        EventPageOffer[]
+  sport                     Sport                          @relation(fields: [sportId], references: [id])
+  parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
+  rounds                    SportLeague[]                  @relation("SportLeagueRounds")
+  affiliations              ParticipantLeagueAffiliation[]
+  eventSeries               EventSeries[]
+  contestConfigTemplates    ContestConfigTemplate[]
+  cups                      Cup[]
+  eventPageOffers           EventPageOffer[]
+  ambiguousFeedParticipants AmbiguousFeedParticipant[]
 
   @@unique([sportId, name])
   @@index([parentSportLeagueId])
@@ -1237,6 +1238,7 @@ model Participant {
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
   leagueAffiliations     ParticipantLeagueAffiliation[]
+  resolvedFeedLinks      AmbiguousFeedParticipant[]
 
   @@index([sportId, status])
   /// The provider name match (#1537): a sync's unmapped participants, looked up by sport and name.
@@ -1265,6 +1267,66 @@ model ParticipantProviderMapping {
   @@unique([providerId, externalId])
   @@index([participantId])
   @@map("participant_provider_mappings")
+}
+
+/// A participant a provider's feed sent that the sync could not link on its own (#1824): its name
+/// matches two or more of the site's participants with no mapping from that provider, so linking
+/// it would be a guess. "Needs linking" on screen. It is open while `resolvedAt` is null; a root
+/// admin resolves it by linking it to one of the candidates or creating a new participant, which
+/// maps the feed id so the next sync links it on its own. One row per feed id: a later sync that
+/// still finds it ambiguous updates the row rather than adding one. A plain open/resolved pair is
+/// a timestamp, not a status (domain-model-conventions-rules §1 *Start with the simplest lifecycle*).
+model AmbiguousFeedParticipant {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The sport league of the event it was first seen in, where the admin's list finds it.
+  sportLeagueId           String    @map("sport_league_id") @db.Uuid
+  providerId              String    @map("provider_id") @db.VarChar(100)
+  /// The provider's id for it, which resolving maps (ParticipantProviderMapping.externalId).
+  externalId              String    @map("external_id") @db.VarChar(255)
+  /// Its name as the feed spells it, at the latest sync that found it ambiguous.
+  feedName                String    @map("feed_name") @db.VarChar(255)
+  /// The site's participants it could be, as of the latest sync: same sport, same name (folded
+  /// within the league its feed names), none mapped from this provider. Not foreign keys: a
+  /// candidate deleted since is dropped where the row is read, and refused where it is resolved.
+  candidateParticipantIds String[]  @map("candidate_participant_ids") @db.Uuid
+  resolvedAt              DateTime? @map("resolved_at") @db.Timestamptz
+  /// The participant it was linked to, or created as, when resolved: by a root admin, by a later
+  /// sync that found one answer, or by binding its feed id by hand. Null while open, and once that
+  /// participant is deleted.
+  resolvedParticipantId   String?   @map("resolved_participant_id") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeague         SportLeague                        @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  resolvedParticipant Participant?                       @relation(fields: [resolvedParticipantId], references: [id], onDelete: SetNull)
+  sightings           AmbiguousFeedParticipantSighting[]
+
+  @@unique([providerId, externalId])
+  @@index([sportLeagueId, resolvedAt])
+  @@index([resolvedAt])
+  @@index([resolvedParticipantId])
+  @@map("ambiguous_feed_participants")
+}
+
+/// An event whose field the feed sent an ambiguous participant in (#1824), with the participant as
+/// the field sent it: resolving writes its field row from `feedParticipant` straight away, and the
+/// event's "every participant linked" ready check fails while an open row has a sighting in it.
+model AmbiguousFeedParticipantSighting {
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambiguousFeedParticipantId String   @map("ambiguous_feed_participant_id") @db.Uuid
+  sportEventId               String   @map("sport_event_id") @db.Uuid
+  /// The provider participant as this event's field sent it, at the latest sync: its name,
+  /// ranking, status and metadata (seed, odds), the values its field row is written from.
+  feedParticipant            Json     @map("feed_participant")
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  ambiguousFeedParticipant AmbiguousFeedParticipant @relation(fields: [ambiguousFeedParticipantId], references: [id], onDelete: Cascade)
+  sportEvent               SportEvent               @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
+
+  @@unique([ambiguousFeedParticipantId, sportEventId])
+  @@index([sportEventId])
+  @@map("ambiguous_feed_participant_sightings")
 }
 
 // =============================================================================
@@ -1985,13 +2047,14 @@ model SportEvent {
   clutchCardEvents           SportEvent[]                @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
-  pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
+  pendingDrawReceipts        ContestDraw[]                      @relation("ContestDrawReceiptsPending")
   contestEntryEventStandings ContestEntryEventStanding[]
   sportEventParticipants     SportEventParticipant[]
   tiers                      SportEventTier[]
   roundSchedule              SportEventRound[]
   matches                    SportEventMatch[]
-  eventSeries                EventSeries                 @relation(fields: [eventSeriesId], references: [id])
+  ambiguousFeedSightings     AmbiguousFeedParticipantSighting[]
+  eventSeries                EventSeries                        @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
   // One edition of a series per year: there is one 2026 Masters (plans/147 decision 5).

@@ -12,6 +12,7 @@ import '@poolmaster/shared/dto/participants.dto';
 import {
   PrismaParticipantRepository,
   PrismaParticipantProviderMappingRepository,
+  PrismaAmbiguousFeedParticipantRepository,
 } from '../../adapters';
 import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
@@ -35,6 +36,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
     participantRepo,
     providerMappingRepo,
     fastify.log.child({ module: 'participants.service' }),
+    new PrismaAmbiguousFeedParticipantRepository(prisma),
   );
 
   const handler = createParticipantHandlers(participantService, opts.providerRegistry);

@@ -6,7 +6,7 @@
  * left out rather than passed.
  */
 
-import { assertNever, ReleaseCheckKey, type ReleaseCheck, type SportNoun } from '@poolmaster/shared/domain';
+import { assertNever, ReleaseCheckKey, type FieldLinkCounts, type ReleaseCheck, type SportNoun } from '@poolmaster/shared/domain';
 
 /** What the checks are judged on: the event's admin counts and its release facts. */
 export interface ReleaseCheckInputs {
@@ -15,7 +15,7 @@ export interface ReleaseCheckInputs {
   scheduledRoundCount: number;
   loadedParticipantCount: number;
   /** Null for an event no provider syncs: it has no provider links to check. */
-  unlinkedParticipantCount: number | null;
+  fieldLinks: FieldLinkCounts | null;
   untieredParticipantCount: number;
   emptyTierLabels: readonly string[];
   isPriced: boolean;
@@ -31,8 +31,9 @@ export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[
     { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: inputs.scheduledRoundCount > 0, value: inputs.scheduledRoundCount },
     { key: ReleaseCheckKey.FIELD_LOADED, passed: inputs.loadedParticipantCount > 0, value: inputs.loadedParticipantCount },
   ];
-  if (inputs.unlinkedParticipantCount !== null) {
-    checks.push({ key: ReleaseCheckKey.FIELD_LINKED, passed: inputs.unlinkedParticipantCount === 0, value: inputs.unlinkedParticipantCount });
+  if (inputs.fieldLinks !== null) {
+    const { unlinkedParticipants, needsLinking } = inputs.fieldLinks;
+    checks.push({ key: ReleaseCheckKey.FIELD_LINKED, passed: unlinkedParticipants === 0 && needsLinking === 0, value: { unlinkedParticipants, needsLinking } });
   }
   checks.push(
     { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: inputs.untieredParticipantCount === 0, value: inputs.untieredParticipantCount },
@@ -64,8 +65,13 @@ export function describeFailedReleaseCheck(check: ReleaseCheck, participant: Spo
       return ['its rounds are not scheduled'];
     case ReleaseCheckKey.FIELD_LOADED:
       return ['its field is not loaded'];
-    case ReleaseCheckKey.FIELD_LINKED:
-      return [`${check.value} active ${check.value === 1 ? participant.one : participant.many} not linked to the event's provider`];
+    case ReleaseCheckKey.FIELD_LINKED: {
+      const { unlinkedParticipants, needsLinking } = check.value;
+      return [
+        ...(unlinkedParticipants === 0 ? [] : [`${unlinkedParticipants} active ${unlinkedParticipants === 1 ? participant.one : participant.many} not linked to the event's provider`]),
+        ...(needsLinking === 0 ? [] : [`${needsLinking} ${needsLinking === 1 ? 'name' : 'names'} from the provider's field waiting in Needs linking`]),
+      ];
+    }
     case ReleaseCheckKey.TIERS_ASSIGNED:
       return [`${check.value} active participant(s) have no tier`];
     case ReleaseCheckKey.TIERS_FILLED:
