@@ -10,6 +10,7 @@
 import { randomUUID } from 'crypto';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
+  AmbiguousFeedParticipantListResponseSchema,
   IngestionScheduleConfigSchema,
   ParticipantListResponseSchema,
   ParticipantProviderMappingListResponseSchema,
@@ -46,6 +47,7 @@ import {
 } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
+import { linkedProviderEvent } from '../../support/event-edition';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -239,6 +241,37 @@ async function seedUnmappedParticipants(unmapped: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
+/**
+ * A root admin, and a fresh sport league with `rows` feed participants needing linking (#1824):
+ * each with two candidates of its own and a sighting in an event of its own, so a read per
+ * candidate or per event shows.
+ */
+async function seedAmbiguousFeedParticipants(rows: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Needs Linking ${suffix}` } });
+  for (let index = 0; index < rows; index += 1) {
+    const name = `Twin ${suffix} ${String(index)}`;
+    const candidates = await prisma.participant.createManyAndReturn({
+      data: [0, 1].map(() => ({ sportId: sport.id, name, participantType: 'INDIVIDUAL' as const })),
+      select: { id: true },
+    });
+    const event = await linkedProviderEvent(prisma, { providerId: provider.providerId, externalId: `held-event-${suffix}-${String(index)}`, name: `Held Open ${suffix} ${String(index)}`, startDate: new Date(Date.now() + (index + 1) * DAY) });
+    await prisma.ambiguousFeedParticipant.create({
+      data: {
+        sportLeagueId: sportLeague.id,
+        providerId: provider.providerId,
+        externalId: `held-${suffix}-${String(index)}`,
+        feedName: name,
+        candidateParticipantIds: candidates.map((candidate) => candidate.id),
+        sightings: { create: { sportEventId: event.id, feedParticipant: { name } } },
+      },
+    });
+  }
+  return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 /** A root admin, a sports league keyed to a tour, and a provider with `events` of that tour's events. */
 async function seedCatalogEvents(events: number) {
   const sport = await golf();
@@ -313,6 +346,19 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       seed: seedSyncRunDetails,
       call: ({ run, rootAdmin }) => get(`/api/v1/ingestion/sync-runs/${run.id}`, rootAdmin),
       rowsShown: (response) => okBody(response, ProviderSyncRunDetailDtoSchema).details?.writeDiagnostics?.rows.length ?? 0,
+    });
+  });
+
+  it('GET the feed participants needing linking of a sport league: the same statements for 2, each with its candidates and event, as for 20 (#1824)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/ingestion/ambiguous-participants',
+      seed: seedAmbiguousFeedParticipants,
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/ingestion/ambiguous-participants?sportLeagueId=${sportLeague.id}`, rootAdmin),
+      rowsShown: (response) => {
+        const { participants } = okBody(response, AmbiguousFeedParticipantListResponseSchema);
+        expect(participants.map((row) => [row.candidates.length, row.events.length])).toEqual(participants.map(() => [2, 1]));
+        return participants.length;
+      },
     });
   });
 

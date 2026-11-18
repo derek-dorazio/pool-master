@@ -188,9 +188,10 @@ participants* switch widens it to every linked event. The route queues a `MANUAL
 flowchart TD
   D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id?}
   M -- yes --> U[update participants row if a value changed]
-  M -- no --> N{one site participant of this sport<br/>with this name, no mapping from this<br/>provider, and in the league whose<br/>keyword = metadata.tour? Within a<br/>league the name is folded}
-  N -- yes --> LK[link it: new mapping, confidence HIGH]
-  N -- no or ambiguous --> CR[create participants row + mapping, confidence EXACT]
+  M -- no --> N{site participants of this sport<br/>with this name, no mapping from this<br/>provider, and in the league whose<br/>keyword = metadata.tour? Within a<br/>league the name is folded}
+  N -- exactly one --> LK[link it: new mapping, confidence HIGH]
+  N -- none --> CR[create participants row + mapping, confidence EXACT]
+  N -- two or more --> H[hold it as needs linking:<br/>ambiguous_feed_participants + a sighting<br/>in this event; no mapping, no field row]
   U & LK & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
   J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
@@ -205,6 +206,8 @@ flowchart TD
 | `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when created, `HIGH` when linked by name. This mapping is how every later sync finds the participant. |
 | `participant_league_affiliations` | `@@unique([participant_id, sport_league_id])` | Each participant whose tour (`metadata.tour`) names one of the site's sport leagues by match keyword joins that league (#1800), in the same transaction that creates it, so a team the feed brings that the site lacked is on the league's roster rather than a guest in the field. A participant the feed already links joins too, so a sync puts right one created before this. One read of the sports' keyed leagues and one insert that skips affiliations already there, whatever the field's size. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
+| `ambiguous_feed_participants` | `@@unique([provider_id, external_id])` | "Needs linking" (#1824): a feed participant with two or more candidates, its feed name, the candidate participant ids and the sport league of the event it was first seen in. A later sync that still finds it ambiguous updates the row (and reopens it), never adds one; one that finds one answer links it and resolves the row. Read only when the field has unmapped participants, by the row's unique key. |
+| `ambiguous_feed_participant_sightings` | `@@unique([ambiguous_feed_participant_id, sport_event_id])` | Each event whose field sent it, with the provider participant as that field sent it. The event's "every participant linked" ready check fails while an open row has a sighting in it. |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
 
 The name link is what stops a team loaded from a data file being created twice. A tour on the
@@ -214,8 +217,21 @@ women's teams each link to their own row. Within that league the name is compare
 III or IV left off, so the feed's "Luka Doncic" links to a data file's "Luka Dončić". A suffix
 only one side carries is forgiven; a Jr. never links to a Sr. of the same name. A participant
 naming no league links by its exact name only, since the sport's every spelling of it is not read.
-A name two candidates share is never guessed; it is created, and an admin merges by hand. Where two
+A participant the provider already maps is some other feed id's, so it is no candidate. Where two
 of a league's candidates fold to one name, only the one spelled exactly as the feed spells it links.
+A name two candidates share, or one the feed sends twice where the site has a candidate, is never
+guessed (#1824): it is neither linked nor created, and waits as "needs linking", off the field.
+
+A root admin lists the open ones (`GET /api/v1/ingestion/ambiguous-participants`, by sport league)
+and resolves each (`POST /api/v1/ingestion/ambiguous-participants/:id/resolve`): linked to one of
+its candidates (mapping `MANUAL`) or created from the feed's latest copy (mapping `EXACT`). Either
+writes its field row in every event that sent it at once, from the sighting, with the event's
+leaderboard rebuild, and then, in one transaction, resolves the row, maps the feed id and
+affiliates the participant with the leagues its tour names, as a sync would; a failure part way
+leaves the row open for a retry. The mapping is what lets the next sync link it on its own.
+Binding the feed id by hand on the participant page resolves the row too, and so does a later sync
+that finds one answer; neither writes the other events' field rows, which those events' own next
+field loads do once the feed id is mapped (an event that no longer syncs keeps its field as it was).
 
 After the field is written, its ranked rows with no mapping from the event's provider are listed,
 best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names

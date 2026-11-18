@@ -405,7 +405,7 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
-  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync });
+  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync, ingestionPersistence });
   app.register(activityModule, {
     prefix: '/api/v1/activity',
     activity: new ActivityService({ jobs: backgroundJobRepository, syncRuns: providerSyncRuns }),
