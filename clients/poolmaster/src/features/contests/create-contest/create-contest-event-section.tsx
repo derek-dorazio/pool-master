@@ -1,5 +1,4 @@
 import {
-  SUPPORTED_SPORTS,
   SelectionType,
   type Sport,
   type SportDefinition,
@@ -44,11 +43,11 @@ function eventSectionHelp(selectionType: SelectionType, sport: SportDefinition) 
 }
 
 /**
- * The sport a contest is for, one choice per supported sport, named by its definition. Only
- * shown when there is more than one to choose from.
+ * The sport a contest is for, one choice per sport with a sport league still on, named by its
+ * definition. Only shown when there is more than one to choose from.
  */
-function SportPicker({ onChange, value }: { onChange: (sport: Sport) => void; value: Sport }) {
-  if (SUPPORTED_SPORTS.length < 2) {
+function SportPicker({ onChange, sports, value }: { onChange: (sport: Sport) => void; sports: readonly Sport[]; value: Sport }) {
+  if (sports.length < 2) {
     return null;
   }
   return (
@@ -57,12 +56,12 @@ function SportPicker({ onChange, value }: { onChange: (sport: Sport) => void; va
       <SegmentedControl
         aria-label="Sport"
         onChange={(next) => {
-          const sport = SUPPORTED_SPORTS.find((candidate) => candidate === next);
+          const sport = sports.find((candidate) => candidate === next);
           if (sport) {
             onChange(sport);
           }
         }}
-        options={SUPPORTED_SPORTS.map((sport) => ({
+        options={sports.map((sport) => ({
           label: getSportDefinition(sport).name,
           testId: `contest-sport-${sport}`,
           value: sport,
@@ -135,6 +134,7 @@ export function CreateContestEventSection({
   onChooseEvent,
   onSelectSport,
   onSquaresGameChange,
+  offeredSports,
   selectedEvent,
   selectionType,
   sport,
@@ -152,6 +152,8 @@ export function CreateContestEventSection({
   onChooseEvent: (eventId: string) => void;
   onSelectSport: (sport: Sport) => void;
   onSquaresGameChange: (sportEventMatchId: string) => void;
+  /** The sports a contest can be made in: each with a sport league still on. */
+  offeredSports: readonly Sport[];
   selectedEvent: SportEventDto | null;
   selectionType: SelectionType;
   sport: Sport;
@@ -167,7 +169,7 @@ export function CreateContestEventSection({
   const { locale } = useDisplayPreferences();
   return (
     <FormSection help={eventSectionHelp(selectionType, sportDefinition)} step={1} testId="create-contest-event" title="Event">
-      <SportPicker onChange={onSelectSport} value={sport} />
+      <SportPicker onChange={onSelectSport} sports={offeredSports} value={sport} />
       {eventsQuery.isLoading ? (
         <LoadingState body="Loading events..." rows={3} testId="create-contest-events-loading" />
       ) : eventsQuery.isError ? (

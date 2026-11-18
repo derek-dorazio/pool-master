@@ -19,6 +19,7 @@ import { listContestConfigTemplates, type ContestConfigTemplateDto, type LeagueD
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/features/auth/auth-context';
+import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
 import { bracketRoundCount, bracketStartRoundOptions } from '../bracket-start-round';
 import { canEventStartRules, contestEventsFor, contestEventsForTemplate } from '../contest-template-events';
@@ -109,6 +110,13 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const requestedEventChosen = useRef(false);
 
   const eventsQuery = useQuery(sportEventsQueryOptions(sport, auth.isAuthenticated));
+  // The sports a contest can be made in: each with a sport league still on. A sport whose every
+  // league is switched off (#1812) is not offered; its events are not either.
+  const sportLeaguesQuery = useSportLeaguesQuery();
+  const offeredSports = useMemo(
+    () => SUPPORTED_SPORTS.filter((candidate) => (sportLeaguesQuery.data ?? []).some((sportLeague) => sportLeague.sport === candidate && sportLeague.isActive)),
+    [sportLeaguesQuery.data],
+  );
 
   const contestEvents = useMemo(
     () => contestEventsFor(eventsQuery.data ?? [], selectionType),
@@ -435,6 +443,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     isSquaresGameMissing,
     lockedEventIds,
     memberRules,
+    offeredSports,
     parsedScoring,
     presets,
     rulesError,

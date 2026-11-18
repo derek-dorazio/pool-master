@@ -560,6 +560,11 @@ describe('How to Play', () => {
     it('keeps the icons to one line and counts the rest as "+N", naming every sport for screen readers', async () => {
       // Room for two icons at 24px each, after the 28px kept for "+N".
       layOutRowsAt(80);
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+        ...SPORT_LEAGUES,
+        sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA' }),
+        sportLeagueFixture({ id: 'nhl', sport: 'HOCKEY', name: 'NHL' }),
+      ] } });
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
         template('golf-tiered', {}),
         template('nfl-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl' }),

@@ -117,7 +117,7 @@ describe('the contest types catalog', () => {
   });
 
   it('gives the public page one tile per format for each sport, the most popular sport first, in the sport\'s format order, led by a default, with no variations', () => {
-    const catalog = buildPublicContestCatalog(TEMPLATES, []);
+    const catalog = buildPublicContestCatalog(TEMPLATES, LEAGUES);
 
     expect(catalog.map(({ sport, groups }) => [sport, groups.map(({ featured, variations }) => [featured.templateKey, variations.length])])).toEqual([
       ['AMERICAN_FOOTBALL', [['cfp-tiered-doubling', 0], ['nfl-survivor', 0], ['nfl-squares', 0]]],
@@ -127,7 +127,10 @@ describe('the contest types catalog', () => {
 
   it('lists the public page\'s sports with the major team sports first and cycling and running last', () => {
     const sports = ['RUNNING', 'CYCLING', 'GOLF', 'BASEBALL', 'BASKETBALL', 'AMERICAN_FOOTBALL'] as const;
-    const catalog = buildPublicContestCatalog(sports.map((sport) => template(`${sport}-tiered`, { sport, sportLeagueId: null, eventType: null })), []);
+    const catalog = buildPublicContestCatalog(
+      sports.map((sport) => template(`${sport}-tiered`, { sport, sportLeagueId: null, eventType: null })),
+      sports.map((sport) => sportLeagueFixture({ id: `${sport}-league`, sport, name: `${sport} league` })),
+    );
 
     expect(catalog.map(({ sport }) => sport)).toEqual(['AMERICAN_FOOTBALL', 'BASKETBALL', 'BASEBALL', 'GOLF', 'CYCLING', 'RUNNING']);
   });
@@ -164,6 +167,16 @@ describe('the contest types catalog', () => {
         ['PGA TOUR', 'pga-tour', ['golf-tiered-pick-6', 'golf-budget-pick-6-best-4']],
       ]],
     ]);
+  });
+
+  it('leaves out of the public page a sport whose every league is switched off, so no empty sport chip shows', () => {
+    const cycling = template('cycling-tiered', { sport: 'CYCLING', sportLeagueId: null, eventType: null });
+    const catalog = buildPublicContestCatalog([...TEMPLATES, cycling], [
+      ...LEAGUES,
+      sportLeagueFixture({ id: 'uci', sport: 'CYCLING', name: 'UCI WorldTour', isActive: false }),
+    ]);
+
+    expect(catalog.map(({ sport }) => sport)).toEqual(['AMERICAN_FOOTBALL', 'GOLF']);
   });
 
   it('leaves out of the public page a sport league that offers no format', () => {

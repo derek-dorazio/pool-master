@@ -185,7 +185,8 @@ function ownedBy(sportLeague: SportLeagueDto) {
  * The public How to Play page's catalog: each sport, the most popular first, with its formats,
  * one tile each, led by the format's default of the first sport league to offer it; then each of
  * its active sport leagues in display order, with the formats it offers, its own templates leading
- * its sport's, and the definition it plays (a stat pool's for the World Series). A sport league that offers none is left out, as is a sport with no templates.
+ * its sport's, and the definition it plays (a stat pool's for the World Series). A sport league that offers none is left out, as is a sport with no templates
+ * or with no active sport league: one whose every league is switched off (#1812) gets no chip.
  */
 export function buildPublicContestCatalog(
   templates: readonly ContestConfigTemplateDto[],
@@ -195,7 +196,8 @@ export function buildPublicContestCatalog(
     const definition = getSportDefinition(sport);
     const sportTemplates = templates.filter((template) => template.sport === sport);
     const groups = toFormatTiles(sport, sportTemplates, definition.selectionTypes, () => false);
-    const leagues = activeSportLeaguesOf(sport, sportLeagues)
+    const activeLeagues = activeSportLeaguesOf(sport, sportLeagues);
+    const leagues = activeLeagues
       .map((sportLeague) => {
         const leagueDefinition = sportLeagueDefinitionOf(sport, sportLeague);
         return {
@@ -213,6 +215,6 @@ export function buildPublicContestCatalog(
         };
       })
       .filter((league) => league.groups.length > 0);
-    return groups.length ? [{ sport, name: definition.name, groups, leagues }] : [];
+    return groups.length && activeLeagues.length ? [{ sport, name: definition.name, groups, leagues }] : [];
   });
 }

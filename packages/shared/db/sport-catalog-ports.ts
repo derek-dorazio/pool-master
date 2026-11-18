@@ -113,6 +113,11 @@ export interface SportEventFilters {
   q?: string;
   /** Leave out DRAFT events: what a non-admin may see (#431). */
   releasedOnly?: boolean;
+  /**
+   * Leave out events of an inactive sport league (#1812): what a member may start a contest on.
+   * A switched-off league's season is still read by its sport league id for contests already made.
+   */
+  activeSportLeaguesOnly?: boolean;
   /** Only events starting at or after this moment. */
   startsFrom?: Date;
   /** Only events starting before this moment. */

@@ -93,10 +93,14 @@ function isRootAdmin(request: FastifyRequest): boolean {
  * admin's catalog alone.
  */
 function isMemberEventList(query: SportEventListQuery): boolean {
-  const offerableOnly = query.status !== undefined && query.status.length > 0
-    && query.status.every((status) => OFFERABLE_SPORT_EVENT_STATUSES.includes(status));
   const oneSeason = query.sportLeagueId !== undefined && query.eventYear !== undefined;
-  return offerableOnly || oneSeason;
+  return isOfferableEventList(query) || oneSeason;
+}
+
+/** The events that can still take a contest: what Create contest chooses from. */
+function isOfferableEventList(query: SportEventListQuery): boolean {
+  return query.status !== undefined && query.status.length > 0
+    && query.status.every((status) => OFFERABLE_SPORT_EVENT_STATUSES.includes(status));
 }
 
 export interface EventHandlerDeps {
@@ -146,7 +150,9 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         throw new SportEventError('Only a root admin may list events beyond those open for contests or one sport league season.', 'ROOT_ADMIN_ACCESS_REQUIRED', 403);
       }
       const events = (await sportEvents.listEvents(
-        { ...filters, statuses: status, releasedOnly: !rootAdmin },
+        // A switched-off sport league (#1812) takes no new contest, so a member is offered none
+        // of its events; its season still reads for the contests already made on it.
+        { ...filters, statuses: status, releasedOnly: !rootAdmin, activeSportLeaguesOnly: !rootAdmin && isOfferableEventList(request.query) },
         { adminCounts: rootAdmin },
       )).map(mapSportEventToDto);
       logger.info({

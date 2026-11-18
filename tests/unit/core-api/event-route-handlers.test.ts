@@ -131,7 +131,7 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
 
     const reply = await callHandler(handlers.listEvents, stubRequest({ query: { sport: 'GOLF' }, authUser: admin, contextLogger: false }));
 
-    expect(services.sportEvents.listEvents).toHaveBeenCalledWith({ sport: 'GOLF', statuses: undefined, releasedOnly: false }, { adminCounts: true });
+    expect(services.sportEvents.listEvents).toHaveBeenCalledWith({ sport: 'GOLF', statuses: undefined, releasedOnly: false, activeSportLeaguesOnly: false }, { adminCounts: true });
     expect(reply.body).toMatchObject({ events: [{ id: EVENT_ID }] });
   });
 
@@ -142,8 +142,20 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
     await callHandler(handlers.listEvents, stubRequest({ query: { sportLeagueId: 'pga', eventYear: 2026 } }));
 
     expect(services.sportEvents.listEvents.mock.calls).toEqual([
-      [{ statuses: [SportEventStatus.SCHEDULED], releasedOnly: true }, { adminCounts: false }],
-      [{ sportLeagueId: 'pga', eventYear: 2026, statuses: undefined, releasedOnly: true }, { adminCounts: false }],
+      [{ statuses: [SportEventStatus.SCHEDULED], releasedOnly: true, activeSportLeaguesOnly: true }, { adminCounts: false }],
+      [{ sportLeagueId: 'pga', eventYear: 2026, statuses: undefined, releasedOnly: true, activeSportLeaguesOnly: false }, { adminCounts: false }],
+    ]);
+  });
+
+  it('offers a member no event of a switched-off sport league to start a contest on, while a root admin still lists them', async () => {
+    const { services, handlers } = fakes();
+
+    await callHandler(handlers.listEvents, stubRequest({ query: { status: [SportEventStatus.SCHEDULED] }, authUser: member }));
+    await callHandler(handlers.listEvents, stubRequest({ query: { status: [SportEventStatus.SCHEDULED] }, authUser: admin, contextLogger: false }));
+
+    expect(services.sportEvents.listEvents.mock.calls).toEqual([
+      [expect.objectContaining({ activeSportLeaguesOnly: true }), { adminCounts: false }],
+      [expect.objectContaining({ activeSportLeaguesOnly: false }), { adminCounts: true }],
     ]);
   });
 
