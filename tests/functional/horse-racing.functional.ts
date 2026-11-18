@@ -130,7 +130,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       path: { eventId },
       body: { participants: field.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 3 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS' } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: {} })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 

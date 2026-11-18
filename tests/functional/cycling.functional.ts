@@ -117,7 +117,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, oddsToWin: 2 + index * 3 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 

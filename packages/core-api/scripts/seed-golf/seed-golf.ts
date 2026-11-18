@@ -875,7 +875,7 @@ class Loader {
       leftDraft(`${tiered} of ${active.length} players tiered and ${priced} priced by hand; finish them on the Manage screen`);
       return;
     }
-    if (tiered === 0 && await refused(autoAssignEventTiers({ client, path, body: { source: 'RANKING' } }), `Assign tiers for ${at.name}`)) return;
+    if (tiered === 0 && await refused(autoAssignEventTiers({ client, path, body: {} }), `Assign tiers for ${at.name}`)) return;
     if (priced === 0 && await refused(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${at.name}`)) return;
     await refused(releaseEvent({ client, path }), `Release ${at.name}`);
   }
@@ -1010,8 +1010,9 @@ class Loader {
       if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
     };
     const statPool = this.contents.has(SportDataContent.STATS);
-    // A stat pool's field is tiered by its ranking, the regular season's composite; any other by its odds.
-    await must(autoAssignEventTiers({ client, path, body: { source: statPool ? 'RANKING' : 'ODDS' } }), `Assign tiers for ${event.name}`);
+    // Tiers and prices follow the field's one order (#1807): a stat pool's field has only its
+    // ranking, the regular season's composite, so it is tiered by that; any other by its odds.
+    await must(autoAssignEventTiers({ client, path, body: {} }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
     if (statPool) {
       // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.

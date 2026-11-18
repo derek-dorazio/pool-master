@@ -56,6 +56,7 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
     logger,
   });
 }

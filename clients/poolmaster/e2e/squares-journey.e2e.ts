@@ -171,7 +171,7 @@ test('act 1: the root admin releases an American football event of one game betw
       rows: teams.map((name, seed) => ({ playerName: teamName(run, name), seedNumber: seed + 1, oddsToWin: 2 + seed * 5 })),
     });
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
-    await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, { source: 'ODDS', tierSize: 1 });
+    await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, { tierSize: 1 });
     await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, STANDARD_PRICING);
 
     const { participants } = await (await expectOk(api.get(`/api/v1/events/${event.id}/participants`, { headers }), 'read the field')).json() as {

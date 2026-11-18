@@ -564,17 +564,16 @@ export const ColorScheme = {
 export type ColorScheme = (typeof ColorScheme)[keyof typeof ColorScheme];
 
 
-/** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
-export const TierSource = {
-  ODDS: 'ODDS',
-  RANKING: 'RANKING',
-} as const;
-export type TierSource = (typeof TierSource)[keyof typeof TierSource];
-
-/** How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. */
+/**
+ * How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. An automatic one
+ * names the value that decided the field's order (#1807, `orderField`): odds, seed, rank, or,
+ * with none of them in the field, the name.
+ */
 export const ValuationSource = {
   AUTO_ODDS: 'AUTO_ODDS',
+  AUTO_SEED: 'AUTO_SEED',
   AUTO_RANKING: 'AUTO_RANKING',
+  AUTO_NAME: 'AUTO_NAME',
   MANUAL: 'MANUAL',
 } as const;
 export type ValuationSource = (typeof ValuationSource)[keyof typeof ValuationSource];

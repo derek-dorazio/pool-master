@@ -284,9 +284,9 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   });
   journey.fieldEntryIds = fieldEntryIds;
 
-  await test.step('tier the field from its odds, two teams a tier, and price it', async () => {
+  await test.step('tier the field, which has odds for every team, two teams a tier, and price it', async () => {
     await page.goto(`/manage/sports/basketball/events/${eventId}/tiers`);
-    await page.getByTestId('root-admin-tier-auto-odds').click();
+    await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${eventId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
       await expect(

@@ -344,7 +344,7 @@ describe('events routes', () => {
       });
       expect(pricesRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(pricesRes.json()).success).toBe(true);
-      expect(pricesRes.json()).toMatchObject({ participants: [{ valuation: { price: 12000, priceAssignedSource: 'AUTO_RANKING' } }] });
+      expect(pricesRes.json()).toMatchObject({ participants: [{ valuation: { price: 12000, priceAssignedSource: 'AUTO_NAME' } }] });
 
       const releaseRes = await getApp().inject({
         method: 'POST',

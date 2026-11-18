@@ -67,7 +67,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
-    tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
+    tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo() }),
     bracket: new SportEventBracketService({
       sportEvents,
       sportLeagues: store.sportLeagueRepo(),

@@ -88,14 +88,14 @@ export function RootAdminSportEventTiersPage() {
               <TierAutoAssignActions
                 disabled={locked || field.length === 0}
                 eventId={eventId}
+                field={field}
                 sport={tournament.sport}
               />
               <PriceAssignAction
-                // poolmaster-allow-list-lookup: counts the tournament's field, which this page shows in full
-                activeParticipantCount={field.filter((entry) => entry.isActive).length}
                 current={tournament.pricing}
                 disabled={locked || field.length === 0}
                 eventId={eventId}
+                field={field}
                 sport={tournament.sport}
               />
             </div>

@@ -23,6 +23,8 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useSettingsGroupQuery } from './use-settings-groups';
+import type { EventFieldEntry } from './event-field-patch';
+import { describeFieldOrder } from './field-order-copy';
 
 /** The five values as the dialog's inputs hold them. */
 type PricingDraft = Record<'salaryCap' | 'unit' | 'topSharePercent' | 'floorSharePercent' | 'steepness', string>;
@@ -32,7 +34,7 @@ function valueFields({ event, participant }: SportVocabulary): ReadonlyArray<{ k
   return [
     { key: 'salaryCap', label: 'Salary cap ($)', helper: `Every budget contest on this ${event.one} uses it.` },
     { key: 'unit', label: 'Round prices to ($)', helper: 'Every price is a multiple of it.' },
-    { key: 'topSharePercent', label: `Best ${participant.one} (% of cap)`, helper: 'The top seed\'s price.' },
+    { key: 'topSharePercent', label: `Best ${participant.one} (% of cap)`, helper: `The first ${participant.one}'s price.` },
     { key: 'floorSharePercent', label: `Worst ${participant.one} (% of cap)`, helper: `The last ${participant.one}'s price.` },
     { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
   ];
@@ -72,19 +74,21 @@ function parseDraft(profileName: string, draft: PricingDraft): { pricing: EventP
  * before assigning. Repeatable until release; the values used are stored on the tournament.
  */
 export function PriceAssignAction({
-  activeParticipantCount,
   current,
   disabled,
   eventId,
+  field,
   sport,
 }: {
-  activeParticipantCount: number;
   /** The values the tournament was last priced with, if any: the dialog starts from them. */
   current: EventPricingConfig | null;
   disabled: boolean;
   eventId: string;
+  /** The event's field: its active participants are priced, in the order the dialog names (#1807). */
+  field: readonly EventFieldEntry[];
   sport: Sport;
 }) {
+  const activeParticipantCount = field.filter((entry) => entry.isActive).length;
   const { vocabulary } = getSportDefinition(sport);
   const { event, participant } = vocabulary;
   const logger = getLogger().child({ feature: 'root-admin-sport-event-tiers-page' });
@@ -160,7 +164,7 @@ export function PriceAssignAction({
       <ConfirmDialog
         confirmLabel={current ? 'Replace prices' : 'Assign prices'}
         confirmTestId="root-admin-tier-auto-prices-confirm"
-        description={`Every active ${participant.one} is priced from the best seed down, ${participant.many} with no seed last. Manual prices are replaced; tiers are untouched. You can price again until the ${event.one} is released.`}
+        description={`${describeFieldOrder(field, participant)} Every active ${participant.one} is priced in that order, the order tiers use too, the first dearest. Manual prices are replaced; tiers are untouched. You can price again until the ${event.one} is released.`}
         error={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })

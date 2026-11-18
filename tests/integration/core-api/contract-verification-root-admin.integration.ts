@@ -1560,7 +1560,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/tiers/auto-assign`,
         headers: rootAdmin.headers,
-        payload: { source: 'RANKING' },
+        payload: {},
       });
       expect(autoTierRes.statusCode).toBe(200);
 

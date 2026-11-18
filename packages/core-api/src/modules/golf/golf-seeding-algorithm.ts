@@ -23,12 +23,6 @@ export interface SeededParticipant {
 
 export interface PricingFieldEntry {
   participantId: string;
-  /** Null for a golfer added to the field without a seed, such as an invited guest, or a horse priced from its odds. */
-  seedNumber: number | null;
-  /** Odds to win as a number "to 1": lower is shorter. Null when the field entry has none. */
-  oddsToWin: number | null;
-  /** The ranking that applied at the event (1 is best); null when the field entry has none. */
-  ranking: number | null;
 }
 
 export interface PricedParticipant {
@@ -45,6 +39,9 @@ const ODDS_JITTER_OFFSET = 0.15;
  * (1..N) becomes seedNumber directly. oddsToWin is derived from position
  * (not the raw, tie-having ranking) via an inverse-weighted,
  * jitter-randomized probability distribution normalized across the field.
+ * The jittered weights are handed out largest first, so a better seed never
+ * gets longer odds: odds outrank seed in the field's order (#1807), and
+ * placeholder odds must not reorder the seeds they came from.
  */
 export function deriveSeedNumbersAndOdds(
   roster: SeedingRosterEntry[],
@@ -56,7 +53,7 @@ export function deriveSeedNumbersAndOdds(
     const position = index + 1;
     const jitter = 1 + (random() * ODDS_JITTER_RANGE - ODDS_JITTER_OFFSET);
     return (1 / position) * jitter;
-  });
+  }).sort((left, right) => right - left);
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
 
   return ordered.map((entry, index) => {
@@ -71,30 +68,15 @@ export function deriveSeedNumbersAndOdds(
 }
 
 /**
- * Prices the field on the budget curve (#93): best seed first; participants with no seed after
- * every seeded one, shortest odds first, so a race priced from its morning line follows the
- * market (#653); then, with neither, best ranking first, so a tennis draw's unseeded players
- * with no odds follow their ranking (#704); then the order given. Position in that order, not
- * the raw seed number, places each participant on the curve, so a withdrawal leaves no gap. No
- * jitter: a price is explainable from seed, odds and ranking order alone.
+ * Prices a field already in order, best first (#1807, `orderField`), on the budget curve (#93).
+ * Position in that order places each participant on the curve, so a withdrawal leaves no gap. No
+ * jitter: a price is explainable from the field's order alone.
  */
-export function deriveGolfPrices(field: PricingFieldEntry[], values: BudgetPricingValues): PricedParticipant[] {
-  const ordered = [...field].sort((left, right) =>
-    compareNullsLast(left.seedNumber, right.seedNumber)
-    || compareNullsLast(left.oddsToWin, right.oddsToWin)
-    || compareNullsLast(left.ranking, right.ranking));
-  return ordered.map((entry, position) => ({
+export function deriveGolfPrices(orderedField: readonly PricingFieldEntry[], values: BudgetPricingValues): PricedParticipant[] {
+  return orderedField.map((entry, position) => ({
     participantId: entry.participantId,
-    price: priceOnBudgetCurve(values, position, ordered.length),
+    price: priceOnBudgetCurve(values, position, orderedField.length),
   }));
-}
-
-/** Ascending, with a missing number after every present one; two missing numbers tie. */
-export function compareNullsLast(left: number | null | undefined, right: number | null | undefined): number {
-  if (left == null && right == null) return 0;
-  if (left == null) return 1;
-  if (right == null) return -1;
-  return left - right;
 }
 
 function tieBreakByRanking(

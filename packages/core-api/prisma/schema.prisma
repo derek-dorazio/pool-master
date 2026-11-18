@@ -322,6 +322,8 @@ enum ValuationSource {
   AUTO_ODDS
   AUTO_RANKING
   MANUAL
+  AUTO_SEED
+  AUTO_NAME
 }
 
 /// A participant's live state within one event. Cross-sport: ELIMINATED covers

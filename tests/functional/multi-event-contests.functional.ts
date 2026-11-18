@@ -148,7 +148,7 @@ async function buildTwoTournamentContest(
       body: { rows: GOLFERS.map((golfer, index) => ({ playerName: `${golfer} ${RUN}${tag}`, ranking: index + 1, seedNumber: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

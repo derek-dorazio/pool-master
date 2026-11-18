@@ -380,7 +380,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       })).response?.status,
     ).toBe(200);
     expect(
-      (await autoAssignEventTiers({ client: admin, path: { eventId }, body: { source: 'RANKING' } }))
+      (await autoAssignEventTiers({ client: admin, path: { eventId }, body: {} }))
         .response?.status,
     ).toBe(200);
     expect(

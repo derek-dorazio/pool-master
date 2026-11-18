@@ -9821,13 +9821,9 @@ export type ReplaceSportEventTiersRequest = {
 };
 
 /**
- * Fills the event's tiers from the active field.
+ * Fills the event's tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name.
  */
 export type AutoAssignSportEventTiersRequest = {
-    /**
-     * What the active field is ordered by before the tiers are filled.
-     */
-    source: 'ODDS' | 'RANKING';
     /**
      * Participants per tier; the last tier takes the rest. Omitted: an event with its sport's default tier count gets the sport's tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).
      */
@@ -9921,12 +9917,12 @@ export type SportEventParticipantValuationDto = {
      * Order within the tier.
      */
     tierOrderIndex: number | null;
-    tierAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+    tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
     /**
      * Price in a budget contest; null when unpriced.
      */
     price: number | null;
-    priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+    priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
 };
 
 /**
@@ -10143,12 +10139,12 @@ export type SportEventParticipantDto = {
          * Order within the tier.
          */
         tierOrderIndex: number | null;
-        tierAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+        tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
         /**
          * Price in a budget contest; null when unpriced.
          */
         price: number | null;
-        priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+        priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
     } | null;
     /**
      * Null until the participant has a scored round, or a race result.
@@ -10405,12 +10401,12 @@ export type SportEventParticipantListResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
@@ -10732,12 +10728,12 @@ export type SportEventParticipantResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
@@ -12270,12 +12266,12 @@ export type ContestLeaderboardResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_RANKING' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
