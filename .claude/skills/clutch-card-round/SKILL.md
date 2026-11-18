@@ -86,6 +86,12 @@ sources" workflow on the working branch. It commits into that branch, so fetch b
 branch has a PR, or the fetched pages land in the PR's history. github.com is reachable
 directly (the nflverse files).
 
+The round's season event (the MLB Postseason for the World Series) must be on the site first:
+each Clutch Card event names it as its parent, found as the season league's event under way at
+the round's start, and the site refuses the round without one (`rules/architecture-rules.md` §4
+*Sport extension*). The sync creates the season event; when it has not, load the season league's
+file first.
+
 ### Step 4 — dry run, the user's go, release
 
 Dry-run "Load sport data" on the file and show the user the field: each team's star count, the

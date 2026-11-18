@@ -54,7 +54,7 @@ import { getVersion, loginUser } from '@poolmaster/shared/generated/hey-api';
 import { formatLoadReport, LoadAction, LoadMode, type LoadRow, LoadSubject, withoutRepeatedRows } from './load-report';
 import { catchUpTestEvents, loadSportData, selectTestSeedEventsOnSite } from './seed-golf';
 import { errorMessage } from '../../src/core/error-message';
-import { isTestSlate, parseSportDataFile, type SportDataFile } from './sport-data-file';
+import { isTestSlate, parseSportDataFile, SportDataContent, type SportDataFile } from './sport-data-file';
 import { loadTestParticipants, refuseUnlessTestTarget } from './test-participants';
 
 // Access tokens last 15 minutes; sign in again well before that.
@@ -99,8 +99,27 @@ async function siteEnvironment(baseUrl: string): Promise<string> {
 }
 
 /** Every data file in the folder, by name. Test slates sit in their own folder, so none is listed. */
+/**
+ * Every data file, by name, with the files that carry box scores (the Clutch Card rounds') after
+ * the rest: a test Clutch Card event names its league's test season event as its parent (#1820),
+ * so the season league's file loads first.
+ */
 function allDataFiles(dataDir: string): string[] {
-  return readdirSync(dataDir).filter((name) => name.endsWith('.json')).sort();
+  const names = readdirSync(dataDir).filter((name) => name.endsWith('.json')).sort();
+  const boxScores = new Set(names.filter((name) => carriesBoxScores(readFileSync(resolve(dataDir, name), 'utf8'))));
+  return [...names.filter((name) => !boxScores.has(name)), ...names.filter((name) => boxScores.has(name))];
+}
+
+/** Whether a data file's scope lists box scores. A file that is not JSON is read, and refused, when it loads. */
+function carriesBoxScores(text: string): boolean {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return false;
+  }
+  const contents = (parsed as { scope?: { contents?: unknown } } | null)?.scope?.contents;
+  return Array.isArray(contents) && contents.includes(SportDataContent.STATS);
 }
 
 async function main(): Promise<void> {

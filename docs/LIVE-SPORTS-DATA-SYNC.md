@@ -132,7 +132,11 @@ details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreatio
 ingestion scheduler) runs the year import below for this calendar year and the next, for each
 active synced league. New events are born `DRAFT` and wait for an admin's release, for now. Setting
 the provider is refused unless it is registered and covers the league's sport, and the league has
-a match keyword. One league's failed read is logged and the sweep goes on.
+a match keyword. One league's failed read is logged and the sweep goes on. Every season league
+goes before any Clutch Card league: a Clutch Card event names its season event (the World Series
+round names the MLB Postseason, #1820), so a new season event is created before its rounds are
+imported. A Clutch Card provider event whose season event is not on the site, or not one event, is
+skipped as `NO_PARENT_EVENT` and created by a later sweep.
 
 The same sweep then keeps the league's already-linked events current with what the provider just
 listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's

@@ -68,6 +68,18 @@ describe('SyncedEventCreationScheduler', () => {
     ]);
   });
 
+  it('imports every season league before any Clutch Card league, so a new season event is there for its rounds to link to', async () => {
+    const worldSeries = buildSportLeague({ id: 'sl-world-series', name: 'League Championship Series', scoringFamily: 'COMPOSITE', eventSyncProviderId: 'balldontlie' });
+    const mlb = buildSportLeague({ id: 'sl-mlb', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    const nfl = buildSportLeague({ id: 'sl-nfl', name: 'NFL', eventSyncProviderId: 'balldontlie' });
+    const { scheduler, sportEvents } = build({ leagues: [worldSeries, mlb, nfl] });
+
+    await scheduler.runSweep();
+
+    expect([...new Set(sportEvents.importProviderEventYear.mock.calls.map(([input]) => input.sportLeagueId))])
+      .toEqual(['sl-mlb', 'sl-nfl', 'sl-world-series']);
+  });
+
   it('keeps each synced league\'s already-linked events current with the same provider events it imported, after the import', async () => {
     const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
     const keepProviderEventsCurrent = jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>()

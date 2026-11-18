@@ -299,7 +299,7 @@ describe('sport catalog mappers', () => {
   it('sends a sport league with a copy of its round names and its counts', () => {
     const roundNames = ['Round 1', 'Final'];
     const summary = {
-      id: 'sl1', sportId: 's1', sport: 'NFL', name: 'NFL', roundNames, affiliationCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
+      id: 'sl1', sportId: 's1', sport: 'NFL', name: 'NFL', roundNames, parentRoundNumbers: [], affiliationCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
     } as unknown as SportLeagueSummary;
 
     const dto = mapSportLeagueToDto(summary);
@@ -310,12 +310,22 @@ describe('sport catalog mappers', () => {
   });
 
   it('sends a playoff round\'s sport league with the id of the season league it belongs to, and a season league with none', () => {
-    const base = { sportId: 's1', sport: 'HOCKEY', roundNames: [], affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const base = { sportId: 's1', sport: 'HOCKEY', roundNames: [], parentRoundNumbers: [], affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
     const round = { ...base, id: 'stanley-cup-final', name: 'Stanley Cup Final', parentSportLeagueId: 'nhl' } as unknown as SportLeagueSummary;
     const season = { ...base, id: 'nhl', name: 'NHL', parentSportLeagueId: null } as unknown as SportLeagueSummary;
 
     expect(mapSportLeagueToDto(round).parentSportLeagueId).toBe('nhl');
     expect(mapSportLeagueToDto(season).parentSportLeagueId).toBeNull();
+  });
+
+  it('sends a Clutch Card league with a copy of the rounds of its season league\'s event it covers', () => {
+    const parentRoundNumbers = [4];
+    const worldSeries = { sportId: 's1', sport: 'BASEBALL', id: 'world-series', name: 'World Series', roundNames: [], parentSportLeagueId: 'mlb', parentRoundNumbers, affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT } as unknown as SportLeagueSummary;
+
+    const dto = mapSportLeagueToDto(worldSeries);
+
+    expect(dto.parentRoundNumbers).toEqual([4]);
+    expect(dto.parentRoundNumbers).not.toBe(parentRoundNumbers);
   });
 
   it('sends an affiliation with its participant embedded', () => {

@@ -19084,6 +19084,15 @@
             ],
             "format": "uuid"
           },
+          "parentRoundNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -19126,6 +19135,7 @@
           "scoringFamily",
           "displayOrder",
           "parentSportLeagueId",
+          "parentRoundNumbers",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -19326,6 +19336,15 @@
                   ],
                   "format": "uuid"
                 },
+                "parentRoundNumbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -19368,6 +19387,7 @@
                 "scoringFamily",
                 "displayOrder",
                 "parentSportLeagueId",
+                "parentRoundNumbers",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -19547,6 +19567,15 @@
                 ],
                 "format": "uuid"
               },
+              "parentRoundNumbers": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "minimum": -9007199254740991,
@@ -19589,6 +19618,7 @@
               "scoringFamily",
               "displayOrder",
               "parentSportLeagueId",
+              "parentRoundNumbers",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -20788,6 +20818,38 @@
               null
             ]
           },
+          "parentEvent": {
+            "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The parent event's identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "The parent event's name, such as \"MLB Postseason\"."
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "parentRoundNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
+          },
           "syncScope": {
             "type": "string",
             "enum": [
@@ -20901,6 +20963,8 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
+          "parentEvent",
+          "parentRoundNumbers",
           "syncScope",
           "providerSynced",
           "autoLifecycleEnabled",
@@ -21206,6 +21270,38 @@
                     null
                   ]
                 },
+                "parentEvent": {
+                  "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The parent event's identifier."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The parent event's name, such as \"MLB Postseason\"."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "parentRoundNumbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -21319,6 +21415,8 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
+                "parentEvent",
+                "parentRoundNumbers",
                 "syncScope",
                 "providerSynced",
                 "autoLifecycleEnabled",
@@ -21611,6 +21709,38 @@
                   null
                 ]
               },
+              "parentEvent": {
+                "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The parent event's identifier."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The parent event's name, such as \"MLB Postseason\"."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "parentRoundNumbers": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
+              },
               "syncScope": {
                 "type": "string",
                 "enum": [
@@ -21724,6 +21854,8 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
+              "parentEvent",
+              "parentRoundNumbers",
               "syncScope",
               "providerSynced",
               "autoLifecycleEnabled",
@@ -21785,6 +21917,11 @@
           },
           "autoLifecycleEnabled": {
             "type": "boolean"
+          },
+          "parentEventId": {
+            "description": "A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.",
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
@@ -21894,9 +22031,10 @@
         "type": "string",
         "enum": [
           "ALREADY_LINKED",
-          "EDITION_EXISTS"
+          "EDITION_EXISTS",
+          "NO_PARENT_EVENT"
         ],
-        "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
+        "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it."
       },
       "ImportSportEventYearFromProviderResponse": {
         "type": "object",
@@ -22137,6 +22275,38 @@
                     null
                   ]
                 },
+                "parentEvent": {
+                  "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The parent event's identifier."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The parent event's name, such as \"MLB Postseason\"."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "parentRoundNumbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -22250,6 +22420,8 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
+                "parentEvent",
+                "parentRoundNumbers",
                 "syncScope",
                 "providerSynced",
                 "autoLifecycleEnabled",
@@ -22280,9 +22452,10 @@
                   "type": "string",
                   "enum": [
                     "ALREADY_LINKED",
-                    "EDITION_EXISTS"
+                    "EDITION_EXISTS",
+                    "NO_PARENT_EVENT"
                   ],
-                  "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
+                  "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it."
                 }
               },
               "required": [

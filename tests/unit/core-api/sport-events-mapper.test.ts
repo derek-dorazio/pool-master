@@ -110,6 +110,18 @@ describe('SportEvent readiness on the wire', () => {
   });
 });
 
+describe('SportEvent parent on the wire (#1820)', () => {
+  it('carries a Clutch Card event\'s season event by id and name, and the rounds of it the event covers', () => {
+    const dto = mapSportEventToDto(summary(event({ parentEvent: { id: 'se-postseason', name: 'MLB Postseason', roundNumbers: [4] } }), 1));
+
+    expect(dto).toMatchObject({ parentEvent: { id: 'se-postseason', name: 'MLB Postseason' }, parentRoundNumbers: [4] });
+  });
+
+  it('carries a null parent and no rounds for an event that names no parent', () => {
+    expect(mapSportEventToDto(summary(event(), 1))).toMatchObject({ parentEvent: null, parentRoundNumbers: [] });
+  });
+});
+
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
     expect(mapSportEventToDto({ event: event(), loadedParticipantCount: 72, tierCount: 6, adminCounts: null })).toMatchObject({

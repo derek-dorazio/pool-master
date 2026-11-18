@@ -337,6 +337,13 @@ filling them in rather than by finding guards scattered through the code:
   the sport's composite. Every event carries its league's overrides, so a reader of an event's
   selection types, scoring definitions, family, tiers, rounds or whether it plays matches reads
   `eventSportDefinition(event)` (or `eventPlaysMatches(event)`), never `getSportDefinition(event.sport)`.
+  A Clutch Card league's events are rounds of its season league's event (#1820): the league
+  names the season league and which rounds (`SportLeague.parentSportLeagueId`,
+  `parentRoundNumbers`, reference data), and every Clutch Card event names its season event
+  (`SportEvent.parentEvent`). Every creation path finds it through `findClutchCardParents`, by
+  the dates (the season event under way at the Clutch Card event's start) or as the caller names
+  it, and refuses a Clutch Card event it cannot link; no other league's event has a parent. A
+  season event a Clutch Card event names cannot be deleted.
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; basketball, American football,
   hockey, baseball, soccer and tennis are head to head; races are finish position), and each family owns one set of result

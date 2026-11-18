@@ -80,3 +80,12 @@ function statPoolDefinition(definition: SportDefinition, composite: SportComposi
     roundLabel: (roundNumber) => `Game ${roundNumber}`,
   };
 }
+
+/**
+ * Whether a sport league is a Clutch Card's (#1820): a championship stat pool, scored by the
+ * composite family. Its events are rounds of its parent league's season event, and each one names
+ * that event (`SportEvent.parentEvent`); no other league's event names a parent.
+ */
+export function isClutchCardLeague(league: Pick<SportLeagueOverrides, 'scoringFamily'>): boolean {
+  return league.scoringFamily === ScoringFamily.COMPOSITE;
+}

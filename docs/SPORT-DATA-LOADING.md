@@ -82,6 +82,14 @@ real file they are written whenever they differ, before or after release: each p
 for a game replaces the stored one, and a stored line for a player the game leaves out is cleared. An
 admin corrects one player's line on the event's Results page.
 
+Each new Clutch Card event names its season event (#1820): the event of its league's season
+league (the MLB for the World Series) that has the rounds it covers and is under way at its
+start. A real file's event finds it by its dates, so the season league's event must be on the
+site first; the site refuses the event without one. A test seed moves each event's dates on its
+own, so it names the parent itself: the latest test season event of the season league ("Test- MLB
+Postseason"). With none on the site yet, the run lists the Clutch Card event as a conflict and
+leaves it out. Loading every test file loads the box score files last, after the season leagues'.
+
 **Released as it loads.** With *release* on (the workflow's default; `--release` locally), an
 apply releases each draft event whose field the file carries and that has not started, so a
 "Load" leaves it open for contests with no trip to the Manage screens. With it off, every
