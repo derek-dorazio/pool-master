@@ -25,33 +25,34 @@ export function RootAdminSportLeagueListPage() {
     () => [
       columnHelper.accessor('name', {
         header: upperFirst(sportLeague.one),
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('matchKeyword', {
         header: 'Match keyword',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('affiliationCount', {
         header: 'Roster size',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor('sportEventCount', {
         header: upperFirst(event.many),
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor('currentEventYear', {
         header: 'Current year',
-        cell: ({ getValue }) => getValue() ?? '—',
+        meta: { type: { kind: 'number' } },
       }),
-      columnHelper.accessor((league) => (league.isActive ? 'Active' : 'Inactive'), {
-        id: 'isActive',
+      columnHelper.accessor('isActive', {
         header: 'Active',
-        meta: { options: {} },
+        meta: { type: { kind: 'boolean' } },
         cell: ({ getValue }) => (
-          <StatusBadge tone={getValue() === 'Active' ? 'active' : 'inactive'}>
-            {getValue()}
+          <StatusBadge tone={getValue() ? 'active' : 'inactive'}>
+            {getValue() ? 'Active' : 'Inactive'}
           </StatusBadge>
         ),
       }),

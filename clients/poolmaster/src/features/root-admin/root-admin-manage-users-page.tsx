@@ -1,3 +1,4 @@
+import { ActiveStatusBadge } from "./active-status-badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ export function RootAdminManageUsersPage() {
         {
           id: "username",
           header: "User",
+          meta: { type: { kind: "text" } },
           cell: ({ row }) => (
             <div>
               <div className="font-medium text-primary">
@@ -66,6 +68,7 @@ export function RootAdminManageUsersPage() {
       ),
       columnHelper.accessor("email", {
         header: "Email",
+        meta: { type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -73,30 +76,18 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
         id: "account",
         header: "Account",
-        meta: { options: {} },
-        cell: ({ getValue }) => {
-          const isActive = getValue() === "Active";
-
-          return (
-            <StatusBadge tone={isActive ? "active" : "inactive"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        meta: { type: { kind: "enum" } },
+        cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
       }),
-      columnHelper.accessor((user) => (user.isRootAdmin ? "Yes" : "No"), {
+      columnHelper.accessor("isRootAdmin", {
         id: "rootAdmin",
         header: "Root admin",
-        meta: { options: {} },
-        cell: ({ getValue }) => {
-          const isRootAdmin = getValue() === "Yes";
-
-          return (
-            <StatusBadge tone={isRootAdmin ? "info" : "neutral"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        meta: { type: { kind: "boolean" } },
+        cell: ({ getValue }) => (
+          <StatusBadge tone={getValue() ? "info" : "neutral"}>
+            {getValue() ? "Yes" : "No"}
+          </StatusBadge>
+        ),
       }),
     ],
     [],

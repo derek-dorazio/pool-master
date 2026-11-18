@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportOrder } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { type UnmappedProviderParticipantDto } from '@/lib/api';
 import { DataGrid, HelpTip, Input, LinkButton, PageHeader, QueryState } from '@/features/shared/ui';
@@ -26,13 +27,14 @@ export function RootAdminUnmappedParticipantsPage() {
     () => [
       columnHelper.accessor('externalName', {
         header: 'Competitor',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor('sport', { header: 'Sport', meta: { options: {} } }),
-      columnHelper.accessor('providerName', { header: 'Provider', meta: { options: {} } }),
-      columnHelper.accessor('externalId', { header: 'Provider id' }),
+      columnHelper.accessor('sport', { header: 'Sport', meta: { type: { kind: 'enum', order: SportOrder } } }),
+      columnHelper.accessor('providerName', { header: 'Provider', meta: { type: { kind: 'enum' } } }),
+      columnHelper.accessor('externalId', { header: 'Provider id', meta: { type: { kind: 'text' } } }),
       columnHelper.display({
         id: 'actions',
         header: '',

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { SportEventSyncScopeOrder } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { listEvents } from '@/lib/api';
@@ -7,13 +8,10 @@ import {
   QueryState,
   LinkButton,
   StatusBadge,
-  optionsFromLabels,
-  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  SYNC_SCOPE_LABELS,
   syncScopeLabel,
   syncScopeTone,
 } from './sport-admin-utils';
@@ -32,7 +30,6 @@ import { upperFirst } from '@/lib/upper-first';
 const columnHelper = createColumnHelper<SportEventDto>();
 
 export function RootAdminSportEventListPage() {
-  const displayPreferences = useDisplayPreferences();
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportName = definition.name.toLowerCase();
@@ -57,29 +54,29 @@ export function RootAdminSportEventListPage() {
       sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
-        meta: { options: { values: optionsFromLabels(SYNC_SCOPE_LABELS) } },
+        meta: { type: { kind: 'enum', order: SportEventSyncScopeOrder, label: syncScopeLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={syncScopeTone(getValue())}>
             {syncScopeLabel(getValue())}
           </StatusBadge>
         ),
       }),
-      ...sportEventScheduleColumns(displayPreferences),
+      ...sportEventScheduleColumns(),
       columnHelper.accessor('loadedParticipantCount', {
         header: 'Field',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor('tierCount', {
         header: 'Tiers',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor((row) => row.adminCounts?.contestCount ?? null, {
         id: 'contestCount',
         header: 'Contests',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
     ],
-    [displayPreferences, event.one],
+    [event.one],
   );
 
   return (

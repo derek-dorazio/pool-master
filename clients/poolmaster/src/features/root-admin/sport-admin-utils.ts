@@ -40,7 +40,7 @@ export type SportEventDtoStatus = SportEventDto['status'];
 
 // --- Sync scope (plans/124 §4.4) ---
 
-export const SYNC_SCOPE_LABELS: Record<SportEventDtoSyncScope, string> = {
+const SYNC_SCOPE_LABELS: Record<SportEventDtoSyncScope, string> = {
   NONE: 'Manual',
   SCORES_ONLY: 'Scores synced',
 };
@@ -384,7 +384,7 @@ type _ParticipantStatusExhaustive =
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
 
-export const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
+const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
   ACTIVE: 'Active',
   INACTIVE: 'Inactive',
   RETIRED: 'Retired',

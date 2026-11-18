@@ -459,14 +459,19 @@ A table that needs search, sorting or paging.
   `views` (a `ViewFilter` in the card's header, `end` for a filter of the chosen view, `status`
   standing in while the chosen view loads or fails); `pageSize`; `showColumnFilters` (on by
   default: each filterable header shows a funnel). A list that can grow to hundreds of rows uses
-  `search` and `pageSize`. A column whose values come from a fixed set gives
-  `meta.options` (`values` in their natural order, `initial` for a starting filter, `manyPerCell`
-  for a cell holding a list), so its filter ticks values instead of matching text. The list
-  gets a search box above eight values: a short list is read at a glance, and a box there is
-  one more thing to skip. Blank cells (nothing, null or an empty word) sort last both ways.
-  Clear all filters clears everything, a column's `initial` selection included. `initial` is
-  read once, when the grid first renders.
-- **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx)
+  `search` and `pageSize`. Each column states its type in `meta.type` (`DataGridColumnType`):
+  `text`, `enum`, `boolean` (`nullable` adds (Blank)), `number`, `date`, `datetime` or
+  `dateRange` (`direction` required, `format` words or numeric, `blank` for an empty cell's
+  words). The accessor returns the real value, and the grid writes number and date cells
+  itself; a column without a type neither sorts nor filters. An `enum` column gives its shared
+  enum's `order` and `label`, or `values` in their natural order, plus `initial` for a starting
+  filter and `manyPerCell` for a cell holding a list. The list gets a search box above eight
+  values: a short list is read at a glance, and a box there is one more thing to skip. Blank
+  cells (nothing, null, an empty word or range) sort last both ways. Clear all filters clears
+  everything, a column's `initial` selection included. `initial` is read once, when the grid
+  first renders.
+- **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx), and every column type's filter in
+  [data-grid-date-filter.stories.tsx](./data-grid-date-filter.stories.tsx)
 
 ### `SimpleTable`
 A small table with no search, sort or paging: a top five, a plan comparison.

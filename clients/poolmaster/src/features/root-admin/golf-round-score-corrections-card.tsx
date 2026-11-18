@@ -52,6 +52,7 @@ const columnHelper = createColumnHelper<ScoreRow>();
 const correctionColumns = [
   columnHelper.accessor('participantName', {
     header: 'Player',
+    meta: { type: { kind: 'text' } },
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),

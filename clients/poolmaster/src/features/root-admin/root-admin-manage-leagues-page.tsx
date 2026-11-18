@@ -1,7 +1,8 @@
+import { ActiveStatusBadge } from "./active-status-badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from "@poolmaster/shared/domain";
+import { isPlatformSearchTerm, type LeaguePlan, LeaguePlanOrder, PLATFORM_SEARCH_MIN_LENGTH } from "@poolmaster/shared/domain";
 import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
@@ -12,10 +13,6 @@ import {
   Input,
   PageHeader,
   SectionCard,
-  StatusBadge,
-  formatDateDisplay,
-  optionsFromLabels,
-  useDisplayPreferences,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -24,8 +21,9 @@ import { MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 const columnHelper = createColumnHelper<LeagueDto>();
 
+const leaguePlanLabel = (plan: LeaguePlan) => LEAGUE_PLAN_LABEL[plan];
+
 export function RootAdminManageLeaguesPage() {
-  const displayPreferences = useDisplayPreferences();
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const canSearch = isPlatformSearchTerm(term);
@@ -56,6 +54,7 @@ export function RootAdminManageLeaguesPage() {
     () => [
       columnHelper.accessor("name", {
         header: "League",
+        meta: { type: { kind: "text" } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-primary">{row.original.name}</div>
@@ -69,6 +68,7 @@ export function RootAdminManageLeaguesPage() {
       }),
       columnHelper.accessor("leagueCode", {
         header: "Code",
+        meta: { type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
@@ -78,53 +78,35 @@ export function RootAdminManageLeaguesPage() {
         {
           id: "lifecycle",
           header: "Lifecycle",
-          meta: { options: {} },
-          cell: ({ getValue }) => {
-            const isActive = getValue() === "Active";
-
-            return (
-              <StatusBadge tone={isActive ? "active" : "inactive"}>
-                {getValue()}
-              </StatusBadge>
-            );
-          },
+          meta: { type: { kind: "enum" } },
+          cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
         },
       ),
       columnHelper.accessor((league) => league.planEntitlements.plan, {
         id: "plan",
         header: "Plan",
-        meta: { options: { values: optionsFromLabels(LEAGUE_PLAN_LABEL) } },
+        meta: { type: { kind: "enum", order: LeaguePlanOrder, label: leaguePlanLabel } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{LEAGUE_PLAN_LABEL[getValue()]}</span>
         ),
       }),
-      columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt, displayPreferences), {
+      columnHelper.accessor("planRenewsAt", {
         id: "planRenewsAt",
         header: "Preview ends",
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
-        ),
+        meta: { type: { kind: "date", direction: "both" } },
       }),
-      columnHelper.accessor((league) => String(league.memberCount), {
+      columnHelper.accessor("memberCount", {
         id: "memberCount",
         header: "Members",
-        cell: ({ row }) => (
-          <span className="font-medium text-foreground">
-            {row.original.memberCount}
-          </span>
-        ),
+        meta: { type: { kind: "number" } },
       }),
-      columnHelper.accessor((league) => String(league.activeContestCount), {
+      columnHelper.accessor("activeContestCount", {
         id: "activeContestCount",
         header: "Active contests",
-        cell: ({ row }) => (
-          <span className="font-medium text-foreground">
-            {row.original.activeContestCount}
-          </span>
-        ),
+        meta: { type: { kind: "number" } },
       }),
     ],
-    [displayPreferences],
+    [],
   );
 
   return (

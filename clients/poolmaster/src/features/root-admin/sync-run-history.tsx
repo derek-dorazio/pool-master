@@ -1,7 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportOrder } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import type { ProviderSummaryDto } from '@/lib/api';
-import { Button, DataGrid, formatDateTimeDisplay, QueryState, SectionCard, StatusBadge, Text, useDisplayPreferences } from '@/features/shared/ui';
+import { Button, DataGrid, QueryState, SectionCard, StatusBadge, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   buildCompactStatsSummary,
@@ -12,7 +13,7 @@ import {
   type ProviderSyncRun,
 } from './root-admin-sync-utils';
 import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
-import { formatEventValue, getRunStatusLabel, getRunStatusTone, toSortableTimestamp } from './sync-run-status';
+import { formatEventValue, getRunStatusLabel, getRunStatusTone } from './sync-run-status';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 
@@ -26,42 +27,24 @@ export function SyncRunHistory({
   providers: readonly ProviderSummaryDto[] | undefined;
   runsQuery: { data: ProviderSyncRun[] | undefined; error: Error | null; isError: boolean; refetch: () => unknown };
 }) {
-  const displayPreferences = useDisplayPreferences();
-
   const syncHistoryColumns = useMemo(
     () => [
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt, displayPreferences),
-        {
-          id: 'started',
-          header: 'Started',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.startedAt ?? left.original.createdAt)
-            - toSortableTimestamp(right.original.startedAt ?? right.original.createdAt),
-          cell: ({ getValue }) => (
-            <Text>{getValue()}</Text>
-          ),
-        },
-      ),
-      syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.completedAt, displayPreferences),
-        {
-          id: 'completed',
-          header: 'Completed',
-          sortingFn: (left, right) =>
-            toSortableTimestamp(left.original.completedAt)
-            - toSortableTimestamp(right.original.completedAt),
-          cell: ({ getValue }) => (
-            <Text tone="muted">{getValue()}</Text>
-          ),
-        },
-      ),
+      syncRunColumnHelper.accessor((run) => run.startedAt ?? run.createdAt, {
+        id: 'started',
+        header: 'Started',
+        meta: { type: { kind: 'datetime', direction: 'past' } },
+      }),
+      syncRunColumnHelper.accessor((run) => run.completedAt ?? null, {
+        id: 'completed',
+        header: 'Completed',
+        meta: { type: { kind: 'datetime', direction: 'past' } },
+      }),
       syncRunColumnHelper.accessor(
         (run) => run.providerId,
         {
           id: 'provider',
           header: 'Provider',
-          meta: { options: { label: (providerId) => getProviderName(providerId, providers) } },
+          meta: { type: { kind: 'enum', label: (providerId) => getProviderName(providerId, providers) } },
           cell: ({ row }) => (
             <div className="flex flex-col gap-1">
               <Text variant="strong">{getProviderName(row.original.providerId, providers)}</Text>
@@ -72,7 +55,7 @@ export function SyncRunHistory({
       ),
       syncRunColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -80,7 +63,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
         id: 'feed',
         header: 'Feed',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),
@@ -88,6 +71,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
         id: 'event',
         header: 'Event',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <Text tone="muted">{getValue()}</Text>
         ),
@@ -95,7 +79,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => getRunStatusLabel(run), {
         id: 'status',
         header: 'Status',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum' } },
         cell: ({ row }) => (
           <StatusBadge tone={getRunStatusTone(row.original)}>
             {getRunStatusLabel(row.original)}
@@ -105,6 +89,7 @@ export function SyncRunHistory({
       syncRunColumnHelper.accessor((run) => buildPayloadSummary(run.payload), {
         id: 'summary',
         header: 'Summary',
+        meta: { type: { kind: 'text' } },
         cell: ({ row }) => (
           <div className="flex flex-col items-start gap-1">
             <Text tone="muted">{buildPayloadSummary(row.original.payload)}</Text>
@@ -127,7 +112,7 @@ export function SyncRunHistory({
         ),
       }),
     ],
-    [displayPreferences, onOpenRun, providers],
+    [onOpenRun, providers],
   );
 
   return (

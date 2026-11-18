@@ -1,16 +1,15 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportEventStatusOrder, SportOrder } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listEvents, type SportEventDto } from '@/lib/api';
 import {
   DataGrid,
   Input,
-  formatDateTimeDisplay,
   LinkButton,
   PageHeader,
   QueryState,
   StatusBadge,
-  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -36,13 +35,7 @@ function readinessTone(status: AdminEvent['readinessStatus']) {
   return 'neutral';
 }
 
-function formatFieldCount(event: AdminEvent) {
-  const providerCount = event.participantCount ?? 'unknown';
-  return `${event.loadedParticipantCount} loaded / ${providerCount} provider`;
-}
-
 export function RootAdminEventsPage() {
-  const displayPreferences = useDisplayPreferences();
   const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -67,6 +60,7 @@ export function RootAdminEventsPage() {
       eventColumnHelper.accessor('name', {
         id: 'event',
         header: 'Event',
+        meta: { type: { kind: 'text' } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">{row.original.name}</div>
@@ -78,32 +72,32 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone="info">{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('providerId', {
         header: 'Source',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
       }),
       eventColumnHelper.accessor('startDate', {
         header: 'Starts',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
+        meta: { type: { kind: 'datetime', direction: 'both' } },
       }),
       eventColumnHelper.accessor('status', {
         header: 'Status',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum', order: SportEventStatusOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone={sportEventStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('readinessStatus', {
         header: 'Readiness',
-        meta: { options: { label: formatReadiness } },
+        meta: { type: { kind: 'enum', label: formatReadiness } },
         cell: ({ row }) => (
           <div>
             <StatusBadge tone={readinessTone(row.original.readinessStatus)}>
@@ -117,9 +111,10 @@ export function RootAdminEventsPage() {
           </div>
         ),
       }),
-      eventColumnHelper.accessor((event) => formatFieldCount(event), {
+      eventColumnHelper.accessor('loadedParticipantCount', {
         id: 'field',
         header: 'Field',
+        meta: { type: { kind: 'number' } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">
@@ -149,7 +144,7 @@ export function RootAdminEventsPage() {
         enableSorting: false,
       }),
     ],
-    [displayPreferences],
+    [],
   );
 
   return (

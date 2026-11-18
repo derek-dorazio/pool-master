@@ -79,6 +79,7 @@ export function InvitesPageWaitingInvitesSection({
   const columns = useMemo<ColumnDef<InviteRow, string>[]>(() => [
     {
       id: 'invited',
+      meta: { type: { kind: 'text' } },
       header: 'Invited',
       accessorFn: (row) => row.label,
       cell: ({ row }) => {
@@ -116,6 +117,7 @@ export function InvitesPageWaitingInvitesSection({
     },
     {
       id: 'sentBy',
+      meta: { type: { kind: 'text' } },
       header: 'Sent by',
       enableGlobalFilter: false,
       accessorFn: (row) => row.sentBy,
@@ -133,12 +135,7 @@ export function InvitesPageWaitingInvitesSection({
       header: 'Expires',
       enableGlobalFilter: false,
       accessorFn: (row) => row.invitation.expiresAt ?? '',
-      cell: ({ row }) => {
-        const { expiresAt } = row.original.invitation;
-        return expiresAt
-          ? <DateDisplay timeStyle={null} value={expiresAt} />
-          : <Text size="inherit" tone="muted">Never</Text>;
-      },
+      meta: { type: { kind: 'date', direction: 'future', blank: 'Never' } },
     },
   ], []);
 

@@ -27,6 +27,7 @@ export function RootAdminContentConfigurationListPage() {
       columnHelper.accessor((template) => `${template.name} ${template.templateKey}`, {
         id: 'template',
         header: 'Template',
+        meta: { type: { kind: 'text' } },
         cell: ({ row }) => (
           <div>
             <div className="text-sm font-semibold text-primary">
@@ -46,7 +47,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'scope',
           header: 'Scope',
-          meta: { options: {} },
+          meta: { type: { kind: 'enum' } },
           cell: ({ getValue }) => (
             <span className="text-muted-foreground">{getValue()}</span>
           ),
@@ -54,7 +55,7 @@ export function RootAdminContentConfigurationListPage() {
       ),
       columnHelper.accessor('selectionType', {
         header: 'Selection',
-        meta: { options: {} },
+        meta: { type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -65,7 +66,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'status',
           header: 'Status',
-          meta: { options: {} },
+          meta: { type: { kind: 'enum' } },
           cell: ({ row }) => (
             <div className="flex flex-wrap gap-2">
               <StatusBadge tone={row.original.active ? 'active' : 'neutral'}>

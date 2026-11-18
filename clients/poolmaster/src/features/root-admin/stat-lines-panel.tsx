@@ -35,6 +35,7 @@ function statLineColumns(composite: SportComposite) {
   return [
     columnHelper.accessor('playerName', {
       header: 'Player',
+      meta: { type: { kind: 'text' } },
       cell: ({ row }) => (
         <div>
           <span className="font-medium text-foreground">{row.original.playerName}</span>
