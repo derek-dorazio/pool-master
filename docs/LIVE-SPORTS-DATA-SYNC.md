@@ -208,6 +208,19 @@ the first 20 and counts the rest. Those are the
 stars the feed named some other way or not at all: its scores never reach them, so the root admin
 merges or maps each by hand.
 
+Then, while the event is still a draft, the field is tiered and priced with no typing (#1822,
+`SyncedFieldValuationService`), the way the *Auto-assign* buttons would: in the field's one order
+(odds, then seed, then rank, by the first value every participant has, then name), on the event's
+own tiers, priced with the values the event was last priced with or else the first Budget pricing
+profile. It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
+tiers made from odds, `pricesMadeFromOdds: 64` the participants priced; `tiersUnchanged` and
+`pricesUnchanged` when nothing moved, so nothing was written). An admin's correction is kept: once
+any tier on the event was placed by hand, the sync leaves every tier alone (`tiersKeptAsEdited`),
+and once any price was typed by hand, every price (`pricesKeptAsEdited`); pressing an *Auto-assign*
+button is not a correction. A released event's tiers and prices are locked
+(`tiersAndPricesLocked`). A failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written
+either way, and the next field sync tries again.
+
 Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202`) because one
 provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's
 bare player id.

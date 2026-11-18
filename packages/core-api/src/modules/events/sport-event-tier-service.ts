@@ -67,6 +67,21 @@ export interface ParticipantValuationView {
   price: number | null;
 }
 
+/** What a field sync's tiering did (#1822): made or found already made, kept as an admin edited them, or none because the event has no tiers. */
+export type SyncedTiers =
+  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; tierCount: number }
+  | { result: 'KEPT_AS_EDITED' | 'NO_TIERS' };
+
+/** What a field sync's pricing did (#1822): made or found already made, or kept as an admin edited them. */
+export type SyncedPrices =
+  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; pricedCount: number; profileName: string }
+  | { result: 'KEPT_AS_EDITED' };
+
+/** What tiering and pricing a synced field did, or why it did neither. */
+export type SyncedFieldValuation =
+  | { outcome: 'VALUED'; sportEventId: string; tiers: SyncedTiers; prices: SyncedPrices }
+  | { outcome: 'SKIPPED'; reason: 'LOCKED' | 'NO_FIELD' };
+
 /**
  * Refuses a tier or price change once the event is released (#431). The field grid's price
  * column goes through this too, so there is one lock rule.
@@ -206,29 +221,9 @@ export class SportEventTierService {
       return [];
     }
     const { ordered, source } = await this.orderedActiveField(input.sportEventId);
-    const layout = eventSportDefinition(event).defaultTierLayout;
-    const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
-    const tierSize = input.tierSize ?? (fitsLayout ? layout.tierSize : undefined);
-    const tierIndexAt = tierSize === undefined
-      ? evenSpreadTierIndex(ordered.length, tiers.length)
-      : (index: number) => Math.min(Math.floor(index / tierSize), tiers.length - 1);
-
-    await this.deps.valuations.assignTiers(ordered.map((entry, index) => ({
-      sportEventParticipantId: entry.id,
-      sportEventTierId: tiers[tierIndexAt(index)].id,
-      tierOrderIndex: index + 1,
-      source,
-    })));
-
+    await this.deps.valuations.assignTiers(tierPlacements(event, tiers, ordered, source, input.tierSize));
     this.deps.logger?.info(
-      {
-        sportEventId: input.sportEventId,
-        source,
-        tierSize: tierSize ?? null,
-        spread: tierSize === undefined ? 'EVEN' : 'FIXED_SIZE',
-        tierCount: tiers.length,
-        assignedCount: ordered.length,
-      },
+      { sportEventId: input.sportEventId, source, tierSize: input.tierSize ?? null, tierCount: tiers.length, assignedCount: ordered.length },
       'Auto-assigned tiers',
     );
     return this.getEffectiveTiersForSportEvent(input.sportEventId);
@@ -336,29 +331,92 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
     }
-    const priced = deriveGolfPrices(ordered.map((entry) => ({ participantId: entry.id })), pricingConfig);
-    await this.deps.valuations.assignEventPrices({
-      sportEventId,
-      pricingConfig,
-      assignments: priced.map((entry) => ({
-        sportEventParticipantId: entry.participantId,
-        price: entry.price,
-        source,
-      })),
-    });
+    const assignments = pricePlacements(ordered, source, pricingConfig);
+    await this.deps.valuations.assignEventPrices({ sportEventId, pricingConfig, assignments });
 
     this.deps.logger?.info(
-      { sportEventId, source, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: priced.length },
+      { sportEventId, source, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: assignments.length },
       'Auto-assigned prices',
     );
     return this.getEffectiveValuationsForSportEvent(sportEventId);
   }
 
   /**
+   * Tiers and prices the field a provider sync just wrote (#1822), the way the two auto-assign
+   * buttons would: in the field's one order (#1807), on the event's own tiers (the sport league's
+   * tier count, made with the event), priced with the values the event was last priced with, or
+   * else `defaultPricing`, the first Budget pricing profile.
+   *
+   * An admin's correction is kept: once any field row's tier was placed by hand (MANUAL, the
+   * drag-and-drop save), the sync leaves every tier alone, and once any price was typed by hand
+   * (the field grid), every price. Pressing an auto-assign button is not a correction: the next
+   * sync re-makes from the newer field, with the values that button used. A participant the
+   * field gains after a correction stays untiered or unpriced until an admin places them.
+   *
+   * Released events are locked (#431) and left alone. Nothing is written when the stored tiers
+   * or prices already match, so a sync of an unchanged field writes nothing.
+   */
+  async valueSyncedField(event: SportEvent, defaultPricing: EventPricingConfig): Promise<SyncedFieldValuation> {
+    if (event.status !== SportEventStatus.DRAFT) {
+      return { outcome: 'SKIPPED', reason: 'LOCKED' };
+    }
+    const [{ ordered, source, basis }, tiers, valuations] = await Promise.all([
+      this.orderedActiveField(event.id),
+      this.deps.tiers.findBySportEvent(event.id),
+      this.deps.valuations.findBySportEvent(event.id),
+    ]);
+    if (ordered.length === 0) {
+      return { outcome: 'SKIPPED', reason: 'NO_FIELD' };
+    }
+    const stored = new Map(valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]));
+
+    let tiersResult: SyncedTiers;
+    if (valuations.some((valuation) => valuation.tierAssignedSource === ValuationSource.MANUAL)) {
+      tiersResult = { result: 'KEPT_AS_EDITED' };
+    } else if (tiers.length === 0) {
+      tiersResult = { result: 'NO_TIERS' };
+    } else {
+      const placements = tierPlacements(event, tiers, ordered, source);
+      const unchanged = placements.every((placement) => {
+        const current = stored.get(placement.sportEventParticipantId);
+        return current?.sportEventTierId === placement.sportEventTierId
+          && current.tierOrderIndex === placement.tierOrderIndex
+          && current.tierAssignedSource === placement.source;
+      });
+      if (!unchanged) await this.deps.valuations.assignTiers(placements);
+      tiersResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis, tierCount: tiers.length };
+    }
+
+    let pricesResult: SyncedPrices;
+    if (valuations.some((valuation) => valuation.priceAssignedSource === ValuationSource.MANUAL)) {
+      pricesResult = { result: 'KEPT_AS_EDITED' };
+    } else {
+      const pricingConfig = event.pricingConfig ?? defaultPricing;
+      const problem = findBudgetPricingProblem(pricingConfig);
+      if (problem) {
+        throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
+      }
+      const assignments = pricePlacements(ordered, source, pricingConfig);
+      const unchanged = event.pricingConfig !== undefined && assignments.every((assignment) => {
+        const current = stored.get(assignment.sportEventParticipantId);
+        return current?.price === assignment.price && current.priceAssignedSource === assignment.source;
+      });
+      if (!unchanged) await this.deps.valuations.assignEventPrices({ sportEventId: event.id, pricingConfig, assignments });
+      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis, pricedCount: assignments.length, profileName: pricingConfig.profileName };
+    }
+
+    this.deps.logger?.info(
+      { sportEventId: event.id, basis, tiers: tiersResult, prices: pricesResult, fieldSize: ordered.length },
+      'Tiered and priced a synced field',
+    );
+    return { outcome: 'VALUED', sportEventId: event.id, tiers: tiersResult, prices: pricesResult };
+  }
+
+  /**
    * The event's active field in its one order (#1807), the order tiers and prices are both filled
    * in, and the source the value that decided it records.
    */
-  private async orderedActiveField(sportEventId: string): Promise<{ ordered: SportEventParticipant[]; source: ValuationSource }> {
+  private async orderedActiveField(sportEventId: string): Promise<{ ordered: SportEventParticipant[]; source: ValuationSource; basis: FieldOrderBasis }> {
     const active = (await this.deps.field.findBySportEvent(sportEventId))
       .filter((entry) => entry.isActive)
       // A full tie keeps this order, so the result never depends on how the rows were read.
@@ -373,7 +431,7 @@ export class SportEventTierService {
       // Every field row names a participant (a foreign key), so a missing name only ties.
       name: nameOf.get(entry.participantId) ?? '',
     })));
-    return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis] };
+    return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis], basis: decision.basis };
   }
 
   /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */
@@ -399,6 +457,42 @@ const SOURCE_BY_BASIS: Record<FieldOrderBasis, ValuationSource> = {
   [FieldOrderBasis.RANKING]: ValuationSource.AUTO_RANKING,
   [FieldOrderBasis.NAME]: ValuationSource.AUTO_NAME,
 };
+
+/**
+ * Each ordered field row's tier: with a `tierSize`, each tier takes that many and the last tier
+ * the rest; with none, the sport's designed layout while the event keeps the sport's tier count
+ * and the layout reaches every tier, else an even spread (see `autoAssignTiers`).
+ */
+function tierPlacements(
+  event: SportEvent,
+  tiers: readonly SportEventTier[],
+  ordered: readonly SportEventParticipant[],
+  source: ValuationSource,
+  requestedTierSize?: number,
+): Array<{ sportEventParticipantId: string; sportEventTierId: string; tierOrderIndex: number; source: ValuationSource }> {
+  const layout = eventSportDefinition(event).defaultTierLayout;
+  const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
+  const tierSize = requestedTierSize ?? (fitsLayout ? layout.tierSize : undefined);
+  const tierIndexAt = tierSize === undefined
+    ? evenSpreadTierIndex(ordered.length, tiers.length)
+    : (index: number) => Math.min(Math.floor(index / tierSize), tiers.length - 1);
+  return ordered.map((entry, index) => ({
+    sportEventParticipantId: entry.id,
+    sportEventTierId: tiers[tierIndexAt(index)].id,
+    tierOrderIndex: index + 1,
+    source,
+  }));
+}
+
+/** Each ordered field row's price on the budget curve (#93). */
+function pricePlacements(
+  ordered: readonly SportEventParticipant[],
+  source: ValuationSource,
+  pricingConfig: EventPricingConfig,
+): Array<{ sportEventParticipantId: string; price: number; source: ValuationSource }> {
+  return deriveGolfPrices(ordered.map((entry) => ({ participantId: entry.id })), pricingConfig)
+    .map((entry) => ({ sportEventParticipantId: entry.participantId, price: entry.price, source }));
+}
 
 /**
  * The tier index of the participant at `index` when `fieldSize` participants are spread evenly

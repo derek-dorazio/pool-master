@@ -89,6 +89,8 @@ import { EventLifecycleScheduler } from './modules/events/event-lifecycle-schedu
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
+import { SyncedFieldValuationService, fieldValuationReport } from './modules/events/synced-field-valuation';
+import { BUDGET_PRICING_SETTINGS } from './modules/events/budget-pricing-settings';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -274,7 +276,9 @@ export function buildApp() {
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
       // A synced league's event takes its games once its field is in (ADR 0011, #1728).
       await sportEventServices.providerGames.afterFieldLoad(detail);
-      return persisted;
+      // Then its tiers and prices, from the field just written (#1822).
+      const fieldValuation = fieldValuationReport(await syncedFieldValuation.afterFieldLoad(detail));
+      return { ...persisted, fieldValuation };
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({
@@ -295,6 +299,12 @@ export function buildApp() {
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
   // One set of event services for the admin routes and the synced event creation sweep.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
+  const syncedFieldValuation = new SyncedFieldValuationService({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    tiers: sportEventServices.tiers,
+    readPricingProfiles: () => appSettings.get(BUDGET_PRICING_SETTINGS),
+    logger: app.log.child({ module: 'events.syncedFieldValuation' }),
+  });
   // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
   const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
