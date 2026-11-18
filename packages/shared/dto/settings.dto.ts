@@ -9,13 +9,12 @@
  */
 import { z } from 'zod';
 import { DateTimeSchema } from './common.dto';
-import { BillingConfigSchema, BudgetPricingConfigSchema, EmailConfigSchema, IngestionScheduleConfigSchema, PlanConfigSchema } from './config.dto';
+import { BillingConfigSchema, EmailConfigSchema, IngestionScheduleConfigSchema, PlanConfigSchema } from './config.dto';
 import { registerSchema } from './schema-registry';
 
 export const SettingsGroupKeySchema = z.enum([
   'INGESTION_SCHEDULE_CONFIG',
   'EMAIL_CONFIG',
-  'BUDGET_PRICING_CONFIG',
   'PLAN_CONFIG',
   'BILLING_CONFIG',
 ]).describe('The stored key of a settings group.');
@@ -51,12 +50,6 @@ export const SettingsGroupSchema = z.discriminatedUnion('key', [
     ...groupFields,
     value: EmailConfigSchema.describe('The value in use.'),
     defaults: EmailConfigSchema.describe('The value a reset would store.'),
-  }),
-  z.object({
-    key: z.literal('BUDGET_PRICING_CONFIG'),
-    ...groupFields,
-    value: BudgetPricingConfigSchema.describe('The value in use.'),
-    defaults: BudgetPricingConfigSchema.describe('The value a reset would store.'),
   }),
   z.object({
     key: z.literal('PLAN_CONFIG'),
@@ -105,11 +98,6 @@ export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
     expectedUpdatedAt,
   }),
   z.object({
-    key: z.literal('BUDGET_PRICING_CONFIG'),
-    value: BudgetPricingConfigSchema.describe('The whole new value.'),
-    expectedUpdatedAt,
-  }),
-  z.object({
     key: z.literal('PLAN_CONFIG'),
     value: PlanConfigSchema.describe('The whole new value.'),
     expectedUpdatedAt,
@@ -142,12 +130,6 @@ export const SettingsChangeSchema = z.discriminatedUnion('key', [
     ...changeFields,
     previousValue: EmailConfigSchema.nullable().describe(previousValueNote),
     newValue: EmailConfigSchema.describe(newValueNote),
-  }),
-  z.object({
-    key: z.literal('BUDGET_PRICING_CONFIG'),
-    ...changeFields,
-    previousValue: BudgetPricingConfigSchema.nullable().describe(previousValueNote),
-    newValue: BudgetPricingConfigSchema.describe(newValueNote),
   }),
   z.object({
     key: z.literal('PLAN_CONFIG'),

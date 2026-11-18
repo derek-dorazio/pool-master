@@ -1,7 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository } from '@poolmaster/shared/db';
-import { FieldOrderBasis, type BudgetPricingProfile, type EventPricingConfig } from '@poolmaster/shared/domain';
-import type { BudgetPricingConfig } from '@poolmaster/shared/dto';
+import { FieldOrderBasis } from '@poolmaster/shared/domain';
 import type { SportEventTierService, SyncedFieldValuation } from './sport-event-tier-service';
 
 /** What a field sync's run reports of the tiering and pricing that followed it. */
@@ -13,8 +12,6 @@ export interface FieldValuationReport {
 export interface SyncedFieldValuationDeps {
   sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
   tiers: Pick<SportEventTierService, 'valueSyncedField'>;
-  /** The Budget pricing app settings; their first profile prices an event never priced before. */
-  readPricingProfiles: () => BudgetPricingConfig;
   logger?: FastifyBaseLogger;
 }
 
@@ -26,7 +23,8 @@ export type FieldValuationOutcome =
 
 /**
  * Tiers and prices come from the feed with no typing (#1822): after each field sync writes an
- * event's field, the field is tiered and priced while the event is a draft
+ * event's field, the field is tiered and priced by its sport league's profiles (#1844) while the
+ * event is a draft
  * (`SportEventTierService.valueSyncedField`), as part of the same field sync run. The auto-assign
  * buttons and the hand edits stay for corrections, and a hand edit is never overwritten.
  */
@@ -41,8 +39,7 @@ export class SyncedFieldValuationService {
     try {
       const event = await this.deps.sportEvents.findByProviderRef(detail.providerId, detail.externalId);
       if (!event) return { outcome: 'SKIPPED', reason: 'NO_EVENT' };
-      const { profiles } = this.deps.readPricingProfiles();
-      return await this.deps.tiers.valueSyncedField(event, eventPricingOf(profiles[0]));
+      return await this.deps.tiers.valueSyncedField(event);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.deps.logger?.error(
@@ -52,11 +49,6 @@ export class SyncedFieldValuationService {
       return { outcome: 'FAILED', message };
     }
   }
-}
-
-/** A profile as an event stores the values it was priced with. */
-function eventPricingOf({ name, ...values }: BudgetPricingProfile): EventPricingConfig {
-  return { profileName: name, ...values };
 }
 
 /** How each order basis reads in a stat's name: "Tiers Made From Odds". */

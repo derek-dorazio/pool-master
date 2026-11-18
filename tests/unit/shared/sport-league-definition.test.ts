@@ -35,7 +35,6 @@ describe('sportLeagueDefinitionOf', () => {
       scoringFamily: ScoringFamily.COMPOSITE,
       tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
       defaultRounds: 7,
-      defaultTierLayout: { tierCount: 6 },
       selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
       scoringDefinitions: ['COMPOSITE_TOTAL'],
       shootout: null,

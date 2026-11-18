@@ -10,6 +10,7 @@ import type {
   SportEventSyncScope,
 } from './enums';
 import type { EventPricingConfig } from './budget-pricing';
+import type { EventTierConfig } from './tier-profiles';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { ScoringFamily } from './sports/scoring-family';
@@ -81,6 +82,12 @@ export interface SportEvent extends DomainEntity {
    * assigned. Locks with the prices at release, and is every budget contest's salary cap.
    */
   pricingConfig?: EventPricingConfig;
+  /**
+   * The tier layout the field was last auto-tiered with (#1844): its sport league's tier profile
+   * at the time, with any tier size an admin sent instead; unset until the field is first
+   * auto-tiered.
+   */
+  tierConfig?: EventTierConfig;
   /**
    * A Clutch Card event's parent (#1820): the season event of its sport league's parent league
    * whose rounds it covers (the World Series round of the MLB Postseason). Absent on any other

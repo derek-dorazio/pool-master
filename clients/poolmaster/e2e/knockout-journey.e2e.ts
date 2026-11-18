@@ -189,6 +189,9 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     await page.goto('/manage/sports/basketball/leagues');
     await page.getByTestId('root-admin-sport-league-list-new').click();
     await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
+    // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
+    await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '4 tiers of 16' });
+    await page.getByTestId('root-admin-sport-league-list-new-pricing-profile').selectOption({ label: 'Standard' });
     const created = await submitAndRead<{ sportLeague: { id: string } }>(
       page,
       'root-admin-sport-league-list-new-save',

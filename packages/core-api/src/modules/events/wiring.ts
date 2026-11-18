@@ -15,6 +15,7 @@ import {
   PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
+  PrismaPricingProfileRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantStatLineRepository,
   PrismaSportEventParticipantGolfStandingRepository,
@@ -27,6 +28,7 @@ import {
   PrismaSportEventTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
+  PrismaTierProfileRepository,
 } from '../../adapters';
 import { GolfScoreService } from '../golf/golf-score-service';
 import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
@@ -58,6 +60,8 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
+    tierProfiles: new PrismaTierProfileRepository(prisma),
+    pricingProfiles: new PrismaPricingProfileRepository(prisma),
     logger,
   });
 }
@@ -288,7 +292,17 @@ export function createSportEventServices(
     raceResults: createRaceResultService(prisma, logger, leaderboards),
     statLines: createStatLineService(prisma, logger, leaderboards),
     matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
-    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, providers, logger }),
+    sportLeagues: new SportLeagueService({
+      sports,
+      sportLeagues,
+      sportEvents: events,
+      affiliations,
+      participants,
+      providers,
+      tierProfiles: new PrismaTierProfileRepository(prisma),
+      pricingProfiles: new PrismaPricingProfileRepository(prisma),
+      logger,
+    }),
   };
 }
 

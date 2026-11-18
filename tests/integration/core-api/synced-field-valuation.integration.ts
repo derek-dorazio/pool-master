@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { DEFAULT_BUDGET_PRICING_PROFILES, SportEventStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { createSportEventTierService } from '../../../packages/core-api/src/modules/events/wiring';
 import { SyncedFieldValuationService } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
@@ -24,7 +24,6 @@ function valuationService() {
   return new SyncedFieldValuationService({
     sportEvents: new PrismaSportEventRepository(getAppPrisma()),
     tiers: createSportEventTierService(getAppPrisma()),
-    readPricingProfiles: () => ({ profiles: DEFAULT_BUDGET_PRICING_PROFILES.map((profile) => ({ ...profile })) }),
   });
 }
 

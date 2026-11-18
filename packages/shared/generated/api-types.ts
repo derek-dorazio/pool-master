@@ -2975,6 +2975,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tier-profiles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List tier profiles
+         * @description Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        get: operations["listTierProfiles"];
+        put?: never;
+        /**
+         * Create a tier profile
+         * @description 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        post: operations["createTierProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tier-profiles/{profileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a tier profile
+         * @description 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        get: operations["getTierProfile"];
+        /**
+         * Update a tier profile
+         * @description Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        put: operations["updateTierProfile"];
+        post?: never;
+        /**
+         * Delete a tier profile
+         * @description 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        delete: operations["deleteTierProfile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing-profiles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List pricing profiles
+         * @description Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        get: operations["listPricingProfiles"];
+        put?: never;
+        /**
+         * Create a pricing profile
+         * @description 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        post: operations["createPricingProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing-profiles/{profileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a pricing profile
+         * @description 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        get: operations["getPricingProfile"];
+        /**
+         * Update a pricing profile
+         * @description Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        put: operations["updatePricingProfile"];
+        post?: never;
+        /**
+         * Delete a pricing profile
+         * @description 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         */
+        delete: operations["deletePricingProfile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/event-pages/": {
         parameters: {
             query?: never;
@@ -4248,39 +4352,6 @@ export interface components {
                 /** @description Whether this email is sent. */
                 YEAR_IN_REVIEW: boolean;
             };
-        };
-        /** @description A named set of budget pricing values. */
-        BudgetPricingProfile: {
-            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-            salaryCap: number;
-            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-            unit: number;
-            /** @description The best seed's price, as a percentage of the salary cap. */
-            topSharePercent: number;
-            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-            floorSharePercent: number;
-            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-            steepness: number;
-            /** @description The profile's name, such as "Standard". */
-            name: string;
-        };
-        /** @description The named sets of values an event's field is priced with for budget contests. */
-        BudgetPricingConfig: {
-            /** @description The pricing profiles, the default first. Names are unique. */
-            profiles: {
-                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                salaryCap: number;
-                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                unit: number;
-                /** @description The best seed's price, as a percentage of the salary cap. */
-                topSharePercent: number;
-                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                floorSharePercent: number;
-                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                steepness: number;
-                /** @description The profile's name, such as "Standard". */
-                name: string;
-            }[];
         };
         /** @description One cap's limit on each plan. A limit never falls as the plan rises. */
         PlanCapRow: {
@@ -9594,6 +9665,16 @@ export interface components {
             /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
             autoReleaseDaysBeforeStart: number | null;
             /**
+             * Format: uuid
+             * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+             */
+            tierProfileId: string;
+            /**
+             * Format: uuid
+             * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+             */
+            pricingProfileId: string;
+            /**
              * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
              * @enum {string}
              */
@@ -9690,6 +9771,16 @@ export interface components {
                 /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
                 autoReleaseDaysBeforeStart: number | null;
                 /**
+                 * Format: uuid
+                 * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+                 */
+                tierProfileId: string;
+                /**
+                 * Format: uuid
+                 * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+                 */
+                pricingProfileId: string;
+                /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
                  */
@@ -9777,6 +9868,16 @@ export interface components {
                 /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
                 autoReleaseDaysBeforeStart: number | null;
                 /**
+                 * Format: uuid
+                 * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+                 */
+                tierProfileId: string;
+                /**
+                 * Format: uuid
+                 * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+                 */
+                pricingProfileId: string;
+                /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
                  */
@@ -9848,6 +9949,16 @@ export interface components {
              * @enum {string}
              */
             bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
+            /**
+             * Format: uuid
+             * @description The tier profile the sport league names. 404 TIER_PROFILE_NOT_FOUND for one that does not exist.
+             */
+            tierProfileId: string;
+            /**
+             * Format: uuid
+             * @description The pricing profile the sport league names. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist.
+             */
+            pricingProfileId: string;
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
@@ -9861,6 +9972,16 @@ export interface components {
             eventSyncProviderId?: string | null;
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
             currentEventYear?: number;
+            /**
+             * Format: uuid
+             * @description Names another tier profile. 404 TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.
+             */
+            tierProfileId?: string;
+            /**
+             * Format: uuid
+             * @description Names another pricing profile. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
+             */
+            pricingProfileId?: string;
             /**
              * @description RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
              * @enum {string}
@@ -10379,6 +10500,22 @@ export interface components {
                 /** @description The profile the values started from. The admin may have changed any value before assigning. */
                 profileName: string;
             } | null;
+            /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+            tierLayout: {
+                /** @description How many tiers a new event starts with. */
+                tierCount: number;
+                /** @description How many participants auto-tiering puts in each tier before the last. */
+                tierSize: number;
+                /**
+                 * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                 * @enum {string}
+                 */
+                lastTier: "ALL_REMAINING" | "CAPPED";
+                /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                lastTierMax: number | null;
+                /** @description The tier profile the layout came from. */
+                profileName: string;
+            } | null;
             /**
              * @description Contest-setup readiness right now.
              * @enum {string}
@@ -10611,6 +10748,22 @@ export interface components {
                     /** @description The profile the values started from. The admin may have changed any value before assigning. */
                     profileName: string;
                 } | null;
+                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                tierLayout: {
+                    /** @description How many tiers a new event starts with. */
+                    tierCount: number;
+                    /** @description How many participants auto-tiering puts in each tier before the last. */
+                    tierSize: number;
+                    /**
+                     * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                     * @enum {string}
+                     */
+                    lastTier: "ALL_REMAINING" | "CAPPED";
+                    /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                    lastTierMax: number | null;
+                    /** @description The tier profile the layout came from. */
+                    profileName: string;
+                } | null;
                 /**
                  * @description Contest-setup readiness right now.
                  * @enum {string}
@@ -10836,6 +10989,22 @@ export interface components {
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
                     /** @description The profile the values started from. The admin may have changed any value before assigning. */
+                    profileName: string;
+                } | null;
+                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                tierLayout: {
+                    /** @description How many tiers a new event starts with. */
+                    tierCount: number;
+                    /** @description How many participants auto-tiering puts in each tier before the last. */
+                    tierSize: number;
+                    /**
+                     * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                     * @enum {string}
+                     */
+                    lastTier: "ALL_REMAINING" | "CAPPED";
+                    /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                    lastTierMax: number | null;
+                    /** @description The tier profile the layout came from. */
                     profileName: string;
                 } | null;
                 /**
@@ -11124,6 +11293,22 @@ export interface components {
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
                     /** @description The profile the values started from. The admin may have changed any value before assigning. */
+                    profileName: string;
+                } | null;
+                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                tierLayout: {
+                    /** @description How many tiers a new event starts with. */
+                    tierCount: number;
+                    /** @description How many participants auto-tiering puts in each tier before the last. */
+                    tierSize: number;
+                    /**
+                     * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                     * @enum {string}
+                     */
+                    lastTier: "ALL_REMAINING" | "CAPPED";
+                    /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                    lastTierMax: number | null;
+                    /** @description The tier profile the layout came from. */
                     profileName: string;
                 } | null;
                 /**
@@ -11446,7 +11631,7 @@ export interface components {
         };
         /** @description Fills the event's tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name. */
         AutoAssignSportEventTiersRequest: {
-            /** @description Participants per tier; the last tier takes the rest. Omitted: an event with its sport's default tier count gets the sport's tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). */
+            /** @description Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5). */
             tierSize?: number;
         };
         /** @description The drag-and-drop tier save. */
@@ -11472,6 +11657,22 @@ export interface components {
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
             /** @description The profile the values started from. The admin may have changed any value before assigning. */
+            profileName: string;
+        };
+        /** @description The tier layout an event's field was last auto-tiered with. */
+        EventTierConfig: {
+            /** @description How many tiers a new event starts with. */
+            tierCount: number;
+            /** @description How many participants auto-tiering puts in each tier before the last. */
+            tierSize: number;
+            /**
+             * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+             * @enum {string}
+             */
+            lastTier: "ALL_REMAINING" | "CAPPED";
+            /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+            lastTierMax: number | null;
+            /** @description The tier profile the layout came from. */
             profileName: string;
         };
         /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed. */
@@ -14911,7 +15112,7 @@ export interface components {
          * @description The stored key of a settings group.
          * @enum {string}
          */
-        SettingsGroupKey: "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG" | "BUDGET_PRICING_CONFIG" | "PLAN_CONFIG" | "BILLING_CONFIG";
+        SettingsGroupKey: "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG" | "PLAN_CONFIG" | "BILLING_CONFIG";
         /** @description The root admin who saved a settings change. */
         SettingsActor: {
             /**
@@ -15280,69 +15481,6 @@ export interface components {
                     /** @description Whether this email is sent. */
                     YEAR_IN_REVIEW: boolean;
                 };
-            };
-        } | {
-            /** @enum {string} */
-            key: "BUDGET_PRICING_CONFIG";
-            /** @description Short display name of the group. */
-            title: string;
-            /** @description What the group controls. */
-            description: string;
-            /**
-             * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
-             * @enum {string}
-             */
-            source: "stored" | "defaults";
-            /**
-             * Format: date-time
-             * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
-             */
-            updatedAt: string | null;
-            /** @description Who last saved the stored value, when known. */
-            updatedBy: {
-                /**
-                 * Format: uuid
-                 * @description The user id of the root admin who made the change.
-                 */
-                id: string;
-                /** @description The admin's full name, for display. */
-                name: string;
-            } | null;
-            /** @description The value in use. */
-            value: {
-                /** @description The pricing profiles, the default first. Names are unique. */
-                profiles: {
-                    /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                    salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                    unit: number;
-                    /** @description The best seed's price, as a percentage of the salary cap. */
-                    topSharePercent: number;
-                    /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                    floorSharePercent: number;
-                    /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                    steepness: number;
-                    /** @description The profile's name, such as "Standard". */
-                    name: string;
-                }[];
-            };
-            /** @description The value a reset would store. */
-            defaults: {
-                /** @description The pricing profiles, the default first. Names are unique. */
-                profiles: {
-                    /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                    salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                    unit: number;
-                    /** @description The best seed's price, as a percentage of the salary cap. */
-                    topSharePercent: number;
-                    /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                    floorSharePercent: number;
-                    /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                    steepness: number;
-                    /** @description The profile's name, such as "Standard". */
-                    name: string;
-                }[];
             };
         } | {
             /** @enum {string} */
@@ -16096,69 +16234,6 @@ export interface components {
                 };
             } | {
                 /** @enum {string} */
-                key: "BUDGET_PRICING_CONFIG";
-                /** @description Short display name of the group. */
-                title: string;
-                /** @description What the group controls. */
-                description: string;
-                /**
-                 * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
-                 * @enum {string}
-                 */
-                source: "stored" | "defaults";
-                /**
-                 * Format: date-time
-                 * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
-                 */
-                updatedAt: string | null;
-                /** @description Who last saved the stored value, when known. */
-                updatedBy: {
-                    /**
-                     * Format: uuid
-                     * @description The user id of the root admin who made the change.
-                     */
-                    id: string;
-                    /** @description The admin's full name, for display. */
-                    name: string;
-                } | null;
-                /** @description The value in use. */
-                value: {
-                    /** @description The pricing profiles, the default first. Names are unique. */
-                    profiles: {
-                        /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                        salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                        unit: number;
-                        /** @description The best seed's price, as a percentage of the salary cap. */
-                        topSharePercent: number;
-                        /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                        floorSharePercent: number;
-                        /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                        steepness: number;
-                        /** @description The profile's name, such as "Standard". */
-                        name: string;
-                    }[];
-                };
-                /** @description The value a reset would store. */
-                defaults: {
-                    /** @description The pricing profiles, the default first. Names are unique. */
-                    profiles: {
-                        /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                        salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                        unit: number;
-                        /** @description The best seed's price, as a percentage of the salary cap. */
-                        topSharePercent: number;
-                        /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                        floorSharePercent: number;
-                        /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                        steepness: number;
-                        /** @description The profile's name, such as "Standard". */
-                        name: string;
-                    }[];
-                };
-            } | {
-                /** @enum {string} */
                 key: "PLAN_CONFIG";
                 /** @description Short display name of the group. */
                 title: string;
@@ -16703,32 +16778,6 @@ export interface components {
             expectedUpdatedAt: string | null;
         } | {
             /** @enum {string} */
-            key: "BUDGET_PRICING_CONFIG";
-            /** @description The whole new value. */
-            value: {
-                /** @description The pricing profiles, the default first. Names are unique. */
-                profiles: {
-                    /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                    salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                    unit: number;
-                    /** @description The best seed's price, as a percentage of the salary cap. */
-                    topSharePercent: number;
-                    /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                    floorSharePercent: number;
-                    /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                    steepness: number;
-                    /** @description The profile's name, such as "Standard". */
-                    name: string;
-                }[];
-            };
-            /**
-             * Format: date-time
-             * @description The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
-             */
-            expectedUpdatedAt: string | null;
-        } | {
-            /** @enum {string} */
             key: "PLAN_CONFIG";
             /** @description The whole new value. */
             value: {
@@ -17255,62 +17304,6 @@ export interface components {
                     /** @description Whether this email is sent. */
                     YEAR_IN_REVIEW: boolean;
                 };
-            };
-        } | {
-            /** @enum {string} */
-            key: "BUDGET_PRICING_CONFIG";
-            /** Format: uuid */
-            id: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            changedAt: string;
-            /** @description Who saved it, when known. */
-            changedBy: {
-                /**
-                 * Format: uuid
-                 * @description The user id of the root admin who made the change.
-                 */
-                id: string;
-                /** @description The admin's full name, for display. */
-                name: string;
-            } | null;
-            /** @description The stored value before the save; null when the save created the first stored value. */
-            previousValue: {
-                /** @description The pricing profiles, the default first. Names are unique. */
-                profiles: {
-                    /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                    salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                    unit: number;
-                    /** @description The best seed's price, as a percentage of the salary cap. */
-                    topSharePercent: number;
-                    /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                    floorSharePercent: number;
-                    /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                    steepness: number;
-                    /** @description The profile's name, such as "Standard". */
-                    name: string;
-                }[];
-            } | null;
-            /** @description The value the save stored. */
-            newValue: {
-                /** @description The pricing profiles, the default first. Names are unique. */
-                profiles: {
-                    /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                    salaryCap: number;
-                    /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                    unit: number;
-                    /** @description The best seed's price, as a percentage of the salary cap. */
-                    topSharePercent: number;
-                    /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                    floorSharePercent: number;
-                    /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                    steepness: number;
-                    /** @description The profile's name, such as "Standard". */
-                    name: string;
-                }[];
             };
         } | {
             /** @enum {string} */
@@ -18033,62 +18026,6 @@ export interface components {
                         /** @description Whether this email is sent. */
                         YEAR_IN_REVIEW: boolean;
                     };
-                };
-            } | {
-                /** @enum {string} */
-                key: "BUDGET_PRICING_CONFIG";
-                /** Format: uuid */
-                id: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                changedAt: string;
-                /** @description Who saved it, when known. */
-                changedBy: {
-                    /**
-                     * Format: uuid
-                     * @description The user id of the root admin who made the change.
-                     */
-                    id: string;
-                    /** @description The admin's full name, for display. */
-                    name: string;
-                } | null;
-                /** @description The stored value before the save; null when the save created the first stored value. */
-                previousValue: {
-                    /** @description The pricing profiles, the default first. Names are unique. */
-                    profiles: {
-                        /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                        salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                        unit: number;
-                        /** @description The best seed's price, as a percentage of the salary cap. */
-                        topSharePercent: number;
-                        /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                        floorSharePercent: number;
-                        /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                        steepness: number;
-                        /** @description The profile's name, such as "Standard". */
-                        name: string;
-                    }[];
-                } | null;
-                /** @description The value the save stored. */
-                newValue: {
-                    /** @description The pricing profiles, the default first. Names are unique. */
-                    profiles: {
-                        /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                        salaryCap: number;
-                        /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                        unit: number;
-                        /** @description The best seed's price, as a percentage of the salary cap. */
-                        topSharePercent: number;
-                        /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                        floorSharePercent: number;
-                        /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                        steepness: number;
-                        /** @description The profile's name, such as "Standard". */
-                        name: string;
-                    }[];
                 };
             } | {
                 /** @enum {string} */
@@ -24450,6 +24387,241 @@ export interface components {
                 /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
                 syncRunIds: string[];
             };
+        };
+        /** @description A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise. */
+        TierProfileWriteRequest: {
+            /** @description How many tiers a new event starts with. */
+            tierCount: number;
+            /** @description How many participants auto-tiering puts in each tier before the last. */
+            tierSize: number;
+            /**
+             * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+             * @enum {string}
+             */
+            lastTier: "ALL_REMAINING" | "CAPPED";
+            /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+            lastTierMax: number | null;
+            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            name: string;
+        };
+        /** @description A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers. */
+        TierProfileDto: {
+            /** @description How many tiers a new event starts with. */
+            tierCount: number;
+            /** @description How many participants auto-tiering puts in each tier before the last. */
+            tierSize: number;
+            /**
+             * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+             * @enum {string}
+             */
+            lastTier: "ALL_REMAINING" | "CAPPED";
+            /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+            lastTierMax: number | null;
+            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            name: string;
+            /** Format: uuid */
+            id: string;
+            /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+            sportLeagueCount: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string;
+        };
+        /** @description Every tier profile. */
+        TierProfileListResponse: {
+            /** @description Every tier profile, by name. */
+            tierProfiles: {
+                /** @description How many tiers a new event starts with. */
+                tierCount: number;
+                /** @description How many participants auto-tiering puts in each tier before the last. */
+                tierSize: number;
+                /**
+                 * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                 * @enum {string}
+                 */
+                lastTier: "ALL_REMAINING" | "CAPPED";
+                /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                lastTierMax: number | null;
+                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                name: string;
+                /** Format: uuid */
+                id: string;
+                /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+                sportLeagueCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description One tier profile. */
+        TierProfileResponse: {
+            /** @description A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers. */
+            tierProfile: {
+                /** @description How many tiers a new event starts with. */
+                tierCount: number;
+                /** @description How many participants auto-tiering puts in each tier before the last. */
+                tierSize: number;
+                /**
+                 * @description What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                 * @enum {string}
+                 */
+                lastTier: "ALL_REMAINING" | "CAPPED";
+                /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
+                lastTierMax: number | null;
+                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                name: string;
+                /** Format: uuid */
+                id: string;
+                /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+                sportLeagueCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description A pricing profile's name and values, the whole of it. 422 PRICING_PROFILE_INVALID when the values contradict each other. */
+        PricingProfileWriteRequest: {
+            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+            salaryCap: number;
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+            unit: number;
+            /** @description The best seed's price, as a percentage of the salary cap. */
+            topSharePercent: number;
+            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+            floorSharePercent: number;
+            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+            steepness: number;
+            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            name: string;
+        };
+        /** @description A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them. */
+        PricingProfileDto: {
+            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+            salaryCap: number;
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+            unit: number;
+            /** @description The best seed's price, as a percentage of the salary cap. */
+            topSharePercent: number;
+            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+            floorSharePercent: number;
+            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+            steepness: number;
+            /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+            name: string;
+            /** Format: uuid */
+            id: string;
+            /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+            sportLeagueCount: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string;
+        };
+        /** @description Every pricing profile. */
+        PricingProfileListResponse: {
+            /** @description Every pricing profile, by name. */
+            pricingProfiles: {
+                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+                salaryCap: number;
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+                unit: number;
+                /** @description The best seed's price, as a percentage of the salary cap. */
+                topSharePercent: number;
+                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+                floorSharePercent: number;
+                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+                steepness: number;
+                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                name: string;
+                /** Format: uuid */
+                id: string;
+                /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+                sportLeagueCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description One pricing profile. */
+        PricingProfileResponse: {
+            /** @description A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them. */
+            pricingProfile: {
+                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+                salaryCap: number;
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+                unit: number;
+                /** @description The best seed's price, as a percentage of the salary cap. */
+                topSharePercent: number;
+                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+                floorSharePercent: number;
+                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+                steepness: number;
+                /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
+                name: string;
+                /** Format: uuid */
+                id: string;
+                /** @description How many sport leagues name the profile. One any league names can't be deleted. */
+                sportLeagueCount: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description A named set of budget pricing values. */
+        BudgetPricingProfile: {
+            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+            salaryCap: number;
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+            unit: number;
+            /** @description The best seed's price, as a percentage of the salary cap. */
+            topSharePercent: number;
+            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+            floorSharePercent: number;
+            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+            steepness: number;
+            /** @description The profile's name, such as "Standard". */
+            name: string;
         };
         /** @enum {string} */
         ClientLogLevel: "debug" | "info" | "warn" | "error" | "fatal";
@@ -34148,6 +34320,680 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listTierProfiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every tier profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierProfileListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    createTierProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TierProfileWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description One tier profile. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getTierProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One tier profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateTierProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TierProfileWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description One tier profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    deleteTierProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listPricingProfiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every pricing profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingProfileListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    createPricingProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingProfileWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description One pricing profile. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getPricingProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One pricing profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updatePricingProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingProfileWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description One pricing profile. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingProfileResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    deletePricingProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

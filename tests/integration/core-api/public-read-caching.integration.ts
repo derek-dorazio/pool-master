@@ -26,6 +26,7 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
+import { leagueProfiles } from '../../support/league-profiles';
 
 const createdSportLeagueIds: string[] = [];
 
@@ -51,7 +52,7 @@ async function createSportLeague(headers: Record<string, string>): Promise<strin
     method: 'POST',
     url: '/api/v1/sport-leagues',
     headers,
-    payload: { sport: 'GOLF', name: `Cache Tour ${randomUUID()}` },
+    payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Cache Tour ${randomUUID()}` },
   });
   expect(response.statusCode).toBe(201);
   const id = response.json<SportLeagueResponse>().sportLeague.id;
@@ -139,7 +140,7 @@ describe('admin saves clear the public reads they change (#1181)', () => {
       method: 'POST',
       url: '/api/v1/sport-leagues',
       headers: member.headers,
-      payload: { sport: 'GOLF', name: `Refused Tour ${randomUUID()}` },
+      payload: { ...(await leagueProfiles(getPrisma())), sport: 'GOLF', name: `Refused Tour ${randomUUID()}` },
     });
 
     expect(response.statusCode).toBe(403);

@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
 import { sweepE2eResidue } from './helpers/residue-sweep';
 import { e2eEmail, e2eLeagueCode, e2eName, e2eUsername, newRunId } from './helpers/test-marker';
@@ -38,7 +38,11 @@ test('the residue sweep removes a run left behind, league first and users last, 
     };
     const golfSportId = sports.find((row) => row.sport === 'GOLF')?.id;
     if (!golfSportId) throw new Error('golf is not in the sports table');
-    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', { sport: 'GOLF', name: tourName });
+    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', {
+      sport: 'GOLF',
+      name: tourName,
+      ...(await sportLeagueProfileIds(api, admin, '6 tiers of 10')),
+    });
     const { event } = await postJson<{ event: { id: string } }>(api, admin, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
       eventYear: 2099,

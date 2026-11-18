@@ -66,6 +66,7 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - [ ] Rename files, types, functions, and modules so they reflect the new domain model rather than retired terminology.
 - [ ] Remove retired associations and legacy compatibility fields instead of preserving them by default.
 - [ ] Do not introduce mixed old/new terminology in the same slice.
+- [ ] A new setting that differs between sport leagues is a platform definition each league names, never a sport registry value or a per-league column of numbers: `rules/domain-model-concepts.md` §2 *Vocabulary* (*The sport side*, "Platform definitions, league picks"). Its migration creates a definition for every value in use and points each league at its own.
 
 ### 2. DTO and API Contract
 
