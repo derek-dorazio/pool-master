@@ -29,6 +29,8 @@ import {
   SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
   ImportSportEventYearFromProviderResponseSchema,
+  ActivityJobResponseSchema,
+  ActivityListResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
@@ -69,10 +71,18 @@ import { IngestionService } from '../../../packages/core-api/src/modules/ingesti
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import {
+  PrismaBackgroundJobRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportLeagueRepository,
+  PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
+import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
+import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { activityModule } from '../../../packages/core-api/src/modules/activity/routes';
+import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
@@ -330,7 +340,18 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     scheduler,
     jobs: backgroundJobs.queue,
   });
-  backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context) });
+  const leagueEventsSync = new LeagueEventsSync({
+    sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
+    sports: new PrismaSportRepository(getAppPrisma()),
+    scoreSource: new EventScoreSourceService(getAppPrisma(), registry),
+    sportEvents: createSportEventServices(getAppPrisma(), undefined, undefined, undefined, registry).sportEvents,
+    syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
+    jobs: backgroundJobs.queue,
+  });
+  backgroundJobs.runWith({
+    MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
+    SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
+  });
 
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);
@@ -339,7 +360,12 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     prefix: '/api/v1/ingestion',
     ingestionService,
     providerRegistry: registry,
+    leagueEventsSync,
     ingestionPersistence: new IngestionPersistence(prisma),
+  });
+  await app.register(activityModule, {
+    prefix: '/api/v1/activity',
+    activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: new PrismaProviderSyncRunRepository(prisma) }),
   });
   await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   await app.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry: registry, cdn: new RecordingCdnInvalidator(), leaderboards: new RecordingLeaderboardRebuilds() });
@@ -404,6 +430,8 @@ describe('Contract verification (root admin)', () => {
   it('refuses one sync run\'s details, raw provider payload included, to a non-root-admin with 403', async () => {
     const run = await getPrisma().providerSyncRun.create({
       data: {
+        kind: 'SCORES',
+        trigger: 'SCHEDULE',
         providerId: 'forbidden-details-provider',
         sport: 'GOLF',
         eventId: 'forbidden-details-event',
@@ -514,6 +542,8 @@ describe('Contract verification (root admin)', () => {
     await getPrisma().providerSyncRun.createMany({
       data: [
         {
+          kind: 'SCORES',
+          trigger: 'SCHEDULE',
           id: '11111111-1111-1111-1111-111111111111',
           providerId: 'integration-test',
           sport: 'GOLF',
@@ -539,6 +569,8 @@ describe('Contract verification (root admin)', () => {
           },
         },
         {
+          kind: 'SCORES',
+          trigger: 'SCHEDULE',
           id: '22222222-2222-2222-2222-222222222222',
           providerId: 'integration-test',
           sport: 'GOLF',
@@ -870,6 +902,8 @@ describe('Contract verification (root admin)', () => {
         id: '33333333-3333-3333-3333-333333333333',
       },
       create: {
+        kind: 'SCORES',
+        trigger: 'SCHEDULE',
         id: '33333333-3333-3333-3333-333333333333',
         providerId: 'contract-provider',
         sport: 'GOLF',
@@ -1976,6 +2010,73 @@ describe('Contract verification (root admin)', () => {
       await app.close();
     }
   });
+  it('syncLeagueEvents queues the league\'s events sync (202), whose job creates the tour\'s events and shows on listActivity with its EVENTS run; a league no provider syncs is refused with 422', async () => {
+    const stamp = Date.now().toString().slice(-8);
+    const tour = `SNOW${stamp}`;
+    const app = await buildIngestionApp(new TourSlateContractProvider(tour));
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin League Sync Contract User', isRootAdmin: true });
+    const prisma = getPrisma();
+    const sport = await prisma.sport.upsert({
+      where: { sport: 'GOLF' },
+      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const synced = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Sync Now Tour ${stamp}`, matchKeyword: tour, eventSyncProviderId: 'contract-provider' } });
+    const unsynced = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Sync Now Manual Tour ${stamp}`, matchKeyword: `${tour}M` } });
+
+    try {
+      const syncRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/sport-leagues/${synced.id}/events-sync`,
+        headers: rootAdmin.headers,
+        payload: { eventYear: 2085 },
+      });
+      expect(syncRes.statusCode).toBe(202);
+      const queued = ActivityJobResponseSchema.parse(syncRes.json()).job;
+      expect(queued).toMatchObject({ type: 'SYNC_LEAGUE_EVENTS', kind: 'SYNC', sportLeagueId: synced.id, sportEventId: null });
+
+      const readActivity = async () => {
+        const res = await app.inject({ method: 'GET', url: `/api/v1/activity?sportLeagueId=${synced.id}`, headers: rootAdmin.headers });
+        expect(res.statusCode).toBe(200);
+        return ActivityListResponseSchema.parse(res.json()).jobs;
+      };
+      let jobs = await readActivity();
+      for (let tries = 0; jobs[0]?.status !== 'SUCCEEDED' && tries < 50; tries += 1) {
+        await new Promise((resolve) => { setTimeout(resolve, 100); });
+        jobs = await readActivity();
+      }
+      expect(jobs).toHaveLength(1);
+      const [job] = jobs;
+      expect(job).toMatchObject({ id: queued.id, status: 'SUCCEEDED', result: { eventYears: [2085], created: 2, updated: 0, skipped: 0 } });
+      expect(job.syncRunIds).toHaveLength(1);
+
+      const runRes = await app.inject({ method: 'GET', url: `/api/v1/ingestion/sync-runs/${job.syncRunIds[0]}`, headers: rootAdmin.headers });
+      expect(runRes.statusCode).toBe(200);
+      expect(ProviderSyncRunDetailDtoSchema.parse(runRes.json())).toMatchObject({
+        kind: 'EVENTS', trigger: 'ADMIN', sportLeagueId: synced.id, backgroundJobId: queued.id, status: 'COMPLETED',
+      });
+      expect(await prisma.sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id }, eventYear: 2085 } })).toBe(2);
+
+      const refusedRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/sport-leagues/${unsynced.id}/events-sync`,
+        headers: rootAdmin.headers,
+        payload: {},
+      });
+      expect(refusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.parse(refusedRes.json()).error.code).toBe('SPORT_LEAGUE_NOT_SYNCED');
+    } finally {
+      const eventIds = (await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id] } } }, select: { id: true } }))
+        .map((event) => event.id);
+      await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
+      await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } } });
+      await prisma.sportLeague.deleteMany({ where: { id: { in: [synced.id, unsynced.id] } } });
+      await app.close();
+    }
+  });
+
   it('previewEventRaceResults and applyEventRaceResults match their DTOs, and refuse with their stable error codes', async () => {
     // #622 — the admin's finishing order for a horse race: a happy path for each operation, then
     // every refusal the routes document, each as an error envelope with its code.

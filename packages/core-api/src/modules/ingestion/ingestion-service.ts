@@ -227,10 +227,10 @@ export class IngestionService {
     providerId: string,
     eventId: string,
     feeds: string[],
-  ): Promise<void> {
+  ): Promise<{ sportEventId: string; sportLeagueId: string } | null> {
     const event = await this.sportEvents.findByProviderRef(providerId, eventId);
     if (!event) {
-      return;
+      return null;
     }
 
     const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.NONE
@@ -247,6 +247,7 @@ export class IngestionService {
       }, 'Manual event sync rejected — requested feed(s) not allowed for this event\'s syncScope');
       throw new SportEventSyncScopeError(eventId, event.syncScope, disallowedFeeds);
     }
+    return { sportEventId: event.id, sportLeagueId: event.sportLeagueId };
   }
 
   private async buildUnmappedParticipantsForProvider(provider: SportDataProvider, externalId: string | undefined): Promise<UnmappedParticipant[]> {
@@ -371,7 +372,7 @@ export class IngestionService {
       },
     });
     const normalizedScope = normalizedRequest.scope;
-    await this.assertFeedsAllowedForSyncScope(
+    const linkedEvent = await this.assertFeedsAllowedForSyncScope(
       provider.providerId,
       normalizedScope.eventId,
       normalizedScope.feeds,
@@ -392,12 +393,14 @@ export class IngestionService {
       providerId: provider.providerId,
       submittedAt,
       runType: 'MANUAL_EVENT_SYNC',
+      ...(linkedEvent && linkedEvent),
       job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: runs.map((run) => run.id),
         sport: normalizedScope.sport,
         providerId: normalizedScope.providerId,
         eventId: normalizedScope.eventId,
         mockEventState: normalizedScope.mockEventState,
+        ...(linkedEvent && { sportEventId: linkedEvent.sportEventId }),
       }),
     });
     this.jobs.queued();
@@ -430,7 +433,7 @@ export class IngestionService {
    * whose failure could not be written (#1445): it is marked FAILED as interrupted, rather than
    * left showing as running for good, and is not run again.
    */
-  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number }): Promise<void> {
+  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number; jobId: string }): Promise<void> {
     const scheduler = this.scheduler;
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
@@ -469,6 +472,7 @@ export class IngestionService {
             feeds: [requestedFeed],
             mockEventState: payload.mockEventState,
           }),
+          { backgroundJobId: context.jobId },
         );
       } catch (error) {
         if (error instanceof SyncRunOutcomeUnrecordedError) {

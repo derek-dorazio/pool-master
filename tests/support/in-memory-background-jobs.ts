@@ -30,9 +30,14 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
   }
 
   function enqueueOne(request: BackgroundJobRequest): boolean {
-    if (request.dedupeKey !== undefined && rows.some((row) => row.dedupeKey === request.dedupeKey)) return false;
+    return enqueueReturningOne(request).written;
+  }
+
+  function enqueueReturningOne(request: BackgroundJobRequest): { written: boolean; job: InMemoryBackgroundJobs['rows'][number] } {
+    const waiting = request.dedupeKey === undefined ? undefined : rows.find((row) => row.dedupeKey === request.dedupeKey);
+    if (waiting) return { written: false, job: waiting };
     const createdAt = now();
-    rows.push({
+    const job: InMemoryBackgroundJobs['rows'][number] = {
       id: `job-${String(nextId++)}`,
       type: request.type,
       payload: structuredClone(request.payload),
@@ -40,9 +45,12 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       runAt: request.runAt ?? createdAt,
       attempts: 0,
       dedupeKey: request.dedupeKey,
+      ...(request.sportLeagueId !== undefined && { sportLeagueId: request.sportLeagueId }),
+      ...(request.sportEventId !== undefined && { sportEventId: request.sportEventId }),
       createdAt,
-    });
-    return true;
+    };
+    rows.push(job);
+    return { written: true, job };
   }
 
   return {
@@ -50,6 +58,7 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
     claimLimits,
     enqueue: (request) => Promise.resolve(enqueueOne(request)),
     enqueueAll: (requests) => Promise.resolve(requests.filter((request) => enqueueOne(request)).length),
+    enqueueReturning: (request) => Promise.resolve({ ...enqueueReturningOne(request).job }),
     claimDue: ({ now: at, limit, leaseUntil }) => {
       claimLimits.push(limit);
       const due = rows
@@ -62,8 +71,9 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       }
       return Promise.resolve(due.map((row) => ({ ...row })));
     },
-    markSucceeded: (claim, completedAt) =>
-      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: undefined })),
+    markSucceeded: (claim, completedAt, result) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: undefined, ...(result !== undefined && { result }) })),
+    renewLease: (claim, leaseUntil) => Promise.resolve(markClaimed(claim, { leaseUntil })),
     markRetry: (claim, { runAt, error }) =>
       Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, leaseUntil: undefined })),
     markFailed: (claim, { error, completedAt }) =>
@@ -75,6 +85,7 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       for (const row of batch) rows.splice(rows.indexOf(row), 1);
       return Promise.resolve(batch.length);
     },
+    findActivity: () => Promise.reject(new Error('Activity reads are tested against Postgres in background-jobs.integration')),
   };
 }
 

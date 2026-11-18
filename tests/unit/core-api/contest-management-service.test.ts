@@ -2292,6 +2292,7 @@ describe('ContestManagementService — a contest of several events', () => {
       expect(requests).toEqual(['contest-1', 'contest-2'].map((contestId) => ({
         type: 'ADD_RELEASED_EDITION_TO_CONTEST',
         payload: { contestId, sportEventId: PGA },
+        sportEventId: PGA,
         runAt: undefined,
         dedupeKey: `ADD_RELEASED_EDITION_TO_CONTEST:${contestId}:${PGA}`,
       })));

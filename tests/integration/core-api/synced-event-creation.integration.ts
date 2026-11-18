@@ -1,16 +1,17 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
-import { PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSportRepository } from '../../../packages/core-api/src/adapters';
+import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
 import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
-import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { heldHere } from '../../support/job-locks';
 
-// A synced sport league's events created by the daily sweep (ADR 0011, #1725) against real
-// Postgres: the leagues it reads, the events the admin's year import writes for them, and a second
-// sweep that writes nothing. The provider's tour list is the one stand-in: which provider events
+// A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
+// Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
+// them, and they write the league's events; a second sweep writes nothing. The provider's tour list is the one stand-in: which provider events
 // belong to a league's tour is EventScoreSourceService's, tested on its own.
 
 beforeAll(() => setupIntegrationTests());
@@ -47,14 +48,26 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     const league = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } });
     return [tourEvent(league.matchKeyword ?? '', eventYear, feed.shiftDays, feed.name)];
   });
-  const scheduler = new SyncedEventCreationScheduler({
+  const backgroundJobs = integrationBackgroundJobs(prisma);
+  const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
+    sports: new PrismaSportRepository(prisma),
     scoreSource: { listTourEventsForYear },
     sportEvents: createSportEventServices(prisma).sportEvents,
-    jobLock: heldHere(),
+    syncRuns: new PrismaProviderSyncRunRepository(prisma),
+    jobs: backgroundJobs.queue,
     now: () => NOW,
   });
-  return { scheduler, listTourEventsForYear };
+  const runner = backgroundJobs.runWith({ SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context) });
+  const sweeper = new SyncedEventCreationScheduler({ leagueEventsSync, jobLock: heldHere() });
+  /** One sweep, and the jobs it queued run to the end. */
+  const scheduler = {
+    async runSweep(): Promise<void> {
+      await sweeper.runSweep();
+      await runner.drain();
+    },
+  };
+  return { scheduler, listTourEventsForYear, leagueEventsSync, runner };
 }
 
 describe('Synced event creation (ADR 0011)', () => {

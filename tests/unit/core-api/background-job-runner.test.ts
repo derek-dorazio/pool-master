@@ -3,9 +3,11 @@ import {
   BACKGROUND_JOB_LEASE_MS,
   BackgroundJobQueue,
   BackgroundJobRunner,
+  PermanentBackgroundJobError,
   readBackgroundJobPollMs,
   type BackgroundJobContext,
   type BackgroundJobHandlers,
+  type BackgroundJobOutcome,
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
@@ -34,7 +36,7 @@ function clock() {
 }
 
 function setup(options: {
-  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<void>;
+  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
   concurrency?: number;
 } = {}) {
   const time = clock();
@@ -71,6 +73,75 @@ describe('background job runner (#1440)', () => {
     expect(handler).toHaveBeenCalledWith(syncPayload(), expect.objectContaining({ jobId: job.id, attempt: 1 }));
     expect(job).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 1, completedAt: time.now() });
     expect(job.leaseUntil).toBeUndefined();
+  });
+
+  it('lets a long handler renew its lease to a full lease from now, so no other task claims it mid-run (#1819)', async () => {
+    let leaseAfterRenewal: Date | undefined;
+    let renewed: boolean | undefined;
+    const { jobs, runner, queue, time } = setup({
+      handler: async (_payload, context) => {
+        time.advance(4 * MINUTE);
+        renewed = await context.renewLease();
+        leaseAfterRenewal = jobs.rows[0].leaseUntil;
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(renewed).toBe(true);
+    expect(leaseAfterRenewal).toEqual(new Date(START + 4 * MINUTE + BACKGROUND_JOB_LEASE_MS));
+  });
+
+  it('answers false to a renewal once another task has claimed the job, and writes no lease', async () => {
+    let renewed: boolean | undefined;
+    let leaseBefore: Date | undefined;
+    let leaseAfter: Date | undefined;
+    const { jobs, runner, queue, time } = setup({
+      handler: async (_payload, context) => {
+        jobs.rows[0].attempts += 1;
+        leaseBefore = jobs.rows[0].leaseUntil;
+        time.advance(MINUTE);
+        renewed = await context.renewLease();
+        leaseAfter = jobs.rows[0].leaseUntil;
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(renewed).toBe(false);
+    expect(leaseAfter).toEqual(leaseBefore);
+  });
+
+  it('keeps what a handler reports it did on the SUCCEEDED job, for Activity to show (#1819)', async () => {
+    const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ created: 2, updated: 1 }) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, result: { created: 2, updated: 1 } });
+  });
+
+  it('keeps no result on a job whose handler reports nothing', async () => {
+    const { jobs, runner, queue } = setup();
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs).result).toBeUndefined();
+  });
+
+  it('marks a job whose handler throws a permanent failure FAILED on that try, without retrying it, and logs an error (#1819)', async () => {
+    const { jobs, runner, queue, logger, handler } = setup({ handler: () => Promise.reject(new PermanentBackgroundJobError('PROVIDER_LEAGUE_REFUSED: not in the plan')) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1 });
+    expect(only(jobs).lastError).toContain('PROVIDER_LEAGUE_REFUSED');
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.failed' }), expect.any(String));
   });
 
   it('leaves a job queued for later untouched until its run time comes', async () => {

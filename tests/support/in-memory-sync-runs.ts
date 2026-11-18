@@ -48,6 +48,7 @@ export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgrou
         payload: update.payload,
         ...(update.startedAt !== undefined && { startedAt: update.startedAt }),
         ...(update.completedAt !== undefined && { completedAt: update.completedAt }),
+        ...(update.backgroundJobId !== undefined && { backgroundJobId: update.backgroundJobId }),
       });
       return Promise.resolve();
     }),
@@ -58,6 +59,8 @@ export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgrou
     }),
     findManyByIds: mockFn<ProviderSyncRunRepository['findManyByIds']>((ids) =>
       Promise.resolve(rows.filter((row) => ids.includes(row.id)).map((run) => ({ ...run })))),
+    findByBackgroundJobIds: mockFn<ProviderSyncRunRepository['findByBackgroundJobIds']>((jobIds) =>
+      Promise.resolve(rows.filter((row) => row.backgroundJobId !== null && jobIds.includes(row.backgroundJobId)).map((run) => ({ ...run })))),
     clearDetailsBatchSubmittedBefore: mockFn<ProviderSyncRunRepository['clearDetailsBatchSubmittedBefore']>(() => Promise.resolve(0)),
     deleteBatchSubmittedBefore: mockFn<ProviderSyncRunRepository['deleteBatchSubmittedBefore']>(() => Promise.resolve(0)),
   };

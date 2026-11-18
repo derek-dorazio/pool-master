@@ -35,6 +35,7 @@ describe('JobLeaderboardRebuilds', () => {
     expect(rebuild.jobs).toEqual([{
       type: BackgroundJobType.REBUILD_LEADERBOARDS,
       payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' },
+      sportEventId: 'event-1',
       dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:EVENT:event-1`,
     }]);
     expect(waiting(jobs)).toEqual([]);

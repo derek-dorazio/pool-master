@@ -600,6 +600,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
             }),
       },
       select: {
+        id: true,
         sport: true,
         providerId: true,
         externalId: true,
@@ -609,6 +610,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       },
     });
     return rows.map((row) => ({
+      sportEventId: row.id,
       sport: row.sport,
       providerId: row.providerId,
       externalId: row.externalId,

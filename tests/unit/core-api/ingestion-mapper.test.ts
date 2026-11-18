@@ -3,6 +3,7 @@
  * (`submitEventSync` since #205) and the events module's `refreshEventParticipants` share one
  * ProviderManualSyncSubmissionResult -> DTO transform.
  */
+import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import {
   toProviderEventDto,
   toProviderManualSyncSubmissionResponse,
@@ -21,6 +22,7 @@ function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
     providerId: 'mock-contest-feed',
     sport: Sport.GOLF,
     eventId: 'event-1',
+    ...SCHEDULED_SCORES_RUN,
     status: ProviderSyncRunStatus.SUBMITTED,
     startedAt: null,
     completedAt: null,
@@ -37,6 +39,11 @@ describe('toProviderSyncRunDto', () => {
       providerId: 'mock-contest-feed',
       sport: 'GOLF',
       eventId: 'event-1',
+      kind: 'SCORES',
+      trigger: 'SCHEDULE',
+      sportLeagueId: null,
+      sportEventId: null,
+      backgroundJobId: null,
       status: 'SUBMITTED',
       startedAt: null,
       completedAt: null,

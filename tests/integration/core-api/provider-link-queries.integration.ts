@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaProviderSyncRunRepository,
@@ -39,6 +40,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
       label: string,
       overrides: { providerId?: string; sport?: Sport; status?: ProviderSyncRunStatus; createdAt: Date; startedAt: Date | null },
     ) => repo.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: overrides.providerId ?? 'feed-a',
       sport: overrides.sport ?? Sport.GOLF,
       eventId: label,
@@ -80,6 +82,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
 describe('ProviderSyncRunRepository details (#1174)', () => {
   const repo = () => new PrismaProviderSyncRunRepository(getAppPrisma());
   const submitted = () => repo().create({
+    ...SCHEDULED_SCORES_RUN,
     providerId: 'feed-a',
     sport: Sport.GOLF,
     eventId: 'details-event',

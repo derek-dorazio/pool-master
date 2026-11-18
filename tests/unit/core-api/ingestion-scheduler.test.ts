@@ -5,6 +5,7 @@
  * Covers ingestion jobs, pollLiveScores, runEventSync, scheduled routing, start/stop lifecycle.
  */
 
+import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { expect } from '@jest/globals';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import { IngestionScheduler, LIVE_SCORE_SWEEP_TICK_MS } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -741,6 +742,7 @@ describe('IngestionScheduler', () => {
         providerId: 'mock-provider',
         sport: 'GOLF' as Sport,
         eventId: 'live-event',
+        ...SCHEDULED_SCORES_RUN,
         status: 'SUBMITTED' as const,
         startedAt: null,
         completedAt: null,
@@ -1500,6 +1502,8 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
       providerId: 'mock-provider',
       sport: Sport.GOLF,
       eventId: 'live-event',
+      ...SCHEDULED_SCORES_RUN,
+      trigger: 'WEBHOOK' as const,
       status: 'SUBMITTED' as const,
       startedAt: null,
       completedAt: null,

@@ -2,7 +2,13 @@
  * The background job table (#1439): durable work a request hands off, claimed by any server task.
  */
 
-import type { BackgroundJob, BackgroundJobRequest, BackgroundJobStatus } from '../domain';
+import type {
+  BackgroundJob,
+  BackgroundJobActivityFilter,
+  BackgroundJobRequest,
+  BackgroundJobResult,
+  BackgroundJobStatus,
+} from '../domain';
 
 /** One claim of a job: the job and the attempt the claim counted. */
 export type BackgroundJobClaim = Pick<BackgroundJob, 'id' | 'attempts'>;
@@ -17,6 +23,11 @@ export interface BackgroundJobRepository {
   /** Queues several jobs in one write, each unless a waiting job holds its dedupe key; resolves to how many were written. */
   enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number>;
   /**
+   * Queues one job and answers it, for a caller that shows the job it queued (an admin's Sync
+   * now, #1819). When a job waiting for its first try holds the dedupe key, answers that job.
+   */
+  enqueueReturning(request: BackgroundJobRequest): Promise<BackgroundJob>;
+  /**
    * Claims up to `limit` due jobs, earliest due first: queued ones whose run time has come, and
    * running ones whose lease ended (their task stopped mid-run). Each becomes RUNNING with one
    * more attempt, leased until `leaseUntil`, and loses its dedupe key for good (a retry has none). Rows another task holds
@@ -28,8 +39,13 @@ export interface BackgroundJobRepository {
    * RUNNING on that attempt, and resolves to whether it did. A try that outran its lease was
    * claimed again elsewhere, so its late mark writes nothing over the newer attempt's.
    */
-  /** SUCCEEDED at `completedAt`. */
-  markSucceeded(claim: BackgroundJobClaim, completedAt: Date): Promise<boolean>;
+  /** SUCCEEDED at `completedAt`, with what its handler reported it did, if anything (#1819). */
+  markSucceeded(claim: BackgroundJobClaim, completedAt: Date, result?: BackgroundJobResult): Promise<boolean>;
+  /**
+   * Holds a long try's claim until `leaseUntil` (#1819), so no other task claims the job while
+   * it is still working; false when the claim is no longer this try's.
+   */
+  renewLease(claim: BackgroundJobClaim, leaseUntil: Date): Promise<boolean>;
   /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed. */
   markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean>;
   /** FAILED for good at `completedAt`. */
@@ -43,4 +59,9 @@ export interface BackgroundJobRepository {
     cutoff: Date,
     limit: number,
   ): Promise<number>;
+  /**
+   * Activity (#1819): the jobs created inside the filter's window that match it, newest first,
+   * in a fixed number of reads however many there are. Nothing pages it.
+   */
+  findActivity(filter: BackgroundJobActivityFilter): Promise<BackgroundJob[]>;
 }

@@ -8,7 +8,7 @@
 
 import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { ProviderSyncRunLedger, type FeedRunType } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type {
   IngestionFeedType,
@@ -51,7 +51,7 @@ function createLedgerStore() {
       if (update.details) details.set(id, update.details);
     }),
     findAll: jest.fn(),
-    findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(),
+    findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), findByBackgroundJobIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(),
   };
 
   return {
@@ -149,7 +149,7 @@ function stripAllowedSourceDifferences(payload: unknown): StoredSyncRun {
 
 async function runAndReadPayload(input: {
   normalizedRequest: NormalizedSyncRequest;
-  runType: string;
+  runType: FeedRunType;
   job: IngestionJobRecord;
 }): Promise<unknown> {
   const { ledger, rowFor, detailsFor } = createLedgerStore();

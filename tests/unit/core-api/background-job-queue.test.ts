@@ -1,4 +1,4 @@
-import { BackgroundJobStatus, BackgroundJobType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, Sport, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import {
   BackgroundJobQueue,
   InvalidBackgroundJobPayloadError,
@@ -93,5 +93,37 @@ describe('jobs a write carries (#1466)', () => {
   it('carries no job, and its wake does nothing, for a write that needs none', () => {
     expect(NO_JOBS_FOR_WRITE.jobs).toEqual([]);
     expect(() => { NO_JOBS_FOR_WRITE.queued(); }).not.toThrow();
+  });
+
+  it('scopes each job to the event or sport league its payload names, so Activity can filter on them (#1819)', () => {
+    const { queue } = setup();
+    const sportEventId = '00000000-0000-4000-8000-0000000000e1';
+    const sportLeagueId = '00000000-0000-4000-8000-0000000000a1';
+    const scopeOf = (request: BackgroundJobRequest) => ({ sportEventId: request.sportEventId, sportLeagueId: request.sportLeagueId });
+    const onEvent = { sportEventId, sportLeagueId: undefined };
+    const onNothing = { sportEventId: undefined, sportLeagueId: undefined };
+
+    expect(scopeOf(queue.request(BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS, { sportEventId, completedAt: '2026-11-07T12:00:00.000Z' }))).toEqual(onEvent);
+    expect(scopeOf(queue.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId, eventYears: [2026], trigger: 'SCHEDULE' })))
+      .toEqual({ sportEventId: undefined, sportLeagueId });
+    expect(scopeOf(queue.request(BackgroundJobType.REBUILD_LEADERBOARDS, { subject: 'EVENT', id: sportEventId }))).toEqual(onEvent);
+    // A contest's rebuild or results email may span several events, so it names none.
+    expect(scopeOf(queue.request(BackgroundJobType.REBUILD_LEADERBOARDS, { subject: 'CONTEST', id: 'contest-1' }))).toEqual(onNothing);
+    expect(scopeOf(queue.request(BackgroundJobType.CONTEST_SETTLED_EMAILS, { contestId: 'contest-1' }))).toEqual(onNothing);
+    // An event sync names PoolMaster's event when the caller knew it, and none otherwise.
+    expect(scopeOf(queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { ...PAYLOAD, sportEventId }))).toEqual(onEvent);
+    expect(scopeOf(queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD))).toEqual(onNothing);
+  });
+
+  it('answers the job it queued, or the waiting job holding the same dedupe key, and wakes the runner either way (#1819)', async () => {
+    const { jobs, queue, runner } = setup();
+
+    const first = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'one-sync' });
+    const second = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'one-sync' });
+
+    expect(second.id).toBe(first.id);
+    expect(first).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
+    expect(jobs.rows).toHaveLength(1);
+    expect(runner.wake).toHaveBeenCalledTimes(2);
   });
 });

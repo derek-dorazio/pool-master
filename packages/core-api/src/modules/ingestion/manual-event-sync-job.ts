@@ -13,6 +13,8 @@ export const ManualEventSyncJobPayloadSchema = z.object({
   /** The provider the event is linked to (#1495). */
   providerId: z.string().min(1),
   eventId: z.string().min(1),
+  /** The PoolMaster event linked to it, when known when queued (#1819): Activity's scope. */
+  sportEventId: z.string().min(1).optional(),
   mockEventState: MockEventStateSchema.optional(),
 });
 export type ManualEventSyncJobPayload = z.infer<typeof ManualEventSyncJobPayloadSchema>;
