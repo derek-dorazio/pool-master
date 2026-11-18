@@ -54,6 +54,8 @@ import { pickPreviewModule } from '../../packages/core-api/src/modules/selection
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
+import { pricingProfilesModule, tierProfilesModule } from '../../packages/core-api/src/modules/profiles/routes';
+import { createProfileServices } from '../../packages/core-api/src/modules/profiles/wiring';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
@@ -361,6 +363,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry });
+  const profiles = createProfileServices(prisma, testApp.log);
+  testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
+  testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });

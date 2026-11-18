@@ -1,6 +1,6 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunCreate, ProviderSyncRunRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncRunCreate, ProviderSyncRunRepository, SportEventRepository } from '@poolmaster/shared/db';
 import {
   IngestionJobStatus,
   ProviderSyncKind,
@@ -39,15 +39,22 @@ export class SyncRunOutcomeUnrecordedError extends Error {
 }
 
 export class ProviderSyncRunLedger {
+  /**
+   * `linkedEvents` finds the event of ours a provider event is linked to, so a run whose caller
+   * did not name its event and sport league still records them (#1847): the Sports page reads
+   * each sport league's runs by them.
+   */
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
+    private readonly linkedEvents?: Pick<SportEventRepository, 'findByProviderRef'>,
   ) {}
 
   async createSubmissions(input: SubmissionInput): Promise<ProviderSyncRun[]> {
+    const runs = submissionRuns(await this.withLinkedEvent(input));
     return Promise.all(
       // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
-      submissionRuns(input).map((run) => this.syncRuns.create(run)),
+      runs.map((run) => this.syncRuns.create(run)),
     );
   }
 
@@ -58,7 +65,15 @@ export class ProviderSyncRunLedger {
   async createSubmissionsWithJob(
     input: SubmissionInput & { job: (runs: ProviderSyncRun[]) => BackgroundJobRequest },
   ): Promise<ProviderSyncRun[]> {
-    return this.syncRuns.createWithJob(submissionRuns(input), input.job);
+    return this.syncRuns.createWithJob(submissionRuns(await this.withLinkedEvent(input)), input.job);
+  }
+
+  /** The input with the linked event and its sport league filled in, when the caller left the league out and one is linked. */
+  private async withLinkedEvent(input: SubmissionInput): Promise<SubmissionInput> {
+    if (input.sportLeagueId !== undefined || this.linkedEvents === undefined) return input;
+    const event = await this.linkedEvents.findByProviderRef(input.providerId, input.normalizedRequest.scope.eventId);
+    if (event === null) return input;
+    return { ...input, sportEventId: event.id, sportLeagueId: event.sportLeagueId };
   }
 
   /**

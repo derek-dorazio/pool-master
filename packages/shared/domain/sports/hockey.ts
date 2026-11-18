@@ -30,7 +30,7 @@ const hockeyComposite: SportComposite<HockeyStat> = {
  * The NHL and the men's tournament are 16 teams in four rounds, four tiers of four. The women's
  * tournament seeds five teams and fills three quarterfinal places from a first round, through
  * play-in places as March Madness's First Four does. The PWHL's four teams start on two tiers
- * (`SportLeague.tierCount`).
+ * (its tier profile, `SportLeague.tierProfileId`).
  */
 export const hockeySportDefinition: SportDefinition = {
   sport: Sport.HOCKEY,
@@ -39,7 +39,6 @@ export const hockeySportDefinition: SportDefinition = {
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
-  defaultTierLayout: { tierCount: 4, tierSize: 4 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).

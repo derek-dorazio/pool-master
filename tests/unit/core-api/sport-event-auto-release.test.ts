@@ -1,5 +1,6 @@
 import { expect, jest } from '@jest/globals';
 import {
+  AutoReleaseCheckOutcome,
   BackgroundJobType,
   JobErrorType,
   ReleaseAttemptOutcome,
@@ -44,7 +45,7 @@ function setup() {
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
-    tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo() }),
+    tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() }),
     bracket: new SportEventBracketService({
       sportEvents,
       sportLeagues: store.sportLeagueRepo(),
@@ -261,6 +262,58 @@ describe('SportEventService ready checks on a root admin\'s read (#1823)', () =>
     const event = await readySyncedDraft(store, sportLeague.id, -1);
 
     await expect(service.releaseEvent(event.id)).rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 409 });
+  });
+});
+
+describe('SportEventService stores each automatic release check on the event (#1847)', () => {
+  it('stores a held check with its time and the keys of the checks that failed, so the Sports page can count it', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.mappings.splice(0, 1);
+    store.contestSetupCounts.set(sportLeague.id, 0);
+
+    await service.autoReleaseEvent(event.id);
+
+    expect(store.autoReleaseChecks.get(event.id)).toEqual({
+      checkedAt: NOW,
+      outcome: AutoReleaseCheckOutcome.HELD,
+      failedChecks: [ReleaseCheckKey.FIELD_LINKED, ReleaseCheckKey.CONTEST_SETUPS_ON],
+    });
+  });
+
+  it('overwrites a held check with RELEASED and no failed checks once a later check releases the event', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.contestSetupCounts.set(sportLeague.id, 0);
+    await service.autoReleaseEvent(event.id);
+    store.contestSetupCounts.delete(sportLeague.id);
+
+    await service.autoReleaseEvent(event.id);
+
+    expect(store.autoReleaseChecks.get(event.id)).toEqual({ checkedAt: NOW, outcome: AutoReleaseCheckOutcome.RELEASED, failedChecks: [] });
+  });
+
+  it('clears a held check when a root admin releases the event by hand', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.contestSetupCounts.set(sportLeague.id, 0);
+    await service.autoReleaseEvent(event.id);
+
+    await service.releaseEvent(event.id);
+
+    expect(store.autoReleaseChecks.has(event.id)).toBe(false);
+  });
+
+  it('leaves the stored check as it was when an attempt is skipped', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.contestSetupCounts.set(sportLeague.id, 0);
+    await service.autoReleaseEvent(event.id);
+    const held = store.autoReleaseChecks.get(event.id);
+    sportLeague.autoReleaseDaysBeforeStart = null;
+
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.SKIPPED });
+    expect(store.autoReleaseChecks.get(event.id)).toBe(held);
   });
 });
 

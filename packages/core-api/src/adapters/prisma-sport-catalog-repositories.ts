@@ -48,8 +48,10 @@ import type {
   TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
+  AutoReleaseCheck,
   BackgroundJobRequest,
   EventPricingConfig,
+  EventTierConfig,
   EventSeries,
   ParticipantLeagueAffiliation,
   Sport,
@@ -61,7 +63,7 @@ import type {
   SportEventTier,
   SportLeague,
 } from '@poolmaster/shared/domain';
-import { compareByEnumOrder, EventPricingConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -137,9 +139,16 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague> {
+  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
-      data: { sportId: input.sportId, name: input.name, matchKeyword: input.matchKeyword, bracketAdvancement: input.bracketAdvancement },
+      data: {
+        sportId: input.sportId,
+        name: input.name,
+        matchKeyword: input.matchKeyword,
+        bracketAdvancement: input.bracketAdvancement,
+        tierProfileId: input.tierProfileId,
+        pricingProfileId: input.pricingProfileId,
+      },
     }));
   }
 
@@ -154,6 +163,8 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
         ...(updates.eventSyncProviderId !== undefined && { eventSyncProviderId: updates.eventSyncProviderId }),
         ...(updates.autoReleaseDaysBeforeStart !== undefined && { autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }),
+        ...(updates.tierProfileId !== undefined && { tierProfileId: updates.tierProfileId }),
+        ...(updates.pricingProfileId !== undefined && { pricingProfileId: updates.pricingProfileId }),
       },
     });
     // A sport event's read carries its sport league's settings, so those are forgotten too.
@@ -467,7 +478,9 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         sportEventId: { in: [...sportEventIds] },
         isActive: true,
-        OR: [{ valuation: null }, { valuation: { sportEventTierId: null } }],
+        // A tierless row auto-tiering left beyond a capped last tier has a source (#1844): it is
+        // out of the tiers by the league's layout, not waiting for one.
+        OR: [{ valuation: null }, { valuation: { sportEventTierId: null, tierAssignedSource: null } }],
       },
       _count: { _all: true },
     });
@@ -551,6 +564,18 @@ export class PrismaSportEventRepository implements SportEventRepository {
       if (eventSyncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
       return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, eventSyncProviderId, autoReleaseDaysBeforeStart }];
     });
+  }
+
+  async recordAutoReleaseCheck(sportEventId: string, check: AutoReleaseCheck | null): Promise<void> {
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
+      where: { id: sportEventId },
+      data: {
+        autoReleaseCheckedAt: check?.checkedAt ?? null,
+        autoReleaseOutcome: check?.outcome ?? null,
+        autoReleaseFailedChecks: check?.failedChecks ?? [],
+      },
+      select: { id: true },
+    }));
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
@@ -1065,9 +1090,11 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
           ?? await tx.sportEventTier.findUniqueOrThrow({ where: { sportEventId_tierKey: { sportEventId, tierKey: reassignTo } } })
         : null;
       const removedIds = removed.map((tier) => tier.id);
+      // A valuation left with no tier loses its source too: a tierless row with a source is one
+      // auto-tiering placed beyond a capped last tier (#1844), which release doesn't wait on.
       await tx.sportEventParticipantValuation.updateMany({
         where: { sportEventTierId: { in: removedIds } },
-        data: { sportEventTierId: target?.id ?? null, tierOrderIndex: null },
+        data: target ? { sportEventTierId: target.id, tierOrderIndex: null } : { sportEventTierId: null, tierOrderIndex: null, tierAssignedSource: null },
       });
       await tx.sportEventTier.deleteMany({ where: { id: { in: removedIds } } });
     });
@@ -1108,6 +1135,25 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
       tierOrderIndex: assignment.tierOrderIndex,
       tierAssignedSource: assignment.source,
     }))));
+  }
+
+  async assignEventTiers(input: {
+    sportEventId: string;
+    tierConfig: EventTierConfig;
+    assignments: readonly TierAssignment[];
+  }): Promise<void> {
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
+      await rewriteValuations(tx, input.assignments.map((assignment) => ({
+        sportEventParticipantId: assignment.sportEventParticipantId,
+        sportEventTierId: assignment.sportEventTierId,
+        tierOrderIndex: assignment.tierOrderIndex,
+        tierAssignedSource: assignment.source,
+      })));
+      await tx.sportEvent.update({
+        where: { id: input.sportEventId },
+        data: { tierConfig: input.tierConfig },
+      });
+    }));
   }
 
   async assignEventPrices(input: {
@@ -1192,7 +1238,8 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
-    tierCount: row.tierCount,
+    tierProfileId: row.tierProfileId,
+    pricingProfileId: row.pricingProfileId,
     matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
@@ -1264,6 +1311,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
+    ...(row.tierConfig !== null && { tierConfig: EventTierConfigSchema.parse(row.tierConfig) }),
     ...(row.parentEventId !== null && row.parentEvent !== null && {
       parentEvent: { id: row.parentEventId, name: row.parentEvent.name, roundNumbers: row.parentRoundNumbers },
     }),

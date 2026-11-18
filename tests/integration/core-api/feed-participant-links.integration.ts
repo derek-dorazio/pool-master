@@ -21,6 +21,7 @@ import { ParticipantService } from '../../../packages/core-api/src/modules/parti
 import type { ProviderParticipant, SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
+import { leagueProfiles } from '../../support/league-profiles';
 
 const PROVIDER = 'TEST_PROVIDER_1824';
 let rootAdmin: TestUserResult;
@@ -142,7 +143,7 @@ describe('feed participants needing linking (#1824)', () => {
     const prisma = getPrisma();
     const { first, second, golfer, detail, golfId } = await twinsAndField();
     const keyword = `TOUR-1824-${randomUUID().slice(0, 8)}`;
-    const tour = await prisma.sportLeague.create({ data: { sportId: golfId, name: `Twin 1824 ${keyword}`, matchKeyword: keyword } });
+    const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golfId, name: `Twin 1824 ${keyword}`, matchKeyword: keyword } });
     // Both twins play the tour the feed names, so the name stays ambiguous within it.
     await prisma.participantLeagueAffiliation.createMany({ data: [first.id, second.id].map((participantId) => ({ participantId, sportLeagueId: tour.id })) });
     await persistence().persistEventDetailWithDiagnostics({ ...detail, participants: [{ ...golfer, metadata: { tour: keyword } }] });

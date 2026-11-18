@@ -19,6 +19,7 @@ import {
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // Sync-run history and score-source links, which only the HTTP contract tests reached before
 // (#508): which runs each filter keeps and in what order, and what a link or unlink writes.
@@ -241,7 +242,7 @@ describe('EventScoreSourceService tour reads', () => {
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    return prisma.sportLeague.create({ data: { sportId: sport.id, name: `Tour ${randomUUID()}`, matchKeyword } });
+    return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Tour ${randomUUID()}`, matchKeyword } });
   }
 
   it("lists a tour's year by the stored league's keyword, matching the provider's tour exactly and ignoring case", async () => {

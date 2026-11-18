@@ -32,6 +32,7 @@ import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } fro
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -228,7 +229,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -241,7 +242,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 
@@ -475,7 +476,7 @@ describe('SportEventTierRepository and valuations', () => {
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: after[1].id, tierOrderIndex: null })]);
   });
 
-  it('leaves a removed tier\'s valuations without a tier when no target is named', async () => {
+  it('leaves a removed tier\'s valuations without a tier or a tier source when no target is named, so release counts them untiered', async () => {
     const { tiers, valuations, field } = repos();
     const event = await createEvent();
     const [ana] = await createParticipants(['Ana']);
@@ -487,7 +488,8 @@ describe('SportEventTierRepository and valuations', () => {
 
     await tiers.replace(event.id, [TIERS[0]]);
 
-    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null })]);
+    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null, tierAssignedSource: null })]);
+    await expect(repos().events.countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 1]]));
   });
 
   it('counts the valuations in each of one event\'s tiers by reading only that event\'s valuations, not every valuation of every event', async () => {
@@ -564,6 +566,54 @@ describe('SportEventTierRepository and valuations', () => {
       sportEventTierId: tier1.id, tierAssignedSource: 'AUTO_RANKING', price: 15, priceAssignedSource: 'AUTO_ODDS',
     })]);
   });
+
+  it('tiers a field and records the tier layout on the event in one write, read back typed (#1844)', async () => {
+    const { events, tiers, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana, ben] = await createParticipants(['Ana', 'Ben']);
+    await createTierRows(tiers, event.id, TIERS);
+    await field.createMany(event.id, [{ participantId: ana.id }, { participantId: ben.id }]);
+    const [first, second] = await field.findBySportEvent(event.id);
+    const [tier1] = await tiers.findBySportEvent(event.id);
+    const tierConfig = { profileName: '1 tier of 1, capped', tierCount: 1, tierSize: 1, lastTier: 'CAPPED' as const, lastTierMax: 1 };
+
+    await valuations.assignEventTiers({
+      sportEventId: event.id,
+      tierConfig,
+      assignments: [
+        { sportEventParticipantId: first.id, sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: second.id, sportEventTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+      ],
+    });
+
+    expect((await events.findById(event.id))?.tierConfig).toEqual(tierConfig);
+    await expect(valuations.findBySportEvent(event.id)).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ sportEventParticipantId: first.id, sportEventTierId: tier1.id }),
+      expect.objectContaining({ sportEventParticipantId: second.id, sportEventTierId: null, tierAssignedSource: 'AUTO_ODDS' }),
+    ]));
+  });
+
+  it('counts an active participant with no tier as untiered, but not one auto-tiering left beyond a capped last tier, nor a withdrawn one (#1844)', async () => {
+    const { events, tiers, valuations, field } = repos();
+    const event = await createEvent();
+    const [ana, ben, cal, dee] = await createParticipants(['Ana', 'Ben', 'Cal', 'Dee']);
+    await createTierRows(tiers, event.id, TIERS);
+    await field.createMany(event.id, [
+      { participantId: ana.id },
+      { participantId: ben.id },
+      { participantId: cal.id },
+      { participantId: dee.id, isActive: false },
+    ]);
+    const rows = await field.findBySportEvent(event.id);
+    const entryOf = (participantId: string) => expectDefined(rows.find((row) => row.participantId === participantId)).id;
+    const [tier1] = await tiers.findBySportEvent(event.id);
+    await valuations.assignTiers([
+      { sportEventParticipantId: entryOf(ana.id), sportEventTierId: tier1.id, tierOrderIndex: 1, source: 'AUTO_ODDS' },
+      { sportEventParticipantId: entryOf(ben.id), sportEventTierId: null, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+    ]);
+
+    await expect(events.countUntieredActiveParticipants([event.id])).resolves.toEqual(new Map([[event.id, 1]]));
+  });
 });
 
 // #787: a sport league's first squares round reads onto each of its events, as its period
@@ -572,7 +622,7 @@ describe('The sport league\'s first squares round on the event read', () => {
   it('reads the league\'s squaresFromRound onto its event, and leaves it unset for a league without one', async () => {
     const prisma = getPrisma();
     const { events } = repos();
-    const league = await prisma.sportLeague.create({ data: { sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Squares round series ${randomUUID()}` } });
     try {
       const withRound = await createSportEventRow(events, {
@@ -799,7 +849,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
   /** A golf sport league of its own, synced by `providerId` unless null, with this release window. */
   async function syncedLeague(providerId: string | null, autoReleaseDaysBeforeStart: number | null = 7) {
     return getPrisma().sportLeague.create({
-      data: { sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, matchKeyword: 'AUTO', eventSyncProviderId: providerId, autoReleaseDaysBeforeStart },
+      data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, matchKeyword: 'AUTO', eventSyncProviderId: providerId, autoReleaseDaysBeforeStart },
     });
   }
 

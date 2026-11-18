@@ -106,14 +106,6 @@ export interface SportShootout {
   label: string;
 }
 
-/** How a new event's pick tiers are laid out before an admin edits them. */
-export interface SportTierLayout {
-  /** How many tiers a new event gets. */
-  tierCount: number;
-  /** How many participants auto-assignment places in each tier; the last tier takes the rest. */
-  tierSize: number;
-}
-
 /**
  * Everything that differs between sports and is data rather than behaviour. Behaviour that
  * differs (storing and scoring results) belongs to the sport's scoring family, never to a
@@ -129,11 +121,6 @@ export interface SportDefinition {
   tournamentFormat: TournamentFormat;
   /** How many rounds an admin-authored event gets when the admin gives no count. */
   defaultRounds: number;
-  /**
-   * The tiers a new event gets, and the tier size auto-assignment uses when none is sent and
-   * the event still has this many tiers (any other count is spread evenly).
-   */
-  defaultTierLayout: SportTierLayout;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
   /**

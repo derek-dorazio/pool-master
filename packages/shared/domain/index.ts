@@ -5,6 +5,7 @@ export * from './contest-validity';
 export * from './tiered-roster';
 export * from './contest-events';
 export * from './budget-pricing';
+export * from './tier-profiles';
 export * from './contest-rules';
 export * from './contest-rules-text';
 export * from './sport-event-lifecycle';
@@ -27,6 +28,7 @@ export * from './event-pages';
 export * from './time-zones';
 export * from './brand';
 export * from './release-checks';
+export * from './sport-league-overview';
 export { assertNever, type AssertTrue } from './assert-never';
 export {
   compareScores,

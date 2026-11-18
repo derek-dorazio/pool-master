@@ -188,7 +188,7 @@ export class IngestionService {
     this.jobs = deps.jobs;
     this.logger = deps.logger;
     this.syncOrchestrator = deps.syncOrchestrator ?? new SyncOrchestrator();
-    this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger);
+    this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger, deps.sportEvents);
   }
 
   private async getConfiguredSportsForProvider(provider: SportDataProvider): Promise<Sport[]> {

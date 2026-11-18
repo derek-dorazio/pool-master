@@ -41,3 +41,26 @@ export async function expectOk(pending: ReturnType<APIRequestContext['get']>, ac
   }
   return response;
 }
+
+/**
+ * The tier and pricing profile ids a sport league a spec creates through the API names: the tier
+ * profile its sport's leagues name, by name, and Standard pricing.
+ */
+export async function sportLeagueProfileIds(
+  api: APIRequestContext,
+  headers: AuthHeaders,
+  tierProfileName: string,
+): Promise<{ tierProfileId: string; pricingProfileId: string }> {
+  const [tierList, pricingList] = await Promise.all([
+    expectOk(api.get('/api/v1/tier-profiles/', { headers }), 'list tier profiles'),
+    expectOk(api.get('/api/v1/pricing-profiles/', { headers }), 'list pricing profiles'),
+  ]);
+  const { tierProfiles } = (await tierList.json()) as { tierProfiles: Array<{ id: string; name: string }> };
+  const { pricingProfiles } = (await pricingList.json()) as { pricingProfiles: Array<{ id: string; name: string }> };
+  const tierProfileId = tierProfiles.find((profile) => profile.name === tierProfileName)?.id;
+  const pricingProfileId = pricingProfiles.find((profile) => profile.name === 'Standard')?.id;
+  if (!tierProfileId || !pricingProfileId) {
+    throw new Error(`the "${tierProfileName}" tier profile or the Standard pricing profile is missing`);
+  }
+  return { tierProfileId, pricingProfileId };
+}

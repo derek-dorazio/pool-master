@@ -30,6 +30,7 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
+  AutoReleaseCheckOutcome,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
@@ -605,6 +606,8 @@ export class SportEventService {
       );
     }
     await this.release(sportEventId);
+    // The admin's judgement replaces the automatic one: no stored hold outlives the release.
+    await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, null);
     return this.requireAdminSummary(sportEventId);
   }
 
@@ -612,8 +615,10 @@ export class SportEventService {
    * One automatic release attempt (#1823), the RELEASE_SPORT_EVENT job's handler: the event is
    * judged again as it stands now. Every ready check passing releases it through the same path as
    * the manual button; any failing holds it as a draft for the next sweep. Either way the result
-   * carries every check and its value. An event that has since been released, stopped being
-   * synced, or left its league's window is skipped.
+   * carries every check and its value, and the event keeps the outcome and the failed checks as
+   * its latest check (#1847), in place of the one before. An event that has since been released,
+   * stopped being synced, or left its league's window is skipped, and its stored check is left as
+   * it was.
    */
   async autoReleaseEvent(sportEventId: string): Promise<ReleaseAttemptResult> {
     const skipReason = await this.autoReleaseSkipReason(await this.requireEvent(sportEventId));
@@ -623,14 +628,18 @@ export class SportEventService {
     }
     const checks = await this.releaseChecksFor(await this.requireAdminSummary(sportEventId));
     const failed = failedReleaseChecks(checks);
+    const checkedAt = this.now();
     if (failed.length > 0) {
+      const failedChecks = failed.map((check) => check.key);
+      await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, { checkedAt, outcome: AutoReleaseCheckOutcome.HELD, failedChecks });
       this.deps.logger?.info(
-        { action: 'events.autoRelease.held', data: { sportEventId, failedChecks: failed.map((check) => check.key) } },
+        { action: 'events.autoRelease.held', data: { sportEventId, failedChecks } },
         'Held an automatic event release: a ready check failed',
       );
       return { outcome: ReleaseAttemptOutcome.HELD, checks };
     }
     await this.release(sportEventId);
+    await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, { checkedAt, outcome: AutoReleaseCheckOutcome.RELEASED, failedChecks: [] });
     this.deps.logger?.info({ action: 'events.autoRelease.released', data: { sportEventId } }, 'Released a sport event automatically');
     return { outcome: ReleaseAttemptOutcome.RELEASED, checks };
   }
@@ -800,11 +809,7 @@ export class SportEventService {
       throw error;
     }
     await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
-    const tiersByEvent = await this.deps.tiers.createDefaultTiers(events.map((event) => ({
-      sportEventId: event.id,
-      definition: eventSportDefinition(event),
-      leagueTierCount: sportLeague.tierCount,
-    })));
+    const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
     return events.map((event): SportEventAdminSummary => {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {

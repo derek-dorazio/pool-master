@@ -26,6 +26,7 @@ import type {
 import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { expectDefined } from '../../support/expect-defined';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -481,7 +482,7 @@ describe('Contest management integration', () => {
   it("refuses a contest from another sport league's own template with 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH, and lists that template only for its league", async () => {
     const prisma = getPrisma();
     const otherLeague = await prisma.sportLeague.create({
-      data: { sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
+      data: { ...(await leagueProfiles(prisma)), sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
     });
     const leagueTemplate = await prisma.contestConfigTemplate.create({
       data: {

@@ -123,8 +123,9 @@ rank, by the first value every golfer has; the dialog says which), ten golfers a
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
 10/10/10/10/10/30. If you add or delete tiers first, auto-assign instead spreads the field
 evenly over them from the top, larger tiers first: the same 80 golfers on five tiers come out
-16/16/16/16/16. A sport league can start its events on its own tier count instead of the
-sport's (the College Football Playoff: six tiers, so its 12 teams come out two to a tier). A
+16/16/16/16/16. The layout is the sport league's tier profile (#1844), so another league can
+start its events on its own (the College Football Playoff's "6 tiers of 2": its 12 teams come
+out two to a tier). A
 tier-pick contest's configuration is checked against this tier count.
 
 ## 6. Release it for contests

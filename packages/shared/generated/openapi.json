@@ -1190,130 +1190,6 @@
         "additionalProperties": false,
         "description": "Whether and how system email is sent."
       },
-      "BudgetPricingProfile": {
-        "type": "object",
-        "properties": {
-          "salaryCap": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10000000,
-            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-          },
-          "unit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10000000,
-            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-          },
-          "topSharePercent": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 100,
-            "description": "The best seed's price, as a percentage of the salary cap."
-          },
-          "floorSharePercent": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 100,
-            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-          },
-          "steepness": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 10,
-            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile's name, such as \"Standard\".",
-            "x-transform": [
-              "trim"
-            ]
-          }
-        },
-        "required": [
-          "salaryCap",
-          "unit",
-          "topSharePercent",
-          "floorSharePercent",
-          "steepness",
-          "name"
-        ],
-        "additionalProperties": false,
-        "description": "A named set of budget pricing values."
-      },
-      "BudgetPricingConfig": {
-        "type": "object",
-        "properties": {
-          "profiles": {
-            "minItems": 1,
-            "maxItems": 10,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "salaryCap": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 10000000,
-                  "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                },
-                "unit": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 10000000,
-                  "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                },
-                "topSharePercent": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 100,
-                  "description": "The best seed's price, as a percentage of the salary cap."
-                },
-                "floorSharePercent": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 100,
-                  "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                },
-                "steepness": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 10,
-                  "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                },
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 50,
-                  "description": "The profile's name, such as \"Standard\".",
-                  "x-transform": [
-                    "trim"
-                  ]
-                }
-              },
-              "required": [
-                "salaryCap",
-                "unit",
-                "topSharePercent",
-                "floorSharePercent",
-                "steepness",
-                "name"
-              ],
-              "additionalProperties": false,
-              "description": "A named set of budget pricing values."
-            },
-            "description": "The pricing profiles, the default first. Names are unique."
-          }
-        },
-        "required": [
-          "profiles"
-        ],
-        "additionalProperties": false,
-        "description": "The named sets of values an event's field is priced with for budget contests."
-      },
       "PlanCapRow": {
         "type": "object",
         "properties": {
@@ -18986,6 +18862,16 @@
             "minimum": 1,
             "maximum": 30
           },
+          "tierProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+          },
+          "pricingProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
+          },
           "bracketAdvancement": {
             "type": "string",
             "enum": [
@@ -19126,6 +19012,8 @@
           "isActive",
           "eventSyncProviderId",
           "autoReleaseDaysBeforeStart",
+          "tierProfileId",
+          "pricingProfileId",
           "bracketAdvancement",
           "roundNames",
           "matchPeriodLayout",
@@ -19247,6 +19135,16 @@
                   ],
                   "minimum": 1,
                   "maximum": 30
+                },
+                "tierProfileId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+                },
+                "pricingProfileId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
                 },
                 "bracketAdvancement": {
                   "type": "string",
@@ -19388,6 +19286,8 @@
                 "isActive",
                 "eventSyncProviderId",
                 "autoReleaseDaysBeforeStart",
+                "tierProfileId",
+                "pricingProfileId",
                 "bracketAdvancement",
                 "roundNames",
                 "matchPeriodLayout",
@@ -19488,6 +19388,16 @@
                 ],
                 "minimum": 1,
                 "maximum": 30
+              },
+              "tierProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+              },
+              "pricingProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
               },
               "bracketAdvancement": {
                 "type": "string",
@@ -19629,6 +19539,8 @@
               "isActive",
               "eventSyncProviderId",
               "autoReleaseDaysBeforeStart",
+              "tierProfileId",
+              "pricingProfileId",
               "bracketAdvancement",
               "roundNames",
               "matchPeriodLayout",
@@ -19691,11 +19603,23 @@
               "FIXED",
               "RESEED_BY_SEED"
             ]
+          },
+          "tierProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tier profile the sport league names. 404 TIER_PROFILE_NOT_FOUND for one that does not exist."
+          },
+          "pricingProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The pricing profile the sport league names. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist."
           }
         },
         "required": [
           "sport",
-          "name"
+          "name",
+          "tierProfileId",
+          "pricingProfileId"
         ],
         "additionalProperties": false,
         "description": "A new sport league."
@@ -19740,6 +19664,16 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "tierProfileId": {
+            "description": "Names another tier profile. 404 TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.",
+            "type": "string",
+            "format": "uuid"
+          },
+          "pricingProfileId": {
+            "description": "Names another pricing profile. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.",
+            "type": "string",
+            "format": "uuid"
+          },
           "bracketAdvancement": {
             "description": "RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.",
             "type": "string",
@@ -19751,6 +19685,628 @@
         },
         "additionalProperties": false,
         "description": "Changes to a sport league; omitted fields are left alone."
+      },
+      "SportLeagueOverviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF",
+              "HORSE_RACING",
+              "AUTO_RACING",
+              "CYCLING",
+              "RUNNING",
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL",
+              "HOCKEY",
+              "BASEBALL",
+              "SOCCER",
+              "TENNIS"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentSportLeagueId": {
+            "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REAL",
+              "CLUTCH_CARD"
+            ],
+            "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
+          },
+          "providerId": {
+            "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "On: offered to customers and synced. Off: hidden and not synced."
+          },
+          "syncHealth": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "NOT_RUN_YET",
+              "OFF"
+            ],
+            "description": "From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SYNC"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many of its syncs' latest runs failed."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, or the event was last checked."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "syncKind": {
+                            "type": "string",
+                            "enum": [
+                              "EVENTS",
+                              "FIELD",
+                              "SCORES"
+                            ],
+                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "syncKind"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync whose latest run failed; its target is that run."
+                      },
+                      "description": "Event list, then field, then scores."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Syncs whose latest run failed."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASE"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many draft events the latest automatic release check held."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, or the event was last checked."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "failedChecks": {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "NOT_STARTED",
+                                "ROUNDS_SCHEDULED",
+                                "FIELD_LOADED",
+                                "FIELD_LINKED",
+                                "TIERS_ASSIGNED",
+                                "TIERS_FILLED",
+                                "PRICES_ASSIGNED",
+                                "BRACKET_COMPLETE",
+                                "CONTEST_SETUPS_ON"
+                              ]
+                            },
+                            "description": "The ready checks that held it, in check order."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "failedChecks"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A draft event its latest automatic release check held; its target is the event."
+                      },
+                      "description": "By event name."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Draft events held by a failed ready check."
+                }
+              ]
+            },
+            "description": "Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention."
+          },
+          "season": {
+            "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The start of its first event."
+              },
+              "end": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The end of its last event, or its start when it has no end."
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "nextEventStartsAt": {
+            "description": "The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "eventCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Its events, past and upcoming, cancelled ones included."
+          }
+        },
+        "required": [
+          "id",
+          "sport",
+          "name",
+          "parentSportLeagueId",
+          "kind",
+          "providerId",
+          "isActive",
+          "syncHealth",
+          "issues",
+          "season",
+          "nextEventStartsAt",
+          "eventCount"
+        ],
+        "additionalProperties": false,
+        "description": "One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts."
+      },
+      "SportLeagueOverviewListResponse": {
+        "type": "object",
+        "properties": {
+          "sportLeagues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sport": {
+                  "type": "string",
+                  "enum": [
+                    "GOLF",
+                    "HORSE_RACING",
+                    "AUTO_RACING",
+                    "CYCLING",
+                    "RUNNING",
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL",
+                    "HOCKEY",
+                    "BASEBALL",
+                    "SOCCER",
+                    "TENNIS"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "parentSportLeagueId": {
+                  "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "REAL",
+                    "CLUTCH_CARD"
+                  ],
+                  "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
+                },
+                "providerId": {
+                  "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "On: offered to customers and synced. Off: hidden and not synced."
+                },
+                "syncHealth": {
+                  "type": "string",
+                  "enum": [
+                    "OK",
+                    "ERROR",
+                    "NOT_RUN_YET",
+                    "OFF"
+                  ],
+                  "description": "From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed."
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SYNC"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many of its syncs' latest runs failed."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                                },
+                                "occurredAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the run was written, or the event was last checked."
+                                },
+                                "target": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "SYNC_RUN",
+                                        "SPORT_EVENT"
+                                      ],
+                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "description": "The sync run's or event's id."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "What an issue item links to."
+                                },
+                                "syncKind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EVENTS",
+                                    "FIELD",
+                                    "SCORES"
+                                  ],
+                                  "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "occurredAt",
+                                "target",
+                                "syncKind"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync whose latest run failed; its target is that run."
+                            },
+                            "description": "Event list, then field, then scores."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Syncs whose latest run failed."
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "RELEASE"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many draft events the latest automatic release check held."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                                },
+                                "occurredAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the run was written, or the event was last checked."
+                                },
+                                "target": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "SYNC_RUN",
+                                        "SPORT_EVENT"
+                                      ],
+                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "description": "The sync run's or event's id."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "What an issue item links to."
+                                },
+                                "failedChecks": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NOT_STARTED",
+                                      "ROUNDS_SCHEDULED",
+                                      "FIELD_LOADED",
+                                      "FIELD_LINKED",
+                                      "TIERS_ASSIGNED",
+                                      "TIERS_FILLED",
+                                      "PRICES_ASSIGNED",
+                                      "BRACKET_COMPLETE",
+                                      "CONTEST_SETUPS_ON"
+                                    ]
+                                  },
+                                  "description": "The ready checks that held it, in check order."
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "occurredAt",
+                                "target",
+                                "failedChecks"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A draft event its latest automatic release check held; its target is the event."
+                            },
+                            "description": "By event name."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Draft events held by a failed ready check."
+                      }
+                    ]
+                  },
+                  "description": "Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention."
+                },
+                "season": {
+                  "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The start of its first event."
+                    },
+                    "end": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The end of its last event, or its start when it has no end."
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                "nextEventStartsAt": {
+                  "description": "The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "eventCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Its events, past and upcoming, cancelled ones included."
+                }
+              },
+              "required": [
+                "id",
+                "sport",
+                "name",
+                "parentSportLeagueId",
+                "kind",
+                "providerId",
+                "isActive",
+                "syncHealth",
+                "issues",
+                "season",
+                "nextEventStartsAt",
+                "eventCount"
+              ],
+              "additionalProperties": false,
+              "description": "One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts."
+            },
+            "description": "Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league."
+          }
+        },
+        "required": [
+          "sportLeagues"
+        ],
+        "additionalProperties": false,
+        "description": "The root admin's Sports page."
       },
       "ParticipantLeagueAffiliationDto": {
         "type": "object",
@@ -21049,6 +21605,61 @@
             ],
             "additionalProperties": false
           },
+          "tierLayout": {
+            "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "tierCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "How many tiers a new event starts with."
+              },
+              "tierSize": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "description": "How many participants auto-tiering puts in each tier before the last."
+              },
+              "lastTier": {
+                "type": "string",
+                "enum": [
+                  "ALL_REMAINING",
+                  "CAPPED"
+                ],
+                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+              },
+              "lastTierMax": {
+                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 500
+              },
+              "profileName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The tier profile the layout came from.",
+                "x-transform": [
+                  "trim"
+                ]
+              }
+            },
+            "required": [
+              "tierCount",
+              "tierSize",
+              "lastTier",
+              "lastTierMax",
+              "profileName"
+            ],
+            "additionalProperties": false
+          },
           "readinessStatus": {
             "type": "string",
             "enum": [
@@ -21530,6 +22141,7 @@
           "participantCount",
           "loadedParticipantCount",
           "pricing",
+          "tierLayout",
           "readinessStatus",
           "readinessReasons",
           "contestEligible",
@@ -21774,6 +22386,61 @@
                     "topSharePercent",
                     "floorSharePercent",
                     "steepness",
+                    "profileName"
+                  ],
+                  "additionalProperties": false
+                },
+                "tierLayout": {
+                  "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "tierCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "How many tiers a new event starts with."
+                    },
+                    "tierSize": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 500,
+                      "description": "How many participants auto-tiering puts in each tier before the last."
+                    },
+                    "lastTier": {
+                      "type": "string",
+                      "enum": [
+                        "ALL_REMAINING",
+                        "CAPPED"
+                      ],
+                      "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                    },
+                    "lastTierMax": {
+                      "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 500
+                    },
+                    "profileName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The tier profile the layout came from.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "tierCount",
+                    "tierSize",
+                    "lastTier",
+                    "lastTierMax",
                     "profileName"
                   ],
                   "additionalProperties": false
@@ -22259,6 +22926,7 @@
                 "participantCount",
                 "loadedParticipantCount",
                 "pricing",
+                "tierLayout",
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
@@ -22490,6 +23158,61 @@
                   "topSharePercent",
                   "floorSharePercent",
                   "steepness",
+                  "profileName"
+                ],
+                "additionalProperties": false
+              },
+              "tierLayout": {
+                "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "tierCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "How many tiers a new event starts with."
+                  },
+                  "tierSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "description": "How many participants auto-tiering puts in each tier before the last."
+                  },
+                  "lastTier": {
+                    "type": "string",
+                    "enum": [
+                      "ALL_REMAINING",
+                      "CAPPED"
+                    ],
+                    "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                  },
+                  "lastTierMax": {
+                    "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 500
+                  },
+                  "profileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "The tier profile the layout came from.",
+                    "x-transform": [
+                      "trim"
+                    ]
+                  }
+                },
+                "required": [
+                  "tierCount",
+                  "tierSize",
+                  "lastTier",
+                  "lastTierMax",
                   "profileName"
                 ],
                 "additionalProperties": false
@@ -22975,6 +23698,7 @@
               "participantCount",
               "loadedParticipantCount",
               "pricing",
+              "tierLayout",
               "readinessStatus",
               "readinessReasons",
               "contestEligible",
@@ -23334,6 +24058,61 @@
                     "topSharePercent",
                     "floorSharePercent",
                     "steepness",
+                    "profileName"
+                  ],
+                  "additionalProperties": false
+                },
+                "tierLayout": {
+                  "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "tierCount": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20,
+                      "description": "How many tiers a new event starts with."
+                    },
+                    "tierSize": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 500,
+                      "description": "How many participants auto-tiering puts in each tier before the last."
+                    },
+                    "lastTier": {
+                      "type": "string",
+                      "enum": [
+                        "ALL_REMAINING",
+                        "CAPPED"
+                      ],
+                      "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                    },
+                    "lastTierMax": {
+                      "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 500
+                    },
+                    "profileName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50,
+                      "description": "The tier profile the layout came from.",
+                      "x-transform": [
+                        "trim"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "tierCount",
+                    "tierSize",
+                    "lastTier",
+                    "lastTierMax",
                     "profileName"
                   ],
                   "additionalProperties": false
@@ -23819,6 +24598,7 @@
                 "participantCount",
                 "loadedParticipantCount",
                 "pricing",
+                "tierLayout",
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
@@ -24317,7 +25097,7 @@
         "type": "object",
         "properties": {
           "tierSize": {
-            "description": "Participants per tier; the last tier takes the rest. Omitted: an event with its sport's default tier count gets the sport's tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).",
+            "description": "Participants per tier but the last, instead of the sport league's tier profile's; the last tier takes the rest, or up to the profile's cap. Omitted: an event with its profile's tier count gets the profile's tier size (10 for golf's six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).",
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
@@ -24417,6 +25197,58 @@
         ],
         "additionalProperties": false,
         "description": "The values an event's field was priced with for budget contests."
+      },
+      "EventTierConfig": {
+        "type": "object",
+        "properties": {
+          "tierCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "description": "How many tiers a new event starts with."
+          },
+          "tierSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "How many participants auto-tiering puts in each tier before the last."
+          },
+          "lastTier": {
+            "type": "string",
+            "enum": [
+              "ALL_REMAINING",
+              "CAPPED"
+            ],
+            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+          },
+          "lastTierMax": {
+            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 500
+          },
+          "profileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The tier profile the layout came from.",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "tierCount",
+          "tierSize",
+          "lastTier",
+          "lastTierMax",
+          "profileName"
+        ],
+        "additionalProperties": false,
+        "description": "The tier layout an event's field was last auto-tiered with."
       },
       "AutoAssignSportEventPricesRequest": {
         "type": "object",
@@ -35596,7 +36428,6 @@
         "enum": [
           "INGESTION_SCHEDULE_CONFIG",
           "EMAIL_CONFIG",
-          "BUDGET_PRICING_CONFIG",
           "PLAN_CONFIG",
           "BILLING_CONFIG"
         ],
@@ -36626,215 +37457,6 @@
                   "standingsBufferMinutes",
                   "weeklyDigestHour",
                   "templates"
-                ],
-                "additionalProperties": false,
-                "description": "The value a reset would store."
-              }
-            },
-            "required": [
-              "key",
-              "title",
-              "description",
-              "source",
-              "updatedAt",
-              "updatedBy",
-              "value",
-              "defaults"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
-                  "BUDGET_PRICING_CONFIG"
-                ]
-              },
-              "title": {
-                "type": "string",
-                "description": "Short display name of the group."
-              },
-              "description": {
-                "type": "string",
-                "description": "What the group controls."
-              },
-              "source": {
-                "type": "string",
-                "enum": [
-                  "stored",
-                  "defaults"
-                ],
-                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
-              },
-              "updatedAt": {
-                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time"
-              },
-              "updatedBy": {
-                "description": "Who last saved the stored value, when known.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "The user id of the root admin who made the change."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "The admin's full name, for display."
-                  }
-                },
-                "required": [
-                  "id",
-                  "name"
-                ],
-                "additionalProperties": false
-              },
-              "value": {
-                "type": "object",
-                "properties": {
-                  "profiles": {
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "salaryCap": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                        },
-                        "unit": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                        },
-                        "topSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The best seed's price, as a percentage of the salary cap."
-                        },
-                        "floorSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                        },
-                        "steepness": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 10,
-                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "The profile's name, such as \"Standard\".",
-                          "x-transform": [
-                            "trim"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "salaryCap",
-                        "unit",
-                        "topSharePercent",
-                        "floorSharePercent",
-                        "steepness",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "A named set of budget pricing values."
-                    },
-                    "description": "The pricing profiles, the default first. Names are unique."
-                  }
-                },
-                "required": [
-                  "profiles"
-                ],
-                "additionalProperties": false,
-                "description": "The value in use."
-              },
-              "defaults": {
-                "type": "object",
-                "properties": {
-                  "profiles": {
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "salaryCap": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                        },
-                        "unit": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                        },
-                        "topSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The best seed's price, as a percentage of the salary cap."
-                        },
-                        "floorSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                        },
-                        "steepness": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 10,
-                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "The profile's name, such as \"Standard\".",
-                          "x-transform": [
-                            "trim"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "salaryCap",
-                        "unit",
-                        "topSharePercent",
-                        "floorSharePercent",
-                        "steepness",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "A named set of budget pricing values."
-                    },
-                    "description": "The pricing profiles, the default first. Names are unique."
-                  }
-                },
-                "required": [
-                  "profiles"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -39002,215 +39624,6 @@
                     "key": {
                       "type": "string",
                       "enum": [
-                        "BUDGET_PRICING_CONFIG"
-                      ]
-                    },
-                    "title": {
-                      "type": "string",
-                      "description": "Short display name of the group."
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "What the group controls."
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "stored",
-                        "defaults"
-                      ],
-                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
-                    },
-                    "updatedAt": {
-                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "format": "date-time"
-                    },
-                    "updatedBy": {
-                      "description": "Who last saved the stored value, when known.",
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "description": "The user id of the root admin who made the change."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "The admin's full name, for display."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "value": {
-                      "type": "object",
-                      "properties": {
-                        "profiles": {
-                          "minItems": 1,
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "salaryCap": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                              },
-                              "unit": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                              },
-                              "topSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The best seed's price, as a percentage of the salary cap."
-                              },
-                              "floorSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                              },
-                              "steepness": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 10,
-                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 50,
-                                "description": "The profile's name, such as \"Standard\".",
-                                "x-transform": [
-                                  "trim"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "salaryCap",
-                              "unit",
-                              "topSharePercent",
-                              "floorSharePercent",
-                              "steepness",
-                              "name"
-                            ],
-                            "additionalProperties": false,
-                            "description": "A named set of budget pricing values."
-                          },
-                          "description": "The pricing profiles, the default first. Names are unique."
-                        }
-                      },
-                      "required": [
-                        "profiles"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value in use."
-                    },
-                    "defaults": {
-                      "type": "object",
-                      "properties": {
-                        "profiles": {
-                          "minItems": 1,
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "salaryCap": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                              },
-                              "unit": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                              },
-                              "topSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The best seed's price, as a percentage of the salary cap."
-                              },
-                              "floorSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                              },
-                              "steepness": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 10,
-                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 50,
-                                "description": "The profile's name, such as \"Standard\".",
-                                "x-transform": [
-                                  "trim"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "salaryCap",
-                              "unit",
-                              "topSharePercent",
-                              "floorSharePercent",
-                              "steepness",
-                              "name"
-                            ],
-                            "additionalProperties": false,
-                            "description": "A named set of budget pricing values."
-                          },
-                          "description": "The pricing profiles, the default first. Names are unique."
-                        }
-                      },
-                      "required": [
-                        "profiles"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value a reset would store."
-                    }
-                  },
-                  "required": [
-                    "key",
-                    "title",
-                    "description",
-                    "source",
-                    "updatedAt",
-                    "updatedBy",
-                    "value",
-                    "defaults"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "key": {
-                      "type": "string",
-                      "enum": [
                         "PLAN_CONFIG"
                       ]
                     },
@@ -40818,101 +41231,6 @@
               "key": {
                 "type": "string",
                 "enum": [
-                  "BUDGET_PRICING_CONFIG"
-                ]
-              },
-              "value": {
-                "type": "object",
-                "properties": {
-                  "profiles": {
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "salaryCap": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                        },
-                        "unit": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                        },
-                        "topSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The best seed's price, as a percentage of the salary cap."
-                        },
-                        "floorSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                        },
-                        "steepness": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 10,
-                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "The profile's name, such as \"Standard\".",
-                          "x-transform": [
-                            "trim"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "salaryCap",
-                        "unit",
-                        "topSharePercent",
-                        "floorSharePercent",
-                        "steepness",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "A named set of budget pricing values."
-                    },
-                    "description": "The pricing profiles, the default first. Names are unique."
-                  }
-                },
-                "required": [
-                  "profiles"
-                ],
-                "additionalProperties": false,
-                "description": "The whole new value."
-              },
-              "expectedUpdatedAt": {
-                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "date-time"
-              }
-            },
-            "required": [
-              "key",
-              "value",
-              "expectedUpdatedAt"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
                   "PLAN_CONFIG"
                 ]
               },
@@ -42426,201 +42744,6 @@
                   "standingsBufferMinutes",
                   "weeklyDigestHour",
                   "templates"
-                ],
-                "additionalProperties": false,
-                "description": "The value the save stored."
-              }
-            },
-            "required": [
-              "key",
-              "id",
-              "changedAt",
-              "changedBy",
-              "previousValue",
-              "newValue"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
-                  "BUDGET_PRICING_CONFIG"
-                ]
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "changedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "changedBy": {
-                "description": "Who saved it, when known.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "The user id of the root admin who made the change."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "The admin's full name, for display."
-                  }
-                },
-                "required": [
-                  "id",
-                  "name"
-                ],
-                "additionalProperties": false
-              },
-              "previousValue": {
-                "description": "The stored value before the save; null when the save created the first stored value.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "profiles": {
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "salaryCap": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                        },
-                        "unit": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                        },
-                        "topSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The best seed's price, as a percentage of the salary cap."
-                        },
-                        "floorSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                        },
-                        "steepness": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 10,
-                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "The profile's name, such as \"Standard\".",
-                          "x-transform": [
-                            "trim"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "salaryCap",
-                        "unit",
-                        "topSharePercent",
-                        "floorSharePercent",
-                        "steepness",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "A named set of budget pricing values."
-                    },
-                    "description": "The pricing profiles, the default first. Names are unique."
-                  }
-                },
-                "required": [
-                  "profiles"
-                ],
-                "additionalProperties": false
-              },
-              "newValue": {
-                "type": "object",
-                "properties": {
-                  "profiles": {
-                    "minItems": 1,
-                    "maxItems": 10,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "salaryCap": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                        },
-                        "unit": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 10000000,
-                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                        },
-                        "topSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The best seed's price, as a percentage of the salary cap."
-                        },
-                        "floorSharePercent": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 100,
-                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                        },
-                        "steepness": {
-                          "type": "number",
-                          "minimum": 0.1,
-                          "maximum": 10,
-                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "The profile's name, such as \"Standard\".",
-                          "x-transform": [
-                            "trim"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "salaryCap",
-                        "unit",
-                        "topSharePercent",
-                        "floorSharePercent",
-                        "steepness",
-                        "name"
-                      ],
-                      "additionalProperties": false,
-                      "description": "A named set of budget pricing values."
-                    },
-                    "description": "The pricing profiles, the default first. Names are unique."
-                  }
-                },
-                "required": [
-                  "profiles"
                 ],
                 "additionalProperties": false,
                 "description": "The value the save stored."
@@ -44709,201 +44832,6 @@
                         "standingsBufferMinutes",
                         "weeklyDigestHour",
                         "templates"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value the save stored."
-                    }
-                  },
-                  "required": [
-                    "key",
-                    "id",
-                    "changedAt",
-                    "changedBy",
-                    "previousValue",
-                    "newValue"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "key": {
-                      "type": "string",
-                      "enum": [
-                        "BUDGET_PRICING_CONFIG"
-                      ]
-                    },
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "changedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "ISO 8601 datetime string."
-                    },
-                    "changedBy": {
-                      "description": "Who saved it, when known.",
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "description": "The user id of the root admin who made the change."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "The admin's full name, for display."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "previousValue": {
-                      "description": "The stored value before the save; null when the save created the first stored value.",
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "profiles": {
-                          "minItems": 1,
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "salaryCap": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                              },
-                              "unit": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                              },
-                              "topSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The best seed's price, as a percentage of the salary cap."
-                              },
-                              "floorSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                              },
-                              "steepness": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 10,
-                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 50,
-                                "description": "The profile's name, such as \"Standard\".",
-                                "x-transform": [
-                                  "trim"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "salaryCap",
-                              "unit",
-                              "topSharePercent",
-                              "floorSharePercent",
-                              "steepness",
-                              "name"
-                            ],
-                            "additionalProperties": false,
-                            "description": "A named set of budget pricing values."
-                          },
-                          "description": "The pricing profiles, the default first. Names are unique."
-                        }
-                      },
-                      "required": [
-                        "profiles"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "newValue": {
-                      "type": "object",
-                      "properties": {
-                        "profiles": {
-                          "minItems": 1,
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "salaryCap": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                              },
-                              "unit": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 10000000,
-                                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                              },
-                              "topSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The best seed's price, as a percentage of the salary cap."
-                              },
-                              "floorSharePercent": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 100,
-                                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                              },
-                              "steepness": {
-                                "type": "number",
-                                "minimum": 0.1,
-                                "maximum": 10,
-                                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 50,
-                                "description": "The profile's name, such as \"Standard\".",
-                                "x-transform": [
-                                  "trim"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "salaryCap",
-                              "unit",
-                              "topSharePercent",
-                              "floorSharePercent",
-                              "steepness",
-                              "name"
-                            ],
-                            "additionalProperties": false,
-                            "description": "A named set of budget pricing values."
-                          },
-                          "description": "The pricing profiles, the default first. Names are unique."
-                        }
-                      },
-                      "required": [
-                        "profiles"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -69947,6 +69875,676 @@
         "additionalProperties": false,
         "description": "One background job, as Activity shows it."
       },
+      "TierProfileWriteRequest": {
+        "type": "object",
+        "properties": {
+          "tierCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "description": "How many tiers a new event starts with."
+          },
+          "tierSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "How many participants auto-tiering puts in each tier before the last."
+          },
+          "lastTier": {
+            "type": "string",
+            "enum": [
+              "ALL_REMAINING",
+              "CAPPED"
+            ],
+            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+          },
+          "lastTierMax": {
+            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 500
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "tierCount",
+          "tierSize",
+          "lastTier",
+          "lastTierMax",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise."
+      },
+      "TierProfileDto": {
+        "type": "object",
+        "properties": {
+          "tierCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "description": "How many tiers a new event starts with."
+          },
+          "tierSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "How many participants auto-tiering puts in each tier before the last."
+          },
+          "lastTier": {
+            "type": "string",
+            "enum": [
+              "ALL_REMAINING",
+              "CAPPED"
+            ],
+            "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+          },
+          "lastTierMax": {
+            "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 500
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportLeagueCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many sport leagues name the profile. One any league names can't be deleted."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          }
+        },
+        "required": [
+          "tierCount",
+          "tierSize",
+          "lastTier",
+          "lastTierMax",
+          "name",
+          "id",
+          "sportLeagueCount",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
+      },
+      "TierProfileListResponse": {
+        "type": "object",
+        "properties": {
+          "tierProfiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tierCount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20,
+                  "description": "How many tiers a new event starts with."
+                },
+                "tierSize": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500,
+                  "description": "How many participants auto-tiering puts in each tier before the last."
+                },
+                "lastTier": {
+                  "type": "string",
+                  "enum": [
+                    "ALL_REMAINING",
+                    "CAPPED"
+                  ],
+                  "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                },
+                "lastTierMax": {
+                  "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 500
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                  "x-transform": [
+                    "trim"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sportLeagueCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                }
+              },
+              "required": [
+                "tierCount",
+                "tierSize",
+                "lastTier",
+                "lastTierMax",
+                "name",
+                "id",
+                "sportLeagueCount",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
+            },
+            "description": "Every tier profile, by name."
+          }
+        },
+        "required": [
+          "tierProfiles"
+        ],
+        "additionalProperties": false,
+        "description": "Every tier profile."
+      },
+      "TierProfileResponse": {
+        "type": "object",
+        "properties": {
+          "tierProfile": {
+            "type": "object",
+            "properties": {
+              "tierCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "How many tiers a new event starts with."
+              },
+              "tierSize": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "description": "How many participants auto-tiering puts in each tier before the last."
+              },
+              "lastTier": {
+                "type": "string",
+                "enum": [
+                  "ALL_REMAINING",
+                  "CAPPED"
+                ],
+                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+              },
+              "lastTierMax": {
+                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 500
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportLeagueCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "How many sport leagues name the profile. One any league names can't be deleted."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              }
+            },
+            "required": [
+              "tierCount",
+              "tierSize",
+              "lastTier",
+              "lastTierMax",
+              "name",
+              "id",
+              "sportLeagueCount",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
+          }
+        },
+        "required": [
+          "tierProfile"
+        ],
+        "additionalProperties": false,
+        "description": "One tier profile."
+      },
+      "PricingProfileWriteRequest": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A pricing profile's name and values, the whole of it. 422 PRICING_PROFILE_INVALID when the values contradict each other."
+      },
+      "PricingProfileDto": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportLeagueCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many sport leagues name the profile. One any league names can't be deleted."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "name",
+          "id",
+          "sportLeagueCount",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+      },
+      "PricingProfileListResponse": {
+        "type": "object",
+        "properties": {
+          "pricingProfiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "salaryCap": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                },
+                "unit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                },
+                "topSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The best seed's price, as a percentage of the salary cap."
+                },
+                "floorSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                },
+                "steepness": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 10,
+                  "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                  "x-transform": [
+                    "trim"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sportLeagueCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "How many sport leagues name the profile. One any league names can't be deleted."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                }
+              },
+              "required": [
+                "salaryCap",
+                "unit",
+                "topSharePercent",
+                "floorSharePercent",
+                "steepness",
+                "name",
+                "id",
+                "sportLeagueCount",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+            },
+            "description": "Every pricing profile, by name."
+          }
+        },
+        "required": [
+          "pricingProfiles"
+        ],
+        "additionalProperties": false,
+        "description": "Every pricing profile."
+      },
+      "PricingProfileResponse": {
+        "type": "object",
+        "properties": {
+          "pricingProfile": {
+            "type": "object",
+            "properties": {
+              "salaryCap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+              },
+              "topSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The best seed's price, as a percentage of the salary cap."
+              },
+              "floorSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+              },
+              "steepness": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 10,
+                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+                "x-transform": [
+                  "trim"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportLeagueCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "How many sport leagues name the profile. One any league names can't be deleted."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              }
+            },
+            "required": [
+              "salaryCap",
+              "unit",
+              "topSharePercent",
+              "floorSharePercent",
+              "steepness",
+              "name",
+              "id",
+              "sportLeagueCount",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
+          }
+        },
+        "required": [
+          "pricingProfile"
+        ],
+        "additionalProperties": false,
+        "description": "One pricing profile."
+      },
+      "BudgetPricingProfile": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, such as \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A named set of budget pricing values."
+      },
       "ClientLogLevel": {
         "type": "string",
         "enum": [
@@ -82472,6 +83070,48 @@
         }
       }
     },
+    "/api/v1/sport-leagues/overview": {
+      "get": {
+        "operationId": "listSportLeagueOverviews",
+        "summary": "List every sport league with its health, issues and season",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.",
+        "responses": {
+          "200": {
+            "description": "The root admin's Sports page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueOverviewListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sport-leagues/{sportLeagueId}": {
       "get": {
         "operationId": "getSportLeague",
@@ -83003,6 +83643,806 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tier-profiles/": {
+      "get": {
+        "operationId": "listTierProfiles",
+        "summary": "List tier profiles",
+        "tags": [
+          "Tier profiles"
+        ],
+        "description": "Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "responses": {
+          "200": {
+            "description": "Every tier profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TierProfileListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTierProfile",
+        "summary": "Create a tier profile",
+        "tags": [
+          "Tier profiles"
+        ],
+        "description": "409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TierProfileWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "One tier profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TierProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tier-profiles/{profileId}": {
+      "get": {
+        "operationId": "getTierProfile",
+        "summary": "Get a tier profile",
+        "tags": [
+          "Tier profiles"
+        ],
+        "description": "404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One tier profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TierProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateTierProfile",
+        "summary": "Update a tier profile",
+        "tags": [
+          "Tier profiles"
+        ],
+        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TierProfileWriteRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One tier profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TierProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTierProfile",
+        "summary": "Delete a tier profile",
+        "tags": [
+          "Tier profiles"
+        ],
+        "description": "409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pricing-profiles/": {
+      "get": {
+        "operationId": "listPricingProfiles",
+        "summary": "List pricing profiles",
+        "tags": [
+          "Pricing profiles"
+        ],
+        "description": "Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "responses": {
+          "200": {
+            "description": "Every pricing profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingProfileListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPricingProfile",
+        "summary": "Create a pricing profile",
+        "tags": [
+          "Pricing profiles"
+        ],
+        "description": "409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingProfileWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "One pricing profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pricing-profiles/{profileId}": {
+      "get": {
+        "operationId": "getPricingProfile",
+        "summary": "Get a pricing profile",
+        "tags": [
+          "Pricing profiles"
+        ],
+        "description": "404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One pricing profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updatePricingProfile",
+        "summary": "Update a pricing profile",
+        "tags": [
+          "Pricing profiles"
+        ],
+        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingProfileWriteRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One pricing profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deletePricingProfile",
+        "summary": "Delete a pricing profile",
+        "tags": [
+          "Pricing profiles"
+        ],
+        "description": "409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "profileId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { BackgroundJobType, JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -99,6 +99,57 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
     ...overrides,
   };
 }
+
+describe('ProviderSyncRunLedger records each run\'s event and sport league (#1847)', () => {
+  const now = new Date('2026-05-30T12:00:00.000Z');
+  const scheduled = (eventId: string) => new SyncOrchestrator({ now: () => now }).normalizeRequest({
+    source: 'SCHEDULED',
+    actor: { type: 'SYSTEM', name: 'scheduler' },
+    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'mock-provider', eventId, feeds: ['EVENTLIVESCORES'] },
+  });
+  const linkedEvents = {
+    findByProviderRef: jest.fn(async (_providerId: string, externalId: string) => (externalId === 'linked'
+      ? { id: 'sport-event-1', sportLeagueId: 'pga-tour' } as SportEvent
+      : null)),
+  };
+
+  beforeEach(() => linkedEvents.findByProviderRef.mockClear());
+
+  it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
+    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
+
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+
+    expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
+    expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('mock-provider', 'linked');
+  });
+
+  it('leaves both null for a provider event linked to no event of ours', async () => {
+    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
+
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+
+    expect(run).toMatchObject({ sportEventId: null, sportLeagueId: null });
+  });
+
+  it('keeps the event and sport league a caller names without looking them up, through the write that also queues the job', async () => {
+    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
+
+    const [run] = await ledger.createSubmissionsWithJob({
+      normalizedRequest: scheduled('linked'),
+      providerId: 'mock-provider',
+      submittedAt: now,
+      runType: 'MANUAL_EVENT_SYNC',
+      trigger: JobTrigger.ADMIN,
+      sportEventId: 'named-event',
+      sportLeagueId: 'named-league',
+      job: () => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: {}, start: TEST_JOB_START }),
+    });
+
+    expect(run).toMatchObject({ sportEventId: 'named-event', sportLeagueId: 'named-league' });
+    expect(linkedEvents.findByProviderRef).not.toHaveBeenCalled();
+  });
+});
 
 describe('ProviderSyncRunLedger', () => {
   it('writes a manual sync\'s SUBMITTED runs through the one write that also queues their job, handing the job the runs', async () => {

@@ -41,6 +41,8 @@ import { contestConfigTemplatesModule } from './modules/contest-config-templates
 import { eventsModule } from './modules/events/routes';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
+import { pricingProfilesModule, tierProfilesModule } from './modules/profiles/routes';
+import { createProfileServices } from './modules/profiles/wiring';
 import { eventPagesModule } from './modules/event-pages/routes';
 import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
@@ -99,7 +101,6 @@ import { LeagueEventsSync } from './modules/events/league-events-sync';
 import { activityModule } from './modules/activity/routes';
 import { ActivityService } from './modules/activity/activity-service';
 import { SyncedFieldValuationService, fieldValuationReport } from './modules/events/synced-field-valuation';
-import { BUDGET_PRICING_SETTINGS } from './modules/events/budget-pricing-settings';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -307,7 +308,7 @@ export function buildApp() {
     },
   };
 
-  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
+  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma));
   // One set of event services for the admin routes and the synced event creation sweep.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
@@ -320,7 +321,6 @@ export function buildApp() {
   const syncedFieldValuation = new SyncedFieldValuationService({
     sportEvents: new PrismaSportEventRepository(prisma),
     tiers: sportEventServices.tiers,
-    readPricingProfiles: () => appSettings.get(BUDGET_PRICING_SETTINGS),
     logger: app.log.child({ module: 'events.syncedFieldValuation' }),
   });
   // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
@@ -418,6 +418,9 @@ export function buildApp() {
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry: registry });
+  const profiles = createProfileServices(prisma, app.log);
+  app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
+  app.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });

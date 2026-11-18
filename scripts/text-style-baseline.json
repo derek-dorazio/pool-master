@@ -38,7 +38,6 @@
   "clients/poolmaster/src/features/root-admin/price-assign-action.tsx": 2,
   "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx": 11,
   "clients/poolmaster/src/features/root-admin/reseed-rounds-card.tsx": 12,
-  "clients/poolmaster/src/features/root-admin/root-admin-budget-pricing-settings-form.tsx": 4,
   "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-detail-page.tsx": 9,
   "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-list-page.tsx": 10,
   "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx": 4,
