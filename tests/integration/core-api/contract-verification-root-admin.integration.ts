@@ -34,6 +34,7 @@ import {
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
+  SportLeagueOverviewListResponseSchema,
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
@@ -1357,6 +1358,13 @@ describe('Contract verification (root admin)', () => {
       expect(
         leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l) => l.id === leagueId),
       ).toBe(true);
+
+      // --- listSportLeagueOverviews (200) — the Sports page (#1847) -----------
+      const overviewRes = await getApp().inject({ method: 'GET', url: '/api/v1/sport-leagues/overview', headers: rootAdmin.headers });
+      expect(overviewRes.statusCode).toBe(200);
+      const overview = SportLeagueOverviewListResponseSchema.safeParse(overviewRes.json());
+      expect(overview.success).toBe(true);
+      expect(overview.data?.sportLeagues.some((row) => row.id === leagueId)).toBe(true);
 
       // --- createParticipant (201) x3 — golf players are participants -------
       const golf = await getPrisma().sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });

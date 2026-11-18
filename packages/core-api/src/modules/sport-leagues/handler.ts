@@ -8,6 +8,7 @@ import type {
   ParticipantLeagueAffiliationUploadRequest,
   SportLeagueListQuery,
   SportLeagueListResponse,
+  SportLeagueOverviewListResponse,
   SportLeagueResponse,
   UpdateParticipantLeagueAffiliationRankingsRequest,
   UpdateSportLeagueRequest,
@@ -17,8 +18,10 @@ import type { ReadCache } from '../../core/read-cache';
 import {
   mapAffiliationToDto,
   mapAffiliationUploadPreviewRowToDto,
+  mapSportLeagueOverviewToDto,
   mapSportLeagueToDto,
 } from '../../mappers';
+import type { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import type { SportLeagueService } from '../sport-catalog/sport-league-service';
 
 type SportLeagueParams = { Params: { sportLeagueId: string } };
@@ -27,8 +30,17 @@ type SportLeagueParams = { Params: { sportLeagueId: string } };
  * Service errors carry their own code and status; the global error handler sends them. `lists`
  * keeps the public list by its filters (#1181); the routes clear it on every write.
  */
-export function createSportLeagueHandlers(sportLeagues: SportLeagueService, lists: ReadCache<SportLeagueListResponse>) {
+export function createSportLeagueHandlers(
+  sportLeagues: SportLeagueService,
+  lists: ReadCache<SportLeagueListResponse>,
+  overviews: SportLeagueOverviewService,
+) {
   return {
+    listSportLeagueOverviews: async (): Promise<SportLeagueOverviewListResponse> => {
+      const rows = await overviews.listOverviews();
+      return { sportLeagues: rows.map(mapSportLeagueOverviewToDto) };
+    },
+
     listSportLeagues: async (request: FastifyRequest<{ Querystring: SportLeagueListQuery }>): Promise<SportLeagueListResponse> => {
       const { sport, isActive } = request.query;
       return lists.get(`${sport ?? ''}:${isActive ?? ''}`, new Date(), async () => {

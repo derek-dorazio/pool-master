@@ -602,6 +602,26 @@ enum PrismaProviderSyncKind {
   SCORES
 }
 
+/// How a sport event's latest automatic release check ended (#1847).
+enum PrismaAutoReleaseCheckOutcome {
+  RELEASED
+  HELD
+}
+
+/// A ready check a DRAFT sport event must pass before release (#1823): ReleaseCheckKey, in its
+/// declared order. Stored as the checks that held an automatic release (#1847).
+enum PrismaReleaseCheckKey {
+  NOT_STARTED
+  ROUNDS_SCHEDULED
+  FIELD_LOADED
+  FIELD_LINKED
+  TIERS_ASSIGNED
+  TIERS_FILLED
+  PRICES_ASSIGNED
+  BRACKET_COMPLETE
+  CONTEST_SETUPS_ON
+}
+
 /// What started a provider sync run (#1819).
 enum PrismaProviderSyncTrigger {
   SCHEDULE
@@ -2005,61 +2025,70 @@ model ContestEntryPick {
 // =============================================================================
 
 model SportEvent {
-  id                         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  externalId                 String                    @map("external_id") @db.VarChar(255)
-  providerId                 String                    @map("provider_id") @db.VarChar(100)
+  id                         String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalId                 String                         @map("external_id") @db.VarChar(255)
+  providerId                 String                         @map("provider_id") @db.VarChar(100)
   sport                      PrismaSport
-  name                       String                    @db.VarChar(500)
-  venue                      String?                   @db.VarChar(500)
-  location                   String?                   @db.VarChar(500)
-  startDate                  DateTime                  @map("start_date") @db.Timestamptz
-  endDate                    DateTime?                 @map("end_date") @db.Timestamptz
-  status                     PrismaSportEventStatus    @default(SCHEDULED)
+  name                       String                         @db.VarChar(500)
+  venue                      String?                        @db.VarChar(500)
+  location                   String?                        @db.VarChar(500)
+  startDate                  DateTime                       @map("start_date") @db.Timestamptz
+  endDate                    DateTime?                      @map("end_date") @db.Timestamptz
+  status                     PrismaSportEventStatus         @default(SCHEDULED)
   rounds                     Int?
   // Par for every round of the event (#478), set by an admin. Null derives each
   // round's par from the field's finished rounds (strokes minus to-par). Read
   // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
-  roundsPar                  Int?                      @map("rounds_par")
-  participantCount           Int?                      @map("participant_count")
-  metadata                   Json                      @default("{}")
+  roundsPar                  Int?                           @map("rounds_par")
+  participantCount           Int?                           @map("participant_count")
+  metadata                   Json                           @default("{}")
   // The series this is one edition of — the event's only parent, and its only
   // path to a sport league (plans/147). Auto-resolved by find-or-create on
   // (sportLeagueId, name) at tournament creation, never an admin decision
   // (plans/124 §4.3a).
-  eventSeriesId              String                    @map("event_series_id") @db.Uuid
+  eventSeriesId              String                         @map("event_series_id") @db.Uuid
   // The year the edition is branded with — "the 2026 Masters" — which is not
   // always the year it starts in; startDate carries the real dates (plans/147
   // decision 3).
-  eventYear                  Int                       @map("event_year")
+  eventYear                  Int                            @map("event_year")
   // Sync eligibility, separate from providerId/externalId identity: NONE for an
   // unlinked event, SCORES_ONLY once an admin links it to a provider event. Every
   // event is admin-owned; a provider never owns one (ADR-0009, #435).
-  syncScope                  PrismaSportEventSyncScope @default(NONE) @map("sync_scope")
+  syncScope                  PrismaSportEventSyncScope      @default(NONE) @map("sync_scope")
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
-  autoLifecycleEnabled       Boolean                   @default(true) @map("auto_lifecycle_enabled")
+  autoLifecycleEnabled       Boolean                        @default(true) @map("auto_lifecycle_enabled")
   // The values the field was last priced with for budget contests (#93), typed by
   // EventPricingConfigSchema. Null until prices are assigned; written with the
   // prices in one transaction and locked with them at release.
-  pricingConfig              Json?                     @map("pricing_config")
+  pricingConfig              Json?                          @map("pricing_config")
   // When the event's provider last sent a webhook notification about it (#1499). Null until one
   // arrives. The scheduler warns when play is underway and none has arrived for a while.
-  lastProviderNotificationAt DateTime?                 @map("last_provider_notification_at") @db.Timestamptz
+  lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
   // A Clutch Card event's parent (#1820): the season event of its sport league's parent league
   // whose rounds it covers (the World Series round of the MLB Postseason). Set on every Clutch
   // Card event created since #1820 and on no other event; the service picks the parent when the
   // event is created and refuses one without. A check constraint keeps the two columns together:
   // both set or neither. An event a Clutch Card event names cannot be deleted.
-  parentEventId              String?                   @map("parent_event_id") @db.Uuid
+  parentEventId              String?                        @map("parent_event_id") @db.Uuid
   // The parent event's rounds this Clutch Card event covers, from its sport league's
   // `parentRoundNumbers`; empty when it has no parent.
-  parentRoundNumbers         Int[]                     @default([]) @map("parent_round_numbers")
-  createdAt                  DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                  DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+  parentRoundNumbers         Int[]                          @default([]) @map("parent_round_numbers")
+  // The latest automatic release check (#1847): when the release job last judged the event,
+  // whether it released or held it, and the checks that held it. Null and empty until the first
+  // check; each check overwrites the one before, and a root admin's release by hand clears it. A
+  // check that skips the event is not stored. Check constraints keep the time and outcome
+  // together, and a RELEASED check with no failed checks. The Sports page counts the DRAFT
+  // events a check HELD.
+  autoReleaseCheckedAt       DateTime?                      @map("auto_release_checked_at") @db.Timestamptz
+  autoReleaseOutcome         PrismaAutoReleaseCheckOutcome? @map("auto_release_outcome")
+  autoReleaseFailedChecks    PrismaReleaseCheckKey[]        @default([]) @map("auto_release_failed_checks")
+  createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
-  parentEvent                SportEvent?                 @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
-  clutchCardEvents           SportEvent[]                @relation("ClutchCardParentEvent")
+  parentEvent                SportEvent?                        @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
+  clutchCardEvents           SportEvent[]                       @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
   pendingDrawReceipts        ContestDraw[]                      @relation("ContestDrawReceiptsPending")
@@ -2387,35 +2416,38 @@ model SportEventParticipantValuation {
 }
 
 model ProviderSyncRun {
-  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerId  String                      @map("provider_id") @db.VarChar(100)
-  sport       PrismaSport
-  eventId     String?                     @map("event_id") @db.VarChar(255)
+  id              String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId      String                      @map("provider_id") @db.VarChar(100)
+  sport           PrismaSport
+  eventId         String?                     @map("event_id") @db.VarChar(255)
   /// What the run syncs and what started it (#1819).
-  kind        PrismaProviderSyncKind
-  trigger     PrismaProviderSyncTrigger
-  /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run, the
-  /// event of a FIELD or SCORES run. Null on runs from before #1819 and where it is not known.
-  sportLeagueId   String?                 @map("sport_league_id") @db.Uuid
-  sportEventId    String?                 @map("sport_event_id") @db.Uuid
+  kind            PrismaProviderSyncKind
+  trigger         PrismaProviderSyncTrigger
+  /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run; the
+  /// event of a FIELD or SCORES run and that event's sport league (#1847). Null where the run's
+  /// provider event is linked to no event of ours.
+  sportLeagueId   String?                     @map("sport_league_id") @db.Uuid
+  sportEventId    String?                     @map("sport_event_id") @db.Uuid
   /// The background job that ran it, so Activity opens a job's runs (#1819). Kept after the job is deleted.
-  backgroundJobId String?                 @map("background_job_id") @db.Uuid
-  status      PrismaProviderSyncRunStatus
-  startedAt   DateTime?                   @map("started_at") @db.Timestamptz
-  completedAt DateTime?                   @map("completed_at") @db.Timestamptz
+  backgroundJobId String?                     @map("background_job_id") @db.Uuid
+  status          PrismaProviderSyncRunStatus
+  startedAt       DateTime?                   @map("started_at") @db.Timestamptz
+  completedAt     DateTime?                   @map("completed_at") @db.Timestamptz
   /// The run's summary: request, feed, outcome and stats. The sync history lists it.
-  payloadJson Json                        @default("{}") @map("payload_json")
+  payloadJson     Json                        @default("{}") @map("payload_json")
   /// The run's detailed diagnostics: the changed rows, the job record and the raw provider
   /// payload. Read one run at a time; the nightly cleanup clears it 30 days after submission
   /// and deletes the run after a year (#1174).
-  detailsJson Json?                       @map("details_json")
-  createdAt   DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+  detailsJson     Json?                       @map("details_json")
+  createdAt       DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([createdAt(sort: Desc)])
   @@index([providerId, createdAt(sort: Desc)])
   @@index([sport, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@index([backgroundJobId])
+  /// The Sports page's latest finished run of each sync kind per sport league (#1847).
+  @@index([sportLeagueId, kind, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
 }
 
@@ -2437,28 +2469,28 @@ model PlatformRuntimeConfig {
 /// Durable work a request handed off (#1439), claimed and run by any server task. Written in
 /// the transaction of the change that caused it; the nightly cleanup deletes finished jobs.
 model BackgroundJob {
-  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type        PrismaBackgroundJobType
-  payload     Json
-  status      PrismaBackgroundJobStatus @default(QUEUED)
-  runAt       DateTime                  @default(now()) @map("run_at") @db.Timestamptz
-  attempts    Int                       @default(0)
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type          PrismaBackgroundJobType
+  payload       Json
+  status        PrismaBackgroundJobStatus @default(QUEUED)
+  runAt         DateTime                  @default(now()) @map("run_at") @db.Timestamptz
+  attempts      Int                       @default(0)
   /// While RUNNING, until when the claiming task holds it; past this the job is due again.
-  leaseUntil  DateTime?                 @map("lease_until") @db.Timestamptz
-  lastError   String?                   @map("last_error")
+  leaseUntil    DateTime?                 @map("lease_until") @db.Timestamptz
+  lastError     String?                   @map("last_error")
   /// One job waiting for its first try per subject: an enqueue with a key such a job holds
   /// writes nothing. Cleared for good when the job is claimed, so a later enqueue (even while
   /// the job waits to be retried) queues a fresh job.
-  dedupeKey   String?                   @unique @map("dedupe_key") @db.VarChar(200)
+  dedupeKey     String?                   @unique @map("dedupe_key") @db.VarChar(200)
   /// The job's scope (#1819), set from its payload when queued (`BACKGROUND_JOB_SCOPES`), so
   /// Activity filters by sport league and event on indexed columns. A job on an event carries the
   /// event; its league is read through the event.
-  sportLeagueId String?                 @map("sport_league_id") @db.Uuid
-  sportEventId  String?                 @map("sport_event_id") @db.Uuid
+  sportLeagueId String?                   @map("sport_league_id") @db.Uuid
+  sportEventId  String?                   @map("sport_event_id") @db.Uuid
   /// What a SUCCEEDED job's handler reported it did (#1819), shown on Activity; null when it reported nothing.
-  result      Json?
-  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  completedAt DateTime?                 @map("completed_at") @db.Timestamptz
+  result        Json?
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  completedAt   DateTime?                 @map("completed_at") @db.Timestamptz
 
   @@index([status, runAt])
   @@index([status, leaseUntil])

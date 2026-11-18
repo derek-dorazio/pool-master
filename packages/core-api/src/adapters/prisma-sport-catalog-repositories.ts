@@ -48,6 +48,7 @@ import type {
   TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
+  AutoReleaseCheck,
   BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
@@ -551,6 +552,18 @@ export class PrismaSportEventRepository implements SportEventRepository {
       if (eventSyncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
       return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, eventSyncProviderId, autoReleaseDaysBeforeStart }];
     });
+  }
+
+  async recordAutoReleaseCheck(sportEventId: string, check: AutoReleaseCheck | null): Promise<void> {
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.sportEvent.update({
+      where: { id: sportEventId },
+      data: {
+        autoReleaseCheckedAt: check?.checkedAt ?? null,
+        autoReleaseOutcome: check?.outcome ?? null,
+        autoReleaseFailedChecks: check?.failedChecks ?? [],
+      },
+      select: { id: true },
+    }));
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
