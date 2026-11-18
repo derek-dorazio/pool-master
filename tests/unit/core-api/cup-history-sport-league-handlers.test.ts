@@ -26,6 +26,7 @@ import {
 } from '../../../packages/core-api/src/modules/history/year-review-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { SportLeagueOverviewService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-overview';
 import { createSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 
@@ -234,8 +235,33 @@ describe('sport league handlers', () => {
     previewAffiliationUpload: jest.fn((..._args: unknown[]) => Promise.resolve([{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }])),
     applyAffiliationUpload: jest.fn((..._args: unknown[]) => Promise.resolve([affiliation])),
   };
-  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000));
+  const overviews = new SportLeagueOverviewService({
+    reader: {
+      readFacts: async () => ({
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', isActive: true }],
+        latestSyncRuns: [],
+        heldEvents: [],
+        eventCounts: new Map([['sl1', 2]]),
+        eventYearSpans: [],
+        nextEventStarts: new Map(),
+        clutchCardEvents: [],
+      }),
+    },
+    now: () => AT,
+  });
+  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews);
   const params = { sportLeagueId: 'sl1' };
+
+  it('answers the root admin\'s overview with every sport league mapped to its row', async () => {
+    const listed = await callHandler(handlers.listSportLeagueOverviews, stubRequest({}));
+
+    expect(listed.body).toEqual({
+      sportLeagues: [{
+        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, kind: 'REAL', providerId: 'balldontlie', isActive: true,
+        syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
+      }],
+    });
+  });
 
   it('keeps the public list by sport and active filter, an omitted filter read as blank', async () => {
     await callHandler(handlers.listSportLeagues, stubRequest({ query: {} }));

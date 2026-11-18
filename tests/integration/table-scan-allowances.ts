@@ -37,4 +37,10 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
     reason: "A standings email records each placed entry's position by id. On the tests' near-empty table the plan hashes the ids against every entry; "
       + 'the real plan looks up each id through contest_entries_pkey, so Postgres keeps it (checked on 200k entries, #1302).',
   },
+  {
+    table: 'sport_events',
+    sqlIncludes: 'GROUP BY "public"."sport_events"."event_series_id", "public"."sport_events"."event_year", "public"."sport_events"."status"',
+    reason: "The root admin's Sports page (#1847) counts every sport league's events and dates each of its seasons, so it groups every event: one row per series, "
+      + 'year and status, a few thousand events in all. Only that page reads it, and an index cannot narrow a read of every row.',
+  },
 ];

@@ -2862,6 +2862,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sport-leagues/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every sport league with its health, issues and season
+         * @description The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.
+         */
+        get: operations["listSportLeagueOverviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sport-leagues/{sportLeagueId}": {
         parameters: {
             query?: never;
@@ -9987,6 +10007,233 @@ export interface components {
              * @enum {string}
              */
             bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
+        };
+        /** @description One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts. */
+        SportLeagueOverviewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            name: string;
+            /**
+             * Format: uuid
+             * @description The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
+             */
+            parentSportLeagueId: string | null;
+            /**
+             * @description REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
+             * @enum {string}
+             */
+            kind: "REAL" | "CLUTCH_CARD";
+            /** @description The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does. */
+            providerId: string | null;
+            /** @description On: offered to customers and synced. Off: hidden and not synced. */
+            isActive: boolean;
+            /**
+             * @description From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.
+             * @enum {string}
+             */
+            syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+            /** @description Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention. */
+            issues: ({
+                /** @enum {string} */
+                type: "SYNC";
+                /** @description How many of its syncs' latest runs failed. */
+                count: number;
+                /** @description Event list, then field, then scores. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, or the event was last checked.
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /**
+                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @enum {string}
+                     */
+                    syncKind: "EVENTS" | "FIELD" | "SCORES";
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "RELEASE";
+                /** @description How many draft events the latest automatic release check held. */
+                count: number;
+                /** @description By event name. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, or the event was last checked.
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /** @description The ready checks that held it, in check order. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "FIELD_LINKED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                }[];
+            })[];
+            /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
+            season: {
+                /**
+                 * Format: date-time
+                 * @description The start of its first event.
+                 */
+                start: string;
+                /**
+                 * Format: date-time
+                 * @description The end of its last event, or its start when it has no end.
+                 */
+                end: string;
+            } | null;
+            /**
+             * Format: date-time
+             * @description The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.
+             */
+            nextEventStartsAt: string | null;
+            /** @description Its events, past and upcoming, cancelled ones included. */
+            eventCount: number;
+        };
+        /** @description The root admin's Sports page. */
+        SportLeagueOverviewListResponse: {
+            /** @description Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league. */
+            sportLeagues: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                name: string;
+                /**
+                 * Format: uuid
+                 * @description The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
+                 */
+                parentSportLeagueId: string | null;
+                /**
+                 * @description REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
+                 * @enum {string}
+                 */
+                kind: "REAL" | "CLUTCH_CARD";
+                /** @description The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does. */
+                providerId: string | null;
+                /** @description On: offered to customers and synced. Off: hidden and not synced. */
+                isActive: boolean;
+                /**
+                 * @description From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.
+                 * @enum {string}
+                 */
+                syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+                /** @description Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention. */
+                issues: ({
+                    /** @enum {string} */
+                    type: "SYNC";
+                    /** @description How many of its syncs' latest runs failed. */
+                    count: number;
+                    /** @description Event list, then field, then scores. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, or the event was last checked.
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /**
+                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @enum {string}
+                         */
+                        syncKind: "EVENTS" | "FIELD" | "SCORES";
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "RELEASE";
+                    /** @description How many draft events the latest automatic release check held. */
+                    count: number;
+                    /** @description By event name. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, or the event was last checked.
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /** @description The ready checks that held it, in check order. */
+                        failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "FIELD_LINKED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                    }[];
+                })[];
+                /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
+                season: {
+                    /**
+                     * Format: date-time
+                     * @description The start of its first event.
+                     */
+                    start: string;
+                    /**
+                     * Format: date-time
+                     * @description The end of its last event, or its start when it has no end.
+                     */
+                    end: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.
+                 */
+                nextEventStartsAt: string | null;
+                /** @description Its events, past and upcoming, cancelled ones included. */
+                eventCount: number;
+            }[];
         };
         /** @description A participant's membership of a sport league, and their current rank there. */
         ParticipantLeagueAffiliationDto: {
@@ -33916,6 +34163,44 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportLeagueOverviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The root admin's Sports page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueOverviewListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

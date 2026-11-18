@@ -19686,6 +19686,628 @@
         "additionalProperties": false,
         "description": "Changes to a sport league; omitted fields are left alone."
       },
+      "SportLeagueOverviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF",
+              "HORSE_RACING",
+              "AUTO_RACING",
+              "CYCLING",
+              "RUNNING",
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL",
+              "HOCKEY",
+              "BASEBALL",
+              "SOCCER",
+              "TENNIS"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentSportLeagueId": {
+            "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REAL",
+              "CLUTCH_CARD"
+            ],
+            "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
+          },
+          "providerId": {
+            "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "On: offered to customers and synced. Off: hidden and not synced."
+          },
+          "syncHealth": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "NOT_RUN_YET",
+              "OFF"
+            ],
+            "description": "From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SYNC"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many of its syncs' latest runs failed."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, or the event was last checked."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "syncKind": {
+                            "type": "string",
+                            "enum": [
+                              "EVENTS",
+                              "FIELD",
+                              "SCORES"
+                            ],
+                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "syncKind"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync whose latest run failed; its target is that run."
+                      },
+                      "description": "Event list, then field, then scores."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Syncs whose latest run failed."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASE"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many draft events the latest automatic release check held."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, or the event was last checked."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "failedChecks": {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "NOT_STARTED",
+                                "ROUNDS_SCHEDULED",
+                                "FIELD_LOADED",
+                                "FIELD_LINKED",
+                                "TIERS_ASSIGNED",
+                                "TIERS_FILLED",
+                                "PRICES_ASSIGNED",
+                                "BRACKET_COMPLETE",
+                                "CONTEST_SETUPS_ON"
+                              ]
+                            },
+                            "description": "The ready checks that held it, in check order."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "failedChecks"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A draft event its latest automatic release check held; its target is the event."
+                      },
+                      "description": "By event name."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Draft events held by a failed ready check."
+                }
+              ]
+            },
+            "description": "Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention."
+          },
+          "season": {
+            "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The start of its first event."
+              },
+              "end": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The end of its last event, or its start when it has no end."
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "nextEventStartsAt": {
+            "description": "The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "eventCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Its events, past and upcoming, cancelled ones included."
+          }
+        },
+        "required": [
+          "id",
+          "sport",
+          "name",
+          "parentSportLeagueId",
+          "kind",
+          "providerId",
+          "isActive",
+          "syncHealth",
+          "issues",
+          "season",
+          "nextEventStartsAt",
+          "eventCount"
+        ],
+        "additionalProperties": false,
+        "description": "One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts."
+      },
+      "SportLeagueOverviewListResponse": {
+        "type": "object",
+        "properties": {
+          "sportLeagues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sport": {
+                  "type": "string",
+                  "enum": [
+                    "GOLF",
+                    "HORSE_RACING",
+                    "AUTO_RACING",
+                    "CYCLING",
+                    "RUNNING",
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL",
+                    "HOCKEY",
+                    "BASEBALL",
+                    "SOCCER",
+                    "TENNIS"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "parentSportLeagueId": {
+                  "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "REAL",
+                    "CLUTCH_CARD"
+                  ],
+                  "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
+                },
+                "providerId": {
+                  "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "On: offered to customers and synced. Off: hidden and not synced."
+                },
+                "syncHealth": {
+                  "type": "string",
+                  "enum": [
+                    "OK",
+                    "ERROR",
+                    "NOT_RUN_YET",
+                    "OFF"
+                  ],
+                  "description": "From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed."
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SYNC"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many of its syncs' latest runs failed."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                                },
+                                "occurredAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the run was written, or the event was last checked."
+                                },
+                                "target": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "SYNC_RUN",
+                                        "SPORT_EVENT"
+                                      ],
+                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "description": "The sync run's or event's id."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "What an issue item links to."
+                                },
+                                "syncKind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EVENTS",
+                                    "FIELD",
+                                    "SCORES"
+                                  ],
+                                  "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "occurredAt",
+                                "target",
+                                "syncKind"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync whose latest run failed; its target is that run."
+                            },
+                            "description": "Event list, then field, then scores."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Syncs whose latest run failed."
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "RELEASE"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many draft events the latest automatic release check held."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                                },
+                                "occurredAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the run was written, or the event was last checked."
+                                },
+                                "target": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "SYNC_RUN",
+                                        "SPORT_EVENT"
+                                      ],
+                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "description": "The sync run's or event's id."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "What an issue item links to."
+                                },
+                                "failedChecks": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NOT_STARTED",
+                                      "ROUNDS_SCHEDULED",
+                                      "FIELD_LOADED",
+                                      "FIELD_LINKED",
+                                      "TIERS_ASSIGNED",
+                                      "TIERS_FILLED",
+                                      "PRICES_ASSIGNED",
+                                      "BRACKET_COMPLETE",
+                                      "CONTEST_SETUPS_ON"
+                                    ]
+                                  },
+                                  "description": "The ready checks that held it, in check order."
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "occurredAt",
+                                "target",
+                                "failedChecks"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A draft event its latest automatic release check held; its target is the event."
+                            },
+                            "description": "By event name."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Draft events held by a failed ready check."
+                      }
+                    ]
+                  },
+                  "description": "Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention."
+                },
+                "season": {
+                  "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The start of its first event."
+                    },
+                    "end": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The end of its last event, or its start when it has no end."
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                "nextEventStartsAt": {
+                  "description": "The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "eventCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Its events, past and upcoming, cancelled ones included."
+                }
+              },
+              "required": [
+                "id",
+                "sport",
+                "name",
+                "parentSportLeagueId",
+                "kind",
+                "providerId",
+                "isActive",
+                "syncHealth",
+                "issues",
+                "season",
+                "nextEventStartsAt",
+                "eventCount"
+              ],
+              "additionalProperties": false,
+              "description": "One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts."
+            },
+            "description": "Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league."
+          }
+        },
+        "required": [
+          "sportLeagues"
+        ],
+        "additionalProperties": false,
+        "description": "The root admin's Sports page."
+      },
       "ParticipantLeagueAffiliationDto": {
         "type": "object",
         "properties": {
@@ -82185,6 +82807,48 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/overview": {
+      "get": {
+        "operationId": "listSportLeagueOverviews",
+        "summary": "List every sport league with its health, issues and season",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.",
+        "responses": {
+          "200": {
+            "description": "The root admin's Sports page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueOverviewListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
