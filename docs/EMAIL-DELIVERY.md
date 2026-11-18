@@ -148,10 +148,8 @@ scope in `EmailTemplateScopeByKey`, a settings switch or a preview example is a 
 Each template's data is a TypeScript type, so a missing token can't merge, and every value is
 HTML-escaped. Dates are shown in the recipient's time zone (their account setting, captured
 from the browser at signup), or in US Eastern when they have none (#1039). An email sent days
-ahead gives only the day ("Thu, Apr 9, 2026"); a time, with its zone named, appears only when it
-matters that day: the entry reminder sent less than a day before picks close, the commissioner's
-"contest isn't open yet" email, an event moved within its own day, and an email recording when
-something happened (account emails, entry receipts). Dates and times are written in English in the
+ahead gives only the day ("Thu, Apr 9, 2026"), and which emails give a time, with its zone named,
+is `rules/ux-rules.md` §14 *System Email* item 8. Dates and times are written in English in the
 region of the recipient's locale (de-DE writes en-DE, "9 Apr 2026, 13:40 CEST", #1088; a region
 with no English locale of its own, such as Brazil, writes European English en-150), with their
 12-hour or 24-hour clock; en-US with the region's own clock when they have no locale or one with no
@@ -590,6 +588,18 @@ no scores and its final results email says why. Which
 contests a cancellation tells is decided before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
+
+Picks are open again (`CONTEST_REOPENED`, #1808) goes when a postponement takes a live contest
+back to `OPEN` because its event's start is ahead again (#1792): on the postponement itself, or
+at the lifecycle sweep after an edit moves the start out. The guarded write that reopens the
+contests writes one `CONTEST_REOPENED_EMAILS` job per contest it moved, as going live writes
+"Contest is live". The job tells every active league member, entered or not, that the contest
+is open again, with the event's new start, when picks close and a link to the contest. A
+contest that went live again, or reopened to another start, before the job ran is told nothing.
+It is in the Contest updates category and under the same plan feature as "New contest open". The
+idempotency key is the contest, the event and the start it reopened to, so a second
+postponement to a later start tells the league again. A postponement that already carries a
+new start also sends "Event postponed" to the commissioners and entrants a few seconds earlier.
 
 Commissioner event emails (#845 C1, C2 and C4) are the third kind of clock-driven email,
 in the Commissioner updates category:

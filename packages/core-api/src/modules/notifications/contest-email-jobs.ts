@@ -2,7 +2,8 @@
  * The contest emails built by background jobs rather than in the request that caused them:
  * "Contest is live" (E1) as a contest goes live and "Final results" (F1 to F3) as it completes
  * (#1387), both written with the contest's status move, and an event on the contest postponed,
- * moved or cancelled (C6, C7; #1458), written after the event's change. Each job reads what it
+ * moved or cancelled (C6, C7; #1458), written after the event's change, and "Picks are open again"
+ * as a postponement reopens a contest (#1808), written with its move. Each job reads what it
  * needs again and queues the emails exactly as the request once did.
  *
  * A job that throws is retried. Each email's outbox idempotency key is the contest (and for E1
@@ -16,6 +17,7 @@ import { readFinalStandings, type FinalStandingsReadDeps } from '../contests/fin
 import type { ContestNotices } from './contest-notices';
 import type {
   ContestEventChangedEmailsJobPayload,
+  ContestReopenedEmailsJobPayload,
   ContestSettledEmailsJobPayload,
   ContestStartedEmailsJobPayload,
 } from './contest-email-job-requests';
@@ -24,7 +26,7 @@ export interface ContestEmailJobDeps {
   contests: Pick<ContestRepository, 'findById'>;
   sportEvents: Pick<SportEventRepository, 'findById'>;
   finalStandings: FinalStandingsReadDeps;
-  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled' | 'contestEventChanged'>;
+  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled' | 'contestEventChanged' | 'contestReopened'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -73,6 +75,28 @@ export class ContestEmailJobs {
       return;
     }
     await this.deps.notices.contestEventChanged(contest, { ...sportEvent, startDate: new Date(payload.change.startsAt) }, payload.change);
+  }
+
+  /**
+   * "Picks are open again" for one contest a postponement reopened. A contest that is live again,
+   * or open to another start, by the time the job runs has nothing to say: picks closed, or a
+   * later reopen queued its own job.
+   */
+  async contestReopened(payload: ContestReopenedEmailsJobPayload): Promise<void> {
+    const [contest, sportEvent] = await Promise.all([
+      this.deps.contests.findById(payload.contestId),
+      this.deps.sportEvents.findById(payload.sportEventId),
+    ]);
+    if (!contest || !sportEvent) {
+      this.skipped('email.contestReopened.skipped', payload.contestId, 'Skipped the picks are open again email because its contest or event is gone');
+      return;
+    }
+    const startsAt = new Date(payload.startsAt);
+    if (contest.status !== ContestStatus.OPEN || contest.startsAt?.getTime() !== startsAt.getTime()) {
+      this.skipped('email.contestReopened.skipped', payload.contestId, 'Skipped the picks are open again email because the contest is no longer open to that start');
+      return;
+    }
+    await this.deps.notices.contestReopened(contest, sportEvent, payload);
   }
 
   private skipped(action: string, contestId: string, message: string): void {

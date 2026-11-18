@@ -975,6 +975,41 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
   });
 
+  it('writes one "Picks are open again" job with each contest it reopens, keyed by the new start, and wakes the runner once', async () => {
+    const second = buildContest({ ...LIVE, id: 'contest-2', leagueId: 'league-2' });
+    const deps = liveContests([LIVE, second]);
+    const written: unknown[] = [];
+    // contest-2 went live again, or reopened, between the read and the guarded write.
+    deps.contests.transitionStatuses = guardedMove(written, (ids) => ids.filter((id) => id === 'contest-1'));
+    const jobs = startedJobs();
+    const sportEvents = postponedEvents(NEW_START);
+
+    await new EventLifecycleService(deps, sportEvents, fakeLogger(), jobs)
+      .followPostponedStart(expectDefined(await sportEvents.findById('sport-event-1')), NOW);
+
+    expect(written).toEqual([{
+      type: BackgroundJobType.CONTEST_REOPENED_EMAILS,
+      payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: NEW_START.toISOString() },
+      runAt: undefined,
+      dedupeKey: `CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-${NEW_START.toISOString()}`,
+    }]);
+    expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes no job and wakes nothing when the guarded write finds no contest still live', async () => {
+    const deps = liveContests([LIVE]);
+    const written: unknown[] = [];
+    deps.contests.transitionStatuses = guardedMove(written, () => []);
+    const jobs = startedJobs();
+    const sportEvents = postponedEvents(NEW_START);
+
+    await new EventLifecycleService(deps, sportEvents, fakeLogger(), jobs)
+      .followPostponedStart(expectDefined(await sportEvents.findById('sport-event-1')), NOW);
+
+    expect(written).toEqual([]);
+    expect(jobs.queued).not.toHaveBeenCalled();
+  });
+
   it('writes nothing when no contest on the postponed event is live', async () => {
     const deps = liveContests([]);
 

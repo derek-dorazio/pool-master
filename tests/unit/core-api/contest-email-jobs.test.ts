@@ -6,6 +6,7 @@ import { BackgroundJobType, ContestFormat, ContestStatus, type SportEvent } from
 import {
   ContestEmailJobs,
   contestEventChangedEmailsJob,
+  contestReopenedEmailsJob,
   contestSettledEmailsJob,
   contestStartedEmailsJob,
   type ContestEmailJobDeps,
@@ -25,6 +26,7 @@ function setup(options: { contest?: ReturnType<typeof buildContest> | null; spor
     contestStarted: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestStarted']>>(async () => undefined),
     contestSettled: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestSettled']>>(async () => undefined),
     contestEventChanged: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestEventChanged']>>(async () => undefined),
+    contestReopened: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestReopened']>>(async () => undefined),
   };
   const standings = [
     { contestEntryId: 'entry-2', position: 2, displayPosition: '2', totalScore: 1 },
@@ -170,6 +172,55 @@ describe('contest email job requests', () => {
       });
       expect(() => queue.request(BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS, { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED' } } as never))
         .toThrow(InvalidBackgroundJobPayloadError);
+    });
+  });
+
+  describe('contestReopened (#1808)', () => {
+    const reopen = { contestId: 'contest-1', sportEventId: SPORT_EVENT.id, startsAt: '2026-04-30T11:40:00.000Z' };
+    const reopenedContest = () => buildContest({ id: 'contest-1', status: ContestStatus.OPEN, startsAt: new Date(reopen.startsAt) });
+
+    it('asks for the picks are open again emails of a contest still open to the start its job names', async () => {
+      const { jobs, notices, contest } = setup({ contest: reopenedContest() });
+
+      await jobs.contestReopened(reopen);
+
+      expect(notices.contestReopened).toHaveBeenCalledWith(contest, SPORT_EVENT, reopen);
+    });
+
+    it('sends nothing, and says why, when the contest went live again or reopened to another start before the job ran', async () => {
+      for (const moved of [
+        buildContest({ id: 'contest-1', status: ContestStatus.ACTIVE, startsAt: new Date(reopen.startsAt) }),
+        buildContest({ id: 'contest-1', status: ContestStatus.OPEN, startsAt: new Date('2026-05-07T11:40:00.000Z') }),
+      ]) {
+        const { jobs, notices, logger } = setup({ contest: moved });
+
+        await jobs.contestReopened(reopen);
+
+        expect(notices.contestReopened).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith({ action: 'email.contestReopened.skipped', data: { contestId: 'contest-1' } }, expect.any(String));
+      }
+    });
+
+    it('sends nothing, and says why, when the contest or its event is gone', async () => {
+      for (const gone of [{ contest: null }, { contest: reopenedContest(), sportEvent: null }]) {
+        const { jobs, notices, logger } = setup(gone);
+
+        await jobs.contestReopened(reopen);
+
+        expect(notices.contestReopened).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith({ action: 'email.contestReopened.skipped', data: { contestId: 'contest-1' } }, expect.any(String));
+      }
+    });
+
+    it('builds a job keyed by the contest, the event and the new start, so a later reopen is its own job', () => {
+      const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+
+      expect(contestReopenedEmailsJob(queue, 'contest-1', 'sport-event-1', new Date(reopen.startsAt))).toEqual({
+        type: BackgroundJobType.CONTEST_REOPENED_EMAILS,
+        payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: reopen.startsAt },
+        runAt: undefined,
+        dedupeKey: 'CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-2026-04-30T11:40:00.000Z',
+      });
     });
   });
 });

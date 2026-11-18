@@ -4,7 +4,8 @@
  * "Final results" (F1, with F3 for its winners) when it settles. All three go to every active
  * member of the contest's league, and to no other league. A contest that ends with no scores
  * (F2) tells only its commissioners and the members with an entry, and so does an event on it
- * being postponed, moved or cancelled (C6, C7).
+ * being postponed, moved or cancelled (C6, C7). "Picks are open again" (#1808), when a postponement
+ * takes a live contest back to open, goes to every active member, as D1 does.
  *
  * Each email is queued once per person: its outbox idempotency key is the contest (and for E1
  * the event) and the person, so a retried call finds it recorded and skips. E1 and F1 (#1387)
@@ -50,8 +51,10 @@ import { describeEventFormat, shareSummaryReads, summarizeContest, type ContestS
 import { activeLeagueMembers, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 import {
   contestEventChangedEmailsJob,
+  contestReopenedAbout,
   sportEventChangeAbout,
   type ContestEventChangedEmailsJobPayload,
+  type ContestReopenedEmailsJobPayload,
 } from './contest-email-job-requests';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { leaderCount } from './live-standings';
@@ -319,6 +322,33 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
       data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, event, change: contestChange, contestUrl },
+    }));
+  }
+
+  /**
+   * "Picks are open again", from its job (#1808): tells every active member the postponed event's
+   * contest takes picks again until `reopen.startsAt`, each once per reopen. A failure to queue
+   * throws, for its job to retry.
+   */
+  async contestReopened(contest: Contest, sportEvent: SportEvent, reopen: ContestReopenedEmailsJobPayload): Promise<void> {
+    const [league, sportLeague] = await Promise.all([
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
+    ]);
+    if (!league || !sportLeague) {
+      this.skipped('email.contestReopened.skipped', contest, 'Skipped the picks are open again email because its league or sport league is gone');
+      return;
+    }
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeague.name);
+    const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const about = contestReopenedAbout(reopen);
+    const closesAt = new Date(reopen.startsAt);
+    await this.queueEach('CONTEST_REOPENED', await activeLeagueMembers(this.deps, league.id), (user) => ({
+      to: emailRecipientOf(user),
+      about,
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
+      refs: { contestId: contest.id },
+      data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, event, closesAt, contestUrl },
     }));
   }
 

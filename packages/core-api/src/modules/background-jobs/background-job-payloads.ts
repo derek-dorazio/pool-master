@@ -10,6 +10,7 @@ import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-
 import { ProviderEventSyncJobPayloadSchema } from '../ingestion/provider-event-sync-job';
 import {
   ContestEventChangedEmailsJobPayloadSchema,
+  ContestReopenedEmailsJobPayloadSchema,
   ContestSettledEmailsJobPayloadSchema,
   ContestStartedEmailsJobPayloadSchema,
 } from '../notifications/contest-email-job-requests';
@@ -23,6 +24,7 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: ContestStartedEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: ContestSettledEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS]: ContestEventChangedEmailsJobPayloadSchema,
+  [BackgroundJobType.CONTEST_REOPENED_EMAILS]: ContestReopenedEmailsJobPayloadSchema,
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: SettleSportEventContestsJobPayloadSchema,
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: SettleGameContestsJobPayloadSchema,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: RebuildLeaderboardsJobPayloadSchema,

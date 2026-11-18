@@ -180,24 +180,33 @@ export class IngestionPersistence {
 
     let linkedCount = 0;
     let createdCount = 0;
+    const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
+    for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
+      // poolmaster-allow-query-in-loop: once per distinct sport among new participants
+      sportBySport.set(sport, await this.prisma.sport.upsert({
+        where: { sport },
+        create: {
+          sport,
+          participantType: 'INDIVIDUAL',
+          // No schema default (#236): a new sport row must not become golf by omission.
+          tournamentFormat: getDefaultTournamentFormatForSport(sport),
+        },
+        update: {},
+        select: { id: true, participantType: true },
+      }));
+    }
+    const sportIdOf = (participant: ProviderParticipant) =>
+      mappingByKey.get(providerKey(participant))?.participant.sportId ?? (sportBySport.get(participant.sport) as { id: string }).id;
+    // The sport leagues the feed's participants name (`metadata.tour`), each of which a
+    // participant of it is affiliated with (#1800), and among whose members a new one is matched.
+    const leagues = await this.leaguesNamedBy([...latestByKey.values()], sportIdOf);
+    /** Each participant's affiliation with every league it names, once its id is known. */
+    const affiliationsOf = (participantIdByKey: ReadonlyMap<string, string>) => [...latestByKey].flatMap(([key, participant]) => {
+      const participantId = participantIdByKey.get(key);
+      return participantId === undefined ? [] : leagues.idsOf(participant).map((sportLeagueId) => ({ participantId, sportLeagueId }));
+    });
     if (unmapped.length > 0) {
-      const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
-      for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
-        // poolmaster-allow-query-in-loop: once per distinct sport among new participants
-        sportBySport.set(sport, await this.prisma.sport.upsert({
-          where: { sport },
-          create: {
-            sport,
-            participantType: 'INDIVIDUAL',
-            // No schema default (#236): a new sport row must not become golf by omission.
-            tournamentFormat: getDefaultTournamentFormatForSport(sport),
-          },
-          update: {},
-          select: { id: true, participantType: true },
-        }));
-      }
-      const sportIdOf = (participant: ProviderParticipant) => (sportBySport.get(participant.sport) as { id: string }).id;
-      const { linked, toCreate } = await this.matchByName(unmapped, sportIdOf);
+      const { linked, toCreate } = await this.matchByName(unmapped, sportIdOf, leagues);
       const created = await this.prisma.$transaction(async (tx) => {
         const rows = toCreate.length === 0 ? [] : await tx.participant.createManyAndReturn({
           data: toCreate.map((participant) => {
@@ -224,11 +233,22 @@ export class IngestionPersistence {
         ];
         // A participant linked by name keeps what the site already holds for it until the feed's next sync.
         await tx.participantProviderMapping.createMany({ data: createdMappings });
+        // In the same write, every participant joins the leagues it names, so a team the feed
+        // brings that the site lacked is on its league's roster, not a guest in the field.
+        const ids = new Map(participantIdByKey);
+        for (const mapping of createdMappings) ids.set(providerKey(mapping), mapping.participantId);
+        const affiliations = affiliationsOf(ids);
+        if (affiliations.length > 0) await tx.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
         return createdMappings;
       });
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
       linkedCount = linked.length;
       createdCount = toCreate.length;
+    } else {
+      // A participant the feed already links joins the leagues it names too, so one created
+      // before the sync affiliated new teams is put right by the next sync.
+      const affiliations = affiliationsOf(participantIdByKey);
+      if (affiliations.length > 0) await this.prisma.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
     }
 
     this.logger?.info({ count: latestByKey.size, updated: updates.length, linked: linkedCount, created: createdCount }, 'Persisted participants from ingestion');
@@ -245,6 +265,37 @@ export class IngestionPersistence {
     return this.prisma.sportEvent.findMany({
       where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
     });
+  }
+
+  /**
+   * The sport leagues the participants name by `metadata.tour` (a league's match keyword, as
+   * `isLeagueTour` matches it: case and surrounding space ignored), in one read of their sports'
+   * keyed leagues, a reference table; no read when none names a league.
+   */
+  private async leaguesNamedBy(participants: readonly ProviderParticipant[], sportIdOf: (participant: ProviderParticipant) => string): Promise<LeaguesNamed> {
+    const toursBySportId = new Map<string, Set<string>>();
+    for (const participant of participants) {
+      const tour = tourOf(participant);
+      if (tour === undefined) continue;
+      const sportId = sportIdOf(participant);
+      toursBySportId.set(sportId, (toursBySportId.get(sportId) ?? new Set()).add(tour.trim()));
+    }
+    const keyedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
+      where: { sportId: { in: [...toursBySportId.keys()] }, matchKeyword: { not: null } },
+      select: { id: true, sportId: true, matchKeyword: true },
+    });
+    const named = keyedLeagues.filter((league) => [...toursBySportId.get(league.sportId) ?? []].some((tour) => isLeagueTour(tour, league.matchKeyword)));
+    const idsBySportId = new Map<string, string[]>();
+    for (const league of named) idsBySportId.set(league.sportId, [...(idsBySportId.get(league.sportId) ?? []), league.id]);
+    return {
+      idsBySportId,
+      idsOf: (participant) => {
+        const tour = tourOf(participant);
+        if (tour === undefined) return [];
+        const sportId = sportIdOf(participant);
+        return named.filter((league) => league.sportId === sportId && isLeagueTour(tour, league.matchKeyword)).map((league) => league.id);
+      },
+    };
   }
 
   /**
@@ -272,9 +323,9 @@ export class IngestionPersistence {
   private async matchByName(
     unmapped: readonly ProviderParticipant[],
     sportIdOf: (participant: ProviderParticipant) => string,
+    leagues: LeaguesNamed,
   ) {
     const namesBySportId = new Map<string, Set<string>>();
-    const toursBySportId = new Map<string, Set<string>>();
     const feedNameCounts = new Map<string, number>();
     const providerIds = new Set<string>();
     const feedKeyOf = (participant: ProviderParticipant) =>
@@ -283,31 +334,14 @@ export class IngestionPersistence {
       providerIds.add(participant.providerId);
       const sportId = sportIdOf(participant);
       namesBySportId.set(sportId, (namesBySportId.get(sportId) ?? new Set()).add(participant.name));
-      const tour = tourOf(participant);
-      if (tour !== undefined) toursBySportId.set(sportId, (toursBySportId.get(sportId) ?? new Set()).add(tour.trim()));
       const feedKey = feedKeyOf(participant);
       feedNameCounts.set(feedKey, (feedNameCounts.get(feedKey) ?? 0) + 1);
-    }
-    // The leagues the feed names, so the candidates read finds their members through the
-    // affiliations' sport league index rather than joining every affiliation to its league. The
-    // sports' keyed leagues are read (a reference table) and named in memory by `isLeagueTour`,
-    // which ignores the stored keyword's case and surrounding space as every tour match does.
-    const keyedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
-      where: { sportId: { in: [...toursBySportId.keys()] }, matchKeyword: { not: null } },
-      select: { id: true, sportId: true, matchKeyword: true },
-    });
-    const leagueIdsBySportId = new Map<string, string[]>();
-    for (const league of keyedLeagues) {
-      const tours = toursBySportId.get(league.sportId) ?? new Set<string>();
-      if ([...tours].some((tour) => isLeagueTour(tour, league.matchKeyword))) {
-        leagueIdsBySportId.set(league.sportId, [...(leagueIdsBySportId.get(league.sportId) ?? []), league.id]);
-      }
     }
     const candidates = await this.prisma.participant.findMany({
       where: {
         OR: [
           ...[...namesBySportId].map(([sportId, names]) => ({ sportId, name: { in: [...names] } })),
-          ...[...leagueIdsBySportId].map(([sportId, sportLeagueIds]) => ({ sportId, leagueAffiliations: { some: { sportLeagueId: { in: sportLeagueIds } } } })),
+          ...[...leagues.idsBySportId].map(([sportId, sportLeagueIds]) => ({ sportId, leagueAffiliations: { some: { sportLeagueId: { in: sportLeagueIds } } } })),
         ],
       },
       select: {
@@ -536,6 +570,14 @@ export class IngestionPersistence {
     }
     return plans.length;
   }
+}
+
+/** The sport leagues a feed's participants name (`leaguesNamedBy`). */
+interface LeaguesNamed {
+  /** Each sport's named leagues, by the sport's id. */
+  idsBySportId: ReadonlyMap<string, string[]>;
+  /** The leagues one participant names: none when it names none, or one the site does not have. */
+  idsOf(participant: ProviderParticipant): string[];
 }
 
 /** The sport league a provider participant names by its match keyword, when it names one. */
