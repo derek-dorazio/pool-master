@@ -1575,7 +1575,8 @@ function renderContestOpenedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `New contest: ${data.contestName}`;
-  const closesLine = formatDay(data.closesAt, context);
+  // When picks close, to the minute: an entry made the evening before a start is still in time.
+  const closesLine = formatInstant(data.closesAt, context);
   const closesLabel = data.events.length === 1 ? 'Picks close' : 'First picks close';
   const intro = `${data.contestName} is open in ${data.leagueName}.`;
   // A season's events after the first, which the header doesn't name.
@@ -2075,7 +2076,8 @@ function renderContestReopenedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const closesLabel = 'Picks close';
-  const closesLine = formatDay(data.closesAt, context);
+  // To the minute: a postponement is often to later the same day, which the day alone can't say.
+  const closesLine = formatInstant(data.closesAt, context);
   const intro = `${data.event.eventName} was postponed, so ${data.contestName} is open again.`;
   const ask = 'Make or change your picks before the new start.';
   return buildMessage(context, {

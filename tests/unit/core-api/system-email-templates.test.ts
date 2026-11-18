@@ -293,7 +293,7 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('New contest open\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
     expect(message.text).toContain('Masters Pick 6 is open in Mathworks.');
     expect(message.text).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of 6 tiers. The best 4 scores count.\n1 entry per member');
-    expect(message.text).toContain('Picks close: Thu, Apr 9, 2026');
+    expect(message.text).toContain('Picks close: Apr 9, 2026, 11:40 AM UTC');
     expect(message.text).not.toContain('Then:');
     expect(message.text).toContain('Enter contest: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1');
     expect(message.html).toContain(`src="${TIERED.imageUrl}"`);
@@ -318,7 +318,7 @@ describe('pool-master-98i system email templates', () => {
     }, UTC);
 
     expect(message.text).toContain('Then:\nPGA Championship, Thu, May 14, 2026');
-    expect(message.text).toContain('First picks close: Thu, Apr 9, 2026');
+    expect(message.text).toContain('First picks close: Apr 9, 2026, 11:40 AM UTC');
   });
 
   it('renders the 3-hour entry reminder with the time picks close, in the reader\'s time zone, and a Make your picks button', () => {
@@ -809,7 +809,7 @@ describe('picks are open again', () => {
     expect(message.subject).toBe('Picks are open again: Masters Pick 6');
     expect(message.text).toContain('Picks open again\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
     expect(message.text).toContain('The Masters was postponed, so Masters Pick 6 is open again.\nMake or change your picks before the new start.');
-    expect(message.text).toContain('Picks close: Thu, Apr 15, 2027');
+    expect(message.text).toContain('Picks close: Apr 15, 2027, 12:00 PM UTC');
     expect(message.text).toContain(`Make your picks: ${data.contestUrl}`);
     expect(message.html).toContain(`href="${data.contestUrl}"`);
     expect(message.text).toContain('Not affiliated with PGA Tour or any sports league.');

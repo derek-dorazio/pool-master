@@ -178,7 +178,7 @@ describe('ContestNotices', () => {
       expect(text).toContain('Masters Pick 6 is open in Office League.');
       expect(text).toContain('New contest open\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
       expect(text).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of 6 tiers. The best 4 scores count.\n2 entries per member');
-      expect(text).toContain('Picks close: Thu, Apr 9, 2026');
+      expect(text).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
       expect(outbox.rows[0]?.htmlBody).toContain('src="https://app.example.test/email/formats/tiered.png"');
       expect(text).toContain(`Enter contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
@@ -210,7 +210,7 @@ describe('ContestNotices', () => {
       await notices().contestOpened(contest.id);
 
       expect(textTo(nora.user.id)).toContain('Second-chance bracket from the Sweet 16');
-      expect(textTo(nora.user.id)).toContain('Picks close: Thu, Apr 9, 2026');
+      expect(textTo(nora.user.id)).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
     });
 
     it('sends nothing, and says why, for a contest whose rules are gone', async () => {
@@ -367,7 +367,7 @@ describe('ContestNotices', () => {
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_REOPENED')).toBe(true);
       const text = textTo(nora.user.id);
       expect(text).toContain('Masters Tournament was postponed, so Masters Pick 6 is open again.');
-      expect(text).toContain('Picks close: Thu, Apr 16, 2026');
+      expect(text).toContain('Picks close: Apr 16, 2026, 7:40 AM EDT');
       expect(text).toContain(`Make your picks: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
