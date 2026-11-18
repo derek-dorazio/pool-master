@@ -368,6 +368,8 @@ export class PrismaSportEventRepository implements SportEventRepository {
         eventYear: input.eventYear,
         syncScope: input.syncScope,
         autoLifecycleEnabled: input.autoLifecycleEnabled,
+        parentEventId: input.parentEvent?.id ?? null,
+        parentRoundNumbers: [...(input.parentEvent?.roundNumbers ?? [])],
       })),
       include: SPORT_EVENT_INCLUDE,
     });
@@ -513,6 +515,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
       _count: { _all: true },
     });
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async countClutchCardEvents(parentEventIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.sportEvent.groupBy({
+      by: ['parentEventId'],
+      where: { parentEventId: { in: [...parentEventIds] } },
+      _count: { _all: true },
+    });
+    return countMap(parentEventIds, groups.flatMap((group) => (group.parentEventId === null ? [] : [[group.parentEventId, group._count._all] as const])));
   }
 
   async countBySportLeagues(
@@ -1143,6 +1154,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,
     parentSportLeagueId: row.parentSportLeagueId,
+    parentRoundNumbers: row.parentRoundNumbers,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -1174,6 +1186,8 @@ const SPORT_EVENT_INCLUDE = {
       sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, eventSyncProviderId: true } },
     },
   },
+  // A Clutch Card event's parent's name (#1820); null on every other event.
+  parentEvent: { select: { name: true } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1203,6 +1217,9 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
+    ...(row.parentEventId !== null && row.parentEvent !== null && {
+      parentEvent: { id: row.parentEventId, name: row.parentEvent.name, roundNumbers: row.parentRoundNumbers },
+    }),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

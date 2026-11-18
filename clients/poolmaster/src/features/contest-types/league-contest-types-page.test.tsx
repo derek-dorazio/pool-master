@@ -130,18 +130,23 @@ describe('League › Contest types', () => {
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
   });
 
-  describe('a sport whose leagues share its every-event contest types', () => {
+  describe('a sport whose leagues each have their own copy of the same contest types', () => {
     const PGA = '80300000-0000-4000-8000-000000000011';
     const LPGA = '80300000-0000-4000-8000-000000000012';
     const THOROUGHBRED = '80300000-0000-4000-8000-000000000013';
-    const golf = (templateKey: string, overrides: Record<string, unknown>) => template(templateKey, { sport: 'GOLF', sportLeagueId: null, eventType: null, ...overrides });
+    const golfOn = (sportLeagueId: string, templateKey: string, overrides: Record<string, unknown>) => template(templateKey, { sport: 'GOLF', sportLeagueId, eventType: null, ...overrides });
+    /** Each tour's copy of one setup (#1825): the PGA TOUR's keeps `id`, the LPGA Tour's has its own. */
+    const golf = (templateKey: string, overrides: { id: string } & Record<string, unknown>) => [
+      golfOn(PGA, templateKey, overrides),
+      golfOn(LPGA, templateKey, { ...overrides, id: `${overrides.id}-lpga` }),
+    ];
     const GOLF_TEMPLATES = [
-      golf('golf-tiered-pick-6', { id: 'tpl-golf-tiered' }),
-      golf('golf-tiered-pick-12', { id: 'tpl-golf-tiered-12', isDefault: false, sortOrder: 2 }),
-      golf('golf-budget-pick-6-best-4', { id: 'tpl-golf-budget', selectionType: 'BUDGET_PICK', configuration: { selectionType: 'BUDGET_PICK', picks: 6, countedScores: 4, maxEntriesPerSquad: 1 } }),
-      golf('golf-quick-pick-6', { id: 'tpl-golf-quick', selectionType: 'RANDOM_DRAW', configuration: { selectionType: 'RANDOM_DRAW', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 } }),
-      golf('pga-tour-majors-tiered', { id: 'tpl-pga-majors', sportLeagueId: PGA, isDefault: false, sortOrder: 10 }),
-      template('horse-racing-tiered', { id: 'tpl-horse-tiered', sport: 'HORSE_RACING', sportLeagueId: null, eventType: null }),
+      ...golf('golf-tiered-pick-6', { id: 'tpl-golf-tiered' }),
+      ...golf('golf-tiered-pick-12', { id: 'tpl-golf-tiered-12', isDefault: false, sortOrder: 2 }),
+      ...golf('golf-budget-pick-6-best-4', { id: 'tpl-golf-budget', selectionType: 'BUDGET_PICK', configuration: { selectionType: 'BUDGET_PICK', picks: 6, countedScores: 4, maxEntriesPerSquad: 1 } }),
+      ...golf('golf-quick-pick-6', { id: 'tpl-golf-quick', selectionType: 'RANDOM_DRAW', configuration: { selectionType: 'RANDOM_DRAW', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 } }),
+      golfOn(PGA, 'pga-tour-majors-tiered', { id: 'tpl-pga-majors', isDefault: false, sortOrder: 10 }),
+      template('horse-racing-tiered', { id: 'tpl-horse-tiered', sport: 'HORSE_RACING', sportLeagueId: THOROUGHBRED, eventType: null }),
     ];
     const GOLF_LEAGUES = [
       { id: PGA, name: 'PGA TOUR', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10, parentSportLeagueId: null },
@@ -160,14 +165,14 @@ describe('League › Contest types', () => {
       }));
     }
 
-    it('shows a chosen league every contest type it can run, its own leading its format and its sport\'s every-event types beside them, with no "Every tournament" section', async () => {
+    it('shows a chosen league every contest type it can run, each format led by its default with its other setups as variations, with no "Every tournament" section', async () => {
       primeGolf('MEMBER');
       renderPage('/league/BIGDAWGS/admin/contest-types?sport=golf&league=pga-tour');
 
       const golfSection = await screen.findByTestId('contest-types-sport-GOLF');
       expect(golfSection).not.toHaveTextContent('Every tournament');
       expect(golfSection).not.toHaveTextContent('LPGA Tour');
-      expect(within(golfSection).getByTestId('contest-type-pga-tour-pga-tour-majors-tiered-variations')).toHaveTextContent('golf-tiered-pick-6 name');
+      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6-variations')).toHaveTextContent('pga-tour-majors-tiered name');
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-budget-pick-6-best-4')).toBeInTheDocument();
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-quick-pick-6')).toBeInTheDocument();
     });
@@ -178,7 +183,7 @@ describe('League › Contest types', () => {
 
       const golfSection = await screen.findByTestId('contest-types-sport-GOLF');
       expect(within(golfSection).getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent).filter((name) => name === 'PGA TOUR' || name === 'LPGA Tour')).toEqual(['PGA TOUR', 'LPGA Tour']);
-      expect(within(golfSection).getByTestId('contest-type-pga-tour-pga-tour-majors-tiered')).toBeInTheDocument();
+      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6')).toBeInTheDocument();
       expect(within(golfSection).getByTestId('contest-type-lpga-tour-golf-tiered-pick-6')).toBeInTheDocument();
       expect(within(golfSection).getByTestId('contest-type-lpga-tour-golf-quick-pick-6')).toBeInTheDocument();
       const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
@@ -186,7 +191,7 @@ describe('League › Contest types', () => {
       expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Golf 6', 'PGA TOUR', 'LPGA Tour', 'Horse racing 1']);
     });
 
-    it('gives a league with only its sport\'s every-event contest types a section, as US Thoroughbred has', async () => {
+    it('gives a league whose only contest types are ones every league of its sport plays a section, as US Thoroughbred has', async () => {
       primeGolf('MEMBER');
       renderPage('/league/BIGDAWGS/admin/contest-types?sport=horse-racing');
 

@@ -32,6 +32,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
@@ -67,6 +68,7 @@ async function cleanup(): Promise<void> {
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
+    await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
@@ -98,6 +100,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     expect(circuit.response?.status).toBe(201);
     const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
+    await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeagueId });
 
     const race = await createEvent({
       client: a,
@@ -155,7 +158,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.HORSE_RACING, active: true },
+      query: { sport: Sport.HORSE_RACING, sportLeagueId, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const drawTemplate = expectDefined(templates.find((template) => template.selectionType === SelectionType.RANDOM_DRAW), 'the random-draw template');

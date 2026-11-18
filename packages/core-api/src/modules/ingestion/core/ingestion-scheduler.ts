@@ -111,6 +111,11 @@ export interface UnlinkedRankedParticipant {
 export interface EventDetailPersisted {
   writeDiagnostics: SyncWriteDiagnostics;
   unlinkedRankedParticipants: readonly UnlinkedRankedParticipant[];
+  /** What tiering and pricing the written field did (#1822): stats and warnings for the run. */
+  fieldValuation?: {
+    stats: Readonly<Record<string, number>>;
+    warnings: readonly IngestionJobWarning[];
+  };
 }
 
 export interface IngestionCallbacks {
@@ -724,7 +729,7 @@ export class IngestionScheduler {
         throw new Error(`Provider returned no event detail for event ${eventId}`);
       }
 
-      const { writeDiagnostics, unlinkedRankedParticipants } = await this.callbacks.onEventDetail(detail);
+      const { writeDiagnostics, unlinkedRankedParticipants, fieldValuation } = await this.callbacks.onEventDetail(detail);
       this.logger?.info({
         sport,
         eventId,
@@ -739,6 +744,7 @@ export class IngestionScheduler {
           eventsHydrated: 1,
           participantsReturned: detail.participants.length,
           ...syncWriteStats(writeDiagnostics),
+          ...fieldValuation?.stats,
         },
         writeDiagnostics,
         warnings: [
@@ -749,6 +755,7 @@ export class IngestionScheduler {
               }]
             : []),
           ...(unlinkedRankedParticipants.length > 0 ? [unlinkedRankedWarning(provider.providerId, unlinkedRankedParticipants)] : []),
+          ...(fieldValuation?.warnings ?? []),
         ],
       };
     }, eventId);

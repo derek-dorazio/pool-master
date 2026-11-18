@@ -11,7 +11,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
-import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
+import { CLUTCH_CARD_SYNC_DELAY_MS, LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import type { ProviderEventDetailsChange, ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
 import { buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
@@ -105,6 +105,18 @@ describe('LeagueEventsSync', () => {
         [BackgroundJobType.SYNC_LEAGUE_EVENTS, pga.id, undefined, { sportLeagueId: pga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }],
         [BackgroundJobType.SYNC_LEAGUE_EVENTS, lpga.id, undefined, { sportLeagueId: lpga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }],
       ]);
+    });
+
+    it('makes each Clutch Card league\'s job due after the season leagues\' jobs, so a new season event is there for its rounds to link to', async () => {
+      const worldSeries = syncedLeague({ name: 'League Championship Series', scoringFamily: 'COMPOSITE' });
+      const mlb = syncedLeague({ name: 'MLB', matchKeyword: 'MLB' });
+      const { sync, jobs } = build({ leagues: [worldSeries, mlb], wakes: false });
+
+      await sync.queueScheduled();
+
+      const runAtOf = (id: string) => jobs.rows.find((job) => job.sportLeagueId === id)?.runAt;
+      expect(runAtOf(mlb.id)).toEqual(NOW);
+      expect(runAtOf(worldSeries.id)).toEqual(new Date(NOW.getTime() + CLUTCH_CARD_SYNC_DELAY_MS));
     });
 
     it('queues nothing more for a league whose sync is still waiting to run', async () => {
@@ -223,7 +235,7 @@ describe('LeagueEventsSync', () => {
         backgroundJobId: job.id,
         status: ProviderSyncRunStatus.COMPLETED,
         completedAt: NOW,
-        payload: expect.objectContaining({ runType: 'LEAGUE_EVENTS_SYNC', stats: { created: 2, updated: 1, skipped: 2 } }),
+        payload: expect.objectContaining({ runType: 'LEAGUE_EVENTS_SYNC', stats: { created: 2, updated: 1, skipped: 2, alreadyStarted: 0 } }),
       });
       const details = syncRuns.update.mock.calls.at(-1)?.[1].details as { years: Array<{ eventYear: number; created: unknown[]; updated: unknown[] }> };
       expect(details.years.map((year) => [year.eventYear, year.created.length, year.updated])).toEqual([
@@ -232,8 +244,25 @@ describe('LeagueEventsSync', () => {
       ]);
       expect(job).toMatchObject({
         status: BackgroundJobStatus.SUCCEEDED,
-        result: { syncRunId: run.id, eventYears: [2026, 2027], created: 2, updated: 1, skipped: 2 },
+        result: { syncRunId: run.id, eventYears: [2026, 2027], created: 2, updated: 1, skipped: 2, alreadyStarted: 0 },
       });
+    });
+
+    it('counts the provider events it skipped because they had already started, on the run and in its result', async () => {
+      const pga = syncedLeague();
+      const importProviderEventYear = jest.fn(async (): Promise<ProviderEventYearImport> => ({
+        created: [],
+        skipped: [
+          { externalId: 'w1', name: 'Week 1', reason: 'ALREADY_STARTED' },
+          { externalId: 'w2', name: 'Week 2', reason: 'ALREADY_LINKED' },
+        ],
+      }));
+      const { sync, syncRuns } = build({ leagues: [pga], importProviderEventYear });
+
+      const result = await sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld });
+
+      expect(result).toMatchObject({ skipped: 2, alreadyStarted: 1 });
+      expect(syncRuns.rows[0]?.payload).toMatchObject({ stats: { skipped: 2, alreadyStarted: 1 } });
     });
 
     it('shows its progress on the run after each year while it runs', async () => {
@@ -276,7 +305,7 @@ describe('LeagueEventsSync', () => {
       await runner.drain();
 
       expect(jobs.rows[0]).toMatchObject({ status: BackgroundJobStatus.QUEUED, attempts: 1, lastError: 'vendor unavailable' });
-      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, payload: expect.objectContaining({ stats: { created: 1, updated: 0, skipped: 1 } }) });
+      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, payload: expect.objectContaining({ stats: { created: 1, updated: 0, skipped: 1, alreadyStarted: 0 } }) });
     });
 
     it('marks the run an earlier try left IN_PROGRESS as interrupted, then records its own', async () => {

@@ -16,7 +16,7 @@ The plan behind the work, and the decisions Derek made on it, are in
   and keeps their dates current, and the lifecycle scheduler moves their status from those
   dates; the admin reviews, releases and browses. **Today** a sweep every six hours creates a
   synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
-  loads their fields (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
+  loads their fields and, while an event is a draft, tiers and prices them (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
   row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
@@ -135,9 +135,16 @@ ingestion scheduler) queues one `SYNC_LEAGUE_EVENTS` background job per active s
 same job. `LeagueEventsSync.run` (`events/league-events-sync.ts`) runs the year import below for
 this calendar year and the next (or the one year Sync now names), recording one `EVENTS` sync run
 with its trigger, progress and what it created and updated (`docs/BACKGROUND-JOBS.md`). Sync now
-replaces the Year import action below, which stays until the admin UI moves to it. New events are born `DRAFT` and wait for an admin's release, for now. Setting
-the provider is refused unless it is registered and covers the league's sport, and the league has
-a match keyword. One league's failed read fails only its own job, which retries.
+replaces the Year import action below, which stays until the admin UI moves to it. New events are
+born `DRAFT` and wait for an admin's release, for now. A provider event whose start has already
+passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
+as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
+league's sport, and the league has a match keyword. One league's failed read fails only its own
+job, which retries. Every season league's job is due before any Clutch Card league's (the schedule
+queues those a few minutes later): a Clutch Card event names its season event (the World Series
+round names the MLB Postseason, #1820), so a new season event is created before its rounds are
+imported. A Clutch Card provider event whose season event is not on the site, or not one event, is
+skipped as `NO_PARENT_EVENT` and created by a later sync.
 
 The same sweep then keeps the league's already-linked events current with what the provider just
 listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's
@@ -159,8 +166,8 @@ Every other league's events come from an admin, in one of three ways, all root a
 
 | Action | Route | What it writes |
 |---|---|---|
-| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped. |
-| Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`). |
+| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped, and so is a provider event whose start has passed (`ALREADY_STARTED`, #1821). |
+| Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`); 409 `SPORT_EVENT_ALREADY_STARTED` when its start has passed. |
 | Link an existing event | `PUT /:eventId/score-source` | `EventScoreSourceService.linkScoreSource` sets `provider_id`, `external_id` and `sync_scope = SCORES_ONLY` on an admin-made event. `DELETE` puts it back to the manual-admin placeholder and `sync_scope = NONE`. |
 
 `sport_events` has `@@unique([provider_id, external_id])`, so one provider event links to at most
@@ -187,6 +194,9 @@ flowchart TD
   U & LK & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
   J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
+  W --> G[games, 2d]
+  G --> T{event still a draft?}
+  T -- yes --> TP[tier and price the field<br/>unless edited by hand: #1822]
 ```
 
 | Table | Key | Written |
@@ -212,6 +222,22 @@ best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1
 the first 20 and counts the rest. Those are the
 stars the feed named some other way or not at all: its scores never reach them, so the root admin
 merges or maps each by hand.
+
+Then, after its games (*2d*) and while the event is still a draft, the field is tiered and priced with no typing (#1822,
+`SyncedFieldValuationService`), the way the *Auto-assign* buttons would: in the field's one order
+(odds, then seed, then rank, by the first value every participant has, then name), on the event's
+own tiers, priced with the values the event was last priced with or else the first Budget pricing
+profile. It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
+tiers made from odds, `pricesMadeFromOdds: 64` the participants priced; `tiersUnchanged` and
+`pricesUnchanged` when nothing moved, so nothing was written). An admin's correction is kept: once
+any tier on the event was placed by hand, the sync leaves every tier alone (`tiersKeptAsEdited`),
+and once any price was typed by hand, every price (`pricesKeptAsEdited`); pressing an *Auto-assign*
+button is not a correction (a tier size sent to it is not kept). A bracket replacement of a
+withdrawn participant places the replacement by hand, so it counts as a correction. After a
+correction, a participant the field gains is left for an admin to place, and the run warns
+`FIELD_ROWS_UNTIERED` or `FIELD_ROWS_UNPRICED` with the count. A released event's tiers and prices are locked
+(`tiersAndPricesLocked`). A failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written
+either way, and the next field sync tries again.
 
 Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202`) because one
 provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's

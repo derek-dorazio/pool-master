@@ -967,11 +967,28 @@ describe('ContestConfigTemplateRepository', () => {
     await getPrisma().contestConfigTemplate.deleteMany({ where: { templateKey: { startsWith: prefix } } });
   });
 
-  async function createTemplate(key: string, eventType: ContestTemplateEventType | null, sortOrder: number, sportLeagueId: string | null = null) {
+  /** Two golf sport leagues, a PGA-style and an LPGA-style tour, for league-scoped templates (#624). */
+  async function createGolfLeagues() {
+    const prisma = getPrisma();
+    const sport = await prisma.sport.upsert({
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const suffix = randomUUID().slice(0, 8);
+    const [pga, lpga] = await Promise.all([
+      prisma.sportLeague.create({ data: { sportId: sport.id, name: `PGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { sportId: sport.id, name: `LPGA-style ${suffix}` } }),
+    ]);
+    return { pga, lpga };
+  }
+
+  /** Every template belongs to one sport league (#1825); one with no league named goes in a scratch league. */
+  async function createTemplate(key: string, eventType: ContestTemplateEventType | null, sortOrder: number, sportLeagueId?: string) {
     return getPrisma().contestConfigTemplate.create({
       data: {
         sport: Sport.GOLF,
-        sportLeagueId,
+        sportLeagueId: sportLeagueId ?? (await createGolfLeagues()).pga.id,
         eventType,
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
@@ -995,25 +1012,8 @@ describe('ContestConfigTemplateRepository', () => {
     expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}knockout`, `${prefix}any`]);
   });
 
-  /** Two golf sport leagues, a PGA-style and an LPGA-style tour, for league-scoped templates (#624). */
-  async function createGolfLeagues() {
-    const prisma = getPrisma();
-    const sport = await prisma.sport.upsert({
-      where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-      update: {},
-    });
-    const suffix = randomUUID().slice(0, 8);
-    const [pga, lpga] = await Promise.all([
-      prisma.sportLeague.create({ data: { sportId: sport.id, name: `PGA-style ${suffix}` } }),
-      prisma.sportLeague.create({ data: { sportId: sport.id, name: `LPGA-style ${suffix}` } }),
-    ]);
-    return { pga, lpga };
-  }
-
-  it("lists a sport league's own templates with the sport-wide ones and never another league's", async () => {
+  it("lists only a sport league's own templates, never another league's copy of the same setup", async () => {
     const { pga, lpga } = await createGolfLeagues();
-    await createTemplate('sport-wide', null, 0);
     await createTemplate('lpga', null, 1, lpga.id);
     await createTemplate('pga', null, 2, pga.id);
     const repo = new PrismaContestConfigTemplateRepository(getAppPrisma());
@@ -1022,24 +1022,31 @@ describe('ContestConfigTemplateRepository', () => {
     const unfiltered = await repo.list({ sport: Sport.GOLF });
 
     expect(ours(forLpga).map((template) => [template.templateKey, template.sportLeagueId])).toEqual([
-      [`${prefix}sport-wide`, null],
       [`${prefix}lpga`, lpga.id],
     ]);
-    expect(ours(unfiltered).map((template) => template.templateKey)).toEqual([
-      `${prefix}sport-wide`, `${prefix}lpga`, `${prefix}pga`,
-    ]);
+    expect(ours(unfiltered).map((template) => template.templateKey)).toEqual([`${prefix}lpga`, `${prefix}pga`]);
   });
 
-  it('narrows by sport league and event type together: both must match or be unscoped', async () => {
-    const { lpga } = await createGolfLeagues();
+  it('narrows by sport league and event type together: the league must match, the event type match or be unscoped', async () => {
+    const { pga, lpga } = await createGolfLeagues();
     await createTemplate('lpga-knockout', ContestTemplateEventType.KNOCKOUT, 0, lpga.id);
     await createTemplate('lpga-week', ContestTemplateEventType.WEEK, 1, lpga.id);
-    await createTemplate('any', null, 2);
+    await createTemplate('lpga-any', null, 2, lpga.id);
+    await createTemplate('pga-any', null, 3, pga.id);
 
     const templates = await new PrismaContestConfigTemplateRepository(getAppPrisma())
       .list({ sport: Sport.GOLF, sportLeagueId: lpga.id, eventType: ContestTemplateEventType.KNOCKOUT });
 
-    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}lpga-knockout`, `${prefix}any`]);
+    expect(ours(templates).map((template) => template.templateKey)).toEqual([`${prefix}lpga-knockout`, `${prefix}lpga-any`]);
+  });
+
+  it('lets two sport leagues each hold a setup with the same key, but refuses a second one in the same league', async () => {
+    const { pga, lpga } = await createGolfLeagues();
+    await createTemplate('shared', null, 0, pga.id);
+    await createTemplate('shared', null, 0, lpga.id);
+
+    await expect(createTemplate('shared', ContestTemplateEventType.WEEK, 0, lpga.id)).resolves.toBeDefined();
+    await expect(createTemplate('shared', ContestTemplateEventType.WEEK, 0, lpga.id)).rejects.toThrow();
   });
 
   it('refuses to delete a sport league that still has a template of its own', async () => {

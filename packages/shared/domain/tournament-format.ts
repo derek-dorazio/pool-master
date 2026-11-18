@@ -49,15 +49,15 @@ export function contestTemplateEventTypeOf(event: SportLeagueEvent & { rounds?: 
 }
 
 /**
- * Whether a contest template is offered on an event (#802): its own sport league's or a
- * sport-wide one, for the event's kind of event (a knockout or a week of games) or for any.
+ * Whether a contest template is offered on an event (#802): its own sport league's, for the
+ * event's kind of event (a knockout or a week of games) or for any.
  * Create contest and the test-participants loader both choose templates by it (#816).
  */
 export function isTemplateOfferedOn(
-  template: { sport: Sport; sportLeagueId: string | null; eventType?: ContestTemplateEventType | null },
+  template: { sport: Sport; sportLeagueId: string; eventType?: ContestTemplateEventType | null },
   event: SportLeagueEvent & { sportLeagueId: string; rounds?: number | null },
 ): boolean {
   return template.sport === event.sport
-    && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)
+    && template.sportLeagueId === event.sportLeagueId
     && ((template.eventType ?? null) === null || template.eventType === contestTemplateEventTypeOf(event));
 }

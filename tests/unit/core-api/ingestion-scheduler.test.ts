@@ -316,6 +316,28 @@ describe('IngestionScheduler', () => {
       expect(job.warnings).toEqual([{ code: 'RANKED_PARTICIPANTS_UNLINKED', message }]);
     });
 
+    it('adds the tiers and prices the written field got to the field sync run\'s stats and warnings (#1822)', async () => {
+      const detail: SportEventDetail = {
+        externalId: 'evt-1', providerId: 'mock-provider', sport: 'GOLF', name: 'The Masters', startDate: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED', fieldLocked: false, metadata: {},
+        participants: [{ externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} }],
+      };
+      const registry = createMockRegistry(fakeSportDataProvider({ getEventDetails: jest.fn().mockResolvedValue(detail) }));
+      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({
+        writeDiagnostics: emptySyncWriteDiagnostics(),
+        unlinkedRankedParticipants: [],
+        fieldValuation: {
+          stats: { tiersMadeFromOdds: 6, pricesKeptAsEdited: 1 },
+          warnings: [{ code: 'EVENT_HAS_NO_TIERS', message: 'The event has no tiers, so its field was not tiered.' }],
+        },
+      });
+
+      const [job] = await new IngestionScheduler(registry, mockCallbacks).runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+
+      expect(job.stats).toMatchObject({ participantsReturned: 1, tiersMadeFromOdds: 6, pricesKeptAsEdited: 1 });
+      expect(job.warnings).toEqual([{ code: 'EVENT_HAS_NO_TIERS', message: 'The event has no tiers, so its field was not tiered.' }]);
+    });
+
     it('returns a COMPLETED job with no errors when the provider call succeeds', async () => {
       const registry = createMockRegistry(mockProvider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);

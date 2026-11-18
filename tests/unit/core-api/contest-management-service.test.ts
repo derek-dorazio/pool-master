@@ -164,7 +164,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sport: Sport.GOLF,
-    sportLeagueId: null,
+    sportLeagueId: PGA_TOUR_LEAGUE_ID,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered-pick-6',
@@ -564,7 +564,7 @@ describe('ContestManagementService', () => {
   });
 
   describe('a sport league\'s own template (#624)', () => {
-    async function createFromLeagueTemplate(templateLeagueId: string | null, eventLeagueId: string) {
+    async function createFromLeagueTemplate(templateLeagueId: string, eventLeagueId: string) {
       const contestCoreRepo = createContestRepo();
       const templateRepo = createContestConfigTemplateRepo();
       const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
@@ -604,12 +604,6 @@ describe('ContestManagementService', () => {
       expect(contestCoreRepo.create).toHaveBeenCalledTimes(1);
     });
 
-    it('creates the contest from a sport-wide template (no sport league) for any league\'s event', async () => {
-      const { created, contestCoreRepo } = await createFromLeagueTemplate(null, LPGA_TOUR_LEAGUE_ID);
-
-      await expect(created).resolves.toBe('contest-1');
-      expect(contestCoreRepo.create).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('setContestCupWeight', () => {
@@ -1737,7 +1731,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     jest.mocked(templateRepo.findById).mockResolvedValue({
       id: '99999999-9999-4999-8999-999999999999',
       sport: Sport.HORSE_RACING,
-      sportLeagueId: null,
+      sportLeagueId: PGA_TOUR_LEAGUE_ID,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.RANDOM_DRAW,
       templateKey: 'horse-racing-random-draw-win-place-show',

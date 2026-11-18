@@ -81,6 +81,20 @@ export interface SportEvent extends DomainEntity {
    * assigned. Locks with the prices at release, and is every budget contest's salary cap.
    */
   pricingConfig?: EventPricingConfig;
+  /**
+   * A Clutch Card event's parent (#1820): the season event of its sport league's parent league
+   * whose rounds it covers (the World Series round of the MLB Postseason). Absent on any other
+   * event, and on a Clutch Card event created before #1820 whose parent was never loaded.
+   */
+  parentEvent?: SportEventParent;
+}
+
+/** The season event a Clutch Card event is rounds of, and which rounds (#1820). */
+export interface SportEventParent {
+  id: string;
+  name: string;
+  /** The parent event's rounds the Clutch Card event covers, first to last; never empty. */
+  roundNumbers: readonly number[];
 }
 
 /**
@@ -135,10 +149,10 @@ export interface ContestConfiguration extends DomainEntity {
 export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
   /**
-   * The sport league whose events this template is offered for (a league's own official preset).
-   * Null means sport-wide: offered for every league of its sport.
+   * The sport league whose events this template is offered for. Every template belongs to one
+   * (#1825); two leagues offering the same setup each have their own copy.
    */
-  sportLeagueId: string | null;
+  sportLeagueId: string;
   /** The kind of event the template is offered for (#802); null offers it for every event of its sport. */
   eventType?: ContestTemplateEventType | null;
   contestFormat: ContestFormat;

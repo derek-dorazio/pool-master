@@ -219,8 +219,8 @@ export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSche
 export const ContestConfigTemplateDtoSchema = z.object({
   id: z.uuid().describe('Seeded contest template identifier.'),
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
-  sportLeagueId: z.uuid().nullable().describe(
-    "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.",
+  sportLeagueId: z.uuid().describe(
+    'Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.',
   ),
   eventType: z.enum(ContestTemplateEventType).nullable().optional().describe('The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season\'s games), for a sport played as matches. Null: every event of its sport.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
@@ -239,7 +239,7 @@ export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSc
 export const ListContestConfigTemplatesQuerySchema = z.object({
   sport: z.enum(sportValues).optional().describe('Only templates for this sport.'),
   sportLeagueId: z.uuid().optional().describe(
-    "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
+    "Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
   ),
   eventType: z.enum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),

@@ -16,6 +16,7 @@ import type {
   SportConfig,
   SportEvent,
   SportEventMatch,
+  SportEventParent,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
@@ -125,7 +126,10 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'parentEvent'> & {
+  /** A Clutch Card event's parent and its rounds of it (#1820); the name is read back, not written. */
+  parentEvent?: Omit<SportEventParent, 'name'>;
+};
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -250,6 +254,8 @@ export interface SportEventRepository {
   findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  /** Clutch Card events that name each event as their parent (#1820), for each id asked about (0 where none). */
+  countClutchCardEvents(parentEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per sport league, through their series, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[], filters?: { eventYear?: number }): Promise<Map<string, number>>;
   /**

@@ -10,6 +10,7 @@ import { refuseUnlessTestTarget, testLeagueCode } from '../../packages/core-api/
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, createAuthenticatedClient, createFunctionalEmail, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { copyContestSetups } from '../support/contest-setups';
 
 // The pool side of a test seed over HTTP: test players join a test league for the seed's sport
 // league, each upcoming race gets an open contest, and every player's squad submits an entry;
@@ -38,6 +39,7 @@ async function cleanup(): Promise<void> {
   const participantIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
   await db.participantLeagueAffiliation.deleteMany({ where: { OR: [{ participantId: { in: participantIds } }, { sportLeagueId: { in: leagueIds } }] } });
   await db.participant.deleteMany({ where: { id: { in: participantIds } } });
+  if (leagueIds.length) await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
 }
 
@@ -92,6 +94,8 @@ describe('SDK Functional: test participants', () => {
     const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.HORSE_RACING } })).data).sportLeagues
       .find((league) => league.name === file.sportLeagues[0].name));
     created.sportLeagueIds.add(sportLeague.id);
+    // A sport league the loader creates has no contest setups until a migration adds them (#1825).
+    await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeague.id });
 
     const options = { getClient, signIn, players, password: PASSWORD };
     const dryRun = await loadTestParticipants(file, { ...options, mode: LoadMode.DRY_RUN });

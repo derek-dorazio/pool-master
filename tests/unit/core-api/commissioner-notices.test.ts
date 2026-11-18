@@ -633,7 +633,7 @@ describe('CommissionerNotices', () => {
   function template(overrides: Partial<ContestConfigTemplate> & { id: string; name: string }): ContestConfigTemplate {
     return {
       sport: Sport.GOLF,
-      sportLeagueId: null,
+      sportLeagueId: 'pga-tour',
       eventType: null as ContestTemplateEventType | null,
       selectionType: SelectionType.TIERED,
       description: 'Pick a golfer from each tier.',

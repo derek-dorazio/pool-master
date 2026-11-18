@@ -216,7 +216,7 @@ describe('history handlers', () => {
 
 describe('sport league handlers', () => {
   const AT = new Date('2026-01-01T00:00:00.000Z');
-  const sportLeague = { id: 'sl1', roundNames: [], createdAt: AT, updatedAt: AT };
+  const sportLeague = { id: 'sl1', roundNames: [], parentRoundNumbers: [], createdAt: AT, updatedAt: AT };
   const affiliation = {
     id: 'a1', sportLeagueId: 'sl1', participantId: 'p1', ranking: 1, createdAt: AT, updatedAt: AT,
     participant: { id: 'p1', injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT },

@@ -104,28 +104,25 @@ export const createContestFormSchema = z.object({
 export type CreateContestFormValues = z.infer<typeof createContestFormSchema>;
 
 /**
- * A format's starting preset: the event's sport league's own default over the sport-wide default,
- * else the first. The list holds only that league's templates and the sport-wide ones, so a
- * template with a sport league is the event's league's.
+ * A format's starting preset: its default, else the first. The list holds only the event's sport
+ * league's templates (#1825: every template is one league's).
  */
-export function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefault' | 'sportLeagueId'>>(presets: Preset[]) {
-  return presets.find((template) => template.isDefault && template.sportLeagueId !== null)
-    ?? presets.find((template) => template.isDefault)
-    ?? presets.at(0);
+export function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefault'>>(presets: Preset[]) {
+  return presets.find((template) => template.isDefault) ?? presets.at(0);
 }
 
 /**
  * The format an event's sport league starts on: the format of its first default by sort order
  * among the ones the page creates and the event can take (#802: a league has a default for each
  * format, and sorts the one to start on first, such as Formula 1's budget contest, #625). Null when
- * the league has no default of its own, and the format chosen stays.
+ * the league has no default, and the format chosen stays.
  */
 export function leagueStartingFormatOf(
   templates: ContestConfigTemplateDto[],
   isAvailable: (format: CreatableSelectionType) => boolean,
 ): CreatableSelectionType | null {
   const formats = templates
-    .filter((template) => template.isDefault && template.sportLeagueId !== null)
+    .filter((template) => template.isDefault)
     .sort((left, right) => left.sortOrder - right.sortOrder)
     .map((template) => template.selectionType)
     .filter((format): format is CreatableSelectionType => hasWebEntryScreen(format) && isAvailable(format));

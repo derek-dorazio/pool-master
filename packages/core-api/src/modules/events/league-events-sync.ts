@@ -22,6 +22,7 @@ import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ProviderSyncTrigger,
+  isClutchCardLeague,
   type BackgroundJob,
   type BackgroundJobResult,
   type ProviderSyncRun,
@@ -63,6 +64,9 @@ export interface LeagueEventsSyncOptions {
 }
 
 /** What one year of a league's events sync did. */
+/** How long after the season leagues' jobs a Clutch Card league's scheduled job is due. */
+export const CLUTCH_CARD_SYNC_DELAY_MS = 10 * 60_000;
+
 interface YearSync {
   eventYear: number;
   created: ProviderEventYearImport['created'];
@@ -102,11 +106,15 @@ export class LeagueEventsSync {
   async queueScheduled(): Promise<number> {
     const leagues = await this.options.sportLeagues.findEventSynced();
     const eventYears = this.scheduledYears();
+    // A Clutch Card event names its season event (#1820), so each Clutch Card league's job is due
+    // after the season leagues' jobs: a new season event is on the site before its rounds import.
+    // One that still misses its season event is skipped as NO_PARENT_EVENT and made by a later sync.
+    const clutchCardRunAt = new Date(this.now().getTime() + CLUTCH_CARD_SYNC_DELAY_MS);
     return this.options.jobs.enqueueAll(leagues.map((league) => syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: league.id,
       eventYears,
       trigger: ProviderSyncTrigger.SCHEDULE,
-    })));
+    }, isClutchCardLeague(league) ? { runAt: clutchCardRunAt } : {})));
   }
 
   /** The SYNC_LEAGUE_EVENTS job. */
@@ -245,11 +253,13 @@ export class LeagueEventsSync {
   }
 }
 
-function countsOf(years: readonly YearSync[]): { created: number; updated: number; skipped: number } {
+/** What a sync changed; `alreadyStarted` counts the skipped provider events whose start had passed (#1821). */
+function countsOf(years: readonly YearSync[]): { created: number; updated: number; skipped: number; alreadyStarted: number } {
   return {
     created: years.reduce((sum, year) => sum + year.created.length, 0),
     updated: years.reduce((sum, year) => sum + year.updated.length, 0),
     skipped: years.reduce((sum, year) => sum + year.skipped.length, 0),
+    alreadyStarted: years.reduce((sum, year) => sum + year.skipped.filter((row) => row.reason === 'ALREADY_STARTED').length, 0),
   };
 }
 
