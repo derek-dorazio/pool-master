@@ -250,6 +250,41 @@ export interface InjuryStatus {
   source?: string;
 }
 
+/**
+ * A participant a provider's feed sent that the sync could not link on its own (#1824): its name
+ * matches two or more of the site's participants with no mapping from the provider. "Needs
+ * linking" on screen. Open while `resolvedAt` is null.
+ */
+export interface AmbiguousFeedParticipant extends DomainEntity {
+  /** The sport league of the event it was first seen in. */
+  sportLeagueId: string;
+  providerId: string;
+  /** The provider's id for it, which resolving maps. */
+  externalId: string;
+  /** Its name as the feed spells it, at the latest sync that found it ambiguous. */
+  feedName: string;
+  /** The site's participants it could be, by name; one deleted since is left out. */
+  candidates: AmbiguousFeedParticipantCandidate[];
+  /** The events whose fields sent it, soonest first. */
+  events: AmbiguousFeedParticipantEvent[];
+  resolvedAt: Date | null;
+  /** The participant it was linked to or created as; null while open, or once that participant is deleted. */
+  resolvedParticipantId: string | null;
+}
+
+/** One of the site's participants an ambiguous feed participant could be. */
+export interface AmbiguousFeedParticipantCandidate {
+  participantId: string;
+  name: string;
+}
+
+/** An event whose field sent an ambiguous feed participant. */
+export interface AmbiguousFeedParticipantEvent {
+  sportEventId: string;
+  name: string;
+  startDate: Date;
+}
+
 /** Mapping between a provider participant and an internal participant. */
 export interface ParticipantProviderMapping extends DomainEntity {
   participantId: string;

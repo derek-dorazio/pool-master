@@ -5,7 +5,7 @@
  */
 import { z } from 'zod';
 import { IngestionJobStatus, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { DateTimeSchema, JsonObjectSchema, UuidSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
 
@@ -275,6 +275,58 @@ export const UnmappedProviderParticipantListResponseSchema = z.object({
 }).describe('The unmapped competitors matching the filters, across the scheduled sports of each provider asked.');
 export type UnmappedProviderParticipantListResponse = z.infer<typeof UnmappedProviderParticipantListResponseSchema>;
 
+// --- Feed participants needing linking (#1824) ---
+
+export const AmbiguousFeedParticipantDtoSchema = z.object({
+  id: UuidSchema,
+  sportLeagueId: UuidSchema.describe('The sport league of the event the feed first sent it in: where the league\'s Roster and Needs attention list it.'),
+  providerId: z.string().describe('The provider whose feed sent it.'),
+  externalId: z.string().describe('The provider\'s id for it. Resolving maps this id, so the next sync links it on its own.'),
+  feedName: z.string().describe('Its name as the feed spells it, at the latest sync that found it ambiguous.'),
+  candidates: z.array(z.object({
+    participantId: UuidSchema,
+    name: z.string(),
+  }).describe('One of the site\'s participants it could be.')).describe(
+    'The site\'s participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out.',
+  ),
+  events: z.array(z.object({
+    sportEventId: UuidSchema,
+    name: z.string(),
+    startDate: DateTimeSchema,
+  }).describe('An event whose field sent it.')).describe(
+    'The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release\'s "every participant linked" check (#1823) holds each of them while it is open.',
+  ),
+  resolvedAt: DateTimeSchema.nullable().describe('When it was linked or created. Null while it needs linking.'),
+  resolvedParticipantId: UuidSchema.nullable().describe('The participant it was linked to or created as. Null while open, or once that participant is deleted.'),
+  createdAt: DateTimeSchema.describe('When a sync first found it ambiguous.'),
+  updatedAt: DateTimeSchema,
+}).describe(
+  'A participant a provider\'s feed sent that the sync could not link on its own, because its name matches two or more of the site\'s participants: "needs linking" on screen. '
+  + 'A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here.',
+);
+export type AmbiguousFeedParticipantDto = z.infer<typeof AmbiguousFeedParticipantDtoSchema>;
+
+export const AmbiguousFeedParticipantListQuerySchema = z.object({
+  sportLeagueId: UuidSchema.optional().describe('Only the ones of this sport league. Without it, every sport league\'s.'),
+}).describe('Filters for the needs-linking list.');
+export type AmbiguousFeedParticipantListQuery = z.infer<typeof AmbiguousFeedParticipantListQuerySchema>;
+
+export const AmbiguousFeedParticipantListResponseSchema = z.object({
+  participants: z.array(AmbiguousFeedParticipantDtoSchema),
+}).describe('The feed participants that still need linking, oldest first. Never paged.');
+export type AmbiguousFeedParticipantListResponse = z.infer<typeof AmbiguousFeedParticipantListResponseSchema>;
+
+export const ResolveAmbiguousFeedParticipantRequestSchema = z.discriminatedUnion('resolution', [
+  z.object({
+    resolution: z.literal('LINK').describe('Link it to one of its candidates.'),
+    participantId: UuidSchema.describe('The candidate it is: one of `candidates`, or 422 FEED_PARTICIPANT_NOT_A_CANDIDATE.'),
+  }).describe('Link the feed participant to one of the site\'s participants it could be.'),
+  z.object({
+    resolution: z.literal('CREATE').describe('None of the candidates is it.'),
+  }).describe('Create a new participant from the feed\'s latest copy of it, in its sport league.'),
+]).describe('How a root admin resolves a feed participant that needs linking.');
+export type ResolveAmbiguousFeedParticipantRequest = z.infer<typeof ResolveAmbiguousFeedParticipantRequestSchema>;
+
 // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
 //
 // Lives in ingestion rather than golf because it is about a provider's catalog, not golf
@@ -323,6 +375,10 @@ registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmiss
 registerSchema('UnmappedProviderParticipantDto', UnmappedProviderParticipantDtoSchema);
 registerSchema('UnmappedProviderParticipantListQuery', UnmappedProviderParticipantListQuerySchema);
 registerSchema('UnmappedProviderParticipantListResponse', UnmappedProviderParticipantListResponseSchema);
+registerSchema('AmbiguousFeedParticipantDto', AmbiguousFeedParticipantDtoSchema);
+registerSchema('AmbiguousFeedParticipantListQuery', AmbiguousFeedParticipantListQuerySchema);
+registerSchema('AmbiguousFeedParticipantListResponse', AmbiguousFeedParticipantListResponseSchema);
+registerSchema('ResolveAmbiguousFeedParticipantRequest', ResolveAmbiguousFeedParticipantRequestSchema);
 registerSchema('ProviderEventDto', ProviderEventDtoSchema);
 registerSchema('ProviderCatalogEventListQuery', ProviderCatalogEventListQuerySchema);
 registerSchema('ProviderCatalogEventListResponse', ProviderCatalogEventListResponseSchema);

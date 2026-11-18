@@ -7,6 +7,7 @@ import type {
   ParticipantRepository,
   ParticipantProviderMappingRepository,
   ParticipantSearchFilters,
+  AmbiguousFeedParticipantRepository,
 } from '@poolmaster/shared/db';
 import type {
   Participant,
@@ -63,6 +64,8 @@ export class ParticipantService {
     private readonly participantRepo: ParticipantRepository,
     private readonly providerMappingRepo: ParticipantProviderMappingRepository,
     private readonly logger?: FastifyBaseLogger,
+    /** A feed id bound by hand resolves its "needs linking" row, if any (#1824). */
+    private readonly ambiguousFeedParticipants?: Pick<AmbiguousFeedParticipantRepository, 'resolveFeedId'>,
   ) {}
 
   async findById(id: string): Promise<Participant | null> {
@@ -238,6 +241,7 @@ export class ParticipantService {
       confidence: MappingConfidence.MANUAL,
       mappedAt: new Date(),
     });
+    await this.ambiguousFeedParticipants?.resolveFeedId(providerId, externalId, participantId, mapping.mappedAt);
     this.logger?.info(
       { action: 'participants.service.bindProviderMapping.success', data: { participantId, providerId, externalId } },
       'Bound provider identity to participant',

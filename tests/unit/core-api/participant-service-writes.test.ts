@@ -99,6 +99,17 @@ describe('participant service', () => {
       });
     });
 
+    it('resolves the feed id\'s "needs linking" row as linked to the participant, at the binding\'s time (#1824)', async () => {
+      const participantRepo = { findById: jest.fn().mockResolvedValue(buildParticipant()) };
+      const mappingRepo = { bind: jest.fn().mockResolvedValue(mapping) };
+      const ambiguous = { resolveFeedId: jest.fn().mockResolvedValue(undefined) };
+      const service = new ParticipantService(participantRepo as never, mappingRepo as never, undefined, ambiguous);
+
+      await service.bindProviderMapping('participant-1', 'mock-contest-feed', 'golfer-77');
+
+      expect(ambiguous.resolveFeedId).toHaveBeenCalledWith('mock-contest-feed', 'golfer-77', 'participant-1', mapping.mappedAt);
+    });
+
     it('refuses to bind to a participant that does not exist', async () => {
       const mappingRepo = { bind: jest.fn() };
       const service = new ParticipantService(

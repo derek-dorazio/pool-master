@@ -23,6 +23,7 @@ import type {
   LeagueRole,
   Participant,
   ParticipantProviderMapping,
+  AmbiguousFeedParticipant,
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
@@ -506,6 +507,17 @@ export interface ParticipantProviderMappingRepository {
    * so an identity already bound elsewhere moves to this one.
    */
   bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
+}
+
+/** The feed participants waiting as "needs linking" (#1824). The sync writes them; these read and settle them. */
+export interface AmbiguousFeedParticipantRepository {
+  /** The open ones, of one sport league when given, oldest first. Never paged. */
+  listOpen(filter: { sportLeagueId?: string }): Promise<AmbiguousFeedParticipant[]>;
+  findById(id: string): Promise<AmbiguousFeedParticipant | null>;
+  /** How many open ones the event's field sent: its "every participant linked" ready check fails while any is. */
+  countOpenForEvent(sportEventId: string): Promise<number>;
+  /** Resolves the open one of a feed id, if any, as linked to the participant its id was bound to by hand. */
+  resolveFeedId(providerId: string, externalId: string, participantId: string, at: Date): Promise<void>;
 }
 
 // --- Contest ---
