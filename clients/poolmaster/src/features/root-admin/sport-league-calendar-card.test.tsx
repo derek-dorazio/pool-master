@@ -227,6 +227,43 @@ describe('plans/147 SportLeagueCalendarCard', () => {
       .toHaveTextContent('Created 1 tournament; skipped 1 already here.');
   });
 
+  it('counts the provider\'s tournaments that already started apart from the ones already here, since they are never created', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({
+      data: {
+        created: [sportEventFixture({ id: 'alpha-2026', eventYear: 2026, sportLeagueId: 'pga' })],
+        skipped: [
+          { externalId: 'pga-tour-2026-masters', name: 'The Masters', reason: 'ALREADY_LINKED' },
+          { externalId: 'pga-tour-2026-sentry', name: 'The Sentry', reason: 'ALREADY_STARTED' },
+          { externalId: 'pga-tour-2026-sony', name: 'Sony Open', reason: 'ALREADY_STARTED' },
+        ],
+      },
+    });
+    renderCard();
+    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import'));
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
+
+    expect(await screen.findByTestId('root-admin-sport-league-calendar-import-result'))
+      .toHaveTextContent('Created 1 tournament; skipped 1 already here and 2 already started.');
+  });
+
+  it('leaves out "already here" when every tournament it skipped had already started', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({
+      data: { created: [], skipped: [{ externalId: 'pga-tour-2026-sentry', name: 'The Sentry', reason: 'ALREADY_STARTED' }] },
+    });
+    renderCard();
+    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import'));
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
+
+    expect(await screen.findByTestId('root-admin-sport-league-calendar-import-result'))
+      .toHaveTextContent('Created 0 tournaments; skipped 1 already started.');
+  });
+
   it('imports from the tour\'s event sync provider rather than the sport\'s primary when the tour has one', async () => {
     importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
     renderCard({ ...SPORT_LEAGUE, eventSyncProviderId: 'balldontlie' }, [

@@ -115,7 +115,7 @@ export interface ProviderEventYearImport {
    * NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not
    * one event (#1820); a later import creates it once its parent is there.
    */
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT' }>;
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -247,7 +247,9 @@ export class SportEventService {
   /**
    * An event created straight from a browsed provider event (plans/124 §4.4a), pre-linked
    * to that provider for scores (SCORES_ONLY). The field is not touched; loading it is
-   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity.
+   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity;
+   * 409 SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed (#1821), since
+   * an event nobody can release or play is never created from a provider.
    */
   async createEventFromProviderEvent(input: {
     sportLeagueId: string;
@@ -262,6 +264,13 @@ export class SportEventService {
       throw new SportEventError(
         `Another sport event is already linked to ${input.providerId}/${input.externalId}.`,
         'EXTERNAL_EVENT_ALREADY_LINKED',
+        409,
+      );
+    }
+    if (providerEventStarted(input.providerEvent, this.now())) {
+      throw new SportEventError(
+        `Provider event ${input.providerId}/${input.externalId} started at ${input.providerEvent.startDate.toISOString()}; an event is created from a provider only before it starts.`,
+        'SPORT_EVENT_ALREADY_STARTED',
         409,
       );
     }
@@ -283,7 +292,9 @@ export class SportEventService {
    * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
    * so the import can be run again: one already linked to the provider event, or a series that
    * already has an edition that year (an admin-authored one, say, or an earlier event of the
-   * same name in this slate). An edition another admin creates while the import runs is not
+   * same name in this slate). A provider event whose start has passed is skipped too (#1821):
+   * created now it would be a draft nobody can release or play. One already linked is still
+   * reported as linked, and keeps updating through `keepProviderEventsCurrent`. An edition another admin creates while the import runs is not
    * skipped: it refuses the whole import with 409, and running it again skips that event.
    */
   async importProviderEventYear(input: {
@@ -293,11 +304,12 @@ export class SportEventService {
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const now = this.now();
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     )).map((event) => event.externalId));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId));
+    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
     const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
     const seriesWithEdition = new Set(unlinked.length === 0
       ? []
@@ -312,6 +324,10 @@ export class SportEventService {
       const { externalId, name } = providerEvent;
       if (linked.has(externalId)) {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
+        continue;
+      }
+      if (providerEventStarted(providerEvent, now)) {
+        skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
         continue;
       }
       const eventSeriesId = seriesIdOf(seriesIdByName, name);
@@ -334,7 +350,14 @@ export class SportEventService {
     const created = await this.createEditions(sportLeague, editions);
 
     this.deps.logger?.info(
-      { sportLeagueId: input.sportLeagueId, eventYear: input.eventYear, providerId: input.providerId, createdCount: created.length, skippedCount: skipped.length },
+      {
+        sportLeagueId: input.sportLeagueId,
+        eventYear: input.eventYear,
+        providerId: input.providerId,
+        createdCount: created.length,
+        skippedCount: skipped.length,
+        alreadyStartedCount: skipped.filter((row) => row.reason === 'ALREADY_STARTED').length,
+      },
       'Imported provider event year',
     );
     return { created, skipped };
@@ -844,4 +867,13 @@ function providerDetailUpdates(
     ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),
     ...(providerEvent.endDate !== null && providerEvent.endDate.getTime() !== event.endDate?.getTime() && { endDate: providerEvent.endDate }),
   };
+}
+
+/**
+ * Whether a provider event's start has passed (#1821), the one test every path that creates an
+ * event from a provider applies: such an event is never created. A start of exactly now counts
+ * as started, as `hasSportEventStarted` counts it.
+ */
+function providerEventStarted(providerEvent: Pick<ProviderEventDetail, 'startDate'>, now: Date): boolean {
+  return providerEvent.startDate.getTime() <= now.getTime();
 }

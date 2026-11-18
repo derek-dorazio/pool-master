@@ -2136,7 +2136,7 @@ export interface paths {
         put?: never;
         /**
          * Import a tour's event year from a provider
-         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
          */
         post: operations["importEventYearFromProvider"];
         delete?: never;
@@ -2156,7 +2156,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event from a provider event
-         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
+         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["createEventFromProviderEvent"];
         delete?: never;
@@ -10680,10 +10680,10 @@ export interface components {
             providerId: string;
         };
         /**
-         * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+         * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
          * @enum {string}
          */
-        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
+        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
         /** @description What an event-year import created and skipped. Running it again creates nothing new. */
         ImportSportEventYearFromProviderResponse: {
             /** @description The events created, in provider order. */
@@ -10824,16 +10824,16 @@ export interface components {
                  */
                 updatedAt: string;
             }[];
-            /** @description Provider events left alone because PoolMaster already has them. */
+            /** @description Provider events left alone because PoolMaster already has them, or because they already started. */
             skipped: {
                 /** @description The provider event id. */
                 externalId: string;
                 name: string;
                 /**
-                 * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+                 * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
                  * @enum {string}
                  */
-                reason: "ALREADY_LINKED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
+                reason: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
             }[];
         };
         /** @description Changes to an event; omitted fields are left alone. */

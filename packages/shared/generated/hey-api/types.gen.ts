@@ -9491,9 +9491,9 @@ export type ImportSportEventYearFromProviderRequest = {
 };
 
 /**
- * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+ * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
  */
-export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
+export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
 
 /**
  * What an event-year import created and skipped. Running it again creates nothing new.
@@ -9688,7 +9688,7 @@ export type ImportSportEventYearFromProviderResponse = {
         updatedAt: string;
     }>;
     /**
-     * Provider events left alone because PoolMaster already has them.
+     * Provider events left alone because PoolMaster already has them, or because they already started.
      */
     skipped: Array<{
         /**
@@ -9697,9 +9697,9 @@ export type ImportSportEventYearFromProviderResponse = {
         externalId: string;
         name: string;
         /**
-         * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+         * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
          */
-        reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
+        reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
     }>;
 };
 

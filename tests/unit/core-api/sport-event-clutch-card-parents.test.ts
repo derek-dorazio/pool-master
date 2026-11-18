@@ -66,6 +66,8 @@ function setup() {
     }),
     lifecycle,
     contests: { recheckReminders: async () => undefined },
+    // Before every event's start here: an event is created from a provider only before it starts.
+    now: () => new Date('2025-09-01T12:00:00.000Z'),
   });
   const addPostseason = (overrides: Partial<SportEvent> = {}): SportEvent => store.addEvent({ ...POSTSEASON, sportLeagueId: mlb.id, ...overrides });
   return { store, service, mlb, worldSeries, addPostseason };
