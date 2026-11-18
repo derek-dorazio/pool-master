@@ -152,6 +152,25 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     expect(store.valuationRows.find((row) => row.sportEventParticipantId === favourite.id)?.price).toBe(777);
   });
 
+  it('warns that participants the field gains after a hand edit have no tier and no price, leaving them for an admin', async () => {
+    const { store, event, tiers, valuation } = await setup();
+    await valuation.afterFieldLoad(SYNCED);
+    const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
+    await tiers.replaceTierAssignments({ sportEventId: event.id, assignments: [{ sportEventParticipantId: favourite.id, tierKey: 'tier-2', tierOrderIndex: 1 }] });
+    await store.valuationRepo().assignEventPrices({
+      sportEventId: event.id,
+      pricingConfig: standardEventPricing(),
+      assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
+    });
+    store.addToField(event.id, 'p-late', { oddsToWin: 2 });
+
+    const outcome = await valuation.afterFieldLoad(SYNCED);
+
+    expect(outcome).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED', untiered: 1 }, prices: { result: 'KEPT_AS_EDITED', unpriced: 1 } });
+    expect(fieldValuationReport(outcome).warnings.map((warning) => warning.code)).toEqual(['FIELD_ROWS_UNTIERED', 'FIELD_ROWS_UNPRICED']);
+    expect(tierOf(store, 'p-late')).toBeNull();
+  });
+
   it('re-makes tiers an admin made with the auto-assign button, since a button press is not a hand edit', async () => {
     const { store, event, tiers, valuation } = await setup();
     await tiers.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
@@ -176,14 +195,16 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     expect(await valuation.afterFieldLoad(SYNCED)).toMatchObject({ tiers: { result: 'NO_TIERS' }, prices: { result: 'MADE' } });
   });
 
-  it('answers a failure instead of throwing, so the field sync that wrote the field still completes', async () => {
-    const { valuation, profiles } = await setup();
+  it('answers a bad pricing profile as a failure, writing no tier or price, instead of throwing, so the field sync that wrote the field still completes', async () => {
+    const { store, valuation, profiles } = await setup();
     profiles[0] = { ...expectDefined(profiles[0]), floorSharePercent: 90 };
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
 
     expect(outcome.outcome).toBe('FAILED');
     expect(outcome.outcome === 'FAILED' && outcome.message).toContain('share');
+    // The pricing values are checked first, so a bad profile leaves the tiers unmade too.
+    expect(store.valuationRows).toEqual([]);
   });
 });
 
@@ -198,11 +219,11 @@ describe('fieldValuationReport — what the field sync run shows', () => {
   });
 
   it.each([
-    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'UNCHANGED' as const, basis: 'SEED' as const, tierCount: 4 }, prices: { result: 'KEPT_AS_EDITED' as const } }, { tiersUnchanged: 4, pricesKeptAsEdited: 1 }],
-    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const }, prices: { result: 'UNCHANGED' as const, basis: 'NAME' as const, pricedCount: 9, profileName: 'Small' } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
+    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'UNCHANGED' as const, basis: 'SEED' as const, tierCount: 4 }, prices: { result: 'KEPT_AS_EDITED' as const, unpriced: 0 } }, { tiersUnchanged: 4, pricesKeptAsEdited: 1 }],
+    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const, untiered: 0 }, prices: { result: 'UNCHANGED' as const, basis: 'NAME' as const, pricedCount: 9, profileName: 'Small' } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
     [{ outcome: 'SKIPPED' as const, reason: 'LOCKED' as const }, { tiersAndPricesLocked: 1 }],
     [{ outcome: 'SKIPPED' as const, reason: 'NO_EVENT' as const }, {}],
-  ])('reports %j as the stats %j', (outcome, stats) => {
+  ])('counts outcome %j in the run\'s stats as %j, with no warning', (outcome, stats) => {
     expect(fieldValuationReport(outcome)).toEqual({ stats, warnings: [] });
   });
 

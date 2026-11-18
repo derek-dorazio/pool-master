@@ -6,6 +6,7 @@ import { SyncedFieldValuationService } from '../../../packages/core-api/src/modu
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { seedEventWithField } from '../list-route-seeds';
 import { expectSameStatementCount } from '../query-scaling';
+import { recordStatements } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 
 // Tiers and prices made from the feed after each field sync (#1822), against real Postgres: the
@@ -41,7 +42,7 @@ function valuationsOf(sportEventId: string) {
 }
 
 describe('Synced field valuation (#1822)', () => {
-  it('tiers and prices a synced draft field by name, stores the default profile on the event, and keeps the tiers once one is placed by hand', async () => {
+  it('tiers and prices a synced draft field by name and stores the default pricing profile on the event', async () => {
     const { event, ref } = await syncedEvent(4);
     const service = valuationService();
 
@@ -54,8 +55,17 @@ describe('Synced field valuation (#1822)', () => {
     expect(made).toHaveLength(4);
     expect(made.every((row) => row.sportEventTierId !== null && row.tierAssignedSource === 'AUTO_NAME' && row.priceAssignedSource === 'AUTO_NAME')).toBe(true);
     expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).pricingConfig).toMatchObject({ profileName: 'Standard', salaryCap: 50_000 });
+  });
 
-    expect(await service.afterFieldLoad(ref)).toMatchObject({ tiers: { result: 'UNCHANGED' }, prices: { result: 'UNCHANGED' } });
+  it('writes nothing when a re-sync finds the same field, and keeps every tier once one is placed by hand', async () => {
+    const { event, ref } = await syncedEvent(4);
+    const service = valuationService();
+    await service.afterFieldLoad(ref);
+    const made = await valuationsOf(event.id);
+
+    const repeat = await recordStatements(() => service.afterFieldLoad(ref));
+    expect(repeat.result).toMatchObject({ tiers: { result: 'UNCHANGED' }, prices: { result: 'UNCHANGED' } });
+    expect(repeat.statements.filter(({ sql }) => /^\s*(INSERT|UPDATE|DELETE)/i.test(sql))).toEqual([]);
 
     await getPrisma().sportEventParticipantValuation.update({ where: { id: expectDefined(made[0]).id }, data: { tierAssignedSource: 'MANUAL' } });
     expect(await service.afterFieldLoad(ref)).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED' }, prices: { result: 'UNCHANGED' } });

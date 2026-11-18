@@ -84,12 +84,22 @@ export function fieldValuationReport(outcome: FieldValuationOutcome): FieldValua
   const { tiers, prices } = outcome;
   if (tiers.result === 'MADE') stats[`tiersMadeFrom${BASIS_WORD[tiers.basis]}`] = tiers.tierCount;
   if (tiers.result === 'UNCHANGED') stats['tiersUnchanged'] = tiers.tierCount;
-  if (tiers.result === 'KEPT_AS_EDITED') stats['tiersKeptAsEdited'] = 1;
+  if (tiers.result === 'KEPT_AS_EDITED') {
+    stats['tiersKeptAsEdited'] = 1;
+    if (tiers.untiered > 0) {
+      warnings.push({ code: 'FIELD_ROWS_UNTIERED', message: `${tiers.untiered} of the field have no tier: the tiers were edited by hand, so the sync leaves them for an admin to place.` });
+    }
+  }
   if (tiers.result === 'NO_TIERS') {
     warnings.push({ code: 'EVENT_HAS_NO_TIERS', message: 'The event has no tiers, so its field was not tiered.' });
   }
   if (prices.result === 'MADE') stats[`pricesMadeFrom${BASIS_WORD[prices.basis]}`] = prices.pricedCount;
   if (prices.result === 'UNCHANGED') stats['pricesUnchanged'] = prices.pricedCount;
-  if (prices.result === 'KEPT_AS_EDITED') stats['pricesKeptAsEdited'] = 1;
+  if (prices.result === 'KEPT_AS_EDITED') {
+    stats['pricesKeptAsEdited'] = 1;
+    if (prices.unpriced > 0) {
+      warnings.push({ code: 'FIELD_ROWS_UNPRICED', message: `${prices.unpriced} of the field have no price: the prices were edited by hand, so the sync leaves them for an admin to price.` });
+    }
+  }
   return { stats, warnings };
 }
