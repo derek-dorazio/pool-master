@@ -78,17 +78,17 @@ In the field grid, give every horse its morning-line odds in the **Odds** column
 *Save changes*. Leave **Seed** as the field file set it, or blank on a field built by hand.
 
 - Enter odds as a number "to 1": 5-2 is `2.5`, 8-1 is `8`, 30-1 is `30`. Lower is shorter.
-- Odds set the tiers (next step) and the budget prices: *Auto-assign prices* prices from the
-  shortest odds down. A seed, if you give one, comes first: seeded horses are priced by seed
-  ahead of every unseeded one, so give every horse a seed in market order or none.
+- Odds set the tiers (next step) and the budget prices, from the shortest odds down, once every
+  horse has odds. Tiers and prices share one order: odds, then seed, then rank, decided by the
+  first value every horse has; the dialogs say which.
 - To set them all at once, use *Bulk upload* on the same page: CSV or JSON with
   `playerName` (or `externalId`) and `oddsToWin` per row, *Preview*, then
   *Apply to field*. It only changes horses already in the field.
 
 ### Tiers
 
-*Tiers* (`/manage/sports/horse-racing/events/:id/tiers`), then *Auto-assign tiers from odds*
-(or *from ranking*, for a loaded field without odds) and *Replace tier assignments*. A horse race starts with three tiers, and auto-assign fills
+*Tiers* (`/manage/sports/horse-racing/events/:id/tiers`), then *Auto-assign tiers* and
+*Replace tier assignments*. A horse race starts with three tiers, and auto-assign fills
 them three horses at a time from the favourite, the last tier taking everyone left: a
 12-runner field comes out 3/3/6. To move a horse to another tier, choose the tier in the select on
 its card, then *Save changes*.
@@ -136,7 +136,7 @@ As a commissioner of a test league (root admin is not needed):
 A horse withdrawn before the race is **scratched**. On *Field*, untick *In field* on its row
 (the reason reads *Scratched*) and press *Save changes*.
 
-- **Before release:** scratch it before *Auto-assign tiers from odds*. A scratched horse is
+- **Before release:** scratch it before *Auto-assign tiers*. A scratched horse is
   not tiered or priced and does not hold up release.
 - **After release, before post time:** it stays in its tier, but members can no longer pick
   it. A member whose tiered or budget entry holds it should click another horse in the same
@@ -230,7 +230,7 @@ are **Races**, **Drivers** and **Series**. What differs:
   driver. Withdrawing one before the race reads
   *Withdrawn*, not *Scratched*.
 - **Starts is the green flag.** It is the cutoff for release, contests and picks.
-- **Five tiers of eight.** *Auto-assign tiers from odds* fills them eight drivers at a time
+- **Five tiers of eight.** *Auto-assign tiers* fills them eight drivers at a time
   from the favourite, so a full 40-car NASCAR field comes out 8/8/8/8/8 and a 33-car Indy 500
   field 8/8/8/8/1. Move drivers by hand if the last tier is too thin. A race whose tier count
   you change is spread evenly instead (see Formula 1 below).
@@ -249,7 +249,7 @@ A Grand Prix runs through the same steps in the **Formula 1** series. What diffe
 
 - **Set four tiers.** The sport starts every race on five tiers of eight, which a 22-car F1
   field cannot fill. On the race's *Tiers* page, press the delete button beside *Tier 5* in the
-  *Tiers* card and confirm *Delete tier*, so four remain. *Auto-assign tiers from odds* then
+  *Tiers* card and confirm *Delete tier*, so four remain. *Auto-assign tiers* then
   spreads the field evenly from the favourite, larger tiers first: 22 drivers come out 6/6/5/5.
   The F1 tiered preset counts four picks, one per tier.
 - **Budget is the default.** On create contest, an F1 race starts on *Budget* with the
@@ -278,7 +278,7 @@ Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps u
   "Entries close at the start".
 - **Odds to win overall.** Give every rider their odds to win the race overall (*Bulk upload*
   with `oddsToWin` suits a field of about 175). Odds alone price an unseeded field.
-- **Five tiers of ten.** *Auto-assign tiers from odds* fills them ten riders at a time from the
+- **Five tiers of ten.** *Auto-assign tiers* fills them ten riders at a time from the
   favourite, the last tier taking the rest: a 176-rider field comes out 10/10/10/10/136. The four
   tiers of contenders hold 40 riders; move riders by hand if a tier looks wrong.
 - **Presets per tour.** On create contest, choose **Cycling**, then the race. *Start from*
@@ -314,10 +314,10 @@ Marathons (World Marathon Majors) run through the same steps under
 - **Ranking and seed, not odds.** Odds are thin for marathons, so *Bulk upload* each runner's
   World Athletics ranking as `ranking` and the same order as `seedNumber`. Odds are optional:
   ranking and seed alone tier and price the field.
-- **Four tiers of six, from ranking.** On *Tiers*, press *Auto-assign tiers from ranking* (not
-  from odds). It fills the tiers six runners at a time from the top-ranked, the last tier taking
-  the rest: a 30-runner field comes out 6/6/6/12. *Auto-assign prices* then prices by seed, best
-  seed first.
+- **Four tiers of six, by seed.** On *Tiers*, press *Auto-assign tiers*. With no odds in the
+  field it orders the runners by seed (the ranking order), and fills the tiers six at a time,
+  the last tier taking the rest: a 30-runner field comes out 6/6/6/12. *Auto-assign prices* then
+  prices in the same order, best seed first.
 - **Presets per series.** On create contest, choose **Running**, then the race. *Start from*
   offers only that series' presets: the tiered one (one runner from each of the four tiers, all
   four counted) is the default, then budget (four runners under the cap) and random draw (one

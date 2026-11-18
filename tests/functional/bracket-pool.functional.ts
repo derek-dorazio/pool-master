@@ -175,7 +175,7 @@ async function releasedKnockout(options: {
     path: { eventId },
     body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed, oddsToWin: 2 + seed * 3 })) },
   })).response?.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: options.tierSize } })).response?.status).toBe(200);
+  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: options.tierSize } })).response?.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

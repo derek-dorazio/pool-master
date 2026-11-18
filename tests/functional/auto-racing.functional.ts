@@ -119,7 +119,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 4 + index * 2 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
@@ -266,7 +266,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     });
     expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 

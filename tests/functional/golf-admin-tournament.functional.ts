@@ -325,7 +325,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(fourTiers.response?.status).toBe(200);
     const tierKeyById = new Map(expectDefined(fourTiers.data).tiers.map((tier) => [tier.id, tier.tierKey]));
 
-    const autoTiers = await autoAssignEventTiers({ client: c, path: { eventId }, body: { source: 'ODDS', tierSize: 6 } });
+    const autoTiers = await autoAssignEventTiers({ client: c, path: { eventId }, body: { tierSize: 6 } });
     expect(autoTiers.response?.status).toBe(200);
     // The guest golfer is tiered alongside everyone else (tiering ignores affiliation).
     const guestAfterTiering = expectDefined(expectDefined(autoTiers.data).participants.find((e) => e.participantId === guestId));
@@ -375,7 +375,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(released.response?.status).toBe(200);
     expect(expectDefined(released.data).event.status).toBe('SCHEDULED');
     expectFunctionalError(
-      await autoAssignEventTiers({ client: c, path: { eventId }, body: { source: 'ODDS', tierSize: 6 } }),
+      await autoAssignEventTiers({ client: c, path: { eventId }, body: { tierSize: 6 } }),
       { status: 409, code: 'SPORT_EVENT_TIERS_LOCKED' },
     );
 
@@ -547,7 +547,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);
     expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
-    expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: { source: 'ODDS' } }), deny);
+    expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: {} }), deny);
     expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardEventPricing() }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);

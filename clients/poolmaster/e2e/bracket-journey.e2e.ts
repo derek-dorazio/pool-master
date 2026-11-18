@@ -173,7 +173,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     await postJson(api, headers, `/api/v1/events/${eventId}/participants/upload`, {
       rows: FIELD.map((team, index) => ({ playerName: teamName(run, team.name), seedNumber: team.seed, oddsToWin: 2 + index * 5 })),
     });
-    await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, { source: 'ODDS', tierSize: 1 });
+    await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, { tierSize: 1 });
     await postJson(api, headers, `/api/v1/events/${eventId}/prices/auto-assign`, STANDARD_PRICING);
 
     const { participants } = await (await expectOk(api.get(`/api/v1/events/${eventId}/participants`, { headers }), 'read the field')).json() as {

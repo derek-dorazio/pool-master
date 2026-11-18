@@ -255,7 +255,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
 
   await test.step('tier the field from its odds: the three favourites, the middle three, the two longshots', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${raceId}/tiers`);
-    await page.getByTestId('root-admin-tier-auto-odds').click();
+    await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
       await expect(

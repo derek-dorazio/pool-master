@@ -279,19 +279,20 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(screen.queryByTestId('root-admin-tier-board-dirty-bar')).not.toBeInTheDocument();
   });
 
-  it('pool-master-dyb auto-assigns tiers from ranking behind a confirmation', async () => {
+  it('auto-assigns tiers with one button behind a confirmation that names the value ordering the field, sending no source', async () => {
     seed();
     autoAssignEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-rank'));
+    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-tiers'));
+    expect(screen.getByTestId('root-admin-tier-auto-tiers-modal')).toHaveTextContent('Ordered by odds, shortest first.');
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
       expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { source: 'RANKING' },
+          body: {},
         }),
       ),
     );
@@ -373,7 +374,7 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(screen.getByTestId('root-admin-tier-def-add')).toBeDisabled();
     expect(screen.getByTestId('root-admin-tier-move-sep-1')).toBeDisabled();
     expect(screen.getByTestId('root-admin-tier-price-sep-1')).toBeDisabled();
-    expect(screen.getByTestId('root-admin-tier-auto-rank')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-tier-auto-tiers')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Drag Rory to reorder' })).not.toBeInTheDocument();
   });
 
@@ -398,7 +399,7 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(screen.getByTestId('root-admin-tier-board-dirty-bar')).toBeInTheDocument();
 
     // An unrelated action refetches tiers with IDENTICAL data -> edit survives.
-    await userEvent.click(screen.getByTestId('root-admin-tier-auto-rank'));
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers'));
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
     await waitFor(() => expect(autoAssignEventTiersMock).toHaveBeenCalled());
     expect(screen.getByTestId('root-admin-tier-board-dirty-bar')).toBeInTheDocument();
@@ -416,7 +417,7 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
         ],
       },
     });
-    await userEvent.click(screen.getByTestId('root-admin-tier-auto-rank'));
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers'));
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
@@ -470,7 +471,7 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(await screen.findByText('Tiers index offline')).toBeInTheDocument();
   });
 
-  it('auto-assigns tiers from odds, and keeps the confirmation open with the reason when the server refuses', async () => {
+  it('auto-assigns tiers, and keeps the confirmation open with the reason when the server refuses', async () => {
     seed();
     autoAssignEventTiersMock.mockResolvedValue({
       error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'Tiers are locked for this tournament.' } },
@@ -478,12 +479,12 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-odds'));
+    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-tiers'));
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
       expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
-        expect.objectContaining({ body: { source: 'ODDS' } }),
+        expect.objectContaining({ body: {} }),
       ),
     );
     const modal = screen.getByTestId('root-admin-tier-auto-tiers-modal');

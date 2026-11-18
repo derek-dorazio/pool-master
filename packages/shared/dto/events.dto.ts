@@ -12,7 +12,6 @@ import {
   SportEventStatus,
   SportEventSyncScope,
   SportStat,
-  TierSource,
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
@@ -287,9 +286,8 @@ export const ReplaceSportEventTiersRequestSchema = z.object({
 export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTiersRequestSchema>;
 
 export const AutoAssignSportEventTiersRequestSchema = z.object({
-  source: z.enum(TierSource).describe('What the active field is ordered by before the tiers are filled.'),
   tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Omitted: an event with its sport\'s default tier count gets the sport\'s tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).'),
-}).describe('Fills the event\'s tiers from the active field.');
+}).describe('Fills the event\'s tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name.');
 export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
 
 export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({

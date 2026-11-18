@@ -778,7 +778,7 @@ describe('Loading a real basketball bracket through the admin API', () => {
       path: { eventId },
       body: { participants: rows.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 5 })) },
     })).response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: admin.client, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: admin.client, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: admin.client, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: admin.client, path: { eventId } })).error).toBeUndefined();
 

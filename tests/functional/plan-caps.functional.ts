@@ -91,7 +91,7 @@ describe('SDK Functional: plan caps (#947)', () => {
         path: { eventId },
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
-      await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } });
+      await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
       await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;

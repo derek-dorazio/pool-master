@@ -1,7 +1,6 @@
 import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { autoAssignEventTiers } from '@/lib/api';
-import type { AutoAssignSportEventTiersRequest } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -10,34 +9,36 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-
-type TierSource = AutoAssignSportEventTiersRequest['source'];
+import type { EventFieldEntry } from './event-field-patch';
+import { describeFieldOrder } from './field-order-copy';
 
 /**
- * plans/124 §6.3 — Tier editor header actions: auto-assign tiers from odds or
- * ranking. Prices are their own action (`PriceAssignAction`) and never touch
- * a tier (§4.5). Replaces manual work, so it confirms.
+ * plans/124 §6.3 — Tier editor header action: auto-assign tiers in the field's one order (#1807),
+ * the order prices use too, which the dialog names. Prices are their own action
+ * (`PriceAssignAction`) and never touch a tier (§4.5). Replaces manual work, so it confirms.
  */
 export function TierAutoAssignActions({
   eventId,
   disabled,
+  field,
   sport,
 }: {
   eventId: string;
   disabled: boolean;
+  field: readonly EventFieldEntry[];
   sport: Sport;
 }) {
   const { participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-tiers-page',
   });
-  const [tierSource, setTierSource] = useState<TierSource | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const autoTiersMutation = useInvalidatingMutation({
-    mutationFn: async (source: TierSource) => {
+    mutationFn: async () => {
       const response = await autoAssignEventTiers({
         path: { eventId },
-        body: { source },
+        body: {},
       });
       if (response.error) {
         throwApiError(response.error);
@@ -50,7 +51,7 @@ export function TierAutoAssignActions({
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
     ],
-    onSuccess: () => setTierSource(null),
+    onSuccess: () => setConfirming(false),
     onError: (error) => {
       logger.warn(
         { action: 'event.tiers.autoAssign.failed', err: error },
@@ -62,31 +63,18 @@ export function TierAutoAssignActions({
   return (
     <div className="flex flex-wrap gap-2">
       <Button
-        data-testid="root-admin-tier-auto-odds"
+        data-testid="root-admin-tier-auto-tiers"
         disabled={disabled}
-        onClick={() => setTierSource('ODDS')}
+        onClick={() => setConfirming(true)}
         size="sm"
         variant="secondary"
       >
-        Auto-assign tiers from odds
-      </Button>
-      <Button
-        data-testid="root-admin-tier-auto-rank"
-        disabled={disabled}
-        onClick={() => setTierSource('RANKING')}
-        size="sm"
-        variant="secondary"
-      >
-        Auto-assign tiers from ranking
+        Auto-assign tiers
       </Button>
       <ConfirmDialog
         confirmLabel="Replace tier assignments"
         confirmTestId="root-admin-tier-auto-tiers-confirm"
-        description={
-          tierSource === 'ODDS'
-            ? `Every ${participant.one} is re-tiered by odds-to-win. Manual tier assignments will be replaced. Prices are untouched.`
-            : `Every ${participant.one} is re-tiered by ranking. Manual tier assignments will be replaced. Prices are untouched.`
-        }
+        description={`${describeFieldOrder(field, participant)} Every ${participant.one} is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
         error={
           autoTiersMutation.isError
             ? extractErrorMessage(autoTiersMutation.error, {
@@ -95,10 +83,10 @@ export function TierAutoAssignActions({
             : undefined
         }
         isPending={autoTiersMutation.isPending}
-        onCancel={() => setTierSource(null)}
-        onConfirm={() => tierSource && autoTiersMutation.mutate(tierSource)}
-        onOpenChange={(next) => !next && setTierSource(null)}
-        open={tierSource !== null}
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => autoTiersMutation.mutate()}
+        onOpenChange={(next) => !next && setConfirming(false)}
+        open={confirming}
         testId="root-admin-tier-auto-tiers-modal"
         title="Auto-assign tiers"
         tone="danger"
