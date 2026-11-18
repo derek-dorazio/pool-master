@@ -1,4 +1,13 @@
-import { filterFns, type Column, type ColumnDef, type Row, type SortingFn, type Table } from "@tanstack/react-table";
+import {
+  filterFns,
+  getSortedRowModel,
+  type Column,
+  type ColumnDef,
+  type Row,
+  type RowModel,
+  type SortingFn,
+  type Table,
+} from "@tanstack/react-table";
 
 /**
  * The filters a DataGrid column can hold, and how each matches a row (rules/ux-rules.md §12
@@ -109,6 +118,39 @@ function byDeclaredOrder<TData>(values: readonly DataGridOption[]): SortingFn<TD
     return first === undefined ? values.length : (rank.get(first) ?? values.length);
   };
   return (left, right, columnId) => rankOf(left.getValue(columnId)) - rankOf(right.getValue(columnId));
+}
+
+/**
+ * TanStack's sorted rows, with the rows whose sorted cell is blank (nothing, null, "" or an empty
+ * list) moved to the end in the data's order, whichever way the column sorts. TanStack's own
+ * `sortUndefined: "last"` only knows `undefined`: its sorts read null and "" as 0 or the empty
+ * word, which sorts first ascending, and a descending sort turns a blank ranked last into first.
+ * The grid sorts one column at a time, so the sorted column decides what is blank.
+ */
+export function getBlanksLastSortedRowModel<TData>(): (table: Table<TData>) => () => RowModel<TData> {
+  return (table) => {
+    const sorted = getSortedRowModel<TData>()(table);
+    let last: { input: RowModel<TData>; output: RowModel<TData> } | undefined;
+    return () => {
+      const input = sorted();
+      const columnId = table.getState().sorting.at(0)?.id;
+      if (columnId === undefined) {
+        return input;
+      }
+      if (last?.input !== input) {
+        last = { input, output: blanksLast(input, columnId) };
+      }
+      return last.output;
+    };
+  };
+}
+
+function blanksLast<TData>(model: RowModel<TData>, columnId: string): RowModel<TData> {
+  const isBlank = (row: Row<TData>) => cellValues(row.getValue(columnId)).length === 0;
+  const blanks = model.rows.filter(isBlank).sort((left, right) => left.index - right.index);
+  const rows = [...model.rows.filter((row) => !isBlank(row)), ...blanks];
+  const flatRows = rows.flatMap((row) => [row, ...row.getLeafRows()]);
+  return { rows, flatRows, rowsById: model.rowsById };
 }
 
 /** The column filters the grid opens with: each enumerated column that starts on some values. */

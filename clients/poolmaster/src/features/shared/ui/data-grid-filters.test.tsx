@@ -120,6 +120,50 @@ describe("DataGrid header sorting", () => {
   });
 });
 
+type Blanks = { id: string; field: number | null | undefined; label: string | null; stage: string | null };
+
+/** Each column holds two values and two blanks of different kinds: null, "", or nothing at all. */
+const BLANKS: Blanks[] = [
+  { id: "p", field: 72, label: "Bravo", stage: "SCHEDULED" },
+  { id: "q", field: null, label: "", stage: null },
+  { id: "r", field: 5, label: "Alpha", stage: "DRAFT" },
+  { id: "s", field: undefined, label: null, stage: "" },
+];
+
+describe("DataGrid blank cells", () => {
+  const blanksHelper = createColumnHelper<Blanks>();
+  const columns = [
+    blanksHelper.accessor("field", { header: "Field" }),
+    blanksHelper.accessor("label", { header: "Label" }),
+    blanksHelper.accessor("stage", {
+      header: "Stage",
+      meta: { options: { values: optionsFromLabels({ DRAFT: "Draft", SCHEDULED: "Scheduled" }) } },
+    }),
+  ];
+
+  it.each(["field", "label", "stage"])(
+    "puts a %s cell holding null, an empty string or nothing last, ascending and descending",
+    async (columnId) => {
+      const user = userEvent.setup();
+      render(
+        <DataGrid
+          columns={columns}
+          data={BLANKS}
+          emptyMessage="No rows."
+          getRowId={(row) => row.id}
+          rowTestId={(row) => `row-${row.id}`}
+        />,
+      );
+      const sort = screen.getByTestId(`data-grid-sort-${columnId}`);
+
+      await user.click(sort);
+      expect(shownRows()).toEqual(["r", "p", "q", "s"]);
+      await user.click(sort);
+      expect(shownRows()).toEqual(["p", "r", "q", "s"]);
+    },
+  );
+});
+
 describe("DataGrid filter popup", () => {
   it("opens from the column's funnel as a popup outside the table, so no row moves", async () => {
     const { user } = renderGrid();

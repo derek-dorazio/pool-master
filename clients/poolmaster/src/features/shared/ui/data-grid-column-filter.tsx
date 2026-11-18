@@ -11,6 +11,9 @@ type ColumnFilterProps<TData> = {
   testId: string;
 };
 
+/** An enum list longer than this gets a search box; a shorter one is read at a glance. */
+const SEARCH_ABOVE = 8;
+
 /** A column's filter in its header: the enum list for an enumerated column, else a text match. */
 export function DataGridColumnFilter<TData>(props: ColumnFilterProps<TData>) {
   return props.column.columnDef.meta?.options ? <EnumColumnFilter {...props} /> : <TextColumnFilter {...props} />;
@@ -98,7 +101,7 @@ function EnumColumnFilter<TData>({ column, label, table, testId }: ColumnFilterP
           <option value="all">Match all</option>
         </Select>
       ) : null}
-      {options.length > 8 ? (
+      {options.length > SEARCH_ABOVE ? (
         <Input
           aria-label={`Search ${label} values`}
           className="h-8 py-1 text-xs sm:text-xs"

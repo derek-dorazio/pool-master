@@ -4,7 +4,6 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
@@ -25,7 +24,7 @@ import { ViewFilter, type ViewFilterOption } from "./view-filter";
 import { DataGridColumnFilter } from "./data-grid-column-filter";
 import { DataGridFilterSummary } from "./data-grid-filter-summary";
 import { DataGridSortButton } from "./data-grid-sort-button";
-import { initialFilters, withGridFilters, type DataGridColumnOptions } from "./data-grid-filters";
+import { getBlanksLastSortedRowModel, initialFilters, withGridFilters, type DataGridColumnOptions } from "./data-grid-filters";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -328,9 +327,8 @@ export function DataGrid<TData>({
     data,
     columns: gridColumns,
     meta,
-    // Blanks sort last whichever way; a click sorts ascending, then descending, then not at all,
-    // one column at a time.
-    defaultColumn: { sortUndefined: "last" },
+    // A click sorts ascending, then descending, then not at all, one column at a time. Blank
+    // cells sort last whichever way (`getBlanksLastSortedRowModel`).
     sortDescFirst: false,
     enableMultiSort: false,
     state: {
@@ -343,7 +341,7 @@ export function DataGrid<TData>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: getBlanksLastSortedRowModel(),
     // A new search, filter or sort starts again from the first page.
     onColumnFiltersChange: (updater) => {
       setColumnFilters((current) => functionalUpdate(updater, current ?? []));
@@ -361,6 +359,8 @@ export function DataGrid<TData>({
     getRowId,
   });
 
+  // The columns' `initial` selections are read once, on the first render; a column that gains
+  // one later (columns built after the data loads) does not apply it.
   if (columnFilters === null) {
     setColumnFilters(initialFilters(table));
   }

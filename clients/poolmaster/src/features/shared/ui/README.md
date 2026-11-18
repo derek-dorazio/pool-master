@@ -461,7 +461,11 @@ A table that needs search, sorting or paging.
   default: each filterable header shows a funnel). A list that can grow to hundreds of rows uses
   `search` and `pageSize`. A column whose values come from a fixed set gives
   `meta.options` (`values` in their natural order, `initial` for a starting filter, `manyPerCell`
-  for a cell holding a list), so its filter ticks values instead of matching text.
+  for a cell holding a list), so its filter ticks values instead of matching text. The list
+  gets a search box above eight values: a short list is read at a glance, and a box there is
+  one more thing to skip. Blank cells (nothing, null or an empty word) sort last both ways.
+  Clear all filters clears everything, a column's `initial` selection included. `initial` is
+  read once, when the grid first renders.
 - **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx)
 
 ### `SimpleTable`
