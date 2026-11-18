@@ -256,10 +256,22 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
     expect(byLeague('LPGA Tour').map(shape)).toEqual(byLeague('PGA TOUR').map(shape));
     expect(byLeague('PGA TOUR').filter((template) => template.isDefault)).toHaveLength(3);
     expect(new Set(templates.map((template) => template.id)).size).toBe(14);
-    expect(byLeague('PGA TOUR').find((template) => template.templateKey === 'golf-tiered-top-four-tiers')).toMatchObject({
-      isDefault: false,
-      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 4, countedScores: 4, maxEntriesPerSquad: 1 },
+  });
+
+  it('seeds golf\'s "Top four tiers" setup on each tour beside its default tiered one: one golfer from each of the first four tiers, all four count, not a default (#704)', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.GOLF, templateKey: 'golf-tiered-top-four-tiers' },
+      include: { sportLeague: true },
+      orderBy: { sportLeague: { name: 'asc' } },
     });
+
+    expect(templates.map((template) => template.sportLeague.name)).toEqual(['LPGA Tour', 'PGA TOUR']);
+    for (const template of templates) {
+      expect(template).toMatchObject({
+        isDefault: false,
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 4, countedScores: 4, maxEntriesPerSquad: 1 },
+      });
+    }
   });
 
   it('gives US Thoroughbred horse racing\'s three setups as its own, kept while the league is switched off, one default per way of picking', async () => {

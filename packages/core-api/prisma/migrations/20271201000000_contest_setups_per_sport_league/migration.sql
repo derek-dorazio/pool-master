@@ -1,8 +1,9 @@
 -- Every contest setup belongs to one sport league (#1825). Ten setups were sport-wide (no sport
 -- league: seven golf, three horse racing) and were offered on every league of their sport. Each
--- becomes its sport's first league's own setup, keeping its id, and every other top-level league
--- of the sport gets its own copy. Inactive leagues get copies too (horse racing is off, #1812),
--- so they come back with their setups intact.
+-- becomes its sport's first top-level league's own setup, keeping its id, and every other league
+-- of the sport, a playoff round under a season league too, gets its own copy, as each was offered
+-- the sport-wide rows before. Inactive leagues get copies too (horse racing is off, #1812), so
+-- they come back with their setups intact.
 
 -- The league that keeps each sport's original rows: the first by display order, then name.
 CREATE TEMP TABLE sport_wide_template_keeper AS
@@ -12,12 +13,26 @@ JOIN sport_leagues l ON l.sport_id = s.id AND l.parent_sport_league_id IS NULL
 WHERE s.sport IN (SELECT sport FROM contest_config_templates WHERE sport_league_id IS NULL)
 ORDER BY s.sport, l.display_order NULLS LAST, l.name, l.id;
 
--- One copy of each sport-wide template for every other top-level league of its sport.
+-- A sport-wide setup whose sport has no top-level league has nowhere to go: stop with its name
+-- rather than at the NOT NULL below.
+DO $$
+DECLARE orphan TEXT;
+BEGIN
+  SELECT string_agg(DISTINCT t.sport::text, ', ') INTO orphan
+  FROM contest_config_templates t
+  WHERE t.sport_league_id IS NULL
+    AND NOT EXISTS (SELECT 1 FROM sport_wide_template_keeper k WHERE k.sport = t.sport);
+  IF orphan IS NOT NULL THEN
+    RAISE EXCEPTION 'Sport-wide contest setups of % have no sport league to belong to', orphan;
+  END IF;
+END $$;
+
+-- One copy of each sport-wide template for every other league of its sport.
 CREATE TEMP TABLE sport_wide_template_copy AS
 SELECT t.id AS original_id, l.id AS sport_league_id, gen_random_uuid() AS copy_id
 FROM contest_config_templates t
 JOIN sports s ON s.sport = t.sport
-JOIN sport_leagues l ON l.sport_id = s.id AND l.parent_sport_league_id IS NULL
+JOIN sport_leagues l ON l.sport_id = s.id
 JOIN sport_wide_template_keeper k ON k.sport = t.sport
 WHERE t.sport_league_id IS NULL
   AND l.id <> k.sport_league_id;

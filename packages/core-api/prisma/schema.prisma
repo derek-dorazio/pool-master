@@ -1480,7 +1480,8 @@ model ContestConfigTemplate {
   configurations  ContestConfiguration[]
   eventPageOffers EventPageOffer[]
 
-  /// A template key is unique within its sport league: two leagues' copies of one setup share it.
+  /// Two leagues' copies of one setup share its template key. Postgres treats a null event type as
+  /// distinct, so the key is enforced unique only among a league's templates for one event type.
   @@unique([sportLeagueId, eventType, contestFormat, selectionType, templateKey])
   @@index([sport, contestFormat, active, sortOrder])
   @@map("contest_config_templates")
