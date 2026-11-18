@@ -16,7 +16,7 @@ The plan behind the work, and the decisions Derek made on it, are in
   and keeps their dates current, and the lifecycle scheduler moves their status from those
   dates; the admin reviews, releases and browses. **Today** a sweep every six hours creates a
   synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
-  loads their fields (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
+  loads their fields and, while an event is a draft, tiers and prices them (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
   row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
 - **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
   The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
@@ -188,6 +188,9 @@ flowchart TD
   U & LK & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
   J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
+  W --> G[games, 2d]
+  G --> T{event still a draft?}
+  T -- yes --> TP[tier and price the field<br/>unless edited by hand: #1822]
 ```
 
 | Table | Key | Written |
@@ -213,6 +216,22 @@ best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1
 the first 20 and counts the rest. Those are the
 stars the feed named some other way or not at all: its scores never reach them, so the root admin
 merges or maps each by hand.
+
+Then, after its games (*2d*) and while the event is still a draft, the field is tiered and priced with no typing (#1822,
+`SyncedFieldValuationService`), the way the *Auto-assign* buttons would: in the field's one order
+(odds, then seed, then rank, by the first value every participant has, then name), on the event's
+own tiers, priced with the values the event was last priced with or else the first Budget pricing
+profile. It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
+tiers made from odds, `pricesMadeFromOdds: 64` the participants priced; `tiersUnchanged` and
+`pricesUnchanged` when nothing moved, so nothing was written). An admin's correction is kept: once
+any tier on the event was placed by hand, the sync leaves every tier alone (`tiersKeptAsEdited`),
+and once any price was typed by hand, every price (`pricesKeptAsEdited`); pressing an *Auto-assign*
+button is not a correction (a tier size sent to it is not kept). A bracket replacement of a
+withdrawn participant places the replacement by hand, so it counts as a correction. After a
+correction, a participant the field gains is left for an admin to place, and the run warns
+`FIELD_ROWS_UNTIERED` or `FIELD_ROWS_UNPRICED` with the count. A released event's tiers and prices are locked
+(`tiersAndPricesLocked`). A failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written
+either way, and the next field sync tries again.
 
 Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202`) because one
 provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's
