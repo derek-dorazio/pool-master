@@ -347,9 +347,10 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     fireEvent.click(screen.getByTestId("data-grid-sort-name"));
     expect(screen.getAllByRole("row")).toHaveLength(2001);
 
-    // A generous ceiling for a shared CI runner under jsdom; a real browser is far quicker.
-    expect(performance.now() - started).toBeLessThan(15_000);
-  });
+    // A generous ceiling for a shared CI runner under jsdom with coverage on, where one pass takes
+    // several seconds; a real browser is far quicker. The test's own timeout sits above it.
+    expect(performance.now() - started).toBeLessThan(20_000);
+  }, 30_000);
 
   describe("jump to a row", () => {
     const data = Array.from({ length: 5 }, (_, index) => ({
