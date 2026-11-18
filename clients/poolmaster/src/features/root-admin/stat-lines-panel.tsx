@@ -203,6 +203,7 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
 
           <div className="mt-4">
             <DataGrid
+              urlKey="stats"
               columns={columns}
               data={rows}
               emptyMessage={fieldQuery.isLoading ? 'Loading players...' : 'No players in the field yet.'}

@@ -24,6 +24,7 @@ export function SquadStandingsGrid<Row extends SquadStandingRow>({
 
   return (
     <DataGrid
+      urlKey='standings'
       headerTone="scoreboard"
       columns={columns}
       data={rows}

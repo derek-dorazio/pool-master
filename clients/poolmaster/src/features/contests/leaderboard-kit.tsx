@@ -71,6 +71,7 @@ export function ScoreboardGrid<Row extends BoardRow>({
   return (
     <LeaderboardSection trailing={trailing}>
       <DataGrid
+        urlKey="board"
         headerTone="scoreboard"
         columns={columns}
         data={myEntries.rows}

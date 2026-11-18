@@ -336,6 +336,7 @@ export function GolfRoundScoreCorrectionsCard({
       ) : null}
 
       <DataGrid
+        urlKey="scores"
         columns={correctionColumns}
         data={rows}
         emptyMessage={

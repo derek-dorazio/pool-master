@@ -117,6 +117,7 @@ export function SyncRunHistory({
       >
         {(runs) => (
           <DataGrid
+            urlKey="runs"
             columns={syncHistoryColumns}
             data={runs}
             emptyMessage="No sync runs matched the current filters."

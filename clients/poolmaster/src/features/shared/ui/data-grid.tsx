@@ -13,7 +13,7 @@ import {
 import { Fragment, useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { ChevronRight, Info, Maximize2 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useInRouterContext, useSearchParams } from "react-router";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
@@ -31,6 +31,7 @@ import {
   type DataGridColumnType,
 } from "./data-grid-filters";
 import { useDisplayPreferences } from "./display-preferences";
+import { decodeGridState, encodeGridState, gridUrlColumns, type GridUrlState } from "./data-grid-url-state";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -148,6 +149,12 @@ export type DataGridProps<TData> = {
    * An id the grid doesn't hold is ignored.
    */
   landOnRowId?: string | null;
+  /**
+   * The page link's query parameter that keeps this grid's filters and sort (#1842), so a
+   * filtered grid can be bookmarked or shared; `grid` unless set. A page with two grids gives
+   * each its own.
+   */
+  urlKey?: string;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -267,10 +274,39 @@ function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
   event.currentTarget.querySelector<HTMLElement>("a[data-row-link], button[data-row-dialog]")?.click();
 }
 
+/** Whether two grid states show the same rows in the same order. */
+function sameState(left: GridUrlState, right: GridUrlState): boolean {
+  return encodeGridState(left) === encodeGridState(right);
+}
+
 /** What a header tells a screen reader about its column's sort. */
 const ARIA_SORT: Record<string, "ascending" | "descending" | undefined> = { asc: "ascending", desc: "descending" };
 
-export function DataGrid<TData>({
+/** Where the grid keeps its filters and sort in the page link; none outside a router. */
+type GridUrlBinding = { value: string | null; write: (next: string | null) => void };
+
+export function DataGrid<TData>(props: DataGridProps<TData>) {
+  return useInRouterContext() ? <RoutedDataGrid {...props} /> : <DataGridBody {...props} url={null} />;
+}
+
+function RoutedDataGrid<TData>(props: DataGridProps<TData>) {
+  const key = props.urlKey ?? "grid";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const url: GridUrlBinding = {
+    value: searchParams.get(key),
+    // A new filter or sort is a step Back returns from, so it pushes; other parameters stay.
+    write: (next) =>
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        if (next === null) params.delete(key);
+        else params.set(key, next);
+        return params;
+      }),
+  };
+  return <DataGridBody {...props} url={url} />;
+}
+
+function DataGridBody<TData>({
   columns,
   data,
   emptyMessage,
@@ -292,8 +328,10 @@ export function DataGrid<TData>({
   toolbarEnd,
   detailRows,
   landOnRowId = null,
-}: DataGridProps<TData>) {
-  // Null until the first render reads which enumerated columns start on some values only.
+  url,
+}: DataGridProps<TData> & { url: GridUrlBinding | null }) {
+  // Null until the first render reads the link, or else which enumerated columns start on some
+  // values only.
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState | null>(null);
   const preferences = useDisplayPreferences();
   const gridColumns = useMemo(() => withGridFilters(columns, preferences), [columns, preferences]);
@@ -333,19 +371,45 @@ export function DataGrid<TData>({
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getBlanksLastSortedRowModel(),
     onColumnFiltersChange: (updater) => {
-      setColumnFilters((current) => functionalUpdate(updater, current ?? []));
+      keep({ sorting, filters: functionalUpdate(updater, columnFilters ?? []) });
     },
     onGlobalFilterChange: (updater: string) => {
       setOwnSearchTerm(updater);
     },
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      keep({ sorting: functionalUpdate(updater, sorting), filters: columnFilters ?? [] });
+    },
     getRowId,
   });
 
-  // The columns' `initial` selections are read once, on the first render; a column that gains
-  // one later (columns built after the data loads) does not apply it.
-  if (columnFilters === null) {
-    setColumnFilters(initialFilters(table));
+  // What the grid shows with nothing in the link: no sort, and the columns' `initial`
+  // selections. It is read once, on the first render; a column that gains an `initial` later
+  // (columns built after the data loads) does not apply it.
+  const [startState, setStartState] = useState<GridUrlState | null>(null);
+  // The link's value the grid last showed, so Back and Forward, which change it, are followed.
+  const [shownUrlValue, setShownUrlValue] = useState<string | null>(null);
+  const restore = (value: string | null, start: GridUrlState) => {
+    const fromLink = decodeGridState(value, gridUrlColumns(table.getAllLeafColumns(), showColumnFilters), preferences);
+    setShownUrlValue(value);
+    setColumnFilters(fromLink?.filters ?? start.filters);
+    setSorting(fromLink?.sorting ?? start.sorting);
+  };
+  if (startState === null) {
+    const start = { sorting: [], filters: initialFilters(table) };
+    setStartState(start);
+    restore(url?.value ?? null, start);
+  } else if (url && url.value !== shownUrlValue) {
+    restore(url.value, startState);
+  }
+
+  /** Shows a new sort or set of filters and keeps it in the link; the start state keeps none. */
+  function keep(next: GridUrlState) {
+    setColumnFilters(next.filters);
+    setSorting(next.sorting);
+    if (!url) return;
+    const value = startState !== null && sameState(next, startState) ? null : (encodeGridState(next) ?? "{}");
+    setShownUrlValue(value);
+    url.write(value);
   }
 
   // The pinned header cell needs a solid fill, or the column names scroll through it.
@@ -366,7 +430,7 @@ export function DataGrid<TData>({
   const jump = (rowId: string) => {
     flushSync(() => {
       setOwnSearchTerm("");
-      setColumnFilters([]);
+      keep({ sorting, filters: [] });
     });
     if (!table.getRowModel().rows.some((row) => row.id === rowId)) {
       return;
