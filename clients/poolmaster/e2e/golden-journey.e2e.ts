@@ -197,6 +197,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.goto('/manage/sports/golf/leagues');
       await page.getByTestId('root-admin-sport-league-list-new').click();
       await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
+      // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
+      await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '6 tiers of 10' });
+      await page.getByTestId('root-admin-sport-league-list-new-pricing-profile').selectOption({ label: 'Standard' });
       const created = await submitAndRead<{ sportLeague: { id: string } }>(
         page,
         'root-admin-sport-league-list-new-save',
@@ -349,7 +352,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       return entryIds;
     });
 
-    await test.step('price the field with the default Budget pricing profile', async () => {
+    await test.step('price the field with the tour\'s pricing profile', async () => {
       // Release needs every active golfer priced (#93); the dialog starts on the default profile.
       await page.getByTestId('root-admin-tier-auto-prices').click();
       await expect(page.getByTestId('root-admin-tier-auto-prices-modal')).toBeVisible();

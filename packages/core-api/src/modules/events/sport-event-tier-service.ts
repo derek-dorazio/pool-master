@@ -19,25 +19,33 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
+  PricingProfileRepository,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventTierDefinition,
   SportEventTierRepository,
+  TierAssignment,
+  TierProfileRepository,
 } from '@poolmaster/shared/db';
 import {
+  eventPricingOf,
   findBudgetPricingProblem,
-  eventSportDefinition,
   FieldOrderBasis,
   orderField,
+  placeInTiers,
   SportEventStatus,
   ValuationSource,
   type EventPricingConfig,
-  type SportDefinition,
+  type EventTierConfig,
   type SportEvent,
+  type SportLeague,
   type SportEventParticipant,
   type SportEventParticipantValuation,
   type SportEventTier,
+  type PricingProfile,
+  type TierProfile,
+  type TierSpread,
 } from '@poolmaster/shared/domain';
 import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
@@ -109,6 +117,10 @@ export interface SportEventTierServiceDeps {
   field: SportEventParticipantRepository;
   /** The field's names, the order's last tie-break (#1807). */
   participants: Pick<ParticipantRepository, 'findByIds'>;
+  /** The event's sport league's tier profile (#1844), the layout auto-tiering fills. */
+  tierProfiles: Pick<TierProfileRepository, 'findBySportLeague' | 'findById'>;
+  /** The event's sport league's pricing profile (#1844), which prices a synced field never priced before. */
+  pricingProfiles: Pick<PricingProfileRepository, 'findBySportLeague'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -125,18 +137,26 @@ export class SportEventTierService {
   }
 
   /**
-   * New events' default tiers, every event's in one insert (#1253): the sport league's tier count
-   * where it sets one (the College Football Playoff: six), else the sport's (golf: six). A
-   * default, fully editable afterwards; the tier count is however many rows exist, not a stored
-   * parameter (plans/124 §4.5a). The events have no tiers yet: an event is created with them.
-   * Answers each event's tiers as written.
+   * New events' default tiers, every event's in one insert (#1253): its sport league's tier
+   * profile's count (#1844: the College Football Playoff's six, golf's six). A default, fully
+   * editable afterwards; the tier count is however many rows exist, not a stored parameter
+   * (plans/124 §4.5a). The events have no tiers yet: an event is created with them. Answers each
+   * event's tiers as written. The caller has the league, so the profile is one read by its id.
+   * 404 TIER_PROFILE_NOT_FOUND for a profile that is gone.
    */
   async createDefaultTiers(
-    events: ReadonlyArray<{ sportEventId: string; definition: SportDefinition; leagueTierCount: number | null }>,
+    sportLeague: Pick<SportLeague, 'id' | 'tierProfileId'>,
+    sportEventIds: readonly string[],
   ): Promise<Map<string, SportEventTierDefinition[]>> {
-    const tiersByEvent = new Map(events.map(({ sportEventId, definition, leagueTierCount }) => [
+    if (sportEventIds.length === 0) return new Map();
+    const profile = await this.deps.tierProfiles.findById(sportLeague.tierProfileId);
+    if (!profile) {
+      throw new SportEventError(`Tier profile ${sportLeague.tierProfileId} of sport league ${sportLeague.id} was not found.`, 'TIER_PROFILE_NOT_FOUND', 404);
+    }
+    const { tierCount } = profile;
+    const tiersByEvent = new Map(sportEventIds.map((sportEventId) => [
       sportEventId,
-      Array.from({ length: leagueTierCount ?? definition.defaultTierLayout.tierCount }, (_, index) => ({
+      Array.from({ length: tierCount }, (_, index) => ({
         tierKey: `tier-${index + 1}`,
         label: `Tier ${index + 1}`,
         tierNumber: index + 1,
@@ -210,14 +230,13 @@ export class SportEventTierService {
 
   /**
    * Puts the active field in its one order (#1807, `orderField`: odds, then seed, then rank,
-   * decided for the whole field, then name), then fills the tiers in tier order. With a `tierSize`,
-   * each tier takes that many and the last tier takes everyone left. With none, an event that
-   * keeps its sport's default tier count gets the sport's designed layout (golf's six tiers of
-   * ten, horse racing's three, three and the rest) while that layout reaches every tier; any
-   * other tier count, or a field too small for the layout, gets the field spread evenly, larger
-   * tiers first (22 drivers on four tiers is 6/6/5/5, 6 horses on three is 2/2/2), so no tier is
-   * left empty unless the field is smaller than the tier count. Recomputed from the current tiers and
-   * field every run — nothing persisted to drift (plans/124 §4.5a).
+   * decided for the whole field, then name), then fills the tiers in tier order by its sport
+   * league's tier profile (#1844, `placeInTiers`): each tier but the last takes the profile's size,
+   * or the `tierSize` sent, and the last tier takes the rest, or up to its cap, with anyone beyond
+   * in no tier. An event whose tier count is not the profile's, or whose field is too small for
+   * it, gets the field spread evenly, larger tiers first (22 drivers on four tiers is 6/6/5/5).
+   * Recomputed from the current tiers and field every run, and the layout used is recorded on the
+   * event with the tiers.
    */
   async autoAssignTiers(input: { sportEventId: string; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const event = await this.requireEditableEvent(input.sportEventId);
@@ -226,17 +245,21 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return [];
     }
-    const { ordered, source } = await this.orderedActiveField(input.sportEventId);
-    const { placements, tierSize } = tierPlacements(event, tiers, ordered, source, input.tierSize);
-    await this.deps.valuations.assignTiers(placements);
+    const [{ ordered, source }, profile] = await Promise.all([
+      this.orderedActiveField(input.sportEventId),
+      this.requireTierProfile(event),
+    ]);
+    const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, input.tierSize);
+    await this.deps.valuations.assignEventTiers({ sportEventId: input.sportEventId, tierConfig, assignments: placements });
     this.deps.logger?.info(
       {
         sportEventId: input.sportEventId,
         source,
-        tierSize: tierSize ?? null,
-        spread: tierSize === undefined ? 'EVEN' : 'FIXED_SIZE',
+        profileName: tierConfig.profileName,
+        tierSize: spread === 'EVEN' ? null : tierConfig.tierSize,
+        spread,
         tierCount: tiers.length,
-        assignedCount: ordered.length,
+        assignedCount: placements.filter((placement) => placement.sportEventTierId !== null).length,
       },
       'Auto-assigned tiers',
     );
@@ -357,9 +380,9 @@ export class SportEventTierService {
 
   /**
    * Tiers and prices the field a provider sync just wrote (#1822), the way the two auto-assign
-   * buttons would: in the field's one order (#1807), on the event's own tiers (the sport league's
-   * tier count, made with the event), priced with the values the event was last priced with, or
-   * else `defaultPricing`, the first Budget pricing profile.
+   * buttons would: in the field's one order (#1807), on the event's own tiers by its sport league's
+   * tier profile (#1844), priced with the values the event was last priced with, or else its sport
+   * league's pricing profile.
    *
    * An admin's correction is kept: once any field row's tier was placed by hand (MANUAL, the
    * drag-and-drop save), the sync leaves every tier alone, and once any price was typed by hand
@@ -374,11 +397,14 @@ export class SportEventTierService {
    * Released events are locked (#431) and left alone. Nothing is written when the stored tiers
    * or prices already match, so a sync of an unchanged field writes nothing.
    */
-  async valueSyncedField(event: SportEvent, defaultPricing: EventPricingConfig): Promise<SyncedFieldValuation> {
+  async valueSyncedField(event: SportEvent): Promise<SyncedFieldValuation> {
     if (!areTiersAndPricesEditable(event)) {
       return { outcome: 'SKIPPED', reason: 'LOCKED' };
     }
-    const pricingConfig = event.pricingConfig ?? defaultPricing;
+    const [tierProfile, pricingConfig] = await Promise.all([
+      this.requireTierProfile(event),
+      event.pricingConfig ?? this.requirePricingProfile(event).then(eventPricingOf),
+    ]);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
     const problem = findBudgetPricingProblem(pricingConfig);
     if (problem) {
@@ -396,18 +422,19 @@ export class SportEventTierService {
 
     let tiersResult: SyncedTiers;
     if (valuations.some((valuation) => valuation.tierAssignedSource === ValuationSource.MANUAL)) {
-      tiersResult = { result: 'KEPT_AS_EDITED', untiered: ordered.filter((entry) => !stored.get(entry.id)?.sportEventTierId).length };
+      // A row placed beyond a capped last tier was placed, so only one never placed is waiting.
+      tiersResult = { result: 'KEPT_AS_EDITED', untiered: ordered.filter((entry) => !stored.get(entry.id)?.tierAssignedSource).length };
     } else if (tiers.length === 0) {
       tiersResult = { result: 'NO_TIERS' };
     } else {
-      const { placements } = tierPlacements(event, tiers, ordered, source);
-      const unchanged = placements.every((placement) => {
+      const { placements, tierConfig } = tierPlacements(tierProfile, tiers, ordered, source);
+      const unchanged = sameTierConfig(event.tierConfig, tierConfig) && placements.every((placement) => {
         const current = stored.get(placement.sportEventParticipantId);
-        return current?.sportEventTierId === placement.sportEventTierId
-          && current.tierOrderIndex === placement.tierOrderIndex
+        return (current?.sportEventTierId ?? null) === placement.sportEventTierId
+          && current?.tierOrderIndex === placement.tierOrderIndex
           && current.tierAssignedSource === placement.source;
       });
-      if (!unchanged) await this.deps.valuations.assignTiers(placements);
+      if (!unchanged) await this.deps.valuations.assignEventTiers({ sportEventId: event.id, tierConfig, assignments: placements });
       tiersResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis, tierCount: tiers.length };
     }
 
@@ -453,6 +480,20 @@ export class SportEventTierService {
     return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis], basis: decision.basis };
   }
 
+  /** The event's sport league's tier profile; every league names one, so a missing one is a broken reference. */
+  private async requireTierProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<TierProfile> {
+    const profile = await this.deps.tierProfiles.findBySportLeague(event.sportLeagueId);
+    if (!profile) throw new SportEventError(`Sport league ${event.sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    return profile;
+  }
+
+  /** The event's sport league's pricing profile; every league names one. */
+  private async requirePricingProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<PricingProfile> {
+    const profile = await this.deps.pricingProfiles.findBySportLeague(event.sportLeagueId);
+    if (!profile) throw new SportEventError(`Sport league ${event.sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    return profile;
+  }
+
   /** 404 EVENT_NOT_FOUND for an unknown event; 409 SPORT_EVENT_TIERS_LOCKED once it is released. */
   private async requireEditableEvent(sportEventId: string): Promise<SportEvent> {
     const event = await this.deps.sportEvents.findById(sportEventId);
@@ -478,36 +519,46 @@ const SOURCE_BY_BASIS: Record<FieldOrderBasis, ValuationSource> = {
 };
 
 /**
- * Each ordered field row's tier: with a `tierSize`, each tier takes that many and the last tier
- * the rest; with none, the sport's designed layout while the event keeps the sport's tier count
- * and the layout reaches every tier, else an even spread (see `autoAssignTiers`).
+ * Each ordered field row's tier by the tier profile (`placeInTiers`), or none beyond a capped last
+ * tier, and the layout as the event records it.
  */
 function tierPlacements(
-  event: SportEvent,
+  profile: TierProfile,
   tiers: readonly SportEventTier[],
   ordered: readonly SportEventParticipant[],
   source: ValuationSource,
   requestedTierSize?: number,
-): {
-  placements: Array<{ sportEventParticipantId: string; sportEventTierId: string; tierOrderIndex: number; source: ValuationSource }>;
-  /** The size each tier was filled to, or undefined for an even spread. */
-  tierSize: number | undefined;
-} {
-  const layout = eventSportDefinition(event).defaultTierLayout;
-  const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
-  const tierSize = requestedTierSize ?? (fitsLayout ? layout.tierSize : undefined);
-  const tierIndexAt = tierSize === undefined
-    ? evenSpreadTierIndex(ordered.length, tiers.length)
-    : (index: number) => Math.min(Math.floor(index / tierSize), tiers.length - 1);
+): { placements: TierAssignment[]; tierConfig: EventTierConfig; spread: TierSpread } {
+  const { tierIndexes, spread } = placeInTiers(profile, tiers.length, ordered.length, requestedTierSize);
   return {
-    placements: ordered.map((entry, index) => ({
-      sportEventParticipantId: entry.id,
-      sportEventTierId: tiers[tierIndexAt(index)].id,
-      tierOrderIndex: index + 1,
-      source,
-    })),
-    tierSize,
+    placements: ordered.map((entry, index) => {
+      const tierIndex = tierIndexes[index];
+      return {
+        sportEventParticipantId: entry.id,
+        sportEventTierId: tierIndex === null ? null : tiers[tierIndex].id,
+        tierOrderIndex: index + 1,
+        source,
+      };
+    }),
+    tierConfig: {
+      profileName: profile.name,
+      tierCount: profile.tierCount,
+      tierSize: requestedTierSize ?? profile.tierSize,
+      lastTier: profile.lastTier,
+      lastTierMax: profile.lastTierMax,
+    },
+    spread,
   };
+}
+
+/** Whether the event already records this layout, so a re-run that places the same writes nothing. */
+function sameTierConfig(stored: EventTierConfig | undefined, next: EventTierConfig): boolean {
+  return stored !== undefined
+    && stored.profileName === next.profileName
+    && stored.tierCount === next.tierCount
+    && stored.tierSize === next.tierSize
+    && stored.lastTier === next.lastTier
+    && stored.lastTierMax === next.lastTierMax;
 }
 
 /** Each ordered field row's price on the budget curve (#93). */
@@ -518,19 +569,6 @@ function pricePlacements(
 ): Array<{ sportEventParticipantId: string; price: number; source: ValuationSource }> {
   return deriveGolfPrices(ordered.map((entry) => ({ participantId: entry.id })), pricingConfig)
     .map((entry) => ({ sportEventParticipantId: entry.participantId, price: entry.price, source }));
-}
-
-/**
- * The tier index of the participant at `index` when `fieldSize` participants are spread evenly
- * over `tierCount` tiers in order, the first `fieldSize % tierCount` tiers taking one more.
- */
-function evenSpreadTierIndex(fieldSize: number, tierCount: number): (index: number) => number {
-  const smallSize = Math.floor(fieldSize / tierCount);
-  const largeTierCount = fieldSize % tierCount;
-  const inLargeTiers = largeTierCount * (smallSize + 1);
-  return (index) => (index < inLargeTiers
-    ? Math.floor(index / (smallSize + 1))
-    : largeTierCount + Math.floor((index - inLargeTiers) / smallSize));
 }
 
 /** The tiers with the field rows placed in each, in tier order; a valuation in no tier given is left out. */

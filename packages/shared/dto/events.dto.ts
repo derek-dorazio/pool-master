@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   EventPricingConfigSchema,
+  EventTierConfigSchema,
   ParticipantInactiveReason,
   ParticipantRoundStatus,
   ParticipantType,
@@ -104,6 +105,7 @@ export const SportEventDtoSchema = z.object({
   participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
   loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
   pricing: EventPricingConfigSchema.nullable().describe('The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
+  tierLayout: EventTierConfigSchema.nullable().describe('The tier layout the field was last auto-tiered with: its sport league\'s tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.'),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
@@ -318,7 +320,7 @@ export const ReplaceSportEventTiersRequestSchema = z.object({
 export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTiersRequestSchema>;
 
 export const AutoAssignSportEventTiersRequestSchema = z.object({
-  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Omitted: an event with its sport\'s default tier count gets the sport\'s tier size (10 for golf); any other tier count gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).'),
+  tierSize: z.number().int().min(1).optional().describe('Participants per tier but the last, instead of the sport league\'s tier profile\'s; the last tier takes the rest, or up to the profile\'s cap. Omitted: an event with its profile\'s tier count gets the profile\'s tier size (10 for golf\'s six tiers of ten) while the field reaches the last tier; any other tier count, or a smaller field, gets the active field spread evenly over its tiers, larger tiers first (22 on four tiers is 6/6/5/5).'),
 }).describe('Fills the event\'s tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name.');
 export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
 
@@ -566,6 +568,7 @@ registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSch
 registerSchema('AutoAssignSportEventTiersRequest', AutoAssignSportEventTiersRequestSchema);
 registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierAssignmentsRequestSchema);
 registerSchema('EventPricingConfig', EventPricingConfigSchema);
+registerSchema('EventTierConfig', EventTierConfigSchema);
 registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
 registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);
 registerSchema('SportEventParticipantStandingDto', SportEventParticipantStandingDtoSchema);

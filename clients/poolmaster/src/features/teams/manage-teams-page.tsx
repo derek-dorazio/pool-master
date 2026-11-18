@@ -21,8 +21,6 @@ import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory'
 import { teamNameColumn } from './team-name-column';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
-const TEAMS_PER_PAGE = 25;
-
 type TeamFilter = 'all' | 'commissioners' | 'inactive';
 
 const TEAM_FILTER_LABELS: Record<TeamFilter, string> = {
@@ -79,6 +77,7 @@ export function ManageTeamsPage() {
       teamNameColumn<ManagedTeamRow>(leagueCode, { link: 'row' }),
       {
         id: 'owners',
+        meta: { type: { kind: 'text' } },
         header: 'Owners',
         accessorFn: (row) => row.ownerNames,
         cell: ({ getValue, row }) => (
@@ -118,7 +117,6 @@ export function ManageTeamsPage() {
           emptyMessage={rows.length ? 'No members match.' : 'No one has joined this league yet.'}
           getRowId={(row) => row.team.id}
           getRowLink={(row) => buildLeagueAdminTeamPath(leagueCode, row.team.id)}
-          pageSize={TEAMS_PER_PAGE}
           rowActions={(row) => (
             <RowActionsMenu
               actions={[{

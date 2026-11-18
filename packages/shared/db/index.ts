@@ -116,6 +116,9 @@ export type {
   ParticipantRoundView,
   ParticipantStandingView,
   PriceAssignment,
+  PricingProfileRepository,
+  PricingProfileWrite,
+  ProfileRepository,
   ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
@@ -146,6 +149,8 @@ export type {
   SportLeagueUses,
   SportRepository,
   TierAssignment,
+  TierProfileRepository,
+  TierProfileWrite,
 } from './sport-catalog-ports';
 export type {
   ContestEntrySquareClaim,

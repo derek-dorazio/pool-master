@@ -1714,3 +1714,17 @@ export const ChampionshipTileOrder = explicitOrder<ChampionshipTile>({
   [ChampionshipTile.MOST_TOP_TENS]: 4,
   [ChampionshipTile.MOST_PLAYED]: 5,
 });
+
+/** What a tier profile's last tier takes (#1844). */
+export const TierProfileLastTier = {
+  /** Everyone left once the tiers before it are filled. */
+  ALL_REMAINING: 'ALL_REMAINING',
+  /** At most the profile's `lastTierMax`; anyone beyond is in no tier and can't be picked. */
+  CAPPED: 'CAPPED',
+} as const;
+export type TierProfileLastTier = (typeof TierProfileLastTier)[keyof typeof TierProfileLastTier];
+/** Uncapped first, as the profile form offers them. */
+export const TierProfileLastTierOrder = explicitOrder<TierProfileLastTier>({
+  [TierProfileLastTier.ALL_REMAINING]: 0,
+  [TierProfileLastTier.CAPPED]: 1,
+});

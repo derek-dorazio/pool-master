@@ -8,6 +8,7 @@ import { createSportEventServices } from '../../../packages/core-api/src/modules
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { heldHere } from '../../support/job-locks';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
@@ -31,7 +32,7 @@ async function golfLeague(data: { matchKeyword: string; eventSyncProviderId: str
     create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  return prisma.sportLeague.create({ data: { sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, ...data } });
+  return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, ...data } });
 }
 
 const DAY = 24 * 60 * 60 * 1000;

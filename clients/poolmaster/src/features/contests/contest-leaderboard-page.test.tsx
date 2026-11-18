@@ -1233,24 +1233,15 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-no-match')).toBeInTheDocument();
   });
 
-  it('shows 25 entries a page, in the server\'s order, with Next and Previous', async () => {
+  it('shows every entry in the server\'s order, with no pages', async () => {
     primeMocks({ leaderboard: leaderboardWithEntries(30) });
 
     renderLeaderboard();
 
     expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-leaderboard-entry-entry-25')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-leaderboard-entry-entry-26')).not.toBeInTheDocument();
-    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-
-    expect(screen.getByTestId('contest-leaderboard-entry-entry-26')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-
-    expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/).map((row) => row.getAttribute('data-testid')))
+      .toEqual(Array.from({ length: 30 }, (_, index) => `contest-leaderboard-entry-entry-${String(index + 1)}`));
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
   });
 
   /** Thirty entries, of which the viewer's team (squad-mine) holds those placed 3, 17 and 28. */
@@ -1301,7 +1292,7 @@ describe('ContestLeaderboardPage', () => {
 
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
     expect(screen.getByTestId('contest-leaderboard-entry-entry-3')).toHaveTextContent('Yours');
-    expect(screen.getByText('1–25 of 30')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^contest-leaderboard-entry-entry-\d+$/)).toHaveLength(30);
   });
 
   it('offers no My entries switch when the viewer has no entry on the leaderboard, and shows the whole board even with ?mine=1', async () => {
@@ -1319,7 +1310,7 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
-  it('opens the entry a link names (?entry=) on its page, scrolled into view, and drops ?entry= by replace once it is closed', async () => {
+  it('opens the entry a link names (?entry=), scrolled into view, and drops ?entry= by replace once it is closed', async () => {
     const scrolled: Element[] = [];
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function scrollIntoView(this: Element) {
       scrolled.push(this);
@@ -1330,7 +1321,6 @@ describe('ContestLeaderboardPage', () => {
 
     const toggle = await screen.findByTestId('contest-leaderboard-entry-toggle-entry-28');
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
     expect(scrolled).toEqual([screen.getByTestId('contest-leaderboard-entry-entry-28')]);
 
     fireEvent.click(toggle);
@@ -1340,7 +1330,7 @@ describe('ContestLeaderboardPage', () => {
     scroll.mockRestore();
   });
 
-  it('ignores a linked entry the board doesn\'t show, another team\'s under My entries or an unknown id, staying on the first page', async () => {
+  it('ignores a linked entry the board doesn\'t show, another team\'s under My entries or an unknown id, opening the first entry', async () => {
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
     primeMocks({ leaderboard: boardWithMyEntriesAt([3, 17, 28]), mySquadId: 'squad-mine' });
 
@@ -1353,7 +1343,7 @@ describe('ContestLeaderboardPage', () => {
     scroll.mockRestore();
   });
 
-  it('ignores an entry id the contest doesn\'t hold, showing the first page with every row as it starts', async () => {
+  it('ignores an entry id the contest doesn\'t hold, showing every row as it starts', async () => {
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
     primeMocks({ leaderboard: leaderboardWithEntries(30) });
 

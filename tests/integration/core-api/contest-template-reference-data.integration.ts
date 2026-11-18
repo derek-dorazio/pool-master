@@ -640,11 +640,12 @@ describe('Seeded tennis tours and their knockout templates', () => {
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(tennis.participantType).toBe('INDIVIDUAL');
-    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, league.tierCount])).toEqual([
-      ['ATP', 'FIXED', [], null],
-      ['NCAA Division I Men', 'FIXED', ncaaRounds, null],
-      ['NCAA Division I Women', 'FIXED', ncaaRounds, null],
-      ['WTA', 'FIXED', [], null],
+    const tierProfileNames = new Map((await getPrisma().tierProfile.findMany()).map((profile) => [profile.id, profile.name]));
+    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, tierProfileNames.get(league.tierProfileId)])).toEqual([
+      ['ATP', 'FIXED', [], '6 tiers of 8'],
+      ['NCAA Division I Men', 'FIXED', ncaaRounds, '6 tiers of 8'],
+      ['NCAA Division I Women', 'FIXED', ncaaRounds, '6 tiers of 8'],
+      ['WTA', 'FIXED', [], '6 tiers of 8'],
     ]);
   });
 
@@ -894,7 +895,7 @@ describe('Every seeded contest template, whatever its sport', () => {
   async function activeTemplates() {
     return getPrisma().contestConfigTemplate.findMany({
       where: { active: true },
-      include: { sportLeague: true },
+      include: { sportLeague: { include: { tierProfile: true } } },
       orderBy: [{ sport: 'asc' }, { templateKey: 'asc' }],
     });
   }
@@ -937,7 +938,7 @@ describe('Every seeded contest template, whatever its sport', () => {
     expect(problems).toEqual([]);
   });
 
-  it('counts no more scores than an entry holds: a tiered preset on its league\'s or else its sport\'s default tiers, a budget roster, or a draw\'s hand', async () => {
+  it('counts no more scores than an entry holds: a tiered preset on its league\'s tier profile\'s tiers, a budget roster, or a draw\'s hand', async () => {
     const templates = await activeTemplates();
 
     const problems = templates.flatMap((template) => {
@@ -946,7 +947,7 @@ describe('Every seeded contest template, whatever its sport', () => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
             return getTieredRosterSize(
-              getTiersInPlay(template.sportLeague.tierCount ?? sportLeagueDefinitionOf(template.sport, template.sportLeague).defaultTierLayout.tierCount, rules.tiersUsed),
+              getTiersInPlay(template.sportLeague.tierProfile.tierCount, rules.tiersUsed),
               rules.picksPerTier,
             );
           case SelectionType.BUDGET_PICK:
@@ -1064,9 +1065,10 @@ describe('The seeded College Football Playoff league and its knockout templates'
       sportLeagues.findBySportAndName(football.id, 'NFL'),
     ]);
 
-    expect([cfp?.bracketAdvancement, cfp?.roundNames, cfp?.tierCount]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 6]);
-    // The NFL keeps the sport's round names and its seven tiers.
-    expect([nfl?.roundNames, nfl?.tierCount]).toEqual([[], null]);
+    const tierProfileNames = new Map((await getPrisma().tierProfile.findMany()).map((profile) => [profile.id, profile.name]));
+    expect([cfp?.bracketAdvancement, cfp?.roundNames, tierProfileNames.get(cfp?.tierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], '6 tiers of 2']);
+    // The NFL keeps the sport's round names and football's seven tiers of two.
+    expect([nfl?.roundNames, tierProfileNames.get(nfl?.tierProfileId ?? '')]).toEqual([[], '7 tiers of 2']);
   });
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {

@@ -24,7 +24,7 @@ import {
   SportEventParticipantResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -99,7 +99,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const sportId = expectDefined(findSportRow(expectMatchesSchema(SportListResponseSchema, (await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
     expect(conference.response?.status).toBe(201);
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

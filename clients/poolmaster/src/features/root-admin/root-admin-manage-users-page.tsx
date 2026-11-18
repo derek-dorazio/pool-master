@@ -1,3 +1,4 @@
+import { ActiveStatusBadge } from "./active-status-badge";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import {
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
-import { buildManageUserPath, MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { buildManageUserPath, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 // #202 step 3.4 — the canonical named component, not an index into the response map.
 type RootAdminUser = UserDto;
@@ -52,6 +53,7 @@ export function RootAdminManageUsersPage() {
         {
           id: "username",
           header: "User",
+          meta: { info: "The user's name and username.", type: { kind: "text" } },
           cell: ({ row }) => (
             <div>
               <div className="font-medium text-primary">
@@ -66,6 +68,7 @@ export function RootAdminManageUsersPage() {
       ),
       columnHelper.accessor("email", {
         header: "Email",
+        meta: { info: "The email address the user signs in with.", type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -73,30 +76,18 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
         id: "account",
         header: "Account",
-        meta: { options: {} },
-        cell: ({ getValue }) => {
-          const isActive = getValue() === "Active";
-
-          return (
-            <StatusBadge tone={isActive ? "active" : "inactive"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        meta: { info: "Whether the user's account is active.", type: { kind: "enum" } },
+        cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
       }),
-      columnHelper.accessor((user) => (user.isRootAdmin ? "Yes" : "No"), {
+      columnHelper.accessor("isRootAdmin", {
         id: "rootAdmin",
         header: "Root admin",
-        meta: { options: {} },
-        cell: ({ getValue }) => {
-          const isRootAdmin = getValue() === "Yes";
-
-          return (
-            <StatusBadge tone={isRootAdmin ? "info" : "neutral"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        meta: { info: "Whether the user can use the root admin pages.", type: { kind: "boolean" } },
+        cell: ({ getValue }) => (
+          <StatusBadge tone={getValue() ? "info" : "neutral"}>
+            {getValue() ? "Yes" : "No"}
+          </StatusBadge>
+        ),
       }),
     ],
     [],
@@ -138,7 +129,6 @@ export function RootAdminManageUsersPage() {
           }
           getRowId={(user) => user.id}
           getRowLink={(user) => buildManageUserPath(user.id)}
-          pageSize={MANAGE_LIST_PAGE_SIZE}
           rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
           searchTerm={search}
           tableTestId="root-admin-manage-users-table"

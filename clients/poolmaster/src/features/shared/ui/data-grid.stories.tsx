@@ -14,12 +14,12 @@ const MEMBERS: Member[] = Array.from({ length: 32 }, (_, index) => ({
 }));
 
 const COLUMNS: ColumnDef<Member>[] = [
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "role", header: "Role" },
-  { accessorKey: "entries", header: "Entries" },
+  { accessorKey: "name", header: "Name", meta: { type: { kind: "text" } } },
+  { accessorKey: "role", header: "Role", meta: { type: { kind: "text" } } },
+  { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
 ];
 
-function MembersGrid(props: { pageSize?: number; showColumnFilters?: boolean; withSearch?: boolean }) {
+function MembersGrid(props: { showColumnFilters?: boolean; withSearch?: boolean }) {
   const { withSearch = true, ...rest } = props;
   return (
     <DataGrid
@@ -36,14 +36,13 @@ function MembersGrid(props: { pageSize?: number; showColumnFilters?: boolean; wi
 const meta = {
   title: "Tables/DataGrid",
   component: MembersGrid,
-  args: { pageSize: 10 },
 } satisfies Meta<typeof MembersGrid>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A table that needs search, sorting or paging. A list that can grow pages and searches. */
-export const SearchAndPages: Story = {};
+/** A table that needs search or sorting. Every row shows; the search and filters narrow them. */
+export const Search: Story = {};
 export const ColumnFilters: Story = { args: { showColumnFilters: true, withSearch: false } };
 
 function MembersWithViews() {
@@ -55,7 +54,6 @@ function MembersWithViews() {
       data={view === "owners" ? owners : MEMBERS}
       emptyMessage="No members match."
       getRowId={(member) => member.id}
-      pageSize={10}
       search={{ label: "Find a member" }}
       showColumnFilters={false}
       views={{
@@ -89,21 +87,21 @@ const EVENTS: SportEvent[] = [
 ];
 
 const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
-  { accessorKey: "name", header: "Name" },
+  { accessorKey: "name", header: "Name", meta: { type: { kind: "text" } } },
   {
     accessorKey: "stage",
     header: "Status",
-    meta: { options: { values: optionsFromLabels(EVENT_STATUS), initial: ["DRAFT", "SCHEDULED"] } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(EVENT_STATUS), initial: ["DRAFT", "SCHEDULED"] } },
     cell: ({ getValue }) => EVENT_STATUS[getValue<keyof typeof EVENT_STATUS>()],
   },
   {
     accessorKey: "issues",
     header: "Issues",
     enableSorting: false,
-    meta: { options: { values: optionsFromLabels(ISSUES), manyPerCell: true } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(ISSUES), manyPerCell: true } },
     cell: ({ getValue }) => getValue<string[]>().map((issue) => ISSUES[issue as keyof typeof ISSUES]).join(", ") || "—",
   },
-  { accessorKey: "field", header: "Field" },
+  { accessorKey: "field", header: "Field", meta: { type: { kind: "number" } } },
 ];
 
 /**
@@ -113,4 +111,35 @@ const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
  */
 export const HeaderFilters: StoryObj = {
   render: () => <DataGrid columns={EVENT_COLUMNS} data={EVENTS} emptyMessage="No events match." getRowId={(event) => event.id} />,
+};
+
+const EXPLAINED_COLUMNS: ColumnDef<Member>[] = [
+  { accessorKey: "name", header: "Name", meta: { info: "The member's display name in the league.", type: { kind: "text" } } },
+  { accessorKey: "role", header: "Role", meta: { info: "Owners run the league; members play in it.", type: { kind: "text" } } },
+  { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
+];
+
+/**
+ * A column that explains itself shows an (i) after its name. A row that leads to a page ends in
+ * a ›; a row that opens a dialog ends in a ⤢ button. The whole row is still the click target.
+ */
+export const ColumnInfoAndRowIcons: StoryObj = {
+  render: () => (
+    <div className="space-y-6">
+      <DataGrid
+        columns={EXPLAINED_COLUMNS}
+        data={MEMBERS.slice(0, 4)}
+        emptyMessage="No members match."
+        getRowId={(member) => member.id}
+        getRowLink={(member) => `/members/${member.id}`}
+      />
+      <DataGrid
+        columns={EXPLAINED_COLUMNS}
+        data={MEMBERS.slice(4, 8)}
+        emptyMessage="No members match."
+        getRowId={(member) => member.id}
+        openRowDialog={() => undefined}
+      />
+    </div>
+  ),
 };

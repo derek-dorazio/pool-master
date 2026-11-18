@@ -45,9 +45,9 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
      bonus (basketball, American football, hockey, baseball, soccer, tennis). A league whose rounds the sport's names
-     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
-     sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
-     College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's). Every league names a tier
+     profile and a pricing profile (`tierProfileId`, `pricingProfileId`): the migration that seeds a new league
+     points it at an existing profile, or adds one first (the College Football Playoff names "6 tiers of 2"). Its matches are `SportEventMatch` rows in the event core, not family tables.
      A sport whose level match is settled by a shoot-out sets the definition's `shootout` (its
      label, soccer's "pens"); every other sport sets it to null. The score stays level and the
      shoot-out's winner goes through. A sport that calls overtime something else (soccer's
@@ -97,7 +97,7 @@ In order:
    the same reference-data migration, and each template finds its league by sport and name
    (same section).
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
-   scoring family, tournament format, default rounds and tier layout, selection types, scoring
+   scoring family, tournament format, default rounds, selection types, scoring
    definitions, vocabulary and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
    A sport whose family lands before its scoring may register with no scoring definitions;
    contest create then refuses it until the scoring slice adds one.
@@ -262,13 +262,13 @@ down: a lesson that was true mid-series may not be by the end.
   as `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12) says. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.
-- **A league that plays differently from the sport's layout.** The tier layout belongs to the
-  sport, not the league. The sport's tier size is used only while an event keeps the sport's
-  tier count and the field fills every tier at that size; otherwise *Auto-assign tiers from
-  odds* spreads the field evenly (an F1 field of 22 on four tiers comes out 6/6/5/5), and release
-  refuses an event with an empty tier.
-  So a league on fewer tiers needs only the tier deletion in its setup procedure, and its tiered
-  preset must count the tiers it plays. A league default in a format other than tiered is fine:
+- **A league that plays differently from its sport's other leagues.** The tier layout belongs to
+  the league's tier profile, not the sport. The profile's tier size is used only while an event
+  keeps the profile's tier count and the field reaches the last tier at that size; otherwise
+  *Auto-assign tiers from odds* spreads the field evenly (an F1 field of 22 on four tiers comes
+  out 6/6/5/5), and release refuses an event with an empty tier.
+  So a league on fewer tiers names a profile with that count (or its setup procedure deletes
+  tiers), and its tiered preset must count the tiers it plays. A league default in a format other than tiered is fine:
   the create-contest page starts on the format of the league's own default.
 - **Looking up a sport league by its sport.** `SportLeagueDto` carries no `sport` (only
   `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.

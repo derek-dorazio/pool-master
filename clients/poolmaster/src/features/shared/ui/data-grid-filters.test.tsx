@@ -26,19 +26,19 @@ const columnHelper = createColumnHelper<Run>();
 
 function buildColumns(statusInitial?: readonly string[]) {
   return [
-    columnHelper.accessor("name", { header: "Name" }),
+    columnHelper.accessor("name", { meta: { type: { kind: "text" } }, header: "Name" }),
     columnHelper.accessor("status", {
       header: "Status",
-      meta: { options: { values: optionsFromLabels(STATUS_LABELS), initial: statusInitial } },
+      meta: { type: { kind: "enum", values: optionsFromLabels(STATUS_LABELS), initial: statusInitial } },
       cell: ({ getValue }) => STATUS_LABELS[getValue() as keyof typeof STATUS_LABELS],
     }),
     columnHelper.accessor("issues", {
       header: "Issues",
-      meta: { options: { values: optionsFromLabels(ISSUE_LABELS), manyPerCell: true } },
+      meta: { type: { kind: "enum", values: optionsFromLabels(ISSUE_LABELS), manyPerCell: true } },
       cell: ({ getValue }) => getValue().join(", "),
       enableSorting: false,
     }),
-    columnHelper.accessor("field", { header: "Field" }),
+    columnHelper.accessor("field", { meta: { type: { kind: "number" } }, header: "Field" }),
   ];
 }
 
@@ -133,11 +133,11 @@ const BLANKS: Blanks[] = [
 describe("DataGrid blank cells", () => {
   const blanksHelper = createColumnHelper<Blanks>();
   const columns = [
-    blanksHelper.accessor("field", { header: "Field" }),
-    blanksHelper.accessor("label", { header: "Label" }),
+    blanksHelper.accessor("field", { meta: { type: { kind: "number" } }, header: "Field" }),
+    blanksHelper.accessor("label", { meta: { type: { kind: "text" } }, header: "Label" }),
     blanksHelper.accessor("stage", {
       header: "Stage",
-      meta: { options: { values: optionsFromLabels({ DRAFT: "Draft", SCHEDULED: "Scheduled" }) } },
+      meta: { type: { kind: "enum", values: optionsFromLabels({ DRAFT: "Draft", SCHEDULED: "Scheduled" }) } },
     }),
   ];
 
@@ -251,7 +251,7 @@ describe("DataGrid enum filter", () => {
 
   it("lists the values found in the rows A to Z when the column declares none", async () => {
     const user = userEvent.setup();
-    const found = [columnHelper.accessor("name", { header: "Name", meta: { options: {} } })];
+    const found = [columnHelper.accessor("name", { header: "Name", meta: { type: { kind: "enum" } } })];
     render(<DataGrid columns={found} data={[...RUNS].reverse()} emptyMessage="None" />);
 
     await user.click(screen.getByTestId("data-grid-filter-name"));
@@ -347,7 +347,7 @@ describe("DataGrid enum filter", () => {
     const user = userEvent.setup();
     const sports = ["Baseball", "Basketball", "Cricket", "Cycling", "Football", "Golf", "Hockey", "Racing", "Soccer", "Tennis"];
     const rows = sports.map((sport, index) => ({ id: String(index), name: sport, status: "DRAFT", issues: [] }));
-    const columns = [columnHelper.accessor("name", { header: "Sport", meta: { options: {} } })];
+    const columns = [columnHelper.accessor("name", { header: "Sport", meta: { type: { kind: "enum" } } })];
     render(<DataGrid columns={columns} data={rows} emptyMessage="None" rowTestId={(row) => `row-${row.id}`} />);
 
     await user.click(screen.getByTestId("data-grid-filter-name"));

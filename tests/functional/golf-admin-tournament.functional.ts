@@ -29,7 +29,7 @@ import {
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -151,7 +151,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
       client: c,
-      body: { sport: 'GOLF', name: `PGA Tour ${RUN}`, matchKeyword: 'PGA' },
+      body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `PGA Tour ${RUN}`, matchKeyword: 'PGA' },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -468,7 +468,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `Editions Tour ${RUN}` } });
+    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Editions Tour ${RUN}` } });
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const edition = (eventYear: number) => createEvent({
@@ -505,7 +505,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `Import Tour ${RUN}`, matchKeyword: 'LPGA Tour' } });
+    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Import Tour ${RUN}`, matchKeyword: 'LPGA Tour' } });
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
@@ -531,7 +531,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(again.data).skipped.filter((row) => row.reason === 'ALREADY_LINKED')).toHaveLength(imported.length);
     expect(expectDefined(again.data).skipped.filter((row) => row.reason !== 'ALREADY_LINKED').every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
 
-    const noKeyword = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `No Keyword Tour ${RUN}` } });
+    const noKeyword = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `No Keyword Tour ${RUN}` } });
     created.sportLeagueIds.add(expectDefined(noKeyword.data).sportLeague.id);
     expectFunctionalError(
       await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(noKeyword.data).sportLeague.id, eventYear: 2027, providerId: 'mock-contest-feed' } }),
@@ -546,7 +546,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}` } }), deny);
+    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}`, tierProfileId: 'x', pricingProfileId: 'x' } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { currentEventYear: 2030 } }), deny);
     expectFunctionalError(await cloneEventYear({ client: c, body: { sportLeagueId: 'x', eventYear: 2030 } }), deny);
     expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);

@@ -13,6 +13,7 @@ import type { SportEventDetail } from '../../../packages/core-api/src/modules/in
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
+import { leagueProfiles } from '../../support/league-profiles';
 
 const rankedEventIds = [
   'integration-ingestion-event',
@@ -602,7 +603,7 @@ describe('IngestionPersistence', () => {
   it('adds a participant the feed creates to the sport league its tour names, in the same write, and on the next sync one already linked that lacks it', async () => {
     const prisma = getPrisma();
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    const league = await prisma.sportLeague.create({ data: { sportId: golf.id, name: 'Joinable League', matchKeyword: 'JOINTEST' } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: 'Joinable League', matchKeyword: 'JOINTEST' } });
     const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: `Joinable ${externalId}`, metadata: { tour } });
     const first = rankedFieldDetail('integration-joins-league', [golfer('ingestion-join-new', 'jointest'), golfer('ingestion-join-none', 'NO-SUCH-LEAGUE')]);
     await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: first.externalId, name: first.name, startDate: first.startDate });

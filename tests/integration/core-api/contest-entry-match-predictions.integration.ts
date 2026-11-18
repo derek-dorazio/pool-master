@@ -26,6 +26,7 @@ import {
 import { recordStatements, statementCounts, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { createContestRow } from '../../support/contest-rows';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
 // one write (upsert, clear and the week's status, all or none), the database checks the migration
@@ -61,7 +62,7 @@ async function createWeek(label: string, startDate: Date) {
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { sportId: sport.id, name: 'NFL' },
+    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });

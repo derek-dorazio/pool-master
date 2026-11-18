@@ -12,11 +12,11 @@ const LEAGUES: League[] = [
   { id: "3", name: "PWHL", state: "OFF" },
 ];
 const COLUMNS: ColumnDef<League>[] = [
-  { accessorKey: "name", header: "Sport league" },
+  { accessorKey: "name", header: "Sport league", meta: { type: { kind: "text" } } },
   {
     accessorKey: "state",
     header: "Status",
-    meta: { options: { values: optionsFromLabels(STATES), initial: ["ON"] } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(STATES), initial: ["ON"] } },
     cell: ({ getValue }) => STATES[getValue<keyof typeof STATES>()],
   },
 ];

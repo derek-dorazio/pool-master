@@ -70,11 +70,11 @@ import {
   createParticipant,
   createSportLeague,
   getEventBracket,
-  getSettingsGroup,
   listEventParticipants,
   listParticipantLeagueAffiliations,
   listEvents,
   listParticipants,
+  listPricingProfiles,
   listSportLeagues,
   listSportProviderMappings,
   listSports,
@@ -195,15 +195,15 @@ function names(list: readonly string[]): string {
   return list.length <= 5 ? list.join(', ') : `${list.slice(0, 5).join(', ')} and ${list.length - 5} more`;
 }
 
-/**
- * Every seeded tournament is priced for budget contests with the app's default Budget pricing
- * profile, the one the admin's price dialog starts on.
- */
-async function defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
-  const group = await must(getSettingsGroup({ client, path: { key: 'BUDGET_PRICING_CONFIG' } }), 'Read budget pricing settings');
-  if (group.key !== 'BUDGET_PRICING_CONFIG') throw new Error(`Read budget pricing settings returned ${group.key}`);
-  const { name, ...values } = found(group.value.profiles[0], 'The default budget pricing profile');
-  return { profileName: name, ...values };
+/** The pricing profile every sport league names unless a root admin moves it (#1844). */
+const STANDARD_PRICING_PROFILE = 'Standard';
+
+/** The Standard pricing profile: its id, and its values as an event's price assignment sends them. */
+async function standardPricing(client: Client): Promise<{ pricingProfileId: string; request: AutoAssignSportEventPricesRequest }> {
+  const { pricingProfiles } = await must(listPricingProfiles({ client }), 'List pricing profiles');
+  const { id, name, ...values } = found(pricingProfiles.find((profile) => profile.name === STANDARD_PRICING_PROFILE), 'The Standard pricing profile');
+  const { salaryCap, unit, topSharePercent, floorSharePercent, steepness } = values;
+  return { pricingProfileId: id, request: { profileName: name, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
 }
 
 /** "matches 3, 7": match numbers as a run's detail names them. */
@@ -392,8 +392,8 @@ class Loader {
   private readonly replaceField: boolean;
   /** A test seed's events are released once set up, unless the run holds them back as drafts. */
   private readonly releaseTestEvents: boolean;
-  /** The site's default budget pricing, read once per run when an event is first priced. */
-  private pricing: Promise<AutoAssignSportEventPricesRequest> | null = null;
+  /** The Standard pricing profile, read once per run when a league is made or an event first priced. */
+  private pricing: ReturnType<typeof standardPricing> | null = null;
 
   private readonly file: SportDataFile;
 
@@ -476,7 +476,15 @@ class Loader {
     }
     this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });
     if (!this.apply) return null;
-    const created = await must(createSportLeague({ client, body: { sport: this.sport, name, matchKeyword: name, ...(bracketAdvancement && { bracketAdvancement }) } }), `Create sport league ${name}`);
+    // A new league tiers as the sport's own leagues do (not a stat pool round's) and prices with
+    // Standard (#1844).
+    const sibling = sportLeagues.find((row) => row.scoringFamily === null) ?? sportLeagues[0];
+    const { tierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
+    const { pricingProfileId } = await this.standardPricing(client);
+    const created = await must(createSportLeague({
+      client,
+      body: { sport: this.sport, name, matchKeyword: name, tierProfileId, pricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
+    }), `Create sport league ${name}`);
     return created.sportLeague.id;
   }
 
@@ -892,10 +900,15 @@ class Loader {
     if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
   }
 
-  /** The site's default budget pricing, read on first use and kept for the rest of the run. */
-  private defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
-    this.pricing ??= defaultPricing(client);
+  /** The Standard pricing profile, read on first use and kept for the rest of the run. */
+  private standardPricing(client: Client): ReturnType<typeof standardPricing> {
+    this.pricing ??= standardPricing(client);
     return this.pricing;
+  }
+
+  /** The Standard pricing values, which every seeded event is priced with. */
+  private async defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
+    return (await this.standardPricing(client)).request;
   }
 
   /** Reports a stat pool event's box score changes, and in an apply writes them. */

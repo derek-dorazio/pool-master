@@ -43,7 +43,7 @@ import {
   SurvivorLeaderboardResponseSchema,
   type SurvivorLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -191,7 +191,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- Two released weeks of the same four games -----------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
@@ -341,7 +341,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     await promoteToRootAdmin(admin);
     const a = admin.client;
     const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
-    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

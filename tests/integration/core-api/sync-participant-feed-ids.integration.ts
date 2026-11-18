@@ -13,6 +13,7 @@ import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import type { ProviderParticipant, SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { linkedProviderEvent } from '../../support/event-edition';
+import { leagueProfiles } from '../../support/league-profiles';
 
 const PROVIDER = 'TEST_PROVIDER_1850';
 const NAME_PREFIX = 'Feed Id 1850 ';
@@ -76,7 +77,7 @@ describe('the sync matches feed participants by feed id only (#1850)', () => {
     const prisma = getPrisma();
     const keyword = `TOUR-1850-${randomUUID().slice(0, 8)}`;
     const { golfer, detail, golfId } = await fieldOf({ metadata: { tour: keyword } });
-    const tour = await prisma.sportLeague.create({ data: { sportId: golfId, name: `${NAME_PREFIX}${keyword}`, matchKeyword: keyword } });
+    const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golfId, name: `${NAME_PREFIX}${keyword}`, matchKeyword: keyword } });
 
     await sync(detail);
 

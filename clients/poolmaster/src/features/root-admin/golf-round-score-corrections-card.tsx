@@ -52,6 +52,7 @@ const columnHelper = createColumnHelper<ScoreRow>();
 const correctionColumns = [
   columnHelper.accessor('participantName', {
     header: 'Player',
+    meta: { info: 'The participant whose round score is shown.', type: { kind: 'text' } },
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
@@ -59,6 +60,7 @@ const correctionColumns = [
   columnHelper.display({
     id: 'strokes',
     header: 'Strokes',
+    meta: { info: "The participant's strokes for the round." },
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
@@ -91,6 +93,7 @@ const correctionColumns = [
   columnHelper.display({
     id: 'scoreToPar',
     header: 'To par',
+    meta: { info: "The round's score against par." },
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
@@ -122,6 +125,7 @@ const correctionColumns = [
   columnHelper.display({
     id: 'thru',
     header: 'Thru',
+    meta: { info: 'How many holes of the round the participant has completed.' },
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
@@ -155,6 +159,7 @@ const correctionColumns = [
   columnHelper.display({
     id: 'status',
     header: 'Status',
+    meta: { info: "Where the participant's round stands." },
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
@@ -193,6 +198,7 @@ const correctionColumns = [
   columnHelper.display({
     id: 'completedAt',
     header: ({ table }) => `Completed at (${(table.options.meta as CorrectionsMeta).timeZoneName})`,
+    meta: { info: 'When the round was completed, in the time zone shown.' },
     cell: ({ row, table }) => {
       const { draft, setDraft, timeZone } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
@@ -330,6 +336,7 @@ export function GolfRoundScoreCorrectionsCard({
       ) : null}
 
       <DataGrid
+        urlKey="scores"
         columns={correctionColumns}
         data={rows}
         emptyMessage={

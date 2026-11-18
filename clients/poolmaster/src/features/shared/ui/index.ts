@@ -23,12 +23,17 @@ export { ChoiceList, type ChoiceListItem } from "./choice-list";
 export { cn } from "./class-names";
 export { ConfirmDialog, type ConfirmationInput, type ConfirmDialogProps } from "./confirm-dialog";
 export { DataGrid, type DataGridDetailRow, type DataGridViews } from "./data-grid";
-export { optionsFromLabels, type DataGridColumnOptions, type DataGridOption } from "./data-grid-filters";
+export {
+  optionsFromLabels,
+  type DataGridColumnOptions,
+  type DataGridColumnType,
+  type DataGridOption,
+  type DateRangeValue,
+} from "./data-grid-filters";
 export { ViewFilter, type ViewFilterOption } from "./view-filter";
 export { Eyebrow } from "./eyebrow";
 export { FormSection } from "./form-section";
 export { Heading } from "./heading";
-export { Pager } from "./pager";
 export { DateDisplay, DateTimeField } from "./date-time";
 export {
   DEFAULT_DISPLAY_PREFERENCES,

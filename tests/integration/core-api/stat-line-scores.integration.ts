@@ -6,6 +6,7 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families/registry';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
+import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
 
 // A provider's box scores written into a Clutch Card event against real Postgres (#1497): the
 // composite family's STAT_LINE writer, through the stat line service, with each star's provider
@@ -34,7 +35,7 @@ async function linkedFinals() {
     update: {},
   });
   const finals = await prisma.sportLeague.create({
-    data: { sportId: basketball.id, name: `NBA Finals ${suffix}`, participantType: 'INDIVIDUAL', scoringFamily: ScoringFamily.COMPOSITE },
+    data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: basketball.id, name: `NBA Finals ${suffix}`, participantType: 'INDIVIDUAL', scoringFamily: ScoringFamily.COMPOSITE },
   });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: finals.id, name: `NBA Finals ${suffix}` } });
   const externalId = `nba-2025-finals-${suffix}`;

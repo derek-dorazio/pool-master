@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
+import { isPlatformSearchTerm, ParticipantStatusOrder, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   createParticipantLeagueAffiliation,
   deleteParticipantLeagueAffiliation,
@@ -23,6 +23,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { participantStatusLabel } from './sport-admin-utils';
 import { useParticipantsQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -44,6 +45,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'name',
     header: participantLabel,
+    meta: { info: "The participant's name.", type: { kind: 'text' } },
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
@@ -51,6 +53,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor('ranking', {
     // The ranking the sport league keeps for the participant (#236), not a world ranking.
     header: 'Ranking',
+    meta: { info: 'The ranking the sport league keeps for the participant, not a world ranking.', type: { kind: 'number' } },
     cell: ({ row, table }) => {
       const entry = row.original;
       const { draft, setDraft } = table.options.meta as RosterGridMeta;
@@ -88,7 +91,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.status, {
     id: 'status',
     header: 'Status',
-    meta: { options: {} },
+    meta: { info: 'Whether the participant is active on the roster.', type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
         {getValue()}
@@ -314,6 +317,7 @@ export function SportLeagueRosterGridCard({
       ) : null}
 
       <DataGrid
+        urlKey="roster"
         columns={rosterColumns}
         data={entries}
         emptyMessage={

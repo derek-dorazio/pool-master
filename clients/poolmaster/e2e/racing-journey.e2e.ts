@@ -159,6 +159,9 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await page.goto('/manage/sports/horse-racing/leagues');
     await page.getByTestId('root-admin-sport-league-list-new').click();
     await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
+    // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
+    await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '3 tiers of 3' });
+    await page.getByTestId('root-admin-sport-league-list-new-pricing-profile').selectOption({ label: 'Standard' });
     const created = await submitAndRead<{ sportLeague: { id: string } }>(
       page,
       'root-admin-sport-league-list-new-save',

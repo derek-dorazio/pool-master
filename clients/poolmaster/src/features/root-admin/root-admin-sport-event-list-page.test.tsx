@@ -163,7 +163,7 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     expect(screen.getByTestId('root-admin-sport-event-row-tour-2')).toBeInTheDocument();
   });
 
-  it('shows 25 tournaments a page and pages on to the rest', async () => {
+  it('shows every tournament, with no pages', async () => {
     listEventsMock.mockResolvedValue({
       data: {
         events: Array.from({ length: 30 }, (_, index) =>
@@ -175,9 +175,7 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
     renderPage();
 
     await screen.findByTestId('root-admin-sport-event-row-tour-1');
-    expect(screen.queryByTestId('root-admin-sport-event-row-tour-26')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /next/i }));
-
-    expect(await screen.findByTestId('root-admin-sport-event-row-tour-26')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-event-row-tour-30')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
   });
 });

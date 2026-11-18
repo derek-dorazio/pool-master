@@ -1,13 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
+import { isPlatformSearchTerm, ParticipantStatusOrder, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   DataGrid,
   ErrorState,
   LinkButton,
   FilterPicker,
   StatusBadge,
-  optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -15,13 +14,11 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
-  PARTICIPANT_STATUS_LABELS,
   participantStatusLabel,
   participantStatusTone,
   type ManagedParticipantStatus,
 } from './sport-admin-utils';
 import {
-  MANAGE_LIST_PAGE_SIZE,
   SEARCH_DEBOUNCE_MS,
   buildSportParticipantListPath,
   buildSportParticipantPath,
@@ -60,21 +57,24 @@ export function RootAdminParticipantListPage() {
     () => [
       columnHelper.accessor('name', {
         header: 'Name',
+        meta: { info: "The participant's full name.", type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('shortName', {
         header: 'Short name',
+        meta: { info: "The participant's shorter name, used where space is tight.", type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('nationality', {
         header: 'Nationality',
+        meta: { info: 'The country the participant represents.', type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        meta: { options: { values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
+        meta: { info: 'Whether the participant is active in the sport league.', type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}
@@ -134,7 +134,6 @@ export function RootAdminParticipantListPage() {
         filterTestIdPrefix="root-admin-participant-list-filter"
         getRowId={(player) => player.id}
         getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
         search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search', onChange: setSearch }}
         tableTestId="root-admin-participant-list-table"

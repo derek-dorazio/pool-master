@@ -1,8 +1,7 @@
 import { LEAGUE_PLANS, PlanCap } from '@poolmaster/shared/domain';
-import type { BillingConfig, BudgetPricingConfig, EmailConfig, IngestionScheduleConfig, PlanConfig, SettingsChange } from '@/lib/api';
+import type { BillingConfig, EmailConfig, IngestionScheduleConfig, PlanConfig, SettingsChange } from '@/lib/api';
 import { describeExpansionPrices, describePayments } from '@/features/billing/billing-format';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
-import { describeBudgetPricing } from './budget-pricing-format';
 
 export type SettingsSummaryItem = {
   id: string;
@@ -89,14 +88,6 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
   ];
 }
 
-/** One row per pricing profile, the default first, as the price dialog offers them (#93). */
-export function summarizeBudgetPricing(config: BudgetPricingConfig): SettingsSummaryItem[] {
-  return config.profiles.map((profile, index) => ({
-    id: `profile-${index}`,
-    label: index === 0 ? `${profile.name} (default)` : profile.name,
-    value: describeBudgetPricing(profile),
-  }));
-}
 
 /** Each plan cap's limit on every plan, Free to Platinum (#944). */
 export function summarizePlans(config: PlanConfig, locale: string): SettingsSummaryItem[] {
