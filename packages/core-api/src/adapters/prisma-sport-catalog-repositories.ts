@@ -313,7 +313,12 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
         ...(filters.statuses !== undefined && { status: { in: [...filters.statuses] } }),
-        ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
+        ...((filters.sportLeagueId !== undefined || filters.activeSportLeaguesOnly) && {
+          eventSeries: {
+            ...(filters.sportLeagueId !== undefined && { sportLeagueId: filters.sportLeagueId }),
+            ...(filters.activeSportLeaguesOnly && { sportLeague: { isActive: true } }),
+          },
+        }),
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
         ...(filters.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),

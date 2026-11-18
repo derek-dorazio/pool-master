@@ -65,8 +65,9 @@ export class PrismaEventPageRepository implements EventPageRepository {
       return [];
     }
     const rows = await this.prisma.eventPageOffer.findMany({
-      // A disabled setup is left out, as Create contest refuses it.
-      where: { eventPageId: { in: [...eventPageIds] }, template: { active: true } },
+      // A disabled setup is left out, as Create contest refuses it, and so is a switched-off
+      // sport league's offer (#1812), as Create contest offers none of its events.
+      where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, sportLeague: { isActive: true } },
       include: { template: true, sportLeague: { select: { name: true, displayName: true } } },
       orderBy: [{ eventPageId: 'asc' }, { sortOrder: 'asc' }],
     });

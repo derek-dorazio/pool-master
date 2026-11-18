@@ -209,6 +209,7 @@ export function CreateContestPage() {
         }}
         onSelectSport={draft.selectSport}
         onSquaresGameChange={(next) => draft.setFormValues({ sportEventMatchId: next })}
+        offeredSports={draft.offeredSports}
         selectedEvent={selectedEvent}
         selectionType={values.selectionType}
         sport={values.sport}

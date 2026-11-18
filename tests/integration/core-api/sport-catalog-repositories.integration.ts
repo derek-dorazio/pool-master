@@ -274,6 +274,20 @@ describe('SportEventRepository — series and event year', () => {
     expect(await events.countBySportLeagues([pga.id, empty.id], { eventYear: 2025 })).toEqual(new Map([[pga.id, 1], [empty.id, 0]]));
   });
 
+  it('leaves out the events of a switched-off sport league when asked for active sport leagues only, alone or with one sport league named', async () => {
+    const [pga, switchedOff] = [await tour('PGA Tour'), await tour('Switched-off Tour')];
+    await new PrismaSportLeagueRepository(getAppPrisma()).update(switchedOff.id, { isActive: false });
+    const series = new PrismaEventSeriesRepository(getAppPrisma());
+    const masters = await edition((await seriesNamed(series, pga.id, 'The Masters')).id, 2026, 'masters-active');
+    const hidden = await edition((await seriesNamed(series, switchedOff.id, 'Hidden Open')).id, 2026, 'hidden-open');
+    const events = new PrismaSportEventRepository(getAppPrisma());
+    const ours = (rows: Array<{ id: string }>) => rows.map((row) => row.id).filter((id) => id === masters.id || id === hidden.id).sort();
+
+    expect(ours(await events.findAll({ eventYear: 2026 }))).toEqual([masters.id, hidden.id].sort());
+    expect(ours(await events.findAll({ eventYear: 2026, activeSportLeaguesOnly: true }))).toEqual([masters.id]);
+    expect(ours(await events.findAll({ sportLeagueId: switchedOff.id, activeSportLeaguesOnly: true }))).toEqual([]);
+  });
+
   it('says a sport league has a loaded bracket when any edition of any of its series, in any year, has a match, and not when none has', async () => {
     const [nfl, cfp, empty] = [await tour('NFL'), await tour('College Football Playoff'), await tour('Empty League')];
     const series = new PrismaEventSeriesRepository(getAppPrisma());

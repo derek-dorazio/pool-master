@@ -288,6 +288,8 @@ export class InMemorySportEvents {
         && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
         && (!filters.releasedOnly || row.status !== 'DRAFT')
+        // An event's league the store never made (addEvent's default) counts as on.
+        && (!filters.activeSportLeaguesOnly || !this.sportLeagues.some((league) => league.id === row.sportLeagueId && !league.isActive))
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),

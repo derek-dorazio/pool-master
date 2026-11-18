@@ -1,12 +1,13 @@
-import { SelectionType } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { FormatIllustration } from '@/features/contest-types/illustrations';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CreateContestPage } from './create-contest-page';
 
 /** The drawing How to Play shows for a format, to compare the preview's picture against. */
@@ -24,6 +25,7 @@ const {
   listContestConfigTemplatesMock,
   listEventParticipantsMock,
   listEventsMock,
+  listSportLeaguesMock,
   listSportLeaguesUsedMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -46,6 +48,7 @@ const {
     listContestConfigTemplatesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
     listSportLeaguesUsedMock: vi.fn(),
     mockLogger: logger,
   };
@@ -59,7 +62,15 @@ bindApiMocks({
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEventParticipants: listEventParticipantsMock,
   listEvents: listEventsMock,
+  listSportLeagues: listSportLeaguesMock,
   listSportLeaguesUsed: listSportLeaguesUsedMock,
+});
+
+/** One active sport league in every sport, so the sport picker offers them all. */
+const ACTIVE_LEAGUE_IN_EVERY_SPORT = SUPPORTED_SPORTS.map((sport) => sportLeagueFixture({ id: `${sport}-league`, sport, name: `${sport} league` }));
+
+beforeEach(() => {
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: ACTIVE_LEAGUE_IN_EVERY_SPORT } });
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -602,6 +613,22 @@ describe('Commissioner tools › Contests › Create contest', () => {
       expect.objectContaining({ action: 'contest.create.failed' }),
       expect.any(String),
     );
+  });
+
+  it('offers no sport whose every league is switched off, keeping a sport with one league still on', async () => {
+    primeCommonMocks();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+      ...ACTIVE_LEAGUE_IN_EVERY_SPORT.filter((league) => league.sport !== 'CYCLING' && league.sport !== 'AUTO_RACING'),
+      sportLeagueFixture({ id: 'uci', sport: 'CYCLING', name: 'UCI WorldTour', isActive: false }),
+      sportLeagueFixture({ id: 'nascar', sport: 'AUTO_RACING', name: 'NASCAR Cup Series', isActive: false }),
+      sportLeagueFixture({ id: 'f1', sport: 'AUTO_RACING', name: 'Formula 1' }),
+    ] } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    await waitFor(() => expect(screen.queryByTestId('contest-sport-CYCLING')).not.toBeInTheDocument());
+    expect(screen.getByTestId('contest-sport-AUTO_RACING')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-sport-GOLF')).toBeInTheDocument();
   });
 
   it('offers basketball\'s roster formats, Pick\'em and Bracket', async () => {

@@ -682,6 +682,32 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **Key code.** `epl-mapping.ts`, `epl-reader.ts`, `fifa-world-cup-mapping.ts`,
   `fifa-world-cup-reader.ts`, shared `competition-status.ts` (the vendor's game states to ours).
 
+### Switched off: the leagues no provider syncs (#1812)
+
+Every sport league left on is one a provider syncs. The leagues no provider covers yet are
+**inactive** (`sport_leagues.is_active = false`) by the migration
+`20271126000000_switch_off_unsynced_sport_leagues`, so a reset database and a new environment keep
+them off. They are not deleted: their rows, contest setups, round names and copy stay, and bringing
+one back is one flip (root admin **Activate**, or a migration) once it has a source. Existing events
+and contests on them are left as they are.
+
+An inactive league is left off How to Play and Contest types (a sport whose every league is off,
+such as cycling, gets no chip), Create contest's sport choices and events (a member's list of
+events open for contests leaves out an inactive league's), event page and start link offers, event
+emails' league list, the sync's scheduled reads, and the root admin's Create event.
+
+| Switched off | Comes back with |
+|---|---|
+| Cycling: UCI WorldTour, UCI Women's WorldTour | #682 |
+| Running: World Marathon Majors (men), (women) | #683 |
+| FIFA Women's World Cup and its Clutch Card leagues (Women's World Cup Semifinals, Final), UEFA European Championship, Copa América | #1814 |
+| NASCAR Cup Series, IndyCar | #681 (provider check #1813, deferred) |
+| Every horse racing league (US Thoroughbred) | #680 (provider check #1813, deferred) |
+| NWSL; PWHL; college hockey (NCAA Division I Men and Women, Men's Frozen Four, Men's Hockey National Championship); NCAA soccer and NCAA tennis (Division I Men and Women) | #1815 |
+
+Formula 1 and every NCAA basketball league stay on. Each return ticket first re-checks
+BALLDONTLIE's specs (the index and each `openapi/<league>.yml` directly) before any other provider.
+
 ## 6. In flight
 
 | Work | Where | What it adds |

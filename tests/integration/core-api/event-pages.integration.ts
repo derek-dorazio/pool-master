@@ -152,6 +152,24 @@ describe('Event page offers', () => {
       await remove();
     }
   });
+
+  it('leaves out an offer in a switched-off sport league, so no page or start link offers a league no provider syncs', async () => {
+    const prisma = getPrisma();
+    const { page, remove } = await scratchPage(true);
+    const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
+    const switchedOff = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
+    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF, sportLeagueId: null } });
+    try {
+      await prisma.eventPageOffer.create({
+        data: { eventPageId: page.id, sportLeagueId: switchedOff.id, eventSeriesName: 'Scratch', templateId: template.id, sortOrder: 1, isPrimary: true },
+      });
+
+      expect(await new PrismaEventPageRepository(getAppPrisma()).findOffers([page.id])).toEqual([]);
+    } finally {
+      await remove();
+      await prisma.sportLeague.delete({ where: { id: switchedOff.id } });
+    }
+  });
 });
 
 describe('PrismaEventPageRepository.findEditionsNotOver', () => {
