@@ -70,11 +70,11 @@ interface SportScenario {
 
 /**
  * Golf has no played seed: its test seeds carry made-up strokes. Thirty golfers over two rounds
- * at par 72, each a stroke apart, with one missing the cut; the tour is the run's own, so the
- * sport-wide golf presets apply.
+ * at par 72, each a stroke apart, with one missing the cut, on the PGA TOUR: every contest setup
+ * is one sport league's (#1825), so a tour of the run's own would have none.
  */
 function golfEvent(tag: string, season: number): SportDataFile {
-  const tour = `Scenario Tour ${tag}`;
+  const tour = 'PGA TOUR';
   const golfers = Array.from({ length: 30 }, (_, index) => index + 1);
   return inSeason(parseSportDataFile(JSON.parse(JSON.stringify({
     schemaVersion: 1,
@@ -247,7 +247,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
       })).data).templates
         .filter((template) => template.contestFormat === ContestFormat.ROSTER)
         .filter((template) => template.selectionType === selectionType)
-        .sort((left, right) => Number(right.sportLeagueId === sportLeague.id) - Number(left.sportLeagueId === sportLeague.id) || left.sortOrder - right.sortOrder);
+        .sort((left, right) => left.sortOrder - right.sortOrder);
       const preset = expectDefined(templates.at(0), `a ${selectionType} preset for ${sportLeague.name}`);
 
       const contest = await createContest({

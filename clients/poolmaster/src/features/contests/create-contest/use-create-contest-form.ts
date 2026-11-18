@@ -100,8 +100,8 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
     && isCreatableSelectionType(template.selectionType)) ?? null;
   const requestedTemplateProgress = useRef<'sport' | 'event' | 'settled'>('sport');
-  // A contest type chosen in one sport league's section names it, `?sportLeague=<id>` (#1716): a
-  // sport-wide template starts on that league's soonest event, not another league's.
+  // A contest type chosen in one sport league's section names it, `?sportLeague=<id>` (#1716): the
+  // template starts on that league's soonest event.
   const requestedSportLeagueId = searchParams.get('sportLeague');
   // An event page's start (#1008) also names the edition, `?event=<id>`, and a later-round
   // bracket's first round, `?startRound=<n>`: chosen once, with the template.
@@ -167,8 +167,8 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null, now);
   const isSquaresGameMissing = selectionType === SelectionType.SQUARES
     && !squaresGames.games.some((game) => game.id === sportEventMatchId);
-  // The chosen event's sport league: its own presets are offered beside the sport-wide ones, so
-  // the presets wait for an event.
+  // The chosen event's sport league: only its own presets are offered, so the presets wait for an
+  // event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
   // A sport played as matches offers a week's templates on a week of games and a knockout's on a
   // knockout (#802); every other sport's templates suit all its events.

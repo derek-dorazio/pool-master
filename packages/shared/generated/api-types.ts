@@ -2002,7 +2002,7 @@ export interface paths {
         };
         /**
          * List contest configuration templates
-         * @description The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones) and kind of event.
+         * @description The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (every template is one league's) and kind of event.
          */
         get: operations["listContestConfigTemplates"];
         put?: never;
@@ -7405,9 +7405,9 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /**
              * Format: uuid
-             * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+             * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
              */
-            sportLeagueId: string | null;
+            sportLeagueId: string;
             /**
              * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
              * @enum {string|null}
@@ -7936,7 +7936,7 @@ export interface components {
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /**
              * Format: uuid
-             * @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
+             * @description Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
              */
             sportLeagueId?: string;
             /**
@@ -7962,9 +7962,9 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /**
                  * Format: uuid
-                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
-                sportLeagueId: string | null;
+                sportLeagueId: string;
                 /**
                  * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                  * @enum {string|null}
@@ -8689,9 +8689,9 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /**
                  * Format: uuid
-                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
-                sportLeagueId: string | null;
+                sportLeagueId: string;
                 /**
                  * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                  * @enum {string|null}
@@ -19780,9 +19780,9 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /**
                  * Format: uuid
-                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
-                sportLeagueId: string | null;
+                sportLeagueId: string;
                 /**
                  * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                  * @enum {string|null}
@@ -20228,9 +20228,9 @@ export interface components {
                     sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                     /**
                      * Format: uuid
-                     * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                     * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                      */
-                    sportLeagueId: string | null;
+                    sportLeagueId: string;
                     /**
                      * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                      * @enum {string|null}
@@ -20679,9 +20679,9 @@ export interface components {
                         sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                         /**
                          * Format: uuid
-                         * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                         * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                          */
-                        sportLeagueId: string | null;
+                        sportLeagueId: string;
                         /**
                          * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                          * @enum {string|null}
@@ -21141,9 +21141,9 @@ export interface components {
                         sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                         /**
                          * Format: uuid
-                         * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                         * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                          */
-                        sportLeagueId: string | null;
+                        sportLeagueId: string;
                         /**
                          * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
                          * @enum {string|null}
@@ -29622,7 +29622,7 @@ export interface operations {
             query?: {
                 /** @description Only templates for this sport. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
+                /** @description Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
                 sportLeagueId?: string;
                 /** @description Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches. */
                 eventType?: "KNOCKOUT" | "WEEK";

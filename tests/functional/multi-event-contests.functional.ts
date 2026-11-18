@@ -36,6 +36,7 @@ import {
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -124,6 +125,7 @@ async function buildTwoTournamentContest(
   expect(tour.response?.status).toBe(201);
   const sportLeagueId = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
+  await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'PGA TOUR', toSportLeagueId: sportLeagueId });
 
   const golferIds: string[] = [];
   for (const golfer of GOLFERS) {
@@ -166,7 +168,7 @@ async function buildTwoTournamentContest(
 
   const templates = expectDefined((await listContestConfigTemplates({
     client: commissioner.client,
-    query: { sport: Sport.GOLF, active: true },
+    query: { sport: Sport.GOLF, sportLeagueId, active: true },
   })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
   const defaultTemplate = expectDefined(templates.find((template) => template.isDefault), 'the golf default template');

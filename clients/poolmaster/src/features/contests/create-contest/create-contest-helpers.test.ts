@@ -21,7 +21,7 @@ function event(fields: Pick<SportEventDto, 'id' | 'sport'> & Partial<Pick<SportE
   return { participantType: null, scoringFamily: null, ...fields } as SportEventDto;
 }
 
-type Preset = Pick<ContestConfigTemplateDto, 'id' | 'isDefault' | 'sportLeagueId'>;
+type Preset = Pick<ContestConfigTemplateDto, 'id' | 'isDefault'>;
 
 function template(fields: Pick<ContestConfigTemplateDto, 'isDefault' | 'selectionType' | 'sortOrder' | 'sportLeagueId'>): ContestConfigTemplateDto {
   return fields as ContestConfigTemplateDto;
@@ -79,16 +79,11 @@ describe('isCreatableSelectionType', () => {
 });
 
 describe('defaultPresetOf', () => {
-  const sportWideDefault: Preset = { id: 'sport-wide', isDefault: true, sportLeagueId: null };
-  const leagueDefault: Preset = { id: 'league', isDefault: true, sportLeagueId: 'nfl' };
-  const plain: Preset = { id: 'plain', isDefault: false, sportLeagueId: null };
+  const leagueDefault: Preset = { id: 'league', isDefault: true };
+  const plain: Preset = { id: 'plain', isDefault: false };
 
-  it('starts on the event\'s sport league\'s own default over the sport-wide one', () => {
-    expect(defaultPresetOf([plain, sportWideDefault, leagueDefault])?.id).toBe('league');
-  });
-
-  it('starts on the sport-wide default when the sport league has none', () => {
-    expect(defaultPresetOf([plain, sportWideDefault])?.id).toBe('sport-wide');
+  it('starts on the format\'s default ahead of a preset listed before it', () => {
+    expect(defaultPresetOf([plain, leagueDefault])?.id).toBe('league');
   });
 
   it('starts on the first preset when none is a default, and on nothing when there are none', () => {
@@ -102,7 +97,6 @@ describe('leagueStartingFormatOf', () => {
     const templates = [
       template({ isDefault: true, selectionType: SelectionType.TIERED, sortOrder: 2, sportLeagueId: 'f1' }),
       template({ isDefault: true, selectionType: SelectionType.BUDGET_PICK, sortOrder: 1, sportLeagueId: 'f1' }),
-      template({ isDefault: true, selectionType: SelectionType.RANDOM_DRAW, sortOrder: 0, sportLeagueId: null }),
       template({ isDefault: false, selectionType: SelectionType.PICK_EM, sortOrder: 0, sportLeagueId: 'f1' }),
     ];
 

@@ -34,6 +34,7 @@ import {
 } from './setup';
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { seededSportLeagueId } from '../support/contest-setups';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
@@ -145,7 +146,7 @@ async function seedImportedGolfEvent(options: {
 
   const sportEvent = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { onPgaTour: true })),
       externalId: `managed-contest-event-${randomUUID().slice(0, 8)}`,
       providerId: options.providerId ?? 'functional-test',
       sport: Sport.GOLF,
@@ -249,6 +250,7 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
+        sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
     });
@@ -359,6 +361,7 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
+        sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
     });
@@ -496,6 +499,7 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
+        sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
     });

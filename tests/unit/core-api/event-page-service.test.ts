@@ -23,7 +23,7 @@ function template(id: string, configJson: ContestConfigTemplate['configJson']): 
   return {
     id,
     sport: Sport.AMERICAN_FOOTBALL,
-    sportLeagueId: null,
+    sportLeagueId: 'nfl',
     contestFormat: ContestFormat.ROSTER,
     selectionType: configJson.selectionType,
     templateKey: id,

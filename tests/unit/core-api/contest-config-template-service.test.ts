@@ -15,7 +15,7 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
   return {
     id: 'template',
     sport: Sport.GOLF,
-    sportLeagueId: null,
+    sportLeagueId: 'pga-league',
     eventType: null,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
@@ -36,7 +36,7 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
 
 /**
  * Mirrors PrismaContestConfigTemplateRepository.list: an event type also matches "any event type",
- * and a sport league also matches the sport-wide (no league) templates.
+ * and a sport league matches only its own templates.
  */
 function templateStore(rows: ContestConfigTemplate[]) {
   const store = new Map(rows.map((row) => [row.id, row]));
@@ -47,7 +47,7 @@ function templateStore(rows: ContestConfigTemplate[]) {
       .filter((row) =>
         (input.sport === undefined || row.sport === input.sport)
         && (input.eventType === undefined || row.eventType === input.eventType || row.eventType == null)
-        && (input.sportLeagueId === undefined || row.sportLeagueId === input.sportLeagueId || row.sportLeagueId === null)
+        && (input.sportLeagueId === undefined || row.sportLeagueId === input.sportLeagueId)
         && (input.active === undefined || row.active === input.active))
       .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name)),
     update: async (id, updates) => {
@@ -78,16 +78,15 @@ describe('ContestConfigTemplateService.listTemplates', () => {
 });
 
 describe('ContestConfigTemplateService.listTemplates by sport league (#624)', () => {
-  it('lists a league\'s own templates with the sport-wide ones, leaves out another league\'s, and echoes each sportLeagueId', async () => {
+  it('lists only a league\'s own templates, leaves out another league\'s, and echoes each sportLeagueId', async () => {
     const { service } = templateStore([
-      template({ id: 'sport-wide', sportLeagueId: null, sortOrder: 1 }),
       template({ id: 'lpga', sportLeagueId: 'lpga-league', sortOrder: 2 }),
       template({ id: 'pga', sportLeagueId: 'pga-league', sortOrder: 3 }),
     ]);
 
     const listed = await service.listTemplates({ sport: Sport.GOLF, sportLeagueId: 'lpga-league' });
 
-    expect(listed.map((row) => [row.id, row.sportLeagueId])).toEqual([['sport-wide', null], ['lpga', 'lpga-league']]);
+    expect(listed.map((row) => [row.id, row.sportLeagueId])).toEqual([['lpga', 'lpga-league']]);
   });
 });
 
@@ -167,18 +166,22 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(store.get('indycar-tiered')?.isDefault).toBe(true);
   });
 
-  it('keeps a sport league\'s default when a sport-wide default is set, and another sport\'s default too', async () => {
+  it('keeps the LPGA Tour\'s default when PGA TOUR\'s copy of the same setup family takes a new default, so one league\'s change leaves the other\'s and another sport\'s alone', async () => {
     const { store, service } = templateStore([
+      template({ id: 'pga-pick-6', templateKey: 'golf-tiered-pick-6', sportLeagueId: 'pga-league', isDefault: true }),
+      template({ id: 'pga-pick-12', templateKey: 'golf-tiered-pick-12', sportLeagueId: 'pga-league' }),
+      template({ id: 'lpga-pick-6', templateKey: 'golf-tiered-pick-6', sportLeagueId: 'lpga-league', isDefault: true }),
       template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
-      template({ id: 'golf-default', isDefault: true }),
-      template({ id: 'auto-sport-wide', sport: Sport.AUTO_RACING }),
+      template({ id: 'auto-on-pga-id', sport: Sport.AUTO_RACING, sportLeagueId: 'pga-league', isDefault: true }),
     ]);
 
-    await service.updateTemplate('auto-sport-wide', { isDefault: true });
+    await service.updateTemplate('pga-pick-12', { isDefault: true });
 
-    expect(store.get('auto-sport-wide')?.isDefault).toBe(true);
+    expect(store.get('pga-pick-12')?.isDefault).toBe(true);
+    expect(store.get('pga-pick-6')?.isDefault).toBe(false);
+    expect(store.get('lpga-pick-6')?.isDefault).toBe(true);
     expect(store.get('nascar-tiered')?.isDefault).toBe(true);
-    expect(store.get('golf-default')?.isDefault).toBe(true);
+    expect(store.get('auto-on-pga-id')?.isDefault).toBe(true);
   });
 
   it('takes the default off a template that is deactivated, even when the request also asks for default', async () => {
