@@ -40,6 +40,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
+import { findClutchCardParents, parentOrThrow } from './clutch-card-parents';
 import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
@@ -93,6 +94,11 @@ export interface CreateSportEventInput {
   rounds?: number;
   roundsPar?: number;
   autoLifecycleEnabled?: boolean;
+  /**
+   * A Clutch Card event's parent, when the caller knows it (#1820); omitted, it is the event of the
+   * league's parent league under way at the start (`findClutchCardParents`).
+   */
+  parentEventId?: string;
 }
 
 export interface ProviderEventDetail {
@@ -105,7 +111,11 @@ export interface ProviderEventDetail {
 /** What a provider event-year import (#385) created, and what it left alone and why. */
 export interface ProviderEventYearImport {
   created: SportEventAdminSummary[];
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' }>;
+  /**
+   * NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not
+   * one event (#1820); a later import creates it once its parent is there.
+   */
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -202,6 +212,7 @@ export class SportEventService {
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [input], { parentEventId: input.parentEventId }))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
@@ -221,12 +232,13 @@ export class SportEventService {
         eventYear: input.eventYear,
         syncScope: SportEventSyncScope.NONE,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+        parentEvent,
       },
       rounds: dailyRoundSchedule(rounds, input.startDate),
     }]));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds, parentEventId: parentEvent?.id },
       'Created sport event',
     );
     return summary;
@@ -235,7 +247,9 @@ export class SportEventService {
   /**
    * An event created straight from a browsed provider event (plans/124 §4.4a), pre-linked
    * to that provider for scores (SCORES_ONLY). The field is not touched; loading it is
-   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity.
+   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity;
+   * 409 SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed (#1821), since
+   * an event nobody can release or play is never created from a provider.
    */
   async createEventFromProviderEvent(input: {
     sportLeagueId: string;
@@ -253,8 +267,16 @@ export class SportEventService {
         409,
       );
     }
+    if (providerEventStarted(input.providerEvent, this.now())) {
+      throw new SportEventError(
+        `Provider event ${input.providerId}/${input.externalId} started at ${input.providerEvent.startDate.toISOString()}; an event is created from a provider only before it starts.`,
+        'SPORT_EVENT_ALREADY_STARTED',
+        409,
+      );
+    }
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [{ startDate: input.providerEvent.startDate, eventYear: input.eventYear }]))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
-    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId });
+    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId }, parentEvent);
     const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
 
     this.deps.logger?.info(
@@ -270,7 +292,9 @@ export class SportEventService {
    * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
    * so the import can be run again: one already linked to the provider event, or a series that
    * already has an edition that year (an admin-authored one, say, or an earlier event of the
-   * same name in this slate). An edition another admin creates while the import runs is not
+   * same name in this slate). A provider event whose start has passed is skipped too (#1821):
+   * created now it would be a draft nobody can release or play. One already linked is still
+   * reported as linked, and keeps updating through `keepProviderEventsCurrent`. An edition another admin creates while the import runs is not
    * skipped: it refuses the whole import with 409, and running it again skips that event.
    */
   async importProviderEventYear(input: {
@@ -280,15 +304,19 @@ export class SportEventService {
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const now = this.now();
     const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     )).map((event) => event.externalId));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId));
+    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
     const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
     const seriesWithEdition = new Set(unlinked.length === 0
       ? []
       : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, eventYear: input.eventYear })).map((event) => event.eventSeriesId));
+
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, unlinked.map((providerEvent) => ({ startDate: providerEvent.startDate, eventYear: input.eventYear })));
+    const parentByExternalId = new Map(unlinked.map((providerEvent, index) => [providerEvent.externalId, parents[index]]));
 
     const editions: NewEdition[] = [];
     const skipped: ProviderEventYearImport['skipped'] = [];
@@ -298,18 +326,38 @@ export class SportEventService {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
+      if (providerEventStarted(providerEvent, now)) {
+        skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
+        continue;
+      }
       const eventSeriesId = seriesIdOf(seriesIdByName, name);
       if (seriesWithEdition.has(eventSeriesId)) {
         skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
         continue;
       }
+      const parent = parentByExternalId.get(externalId);
+      if (parent !== undefined && 'refusal' in parent) {
+        this.deps.logger?.warn(
+          { sportLeagueId: sportLeague.id, externalId, name, code: parent.refusal.code, reason: parent.refusal.message },
+          'Skipped a provider Clutch Card event with no parent event yet',
+        );
+        skipped.push({ externalId, name, reason: 'NO_PARENT_EVENT' });
+        continue;
+      }
       seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }));
+      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }, parent?.parentEvent));
     }
     const created = await this.createEditions(sportLeague, editions);
 
     this.deps.logger?.info(
-      { sportLeagueId: input.sportLeagueId, eventYear: input.eventYear, providerId: input.providerId, createdCount: created.length, skippedCount: skipped.length },
+      {
+        sportLeagueId: input.sportLeagueId,
+        eventYear: input.eventYear,
+        providerId: input.providerId,
+        createdCount: created.length,
+        skippedCount: skipped.length,
+        alreadyStartedCount: skipped.filter((row) => row.reason === 'ALREADY_STARTED').length,
+      },
       'Imported provider event year',
     );
     return { created, skipped };
@@ -402,9 +450,11 @@ export class SportEventService {
       );
     }
 
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, sourceEvents.map((event) => ({ startDate: shiftYears(event.startDate, shift), eventYear: targetYear })));
+    const parentEvents = parents.map(parentOrThrow);
     const seriesIdByName = await this.resolveSeries(sportLeague, sourceEvents.map((event) => event.name));
     const defaultRounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event) => {
+    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event, index) => {
       const startDate = shiftYears(event.startDate, shift);
       const rounds = event.rounds ?? defaultRounds;
       return {
@@ -424,6 +474,7 @@ export class SportEventService {
           eventYear: targetYear,
           syncScope: SportEventSyncScope.NONE,
           autoLifecycleEnabled: event.autoLifecycleEnabled,
+          parentEvent: parentEvents[index],
         },
         rounds: dailyRoundSchedule(rounds, startDate),
       };
@@ -550,7 +601,10 @@ export class SportEventService {
     return this.requireAdminSummary(sportEventId);
   }
 
-  /** Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. */
+  /**
+   * Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs
+   * on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its parent (#1820).
+   */
   async deleteEvent(sportEventId: string): Promise<void> {
     await this.requireEvent(sportEventId);
     const contests = (await this.deps.sportEvents.countContests([sportEventId])).get(sportEventId) ?? 0;
@@ -558,6 +612,14 @@ export class SportEventService {
       throw new SportEventError(
         `Sport event ${sportEventId} has ${contests} contest(s) and cannot be deleted.`,
         'EVENT_HAS_CONTESTS',
+        409,
+      );
+    }
+    const clutchCardEvents = (await this.deps.sportEvents.countClutchCardEvents([sportEventId])).get(sportEventId) ?? 0;
+    if (clutchCardEvents > 0) {
+      throw new SportEventError(
+        `Sport event ${sportEventId} is the parent of ${clutchCardEvents} Clutch Card event(s) and cannot be deleted.`,
+        'EVENT_HAS_CLUTCH_CARD_EVENTS',
         409,
       );
     }
@@ -768,6 +830,7 @@ function providerEdition(
   sport: Sport,
   seriesIdByName: ReadonlyMap<string, string>,
   input: ProviderEventDetail & { externalId: string; eventYear: number; providerId: string; rounds?: number },
+  parentEvent: SportEventCreate['parentEvent'],
 ): NewEdition {
   const schedule = input.rounds === undefined
     ? deriveGolfTournamentRounds(input.startDate, input.endDate)
@@ -787,6 +850,7 @@ function providerEdition(
       eventYear: input.eventYear,
       syncScope: SportEventSyncScope.SCORES_ONLY,
       autoLifecycleEnabled: true,
+      parentEvent,
     },
     rounds: schedule,
   };
@@ -803,4 +867,13 @@ function providerDetailUpdates(
     ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),
     ...(providerEvent.endDate !== null && providerEvent.endDate.getTime() !== event.endDate?.getTime() && { endDate: providerEvent.endDate }),
   };
+}
+
+/**
+ * Whether a provider event's start has passed (#1821), the one test every path that creates an
+ * event from a provider applies: such an event is never created. A start of exactly now counts
+ * as started, as `hasSportEventStarted` counts it.
+ */
+function providerEventStarted(providerEvent: Pick<ProviderEventDetail, 'startDate'>, now: Date): boolean {
+  return providerEvent.startDate.getTime() <= now.getTime();
 }

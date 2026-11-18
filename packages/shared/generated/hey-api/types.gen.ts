@@ -8008,6 +8008,10 @@ export type SportLeagueDto = {
      */
     parentSportLeagueId: string | null;
     /**
+     * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
+     */
+    parentRoundNumbers: Array<number>;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -8120,6 +8124,10 @@ export type SportLeagueListResponse = {
          */
         parentSportLeagueId: string | null;
         /**
+         * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
+         */
+        parentRoundNumbers: Array<number>;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -8218,6 +8226,10 @@ export type SportLeagueResponse = {
          * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
          */
         parentSportLeagueId: string | null;
+        /**
+         * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
+         */
+        parentRoundNumbers: Array<number>;
         /**
          * Participants currently affiliated with the sport league.
          */
@@ -8887,6 +8899,23 @@ export type SportEventDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
     /**
+     * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
+     */
+    parentEvent: {
+        /**
+         * The parent event's identifier.
+         */
+        id: string;
+        /**
+         * The parent event's name, such as "MLB Postseason".
+         */
+        name: string;
+    } | null;
+    /**
+     * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
+     */
+    parentRoundNumbers: Array<number>;
+    /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
     syncScope: 'NONE' | 'SCORES_ONLY';
@@ -9089,6 +9118,23 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
+         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
+         */
+        parentEvent: {
+            /**
+             * The parent event's identifier.
+             */
+            id: string;
+            /**
+             * The parent event's name, such as "MLB Postseason".
+             */
+            name: string;
+        } | null;
+        /**
+         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
+         */
+        parentRoundNumbers: Array<number>;
+        /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
@@ -9286,6 +9332,23 @@ export type SportEventResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
+         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
+         */
+        parentEvent: {
+            /**
+             * The parent event's identifier.
+             */
+            id: string;
+            /**
+             * The parent event's name, such as "MLB Postseason".
+             */
+            name: string;
+        } | null;
+        /**
+         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
+         */
+        parentRoundNumbers: Array<number>;
+        /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
@@ -9365,6 +9428,10 @@ export type CreateSportEventRequest = {
      */
     rounds?: number;
     autoLifecycleEnabled?: boolean;
+    /**
+     * A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.
+     */
+    parentEventId?: string;
 };
 
 /**
@@ -9424,9 +9491,9 @@ export type ImportSportEventYearFromProviderRequest = {
 };
 
 /**
- * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+ * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
  */
-export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'EDITION_EXISTS';
+export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
 
 /**
  * What an event-year import created and skipped. Running it again creates nothing new.
@@ -9554,6 +9621,23 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
+         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
+         */
+        parentEvent: {
+            /**
+             * The parent event's identifier.
+             */
+            id: string;
+            /**
+             * The parent event's name, such as "MLB Postseason".
+             */
+            name: string;
+        } | null;
+        /**
+         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
+         */
+        parentRoundNumbers: Array<number>;
+        /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
@@ -9604,7 +9688,7 @@ export type ImportSportEventYearFromProviderResponse = {
         updatedAt: string;
     }>;
     /**
-     * Provider events left alone because PoolMaster already has them.
+     * Provider events left alone because PoolMaster already has them, or because they already started.
      */
     skipped: Array<{
         /**
@@ -9613,9 +9697,9 @@ export type ImportSportEventYearFromProviderResponse = {
         externalId: string;
         name: string;
         /**
-         * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+         * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
          */
-        reason: 'ALREADY_LINKED' | 'EDITION_EXISTS';
+        reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
     }>;
 };
 

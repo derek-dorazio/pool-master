@@ -8,7 +8,9 @@
  * own year import for this calendar year and the next: the provider's events whose tour is the
  * league's match keyword (`EventScoreSourceService.listTourEventsForYear`), created and linked for
  * scores by `SportEventService.importProviderEventYear`. It is the one creation path, so series,
- * rounds and default tiers are seeded the same way, and a re-run skips what is already there. The
+ * rounds and default tiers are seeded the same way, and a re-run skips what is already there. A
+ * provider event that has already started is never created (#1821); the sweep's summary counts
+ * those skips as `alreadyStartedCount`. The
  * same provider events then update the league's linked events whose details moved
  * (`SportEventService.keepProviderEventsCurrent`): the provider wins over an admin's edit, and a
  * moved start is told to the leagues as an admin's move is. Status is never set here; the
@@ -26,6 +28,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportLeagueRepository } from '@poolmaster/shared/db';
+import { isClutchCardLeague } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
 import { errorMessage } from '../../core/error-message';
@@ -56,6 +59,8 @@ interface LeagueYearImport {
   eventYear: number;
   createdCount: number;
   skippedCount: number;
+  /** Of the skipped, the provider events not created because their start had passed (#1821). */
+  alreadyStartedCount: number;
   updatedCount: number;
 }
 
@@ -91,7 +96,11 @@ export class SyncedEventCreationScheduler {
 
   private async sweep(): Promise<void> {
     const thisYear = this.now().getUTCFullYear();
-    const leagues = await this.options.sportLeagues.findEventSynced();
+    // A Clutch Card league's events are rounds of its parent league's season event, which they
+    // link to when created (#1820), so every season league goes first: a new season event is on
+    // the site by the time its rounds are imported.
+    const leagues = [...await this.options.sportLeagues.findEventSynced()]
+      .sort((left, right) => Number(isClutchCardLeague(left)) - Number(isClutchCardLeague(right)));
     const imports: LeagueYearImport[] = [];
     let failedCount = 0;
     for (const league of leagues) {
@@ -108,6 +117,7 @@ export class SyncedEventCreationScheduler {
             eventYear,
             createdCount: result.created.length,
             skippedCount: result.skipped.length,
+            alreadyStartedCount: result.skipped.filter((row) => row.reason === 'ALREADY_STARTED').length,
             updatedCount: updated.length,
           });
         } catch (error) {
@@ -126,8 +136,9 @@ export class SyncedEventCreationScheduler {
       leagueCount: leagues.length,
       createdCount: imports.reduce((sum, item) => sum + item.createdCount, 0),
       updatedCount: imports.reduce((sum, item) => sum + item.updatedCount, 0),
+      alreadyStartedCount: imports.reduce((sum, item) => sum + item.alreadyStartedCount, 0),
       failedCount,
-      imports: imports.filter((item) => item.createdCount > 0 || item.updatedCount > 0),
+      imports: imports.filter((item) => item.createdCount > 0 || item.updatedCount > 0 || item.alreadyStartedCount > 0),
     }, 'Synced event creation sweep finished');
   }
 }

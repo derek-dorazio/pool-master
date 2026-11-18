@@ -68,6 +68,18 @@ describe('SyncedEventCreationScheduler', () => {
     ]);
   });
 
+  it('imports every season league before any Clutch Card league, so a new season event is there for its rounds to link to', async () => {
+    const worldSeries = buildSportLeague({ id: 'sl-world-series', name: 'League Championship Series', scoringFamily: 'COMPOSITE', eventSyncProviderId: 'balldontlie' });
+    const mlb = buildSportLeague({ id: 'sl-mlb', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    const nfl = buildSportLeague({ id: 'sl-nfl', name: 'NFL', eventSyncProviderId: 'balldontlie' });
+    const { scheduler, sportEvents } = build({ leagues: [worldSeries, mlb, nfl] });
+
+    await scheduler.runSweep();
+
+    expect([...new Set(sportEvents.importProviderEventYear.mock.calls.map(([input]) => input.sportLeagueId))])
+      .toEqual(['sl-mlb', 'sl-nfl', 'sl-world-series']);
+  });
+
   it('keeps each synced league\'s already-linked events current with the same provider events it imported, after the import', async () => {
     const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
     const keepProviderEventsCurrent = jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>()
@@ -84,6 +96,33 @@ describe('SyncedEventCreationScheduler', () => {
     expect(sportEvents.importProviderEventYear.mock.invocationCallOrder[0]).toBeLessThan(keepProviderEventsCurrent.mock.invocationCallOrder[0]);
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({ createdCount: 2, updatedCount: 1, failedCount: 0 }),
+      'Synced event creation sweep finished',
+    );
+  });
+
+  it('counts the provider events it skipped because they already started in the sweep\'s summary, beside what it created', async () => {
+    const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
+    const { scheduler, sportEvents, logger } = build({ leagues: [nfl] });
+    sportEvents.importProviderEventYear.mockResolvedValueOnce({
+      created: [],
+      skipped: [
+        { externalId: 'w1', name: 'Week 1', reason: 'ALREADY_STARTED' },
+        { externalId: 'w2', name: 'Week 2', reason: 'ALREADY_STARTED' },
+        { externalId: 'w3', name: 'Week 3', reason: 'ALREADY_LINKED' },
+      ],
+    });
+
+    await scheduler.runSweep();
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdCount: 1,
+        alreadyStartedCount: 2,
+        imports: [
+          { sportLeagueId: 'sl-nfl', eventYear: 2026, createdCount: 0, skippedCount: 3, alreadyStartedCount: 2, updatedCount: 0 },
+          { sportLeagueId: 'sl-nfl', eventYear: 2027, createdCount: 1, skippedCount: 0, alreadyStartedCount: 0, updatedCount: 0 },
+        ],
+      }),
       'Synced event creation sweep finished',
     );
   });

@@ -6,4 +6,4 @@ export { eventRoundLabel, roundSeriesLength, seriesWinsNeeded } from './round-la
 export { MATCH_PERIOD_LAYOUTS, matchPeriodLayoutOf, matchPeriodsOf } from './match-periods';
 export { SPORT_LEAGUE_NOUNS, sportLeagueNounOf } from './league-nouns';
 export { SPORT_STAT_VALUE_MAX, SportStat, sportStatValueMin, statValue, type SportComposite, type StatLine } from './sport-stats';
-export { eventSportDefinition, sportLeagueDefinitionOf, type SportLeagueEvent, type SportLeagueOverrides } from './sport-league-definition';
+export { eventSportDefinition, isClutchCardLeague, sportLeagueDefinitionOf, type SportLeagueEvent, type SportLeagueOverrides } from './sport-league-definition';

@@ -34,7 +34,7 @@ Write this in the ticket, each open point a question with a recommendation:
 | Shape | One event per round. When a round holds two series (conference finals, semifinals), both are one event and game N holds each series' Game N |
 | Sport and composite | The sport, and so the composite its stars score (Triple Threat, Power Play, Box Score, Redzone, Hat Trick) |
 | Display order | Its `display_order` among the sport's leagues: after the sport's existing stat pool leagues, in the calendar order of their rounds |
-| Season league | The league whose round it is (the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four): its `parent_sport_league_id`, which How to Play and Contest types list it under |
+| Season league | The league whose round it is (the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four): its `parent_sport_league_id`, which How to Play and Contest types list it under, and which rounds of the season league's event it covers (`parent_round_numbers`) |
 | Last season | Which season the test data is: the latest one fully played. A round still being played is not "as played" yet, so use the year before |
 
 Men's and women's competitions are always separate leagues. Two sports could have a round of the
@@ -55,6 +55,10 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
    name, "NBA Finals"), or the league's year import finds nothing and its stars load twice.
    Set `parent_sport_league_id` to its season league, looked up by sport and name; a round
    without one lists apart from its league, and the reference-data integration test fails.
+   Set `parent_round_numbers` to the season event's rounds the league covers, counted from the
+   season league's first round (the World Series is `{4}` of the MLB Postseason, the Men's Final
+   Four `{5}` of the NCAA tournament). Without it no event of the league can be created
+   (`rules/architecture-rules.md` §4 *Sport extension*): each event names its season event.
 3. Insert its three default setups, one per format, in this order: Tiered (six tiers, one pick
    each, best four count), Budget (six stars under the cap, best four) and Quick pick (three stars,
    all count), each `is_default`, scored by `COMPOSITE_TOTAL`. Template keys are
