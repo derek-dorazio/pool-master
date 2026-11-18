@@ -20,6 +20,7 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   1: '904e71cf6f273fa03c7ea11a859a7ade3022ca52f6e4501cbdd3c7ca92e2f754',
   2: 'de64bb3ca1096b7392dc538f6f2a44e4d342498850cbef6a7fe9c686d6bedd38',
   3: '9662735145ab07cfb15d66492d73ec044bdfcbecad079abdde9623103e75e20b',
+  4: '73a8c17ffc456c015c622801f9a74adee70ecbdbc7fb068eaa88e59e4a383b7b',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

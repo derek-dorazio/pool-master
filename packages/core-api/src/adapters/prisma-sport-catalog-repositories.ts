@@ -613,7 +613,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         autoLifecycleEnabled: true,
-        status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+        status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED] },
       },
       include: SPORT_EVENT_INCLUDE,
     });

@@ -3,7 +3,7 @@ import {
   EventScoreSourceError,
   EventScoreSourceService,
 } from '../../../packages/core-api/src/modules/events/event-score-source-service';
-import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { ProviderLeagueRefusedError, type SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { Sport } from '@poolmaster/shared/domain';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -246,7 +246,7 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     }]);
   });
 
-  it('asks the provider for the league\'s sport across that calendar year in UTC', async () => {
+  it('asks the provider for the league\'s sport across that calendar year in UTC, naming the league\'s tour so it reads only that league', async () => {
     const provider = buildProvider();
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
@@ -256,7 +256,28 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
       from: new Date('2027-01-01T00:00:00.000Z'),
       to: new Date('2027-12-31T23:59:59.999Z'),
+    }, { tour: 'PGA TOUR' });
+  });
+
+  it('refuses with 422 PROVIDER_LEAGUE_REFUSED, naming the league, when the provider\'s plan refuses the tour\'s league', async () => {
+    const provider = buildProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(new ProviderLeagueRefusedError('BALLDONTLIE', 'NFL', 401)) });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027)).rejects.toMatchObject({
+      code: 'PROVIDER_LEAGUE_REFUSED',
+      statusCode: 422,
+      message: expect.stringContaining('BALLDONTLIE refused NFL') as unknown,
     });
+  });
+
+  it('passes on any other provider failure unchanged', async () => {
+    const outage = new Error('BALLDONTLIE request /nfl/v1/games failed: 503');
+    const provider = buildProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(outage) });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027)).rejects.toBe(outage);
   });
 
   it('refuses a league with no match keyword with 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD and never calls the provider', async () => {

@@ -49,6 +49,11 @@ describe('areContestEntriesOpen — joining, renaming and leaving a contest', ()
     },
   );
 
+  it('opens entries on a contest reopened for its postponed event, until the new start', () => {
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [event('week-6', 24 * 7, SportEventStatus.POSTPONED)], NOW)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [event('week-6', -1, SportEventStatus.POSTPONED)], NOW)).toBe(false);
+  });
+
   it('closes entries once a random draw has dealt, before the event starts', () => {
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN, drawnAt: NOW }, [upcoming], NOW)).toBe(false);
   });
@@ -61,6 +66,13 @@ describe('areEventPicksOpen — changing and submitting one event\'s picks', () 
 
   it('still takes picks for a later event on an ACTIVE contest whose first event is being played', () => {
     expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, later, NOW)).toBe(true);
+  });
+
+  it('takes picks on a live season contest for a postponed week until its new start, and closes them at it', () => {
+    const postponedWeek = event('week-6', 24 * 7, SportEventStatus.POSTPONED);
+    const postponedPastStart = event('week-6', -1, SportEventStatus.POSTPONED);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, postponedWeek, NOW)).toBe(true);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, postponedPastStart, NOW)).toBe(false);
   });
 
   it('closes an event\'s picks at its scheduled start, before its status is moved on', () => {
@@ -191,6 +203,18 @@ describe('areMatchPicksOpen — changing one game\'s pick', () => {
 
   it('locks a game whose status moved on before its scheduled kickoff', () => {
     expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(50, MatchStatus.IN_PROGRESS), 1, NOW)).toBe(false);
+  });
+
+  it('keeps a postponed game\'s pick open until its new kickoff while the week is under way, then locks it', () => {
+    const postponedToMonday = game(26, MatchStatus.POSTPONED);
+
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, NOW)).toBe(true);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, postponedToMonday, 1, new Date(NOW.getTime() + 26 * HOUR))).toBe(false);
+  });
+
+  it('locks a postponed game with no new time yet at its old kickoff, as it was put off after picks closed', () => {
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, game(-2, MatchStatus.POSTPONED), 1, NOW)).toBe(false);
   });
 
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])(
@@ -346,6 +370,13 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
     expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 6 * HOUR) });
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
     expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], new Date(NOW.getTime() + 6 * HOUR))).toBe(false);
+  });
+
+  it('keeps a squares contest open until a postponed game\'s new kickoff', () => {
+    const timing = cutoffTiming(SUPER_BOWL, playoffs, [game('super-bowl', 30, MatchStatus.POSTPONED)]);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 30 * HOUR) });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
   });
 
   it.each([MatchStatus.IN_PROGRESS, MatchStatus.CANCELLED])('is started once the game is %s, though its kickoff time has not passed', (status) => {

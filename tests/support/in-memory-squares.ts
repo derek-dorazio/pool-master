@@ -15,6 +15,7 @@ import type {
 import {
   ContestEntryStatus,
   ContestStatus,
+  isMatchUnplayed,
   MatchStatus,
   SelectionType,
   type SportEventMatch,
@@ -78,7 +79,7 @@ export class InMemorySquares {
         if (!game) return false;
         if (game.status === MatchStatus.IN_PROGRESS || this.boxesOf(contest.id).length === 100) return true;
         const kickoff = game.scheduledDate ?? this.world.sportEvents.get(game.sportEventId)?.startDate;
-        return game.status === MatchStatus.SCHEDULED && kickoff !== undefined && kickoff <= kickoffBy;
+        return isMatchUnplayed(game.status) && kickoff !== undefined && kickoff <= kickoffBy;
       })
       .map((contest) => contest.id);
   }

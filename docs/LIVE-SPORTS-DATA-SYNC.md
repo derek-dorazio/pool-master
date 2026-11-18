@@ -79,9 +79,13 @@ Nothing about a provider is in the database. It is configuration, read once at s
 
 `registerConfiguredProviders` (`ingestion/core/provider-bindings.ts`) builds each adapter and
 calls `ProviderRegistry.register(sport, provider, priority)` for each sport in its
-`sportsCovered`. The BALLDONTLIE adapter covers `GOLF`, `AMERICAN_FOOTBALL`, `BASKETBALL` and
-`SOCCER` (`balldontlie-adapter.ts`, the `leagues` map). Staging and prod refuse the mock unless an
-override with a reason is set.
+`sportsCovered`. The BALLDONTLIE adapter covers `GOLF`, `AMERICAN_FOOTBALL`, `BASKETBALL`,
+`SOCCER`, `HOCKEY` and `BASEBALL` (`balldontlie-adapter.ts`, the `leagues` map). A sport's leagues
+are read one by one (#1797): a league the plan refuses (the NCAA brackets and the World Cup need
+the GOAT tier, college football a paid one) or whose read fails is left out of the sport's events
+and teams and logged as `balldontlie.league.unavailable` with the league, the status and whether
+it was a refusal, so its neighbours still list; only when every league fails does the sport's list
+fail. Staging and prod refuse the mock unless an override with a reason is set.
 
 The *schedule* is the one runtime setting: the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's ingestion page. Defaults:
@@ -150,7 +154,7 @@ Every other league's events come from an admin, in one of three ways, all root a
 
 | Action | Route | What it writes |
 |---|---|---|
-| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped. |
+| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped. |
 | Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`). |
 | Link an existing event | `PUT /:eventId/score-source` | `EventScoreSourceService.linkScoreSource` sets `provider_id`, `external_id` and `sync_scope = SCORES_ONLY` on an admin-made event. `DELETE` puts it back to the manual-admin placeholder and `sync_scope = NONE`. |
 
@@ -434,7 +438,7 @@ finish position (racing) accepts none, and its batches are skipped with
 | Category | Family | Writer | Tables written |
 |---|---|---|---|
 | `GOLF` | stroke play | `GolfScoreService.persistRoundUpdatesForSportEvent` (`golf/golf-score-service.ts`) | `sport_event_participant_rounds`, `sport_event_participant_golf_rounds`, `sport_event_participant_standings` + `…_golf_standings`. A round the admin did not schedule, or a hole past 18, is skipped. |
-| `GAME` | head to head | `writeGameScores` (`scoring-families/head-to-head/game-score-writer.ts`) | `sport_event_matches`: links `external_game_id`, writes live scores, and records finals through `MatchResultService.recordResult`, the admin's own path (`result_source = PROVIDER`). |
+| `GAME` | head to head | `writeGameScores` (`scoring-families/head-to-head/game-score-writer.ts`) | `sport_event_matches`: links `external_game_id`, writes live scores, and records finals through `MatchResultService.recordResult`, the admin's own path (`result_source = PROVIDER`). A game the provider postpones is marked `POSTPONED` (#1791) and scheduled again when the provider says so; the game slate moves a postponed game to its new kickoff. |
 | `STAT_LINE` | composite | `writeStatLineGames` (`scoring-families/composite/stat-line-writer.ts`) → `StatLineService.applyGames` | `sport_event_participant_rounds` (one per star per game), `sport_event_participant_stat_lines` (`@@unique([participant_round_id, stat])`). |
 
 ### GAME: how a provider game finds its match

@@ -93,7 +93,7 @@ function fakes() {
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
     statLines: { applyGameLines: fn(undefined) },
     matchResults: {
-      recordResult: fn([]), clearResult: fn([]), recordPeriodScore: fn([]), clearPeriodScore: fn([]), cancelMatch: fn([]),
+      recordResult: fn([]), clearResult: fn([]), recordPeriodScore: fn([]), clearPeriodScore: fn([]), cancelMatch: fn([]), postponeMatch: fn([]),
     },
     bracket: {
       listBracket: fn([]),
@@ -433,11 +433,13 @@ describe('bracket', () => {
       [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: { homeScore: 7, awayScore: 3 } })],
       [handlers.clearEventMatchPeriodScore, stubRequest({ params: periodParams })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
+      [handlers.postponeEventMatch, stubRequest({ params: matchParams })],
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
     expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2, { homeScore: 7, awayScore: 3 });
     expect(services.matchResults.clearPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2);
+    expect(services.matchResults.postponeMatch).toHaveBeenCalledWith(EVENT_ID, 4);
   });
 
   it('proposes and sets a round\'s matchups', async () => {

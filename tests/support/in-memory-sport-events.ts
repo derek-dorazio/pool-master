@@ -37,7 +37,7 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
   BackgroundJobRequest,
   SportEventParticipantStatLine,
@@ -390,7 +390,7 @@ export class InMemorySportEvents {
       },
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
-        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
+        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
       )),
     };
   }
@@ -756,7 +756,7 @@ export class InMemorySportEvents {
           const row = this.matchRows.find((match) => match.id === id);
           if (!row) throw new Error('unknown match');
           // As the Prisma adapter does: a match with a result or cancelled keeps it.
-          if (row.status === MatchStatus.SCHEDULED || row.status === MatchStatus.IN_PROGRESS) Object.assign(row, values);
+          if (isMatchUnplayed(row.status) || row.status === MatchStatus.IN_PROGRESS) Object.assign(row, values);
         }
       },
       placeSides: async (sides, jobs) => {

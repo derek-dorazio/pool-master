@@ -109,13 +109,16 @@ export type TournamentFormat = (typeof TournamentFormat)[keyof typeof Tournament
 
 /**
  * Where one match of an event stands (#698). A match is COMPLETED once its result is in; a
- * CANCELLED one was never played.
+ * CANCELLED one was never played. A POSTPONED one was put off before it began (#1791): it is
+ * still to be played, at its new time once one is set, and its picks lock at that time as a
+ * SCHEDULED game's do.
  */
 export const MatchStatus = {
   SCHEDULED: 'SCHEDULED',
   IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
+  POSTPONED: 'POSTPONED',
 } as const;
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 

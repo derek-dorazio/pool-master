@@ -59,13 +59,15 @@ import { useContestEntriesQuery } from './use-contest-entries';
 import { useContestLeague } from './use-contest-league';
 import { useLiveContestQuery } from './use-contest-query';
 import { PickEmEntryPicks } from './pick-em-entry-picks';
+import { useSurvivorEntryPick } from './survivor-entry-pick';
 
 const BracketIcon = SELECTION_TYPE_ICONS[SelectionType.BRACKET];
 
 /**
  * Whether an entry row of this contest opens to its picks on the entry list. A lineup's does, and
- * a pick'em entry's opens to the week's games (#1751); survivor, bracket and squares rows are
- * still in design (#1739), so the viewer's own open their pick screen through ✎ instead.
+ * a pick'em entry's opens to the week's games (#1751). A survivor entry's one pick fits on its
+ * status line (#1757), and bracket and squares rows are still in design (#1739), so the viewer's
+ * own open their pick screen through ✎ instead.
  */
 function opensToPicks(contest: Pick<ContestDto, 'contestFormat' | 'selectionType'>) {
   return contest.contestFormat === ContestFormat.ROSTER || contest.selectionType === SelectionType.PICK_EM;
@@ -123,6 +125,8 @@ function EntryRow({
   onToggle: () => void;
 }) {
   const picks = picksInEvent(entry, currentEventId);
+  // A survivor entry of the viewer's names its team on its status line (#1757).
+  const survivorPick = useSurvivorEntryPick(contest, entry.id, currentEventId, isMine && contest.selectionType === SelectionType.SURVIVOR);
   const entryPath = buildLeagueContestEntryPath(leagueCode, contest.id, entry.id);
   // A bracket's own entries open their bracket from the icon before the name (#1753); the other
   // formats keep ✎ at the row's end.
@@ -161,6 +165,7 @@ function EntryRow({
         {isMine ? (
           <Text as="span" className="mt-1 block" data-testid={`contest-board-entry-status-${entry.id}`} tone="muted" variant="caption">
             {describeOwnEntry(entry, currentEventId, lineupSpend(picks, lineupValues))}
+            {survivorPick === null ? null : ` · ${survivorPick}`}
           </Text>
         ) : null}
       </span>

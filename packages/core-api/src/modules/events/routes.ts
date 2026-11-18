@@ -178,7 +178,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
         'Creates each provider event for the sport league\'s tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) '
         + 'exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league\'s matchKeyword, ignoring case. '
         + 'Events already linked, and series that already have an edition that year, are skipped and reported, so the import can be re-run. Fields are not loaded. '
-        + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD. Root admin only.',
+        + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan '
+        + 'does not include the tour\'s league (#1797). Root admin only.',
       operationId: 'importEventYearFromProvider',
       body: schemaRef('ImportSportEventYearFromProviderRequest'),
       response: { 201: schemaRef('ImportSportEventYearFromProviderResponse'), ...errors(401, 403, 404, 422) },
@@ -787,6 +788,21 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.cancelEventMatch,
+  });
+
+  fastify.post('/:eventId/bracket/matches/:matchNumber/postpone', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Postpone a game',
+      description: 'Marks a released game POSTPONED before it begins: it is still to be played, shows as postponed, and its picks stay open until its time, which the bracket match edit (or the provider) moves to the new one. A game of a bracket can be postponed. '
+        + 'Postponing a postponed game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result. '
+        + '409 MATCH_CANCELLED for a cancelled game. 409 MATCH_ALREADY_STARTED for a game under way or with a period score. Returns the games. Root admin only.',
+      operationId: 'postponeEventMatch',
+      params: MATCH_PARAMS,
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409) },
+    },
+    handler: handler.postponeEventMatch,
   });
 
   const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '

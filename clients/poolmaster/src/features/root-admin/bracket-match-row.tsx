@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
-import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult } from '@/lib/api';
+import { isMatchUnplayed, MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { cancelEventMatch, clearEventMatchResult, postponeEventMatch, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, ConfirmDialog, formatDateTimeDisplay, InlineError, StatusBadge, TableCell, TableRow, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -17,6 +17,7 @@ const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
   [MatchStatus.IN_PROGRESS]: 'In progress',
   [MatchStatus.COMPLETED]: 'Final',
   [MatchStatus.CANCELLED]: 'Cancelled',
+  [MatchStatus.POSTPONED]: 'Postponed',
 };
 
 const MATCH_STATUS_TONE: Record<MatchStatus, 'neutral' | 'active' | 'final' | 'warning'> = {
@@ -24,13 +25,15 @@ const MATCH_STATUS_TONE: Record<MatchStatus, 'neutral' | 'active' | 'final' | 'w
   [MatchStatus.IN_PROGRESS]: 'active',
   [MatchStatus.COMPLETED]: 'final',
   [MatchStatus.CANCELLED]: 'warning',
+  [MatchStatus.POSTPONED]: 'warning',
 };
 
 /**
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
  * earlier match fills; once the event is released one tap names the winner, and a final result
  * can be switched or cleared while the next match has none. A released game of a week that forms
- * no bracket can be cancelled once it is postponed (#715), or end in a tie (#792). A match that
+ * no bracket can be cancelled once it is postponed (#715), or end in a tie (#792). A released game
+ * not yet under way can be postponed (#1791), and keeps its picks open until its new time. A match that
  * stopped early, in any sport (#704), is entered under "Ended early".
  */
 export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
@@ -60,6 +63,14 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
     write: (path) => cancelEventMatch({ path }),
   });
 
+  const postpone = useMatchWrite({
+    context,
+    failedAction: 'event.bracket.postpone.failed',
+    match,
+    refusedMessage: 'Game postponement was rejected',
+    write: (path) => postponeEventMatch({ path }),
+  });
+
   const home = sideEntry(match, MatchSide.HOME, context.fieldById);
   const away = sideEntry(match, MatchSide.AWAY, context.fieldById);
   const decided = match.status === MatchStatus.COMPLETED;
@@ -67,7 +78,8 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
   const awayFed = feederOf(match, MatchSide.AWAY, context.bracket) !== undefined;
   const pairingEditable = !released && !(homeFed && awayFed);
   const weekGame = formsNoBracket(context.bracket);
-  const cancellable = released && match.status === MatchStatus.SCHEDULED && weekGame;
+  const cancellable = released && isMatchUnplayed(match.status) && weekGame;
+  const postponable = released && match.status === MatchStatus.SCHEDULED && match.periodScores.length === 0;
   const closeCancel = () => {
     if (!cancel.isPending) {
       cancel.reset();
@@ -142,6 +154,17 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
                   Clear result
                 </Button>
               ) : null}
+              {postponable ? (
+                <Button
+                  data-testid={`root-admin-bracket-postpone-${match.matchNumber}`}
+                  disabled={result.isPending || postpone.isPending}
+                  onClick={() => postpone.mutate()}
+                  size="sm"
+                  variant="ghost"
+                >
+                  {`Postpone ${noun.one}`}
+                </Button>
+              ) : null}
               {cancellable ? (
                 <Button
                   data-testid={`root-admin-bracket-cancel-${match.matchNumber}`}
@@ -177,6 +200,11 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
           </ConfirmDialog>
           {released && (!home || !away) ? (
             <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
+          ) : null}
+          {postpone.isError ? (
+            <InlineError className="mt-2" testId={`root-admin-bracket-postpone-error-${match.matchNumber}`}>
+              {extractErrorMessage(postpone.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be postponed. Try again.` })}
+            </InlineError>
           ) : null}
           {result.isError ? (
             <InlineError className="mt-2" testId={`root-admin-bracket-error-${match.matchNumber}`}>

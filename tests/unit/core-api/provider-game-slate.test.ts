@@ -180,6 +180,20 @@ describe('ProviderGameSlateService', () => {
     );
   });
 
+  it('moves a released week\'s postponed game to the provider\'s new kickoff, leaving it postponed', async () => {
+    const { service, event, store, matchesNow, field } = setup();
+    await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });
+    await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+    store.matchRows = store.matchRows.map((match) => (match.matchNumber === 2 ? { ...match, status: MatchStatus.POSTPONED } : match));
+
+    const rescheduled = [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 26)];
+    await expect(service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: rescheduled }))
+      .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matchNumbers: [2] });
+
+    expect(await matchesNow()).toContainEqual([2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 26 * HOUR).toISOString()]);
+    expect(store.matchRows.find((match) => match.matchNumber === 2)?.status).toBe(MatchStatus.POSTPONED);
+  });
+
   it('reports a released week whose kickoffs all match as unchanged', async () => {
     const { service, event, store } = setup();
     await service.syncGames({ providerId: PROVIDER, externalId: event.externalId, games: WEEK });

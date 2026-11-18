@@ -22,7 +22,9 @@
  *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
- * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
+ * the contests whose cutoff comes after the event's start (a second-chance bracket, #721). A
+ * POSTPONED event's status is left alone, but its contests follow its start (#1792): open while
+ * it is ahead, wherever the start has moved to, and live once it has passed.
  *
  * The emails that fire on the clock rather than on an action, such as entry reminders and live
  * standings, sweep on timers of their own (`DueNotificationsScheduler`), so a slow one never
@@ -50,7 +52,7 @@ export interface EventLifecycleSchedulerOptions {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
   /** Which events hold a stat line still in progress, whose completion waits (#1660). */
   statLines: Pick<SportEventParticipantStatLineRepository, 'findSportEventsWithLiveLines'>;
-  eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
+  eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff' | 'followPostponedStart'>;
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
   logger?: FastifyBaseLogger;
@@ -123,6 +125,12 @@ export class EventLifecycleScheduler {
   }
 
   private async applyDueTransition(candidate: SportEvent, roundSchedule: SportEventRound[], now: Date, liveLineHeld: boolean): Promise<void> {
+    if (candidate.status === SportEventStatus.POSTPONED) {
+      // Its contests take entries until its start, wherever that has moved to (#1792).
+      await this.eventLifecycleService.followPostponedStart(candidate, now);
+      return;
+    }
+
     if (candidate.status === SportEventStatus.SCHEDULED) {
       const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
       if (now >= dueAt) {

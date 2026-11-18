@@ -53,12 +53,14 @@ const EVENTS = [
   sportEventFixture({ id: 'open-2026', name: 'The Open', eventYear: 2026, sportLeagueId: 'pga' }),
 ];
 
-function renderCard(sportLeague = SPORT_LEAGUE) {
+const MOCK_FEED_ONLY = [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }];
+
+function renderCard(sportLeague = SPORT_LEAGUE, providers = MOCK_FEED_ONLY) {
   // The server filters by year, so the mock does too: the card never filters a list itself.
   listEventsMock.mockImplementation(({ query }: { query: { eventYear?: number } }) =>
     Promise.resolve({ data: { events: EVENTS.filter((event) => event.eventYear === query.eventYear) } }));
   listEventYearsMock.mockResolvedValue({ data: { years: [2026, 2025] } });
-  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] } });
+  listProvidersMock.mockResolvedValue({ data: { providers } });
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${sportLeague.id}`]}>
@@ -225,6 +227,23 @@ describe('plans/147 SportLeagueCalendarCard', () => {
       .toHaveTextContent('Created 1 tournament; skipped 1 already here.');
   });
 
+  it('imports from the tour\'s event sync provider rather than the sport\'s primary when the tour has one', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
+    renderCard({ ...SPORT_LEAGUE, eventSyncProviderId: 'balldontlie' }, [
+      ...MOCK_FEED_ONLY,
+      { providerId: 'balldontlie', sportsCovered: ['GOLF'], primaryForSports: [] },
+    ]);
+    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import'));
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
+
+    await waitFor(() => expect(importEventYearFromProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { sportLeagueId: 'pga', eventYear: 2026, providerId: 'balldontlie' } }),
+    ));
+  });
+
   it('says the provider listed nothing for the tour, and to check its match keyword, when the import creates and skips nothing', async () => {
     importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
     renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, matchKeyword: 'PGA' }));
@@ -252,6 +271,22 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
 
     expect(await screen.findByText('PGA Tour has no match keyword. Set it to the provider’s tour name.'))
+      .toBeInTheDocument();
+  });
+
+  it('tells the admin the provider\'s plan refused the tour\'s events, instead of a generic failure', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({
+      error: { error: { code: 'PROVIDER_LEAGUE_REFUSED', message: 'BALLDONTLIE refused NFL\'s reads (HTTP 401)' } },
+      response: { status: 422 },
+    });
+    renderCard();
+    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import'));
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
+
+    expect(await screen.findByText('The provider refused PGA Tour’s tournaments: its current plan doesn’t include them.'))
       .toBeInTheDocument();
   });
 });

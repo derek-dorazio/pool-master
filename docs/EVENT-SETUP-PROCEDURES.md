@@ -78,7 +78,10 @@ To create a whole year of those listed events at once, open the tour's page (`/m
 pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
 event the mock lists for that tour and year is created and linked for scores; ones the tour
 already has are skipped, so it is safe to run again. The tour's match keyword must be the
-mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385). The single-event browse
+mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385). The import starts on the tour's
+event sync provider when it has one, else the sport's primary, and asks that provider for the
+tour's league alone; when the provider's plan does not include that league, the dialog says so
+(#1797). The single-event browse
 accepts that keyword too, as well as words in event names: whole words only, so `NBA` does
 not match "WNBA Playoffs".
 
@@ -361,7 +364,7 @@ placed, until that team has played.
 An event that will not be played is cancelled from the Workflow card on its home page: *Move to
 Cancelled*, then confirm. It is offered from Draft, Scheduled, In Progress and Postponed (*Move
 to Postponed* parks an event whose date is moving; it goes back to Scheduled or In Progress
-later). Cancelled is final: no move leads out of it, and a data file never changes the event
+later, and while its start is ahead its live contests take entries and pick changes again). Cancelled is final: no move leads out of it, and a data file never changes the event
 again.
 
 A cancelled event counts for nothing, whatever scores or results it already holds:
@@ -377,6 +380,9 @@ A cancelled event counts for nothing, whatever scores or results it already hold
 A single game is cancelled instead, for a week of games that forms no bracket (an NFL
 regular-season week): *Cancel game* on its row of the week's results page, then confirm. It is
 offered only on a released week (a draft's games are edited freely) and an unplayed game; clear
-a result first. A cancelled game counts for nothing in any contest. A postponed game is cancelled
-in its own week and added to the week it moves to while that week is still a draft. A bracket's
+a result first. A cancelled game counts for nothing in any contest. A game put off to a later
+day of its own week, or of a bracket round, is postponed instead: *Postpone game* on its row,
+then set its new time on the game; its picks stay open until then. A game that moves to another
+week is cancelled in its own week and added to the week it moves to while that week is still a
+draft. A bracket's
 games cannot be cancelled: every one of them decides who goes on.
