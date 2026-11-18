@@ -513,8 +513,11 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(first.response?.status).toBe(201);
     const imported = expectDefined(first.data).created;
     imported.forEach((event) => created.sportEventIds.add(event.id));
-    expect(expectDefined(first.data).skipped).toEqual([]);
-    expect(imported.length).toBeGreaterThan(20);
+    // Tournaments whose start has already passed are never created (#1821); once the mock's 2027
+    // season is under way they are the only ones a first run skips.
+    const started = expectDefined(first.data).skipped;
+    expect(started.every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
+    expect(imported.length + started.length).toBeGreaterThan(20);
     for (const event of imported) {
       expect(event).toMatchObject({ sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed', syncScope: 'SCORES_ONLY', loadedParticipantCount: 0 });
       expect(event.externalId.startsWith('lpga-tour-2027-')).toBe(true);
@@ -523,8 +526,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const again = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
     expect(again.response?.status).toBe(201);
     expect(expectDefined(again.data).created).toEqual([]);
-    expect(expectDefined(again.data).skipped).toHaveLength(imported.length);
-    expect(new Set(expectDefined(again.data).skipped.map((row) => row.reason))).toEqual(new Set(['ALREADY_LINKED']));
+    expect(expectDefined(again.data).skipped.filter((row) => row.reason === 'ALREADY_LINKED')).toHaveLength(imported.length);
+    expect(expectDefined(again.data).skipped.filter((row) => row.reason !== 'ALREADY_LINKED').every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
 
     const noKeyword = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `No Keyword Tour ${RUN}` } });
     created.sportLeagueIds.add(expectDefined(noKeyword.data).sportLeague.id);

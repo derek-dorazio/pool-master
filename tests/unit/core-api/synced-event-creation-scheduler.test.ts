@@ -88,6 +88,33 @@ describe('SyncedEventCreationScheduler', () => {
     );
   });
 
+  it('counts the provider events it skipped because they already started in the sweep\'s summary, beside what it created', async () => {
+    const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
+    const { scheduler, sportEvents, logger } = build({ leagues: [nfl] });
+    sportEvents.importProviderEventYear.mockResolvedValueOnce({
+      created: [],
+      skipped: [
+        { externalId: 'w1', name: 'Week 1', reason: 'ALREADY_STARTED' },
+        { externalId: 'w2', name: 'Week 2', reason: 'ALREADY_STARTED' },
+        { externalId: 'w3', name: 'Week 3', reason: 'ALREADY_LINKED' },
+      ],
+    });
+
+    await scheduler.runSweep();
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdCount: 1,
+        alreadyStartedCount: 2,
+        imports: [
+          { sportLeagueId: 'sl-nfl', eventYear: 2026, createdCount: 0, skippedCount: 3, alreadyStartedCount: 2, updatedCount: 0 },
+          { sportLeagueId: 'sl-nfl', eventYear: 2027, createdCount: 1, skippedCount: 0, alreadyStartedCount: 0, updatedCount: 0 },
+        ],
+      }),
+      'Synced event creation sweep finished',
+    );
+  });
+
   it('counts a league whose kept-current step fails as failed and carries on with the next year', async () => {
     const nfl = buildSportLeague({ id: 'sl-nfl', eventSyncProviderId: 'balldontlie', matchKeyword: 'NFL' });
     const keepProviderEventsCurrent = jest.fn<ReturnType<KeepCurrent>, Parameters<KeepCurrent>>()

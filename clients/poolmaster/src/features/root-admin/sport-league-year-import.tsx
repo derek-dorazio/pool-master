@@ -14,7 +14,8 @@ import { SportProviderChoice } from './sport-provider-choice';
 /**
  * #385 — one action creates a tour's year of tournaments from the golf provider, each
  * linked for scores. Tournaments the tour already has are skipped, so it is safe to run
- * again; the result says how many were created and skipped. No preview: the confirm says
+ * again, and so are the provider's tournaments that already started, which are never created;
+ * the result says how many were created and skipped, and why. No preview: the confirm says
  * what will happen and the skip rule makes a repeat harmless.
  */
 export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: number; sportLeague: SportLeagueDto }) {
@@ -80,14 +81,14 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
         <p className="w-full text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-import-result" role="status">
           {result.created.length === 0 && result.skipped.length === 0
             ? `The provider lists no ${eventYear} ${event.many} for the ${sportLeagueNoun.one} “${sportLeague.matchKeyword ?? ''}”. Check that ${sportLeague.name}’s match keyword is the provider’s ${sportLeagueNoun.one} name.`
-            : `Created ${result.created.length} ${result.created.length === 1 ? event.one : event.many}; skipped ${result.skipped.length} already here.`}
+            : importSummary(result, event)}
         </p>
       ) : null}
 
       <ConfirmDialog
         confirmLabel={`Import ${eventYear}`}
         confirmTestId="root-admin-sport-league-calendar-import-confirm"
-        description={`Every ${eventYear} ${event.one} the provider lists for ${sportLeague.name} that isn’t here yet is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here are skipped, and no fields are loaded.`}
+        description={`Every ${eventYear} ${event.one} the provider lists for ${sportLeague.name} that isn’t here yet and hasn’t started is created and linked for results. ${event.many.charAt(0).toUpperCase()}${event.many.slice(1)} already here or already started are skipped, and no fields are loaded.`}
         error={
           importMutation.isError
             ? extractErrorMessage(importMutation.error, {
@@ -116,4 +117,12 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
       </ConfirmDialog>
     </>
   );
+}
+
+/** "Created 3 tournaments; skipped 2 already here", and how many already started when any did. */
+function importSummary(result: ImportSportEventYearFromProviderResponse, event: { one: string; many: string }): string {
+  const started = result.skipped.filter((row) => row.reason === 'ALREADY_STARTED').length;
+  const here = result.skipped.length - started;
+  const created = `Created ${result.created.length} ${result.created.length === 1 ? event.one : event.many}`;
+  return started === 0 ? `${created}; skipped ${here} already here.` : `${created}; skipped ${here} already here and ${started} already started.`;
 }

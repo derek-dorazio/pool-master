@@ -169,8 +169,8 @@ export const ImportSportEventYearFromProviderRequestSchema = z.object({
 }).describe('Creates each of the provider\'s events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded.');
 export type ImportSportEventYearFromProviderRequest = z.infer<typeof ImportSportEventYearFromProviderRequestSchema>;
 
-export const ImportSportEventSkipReasonDtoSchema = z.enum(['ALREADY_LINKED', 'EDITION_EXISTS'])
-  .describe('ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).');
+export const ImportSportEventSkipReasonDtoSchema = z.enum(['ALREADY_LINKED', 'ALREADY_STARTED', 'EDITION_EXISTS'])
+  .describe('ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event\'s start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).');
 export type ImportSportEventSkipReasonDto = z.infer<typeof ImportSportEventSkipReasonDtoSchema>;
 
 export const ImportSportEventYearFromProviderResponseSchema = z.object({
@@ -179,7 +179,7 @@ export const ImportSportEventYearFromProviderResponseSchema = z.object({
     externalId: z.string().describe('The provider event id.'),
     name: z.string(),
     reason: ImportSportEventSkipReasonDtoSchema,
-  })).describe('Provider events left alone because PoolMaster already has them.'),
+  })).describe('Provider events left alone because PoolMaster already has them, or because they already started.'),
 }).describe('What an event-year import created and skipped. Running it again creates nothing new.');
 export type ImportSportEventYearFromProviderResponse = z.infer<typeof ImportSportEventYearFromProviderResponseSchema>;
 
