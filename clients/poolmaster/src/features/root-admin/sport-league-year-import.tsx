@@ -24,7 +24,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
-  const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport);
+  const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport, sportLeague.eventSyncProviderId);
 
   const importMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -93,6 +93,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
             ? extractErrorMessage(importMutation.error, {
                 codeMessages: {
                   SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${sportLeague.name} has no match keyword. Set it to the provider’s ${sportLeagueNoun.one} name.`,
+                  PROVIDER_LEAGUE_REFUSED: `The provider refused ${sportLeague.name}’s ${event.many}: its current plan doesn’t include them.`,
                 },
                 fallback: 'We could not import this year.',
               })

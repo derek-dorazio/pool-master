@@ -48,7 +48,7 @@ export type ContestCutoff =
 const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
 
 /** Whether a game has moved on from being still to play (scheduled, or postponed before it began), by its status or by a period score entered for it. */
-function hasGameMovedOn(game: MatchTiming): boolean {
+export function hasGameMovedOn(game: MatchTiming): boolean {
   return !isMatchUnplayed(game.status) || (game.periodScores?.length ?? 0) > 0;
 }
 

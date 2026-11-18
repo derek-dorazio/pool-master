@@ -16,7 +16,7 @@
  * category. The vendor marks no college game as a playoff game, so the playoff's games are the
  * season's from the day after conference championship Saturday through January 31
  * (`CFP_LEAGUE` in `ncaaf-mapping.ts`). Football's events and teams are the NFL's and college
- * football's together.
+ * football's, each league read on its own (#1797).
  *
  * NCAA basketball, men's and women's (#1496, `ncaa-tournament-reader.ts`): each season's
  * tournament as an event (`ncaab-2025-tournament`, `ncaaw-2025-tournament`), from the vendor's
@@ -26,7 +26,8 @@
  * NBA (#1496, `nba-mapping.ts` through the shared `series-playoffs-reader.ts`): each season's
  * playoffs as an event (`nba-2025-postseason`), its teams, and every playoff game's score in the
  * GAME category, from which the GAME writer counts each best-of-seven series' wins (#1545).
- * Basketball's events and teams are the NCAA tournaments', the NBA's and the WNBA's together.
+ * Basketball's events and teams are the NCAA tournaments', the NBA's and the WNBA's, each read on
+ * its own.
  * Each playoff round is an event too (#1497, `series-playoff-rounds.ts`): a Clutch Card's
  * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
  * scores in the STAT_LINE category.
@@ -47,8 +48,8 @@
  *
  * FIFA World Cup (#1496, `fifa-world-cup-reader.ts`): each edition's knockout bracket as an event
  * (`fifa-wc-2026-knockout`, GOAT tier), its teams, and its matches' scores in the GAME category,
- * with a shoot-out's scores (#1532). Soccer's events and teams are both leagues', one after the
- * other. Any other event id is a PGA TOUR tournament id.
+ * with a shoot-out's scores (#1532). Soccer's events and teams are both leagues', each read on its
+ * own, the Premier League's first. Any other event id is a PGA TOUR tournament id.
  *
  * This adapter only reads. A synced sport league's events are created from its event list by the
  * daily synced event creation sweep (ADR 0011); every other league's, by an admin.
@@ -58,16 +59,18 @@ import type { FastifyBaseLogger } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { errorMessage } from '../../../../core/error-message';
-import type {
-  DateRange,
-  ProviderHealthStatus,
-  ProviderParticipant,
-  ProviderPayloadCapture,
-  ProviderPayloadCaptureSession,
-  ProviderPayloadDiagnostics,
-  SportDataProvider,
-  SportEvent,
-  SportEventDetail,
+import {
+  ProviderLeagueRefusedError,
+  type DateRange,
+  type ProviderEventListOptions,
+  type ProviderHealthStatus,
+  type ProviderParticipant,
+  type ProviderPayloadCapture,
+  type ProviderPayloadCaptureSession,
+  type ProviderPayloadDiagnostics,
+  type SportDataProvider,
+  type SportEvent,
+  type SportEventDetail,
 } from '../../core/provider-interface';
 import { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { NCAA_MEN, NCAA_WOMEN, parseNcaaTournamentScope, type NcaaTournamentLeague } from './ncaa-tournament-mapping';
@@ -79,15 +82,15 @@ import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
 import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
 import { PlayoffRoundsReader, PlayoffsReader } from './series-playoffs-reader';
-import { parseEplScope } from './epl-mapping';
+import { EPL_TOUR, parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
-import { parseWorldCupScope } from './fifa-world-cup-mapping';
+import { FIFA_WC_TOUR, parseWorldCupScope } from './fifa-world-cup-mapping';
 import { WorldCupReader } from './fifa-world-cup-reader';
-import { parseNflScope } from './nfl-mapping';
+import { NFL_LEAGUE_NAME, parseNflScope } from './nfl-mapping';
 import { NflReader } from './nfl-reader';
-import { parseCfpScope } from './ncaaf-mapping';
+import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
-import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, type BalldontlieQuery } from './balldontlie-client';
+import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieQuery } from './balldontlie-client';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -114,7 +117,10 @@ export interface BalldontlieAdapterOptions {
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
-  /** Where a read the adapter can do without (a series playoffs' standings) logs that it was refused. */
+  /**
+   * Where a read the adapter can do without logs that it was refused or failed: a series
+   * playoffs' standings, or one league of a sport's list (#1797).
+   */
   logger?: FastifyBaseLogger;
 }
 
@@ -124,10 +130,20 @@ export interface BalldontlieAdapterOptions {
  */
 const MAX_SEASONS_FETCHED_ONE_BY_ONE = 3;
 
-/** What the adapter reads for one league: its events in a date range, and everyone who plays in it. */
+/**
+ * What the adapter reads for one league: its events in a date range, and everyone who plays in
+ * it. `tour` is the `metadata.tour` its events carry, the sport league's match keyword; null for
+ * golf, whose tournaments are read as one list.
+ */
 interface LeagueReads {
+  tour: string | null;
   events(dateRange?: DateRange): Promise<SportEvent[]>;
   participants(): Promise<ProviderParticipant[]>;
+}
+
+/** A vendor answer saying the plan does not include a read. */
+function isPlanRefusal(error: unknown): error is BalldontlieRequestError & { status: number } {
+  return error instanceof BalldontlieRequestError && (error.status === 401 || error.status === 403);
 }
 
 /** A vendor tournament id: a positive whole number. Anything else cannot name one. */
@@ -160,10 +176,12 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   /** Each NCAA tournament league's reads, by its key. */
   private readonly ncaa: Readonly<Record<NcaaTournamentLeague['key'], NcaaTournamentReader>>;
   /** Each league's schedule and roster reads, by the sport it serves. */
-  private readonly leagues: ReadonlyMap<Sport, LeagueReads>;
+  private readonly leagues: ReadonlyMap<Sport, readonly LeagueReads[]>;
+  private readonly logger: FastifyBaseLogger | undefined;
 
   constructor(options: BalldontlieAdapterOptions) {
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
+    this.logger = options.logger;
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
     this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
@@ -176,29 +194,26 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       ncaab: new NcaaTournamentReader(this.client, NCAA_MEN, options.now ?? Date.now),
       ncaaw: new NcaaTournamentReader(this.client, NCAA_WOMEN, options.now ?? Date.now),
     };
-    const ncaaReaders = Object.values(this.ncaa);
-    this.leagues = new Map<Sport, LeagueReads>([
-      [Sport.GOLF, { events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }],
-      // Read together, as soccer's are, so a failed read fails the sport's whole list.
-      [Sport.AMERICAN_FOOTBALL, {
-        events: async (dateRange) => (await Promise.all([this.nfl.upcomingEvents(dateRange), this.ncaaf.upcomingEvents(dateRange)])).flat(),
-        participants: async () => (await Promise.all([this.nfl.teams(), this.ncaaf.teams()])).flat(),
-      }],
-      // Read together, as soccer's are: the NCAA brackets need the GOAT tier, so a plan without
-      // it loses the NBA's and the WNBA's playoffs from the list too.
-      [Sport.BASKETBALL, {
-        events: async (dateRange) => (await Promise.all([...ncaaReaders.map((reader) => reader.upcomingEvents(dateRange)), this.nba.upcomingEvents(dateRange), this.wnba.upcomingEvents(dateRange)])).flat(),
-        participants: async () => (await Promise.all([...ncaaReaders.map((reader) => reader.teams()), this.nba.teams(), this.wnba.teams()])).flat(),
-      }],
-      // Read together, so a failed read fails the sport's whole list: the World Cup's matches
-      // need the GOAT tier, which the NCAA brackets need too, so a plan without it loses
-      // soccer's events as well as basketball's, the Premier League's with them.
-      [Sport.SOCCER, {
-        events: async (dateRange) => (await Promise.all([this.epl.upcomingEvents(dateRange), this.worldCup.upcomingEvents(dateRange)])).flat(),
-        participants: async () => (await Promise.all([this.epl.teams(), this.worldCup.teams()])).flat(),
-      }],
-      [Sport.HOCKEY, { events: (dateRange) => this.nhl.upcomingEvents(dateRange), participants: () => this.nhl.teams() }],
-      [Sport.BASEBALL, { events: (dateRange) => this.mlb.upcomingEvents(dateRange), participants: () => this.mlb.teams() }],
+    const reads = (tour: string, reader: { upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]>; teams(): Promise<ProviderParticipant[]> }): LeagueReads => ({
+      tour,
+      events: (dateRange) => reader.upcomingEvents(dateRange),
+      participants: () => reader.teams(),
+    });
+    // Each league is read on its own (#1797): a league the plan refuses (the NCAA brackets and
+    // the World Cup need the GOAT tier, college football a paid one) or whose read fails is
+    // left out of its sport's list and logged, and its neighbours still list.
+    this.leagues = new Map<Sport, readonly LeagueReads[]>([
+      [Sport.GOLF, [{ tour: null, events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }]],
+      [Sport.AMERICAN_FOOTBALL, [reads(NFL_LEAGUE_NAME, this.nfl), reads(CFP_LEAGUE.tour, this.ncaaf)]],
+      [Sport.BASKETBALL, [
+        reads(NCAA_MEN.tour, this.ncaa.ncaab),
+        reads(NCAA_WOMEN.tour, this.ncaa.ncaaw),
+        reads(NBA_PLAYOFFS.tour, this.nba),
+        reads(WNBA_PLAYOFFS.tour, this.wnba),
+      ]],
+      [Sport.SOCCER, [reads(EPL_TOUR, this.epl), reads(FIFA_WC_TOUR, this.worldCup)]],
+      [Sport.HOCKEY, [reads(NHL_PLAYOFFS.tour, this.nhl)]],
+      [Sport.BASEBALL, [reads(MLB_POSTSEASON.tour, this.mlb)]],
     ]);
     this.sportsCovered = [...this.leagues.keys()];
   }
@@ -215,9 +230,55 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     return this.payloads.beginProviderPayloadCapture();
   }
 
-  /** The sport's events starting inside `dateRange`; none for a sport the adapter does not cover. */
-  async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
-    return await this.leagues.get(sport)?.events(dateRange) ?? [];
+  /**
+   * The sport's events starting inside `dateRange`; none for a sport the adapter does not cover.
+   * Given a `tour` that names one of the sport's leagues, only that league is read, and a refusal
+   * of it throws `ProviderLeagueRefusedError` (#1797); otherwise every league is read on its own
+   * (`eachLeague`).
+   */
+  async getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]> {
+    const leagues = this.leagues.get(sport) ?? [];
+    const tour = options?.tour?.trim().toLowerCase();
+    const named = tour ? leagues.filter((league) => league.tour?.toLowerCase() === tour) : [];
+    if (named.length > 0) {
+      return (await Promise.all(named.map(async (league) => {
+        try {
+          return await league.events(dateRange);
+        } catch (error) {
+          if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour ?? sport, error.status, { cause: error });
+          throw error;
+        }
+      }))).flat();
+    }
+    return this.eachLeague(sport, leagues, 'events', (league) => league.events(dateRange));
+  }
+
+  /**
+   * Each of a sport's leagues read on its own, their lists together. A league whose read is
+   * refused or fails is left out and logged (`balldontlie.league.unavailable`), so one league's
+   * plan or outage never empties its neighbours' lists; when every league fails, the first
+   * failure is thrown, as a one-league sport's always is.
+   */
+  private async eachLeague<Item>(sport: Sport, leagues: readonly LeagueReads[], what: 'events' | 'participants', read: (league: LeagueReads) => Promise<Item[]>): Promise<Item[]> {
+    const results = await Promise.allSettled(leagues.map(read));
+    const failures = results.flatMap((result, index) => (result.status === 'rejected' ? [{ league: leagues[index], reason: result.reason as unknown }] : []));
+    if (failures.length > 0 && failures.length === results.length) throw failures[0].reason;
+    for (const { league, reason } of failures) {
+      this.logger?.warn(
+        {
+          action: 'balldontlie.league.unavailable',
+          sport,
+          league: league.tour,
+          read: what,
+          refused: isPlanRefusal(reason),
+          status: reason instanceof BalldontlieRequestError ? reason.status : null,
+          path: reason instanceof BalldontlieRequestError ? reason.path : null,
+          error: errorMessage(reason),
+        },
+        `Left a league out of the sport's ${what}: its read was refused or failed`,
+      );
+    }
+    return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
   }
 
   /**
@@ -292,7 +353,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
 
   /** Every active PGA TOUR golfer, every NFL and college football team, every Division I men's and women's basketball team, NBA team and WNBA team, every NHL team, every MLB team, or the Premier League's and the World Cup's teams; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
-    return await this.leagues.get(sport)?.participants() ?? [];
+    return this.eachLeague(sport, this.leagues.get(sport) ?? [], 'participants', (league) => league.participants());
   }
 
   private async pgaPlayers(): Promise<ProviderParticipant[]> {
