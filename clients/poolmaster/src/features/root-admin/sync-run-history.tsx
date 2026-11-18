@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportOrder } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import type { ProviderSummaryDto } from '@/lib/api';
 import { Button, DataGrid, QueryState, SectionCard, StatusBadge, Text } from '@/features/shared/ui';
@@ -54,7 +55,7 @@ export function SyncRunHistory({
       ),
       syncRunColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { type: { kind: 'enum' } },
+        meta: { type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <Text>{getValue()}</Text>
         ),

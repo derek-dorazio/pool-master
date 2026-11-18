@@ -12,7 +12,7 @@ const LEAGUES: Sport[] = [
   { id: "3", name: "NBA", leagueKind: "REAL" },
 ];
 const COLUMNS: ColumnDef<Sport>[] = [
-  { accessorKey: "name", header: "Sport league" },
+  { accessorKey: "name", header: "Sport league", meta: { type: { kind: "text" } } },
   {
     accessorKey: "leagueKind",
     header: "Kind",

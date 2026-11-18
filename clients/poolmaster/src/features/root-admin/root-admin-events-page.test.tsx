@@ -97,6 +97,30 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     expect(options?.query).toEqual({ eventYear: new Date().getFullYear() });
   });
 
+  it('filters Starts by the dates it shows, not the stored text, and sorts it by the instant', async () => {
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          sportEventFixture({ id: 'late', name: 'Late Open', startDate: '2026-05-21T16:00:00.000Z' }),
+          sportEventFixture({ id: 'early', name: 'Early Classic', startDate: '2026-05-07T12:00:00.000Z' }),
+          sportEventFixture({ id: 'june', name: 'June Invitational', startDate: '2026-06-04T12:00:00.000Z' }),
+        ],
+      },
+    });
+    renderPage();
+    await screen.findByText('Late Open');
+    const shown = () => screen.getAllByTestId(/^root-admin-event-row-/).map((row) => row.getAttribute('data-testid')?.slice(21));
+
+    expect(screen.getByTestId('root-admin-event-row-early')).toHaveTextContent('May 07, 2026, 08:00 AM');
+    fireEvent.click(screen.getByTestId('data-grid-sort-startDate'));
+    expect(shown()).toEqual(['early', 'late', 'june']);
+
+    fireEvent.click(screen.getByTestId('root-admin-events-filter-startDate'));
+    fireEvent.change(screen.getByTestId('root-admin-events-filter-startDate-typed'), { target: { value: 'May 1 2026 – May 31 2026' } });
+    fireEvent.click(screen.getByTestId('root-admin-events-filter-startDate-apply'));
+    expect(shown()).toEqual(['early', 'late']);
+  });
+
   it('opens on this year\'s events and reads another year when one is chosen', async () => {
     const currentYear = new Date().getFullYear();
     listEventsMock.mockResolvedValue({ data: { events: [] } });

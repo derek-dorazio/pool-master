@@ -8,6 +8,7 @@ import {
   type SortingFn,
   type Table,
 } from "@tanstack/react-table";
+import { compareByEnumOrder, explicitOrderValues, type EnumOrder } from "@poolmaster/shared/domain";
 import {
   describeSpan,
   type DateDirection,
@@ -37,12 +38,18 @@ export type DataGridOption = { value: string; label: string };
  */
 export type DataGridColumnOptions = {
   /**
+   * The shared enum's own order (`<Name>Order` from `@poolmaster/shared/domain`, #1841): an
+   * explicit order lists every value in its place and sorts by it; an alphabetical one sorts
+   * by `label`. Preferred over `values` for a column holding a shared enum.
+   */
+  order?: EnumOrder<string>;
+  /**
    * Every value the column can hold, in their natural order (the filter's list and the column's
    * sort follow it). Omitted, the values found in the rows, A to Z by their words.
    */
   values?: readonly DataGridOption[];
-  /** The words for a value found in the rows, when `values` is omitted; omitted, the value itself. */
-  label?: (value: string) => string;
+  /** The words for each value, when `values` does not give them; omitted, the value itself. */
+  label?(value: string): string;
   /** The values ticked when the grid opens, such as a Status that starts on On; omitted, no filter. */
   initial?: readonly string[];
   /**
@@ -231,8 +238,22 @@ export function columnOptions<TData>(table: Table<TData>, column: Column<TData>)
     return type.nullable ? [...YES_NO, { value: NO_VALUE, label: "(Blank)" }] : YES_NO;
   }
   const options = type?.kind === "enum" ? type : undefined;
-  const declared = options?.values ?? foundOptions(table, column, options?.label);
+  const declared = options?.values ?? orderOptions(options) ?? foundOptions(table, column, labelOf(options));
   return options?.manyPerCell ? [...declared, { value: NO_VALUE, label: "(None)" }] : declared;
+}
+
+/** The column's words for a value, or the value itself. */
+function labelOf(options: DataGridColumnOptions | undefined): (value: string) => string {
+  return (value) => options?.label?.(value) ?? value;
+}
+
+/** An explicit enum order's values, first to last, in their words; null for none or an alphabetical order. */
+function orderOptions(options: DataGridColumnOptions | undefined): DataGridOption[] | null {
+  if (options?.order?.kind !== "explicit") {
+    return null;
+  }
+  const label = labelOf(options);
+  return explicitOrderValues(options.order).map((value) => ({ value, label: label(value) }));
 }
 
 function foundOptions<TData>(table: Table<TData>, column: Column<TData>, label = (value: string) => value): DataGridOption[] {
@@ -311,7 +332,10 @@ export function columnTypeClassName(type: DataGridColumnType | undefined): strin
 }
 
 function sortingFnFor<TData>(type: DataGridColumnType): SortingFn<TData> | "text" | "basic" | "datetime" | "auto" {
-  if (type.kind === "enum") return type.values ? byDeclaredOrder<TData>(type.values) : "text";
+  if (type.kind === "enum") {
+    if (type.values) return byDeclaredOrder<TData>(type.values);
+    return type.order ? byEnumOrder<TData>(type.order, labelOf(type)) : "text";
+  }
   if (type.kind === "dateRange") return byStartThenEnd;
   return BUILT_IN_SORT[type.kind] ?? "auto";
 }
@@ -324,6 +348,19 @@ function byDeclaredOrder<TData>(values: readonly DataGridOption[]): SortingFn<TD
     return first === undefined ? values.length : (rank.get(first) ?? values.length);
   };
   return (left, right, columnId) => rankOf(left.getValue(columnId)) - rankOf(right.getValue(columnId));
+}
+
+/** Sorts a shared enum's column by the enum's declared order (#1841); a value outside it sorts last. */
+function byEnumOrder<TData>(order: EnumOrder<string>, label: (value: string) => string = (value) => value): SortingFn<TData> {
+  const compare = compareByEnumOrder(order, label);
+  const known = (value: string) => order.kind === "alphabetical" || value in order.orderIndex;
+  return (left, right, columnId) => {
+    const [a, b] = [cellValues(left.getValue(columnId)).at(0), cellValues(right.getValue(columnId)).at(0)];
+    if (a === undefined || b === undefined || !known(a) || !known(b)) {
+      return Number(a === undefined || !known(a)) - Number(b === undefined || !known(b));
+    }
+    return compare(a, b);
+  };
 }
 
 /** A dateRange column sorts by start, then by end; a missing end sorts after any date. */

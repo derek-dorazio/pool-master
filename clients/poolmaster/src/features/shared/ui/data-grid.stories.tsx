@@ -14,9 +14,9 @@ const MEMBERS: Member[] = Array.from({ length: 32 }, (_, index) => ({
 }));
 
 const COLUMNS: ColumnDef<Member>[] = [
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "role", header: "Role" },
-  { accessorKey: "entries", header: "Entries" },
+  { accessorKey: "name", header: "Name", meta: { type: { kind: "text" } } },
+  { accessorKey: "role", header: "Role", meta: { type: { kind: "text" } } },
+  { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
 ];
 
 function MembersGrid(props: { pageSize?: number; showColumnFilters?: boolean; withSearch?: boolean }) {
@@ -89,7 +89,7 @@ const EVENTS: SportEvent[] = [
 ];
 
 const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
-  { accessorKey: "name", header: "Name" },
+  { accessorKey: "name", header: "Name", meta: { type: { kind: "text" } } },
   {
     accessorKey: "stage",
     header: "Status",
@@ -103,7 +103,7 @@ const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
     meta: { type: { kind: "enum", values: optionsFromLabels(ISSUES), manyPerCell: true } },
     cell: ({ getValue }) => getValue<string[]>().map((issue) => ISSUES[issue as keyof typeof ISSUES]).join(", ") || "—",
   },
-  { accessorKey: "field", header: "Field" },
+  { accessorKey: "field", header: "Field", meta: { type: { kind: "number" } } },
 ];
 
 /**

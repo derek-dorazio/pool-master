@@ -1,13 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
+import { isPlatformSearchTerm, ParticipantStatusOrder, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   DataGrid,
   ErrorState,
   LinkButton,
   FilterPicker,
   StatusBadge,
-  optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -15,7 +14,6 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
-  PARTICIPANT_STATUS_LABELS,
   participantStatusLabel,
   participantStatusTone,
   type ManagedParticipantStatus,
@@ -77,7 +75,7 @@ export function RootAdminParticipantListPage() {
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        meta: { type: { kind: 'enum', values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
+        meta: { type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { SportEventSyncScopeOrder } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { listEvents } from '@/lib/api';
@@ -7,12 +8,10 @@ import {
   QueryState,
   LinkButton,
   StatusBadge,
-  optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  SYNC_SCOPE_LABELS,
   syncScopeLabel,
   syncScopeTone,
 } from './sport-admin-utils';
@@ -55,7 +54,7 @@ export function RootAdminSportEventListPage() {
       sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
-        meta: { type: { kind: 'enum', values: optionsFromLabels(SYNC_SCOPE_LABELS) } },
+        meta: { type: { kind: 'enum', order: SportEventSyncScopeOrder, label: syncScopeLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={syncScopeTone(getValue())}>
             {syncScopeLabel(getValue())}

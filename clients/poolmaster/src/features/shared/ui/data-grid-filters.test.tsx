@@ -33,7 +33,6 @@ function buildColumns(statusInitial?: readonly string[]) {
       cell: ({ getValue }) => STATUS_LABELS[getValue() as keyof typeof STATUS_LABELS],
     }),
     columnHelper.accessor("issues", {
-      meta: { type: { kind: "text" } },
       header: "Issues",
       meta: { type: { kind: "enum", values: optionsFromLabels(ISSUE_LABELS), manyPerCell: true } },
       cell: ({ getValue }) => getValue().join(", "),
@@ -137,7 +136,6 @@ describe("DataGrid blank cells", () => {
     blanksHelper.accessor("field", { meta: { type: { kind: "number" } }, header: "Field" }),
     blanksHelper.accessor("label", { meta: { type: { kind: "text" } }, header: "Label" }),
     blanksHelper.accessor("stage", {
-      meta: { type: { kind: "text" } },
       header: "Stage",
       meta: { type: { kind: "enum", values: optionsFromLabels({ DRAFT: "Draft", SCHEDULED: "Scheduled" }) } },
     }),

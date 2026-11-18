@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from "@poolmaster/shared/domain";
+import { isPlatformSearchTerm, type LeaguePlan, LeaguePlanOrder, PLATFORM_SEARCH_MIN_LENGTH } from "@poolmaster/shared/domain";
 import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
@@ -13,7 +13,6 @@ import {
   PageHeader,
   SectionCard,
   StatusBadge,
-  optionsFromLabels,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -21,6 +20,8 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 const columnHelper = createColumnHelper<LeagueDto>();
+
+const leaguePlanLabel = (plan: LeaguePlan) => LEAGUE_PLAN_LABEL[plan];
 
 export function RootAdminManageLeaguesPage() {
   const [search, setSearch] = useState("");
@@ -92,7 +93,7 @@ export function RootAdminManageLeaguesPage() {
       columnHelper.accessor((league) => league.planEntitlements.plan, {
         id: "plan",
         header: "Plan",
-        meta: { type: { kind: "enum", values: optionsFromLabels(LEAGUE_PLAN_LABEL) } },
+        meta: { type: { kind: "enum", order: LeaguePlanOrder, label: leaguePlanLabel } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{LEAGUE_PLAN_LABEL[getValue()]}</span>
         ),

@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportEventStatusOrder, SportOrder } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listEvents, type SportEventDto } from '@/lib/api';
@@ -71,7 +72,7 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { type: { kind: 'enum' } },
+        meta: { type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone="info">{getValue()}</StatusBadge>
         ),
@@ -89,7 +90,7 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('status', {
         header: 'Status',
-        meta: { type: { kind: 'enum' } },
+        meta: { type: { kind: 'enum', order: SportEventStatusOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone={sportEventStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),

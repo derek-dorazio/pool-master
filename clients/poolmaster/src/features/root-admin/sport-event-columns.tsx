@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { SportEventStatusOrder } from '@poolmaster/shared/domain';
 import { StatusBadge } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
 import { deriveSportEventReadiness, formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
@@ -33,7 +34,7 @@ export function sportEventScheduleColumns() {
     }),
     columnHelper.accessor('status', {
       header: 'Status',
-      meta: { type: { kind: 'enum', label: formatSportEventStatus } },
+      meta: { type: { kind: 'enum', order: SportEventStatusOrder, label: formatSportEventStatus } },
       cell: ({ getValue }) => (
         <StatusBadge tone={sportEventStatusTone(getValue())}>
           {formatSportEventStatus(getValue())}

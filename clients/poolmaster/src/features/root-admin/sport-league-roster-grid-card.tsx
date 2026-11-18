@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
+import { isPlatformSearchTerm, ParticipantStatusOrder, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   createParticipantLeagueAffiliation,
   deleteParticipantLeagueAffiliation,
@@ -23,6 +23,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { participantStatusLabel } from './sport-admin-utils';
 import { useParticipantsQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -90,7 +91,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.status, {
     id: 'status',
     header: 'Status',
-    meta: { type: { kind: 'enum' } },
+    meta: { type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
         {getValue()}
