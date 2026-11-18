@@ -2565,7 +2565,7 @@ export const listProviderCatalogEvents = <ThrowOnError extends boolean = false>(
 /**
  * List background jobs for the Activity grid
  *
- * Every background job queued inside a window (syncs, emails, settlements, releases and the rest), filtered by kind, status, sport league and event, newest first. Nothing pages the result; the filters narrow it. `to` defaults to now; `from` to 24 hours before it, or to 30 days before it (every job kept) when a sportLeagueId or sportEventId narrows the read. A `from` after `to` answers 400 ACTIVITY_WINDOW_INVALID. A league's activity is its own jobs and the jobs on any of its events. Each sync job names the sync runs it ran; read one with getProviderSyncRun.
+ * Every background job queued inside a window (syncs, emails, settlements, releases and the rest), filtered by kind, status, sport league and event, newest first. Nothing pages the result; the filters narrow it. `to` defaults to now; `from` to 24 hours before it, or to 30 days before it (every job kept) when a sportLeagueId or sportEventId narrows the read. A `from` after `to` answers 400 ACTIVITY_WINDOW_INVALID; more than 60 reads a minute from one address answer 429 ACTIVITY_RATE_LIMITED. A league's activity is its own jobs and the jobs on any of its events. Each sync job names the sync runs it ran; read one with getProviderSyncRun.
  */
 export const listActivity = <ThrowOnError extends boolean = false>(options?: Options<ListActivityData, ThrowOnError>): RequestResult<ListActivityResponses, ListActivityErrors, ThrowOnError> => (options?.client ?? client).get<ListActivityResponses, ListActivityErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

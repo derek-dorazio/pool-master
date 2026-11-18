@@ -35103,6 +35103,10 @@ export type ListActivityErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type ListActivityError = ListActivityErrors[keyof ListActivityErrors];

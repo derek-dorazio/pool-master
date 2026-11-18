@@ -50,7 +50,7 @@ handler is idempotent.
 `GET /api/v1/activity` (root admin) lists jobs newest first, narrowed by kind, status, league or
 event, each with the ids of the sync runs it recorded. There is no paging: the read is bounded
 by its window instead, `from` to `to`, which defaults to the last 24 hours, or the whole 30 days
-kept when a league or event narrows it; a `from` after `to` answers 400 `ACTIVITY_WINDOW_INVALID`. It costs the same statements for any number of jobs
+kept when a league or event narrows it; a `from` after `to` answers 400 `ACTIVITY_WINDOW_INVALID`. One address may read it 60 times a minute (`@fastify/rate-limit` on this route only, per process); more answer 429 `ACTIVITY_RATE_LIMITED`. It costs the same statements for any number of jobs
 (pinned in `root-admin-route-query-scaling.integration.ts`).
 
 ## Queueing
