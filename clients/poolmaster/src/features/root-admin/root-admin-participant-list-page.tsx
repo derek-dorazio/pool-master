@@ -58,24 +58,24 @@ export function RootAdminParticipantListPage() {
     () => [
       columnHelper.accessor('name', {
         header: 'Name',
-        meta: { type: { kind: 'text' } },
+        meta: { info: "The participant's full name.", type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('shortName', {
         header: 'Short name',
-        meta: { type: { kind: 'text' } },
+        meta: { info: "The participant's shorter name, used where space is tight.", type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('nationality', {
         header: 'Nationality',
-        meta: { type: { kind: 'text' } },
+        meta: { info: 'The country the participant represents.', type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        meta: { type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
+        meta: { info: 'Whether the participant is active in the sport league.', type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}

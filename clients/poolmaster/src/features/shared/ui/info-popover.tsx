@@ -8,6 +8,9 @@ const CALLOUT_WIDTH = 288;
 /** How each kind of trigger button looks. */
 const TRIGGER_LOOK = {
   icon: "inline-flex size-9 items-center justify-center rounded-full transition hover:bg-muted/50",
+  // The icon look sized to a line of small text, such as a grid's column header, so the row
+  // keeps its height; padding with a matching negative margin keeps the target bigger.
+  inline: "-m-1 inline-flex items-center justify-center rounded-full p-1 transition hover:bg-muted/50",
   // Padding with a matching negative margin: a bigger target to tap, no taller a row.
   text: "-mx-1 -my-2 rounded-sm px-1 py-2 underline decoration-dotted underline-offset-2",
   // The whole cell is the button; the cell inside draws the look.
@@ -52,11 +55,11 @@ export function InfoPopover({
   padding?: "none" | "sm";
   testId: string;
   /**
-   * `icon` is a round icon button; `text` is a value in a line of text, such as a score in a
+   * `icon` is a round icon button; `inline` is the same, no taller than the small text it sits in; `text` is a value in a line of text, such as a score in a
    * table cell, dotted underneath to say it opens, and no taller than the text around it.
    * `cell` fills a small cell of a board, such as a squares box, which draws its own look.
    */
-  trigger?: "cell" | "icon" | "text";
+  trigger?: "cell" | "icon" | "inline" | "text";
 }) {
   // Hover opens it while the mouse is over it; a tap or click pins it open until tapped again.
   // Only a mouse hovers: a phone's tap also fires enter, which would fight the tap's toggle.

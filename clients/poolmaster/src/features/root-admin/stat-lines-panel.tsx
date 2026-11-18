@@ -35,7 +35,7 @@ function statLineColumns(composite: SportComposite) {
   return [
     columnHelper.accessor('playerName', {
       header: 'Player',
-      meta: { type: { kind: 'text' } },
+      meta: { info: 'The participant whose stat line is shown, with their team underneath.', type: { kind: 'text' } },
       cell: ({ row }) => (
         <div>
           <span className="font-medium text-foreground">{row.original.playerName}</span>
@@ -46,6 +46,7 @@ function statLineColumns(composite: SportComposite) {
     ...composite.stats.map((stat) => columnHelper.display({
       id: stat,
       header: SPORT_STAT_LABELS[stat].short,
+      meta: { info: SPORT_STAT_LABELS[stat].long },
       cell: ({ row, table }) => {
         const { draft, setDraft } = table.options.meta as GridMeta;
         const entry = row.original;
@@ -75,6 +76,7 @@ function statLineColumns(composite: SportComposite) {
     columnHelper.display({
       id: 'composite',
       header: composite.name,
+      meta: { info: 'The total the stat line scores, worked out from the stats beside it.' },
       cell: ({ row, table }) => {
         const { draft } = table.options.meta as GridMeta;
         const entry = row.original;

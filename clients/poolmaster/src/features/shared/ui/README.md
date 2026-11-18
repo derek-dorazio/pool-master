@@ -470,6 +470,9 @@ A table that needs search, sorting or paging.
   cells (nothing, null, an empty word or range) sort last both ways. Clear all filters clears
   everything, a column's `initial` selection included. `initial` is read once, when the grid
   first renders.
+  `meta.info` gives a column an (i) after its name. `getRowLink` (a › at the row's end) or
+  `openRowDialog` (a ⤢ button there) makes the whole row open its page or dialog; the icon
+  shares the pinned last column with `rowActions`.
 - **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx), and every column type's filter in
   [data-grid-date-filter.stories.tsx](./data-grid-date-filter.stories.tsx)
 

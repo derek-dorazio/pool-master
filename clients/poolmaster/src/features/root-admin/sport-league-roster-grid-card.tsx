@@ -45,7 +45,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'name',
     header: participantLabel,
-    meta: { type: { kind: 'text' } },
+    meta: { info: "The participant's name.", type: { kind: 'text' } },
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
@@ -53,7 +53,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor('ranking', {
     // The ranking the sport league keeps for the participant (#236), not a world ranking.
     header: 'Ranking',
-    meta: { type: { kind: 'number' } },
+    meta: { info: 'The ranking the sport league keeps for the participant, not a world ranking.', type: { kind: 'number' } },
     cell: ({ row, table }) => {
       const entry = row.original;
       const { draft, setDraft } = table.options.meta as RosterGridMeta;
@@ -91,7 +91,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.status, {
     id: 'status',
     header: 'Status',
-    meta: { type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
+    meta: { info: 'Whether the participant is active on the roster.', type: { kind: 'enum', order: ParticipantStatusOrder, label: participantStatusLabel } },
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
         {getValue()}

@@ -53,7 +53,7 @@ export function RootAdminManageUsersPage() {
         {
           id: "username",
           header: "User",
-          meta: { type: { kind: "text" } },
+          meta: { info: "The user's name and username.", type: { kind: "text" } },
           cell: ({ row }) => (
             <div>
               <div className="font-medium text-primary">
@@ -68,7 +68,7 @@ export function RootAdminManageUsersPage() {
       ),
       columnHelper.accessor("email", {
         header: "Email",
-        meta: { type: { kind: "text" } },
+        meta: { info: "The email address the user signs in with.", type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -76,13 +76,13 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
         id: "account",
         header: "Account",
-        meta: { type: { kind: "enum" } },
+        meta: { info: "Whether the user's account is active.", type: { kind: "enum" } },
         cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
       }),
       columnHelper.accessor("isRootAdmin", {
         id: "rootAdmin",
         header: "Root admin",
-        meta: { type: { kind: "boolean" } },
+        meta: { info: "Whether the user can use the root admin pages.", type: { kind: "boolean" } },
         cell: ({ getValue }) => (
           <StatusBadge tone={getValue() ? "info" : "neutral"}>
             {getValue() ? "Yes" : "No"}

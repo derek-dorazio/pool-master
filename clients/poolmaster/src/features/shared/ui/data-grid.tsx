@@ -14,10 +14,12 @@ import {
 } from "@tanstack/react-table";
 import { Fragment, useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
+import { ChevronRight, Info, Maximize2 } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
+import { InfoPopover } from "./info-popover";
 import { Pager } from "./pager";
 import { Tile } from "./tile";
 import { ViewFilter, type ViewFilterOption } from "./view-filter";
@@ -112,14 +114,6 @@ export type DataGridProps<TData> = {
   emptyMessage: string;
   filterTestIdPrefix?: string;
   getRowId?: (row: TData, index: number) => string;
-  /**
-   * Where a row leads: the whole row opens it (rules/ux-rules.md §12), and its first cell is the
-   * link a keyboard reaches. Buttons, links and menus inside the row keep their own clicks.
-   */
-  getRowLink?: (row: TData) => string;
-  getRowLinkProps?: (
-    row: TData,
-  ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
   /**
    * The row's quick actions, a `RowActionsMenu` ("⋯"), in a last column of its own. That column
@@ -181,6 +175,28 @@ export type DataGridProps<TData> = {
       search?: never;
       jumpToRow?: never;
     }
+) & (
+  | {
+      /**
+       * Where a row leads: the whole row opens it (rules/ux-rules.md §12), its first cell is the
+       * link a keyboard reaches, and a › at its right end says so. Buttons, links and menus
+       * inside the row keep their own clicks.
+       */
+      getRowLink?: (row: TData) => string;
+      getRowLinkProps?: (
+        row: TData,
+      ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
+      openRowDialog?: never;
+    }
+  | {
+      /**
+       * Opens a row's details in a dialog: the whole row opens it, and a ⤢ button at its right
+       * end is the way in a keyboard reaches. A row leads to a page or opens a dialog, never both.
+       */
+      openRowDialog: (row: TData) => void;
+      getRowLink?: never;
+      getRowLinkProps?: never;
+    }
 );
 
 declare module "@tanstack/react-table" {
@@ -191,6 +207,11 @@ declare module "@tanstack/react-table" {
      * under it, such as a leaderboard's Entry column on a phone.
      */
     pinned?: "start";
+    /**
+     * What the column holds and why, in one or two plain sentences of product copy: a small (i)
+     * after the column's name shows it. Explanations live only here, never as text on the page.
+     */
+    info?: string;
     /**
      * What the column holds (`DataGridColumnType`): text, a value from a fixed set, yes/no, a
      * number, a date or a date range. The grid supplies its filter, its sort and, for numbers
@@ -240,7 +261,8 @@ const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='me
 
 /**
  * A click on a linked row opens it through the row's link, as if the link were clicked: the
- * router moves, and the link's own `onClick` runs. A click on a control in the row, one that
+ * router moves, and the link's own `onClick` runs. A row that opens a dialog does the same
+ * through its ⤢ button. A click on a control in the row, one that
  * reaches the row from a dialog or menu drawn elsewhere on the page, or the end of selecting the
  * row's text does not.
  */
@@ -252,7 +274,7 @@ function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
   if (target.closest(OWN_CLICK_SELECTOR) || window.getSelection()?.toString()) {
     return;
   }
-  event.currentTarget.querySelector<HTMLAnchorElement>("a[data-row-link]")?.click();
+  event.currentTarget.querySelector<HTMLElement>("a[data-row-link], button[data-row-dialog]")?.click();
 }
 
 /** What a header tells a screen reader about its column's sort. */
@@ -266,6 +288,7 @@ export function DataGrid<TData>({
   getRowId,
   getRowLink,
   getRowLinkProps,
+  openRowDialog,
   rowTestId,
   rowActions,
   tableTestId,
@@ -375,12 +398,14 @@ export function DataGrid<TData>({
   }
 
   // The pinned header cell needs a solid fill, or the column names scroll through it.
+  // The pinned last column: the row's actions, then the › or ⤢ that says what the row opens.
+  const hasEndColumn = Boolean(rowActions ?? getRowLink ?? openRowDialog);
   const pinnedHeaderSurface = headerTone === "scoreboard" ? "bg-surface-inverse" : PINNED_PLAIN_HEADER_SURFACE;
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
   const visibleColumnCount = useMemo(
-    () => table.getVisibleLeafColumns().length + (rowActions ? 1 : 0),
-    [rowActions, table],
+    () => table.getVisibleLeafColumns().length + (hasEndColumn ? 1 : 0),
+    [hasEndColumn, table],
   );
 
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
@@ -505,6 +530,20 @@ export function DataGrid<TData>({
                     const { column } = header;
                     const canFilter = showColumnFilters && column.getCanFilter();
                     const name = flexRender(column.columnDef.header, header.getContext());
+                    const columnInfo = column.columnDef.meta?.info;
+                    const info = columnInfo ? (
+                      <InfoPopover
+                        icon={<Info aria-hidden className="size-3.5" />}
+                        label={`About ${filterLabel(column.columnDef.header, column.id)}`}
+                        look="tooltip"
+                        testId={`data-grid-info-${column.id}`}
+                        trigger="inline"
+                      >
+                        <span className="block text-left text-sm font-normal normal-case leading-snug tracking-normal">
+                          {columnInfo}
+                        </span>
+                      </InfoPopover>
+                    ) : null;
 
                     return (
                       <th
@@ -521,13 +560,19 @@ export function DataGrid<TData>({
                             {column.getCanSort() ? (
                               <DataGridSortButton
                                 direction={column.getIsSorted()}
+                                info={info}
                                 onClick={() => column.toggleSorting(undefined, false)}
                                 testId={`data-grid-sort-${column.id}`}
                                 tone={headerTone}
                               >
                                 {name}
                               </DataGridSortButton>
-                            ) : name}
+                            ) : (
+                              <>
+                                {name}
+                                {info}
+                              </>
+                            )}
                             {canFilter ? (
                               <DataGridColumnFilter
                                 column={column}
@@ -541,9 +586,9 @@ export function DataGrid<TData>({
                       </th>
                     );
                   })}
-                  {rowActions ? (
+                  {hasEndColumn ? (
                     <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">{rowActions ? "Actions" : "Open"}</span>
                     </th>
                   ) : null}
                 </tr>
@@ -570,7 +615,7 @@ export function DataGrid<TData>({
                         )}
                         data-row-id={row.id}
                         data-testid={rowTestId?.(row.original, index)}
-                        onClick={link ? openRowFromClick : undefined}
+                        onClick={link || openRowDialog ? openRowFromClick : undefined}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td
@@ -599,7 +644,7 @@ export function DataGrid<TData>({
                             )}
                           </td>
                         ))}
-                        {rowActions ? (
+                        {hasEndColumn ? (
                           <td
                             className={cn(
                               PINNED_END_CELL,
@@ -607,7 +652,28 @@ export function DataGrid<TData>({
                             )}
                             data-testid="data-grid-row-actions"
                           >
-                            {rowActions(row.original)}
+                            <span className="inline-flex items-center justify-end gap-1">
+                              {rowActions?.(row.original)}
+                              {link ? (
+                                <ChevronRight
+                                  aria-hidden="true"
+                                  className="size-4 text-muted-foreground"
+                                  data-testid="data-grid-row-opens-page"
+                                />
+                              ) : null}
+                              {openRowDialog ? (
+                                <button
+                                  aria-label="Open details"
+                                  className="inline-flex rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  data-row-dialog=""
+                                  data-testid="data-grid-row-opens-dialog"
+                                  onClick={() => openRowDialog(row.original)}
+                                  type="button"
+                                >
+                                  <Maximize2 aria-hidden="true" className="size-4" />
+                                </button>
+                              ) : null}
+                            </span>
                           </td>
                         ) : null}
                       </tr>
@@ -629,7 +695,7 @@ export function DataGrid<TData>({
                               {detail.span?.fromColumnId === column.id ? detail.span.content : detail.cells[column.id]}
                             </td>
                           ))}
-                          {rowActions ? <td className={cn(PINNED_END_CELL, "bg-card")} /> : null}
+                          {hasEndColumn ? <td className={cn(PINNED_END_CELL, "bg-card")} /> : null}
                         </tr>
                       ))}
                     </Fragment>

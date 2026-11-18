@@ -391,8 +391,12 @@ administration area (root admin included), reusing the same shared components.
    entry's pick screen address lands there too, on `?entry=`. Any other long ranked list offers a
    way to jump to the viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
-   clicks, its first cell is the link a keyboard reaches), with no per-row Manage
-   button. Quick actions that need no page of their own sit in a `RowActionsMenu`
+   clicks, its first cell is the link a keyboard reaches, and a › at its right end says so),
+   with no per-row Manage or View details button. A row that opens a detail dialog instead
+   uses `openRowDialog`, which draws a ⤢ button there; a row never does both. A grid column
+   whose meaning isn't plain from its name explains itself in `meta.info`, which the header
+   shows behind an (i) after the name, never as text on the page; root admin grids explain
+   every column. Quick actions that need no page of their own sit in a `RowActionsMenu`
    ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
    reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
    ends with a toast. A row with no quick actions shows no "⋯". A manage list's

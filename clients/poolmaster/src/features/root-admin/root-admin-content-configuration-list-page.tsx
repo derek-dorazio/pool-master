@@ -27,7 +27,7 @@ export function RootAdminContentConfigurationListPage() {
       columnHelper.accessor((template) => `${template.name} ${template.templateKey}`, {
         id: 'template',
         header: 'Template',
-        meta: { type: { kind: 'text' } },
+        meta: { info: "The contest template's name and key, with what it sets up underneath.", type: { kind: 'text' } },
         cell: ({ row }) => (
           <div>
             <div className="text-sm font-semibold text-primary">
@@ -47,7 +47,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'scope',
           header: 'Scope',
-          meta: { type: { kind: 'enum' } },
+          meta: { info: 'The sport and contest format the template is for.', type: { kind: 'enum' } },
           cell: ({ getValue }) => (
             <span className="text-muted-foreground">{getValue()}</span>
           ),
@@ -55,7 +55,7 @@ export function RootAdminContentConfigurationListPage() {
       ),
       columnHelper.accessor('selectionType', {
         header: 'Selection',
-        meta: { type: { kind: 'enum' } },
+        meta: { info: 'How members pick in contests built from the template.', type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -66,7 +66,7 @@ export function RootAdminContentConfigurationListPage() {
         {
           id: 'status',
           header: 'Status',
-          meta: { type: { kind: 'enum' } },
+          meta: { info: 'Whether the template is active, and whether it is the default for its scope.', type: { kind: 'enum' } },
           cell: ({ row }) => (
             <div className="flex flex-wrap gap-2">
               <StatusBadge tone={row.original.active ? 'active' : 'neutral'}>

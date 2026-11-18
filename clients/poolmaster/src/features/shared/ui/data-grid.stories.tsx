@@ -114,3 +114,34 @@ const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
 export const HeaderFilters: StoryObj = {
   render: () => <DataGrid columns={EVENT_COLUMNS} data={EVENTS} emptyMessage="No events match." getRowId={(event) => event.id} />,
 };
+
+const EXPLAINED_COLUMNS: ColumnDef<Member>[] = [
+  { accessorKey: "name", header: "Name", meta: { info: "The member's display name in the league.", type: { kind: "text" } } },
+  { accessorKey: "role", header: "Role", meta: { info: "Owners run the league; members play in it.", type: { kind: "text" } } },
+  { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
+];
+
+/**
+ * A column that explains itself shows an (i) after its name. A row that leads to a page ends in
+ * a ›; a row that opens a dialog ends in a ⤢ button. The whole row is still the click target.
+ */
+export const ColumnInfoAndRowIcons: StoryObj = {
+  render: () => (
+    <div className="space-y-6">
+      <DataGrid
+        columns={EXPLAINED_COLUMNS}
+        data={MEMBERS.slice(0, 4)}
+        emptyMessage="No members match."
+        getRowId={(member) => member.id}
+        getRowLink={(member) => `/members/${member.id}`}
+      />
+      <DataGrid
+        columns={EXPLAINED_COLUMNS}
+        data={MEMBERS.slice(4, 8)}
+        emptyMessage="No members match."
+        getRowId={(member) => member.id}
+        openRowDialog={() => undefined}
+      />
+    </div>
+  ),
+};
