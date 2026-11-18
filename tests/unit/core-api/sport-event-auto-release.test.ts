@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import {
   BackgroundJobType,
   ReleaseAttemptOutcome,
@@ -177,6 +177,11 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
     expect(statusOf(store, inWindow.id)).toBe(SportEventStatus.DRAFT);
   });
 
+  it('reports a skipped attempt as stored JSON with its reason alone', () => {
+    expect(releaseAttemptResultToJson({ outcome: ReleaseAttemptOutcome.SKIPPED, reason: ReleaseAttemptSkipReason.NOT_DRAFT }))
+      .toEqual({ outcome: 'SKIPPED', reason: 'NOT_DRAFT' });
+  });
+
   it('reports the attempt as stored JSON: the start as an ISO string, every other value as it is', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
@@ -270,6 +275,22 @@ describe('SportEventAutoReleaseScheduler: the hourly sweep (#1823)', () => {
     await scheduler.runSweep();
 
     expect(jobRows.rows).toHaveLength(1);
+  });
+
+  it('sweeps on its timer once started, and no more once stopped', async () => {
+    jest.useFakeTimers();
+    try {
+      const { store, sportLeague, scheduler, jobRows } = setup();
+      await readySyncedDraft(store, sportLeague.id, 3);
+
+      scheduler.start();
+      await jest.advanceTimersByTimeAsync(60 * 1000);
+      scheduler.stop();
+
+      expect(jobRows.rows).toHaveLength(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('leaves alone a draft not linked to its league\'s sync provider', async () => {

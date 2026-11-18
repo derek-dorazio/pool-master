@@ -8787,7 +8787,7 @@ export type SportEventAdminCountsDto = {
 export type ReleaseCheckDto = {
     key: 'NOT_STARTED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8797,7 +8797,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'ROUNDS_SCHEDULED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8807,7 +8807,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'FIELD_LOADED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8817,7 +8817,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'FIELD_LINKED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8827,7 +8827,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'TIERS_ASSIGNED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8837,7 +8837,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'TIERS_FILLED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8847,7 +8847,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'PRICES_ASSIGNED';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8857,7 +8857,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'BRACKET_COMPLETE';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -8867,7 +8867,7 @@ export type ReleaseCheckDto = {
 } | {
     key: 'CONTEST_SETUPS_ON';
     /**
-     * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+     * Whether the check passed.
      */
     passed: boolean;
     /**
@@ -9014,12 +9014,12 @@ export type SportEventDto = {
      */
     tierCount: number;
     /**
-     * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.
+     * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
      */
     releaseChecks: Array<{
         key: 'NOT_STARTED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9029,7 +9029,7 @@ export type SportEventDto = {
     } | {
         key: 'ROUNDS_SCHEDULED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9039,7 +9039,7 @@ export type SportEventDto = {
     } | {
         key: 'FIELD_LOADED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9049,7 +9049,7 @@ export type SportEventDto = {
     } | {
         key: 'FIELD_LINKED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9059,7 +9059,7 @@ export type SportEventDto = {
     } | {
         key: 'TIERS_ASSIGNED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9069,7 +9069,7 @@ export type SportEventDto = {
     } | {
         key: 'TIERS_FILLED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9079,7 +9079,7 @@ export type SportEventDto = {
     } | {
         key: 'PRICES_ASSIGNED';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9089,7 +9089,7 @@ export type SportEventDto = {
     } | {
         key: 'BRACKET_COMPLETE';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9099,7 +9099,7 @@ export type SportEventDto = {
     } | {
         key: 'CONTEST_SETUPS_ON';
         /**
-         * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+         * Whether the check passed.
          */
         passed: boolean;
         /**
@@ -9310,12 +9310,12 @@ export type SportEventListResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9325,7 +9325,7 @@ export type SportEventListResponse = {
         } | {
             key: 'ROUNDS_SCHEDULED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9335,7 +9335,7 @@ export type SportEventListResponse = {
         } | {
             key: 'FIELD_LOADED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9345,7 +9345,7 @@ export type SportEventListResponse = {
         } | {
             key: 'FIELD_LINKED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9355,7 +9355,7 @@ export type SportEventListResponse = {
         } | {
             key: 'TIERS_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9365,7 +9365,7 @@ export type SportEventListResponse = {
         } | {
             key: 'TIERS_FILLED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9375,7 +9375,7 @@ export type SportEventListResponse = {
         } | {
             key: 'PRICES_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9385,7 +9385,7 @@ export type SportEventListResponse = {
         } | {
             key: 'BRACKET_COMPLETE';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9395,7 +9395,7 @@ export type SportEventListResponse = {
         } | {
             key: 'CONTEST_SETUPS_ON';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9601,12 +9601,12 @@ export type SportEventResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9616,7 +9616,7 @@ export type SportEventResponse = {
         } | {
             key: 'ROUNDS_SCHEDULED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9626,7 +9626,7 @@ export type SportEventResponse = {
         } | {
             key: 'FIELD_LOADED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9636,7 +9636,7 @@ export type SportEventResponse = {
         } | {
             key: 'FIELD_LINKED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9646,7 +9646,7 @@ export type SportEventResponse = {
         } | {
             key: 'TIERS_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9656,7 +9656,7 @@ export type SportEventResponse = {
         } | {
             key: 'TIERS_FILLED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9666,7 +9666,7 @@ export type SportEventResponse = {
         } | {
             key: 'PRICES_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9676,7 +9676,7 @@ export type SportEventResponse = {
         } | {
             key: 'BRACKET_COMPLETE';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9686,7 +9686,7 @@ export type SportEventResponse = {
         } | {
             key: 'CONTEST_SETUPS_ON';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9963,12 +9963,12 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9978,7 +9978,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'ROUNDS_SCHEDULED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9988,7 +9988,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'FIELD_LOADED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -9998,7 +9998,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'FIELD_LINKED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -10008,7 +10008,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'TIERS_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -10018,7 +10018,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'TIERS_FILLED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -10028,7 +10028,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'PRICES_ASSIGNED';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -10038,7 +10038,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'BRACKET_COMPLETE';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -10048,7 +10048,7 @@ export type ImportSportEventYearFromProviderResponse = {
         } | {
             key: 'CONTEST_SETUPS_ON';
             /**
-             * Whether the check passed. The event is released, by hand or automatically, only when every check passes.
+             * Whether the check passed.
              */
             passed: boolean;
             /**
@@ -32194,7 +32194,7 @@ export type ReleaseEventErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete.
+     * SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete. The rounds, provider-link and contest-setup ready checks hold only the automatic release (#1823).
      */
     422: ErrorEnvelope;
 };

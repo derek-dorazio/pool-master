@@ -20607,7 +20607,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "string",
@@ -20633,7 +20633,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "integer",
@@ -20660,7 +20660,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "integer",
@@ -20687,7 +20687,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "integer",
@@ -20714,7 +20714,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "integer",
@@ -20741,7 +20741,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "array",
@@ -20769,7 +20769,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
@@ -20799,7 +20799,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "array",
@@ -20827,7 +20827,7 @@
               },
               "passed": {
                 "type": "boolean",
-                "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                "description": "Whether the check passed."
               },
               "value": {
                 "type": "integer",
@@ -21102,7 +21102,7 @@
             "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
           },
           "releaseChecks": {
-            "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+            "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
             "type": [
               "array",
               "null"
@@ -21121,7 +21121,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "string",
@@ -21147,7 +21147,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "integer",
@@ -21174,7 +21174,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "integer",
@@ -21201,7 +21201,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "integer",
@@ -21228,7 +21228,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "integer",
@@ -21255,7 +21255,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "array",
@@ -21283,7 +21283,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
@@ -21313,7 +21313,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "array",
@@ -21341,7 +21341,7 @@
                     },
                     "passed": {
                       "type": "boolean",
-                      "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                      "description": "Whether the check passed."
                     },
                     "value": {
                       "type": "integer",
@@ -21780,7 +21780,7 @@
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "releaseChecks": {
-                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                   "type": [
                     "array",
                     "null"
@@ -21799,7 +21799,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "string",
@@ -21825,7 +21825,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -21852,7 +21852,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -21879,7 +21879,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -21906,7 +21906,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -21933,7 +21933,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "array",
@@ -21961,7 +21961,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
@@ -21991,7 +21991,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "array",
@@ -22019,7 +22019,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -22445,7 +22445,7 @@
                 "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
               },
               "releaseChecks": {
-                "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                 "type": [
                   "array",
                   "null"
@@ -22464,7 +22464,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "string",
@@ -22490,7 +22490,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "integer",
@@ -22517,7 +22517,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "integer",
@@ -22544,7 +22544,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "integer",
@@ -22571,7 +22571,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "integer",
@@ -22598,7 +22598,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "array",
@@ -22626,7 +22626,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
@@ -22656,7 +22656,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "array",
@@ -22684,7 +22684,7 @@
                         },
                         "passed": {
                           "type": "boolean",
-                          "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                          "description": "Whether the check passed."
                         },
                         "value": {
                           "type": "integer",
@@ -23231,7 +23231,7 @@
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "releaseChecks": {
-                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The manual release and the automatic release both pass only when every check passes. Filled on a root admin's read of the one event and on every admin action's answer; null on lists, for anyone but a root admin, and once the event is released.",
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                   "type": [
                     "array",
                     "null"
@@ -23250,7 +23250,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "string",
@@ -23276,7 +23276,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -23303,7 +23303,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -23330,7 +23330,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -23357,7 +23357,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -23384,7 +23384,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "array",
@@ -23412,7 +23412,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
@@ -23442,7 +23442,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "array",
@@ -23470,7 +23470,7 @@
                           },
                           "passed": {
                             "type": "boolean",
-                            "description": "Whether the check passed. The event is released, by hand or automatically, only when every check passes."
+                            "description": "Whether the check passed."
                           },
                           "value": {
                             "type": "integer",
@@ -77356,7 +77356,7 @@
             }
           },
           "422": {
-            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete.",
+            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete. The rounds, provider-link and contest-setup ready checks hold only the automatic release (#1823).",
             "content": {
               "application/json": {
                 "schema": {
