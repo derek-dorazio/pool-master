@@ -140,8 +140,9 @@ born `DRAFT` and wait for an admin's release, for now. A provider event whose st
 passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
 as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
 league's sport, and the league has a match keyword. One league's failed read fails only its own
-job, which retries. Every season league's job is due before any Clutch Card league's (the schedule
-queues those a few minutes later): a Clutch Card event names its season event (the World Series
+job, which retries. Within one scheduled pass, each Clutch Card league's job is due 10 minutes
+after the season leagues' jobs (an admin's Sync now runs at once, and a Sync now with no year
+pressed while a scheduled job waits answers that job, so it waits the same 10 minutes): a Clutch Card event names its season event (the World Series
 round names the MLB Postseason, #1820), so a new season event is created before its rounds are
 imported. A Clutch Card provider event whose season event is not on the site, or not one event, is
 skipped as `NO_PARENT_EVENT` and created by a later sync.

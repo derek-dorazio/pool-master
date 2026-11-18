@@ -324,14 +324,14 @@ describe('LeagueEventsSync', () => {
       expect(syncRuns.rows[0]?.payload).toMatchObject({ detail: expect.stringContaining('Interrupted') });
     });
 
-    it('stops before importing when another task has claimed the job, and marks its own run FAILED', async () => {
+    it('stops before importing or recording a run when another task has claimed the job', async () => {
       const pga = syncedLeague();
       const { sync, syncRuns, sportEvents } = build({ leagues: [pga] });
 
       await expect(sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease: () => Promise.resolve(false) }))
         .rejects.toThrow('Another try took over');
       expect(sportEvents.importProviderEventYear).not.toHaveBeenCalled();
-      expect(syncRuns.rows.map((run) => run.status)).toEqual([ProviderSyncRunStatus.FAILED]);
+      expect(syncRuns.rows).toHaveLength(0);
     });
 
     it('renews its lease before each year, so a sync slowed by the provider keeps its claim', async () => {

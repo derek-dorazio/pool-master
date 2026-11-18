@@ -95,10 +95,15 @@ describe('background job runner (#1440)', () => {
 
   it('answers false to a renewal once another task has claimed the job, and writes no lease', async () => {
     let renewed: boolean | undefined;
-    const { jobs, runner, queue } = setup({
+    let leaseBefore: Date | undefined;
+    let leaseAfter: Date | undefined;
+    const { jobs, runner, queue, time } = setup({
       handler: async (_payload, context) => {
         jobs.rows[0].attempts += 1;
+        leaseBefore = jobs.rows[0].leaseUntil;
+        time.advance(MINUTE);
         renewed = await context.renewLease();
+        leaseAfter = jobs.rows[0].leaseUntil;
       },
     });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
@@ -106,6 +111,7 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(renewed).toBe(false);
+    expect(leaseAfter).toEqual(leaseBefore);
   });
 
   it('keeps what a handler reports it did on the SUCCEEDED job, for Activity to show (#1819)', async () => {

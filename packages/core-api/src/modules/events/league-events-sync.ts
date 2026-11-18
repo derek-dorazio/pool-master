@@ -63,10 +63,10 @@ export interface LeagueEventsSyncOptions {
   now?: () => Date;
 }
 
-/** What one year of a league's events sync did. */
 /** How long after the season leagues' jobs a Clutch Card league's scheduled job is due. */
 export const CLUTCH_CARD_SYNC_DELAY_MS = 10 * 60_000;
 
+/** What one year of a league's events sync did. */
 interface YearSync {
   eventYear: number;
   created: ProviderEventYearImport['created'];
@@ -128,6 +128,8 @@ export class LeagueEventsSync {
     const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
     if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);
 
+    // A try whose job another task has claimed stops before it records a run of its own.
+    if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
     const startedAt = this.now();
     const basePayload = { runType: LEAGUE_EVENTS_SYNC_RUN_TYPE, eventYears: payload.eventYears };
     const run = await this.options.syncRuns.create({
@@ -148,10 +150,10 @@ export class LeagueEventsSync {
 
     const years: YearSync[] = [];
     try {
-      for (const eventYear of payload.eventYears) {
-        // A year's reads can wait on the provider's rate limit, so each year starts on a fresh
-        // lease; a try whose job another task has claimed stops here.
-        if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
+      for (const [index, eventYear] of payload.eventYears.entries()) {
+        // A year's reads can wait on the provider's rate limit, so each later year starts on a
+        // fresh lease; a try whose job another task has claimed stops here.
+        if (index > 0 && !await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
         years.push(await this.syncYear(sportLeague.id, providerId, eventYear));
         // poolmaster-allow-query-in-loop: the run's progress after each year
         await this.options.syncRuns.update(run.id, {
