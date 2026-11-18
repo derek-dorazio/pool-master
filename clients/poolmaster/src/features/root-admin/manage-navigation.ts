@@ -49,6 +49,9 @@ export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
   return `${buildSportLeagueListPath(sport)}/${sportLeagueId}`;
 }
 
+/** The platform's tier and pricing profiles (#1849), beside the sports under Sports. */
+export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
+
 /** Where `/manage/sports` itself lands: the first supported sport's events. */
 export const SPORTS_LANDING_PATH = buildSportEventListPath(SUPPORTED_SPORTS[0]);
 
@@ -104,18 +107,21 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
 
 /**
  * Under Sports, the second row: one tab per supported sport, in enum order, named by its
- * definition. Null anywhere else.
+ * definition, then Profiles. Null anywhere else.
  */
 export function buildManageSportTabs(pathname: string): PageLinkTab[] | null {
   if (!isAtOrUnder(pathname, SPORTS_PATH)) {
     return null;
   }
-  return SUPPORTED_SPORTS.map((sport) => ({
-    isActive: isAtOrUnder(pathname, buildSportPath(sport)),
-    label: getSportDefinition(sport).name,
-    testId: `root-admin-manage-menu-${sportPathSegment(sport)}`,
-    to: buildSportPath(sport),
-  }));
+  return [
+    ...SUPPORTED_SPORTS.map((sport) => ({
+      isActive: isAtOrUnder(pathname, buildSportPath(sport)),
+      label: getSportDefinition(sport).name,
+      testId: `root-admin-manage-menu-${sportPathSegment(sport)}`,
+      to: buildSportPath(sport),
+    })),
+    { isActive: isAtOrUnder(pathname, PROFILES_PATH), label: 'Profiles', testId: 'root-admin-manage-menu-profiles', to: PROFILES_PATH },
+  ];
 }
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
@@ -130,6 +136,7 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   new: 'New',
   edit: 'Edit details',
   schedule: 'Schedule',
+  profiles: 'Profiles',
 };
 
 /** A sport's three lists, labelled in the sport's own words: "Tournaments", "Golfers", "Tours". */
