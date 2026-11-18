@@ -1292,6 +1292,7 @@ model AmbiguousFeedParticipant {
 
   @@unique([providerId, externalId])
   @@index([sportLeagueId, resolvedAt])
+  @@index([resolvedAt])
   @@index([resolvedParticipantId])
   @@map("ambiguous_feed_participants")
 }

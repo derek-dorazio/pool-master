@@ -183,3 +183,34 @@ describe('feed participants needing linking (#1824)', () => {
     await expect(heldRowsOf(golfer.externalId)).resolves.toEqual([expect.objectContaining({ resolvedParticipantId: first.id, resolvedAt: expect.any(Date) })]);
   });
 });
+
+describe('PrismaAmbiguousFeedParticipantRepository (#1824)', () => {
+  it('reads a row with a deleted candidate left out and its events soonest first, lists it among every league\'s open rows, and reads no row for an unknown id', async () => {
+    const prisma = getPrisma();
+    const { first, second, golfer, detail, event } = await twinsAndField();
+    await persistence().persistEventDetailWithDiagnostics(detail);
+    const sooner = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: `${detail.externalId}-sooner`, name: `${detail.name} Sooner`, startDate: new Date('2027-07-01T12:00:00.000Z') });
+    await persistence().persistEventDetailWithDiagnostics({ ...detail, externalId: `${detail.externalId}-sooner`, name: `${detail.name} Sooner` });
+    await prisma.participant.update({ where: { id: second.id }, data: { name: `${golfer.name} renamed` } });
+    const [row] = await heldRowsOf(golfer.externalId);
+    // A candidate deleted since: the row still names it, the read leaves it out.
+    await prisma.ambiguousFeedParticipant.update({ where: { id: row.id }, data: { candidateParticipantIds: [first.id, randomUUID()] } });
+
+    const read = await repository().findById(row.id);
+
+    expect(read).toMatchObject({ candidates: [{ participantId: first.id, name: golfer.name }], resolvedAt: null, resolvedParticipantId: null });
+    expect(read?.events.map((seen) => seen.sportEventId)).toEqual([sooner.id, event.id]);
+    await expect(repository().listOpen({}).then((rows) => rows.some((listed) => listed.id === row.id))).resolves.toBe(true);
+    await expect(repository().findById(randomUUID())).resolves.toBeNull();
+    await expect(repository().countOpenForEvent(sooner.id)).resolves.toBe(1);
+  });
+
+  it('lists nothing, with no read of candidates, for a sport league with no open rows', async () => {
+    const { statements } = await recordStatements(async () => {
+      const rows = await repository().listOpen({ sportLeagueId: randomUUID() });
+      expect(rows).toEqual([]);
+    });
+
+    expect(statementsOn(statements, StatementVerb.SELECT, 'participants')).toHaveLength(0);
+  });
+});

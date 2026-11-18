@@ -35,6 +35,9 @@ CREATE TABLE "ambiguous_feed_participant_sightings" (
 CREATE INDEX "ambiguous_feed_participants_sport_league_id_resolved_at_idx" ON "ambiguous_feed_participants"("sport_league_id", "resolved_at");
 
 -- CreateIndex
+CREATE INDEX "ambiguous_feed_participants_resolved_at_idx" ON "ambiguous_feed_participants"("resolved_at");
+
+-- CreateIndex
 CREATE INDEX "ambiguous_feed_participants_resolved_participant_id_idx" ON "ambiguous_feed_participants"("resolved_participant_id");
 
 -- CreateIndex
