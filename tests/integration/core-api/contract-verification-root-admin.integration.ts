@@ -340,6 +340,8 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     scheduler,
+    sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
+    webhookProviderIds: [],
     jobs: backgroundJobs.queue,
   });
   const leagueEventsSync = new LeagueEventsSync({
@@ -956,6 +958,9 @@ describe('Contract verification (root admin)', () => {
         providerId: 'contract-provider',
         status: 'HEALTHY',
         activeEventCount: 1,
+        requestsPerMinute: null,
+        webhooksEnabled: false,
+        syncedSportLeagueCount: 0,
       });
 
       const syncRunsRes = await app.inject({

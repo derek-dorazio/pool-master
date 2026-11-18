@@ -957,12 +957,12 @@ export type BillingConfig = {
 };
 
 /**
- * Partial ingestion scheduling override used for global updates and per-sport overrides.
+ * Partial ingestion schedule update: only the policies and properties it names change.
  */
-export type IngestionScheduleConfigOverride = {
+export type IngestionScheduleConfigPatch = {
     scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
-     * Partial feed-scheduling override payload.
+     * Partial feed-scheduling update payload.
      */
     healthCheck?: {
         /**
@@ -983,7 +983,28 @@ export type IngestionScheduleConfigOverride = {
         lookaheadDays?: number;
     };
     /**
-     * Partial feed-scheduling override payload.
+     * Partial feed-scheduling update payload.
+     */
+    eventList?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling update payload.
      */
     eventParticipants?: {
         /**
@@ -1004,7 +1025,7 @@ export type IngestionScheduleConfigOverride = {
         lookaheadDays?: number;
     };
     /**
-     * Partial feed-scheduling override payload.
+     * Partial feed-scheduling update payload.
      */
     eventLiveScores?: {
         /**
@@ -1027,7 +1048,7 @@ export type IngestionScheduleConfigOverride = {
 };
 
 /**
- * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+ * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
  */
 export type IngestionScheduleConfig = {
     /**
@@ -1038,6 +1059,27 @@ export type IngestionScheduleConfig = {
      * Scheduling policy for provider health checks.
      */
     healthCheck: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+     */
+    eventList: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -1096,77 +1138,6 @@ export type IngestionScheduleConfig = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
-    };
-    /**
-     * Per-sport scheduling overrides applied on top of the global feed policies.
-     */
-    perSportOverrides: {
-        [key: string]: {
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            healthCheck?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            eventParticipants?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Partial feed-scheduling override payload.
-             */
-            eventLiveScores?: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled?: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-        };
     };
 };
 
@@ -15509,6 +15480,27 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
+         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         */
+        eventList: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+             */
+            lookaheadDays?: number;
+        };
+        /**
          * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
@@ -15549,77 +15541,6 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-            };
         };
     };
     /**
@@ -15652,6 +15573,27 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
+         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         */
+        eventList: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+             */
+            lookaheadDays?: number;
+        };
+        /**
          * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
@@ -15692,77 +15634,6 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-            };
         };
     };
 } | {
@@ -16570,6 +16441,27 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
+             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             */
+            eventList: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+                 */
+                lookaheadDays?: number;
+            };
+            /**
              * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
              */
             eventParticipants: {
@@ -16610,77 +16502,6 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * Per-sport scheduling overrides applied on top of the global feed policies.
-             */
-            perSportOverrides: {
-                [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    healthCheck?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventParticipants?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventLiveScores?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                };
             };
         };
         /**
@@ -16713,6 +16534,27 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
+             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             */
+            eventList: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+                 */
+                lookaheadDays?: number;
+            };
+            /**
              * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
              */
             eventParticipants: {
@@ -16753,77 +16595,6 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * Per-sport scheduling overrides applied on top of the global feed policies.
-             */
-            perSportOverrides: {
-                [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    healthCheck?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventParticipants?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventLiveScores?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                };
             };
         };
     } | {
@@ -17599,6 +17370,27 @@ export type SettingsGroupUpdateRequest = {
             lookaheadDays?: number;
         };
         /**
+         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         */
+        eventList: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+             */
+            lookaheadDays?: number;
+        };
+        /**
          * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
@@ -17639,77 +17431,6 @@ export type SettingsGroupUpdateRequest = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-            };
         };
     };
     /**
@@ -18110,6 +17831,27 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
+         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         */
+        eventList: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+             */
+            lookaheadDays?: number;
+        };
+        /**
          * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
@@ -18150,77 +17892,6 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-            };
         };
     } | null;
     /**
@@ -18253,6 +17924,27 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
+         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         */
+        eventList: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+             */
+            lookaheadDays?: number;
+        };
+        /**
          * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
@@ -18293,77 +17985,6 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                     */
-                    lookaheadDays?: number;
-                };
-            };
         };
     };
 } | {
@@ -19127,6 +18748,27 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
+             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             */
+            eventList: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+                 */
+                lookaheadDays?: number;
+            };
+            /**
              * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
              */
             eventParticipants: {
@@ -19167,77 +18809,6 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * Per-sport scheduling overrides applied on top of the global feed policies.
-             */
-            perSportOverrides: {
-                [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    healthCheck?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventParticipants?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventLiveScores?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                };
             };
         } | null;
         /**
@@ -19270,6 +18841,27 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
+             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             */
+            eventList: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+                 */
+                lookaheadDays?: number;
+            };
+            /**
              * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
              */
             eventParticipants: {
@@ -19310,77 +18902,6 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * Per-sport scheduling overrides applied on top of the global feed policies.
-             */
-            perSportOverrides: {
-                [key: string]: {
-                    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    healthCheck?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventParticipants?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                    /**
-                     * Partial feed-scheduling override payload.
-                     */
-                    eventLiveScores?: {
-                        /**
-                         * Whether the feed should be scheduled automatically.
-                         */
-                        enabled?: boolean;
-                        /**
-                         * How often the feed should run, in minutes, for interval-driven orchestration.
-                         */
-                        intervalMinutes?: number;
-                        /**
-                         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                         */
-                        intervalSeconds?: number;
-                        /**
-                         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                         */
-                        lookaheadDays?: number;
-                    };
-                };
             };
         };
     } | {
@@ -26791,6 +26312,18 @@ export type ProviderSummaryDto = {
      * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
      */
     supportsLiveSimulation: boolean;
+    /**
+     * The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced.
+     */
+    requestsPerMinute: number | null;
+    /**
+     * True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted.
+     */
+    webhooksEnabled: boolean;
+    /**
+     * The active sport leagues whose events this provider's sync creates.
+     */
+    syncedSportLeagueCount: number;
 };
 
 /**
@@ -26838,6 +26371,18 @@ export type ProviderListResponse = {
          * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
          */
         supportsLiveSimulation: boolean;
+        /**
+         * The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced.
+         */
+        requestsPerMinute: number | null;
+        /**
+         * True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted.
+         */
+        webhooksEnabled: boolean;
+        /**
+         * The active sport leagues whose events this provider's sync creates.
+         */
+        syncedSportLeagueCount: number;
     }>;
 };
 
@@ -36059,7 +35604,7 @@ export type GetIngestionScheduleError = GetIngestionScheduleErrors[keyof GetInge
 
 export type GetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
      */
     200: IngestionScheduleConfig;
 };
@@ -36067,7 +35612,7 @@ export type GetIngestionScheduleResponses = {
 export type GetIngestionScheduleResponse = GetIngestionScheduleResponses[keyof GetIngestionScheduleResponses];
 
 export type UpdateIngestionScheduleData = {
-    body: IngestionScheduleConfigOverride;
+    body: IngestionScheduleConfigPatch;
     path?: never;
     query?: never;
     url: '/api/v1/platform/ingestion-schedule';
@@ -36088,82 +35633,12 @@ export type UpdateIngestionScheduleError = UpdateIngestionScheduleErrors[keyof U
 
 export type UpdateIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
      */
     200: IngestionScheduleConfig;
 };
 
 export type UpdateIngestionScheduleResponse = UpdateIngestionScheduleResponses[keyof UpdateIngestionScheduleResponses];
-
-export type SetSportIngestionOverrideData = {
-    body: IngestionScheduleConfigOverride;
-    path: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    };
-    query?: never;
-    url: '/api/v1/platform/ingestion-schedule/{sport}';
-};
-
-export type SetSportIngestionOverrideErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-};
-
-export type SetSportIngestionOverrideError = SetSportIngestionOverrideErrors[keyof SetSportIngestionOverrideErrors];
-
-export type SetSportIngestionOverrideResponses = {
-    /**
-     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
-     */
-    200: IngestionScheduleConfig;
-};
-
-export type SetSportIngestionOverrideResponse = SetSportIngestionOverrideResponses[keyof SetSportIngestionOverrideResponses];
-
-export type ResetSportIngestionOverrideData = {
-    body?: never;
-    path: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    };
-    query?: never;
-    url: '/api/v1/platform/ingestion-schedule/{sport}/reset';
-};
-
-export type ResetSportIngestionOverrideErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-};
-
-export type ResetSportIngestionOverrideError = ResetSportIngestionOverrideErrors[keyof ResetSportIngestionOverrideErrors];
-
-export type ResetSportIngestionOverrideResponses = {
-    /**
-     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
-     */
-    200: IngestionScheduleConfig;
-};
-
-export type ResetSportIngestionOverrideResponse = ResetSportIngestionOverrideResponses[keyof ResetSportIngestionOverrideResponses];
 
 export type ResetIngestionScheduleData = {
     body?: never;
@@ -36187,7 +35662,7 @@ export type ResetIngestionScheduleError = ResetIngestionScheduleErrors[keyof Res
 
 export type ResetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
      */
     200: IngestionScheduleConfig;
 };

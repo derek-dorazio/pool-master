@@ -17,7 +17,8 @@
  */
 
 import { SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
-import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
+import type { IngestionFeedPolicyKey, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
+import { SCHEDULE_RECHECK_MS, schedulePolicyDelayMs } from '../../../core/schedule-policy-delay';
 import type { FastifyBaseLogger } from 'fastify';
 import type { JobLock } from '../../../core/job-lock';
 import type { ProviderRegistry } from './provider-registry';
@@ -123,9 +124,9 @@ export interface IngestionCallbacks {
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
 }
 
+/** One schedule for every sport league (#1871). */
 export interface IngestionScheduleConfigReader {
   getConfig(): Promise<IngestionScheduleConfig>;
-  getPerSportConfig(sport: string): Promise<IngestionScheduleConfig>;
 }
 
 /** A linked event a scheduled sweep syncs: the provider it is linked to and its id there. */
@@ -259,7 +260,7 @@ export class IngestionScheduler {
       'configured sport loop reconciliation',
       async () => this.reconcileConfiguredSportLoops(),
       // eslint-disable-next-line @typescript-eslint/require-await -- resolveDelayMs must return Promise<number>; this constant needs the async wrap, not an await.
-      async () => CONFIG_RECHECK_MS,
+      async () => SCHEDULE_RECHECK_MS,
     );
 
     this.logger?.info('Ingestion scheduler started');
@@ -279,13 +280,13 @@ export class IngestionScheduler {
         this.startRecurringLoop(
           `${sport} participant sync`,
           async () => this.runConfiguredSportFieldSync(sport),
-          async () => this.getFieldSyncDelayMs(sport),
+          async () => this.getFieldSyncDelayMs(),
           `ingestion:${sport}:participants`,
         );
         this.startRecurringLoop(
           `${sport} live score sync`,
           async () => this.runConfiguredLiveScoreSweep(sport),
-          async () => this.getLiveScoreSweepDelayMs(sport),
+          async () => this.getLiveScoreSweepDelayMs(),
           `ingestion:${sport}:live-scores`,
         );
         this.startedSportLoops.add(sport);
@@ -443,7 +444,7 @@ export class IngestionScheduler {
 
     // A synced sport league's fields load whether or not the admin has turned the feed on for
     // every linked event (ADR 0011, #1726); the switch widens it to all of them.
-    const config = await this.getSportConfig(sport);
+    const config = await this.getGlobalConfig();
     const syncedLeaguesOnly = !config.eventParticipants.enabled;
 
     const window = resolveEventParticipantSyncWindow(config, this.getNow());
@@ -503,7 +504,7 @@ export class IngestionScheduler {
       return;
     }
 
-    const config = await this.getSportConfig(sport);
+    const config = await this.getGlobalConfig();
     if (!config.eventLiveScores.enabled) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
       return;
@@ -517,7 +518,7 @@ export class IngestionScheduler {
 
     const now = this.getNow();
     const listed = await eventReader.listLiveScoreEvents({ sport, now });
-    const events = this.dueLiveScoreEvents(sport, listed, now, toDelayMs(config.eventLiveScores));
+    const events = this.dueLiveScoreEvents(sport, listed, now, schedulePolicyDelayMs(config.eventLiveScores));
 
     this.logger?.debug({
       sport,
@@ -635,7 +636,7 @@ export class IngestionScheduler {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
       return null;
     }
-    if (!(await this.getSportConfig(request.sport)).eventLiveScores.enabled) {
+    if (!(await this.getGlobalConfig()).eventLiveScores.enabled) {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because live score syncs are off for the sport');
       return null;
     }
@@ -881,33 +882,23 @@ export class IngestionScheduler {
     }
   }
 
-  private async getGlobalDelayMs(
-    feed: keyof Pick<IngestionScheduleConfig, 'healthCheck'>,
-  ): Promise<number> {
+  private async getGlobalDelayMs(feed: IngestionFeedPolicyKey): Promise<number> {
     const config = await this.getGlobalConfig();
-    return toDelayMs(config[feed]);
-  }
-
-  private async getSportDelayMs(
-    sport: Sport,
-    feed: keyof Omit<IngestionScheduleConfig, 'perSportOverrides' | 'scheduledSports'>,
-  ): Promise<number> {
-    const config = await this.getSportConfig(sport);
-    return toDelayMs(config[feed]);
+    return schedulePolicyDelayMs(config[feed]);
   }
 
   /**
    * The field loop's interval. It runs for synced sport leagues even while the admin's switch is
    * off (#1726), so the switch never shortens it to the config recheck.
    */
-  private async getFieldSyncDelayMs(sport: Sport): Promise<number> {
-    const config = await this.getSportConfig(sport);
-    return toDelayMs({ ...config.eventParticipants, enabled: true });
+  private async getFieldSyncDelayMs(): Promise<number> {
+    const config = await this.getGlobalConfig();
+    return schedulePolicyDelayMs({ ...config.eventParticipants, enabled: true });
   }
 
   /** The admin's live-score interval, shortened to a tick while a notified provider's cadence is set. */
-  private async getLiveScoreSweepDelayMs(sport: Sport): Promise<number> {
-    const adminDelayMs = await this.getSportDelayMs(sport, 'eventLiveScores');
+  private async getLiveScoreSweepDelayMs(): Promise<number> {
+    const adminDelayMs = await this.getGlobalDelayMs('eventLiveScores');
     return this.options.notifiedProviderCadence ? Math.min(adminDelayMs, LIVE_SCORE_SWEEP_TICK_MS) : adminDelayMs;
   }
 
@@ -946,14 +937,6 @@ export class IngestionScheduler {
     return sports.includes(sport);
   }
 
-  private async getSportConfig(sport: Sport): Promise<IngestionScheduleConfig> {
-    if (!this.options.configReader) {
-      return defaultIngestionScheduleConfig();
-    }
-
-    return this.options.configReader.getPerSportConfig(sport);
-  }
-
   /** The registered provider with this id, when it serves the sport. */
   private providerServing(sport: Sport, providerId: string): SportDataProvider | null {
     const provider = this.registry.getProviderById(providerId);
@@ -969,7 +952,7 @@ export class IngestionScheduler {
       return await resolveDelayMs();
     } catch (error) {
       this.logger?.error({ error }, 'Falling back to config recheck delay because policy resolution failed');
-      return CONFIG_RECHECK_MS;
+      return SCHEDULE_RECHECK_MS;
     }
   }
 }
@@ -1139,42 +1122,25 @@ function toIngestionFailureLog(error: unknown): {
   };
 }
 
-const CONFIG_RECHECK_MS = 60 * 1000;
-
 function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
-    return {
-      scheduledSports: [...SUPPORTED_SPORTS],
-      healthCheck: {
-        enabled: true,
-        intervalMinutes: 5,
-      },
+  return {
+    scheduledSports: [...SUPPORTED_SPORTS],
+    healthCheck: {
+      enabled: true,
+      intervalMinutes: 5,
+    },
+    eventList: {
+      enabled: true,
+      intervalMinutes: 360,
+    },
     eventParticipants: {
-        enabled: false,
-        intervalMinutes: 360,
-        lookaheadDays: 14,
-      },
+      enabled: false,
+      intervalMinutes: 360,
+      lookaheadDays: 14,
+    },
     eventLiveScores: {
-        enabled: true,
-        intervalSeconds: 300,
-      },
-    perSportOverrides: {},
+      enabled: true,
+      intervalSeconds: 300,
+    },
   };
-}
-
-function toDelayMs(
-  policy: IngestionScheduleConfig[keyof Omit<IngestionScheduleConfig, 'perSportOverrides' | 'scheduledSports'>],
-): number {
-  if (!policy.enabled) {
-    return CONFIG_RECHECK_MS;
-  }
-
-  if (policy.intervalSeconds) {
-    return policy.intervalSeconds * 1000;
-  }
-
-  if (policy.intervalMinutes) {
-    return policy.intervalMinutes * 60 * 1000;
-  }
-
-  return CONFIG_RECHECK_MS;
 }

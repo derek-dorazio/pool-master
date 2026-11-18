@@ -68,7 +68,6 @@ import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-man
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
 import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
-import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
@@ -472,10 +471,6 @@ export const router = createBrowserRouter([
                   {
                     path: 'settings/ingestion-schedule',
                     element: <RootAdminIngestionSchedulePage />,
-                  },
-                  {
-                    path: 'settings/sport-overrides',
-                    element: <RootAdminSportOverridesPage />,
                   },
                 ],
               },

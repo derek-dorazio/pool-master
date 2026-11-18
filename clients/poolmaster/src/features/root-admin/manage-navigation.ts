@@ -123,7 +123,6 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   'unmapped-participants': 'Unmapped Competitors',
   map: 'Map competitor',
   'ingestion-schedule': 'Global Ingestion Schedule',
-  'sport-overrides': 'Sport Ingestion Overrides',
   field: 'Field',
   tiers: 'Tiers',
   results: 'Results',

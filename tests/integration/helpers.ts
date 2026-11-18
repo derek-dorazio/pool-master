@@ -299,6 +299,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: new PrismaProviderSyncRunRepository(prisma),
     ingestionConfigReader: ingestionConfigService,
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    webhookProviderIds: [],
     jobs: backgroundJobs.queue,
   });
   // A sport league's events sync (#1819), its Sync now and its job, as index.ts wires them.

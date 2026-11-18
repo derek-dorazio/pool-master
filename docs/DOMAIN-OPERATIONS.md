@@ -1269,14 +1269,13 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history. Each value is typed by its group's schema; a change whose stored values no longer validate is logged and left out |
 | Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
 | Send a test email | `rootAdmin` | `sendTestEmail` (#910) — one fixed email to one address through the outbox and the saved `EMAIL_CONFIG`; waits for the sender's first try and returns `SENT`, `SKIPPED` with the reason, or `QUEUED` with the provider's error. The Email card of `/manage/settings` |
-| Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
-| Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |
+| Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule` (a patch: only the policies and properties it names change), `resetIngestionSchedule`. One schedule for every sport league: health check, event list, field and live scores. There are no per-sport overrides (#1871) |
 
 ### Providers and ProviderSyncRun — `ingestion`
 
 | Operation | Role | Notes |
 |---|---|---|
-| List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
+| List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports, its active event count, the request rate it is paced to, whether its webhooks are on, and how many active sport leagues its sync creates. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours), newest submission first. Unpaged (§16): the window is the bound. Each run carries its summary only (request, feed, outcome, stats) |
 | Read one sync run | `rootAdmin` | `getProviderSyncRun` (#1174) — the run's summary plus its detailed diagnostics: the rows the sync created, updated or deleted (unchanged rows are counted, not stored), the ingestion job record and the raw provider payload. They live in their own column, `details_json`, and are null before the run starts. The nightly cleanup clears them 30 days after submission and deletes the run after a year. 404 `SYNC_RUN_NOT_FOUND` |
 | Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs and a `MANUAL_EVENT_SYNC` background job commit together, and the job runs them after acceptance on whichever server task claims it (#1441, `docs/BACKGROUND-JOBS.md`). An event whose `syncScope` forbids a feed is 409 |

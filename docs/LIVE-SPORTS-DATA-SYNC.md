@@ -14,7 +14,7 @@ The plan behind the work, and the decisions Derek made on it, are in
 - **Where this is going: the sync creates a live league's events** (ADR 0011, superseding
   ADR 0009). Once a league's sync is live, it creates the league's events, loads their fields
   and keeps their dates current, and the lifecycle scheduler moves their status from those
-  dates; the admin reviews, releases and browses. **Today** a sweep every six hours creates a
+  dates; the admin reviews, releases and browses. **Today** a sweep on the schedule's Event list policy (every six hours by default) creates a
   synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
   loads their fields and, while an event is a draft, tiers and prices them (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
   row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
@@ -88,9 +88,22 @@ it was a refusal, so its neighbours still list; only when every league fails doe
 fail. Staging and prod refuse the mock unless an override with a reason is set.
 
 The *schedule* is the one runtime setting: the `INGESTION_SCHEDULE_CONFIG` settings group
-(`platform/ingestion-config-service.ts`), edited on the root admin's ingestion page. Defaults:
-every supported sport scheduled, live scores every 300 seconds, field loads off, health checks
-every 5 minutes, with per-sport overrides.
+(`platform/ingestion-config-service.ts`), edited on the root admin's ingestion page. It is **one
+schedule for every sport league** (#1871): four policies, each with its own interval.
+
+| Sync | Policy | Default | Read by |
+|---|---|---|---|
+| Health check | `healthCheck.intervalMinutes` | 5 min | the ingestion scheduler's health loop |
+| Event list | `eventList.intervalMinutes` | 360 min | `SyncedEventCreationScheduler` (*2b*) |
+| Field | `eventParticipants.intervalMinutes`, `lookaheadDays` | 360 min, 14 days, off for leagues not synced | each sport's field loop (*2c*) |
+| Live scores | `eventLiveScores.intervalSeconds` | 300 s | each sport's live-score sweep; webhooks arrive between runs |
+
+Each loop reads its interval again after every run, so a saved change applies from the next run
+without a restart; a policy switched off rechecks every minute. Every supported sport is
+scheduled by default. There are **no per-sport overrides**: webhooks cover fast live scores, and a
+per-league override can come later if a league needs one. A value stored before #1871 still
+loads: the settings group drops the `perSportOverrides` key on read, the next save stores the
+value without it, and the missing `eventList` takes its default.
 
 ## 2. Registration: the rows a sync needs first
 
@@ -127,7 +140,8 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 ### 2b. Event rows, by the synced league sweep or an admin action
 
 A sport league whose `event_sync_provider_id` a root admin has set (the sport league's Edit
-details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreationScheduler`
+details, "Event sync"; #1725) is **synced**: on the schedule's Event list policy (every six hours by default; off queues
+nothing) `SyncedEventCreationScheduler`
 (`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
 ingestion scheduler) queues one `SYNC_LEAGUE_EVENTS` background job per active synced league
 (#1819), and a root admin's **Sync now** (`POST /api/v1/ingestion/sport-leagues/:sportLeagueId/events-sync`,
