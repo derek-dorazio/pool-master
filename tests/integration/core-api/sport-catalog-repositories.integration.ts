@@ -7,7 +7,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { seriesNamed } from '../../support/sport-event-rows';
-import { BracketAdvancement, Sport, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
+import { BracketAdvancement, Sport, SPORTS_BY_POPULARITY, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
@@ -62,20 +62,17 @@ async function createParticipant(sportId: string, name: string, externalId?: str
 }
 
 describe('Sport and SportLeague repositories', () => {
-  it('reads a sport by id, null for an unknown id, and lists every sport ordered by sport', async () => {
+  it('reads a sport by id, null for an unknown id, and lists every sport most popular first', async () => {
     const golf = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
 
     await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
-    // Every sport the migrations seed survives the cleanup, as reference data. The sport enum orders
-    // them, so tennis, added last, lists last.
+    // Every sport the migrations seed survives the cleanup, as reference data, listed in Sport's own
+    // order (most popular first), not the database enum's declaration order.
     const allSports = await sports.findAll();
-    expect(allSports.map((row) => row.sport)).toEqual([
-      Sport.GOLF, Sport.HORSE_RACING, Sport.AUTO_RACING, Sport.CYCLING, Sport.RUNNING, Sport.BASKETBALL, Sport.AMERICAN_FOOTBALL,
-      Sport.HOCKEY, Sport.BASEBALL, Sport.SOCCER, Sport.TENNIS,
-    ]);
-    expect(allSports[0].id).toBe(golf.id);
+    expect(allSports.map((row) => row.sport)).toEqual(SPORTS_BY_POPULARITY);
+    expect(allSports.find((row) => row.sport === Sport.GOLF)?.id).toBe(golf.id);
   });
 
   // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.

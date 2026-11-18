@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TierProfileLastTier } from './enums';
 import type { DomainEntity } from './types';
 
 /**
@@ -15,15 +16,6 @@ import type { DomainEntity } from './types';
 
 export const TIER_PROFILE_TIER_COUNT_MAX = 20;
 export const TIER_PROFILE_TIER_SIZE_MAX = 500;
-
-/** What a tier profile's last tier takes. */
-export const TierProfileLastTier = {
-  /** Everyone left once the tiers before it are filled. */
-  ALL_REMAINING: 'ALL_REMAINING',
-  /** At most the profile's `lastTierMax`; anyone beyond is in no tier and can't be picked. */
-  CAPPED: 'CAPPED',
-} as const;
-export type TierProfileLastTier = (typeof TierProfileLastTier)[keyof typeof TierProfileLastTier];
 
 /** The four values a field is laid out in tiers with. */
 export const TierLayoutValuesSchema = z.object({

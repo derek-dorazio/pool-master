@@ -6,6 +6,8 @@
  * they are no longer part of the first-pass runtime surface.
  */
 
+import { alphabeticalOrder, explicitOrder, explicitOrderValues, type EnumOrder } from './enum-order';
+
 // --- Sports ---
 
 /**
@@ -26,12 +28,28 @@ export const Sport = {
   TENNIS: 'TENNIS',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
+/** The most popular first, the ancillary sports (cycling, running) last, wherever sports are listed, grids included. */
+export const SportOrder = explicitOrder<Sport>({
+  [Sport.AMERICAN_FOOTBALL]: 0,
+  [Sport.BASKETBALL]: 1,
+  [Sport.BASEBALL]: 2,
+  [Sport.HOCKEY]: 3,
+  [Sport.SOCCER]: 4,
+  [Sport.GOLF]: 5,
+  [Sport.AUTO_RACING]: 6,
+  [Sport.TENNIS]: 7,
+  [Sport.HORSE_RACING]: 8,
+  [Sport.CYCLING]: 9,
+  [Sport.RUNNING]: 10,
+});
 
 export const ParticipantType = {
   INDIVIDUAL: 'INDIVIDUAL',
   TEAM: 'TEAM',
 } as const;
 export type ParticipantType = (typeof ParticipantType)[keyof typeof ParticipantType];
+/** No natural order: A to Z by the label each screen shows. */
+export const ParticipantTypeOrder: EnumOrder<ParticipantType> = alphabeticalOrder();
 
 // --- Participant Status ---
 
@@ -42,6 +60,13 @@ export const ParticipantStatus = {
   SUSPENDED: 'SUSPENDED',
 } as const;
 export type ParticipantStatus = (typeof ParticipantStatus)[keyof typeof ParticipantStatus];
+/** Active first, then the ways a participant stops playing. */
+export const ParticipantStatusOrder = explicitOrder<ParticipantStatus>({
+  [ParticipantStatus.ACTIVE]: 0,
+  [ParticipantStatus.INACTIVE]: 1,
+  [ParticipantStatus.SUSPENDED]: 2,
+  [ParticipantStatus.RETIRED]: 3,
+});
 
 export const InjuryStatusCode = {
   HEALTHY: 'HEALTHY',
@@ -53,6 +78,16 @@ export const InjuryStatusCode = {
   SCRATCHED: 'SCRATCHED',
 } as const;
 export type InjuryStatusCode = (typeof InjuryStatusCode)[keyof typeof InjuryStatusCode];
+/** The order the values are declared in. */
+export const InjuryStatusCodeOrder = explicitOrder<InjuryStatusCode>({
+  [InjuryStatusCode.HEALTHY]: 0,
+  [InjuryStatusCode.QUESTIONABLE]: 1,
+  [InjuryStatusCode.DOUBTFUL]: 2,
+  [InjuryStatusCode.OUT]: 3,
+  [InjuryStatusCode.WITHDRAWN]: 4,
+  [InjuryStatusCode.SUSPENDED]: 5,
+  [InjuryStatusCode.SCRATCHED]: 6,
+});
 
 export const FormTrend = {
   RISING: 'RISING',
@@ -60,6 +95,12 @@ export const FormTrend = {
   FALLING: 'FALLING',
 } as const;
 export type FormTrend = (typeof FormTrend)[keyof typeof FormTrend];
+/** The order the values are declared in. */
+export const FormTrendOrder = explicitOrder<FormTrend>({
+  [FormTrend.RISING]: 0,
+  [FormTrend.STABLE]: 1,
+  [FormTrend.FALLING]: 2,
+});
 
 export const MappingConfidence = {
   EXACT: 'EXACT',
@@ -67,6 +108,12 @@ export const MappingConfidence = {
   MANUAL: 'MANUAL',
 } as const;
 export type MappingConfidence = (typeof MappingConfidence)[keyof typeof MappingConfidence];
+/** The order the values are declared in. */
+export const MappingConfidenceOrder = explicitOrder<MappingConfidence>({
+  [MappingConfidence.EXACT]: 0,
+  [MappingConfidence.HIGH]: 1,
+  [MappingConfidence.MANUAL]: 2,
+});
 
 // --- Contest Pool ---
 
@@ -77,6 +124,8 @@ export const PoolType = {
   FULL_SPORT: 'FULL_SPORT',
 } as const;
 export type PoolType = (typeof PoolType)[keyof typeof PoolType];
+/** No natural order: A to Z by the label each screen shows. */
+export const PoolTypeOrder: EnumOrder<PoolType> = alphabeticalOrder();
 
 // --- Contest Structure ---
 
@@ -92,6 +141,8 @@ export const ContestFormat = {
   SQUARES: 'SQUARES',
 } as const;
 export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
+/** No natural order: A to Z by the label each screen shows. */
+export const ContestFormatOrder: EnumOrder<ContestFormat> = alphabeticalOrder();
 
 /** Tournament structural format: decides which contest formats are valid for a sport's events. */
 export const TournamentFormat = {
@@ -106,6 +157,8 @@ export const TournamentFormat = {
   MATCHES: 'MATCHES',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
+/** No natural order: A to Z by the label each screen shows. */
+export const TournamentFormatOrder: EnumOrder<TournamentFormat> = alphabeticalOrder();
 
 /**
  * Where one match of an event stands (#698). A match is COMPLETED once its result is in; a
@@ -121,6 +174,14 @@ export const MatchStatus = {
   POSTPONED: 'POSTPONED',
 } as const;
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
+/** The lifecycle, as an event's: postponed beside scheduled, cancelled last. */
+export const MatchStatusOrder = explicitOrder<MatchStatus>({
+  [MatchStatus.SCHEDULED]: 0,
+  [MatchStatus.POSTPONED]: 1,
+  [MatchStatus.IN_PROGRESS]: 2,
+  [MatchStatus.COMPLETED]: 3,
+  [MatchStatus.CANCELLED]: 4,
+});
 
 /**
  * One side of a match (#698). On a neutral site HOME is the upper line of the bracket; screens
@@ -131,6 +192,11 @@ export const MatchSide = {
   AWAY: 'AWAY',
 } as const;
 export type MatchSide = (typeof MatchSide)[keyof typeof MatchSide];
+/** The order the values are declared in. */
+export const MatchSideOrder = explicitOrder<MatchSide>({
+  [MatchSide.HOME]: 0,
+  [MatchSide.AWAY]: 1,
+});
 
 /**
  * How a match with a result ended (#704 slice 1), in any sport that plays matches. PLAYED: to its
@@ -145,6 +211,13 @@ export const MatchEnding = {
   DEFAULT: 'DEFAULT',
 } as const;
 export type MatchEnding = (typeof MatchEnding)[keyof typeof MatchEnding];
+/** The order the values are declared in. */
+export const MatchEndingOrder = explicitOrder<MatchEnding>({
+  [MatchEnding.PLAYED]: 0,
+  [MatchEnding.RETIREMENT]: 1,
+  [MatchEnding.WALKOVER]: 2,
+  [MatchEnding.DEFAULT]: 3,
+});
 
 /**
  * How a sport league's bracket winners reach their next match (#722). FIXED: each match names
@@ -157,6 +230,8 @@ export const BracketAdvancement = {
   RESEED_BY_SEED: 'RESEED_BY_SEED',
 } as const;
 export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof BracketAdvancement];
+/** No natural order: A to Z by the label each screen shows. */
+export const BracketAdvancementOrder: EnumOrder<BracketAdvancement> = alphabeticalOrder();
 
 /**
  * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
@@ -170,6 +245,8 @@ export const MatchPeriodLayout = {
   THREE_PERIODS: 'THREE_PERIODS',
 } as const;
 export type MatchPeriodLayout = (typeof MatchPeriodLayout)[keyof typeof MatchPeriodLayout];
+/** No natural order: A to Z by the label each screen shows. */
+export const MatchPeriodLayoutOrder: EnumOrder<MatchPeriodLayout> = alphabeticalOrder();
 
 /**
  * What screens call a sport league when its sport's noun does not fit (#834): the NCAA Division I
@@ -180,6 +257,8 @@ export const SportLeagueNoun = {
   LEAGUE: 'LEAGUE',
 } as const;
 export type SportLeagueNoun = (typeof SportLeagueNoun)[keyof typeof SportLeagueNoun];
+/** No natural order: A to Z by the label each screen shows. */
+export const SportLeagueNounOrder: EnumOrder<SportLeagueNoun> = alphabeticalOrder();
 
 /**
  * How one field member's race ended (#622): the finish-position family's result status. Only a
@@ -193,6 +272,13 @@ export const RaceResultStatus = {
   DID_NOT_START: 'DID_NOT_START',
 } as const;
 export type RaceResultStatus = (typeof RaceResultStatus)[keyof typeof RaceResultStatus];
+/** The order the values are declared in. */
+export const RaceResultStatusOrder = explicitOrder<RaceResultStatus>({
+  [RaceResultStatus.FINISHED]: 0,
+  [RaceResultStatus.DID_NOT_FINISH]: 1,
+  [RaceResultStatus.DISQUALIFIED]: 2,
+  [RaceResultStatus.DID_NOT_START]: 3,
+});
 
 /** Why one row of a race's finishing order cannot be applied (#622). */
 export const RaceResultRowError = {
@@ -201,6 +287,8 @@ export const RaceResultRowError = {
   FINISH_WITHOUT_POSITION: 'FINISH_WITHOUT_POSITION',
 } as const;
 export type RaceResultRowError = (typeof RaceResultRowError)[keyof typeof RaceResultRowError];
+/** No natural order: A to Z by the label each screen shows. */
+export const RaceResultRowErrorOrder: EnumOrder<RaceResultRowError> = alphabeticalOrder();
 
 /** Why a race's finishing order as a whole cannot be applied (#622). */
 export const RaceResultOrderError = {
@@ -208,6 +296,8 @@ export const RaceResultOrderError = {
   FIELD_INCOMPLETE: 'FIELD_INCOMPLETE',
 } as const;
 export type RaceResultOrderError = (typeof RaceResultOrderError)[keyof typeof RaceResultOrderError];
+/** No natural order: A to Z by the label each screen shows. */
+export const RaceResultOrderErrorOrder: EnumOrder<RaceResultOrderError> = alphabeticalOrder();
 
 /** What applying one row of a finishing order would do to the runner's stored result (#622). */
 export const RaceResultChange = {
@@ -216,6 +306,12 @@ export const RaceResultChange = {
   UNCHANGED: 'UNCHANGED',
 } as const;
 export type RaceResultChange = (typeof RaceResultChange)[keyof typeof RaceResultChange];
+/** The order the values are declared in. */
+export const RaceResultChangeOrder = explicitOrder<RaceResultChange>({
+  [RaceResultChange.CREATE]: 0,
+  [RaceResultChange.UPDATE]: 1,
+  [RaceResultChange.UNCHANGED]: 2,
+});
 
 /**
  * How an entry picks its lineup. Each value has a selection engine.
@@ -248,6 +344,8 @@ export const SelectionType = {
   SQUARES: 'SQUARES',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
+/** No natural order: A to Z by the label each screen shows. */
+export const SelectionTypeOrder: EnumOrder<SelectionType> = alphabeticalOrder();
 
 /**
  * The kind of event a contest template is offered for (#802), where a sport's events come in more
@@ -260,6 +358,8 @@ export const ContestTemplateEventType = {
   WEEK: 'WEEK',
 } as const;
 export type ContestTemplateEventType = (typeof ContestTemplateEventType)[keyof typeof ContestTemplateEventType];
+/** No natural order: A to Z by the label each screen shows. */
+export const ContestTemplateEventTypeOrder: EnumOrder<ContestTemplateEventType> = alphabeticalOrder();
 
 /**
  * How a pick'em contest is played (#716). STRAIGHT_UP: pick the winner of every game.
@@ -271,6 +371,11 @@ export const PickEmMode = {
   CONFIDENCE: 'CONFIDENCE',
 } as const;
 export type PickEmMode = (typeof PickEmMode)[keyof typeof PickEmMode];
+/** The order the values are declared in. */
+export const PickEmModeOrder = explicitOrder<PickEmMode>({
+  [PickEmMode.STRAIGHT_UP]: 0,
+  [PickEmMode.CONFIDENCE]: 1,
+});
 
 /**
  * How one game pick stands against the results (#721). CORRECT: the team picked won its game in
@@ -286,6 +391,13 @@ export const PickOutcome = {
   PENDING: 'PENDING',
 } as const;
 export type PickOutcome = (typeof PickOutcome)[keyof typeof PickOutcome];
+/** Undecided first, then right, push, wrong. */
+export const PickOutcomeOrder = explicitOrder<PickOutcome>({
+  [PickOutcome.PENDING]: 0,
+  [PickOutcome.CORRECT]: 1,
+  [PickOutcome.PUSH]: 2,
+  [PickOutcome.BUSTED]: 3,
+});
 
 /**
  * What one game pick says happens (#792). TEAM: the team it names wins. TIE: the game ends level,
@@ -297,6 +409,11 @@ export const PredictedResult = {
   TIE: 'TIE',
 } as const;
 export type PredictedResult = (typeof PredictedResult)[keyof typeof PredictedResult];
+/** The order the values are declared in. */
+export const PredictedResultOrder = explicitOrder<PredictedResult>({
+  [PredictedResult.TEAM]: 0,
+  [PredictedResult.TIE]: 1,
+});
 
 /**
  * How a survivor entry's week went (#719). SURVIVED: its team won, or its game was cancelled.
@@ -311,6 +428,13 @@ export const SurvivorWeekOutcome = {
   PENDING: 'PENDING',
 } as const;
 export type SurvivorWeekOutcome = (typeof SurvivorWeekOutcome)[keyof typeof SurvivorWeekOutcome];
+/** Undecided first, then from best to worst. */
+export const SurvivorWeekOutcomeOrder = explicitOrder<SurvivorWeekOutcome>({
+  [SurvivorWeekOutcome.PENDING]: 0,
+  [SurvivorWeekOutcome.SURVIVED]: 1,
+  [SurvivorWeekOutcome.LIFE_LOST]: 2,
+  [SurvivorWeekOutcome.ELIMINATED]: 3,
+});
 
 // --- Selection ---
 
@@ -321,6 +445,13 @@ export const SelectionStatus = {
   COMPLETE: 'COMPLETE',
 } as const;
 export type SelectionStatus = (typeof SelectionStatus)[keyof typeof SelectionStatus];
+/** The order the values are declared in. */
+export const SelectionStatusOrder = explicitOrder<SelectionStatus>({
+  [SelectionStatus.PENDING]: 0,
+  [SelectionStatus.LIVE]: 1,
+  [SelectionStatus.PAUSED]: 2,
+  [SelectionStatus.COMPLETE]: 3,
+});
 
 // --- Sport Event Lifecycle ---
 
@@ -335,6 +466,15 @@ export const SportEventStatus = {
   POSTPONED: 'POSTPONED',
 } as const;
 export type SportEventStatus = (typeof SportEventStatus)[keyof typeof SportEventStatus];
+/** The lifecycle, a postponed event beside the scheduled ones and a cancelled one last. */
+export const SportEventStatusOrder = explicitOrder<SportEventStatus>({
+  [SportEventStatus.DRAFT]: 0,
+  [SportEventStatus.SCHEDULED]: 1,
+  [SportEventStatus.POSTPONED]: 2,
+  [SportEventStatus.IN_PROGRESS]: 3,
+  [SportEventStatus.COMPLETED]: 4,
+  [SportEventStatus.CANCELLED]: 5,
+});
 
 /**
  * The statuses an event can still take a contest in: released and not yet started (or moved), or a
@@ -359,6 +499,11 @@ export const SportEventSyncScope = {
   SCORES_ONLY: 'SCORES_ONLY',
 } as const;
 export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
+/** The order the values are declared in. */
+export const SportEventSyncScopeOrder = explicitOrder<SportEventSyncScope>({
+  [SportEventSyncScope.NONE]: 0,
+  [SportEventSyncScope.SCORES_ONLY]: 1,
+});
 
 /** Where one provider sync run is in its lifecycle. */
 export const ProviderSyncRunStatus = {
@@ -369,6 +514,14 @@ export const ProviderSyncRunStatus = {
   CANCELLED: 'CANCELLED',
 } as const;
 export type ProviderSyncRunStatus = (typeof ProviderSyncRunStatus)[keyof typeof ProviderSyncRunStatus];
+/** The order the values are declared in. */
+export const ProviderSyncRunStatusOrder = explicitOrder<ProviderSyncRunStatus>({
+  [ProviderSyncRunStatus.SUBMITTED]: 0,
+  [ProviderSyncRunStatus.IN_PROGRESS]: 1,
+  [ProviderSyncRunStatus.COMPLETED]: 2,
+  [ProviderSyncRunStatus.FAILED]: 3,
+  [ProviderSyncRunStatus.CANCELLED]: 4,
+});
 
 /** What a provider sync run syncs (#1819). */
 export const ProviderSyncKind = {
@@ -380,6 +533,12 @@ export const ProviderSyncKind = {
   SCORES: 'SCORES',
 } as const;
 export type ProviderSyncKind = (typeof ProviderSyncKind)[keyof typeof ProviderSyncKind];
+/** The order the values are declared in. */
+export const ProviderSyncKindOrder = explicitOrder<ProviderSyncKind>({
+  [ProviderSyncKind.EVENTS]: 0,
+  [ProviderSyncKind.FIELD]: 1,
+  [ProviderSyncKind.SCORES]: 2,
+});
 
 /** What started a provider sync run (#1819). Each kind has all three. */
 export const ProviderSyncTrigger = {
@@ -391,6 +550,8 @@ export const ProviderSyncTrigger = {
   ADMIN: 'ADMIN',
 } as const;
 export type ProviderSyncTrigger = (typeof ProviderSyncTrigger)[keyof typeof ProviderSyncTrigger];
+/** No natural order: A to Z by the label each screen shows. */
+export const ProviderSyncTriggerOrder: EnumOrder<ProviderSyncTrigger> = alphabeticalOrder();
 
 /** Where one in-memory ingestion job is; a provider sync run records the job's outcome. */
 export const IngestionJobStatus = {
@@ -400,6 +561,13 @@ export const IngestionJobStatus = {
   FAILED: 'FAILED',
 } as const;
 export type IngestionJobStatus = (typeof IngestionJobStatus)[keyof typeof IngestionJobStatus];
+/** The order the values are declared in. */
+export const IngestionJobStatusOrder = explicitOrder<IngestionJobStatus>({
+  [IngestionJobStatus.PENDING]: 0,
+  [IngestionJobStatus.RUNNING]: 1,
+  [IngestionJobStatus.COMPLETED]: 2,
+  [IngestionJobStatus.FAILED]: 3,
+});
 
 /**
  * A participant's progress through one round (SportEventParticipantRound.status), as the
@@ -414,6 +582,14 @@ export const ParticipantRoundStatus = {
   MISSED_CUT: 'MISSED_CUT',
 } as const;
 export type ParticipantRoundStatus = (typeof ParticipantRoundStatus)[keyof typeof ParticipantRoundStatus];
+/** The order the values are declared in. */
+export const ParticipantRoundStatusOrder = explicitOrder<ParticipantRoundStatus>({
+  [ParticipantRoundStatus.IN_PROGRESS]: 0,
+  [ParticipantRoundStatus.COMPLETED]: 1,
+  [ParticipantRoundStatus.DNF]: 2,
+  [ParticipantRoundStatus.DSQ]: 3,
+  [ParticipantRoundStatus.MISSED_CUT]: 4,
+});
 
 /**
  * Who set a match's result (#1496, #1531): an admin, or the provider its game is linked to. A
@@ -424,6 +600,8 @@ export const MatchResultSource = {
   PROVIDER: 'PROVIDER',
 } as const;
 export type MatchResultSource = (typeof MatchResultSource)[keyof typeof MatchResultSource];
+/** No natural order: A to Z by the label each screen shows. */
+export const MatchResultSourceOrder: EnumOrder<MatchResultSource> = alphabeticalOrder();
 
 /**
  * Where a provider says a game stands (#1496), as a `GAME` live-score update reports it. Only a
@@ -437,6 +615,14 @@ export const ProviderGameState = {
   CANCELLED: 'CANCELLED',
 } as const;
 export type ProviderGameState = (typeof ProviderGameState)[keyof typeof ProviderGameState];
+/** The lifecycle, as an event's: postponed beside scheduled, cancelled last. */
+export const ProviderGameStateOrder = explicitOrder<ProviderGameState>({
+  [ProviderGameState.SCHEDULED]: 0,
+  [ProviderGameState.POSTPONED]: 1,
+  [ProviderGameState.IN_PROGRESS]: 2,
+  [ProviderGameState.FINAL]: 3,
+  [ProviderGameState.CANCELLED]: 4,
+});
 
 /**
  * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
@@ -455,6 +641,8 @@ export const ParticipantInactiveReason = {
 } as const;
 export type ParticipantInactiveReason =
   (typeof ParticipantInactiveReason)[keyof typeof ParticipantInactiveReason];
+/** No natural order: A to Z by the label each screen shows. */
+export const ParticipantInactiveReasonOrder: EnumOrder<ParticipantInactiveReason> = alphabeticalOrder();
 
 /**
  * A participant's live state within one event (SportEventParticipantStanding.status).
@@ -470,6 +658,14 @@ export const ParticipantStandingStatus = {
 } as const;
 export type ParticipantStandingStatus =
   (typeof ParticipantStandingStatus)[keyof typeof ParticipantStandingStatus];
+/** The order the values are declared in. */
+export const ParticipantStandingStatusOrder = explicitOrder<ParticipantStandingStatus>({
+  [ParticipantStandingStatus.ACTIVE]: 0,
+  [ParticipantStandingStatus.IN_PROGRESS]: 1,
+  [ParticipantStandingStatus.COMPLETE]: 2,
+  [ParticipantStandingStatus.WITHDRAWN]: 3,
+  [ParticipantStandingStatus.ELIMINATED]: 4,
+});
 
 export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiveReason;
 
@@ -501,6 +697,24 @@ export const ContestStatus = {
   COMPLETED: 'COMPLETED',
 } as const;
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
+/** The order the values are declared in. */
+export const ContestStatusOrder = explicitOrder<ContestStatus>({
+  [ContestStatus.DRAFT]: 0,
+  [ContestStatus.OPEN]: 1,
+  [ContestStatus.ACTIVE]: 2,
+  [ContestStatus.COMPLETED]: 3,
+});
+/**
+ * A named priority order (#1841): how League Home lists a league's current contests. Open
+ * first, because that is where a step waits, then Live, then Set up (shown to commissioners
+ * only). A final contest is not current, and the list leaves it out.
+ */
+export const ContestStatusOrderForHomeCurrent = explicitOrder<ContestStatus>({
+  [ContestStatus.OPEN]: 0,
+  [ContestStatus.ACTIVE]: 1,
+  [ContestStatus.DRAFT]: 2,
+  [ContestStatus.COMPLETED]: 3,
+});
 
 /**
  * Where an entry stands in one event of its contest (#481, per event since #713). An entry's
@@ -514,6 +728,11 @@ export const ContestEntryStatus = {
   SUBMITTED: 'SUBMITTED',
 } as const;
 export type ContestEntryStatus = (typeof ContestEntryStatus)[keyof typeof ContestEntryStatus];
+/** The order the values are declared in. */
+export const ContestEntryStatusOrder = explicitOrder<ContestEntryStatus>({
+  [ContestEntryStatus.DRAFT]: 0,
+  [ContestEntryStatus.SUBMITTED]: 1,
+});
 
 /** How a prize definition's payout is expressed. */
 export const PrizePayoutType = {
@@ -521,6 +740,8 @@ export const PrizePayoutType = {
   PERCENTAGE: 'PERCENTAGE',
 } as const;
 export type PrizePayoutType = (typeof PrizePayoutType)[keyof typeof PrizePayoutType];
+/** No natural order: A to Z by the label each screen shows. */
+export const PrizePayoutTypeOrder: EnumOrder<PrizePayoutType> = alphabeticalOrder();
 
 // --- League ---
 
@@ -529,6 +750,11 @@ export const LeagueRole = {
   MEMBER: 'MEMBER',
 } as const;
 export type LeagueRole = (typeof LeagueRole)[keyof typeof LeagueRole];
+/** The order the values are declared in. */
+export const LeagueRoleOrder = explicitOrder<LeagueRole>({
+  [LeagueRole.COMMISSIONER]: 0,
+  [LeagueRole.MEMBER]: 1,
+});
 
 export const LeagueMembershipStatus = {
   ACTIVE: 'ACTIVE',
@@ -536,6 +762,11 @@ export const LeagueMembershipStatus = {
 } as const;
 export type LeagueMembershipStatus =
   (typeof LeagueMembershipStatus)[keyof typeof LeagueMembershipStatus];
+/** The order the values are declared in. */
+export const LeagueMembershipStatusOrder = explicitOrder<LeagueMembershipStatus>({
+  [LeagueMembershipStatus.ACTIVE]: 0,
+  [LeagueMembershipStatus.INACTIVE]: 1,
+});
 
 export const LeagueIconKey = {
   GOLF_FLAG: 'GOLF_FLAG',
@@ -560,6 +791,8 @@ export const LeagueIconKey = {
   STOPWATCH: 'STOPWATCH',
 } as const;
 export type LeagueIconKey = (typeof LeagueIconKey)[keyof typeof LeagueIconKey];
+/** No natural order: A to Z by the label each screen shows. */
+export const LeagueIconKeyOrder: EnumOrder<LeagueIconKey> = alphabeticalOrder();
 
 export const AuthProvider = {
   EMAIL: 'email',
@@ -567,12 +800,19 @@ export const AuthProvider = {
   APPLE: 'apple',
 } as const;
 export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
+/** No natural order: A to Z by the label each screen shows. */
+export const AuthProviderOrder: EnumOrder<AuthProvider> = alphabeticalOrder();
 
 export const TimeFormat = {
   TWELVE_HOUR: '12H',
   TWENTY_FOUR_HOUR: '24H',
 } as const;
 export type TimeFormat = (typeof TimeFormat)[keyof typeof TimeFormat];
+/** The order the values are declared in. */
+export const TimeFormatOrder = explicitOrder<TimeFormat>({
+  [TimeFormat.TWELVE_HOUR]: 0,
+  [TimeFormat.TWENTY_FOUR_HOUR]: 1,
+});
 
 /**
  * The member's Appearance choice. A user with none saved has no value: the website then follows
@@ -584,6 +824,12 @@ export const ColorScheme = {
   DARK: 'DARK',
 } as const;
 export type ColorScheme = (typeof ColorScheme)[keyof typeof ColorScheme];
+/** The order the values are declared in. */
+export const ColorSchemeOrder = explicitOrder<ColorScheme>({
+  [ColorScheme.DEVICE]: 0,
+  [ColorScheme.LIGHT]: 1,
+  [ColorScheme.DARK]: 2,
+});
 
 
 /**
@@ -599,6 +845,14 @@ export const ValuationSource = {
   MANUAL: 'MANUAL',
 } as const;
 export type ValuationSource = (typeof ValuationSource)[keyof typeof ValuationSource];
+/** The order the values are declared in. */
+export const ValuationSourceOrder = explicitOrder<ValuationSource>({
+  [ValuationSource.AUTO_ODDS]: 0,
+  [ValuationSource.AUTO_SEED]: 1,
+  [ValuationSource.AUTO_RANKING]: 2,
+  [ValuationSource.AUTO_NAME]: 3,
+  [ValuationSource.MANUAL]: 4,
+});
 
 export const GolfCategoryKey = {
   SENIOR: 'SENIOR',
@@ -609,12 +863,16 @@ export const GolfCategoryKey = {
 } as const;
 export type GolfCategoryKey =
   (typeof GolfCategoryKey)[keyof typeof GolfCategoryKey];
+/** No natural order: A to Z by the label each screen shows. */
+export const GolfCategoryKeyOrder: EnumOrder<GolfCategoryKey> = alphabeticalOrder();
 
 export const GolfCutRuleType = {
   FIXED_SCORE: 'FIXED_SCORE',
 } as const;
 export type GolfCutRuleType =
   (typeof GolfCutRuleType)[keyof typeof GolfCutRuleType];
+/** No natural order: A to Z by the label each screen shows. */
+export const GolfCutRuleTypeOrder: EnumOrder<GolfCutRuleType> = alphabeticalOrder();
 
 export const TeamIconKey = {
   CAPTAIN_SMILE_SUNSET: 'CAPTAIN_SMILE_SUNSET',
@@ -719,6 +977,8 @@ export const TeamIconKey = {
   BANANA_BAT_CANDY: 'BANANA_BAT_CANDY',
 } as const;
 export type TeamIconKey = (typeof TeamIconKey)[keyof typeof TeamIconKey];
+/** No natural order: A to Z by the label each screen shows. */
+export const TeamIconKeyOrder: EnumOrder<TeamIconKey> = alphabeticalOrder();
 
 export const SquadMembershipStatus = {
   ACTIVE: 'ACTIVE',
@@ -726,6 +986,11 @@ export const SquadMembershipStatus = {
 } as const;
 export type SquadMembershipStatus =
   (typeof SquadMembershipStatus)[keyof typeof SquadMembershipStatus];
+/** The order the values are declared in. */
+export const SquadMembershipStatusOrder = explicitOrder<SquadMembershipStatus>({
+  [SquadMembershipStatus.ACTIVE]: 0,
+  [SquadMembershipStatus.INACTIVE]: 1,
+});
 
 export const SquadOwnerInvitationStatus = {
   PENDING: 'PENDING',
@@ -735,6 +1000,13 @@ export const SquadOwnerInvitationStatus = {
 } as const;
 export type SquadOwnerInvitationStatus =
   (typeof SquadOwnerInvitationStatus)[keyof typeof SquadOwnerInvitationStatus];
+/** The order the values are declared in. */
+export const SquadOwnerInvitationStatusOrder = explicitOrder<SquadOwnerInvitationStatus>({
+  [SquadOwnerInvitationStatus.PENDING]: 0,
+  [SquadOwnerInvitationStatus.ACCEPTED]: 1,
+  [SquadOwnerInvitationStatus.EXPIRED]: 2,
+  [SquadOwnerInvitationStatus.REVOKED]: 3,
+});
 
 // --- League Invitation ---
 
@@ -743,6 +1015,8 @@ export const InviteType = {
   LINK: 'LINK',
 } as const;
 export type InviteType = (typeof InviteType)[keyof typeof InviteType];
+/** No natural order: A to Z by the label each screen shows. */
+export const InviteTypeOrder: EnumOrder<InviteType> = alphabeticalOrder();
 
 export const InvitationStatus = {
   PENDING: 'PENDING',
@@ -751,6 +1025,13 @@ export const InvitationStatus = {
   REVOKED: 'REVOKED',
 } as const;
 export type InvitationStatus = (typeof InvitationStatus)[keyof typeof InvitationStatus];
+/** The order the values are declared in. */
+export const InvitationStatusOrder = explicitOrder<InvitationStatus>({
+  [InvitationStatus.PENDING]: 0,
+  [InvitationStatus.ACCEPTED]: 1,
+  [InvitationStatus.EXPIRED]: 2,
+  [InvitationStatus.REVOKED]: 3,
+});
 
 // --- Week Day ---
 
@@ -764,6 +1045,16 @@ export const WeekDay = {
   SUNDAY: 'SUNDAY',
 } as const;
 export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];
+/** The order the values are declared in. */
+export const WeekDayOrder = explicitOrder<WeekDay>({
+  [WeekDay.MONDAY]: 0,
+  [WeekDay.TUESDAY]: 1,
+  [WeekDay.WEDNESDAY]: 2,
+  [WeekDay.THURSDAY]: 3,
+  [WeekDay.FRIDAY]: 4,
+  [WeekDay.SATURDAY]: 5,
+  [WeekDay.SUNDAY]: 6,
+});
 
 // --- Tier Assignment ---
 
@@ -773,6 +1064,8 @@ export const TierAssignmentMode = {
   MANUAL: 'MANUAL',
 } as const;
 export type TierAssignmentMode = (typeof TierAssignmentMode)[keyof typeof TierAssignmentMode];
+/** No natural order: A to Z by the label each screen shows. */
+export const TierAssignmentModeOrder: EnumOrder<TierAssignmentMode> = alphabeticalOrder();
 
 // --- Admin ---
 
@@ -784,6 +1077,14 @@ export const AdminRole = {
   VIEWER: 'VIEWER',
 } as const;
 export type AdminRole = (typeof AdminRole)[keyof typeof AdminRole];
+/** The order the values are declared in. */
+export const AdminRoleOrder = explicitOrder<AdminRole>({
+  [AdminRole.SUPER_ADMIN]: 0,
+  [AdminRole.OPERATIONS]: 1,
+  [AdminRole.SUPPORT]: 2,
+  [AdminRole.DATA_OPS]: 3,
+  [AdminRole.VIEWER]: 4,
+});
 
 // --- Announcements ---
 
@@ -793,6 +1094,8 @@ export const AnnouncementType = {
   BOTH: 'BOTH',
 } as const;
 export type AnnouncementType = (typeof AnnouncementType)[keyof typeof AnnouncementType];
+/** No natural order: A to Z by the label each screen shows. */
+export const AnnouncementTypeOrder: EnumOrder<AnnouncementType> = alphabeticalOrder();
 
 export const AnnouncementTarget = {
   ALL_USERS: 'ALL_USERS',
@@ -800,6 +1103,8 @@ export const AnnouncementTarget = {
   SPECIFIC_TENANTS: 'SPECIFIC_TENANTS',
 } as const;
 export type AnnouncementTarget = (typeof AnnouncementTarget)[keyof typeof AnnouncementTarget];
+/** No natural order: A to Z by the label each screen shows. */
+export const AnnouncementTargetOrder: EnumOrder<AnnouncementTarget> = alphabeticalOrder();
 
 export const Severity = {
   INFO: 'INFO',
@@ -808,6 +1113,13 @@ export const Severity = {
   ERROR: 'ERROR',
 } as const;
 export type Severity = (typeof Severity)[keyof typeof Severity];
+/** Least to most severe. */
+export const SeverityOrder = explicitOrder<Severity>({
+  [Severity.INFO]: 0,
+  [Severity.WARNING]: 1,
+  [Severity.ERROR]: 2,
+  [Severity.CRITICAL]: 3,
+});
 
 // --- System email (#844) ---
 
@@ -830,6 +1142,8 @@ export const EmailCategory = {
   ROOT_ADMIN: 'ROOT_ADMIN',
 } as const;
 export type EmailCategory = (typeof EmailCategory)[keyof typeof EmailCategory];
+/** No natural order: A to Z by the label each screen shows. */
+export const EmailCategoryOrder: EnumOrder<EmailCategory> = alphabeticalOrder();
 
 /** The categories a member can turn off, one switch each on their account (#844 slice 5, Q7.1). */
 export const OptionalEmailCategory = {
@@ -840,6 +1154,8 @@ export const OptionalEmailCategory = {
   RECEIPTS: EmailCategory.RECEIPTS,
 } as const;
 export type OptionalEmailCategory = (typeof OptionalEmailCategory)[keyof typeof OptionalEmailCategory];
+/** No natural order: A to Z by the label each screen shows. */
+export const OptionalEmailCategoryOrder: EnumOrder<OptionalEmailCategory> = alphabeticalOrder();
 
 export function isOptionalEmailCategory(category: EmailCategory): category is OptionalEmailCategory {
   return Object.values<EmailCategory>(OptionalEmailCategory).includes(category);
@@ -859,14 +1175,16 @@ export const LeaguePlan = {
   PLATINUM: 'PLATINUM',
 } as const;
 export type LeaguePlan = (typeof LeaguePlan)[keyof typeof LeaguePlan];
+/** The order the values are declared in. */
+export const LeaguePlanOrder = explicitOrder<LeaguePlan>({
+  [LeaguePlan.FREE]: 0,
+  [LeaguePlan.PRO]: 1,
+  [LeaguePlan.PREMIUM]: 2,
+  [LeaguePlan.PLATINUM]: 3,
+});
 
 /** Every plan, lowest first. The order is what "starts at" and "never falls" mean. */
-export const LEAGUE_PLANS: readonly LeaguePlan[] = [
-  LeaguePlan.FREE,
-  LeaguePlan.PRO,
-  LeaguePlan.PREMIUM,
-  LeaguePlan.PLATINUM,
-];
+export const LEAGUE_PLANS: readonly LeaguePlan[] = explicitOrderValues(LeaguePlanOrder);
 
 /**
  * What a plan can switch on or off (#944), each with the first plan that gets it in
@@ -897,6 +1215,8 @@ export const PlanFeature = {
   RECORD_BOOK: 'RECORD_BOOK',
 } as const;
 export type PlanFeature = (typeof PlanFeature)[keyof typeof PlanFeature];
+/** No natural order: A to Z by the label each screen shows. */
+export const PlanFeatureOrder: EnumOrder<PlanFeature> = alphabeticalOrder();
 
 /** The groups the Plans page lists features under. */
 export const PlanFeatureGroup = {
@@ -905,6 +1225,8 @@ export const PlanFeatureGroup = {
   HISTORY: 'HISTORY',
 } as const;
 export type PlanFeatureGroup = (typeof PlanFeatureGroup)[keyof typeof PlanFeatureGroup];
+/** No natural order: A to Z by the label each screen shows. */
+export const PlanFeatureGroupOrder: EnumOrder<PlanFeatureGroup> = alphabeticalOrder();
 
 export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>> = {
   EMAIL_CONTEST_OPENED: PlanFeatureGroup.EMAILS,
@@ -939,6 +1261,8 @@ export const LeaguePlanChangeReason = {
   GIFT_RESTORED: 'GIFT_RESTORED',
 } as const;
 export type LeaguePlanChangeReason = (typeof LeaguePlanChangeReason)[keyof typeof LeaguePlanChangeReason];
+/** No natural order: A to Z by the label each screen shows. */
+export const LeaguePlanChangeReasonOrder: EnumOrder<LeaguePlanChangeReason> = alphabeticalOrder();
 
 /**
  * What one line of a league's payment history records (#980). An expansion while payments are
@@ -949,6 +1273,8 @@ export const LeaguePaymentKind = {
   CONTEST_EXPANSION_GRANT: 'CONTEST_EXPANSION_GRANT',
 } as const;
 export type LeaguePaymentKind = (typeof LeaguePaymentKind)[keyof typeof LeaguePaymentKind];
+/** No natural order: A to Z by the label each screen shows. */
+export const LeaguePaymentKindOrder: EnumOrder<LeaguePaymentKind> = alphabeticalOrder();
 
 /** The limits a plan sets (#944): entries per contest, and sports leagues per calendar year. */
 export const PlanCap = {
@@ -956,6 +1282,8 @@ export const PlanCap = {
   SPORTS_LEAGUES_PER_YEAR: 'SPORTS_LEAGUES_PER_YEAR',
 } as const;
 export type PlanCap = (typeof PlanCap)[keyof typeof PlanCap];
+/** No natural order: A to Z by the label each screen shows. */
+export const PlanCapOrder: EnumOrder<PlanCap> = alphabeticalOrder();
 
 /** The system emails core-api can send, one per template. */
 export const EmailTemplateKey = {
@@ -994,6 +1322,8 @@ export const EmailTemplateKey = {
   CONTEST_REOPENED: 'CONTEST_REOPENED',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
+/** No natural order: A to Z by the label each screen shows. */
+export const EmailTemplateKeyOrder: EnumOrder<EmailTemplateKey> = alphabeticalOrder();
 
 /**
  * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset and the
@@ -1029,6 +1359,17 @@ export const EmailMessageStatus = {
   SKIPPED: 'SKIPPED',
 } as const;
 export type EmailMessageStatus = (typeof EmailMessageStatus)[keyof typeof EmailMessageStatus];
+/** The order the values are declared in. */
+export const EmailMessageStatusOrder = explicitOrder<EmailMessageStatus>({
+  [EmailMessageStatus.QUEUED]: 0,
+  [EmailMessageStatus.SENDING]: 1,
+  [EmailMessageStatus.SENT]: 2,
+  [EmailMessageStatus.DELIVERED]: 3,
+  [EmailMessageStatus.BOUNCED]: 4,
+  [EmailMessageStatus.COMPLAINED]: 5,
+  [EmailMessageStatus.FAILED]: 6,
+  [EmailMessageStatus.SKIPPED]: 7,
+});
 
 /**
  * One kind of background job (#1439): work a request hands off rather than waits for. Each has
@@ -1061,6 +1402,8 @@ export const BackgroundJobType = {
   RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
+/** No natural order: A to Z by the label each screen shows. */
+export const BackgroundJobTypeOrder: EnumOrder<BackgroundJobType> = alphabeticalOrder();
 
 /**
  * What a background job is about, as Activity groups and filters it (#1819). Derived from the
@@ -1079,6 +1422,14 @@ export const BackgroundJobKind = {
   OTHER: 'OTHER',
 } as const;
 export type BackgroundJobKind = (typeof BackgroundJobKind)[keyof typeof BackgroundJobKind];
+/** The order the values are declared in. */
+export const BackgroundJobKindOrder = explicitOrder<BackgroundJobKind>({
+  [BackgroundJobKind.SYNC]: 0,
+  [BackgroundJobKind.EMAIL]: 1,
+  [BackgroundJobKind.SETTLEMENT]: 2,
+  [BackgroundJobKind.RELEASE]: 3,
+  [BackgroundJobKind.OTHER]: 4,
+});
 
 /** Where one background job stands. */
 export const BackgroundJobStatus = {
@@ -1092,6 +1443,13 @@ export const BackgroundJobStatus = {
   FAILED: 'FAILED',
 } as const;
 export type BackgroundJobStatus = (typeof BackgroundJobStatus)[keyof typeof BackgroundJobStatus];
+/** The order the values are declared in. */
+export const BackgroundJobStatusOrder = explicitOrder<BackgroundJobStatus>({
+  [BackgroundJobStatus.QUEUED]: 0,
+  [BackgroundJobStatus.RUNNING]: 1,
+  [BackgroundJobStatus.SUCCEEDED]: 2,
+  [BackgroundJobStatus.FAILED]: 3,
+});
 
 /** Why an email was skipped rather than queued. */
 export const EmailSkipReason = {
@@ -1109,6 +1467,8 @@ export const EmailSkipReason = {
   NOT_IN_PLAN: 'NOT_IN_PLAN',
 } as const;
 export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
+/** No natural order: A to Z by the label each screen shows. */
+export const EmailSkipReasonOrder: EnumOrder<EmailSkipReason> = alphabeticalOrder();
 
 /** Why an address is on the email suppression list. */
 export const EmailSuppressionReason = {
@@ -1118,6 +1478,8 @@ export const EmailSuppressionReason = {
   COMPLAINT: 'COMPLAINT',
 } as const;
 export type EmailSuppressionReason = (typeof EmailSuppressionReason)[keyof typeof EmailSuppressionReason];
+/** No natural order: A to Z by the label each screen shows. */
+export const EmailSuppressionReasonOrder: EnumOrder<EmailSuppressionReason> = alphabeticalOrder();
 
 // --- Cups (#841) ---
 
@@ -1133,6 +1495,13 @@ export const CupWeight = {
   NOT_COUNTED: 'NOT_COUNTED',
 } as const;
 export type CupWeight = (typeof CupWeight)[keyof typeof CupWeight];
+/** The order the values are declared in. */
+export const CupWeightOrder = explicitOrder<CupWeight>({
+  [CupWeight.NORMAL]: 0,
+  [CupWeight.BONUS]: 1,
+  [CupWeight.DOUBLE]: 2,
+  [CupWeight.NOT_COUNTED]: 3,
+});
 
 /**
  * How a league's commissioners hear about upcoming events (#851): PER_EVENT, "Coming up soon"
@@ -1144,6 +1513,8 @@ export const EventEmailDelivery = {
   WEEKLY_DIGEST: 'WEEKLY_DIGEST',
 } as const;
 export type EventEmailDelivery = (typeof EventEmailDelivery)[keyof typeof EventEmailDelivery];
+/** No natural order: A to Z by the label each screen shows. */
+export const EventEmailDeliveryOrder: EnumOrder<EventEmailDelivery> = alphabeticalOrder();
 
 /**
  * The league's points table for cups and the championship (#841): what each finishing place in a
@@ -1158,6 +1529,8 @@ export const CupPointsScale = {
   CUSTOM: 'CUSTOM',
 } as const;
 export type CupPointsScale = (typeof CupPointsScale)[keyof typeof CupPointsScale];
+/** No natural order: A to Z by the label each screen shows. */
+export const CupPointsScaleOrder: EnumOrder<CupPointsScale> = alphabeticalOrder();
 
 /**
  * Whether one contest of a cup's season and sports league counts toward it (#841). COUNTED: it is
@@ -1174,6 +1547,14 @@ export const CupContestCount = {
   AFTER_CROWNING: 'AFTER_CROWNING',
 } as const;
 export type CupContestCount = (typeof CupContestCount)[keyof typeof CupContestCount];
+/** The order the values are declared in. */
+export const CupContestCountOrder = explicitOrder<CupContestCount>({
+  [CupContestCount.COUNTED]: 0,
+  [CupContestCount.NOT_COUNTED]: 1,
+  [CupContestCount.NO_RESULT]: 2,
+  [CupContestCount.NOT_FINAL]: 3,
+  [CupContestCount.AFTER_CROWNING]: 4,
+});
 
 /**
  * Whether a contest that went final counts toward the league championship of its year (#837).
@@ -1186,6 +1567,12 @@ export const ContestResultCount = {
   NO_RESULT: 'NO_RESULT',
 } as const;
 export type ContestResultCount = (typeof ContestResultCount)[keyof typeof ContestResultCount];
+/** The order the values are declared in. */
+export const ContestResultCountOrder = explicitOrder<ContestResultCount>({
+  [ContestResultCount.COUNTED]: 0,
+  [ContestResultCount.NOT_COUNTED]: 1,
+  [ContestResultCount.NO_RESULT]: 2,
+});
 
 /**
  * A cup's state (#841): OPEN while its standings are worked out on read; CROWNED once the
@@ -1196,6 +1583,11 @@ export const CupStatus = {
   CROWNED: 'CROWNED',
 } as const;
 export type CupStatus = (typeof CupStatus)[keyof typeof CupStatus];
+/** The order the values are declared in. */
+export const CupStatusOrder = explicitOrder<CupStatus>({
+  [CupStatus.OPEN]: 0,
+  [CupStatus.CROWNED]: 1,
+});
 
 /** The trophy a squad takes from a crowned cup (#841): 1st, 2nd or 3rd. Squads sharing a place share its trophy. */
 export const CupTrophy = {
@@ -1204,6 +1596,12 @@ export const CupTrophy = {
   THIRD: 'THIRD',
 } as const;
 export type CupTrophy = (typeof CupTrophy)[keyof typeof CupTrophy];
+/** The order the values are declared in. */
+export const CupTrophyOrder = explicitOrder<CupTrophy>({
+  [CupTrophy.CHAMPION]: 0,
+  [CupTrophy.RUNNER_UP]: 1,
+  [CupTrophy.THIRD]: 2,
+});
 
 /**
  * The All years page's tiles (#837): the squads with the most league championships won (years
@@ -1214,6 +1612,11 @@ export const SummaryTile = {
   MOST_CUPS: 'MOST_CUPS',
 } as const;
 export type SummaryTile = (typeof SummaryTile)[keyof typeof SummaryTile];
+/** The order the values are declared in. */
+export const SummaryTileOrder = explicitOrder<SummaryTile>({
+  [SummaryTile.MOST_CHAMPIONSHIPS]: 0,
+  [SummaryTile.MOST_CUPS]: 1,
+});
 
 /**
  * The league's record book on All years (#873), each worked out on read from its counted
@@ -1245,6 +1648,8 @@ export const RecordType = {
   LONGEST_DROUGHT: 'LONGEST_DROUGHT',
 } as const;
 export type RecordType = (typeof RecordType)[keyof typeof RecordType];
+/** No natural order: A to Z by the label each screen shows. */
+export const RecordTypeOrder: EnumOrder<RecordType> = alphabeticalOrder();
 
 /** The Hall of Lame's records (#873): shown below the record book, and hidden with the league's setting. */
 export const HALL_OF_LAME_RECORD_TYPES: readonly RecordType[] = [
@@ -1267,6 +1672,8 @@ export const TrophyKind = {
   CUP: 'CUP',
 } as const;
 export type TrophyKind = (typeof TrophyKind)[keyof typeof TrophyKind];
+/** No natural order: A to Z by the label each screen shows. */
+export const TrophyKindOrder: EnumOrder<TrophyKind> = alphabeticalOrder();
 
 /**
  * Where a league's year in review (#872) stands for last year: nothing to send (no championship
@@ -1278,6 +1685,12 @@ export const YearReviewStatus = {
   SENT: 'SENT',
 } as const;
 export type YearReviewStatus = (typeof YearReviewStatus)[keyof typeof YearReviewStatus];
+/** The order the values are declared in. */
+export const YearReviewStatusOrder = explicitOrder<YearReviewStatus>({
+  [YearReviewStatus.NOTHING_TO_SEND]: 0,
+  [YearReviewStatus.READY]: 1,
+  [YearReviewStatus.SENT]: 2,
+});
 
 /**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,
@@ -1292,3 +1705,26 @@ export const ChampionshipTile = {
   MOST_PLAYED: 'MOST_PLAYED',
 } as const;
 export type ChampionshipTile = (typeof ChampionshipTile)[keyof typeof ChampionshipTile];
+/** The order the values are declared in. */
+export const ChampionshipTileOrder = explicitOrder<ChampionshipTile>({
+  [ChampionshipTile.MOST_FIRSTS]: 0,
+  [ChampionshipTile.MOST_SECONDS]: 1,
+  [ChampionshipTile.MOST_THIRDS]: 2,
+  [ChampionshipTile.MOST_PODIUMS]: 3,
+  [ChampionshipTile.MOST_TOP_TENS]: 4,
+  [ChampionshipTile.MOST_PLAYED]: 5,
+});
+
+/** What a tier profile's last tier takes (#1844). */
+export const TierProfileLastTier = {
+  /** Everyone left once the tiers before it are filled. */
+  ALL_REMAINING: 'ALL_REMAINING',
+  /** At most the profile's `lastTierMax`; anyone beyond is in no tier and can't be picked. */
+  CAPPED: 'CAPPED',
+} as const;
+export type TierProfileLastTier = (typeof TierProfileLastTier)[keyof typeof TierProfileLastTier];
+/** Uncapped first, as the profile form offers them. */
+export const TierProfileLastTierOrder = explicitOrder<TierProfileLastTier>({
+  [TierProfileLastTier.ALL_REMAINING]: 0,
+  [TierProfileLastTier.CAPPED]: 1,
+});

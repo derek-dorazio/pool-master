@@ -62,7 +62,7 @@ import type {
   SportEventTier,
   SportLeague,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, EventTierConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -87,8 +87,10 @@ export class PrismaSportRepository implements SportRepository {
   }
 
   async findAll(): Promise<SportConfig[]> {
-    const rows = await this.prisma.sport.findMany({ orderBy: { sport: 'asc' } });
-    return rows.map(toSport);
+    // Sport's own order (`SportOrder`), not Postgres's enum declaration order.
+    const rows = await this.prisma.sport.findMany();
+    const bySportOrder = compareByEnumOrder(SportOrder);
+    return rows.map(toSport).sort((left, right) => bySportOrder(left.sport, right.sport));
   }
 }
 
