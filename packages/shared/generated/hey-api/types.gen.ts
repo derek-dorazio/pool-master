@@ -27172,7 +27172,7 @@ export type AmbiguousFeedParticipantDto = {
         name: string;
     }>;
     /**
-     * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's "every participant linked" ready check fails while it is open.
+     * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release's "every participant linked" check (#1823) holds each of them while it is open.
      */
     events: Array<{
         /**
@@ -27249,7 +27249,7 @@ export type AmbiguousFeedParticipantListResponse = {
             name: string;
         }>;
         /**
-         * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event's "every participant linked" ready check fails while it is open.
+         * The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release's "every participant linked" check (#1823) holds each of them while it is open.
          */
         events: Array<{
             /**

@@ -38,6 +38,7 @@ afterAll(async () => {
   await prisma.participantProviderMapping.deleteMany({ where: { providerId: PROVIDER } });
   await prisma.participantLeagueAffiliation.deleteMany({ where: { participant: { name: { startsWith: 'Twin 1824 ' } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: 'Twin 1824 ' } } });
+  await prisma.sportLeague.deleteMany({ where: { name: { startsWith: 'Twin 1824 ' } } });
   await teardownIntegrationTests();
 });
 
@@ -113,7 +114,6 @@ describe('feed participants needing linking (#1824)', () => {
     expect(AmbiguousFeedParticipantDtoSchema.parse(resolved.json())).toMatchObject({ id: row.id, resolvedParticipantId: second.id, resolvedAt: expect.any(String) });
     await expect(mappingOf(golfer.externalId)).resolves.toMatchObject({ participantId: second.id, confidence: 'MANUAL' });
     await expect(getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id } })).resolves.toEqual([expect.objectContaining({ participantId: second.id, ranking: 7 })]);
-    await expect(getPrisma().participantLeagueAffiliation.count({ where: { participantId: second.id, sportLeagueId: row.sportLeagueId } })).resolves.toBe(1);
     await expect(repository().countOpenForEvent(event.id)).resolves.toBe(0);
     const after: Response = await getApp().inject({ method: 'GET', url: `/api/v1/ingestion/ambiguous-participants?sportLeagueId=${row.sportLeagueId}`, headers: rootAdmin.headers });
     expect(AmbiguousFeedParticipantListResponseSchema.parse(after.json()).participants.some((listedRow) => listedRow.id === row.id)).toBe(false);
@@ -135,8 +135,26 @@ describe('feed participants needing linking (#1824)', () => {
     const created = AmbiguousFeedParticipantDtoSchema.parse(resolved.json()).resolvedParticipantId as string;
     await expect(getPrisma().participant.findUniqueOrThrow({ where: { id: created } })).resolves.toMatchObject({ sportId: golfId, name: golfer.name, externalId: golfer.externalId });
     await expect(mappingOf(golfer.externalId)).resolves.toMatchObject({ participantId: created, confidence: 'EXACT' });
-    await expect(getPrisma().participantLeagueAffiliation.count({ where: { participantId: created, sportLeagueId: row.sportLeagueId } })).resolves.toBe(1);
     await expect(getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id } })).resolves.toEqual([expect.objectContaining({ participantId: created, ranking: 7 })]);
+  });
+
+  it('affiliates a created golfer with the sport league its tour names, as a sync does, and reuses the golfer an earlier attempt created rather than creating another', async () => {
+    const prisma = getPrisma();
+    const { first, second, golfer, detail, golfId } = await twinsAndField();
+    const keyword = `TOUR-1824-${randomUUID().slice(0, 8)}`;
+    const tour = await prisma.sportLeague.create({ data: { sportId: golfId, name: `Twin 1824 ${keyword}`, matchKeyword: keyword } });
+    // Both twins play the tour the feed names, so the name stays ambiguous within it.
+    await prisma.participantLeagueAffiliation.createMany({ data: [first.id, second.id].map((participantId) => ({ participantId, sportLeagueId: tour.id })) });
+    await persistence().persistEventDetailWithDiagnostics({ ...detail, participants: [{ ...golfer, metadata: { tour: keyword } }] });
+    const [row] = await heldRowsOf(golfer.externalId);
+    const earlier = await prisma.participant.create({ data: { sportId: golfId, name: golfer.name, participantType: 'INDIVIDUAL' } });
+    await prisma.ambiguousFeedParticipant.update({ where: { id: row.id }, data: { resolvedParticipantId: earlier.id } });
+
+    const resolved = await resolve(row.id, { resolution: 'CREATE' });
+
+    expect(AmbiguousFeedParticipantDtoSchema.parse(resolved.json()).resolvedParticipantId).toBe(earlier.id);
+    await expect(prisma.participantLeagueAffiliation.findMany({ where: { participantId: earlier.id }, select: { sportLeagueId: true } })).resolves.toEqual([{ sportLeagueId: tour.id }]);
+    await expect(prisma.participant.count({ where: { sportId: golfId, name: golfer.name } })).resolves.toBe(3);
   });
 
   it('refuses a pick that is not a candidate with 422 and a row resolved already with 409, and writes nothing for either', async () => {

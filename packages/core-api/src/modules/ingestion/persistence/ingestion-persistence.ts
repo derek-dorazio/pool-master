@@ -5,7 +5,7 @@
  * and event fields received from data providers.
  */
 
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   getDefaultTournamentFormatForSport,
@@ -303,18 +303,23 @@ export class IngestionPersistence {
           feedName: participant.name,
           candidateParticipantIds: [...candidateIds],
         })),
+        // A concurrent sync of another event may hold the same feed id first; its row stands.
+        skipDuplicates: true,
         select: { id: true, providerId: true, externalId: true },
       });
       for (const { id, participant, candidateIds } of held) {
         // poolmaster-allow-query-in-loop: the held ambiguous names of one event's field (per-row values, one transaction)
         await tx.ambiguousFeedParticipant.update({
           where: { id },
-          data: { feedName: participant.name, candidateParticipantIds: [...candidateIds], resolvedAt: null },
+          data: { feedName: participant.name, candidateParticipantIds: [...candidateIds], resolvedAt: null, resolvedParticipantId: null },
         });
       }
       const createdIdByKey = new Map(created.map((row) => [providerKey(row), row.id]));
       const sightings = [
-        ...fresh.map(({ participant }) => ({ id: createdIdByKey.get(providerKey(participant)) as string, participant })),
+        ...fresh.flatMap(({ participant }) => {
+          const createdId = createdIdByKey.get(providerKey(participant));
+          return createdId === undefined ? [] : [{ id: createdId, participant }];
+        }),
         ...held.map(({ id, participant }) => ({ id, participant })),
       ];
       await tx.ambiguousFeedParticipantSighting.deleteMany({
@@ -552,15 +557,19 @@ export class IngestionPersistence {
   /**
    * Resolves a "needs linking" feed participant (#1824): links its feed id to the root admin's
    * pick of its candidates (`participantId`), or creates the participant from the feed's latest
-   * sighting of it (`participantId` null), and then writes its field row in every event it was
-   * seen in, as that event's field sent it, so it is on the field without waiting for the next
-   * sync. The mapping (MANUAL for a pick, EXACT for one created from the feed), the participant's
-   * affiliation with the row's sport league, and the row's resolution are one transaction; each
-   * event's field row is written as a sync writes one (`persistEventField`), with its leaderboard
-   * rebuild. The service has checked the row is open, the pick is a candidate and the feed id is
-   * unmapped. Answers the linked participant's id and how many field rows it wrote.
+   * sighting of it (`participantId` null), and writes its field row in every event it was seen
+   * in, as that event's field sent it, so it is on the field without waiting for the next sync.
+   *
+   * In this order, so a failure part way leaves the row open and a retry finishes it: a created
+   * participant first (remembered on the row, so a retry reuses it rather than creating another);
+   * then each event's field row, written as a sync writes one (`persistEventField`, idempotent,
+   * with its leaderboard rebuild); then, in one transaction, the row's resolution, the mapping
+   * (MANUAL for a pick, EXACT for one created from the feed) and the participant's affiliation
+   * with every sport league its tour names, as a sync affiliates one. The resolution is guarded
+   * on the row being open and the mapping on the feed id's unique key, so a concurrent resolve
+   * or bind answers an outcome rather than failing. The service has checked the pick.
    */
-  async resolveAmbiguousFeedParticipant(id: string, participantId: string | null): Promise<{ participantId: string; fieldRowsWritten: number }> {
+  async resolveAmbiguousFeedParticipant(id: string, participantId: string | null): Promise<AmbiguousResolveOutcome> {
     const row = await this.prisma.ambiguousFeedParticipant.findUniqueOrThrow({
       where: { id },
       include: {
@@ -571,6 +580,7 @@ export class IngestionPersistence {
         },
       },
     });
+    if (row.resolvedAt !== null) return { outcome: 'RESOLVED_ALREADY' };
     const sightings = row.sightings.map((sighting) => ({ event: sighting.sportEvent, participant: feedParticipantOf(sighting.feedParticipant) }));
     const latest: ProviderParticipant = sightings.at(0)?.participant ?? {
       providerId: row.providerId,
@@ -580,27 +590,16 @@ export class IngestionPersistence {
       active: true,
       metadata: {},
     };
-    const linkedId = await this.prisma.$transaction(async (tx) => {
-      const linkedTo = participantId ?? (await tx.participant.create({
-        data: {
-          sportId: row.sportLeague.sportId,
-          participantType: row.sportLeague.sport.participantType,
-          externalId: row.externalId,
-          ...participantValues(latest),
-        },
+    const leagues = await this.leaguesNamedBy([latest], () => row.sportLeague.sportId);
+
+    // A participant an earlier CREATE made is still the row's while it is open (deleting it clears the column).
+    const linkedId = participantId ?? row.resolvedParticipantId ?? await this.prisma.$transaction(async (tx) => {
+      const created = await tx.participant.create({
+        data: { sportId: row.sportLeague.sportId, participantType: row.sportLeague.sport.participantType, externalId: row.externalId, ...participantValues(latest) },
         select: { id: true },
-      })).id;
-      await tx.participantProviderMapping.create({
-        data: {
-          participantId: linkedTo,
-          providerId: row.providerId,
-          externalId: row.externalId,
-          confidence: participantId === null ? MappingConfidence.EXACT : MappingConfidence.MANUAL,
-        },
       });
-      await tx.participantLeagueAffiliation.createMany({ data: [{ participantId: linkedTo, sportLeagueId: row.sportLeagueId }], skipDuplicates: true });
-      await tx.ambiguousFeedParticipant.update({ where: { id }, data: { resolvedAt: new Date(), resolvedParticipantId: linkedTo } });
-      return linkedTo;
+      await tx.ambiguousFeedParticipant.update({ where: { id }, data: { resolvedParticipantId: created.id } });
+      return created.id;
     });
 
     let fieldRowsWritten = 0;
@@ -620,8 +619,29 @@ export class IngestionPersistence {
       }
     }
     if (sightings.length > 0) this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const { count } = await tx.ambiguousFeedParticipant.updateMany({ where: { id, resolvedAt: null }, data: { resolvedAt: new Date(), resolvedParticipantId: linkedId } });
+        if (count === 0) throw new ResolvedMeanwhile();
+        await tx.participantProviderMapping.create({
+          data: {
+            participantId: linkedId,
+            providerId: row.providerId,
+            externalId: row.externalId,
+            confidence: participantId === null ? MappingConfidence.EXACT : MappingConfidence.MANUAL,
+          },
+        });
+        const affiliations = leagues.idsOf(latest).map((sportLeagueId) => ({ participantId: linkedId, sportLeagueId }));
+        if (affiliations.length > 0) await tx.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
+      });
+    } catch (error) {
+      if (error instanceof ResolvedMeanwhile) return { outcome: 'RESOLVED_ALREADY' };
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return { outcome: 'FEED_ID_MAPPED' };
+      throw error;
+    }
     this.logger?.info({ ambiguousFeedParticipantId: id, participantId: linkedId, created: participantId === null, fieldRowsWritten }, 'Resolved feed participant needing linking');
-    return { participantId: linkedId, fieldRowsWritten };
+    return { outcome: 'RESOLVED', participantId: linkedId, fieldRowsWritten };
   }
 
   /**
@@ -761,6 +781,15 @@ function isStoredFeedParticipant(value: unknown): value is ProviderParticipant {
   return (['externalId', 'providerId', 'name', 'sport'] as const).every((key) => typeof field(key) === 'string')
     && typeof field('active') === 'boolean' && typeof field('metadata') === 'object' && field('metadata') !== null;
 }
+
+/** What resolving a needs-linking row did: resolved it, or found it resolved, or its feed id mapped, by a concurrent write. */
+export type AmbiguousResolveOutcome =
+  | { outcome: 'RESOLVED'; participantId: string; fieldRowsWritten: number }
+  | { outcome: 'RESOLVED_ALREADY' }
+  | { outcome: 'FEED_ID_MAPPED' };
+
+/** Rolls back a resolution whose row a concurrent write resolved first. */
+class ResolvedMeanwhile extends Error {}
 
 /** The event a field sync's ambiguous participants were seen in, and its sport league. */
 interface AmbiguousSighting {

@@ -144,9 +144,9 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Resolve a feed participant that needs linking',
-      description: 'Links the feed participant to one of its candidates (LINK, with MANUAL confidence) or creates it as a new participant from the feed\'s latest copy (CREATE), in its sport league. '
+      description: 'Links the feed participant to one of its candidates (LINK, with MANUAL confidence) or creates it as a new participant from the feed\'s latest copy (CREATE), affiliated with the sport leagues its tour names as a sync would. '
         + 'Either maps its feed id, so the next sync links it on its own, and writes its field row in every event that sent it at once. Answers the row, resolved. '
-        + '404 FEED_PARTICIPANT_LINK_NOT_FOUND; 409 FEED_PARTICIPANT_LINK_RESOLVED when it was resolved already, FEED_PARTICIPANT_ALREADY_MAPPED when its feed id was bound some other way since; 422 FEED_PARTICIPANT_NOT_A_CANDIDATE when the pick is not a candidate.',
+        + '404 FEED_PARTICIPANT_LINK_NOT_FOUND; 409 FEED_PARTICIPANT_LINK_RESOLVED when it was resolved already, FEED_PARTICIPANT_ALREADY_MAPPED when its feed id was bound some other way since; 422 FEED_PARTICIPANT_NOT_A_CANDIDATE when the pick is not a candidate, or the provider maps it since.',
       operationId: 'resolveAmbiguousFeedParticipant',
       params: {
         type: 'object',

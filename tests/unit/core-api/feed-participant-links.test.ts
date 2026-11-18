@@ -27,7 +27,7 @@ function needsLinking(overrides: Partial<AmbiguousFeedParticipant> = {}): Ambigu
 }
 
 /** An in-memory store of rows; resolving through the persistence double marks the row resolved, as the real write does. */
-function world(rows: AmbiguousFeedParticipant[], options: { mapped?: boolean } = {}) {
+function world(rows: AmbiguousFeedParticipant[], options: { mapped?: boolean; pickMapped?: boolean; outcome?: 'RESOLVED_ALREADY' | 'FEED_ID_MAPPED' } = {}) {
   const store = new Map(rows.map((row) => [row.id, row]));
   const ambiguous: AmbiguousFeedParticipantRepository = {
     listOpen: ({ sportLeagueId }) => Promise.resolve([...store.values()].filter((row) => row.resolvedAt === null && (sportLeagueId === undefined || row.sportLeagueId === sportLeagueId))),
@@ -39,16 +39,19 @@ function world(rows: AmbiguousFeedParticipant[], options: { mapped?: boolean } =
   const persistence = {
     resolveAmbiguousFeedParticipant: (id: string, participantId: string | null) => {
       resolved.push({ id, participantId });
+      if (options.outcome) return Promise.resolve({ outcome: options.outcome });
       const linked = participantId ?? 'created-1';
       const row = store.get(id) as AmbiguousFeedParticipant;
       store.set(id, { ...row, resolvedAt: new Date('2026-11-18T05:00:00.000Z'), resolvedParticipantId: linked });
-      return Promise.resolve({ participantId: linked, fieldRowsWritten: row.events.length });
+      return Promise.resolve({ outcome: 'RESOLVED' as const, participantId: linked, fieldRowsWritten: row.events.length });
     },
   };
+  const mapping = (participantId: string, externalId: string) => ({
+    id: `mapping-${externalId}`, participantId, providerId: 'balldontlie', externalId, confidence: MappingConfidence.MANUAL, mappedAt: new Date(), createdAt: new Date(), updatedAt: new Date(),
+  });
   const mappings = fakeParticipantProviderMappingRepo({
-    findByProviderExternalIds: () => Promise.resolve(options.mapped
-      ? [{ id: 'mapping-1', participantId: 'site-z', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.MANUAL, mappedAt: new Date(), createdAt: new Date(), updatedAt: new Date() }]
-      : []),
+    findByParticipant: (participantId) => Promise.resolve(options.pickMapped ? [mapping(participantId, 'bdl-other')] : []),
+    findByProviderExternalIds: () => Promise.resolve(options.mapped ? [mapping('site-z', 'bdl-1')] : []),
   });
   const service = new FeedParticipantLinkService({ ambiguous, mappings, persistence });
   return { service, resolved };
@@ -89,11 +92,21 @@ describe('FeedParticipantLinkService (#1824)', () => {
     ['the row was resolved already', [needsLinking({ resolvedAt: new Date() })], { resolution: 'CREATE' as const }, 'FEED_PARTICIPANT_LINK_RESOLVED', 409, false],
     ['the pick is not one of its candidates', [needsLinking()], { resolution: 'LINK' as const, participantId: 'site-z' }, 'FEED_PARTICIPANT_NOT_A_CANDIDATE', 422, false],
     ['its feed id was mapped some other way since', [needsLinking()], { resolution: 'LINK' as const, participantId: 'site-a' }, 'FEED_PARTICIPANT_ALREADY_MAPPED', 409, true],
-  ])('refuses to resolve, and writes nothing, when %s', async (_label, rows, choice, code, statusCode, mapped) => {
-    const { service, resolved } = world(rows, { mapped });
+    ['the provider maps the pick since the row was held', [needsLinking()], { resolution: 'LINK' as const, participantId: 'site-a' }, 'FEED_PARTICIPANT_NOT_A_CANDIDATE', 422, false, true],
+  ])('refuses to resolve, and writes nothing, when %s', async (_label, rows, choice, code, statusCode, mapped, pickMapped = false) => {
+    const { service, resolved } = world(rows, { mapped, pickMapped });
 
     await expect(service.resolve('held-1', choice)).rejects.toMatchObject({ code, statusCode });
     await expect(service.resolve('held-1', choice)).rejects.toBeInstanceOf(FeedParticipantLinkError);
     expect(resolved).toEqual([]);
+  });
+
+  it.each([
+    ['resolved it first', 'RESOLVED_ALREADY' as const, 'FEED_PARTICIPANT_LINK_RESOLVED'],
+    ['mapped its feed id first', 'FEED_ID_MAPPED' as const, 'FEED_PARTICIPANT_ALREADY_MAPPED'],
+  ])('answers 409 when a concurrent write %s', async (_label, outcome, code) => {
+    const { service } = world([needsLinking()], { outcome });
+
+    await expect(service.resolve('held-1', { resolution: 'CREATE' })).rejects.toMatchObject({ code, statusCode: 409 });
   });
 });

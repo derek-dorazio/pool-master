@@ -294,7 +294,7 @@ export const AmbiguousFeedParticipantDtoSchema = z.object({
     name: z.string(),
     startDate: DateTimeSchema,
   }).describe('An event whose field sent it.')).describe(
-    'The events whose fields sent it, soonest first. It is on none of their fields until it is resolved, and each event\'s "every participant linked" ready check fails while it is open.',
+    'The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release\'s "every participant linked" check (#1823) holds each of them while it is open.',
   ),
   resolvedAt: DateTimeSchema.nullable().describe('When it was linked or created. Null while it needs linking.'),
   resolvedParticipantId: UuidSchema.nullable().describe('The participant it was linked to or created as. Null while open, or once that participant is deleted.'),

@@ -1040,7 +1040,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       expect(prisma.ambiguousFeedParticipant.createManyAndReturn).not.toHaveBeenCalled();
       expect(prisma.ambiguousFeedParticipant.update).toHaveBeenCalledWith({
         where: { id: 'held-earlier' },
-        data: { feedName: 'Tom Kim', candidateParticipantIds: ['site-a', 'site-b'], resolvedAt: null },
+        data: { feedName: 'Tom Kim', candidateParticipantIds: ['site-a', 'site-b'], resolvedAt: null, resolvedParticipantId: null },
       });
       expect(prisma.ambiguousFeedParticipantSighting.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({ ambiguousFeedParticipantId: 'held-earlier', sportEventId: 'sport-event-1' })] });
     });

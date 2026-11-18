@@ -216,9 +216,13 @@ guessed (#1824): it is neither linked nor created, and waits as "needs linking",
 A root admin lists the open ones (`GET /api/v1/ingestion/ambiguous-participants`, by sport league)
 and resolves each (`POST /api/v1/ingestion/ambiguous-participants/:id/resolve`): linked to one of
 its candidates (mapping `MANUAL`) or created from the feed's latest copy (mapping `EXACT`). Either
-affiliates it with the row's sport league and writes its field row in every event that sent it at
-once, from the sighting, with the event's leaderboard rebuild; the mapping is what lets the next
-sync link it on its own. Binding the feed id by hand on the participant page resolves the row too.
+writes its field row in every event that sent it at once, from the sighting, with the event's
+leaderboard rebuild, and then, in one transaction, resolves the row, maps the feed id and
+affiliates the participant with the leagues its tour names, as a sync would; a failure part way
+leaves the row open for a retry. The mapping is what lets the next sync link it on its own.
+Binding the feed id by hand on the participant page resolves the row too, and so does a later sync
+that finds one answer; neither writes the other events' field rows, which those events' own next
+field loads do once the feed id is mapped (an event that no longer syncs keeps its field as it was).
 
 After the field is written, its ranked rows with no mapping from the event's provider are listed,
 best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names

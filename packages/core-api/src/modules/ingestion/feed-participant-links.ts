@@ -20,7 +20,7 @@ export type AmbiguousFeedParticipantResolution =
 
 export interface FeedParticipantLinkServiceDependencies {
   ambiguous: AmbiguousFeedParticipantRepository;
-  mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds' | 'findByParticipant'>;
   persistence: Pick<IngestionPersistence, 'resolveAmbiguousFeedParticipant'>;
   logger?: FastifyBaseLogger;
 }
@@ -35,8 +35,9 @@ export class FeedParticipantLinkService {
 
   /**
    * Resolves one: refused when there is no such row (404), it is resolved already (409), the
-   * pick is not one of its candidates (422), or its feed id was mapped by some other way since
-   * (409, as the next sync will have settled it). Answers the row as resolved.
+   * pick is not one of its candidates or the provider maps the pick since (422), or its feed id
+   * was mapped some other way since (409, as the next sync will have settled it). Answers the
+   * row as resolved.
    */
   async resolve(id: string, choice: AmbiguousFeedParticipantResolution): Promise<AmbiguousFeedParticipant> {
     const row = await this.deps.ambiguous.findById(id);
@@ -51,6 +52,17 @@ export class FeedParticipantLinkService {
         422,
       );
     }
+    if (choice.resolution === 'LINK') {
+      // A pick the provider maps since the row was held is some other feed id's now: linking it too would give one participant two.
+      const theirs = (await this.deps.mappings.findByParticipant(choice.participantId)).find((mapping) => mapping.providerId === row.providerId);
+      if (theirs) {
+        throw new FeedParticipantLinkError(
+          `Participant ${choice.participantId} is ${row.providerId} ${theirs.externalId} already, so it is no longer a candidate for ${row.feedName}.`,
+          'FEED_PARTICIPANT_NOT_A_CANDIDATE',
+          422,
+        );
+      }
+    }
     const mapped = (await this.deps.mappings.findByProviderExternalIds(row.providerId, [row.externalId])).at(0);
     if (mapped) {
       throw new FeedParticipantLinkError(
@@ -59,15 +71,22 @@ export class FeedParticipantLinkService {
         409,
       );
     }
-    const { participantId, fieldRowsWritten } = await this.deps.persistence.resolveAmbiguousFeedParticipant(
+    const resolved = await this.deps.persistence.resolveAmbiguousFeedParticipant(
       id,
       choice.resolution === 'LINK' ? choice.participantId : null,
     );
-    this.deps.logger?.info({ ambiguousFeedParticipantId: id, resolution: choice.resolution, participantId, fieldRowsWritten }, 'Resolved feed participant needing linking');
-    const resolved = await this.deps.ambiguous.findById(id);
+    // A concurrent resolve, bind or sync got there first.
+    if (resolved.outcome === 'RESOLVED_ALREADY') {
+      throw new FeedParticipantLinkError(`${row.feedName} (${row.providerId} ${row.externalId}) was resolved already.`, 'FEED_PARTICIPANT_LINK_RESOLVED', 409);
+    }
+    if (resolved.outcome === 'FEED_ID_MAPPED') {
+      throw new FeedParticipantLinkError(`${row.providerId} ${row.externalId} was mapped while it was being resolved.`, 'FEED_PARTICIPANT_ALREADY_MAPPED', 409);
+    }
+    this.deps.logger?.info({ ambiguousFeedParticipantId: id, resolution: choice.resolution, participantId: resolved.participantId, fieldRowsWritten: resolved.fieldRowsWritten }, 'Resolved feed participant needing linking');
+    const after = await this.deps.ambiguous.findById(id);
     // The row was read above and resolving never deletes it; only a concurrent delete of its league could.
-    if (!resolved) throw new FeedParticipantLinkError(`No feed participant needing linking has id ${id}.`, 'FEED_PARTICIPANT_LINK_NOT_FOUND', 404);
-    return resolved;
+    if (!after) throw new FeedParticipantLinkError(`No feed participant needing linking has id ${id}.`, 'FEED_PARTICIPANT_LINK_NOT_FOUND', 404);
+    return after;
   }
 }
 
