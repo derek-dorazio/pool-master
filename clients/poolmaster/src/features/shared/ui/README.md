@@ -469,6 +469,11 @@ filters and search narrow them.
   `meta.info` gives a column an (i) after its name. `getRowLink` (a › at the row's end) or
   `openRowDialog` (a ⤢ button there) makes the whole row open its page or dialog; the icon
   shares the pinned last column with `rowActions`.
+  Inside a router the grid keeps its column filters and sort in the page link (a parameter named
+  by `urlKey`, `grid` unless set), so a filtered grid can be bookmarked or shared; a page with
+  two grids gives each its own `urlKey`. Apply and sort push a step Back returns from; a link
+  the grid can't use is ignored. A date filter keeps its span, so "Past 2 hours" is resolved
+  again when the link opens.
 - **Story:** [data-grid.stories.tsx](./data-grid.stories.tsx), and every column type's filter in
   [data-grid-date-filter.stories.tsx](./data-grid-date-filter.stories.tsx)
 

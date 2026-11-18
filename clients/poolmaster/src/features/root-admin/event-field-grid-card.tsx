@@ -298,6 +298,7 @@ export function EventFieldGridCard({
       ) : null}
 
       <DataGrid
+        urlKey="field"
         columns={columns}
         data={entries}
         emptyMessage={

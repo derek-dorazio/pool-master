@@ -31,6 +31,7 @@ export function SportLeagueEventCalendar({
   const columns = useMemo(() => buildCalendarColumns(upperFirst(event.one)), [event.one]);
   return (
     <DataGrid
+      urlKey='events'
       columns={columns}
       data={tournaments}
       emptyMessage={

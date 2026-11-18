@@ -150,6 +150,7 @@ export function InvitesPageWaitingInvitesSection({
         <ErrorState body="We couldn't load pending invites right now." onRetry={onRetry} size="plain" testId="league-invitations-error" />
       ) : (
         <DataGrid
+          urlKey="invites"
           columns={columns}
           data={visibleRows}
           emptyMessage={rows.length

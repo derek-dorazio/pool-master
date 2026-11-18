@@ -377,7 +377,8 @@ administration area (root admin included), reusing the same shared components.
    row list: a settings row is a `SectionRow` too, never a component of its own.
 7. **Lists scale.** Member, owner and leaderboard lists have search and filters,
    assuming thousands of rows, and never page: every row shows, and search and filters
-   narrow them (the owner, 2026-11-18). A list that would be too long to load is bounded by
+   narrow them (the owner, 2026-11-18). A grid's filters and sort live in the page link, so a
+   filtered list can be bookmarked or shared (`DataGrid`'s `urlKey`). A list that would be too long to load is bounded by
    what it is for, such as one event or one league, never by a page. A contest leaderboard stays sorted by place, with the viewer's
    entries marked where they fall, and offers a **My entries** switch while the viewer
    has an entry on it: on, the board lists only theirs, each at its real place, with

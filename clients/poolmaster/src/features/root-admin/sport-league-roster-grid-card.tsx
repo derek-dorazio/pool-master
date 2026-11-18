@@ -317,6 +317,7 @@ export function SportLeagueRosterGridCard({
       ) : null}
 
       <DataGrid
+        urlKey="roster"
         columns={rosterColumns}
         data={entries}
         emptyMessage={
