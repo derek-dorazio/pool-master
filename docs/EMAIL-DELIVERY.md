@@ -332,6 +332,29 @@ Each core-api task re-reads the settings every 30 seconds, so a test pressed rig
 can still run on the old settings on another task; the skip reason shows it. Wait half a minute
 after a save, or press again.
 
+## Previewing and Resending From Admin
+
+The root admin's Notifications page (#1870) reads `/api/v1/platform/emails`:
+
+- `GET /` lists every template key with its plan feature and the plan it starts at, its status
+  (ON or OFF by its EMAIL_CONFIG switch, ALWAYS_ON for an email with none), how many the
+  transport accepted in the last 30 days (`SENT`, `DELIVERED`, `BOUNCED` or `COMPLAINED`, by
+  `sent_at`), the last send, and `previewSentAt`, the newest send whose content is still kept.
+  Two grouped reads over the `(template_key, sent_at)` index, whatever the outbox holds.
+- `GET /:templateKey/latest-send` answers that send's subject and HTML exactly as they went, with
+  the recipient masked. A preview is always a real email: there is no sample data. Content is
+  cleared 7 days after sending, and an email with `keepsContent: false` (a password reset) keeps
+  none, so such an email answers 404 `SYSTEM_EMAIL_NOT_SENT` like one never sent.
+- `POST /:templateKey/latest-send/send-to-me` records a copy of that send to the calling admin
+  (`EmailService.sendCopy`): the same template key, sender, subject and bodies, a fresh
+  idempotency key per press, no league or contest ref and no `List-Unsubscribe` header. It obeys
+  the overall switch, the email's own switch, "Only send to" and the suppression list, but not the
+  league plan or opt-outs, which belong to the first recipient. The copy is a real send of that
+  email, so it counts in the 30-day number and becomes the latest send. The footer's "Stop these
+  emails" link in a member email still carries the first recipient's token: don't press it.
+
+An email's status is changed with the EMAIL_CONFIG settings update, as before.
+
 ## Testing on QA Without Emailing Real People
 
 1. On `/manage/settings`, set "Only send to" to your own address(es), and to

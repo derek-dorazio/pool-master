@@ -42,6 +42,11 @@ export class PlanEntitlementsService {
     return resolvePlanEntitlements(plan, this.deps.readConfig());
   }
 
+  /** The lowest plan that has `feature` under the current PLAN_CONFIG; every plan above it has it too. */
+  featureStartsAt(feature: PlanFeature): LeaguePlan {
+    return this.deps.readConfig().features[feature];
+  }
+
   /** What the league may do on the plan it is on now. */
   async forLeague(leagueId: string): Promise<PlanEntitlements> {
     const league = await this.deps.leagues.findById(leagueId);

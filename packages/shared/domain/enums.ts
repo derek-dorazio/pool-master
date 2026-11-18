@@ -1458,6 +1458,24 @@ export const EmailMessageStatusOrder = explicitOrder<EmailMessageStatus>({
 });
 
 /**
+ * Whether a system email is sent, as the root admin's Notifications page shows it (#1870): ON or
+ * OFF by its own switch in EMAIL_CONFIG, or ALWAYS_ON for an email that has no switch (the account
+ * emails and the test email), which only the overall switch stops.
+ */
+export const EmailTemplateStatus = {
+  ON: 'ON',
+  OFF: 'OFF',
+  ALWAYS_ON: 'ALWAYS_ON',
+} as const;
+export type EmailTemplateStatus = (typeof EmailTemplateStatus)[keyof typeof EmailTemplateStatus];
+/** The order the values are declared in. */
+export const EmailTemplateStatusOrder = explicitOrder<EmailTemplateStatus>({
+  [EmailTemplateStatus.ON]: 0,
+  [EmailTemplateStatus.OFF]: 1,
+  [EmailTemplateStatus.ALWAYS_ON]: 2,
+});
+
+/**
  * One kind of background job (#1439): work a request hands off rather than waits for. Each has
  * one handler and one payload schema, in the background-jobs module's registries.
  */

@@ -76,6 +76,15 @@ describe('PlanEntitlementsService', () => {
     expect(free.features.has(PlanFeature.CUP_STANDINGS)).toBe(true);
   });
 
+  it('names the lowest plan a feature starts at, read from PLAN_CONFIG on every call (#1870)', () => {
+    const { service, setConfig } = buildService();
+    const defaults = PLAN_SETTINGS.defaults({});
+
+    expect(service.featureStartsAt(PlanFeature.EMAIL_CONTEST_STANDINGS)).toBe(LeaguePlan.PRO);
+    setConfig({ ...defaults, features: { ...defaults.features, EMAIL_CONTEST_STANDINGS: LeaguePlan.PREMIUM } });
+    expect(service.featureStartsAt(PlanFeature.EMAIL_CONTEST_STANDINGS)).toBe(LeaguePlan.PREMIUM);
+  });
+
   it('answers for a league from the plan the league is on now', async () => {
     const { service, league } = buildService({ plan: LeaguePlan.PRO });
 

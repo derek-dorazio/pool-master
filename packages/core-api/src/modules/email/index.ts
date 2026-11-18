@@ -14,3 +14,5 @@ export * from './email-preferences-service';
 export * from './email-unsubscribe-routes';
 export * from './email-test-service';
 export * from './email-test-routes';
+export * from './system-email-admin-service';
+export * from './system-email-routes';

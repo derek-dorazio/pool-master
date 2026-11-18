@@ -9,17 +9,36 @@ import type {
   EmailMessageRecordState,
   EmailMessageRepository,
   EmailMessageState,
+  EmailSendSummary,
+  SentEmailContent,
 } from '@poolmaster/shared/db';
 import {
   DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
+  EmailTemplateKey,
   type DeliveryOutcomeStatus,
   type EmailMessage,
   type EmailSkipReason,
-  type EmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
 const CLEARED_CONTENT = { subject: null, textBody: null, htmlBody: null, listUnsubscribeUrl: null };
+
+/** An email the transport accepted, whatever SES reported about it after. */
+const SENT_STATUSES = [
+  EmailMessageStatus.SENT,
+  EmailMessageStatus.DELIVERED,
+  EmailMessageStatus.BOUNCED,
+  EmailMessageStatus.COMPLAINED,
+];
+
+/**
+ * Every template key, named so the (template_key, sent_at) index serves a read over all of them
+ * as one range per key instead of a walk of the whole table (#1870).
+ */
+const ALL_TEMPLATE_KEYS = Object.values(EmailTemplateKey);
+
+/** A sent row whose content is still kept: subject and both bodies. */
+const KEEPS_CONTENT = { subject: { not: null }, textBody: { not: null }, htmlBody: { not: null } } as const;
 
 export class PrismaEmailMessageRepository implements EmailMessageRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -180,6 +199,53 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
       if (row.noticeAbout !== null && row.leagueId !== null) recorded.get(row.noticeAbout)?.add(row.leagueId);
     }
     return recorded;
+  }
+
+  async summarizeSentSince(since: Date): Promise<EmailSendSummary[]> {
+    const sent = { templateKey: { in: ALL_TEMPLATE_KEYS }, sentAt: { gte: since }, status: { in: SENT_STATUSES } };
+    const [counts, previews] = await Promise.all([
+      this.prisma.emailMessage.groupBy({
+        by: ['templateKey'],
+        where: sent,
+        _count: { _all: true },
+        _max: { sentAt: true },
+      }),
+      this.prisma.emailMessage.groupBy({
+        by: ['templateKey'],
+        where: { ...sent, ...KEEPS_CONTENT },
+        _max: { sentAt: true },
+      }),
+    ]);
+    const previewSentAt = new Map(previews.map((row) => [row.templateKey, row._max.sentAt ?? undefined]));
+    return counts.flatMap((row) => (row._max.sentAt === null ? [] : [{
+      templateKey: row.templateKey,
+      sentCount: row._count._all,
+      lastSentAt: row._max.sentAt,
+      previewSentAt: previewSentAt.get(row.templateKey),
+    }]));
+  }
+
+  async findLatestSentWithContent(templateKey: EmailTemplateKey, since: Date): Promise<SentEmailContent | undefined> {
+    const row = await this.prisma.emailMessage.findFirst({
+      where: { templateKey, sentAt: { gte: since }, status: { in: SENT_STATUSES }, ...KEEPS_CONTENT },
+      orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
+      select: {
+        id: true,
+        templateKey: true,
+        recipientEmail: true,
+        fromName: true,
+        fromAddress: true,
+        subject: true,
+        textBody: true,
+        htmlBody: true,
+        sentAt: true,
+      },
+    });
+    if (row === null) return undefined;
+    const { subject, textBody, htmlBody, sentAt } = row;
+    // The where clause asked for every one of these; a null here would be a row changed between.
+    if (subject === null || textBody === null || htmlBody === null || sentAt === null) return undefined;
+    return { ...row, subject, textBody, htmlBody, sentAt };
   }
 
   async findLatestStateByInvitations(

@@ -1,4 +1,4 @@
-import { LeaguePlan, PlanFeature, TimeFormat } from '@poolmaster/shared/domain';
+import { LeaguePlan, PlanFeature, TimeFormat, type EmailSkipReason } from '@poolmaster/shared/domain';
 import type { EmailConfig, PlanConfig } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
@@ -683,5 +683,89 @@ describe('email service: many recipients at once (#1173)', () => {
     expect(ownOutbox.rows).toEqual([]);
     expect(wokenDuringWrite).toEqual([false]);
     expect(onQueued).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('email service: a copy of a sent email (#1870)', () => {
+  const SOURCE = {
+    id: 'sent-1',
+    templateKey: 'CONTEST_RESULTS' as const,
+    recipientEmail: 'member@gmail.com',
+    fromName: 'Office League',
+    fromAddress: 'office24@qa.example.com',
+    subject: 'Final results: Masters Pick 6',
+    textBody: 'You finished 2nd.',
+    htmlBody: '<html><body>You finished 2nd.</body></html>',
+    sentAt: new Date('2026-10-21T12:00:00.000Z'),
+  };
+  const ADMIN_RECIPIENT = { email: 'admin@gmail.com', userId: 'admin-1' };
+
+  it('queues the same sender, subject and bodies to the admin, with no league, contest or unsubscribe header, and wakes the sender', async () => {
+    const outbox = inMemoryEmailMessages();
+    const onQueued = jest.fn();
+
+    const message = await service({ outbox, onQueued }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+
+    expect(message.status).toBe('QUEUED');
+    expect(outbox.rows).toHaveLength(1);
+    expect(outbox.rows[0]).toMatchObject({
+      templateKey: 'CONTEST_RESULTS',
+      recipientUserId: 'admin-1',
+      recipientEmail: 'admin@gmail.com',
+      fromName: 'Office League',
+      fromAddress: 'office24@qa.example.com',
+      subject: SOURCE.subject,
+      textBody: SOURCE.textBody,
+      htmlBody: SOURCE.htmlBody,
+      idempotencyKey: 'CONTEST_RESULTS:admin-copy:sent-1:press-1:admin-1',
+      nextAttemptAt: NOW,
+    });
+    expect(outbox.rows[0]).not.toHaveProperty('leagueId', expect.anything());
+    expect(outbox.rows[0].listUnsubscribeUrl).toBeUndefined();
+    expect(onQueued).toHaveBeenCalledTimes(1);
+  });
+
+  it('records each press as its own email', async () => {
+    const outbox = inMemoryEmailMessages();
+    const email = service({ outbox });
+
+    await email.sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+    await email.sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-2');
+
+    expect(outbox.rows).toHaveLength(2);
+  });
+
+  it.each([
+    ['all email is switched off', { enabled: false }, 'EMAIL_DISABLED'],
+    ['the email\'s own switch is off', { templates: { ...emailConfig().templates, CONTEST_RESULTS: false } }, 'TEMPLATE_DISABLED'],
+    ['the admin is not on "Only send to"', { allowedRecipients: ['@example.com'] }, 'NOT_ALLOWED_IN_ENVIRONMENT'],
+  ] satisfies Array<[string, Partial<EmailConfig>, EmailSkipReason]>)('skips the copy, with no content and no wake, when %s', async (_case, overrides, reason) => {
+    const outbox = inMemoryEmailMessages();
+    const onQueued = jest.fn();
+
+    const message = await service({ outbox, onQueued, readConfig: () => emailConfig(overrides) })
+      .sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+
+    expect(message).toMatchObject({ status: 'SKIPPED', skipReason: reason });
+    expect(outbox.rows[0].htmlBody).toBeUndefined();
+    expect(onQueued).not.toHaveBeenCalled();
+  });
+
+  it('skips the copy as SUPPRESSED when the admin\'s address bounced before', async () => {
+    const suppressions = inMemoryEmailSuppressions();
+    await suppressions.suppress({ email: 'Admin@Gmail.com', suppressionReason: 'BOUNCE' });
+
+    const message = await service({ suppressions }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+
+    expect(message).toMatchObject({ status: 'SKIPPED', skipReason: 'SUPPRESSED' });
+  });
+
+  it('queues the copy even when the admin turned the email\'s category off: opt-outs are about the person it first went to', async () => {
+    const optOuts = inMemoryEmailOptOuts();
+    await optOuts.setOptedOut('admin-1', 'RESULTS', true);
+
+    const message = await service({ optOuts }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+
+    expect(message.status).toBe('QUEUED');
   });
 });
