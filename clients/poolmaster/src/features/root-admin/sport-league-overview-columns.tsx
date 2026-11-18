@@ -10,7 +10,7 @@ import {
   type Sport,
 } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
-import { Button, Chip, type ChipProps, type DateRangeValue } from '@/features/shared/ui';
+import { Button, Chip, Text, type ChipProps, type DateRangeValue } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
 import { SPORT_LEAGUE_ISSUE_LABELS } from './sport-league-overview-text';
@@ -61,8 +61,18 @@ export function providerText(
  * and the sports read as groups whatever the filter or sort.
  */
 export function isFirstOfSport(rows: readonly Row<SportLeagueOverviewDto>[], row: Row<SportLeagueOverviewDto>): boolean {
-  const index = rows.findIndex((candidate) => candidate.id === row.id);
-  return index <= 0 || rows[index - 1].original.sport !== row.original.sport;
+  return firstOfSportIds(rows).has(row.id);
+}
+
+/** The ids of each sport's first row, worked out once per row model rather than once per cell. */
+const firstOfSportCache = new WeakMap<readonly Row<SportLeagueOverviewDto>[], ReadonlySet<string>>();
+
+function firstOfSportIds(rows: readonly Row<SportLeagueOverviewDto>[]): ReadonlySet<string> {
+  const cached = firstOfSportCache.get(rows);
+  if (cached) return cached;
+  const ids = new Set(rows.filter((row, index) => index === 0 || rows[index - 1].original.sport !== row.original.sport).map((row) => row.id));
+  firstOfSportCache.set(rows, ids);
+  return ids;
 }
 
 function totalIssues(overview: SportLeagueOverviewDto): number {
@@ -95,7 +105,7 @@ export function sportLeagueOverviewColumns({
         type: { kind: 'enum', order: SportOrder, label: (sport) => getSportDefinition(sport as Sport).name },
       },
       cell: ({ row, table }) => (isFirstOfSport(table.getRowModel().rows, row)
-        ? <span className="font-semibold text-foreground">{getSportDefinition(row.original.sport).name}</span>
+        ? <Text variant="strong" weight="semibold">{getSportDefinition(row.original.sport).name}</Text>
         : null),
     }),
     columnHelper.accessor('name', {
@@ -106,8 +116,8 @@ export function sportLeagueOverviewColumns({
       },
       cell: ({ row }) => (
         <span className={row.original.parentSportLeagueId === null ? 'inline-flex items-center gap-2' : 'inline-flex items-center gap-2 pl-6'}>
-          {row.original.parentSportLeagueId === null ? null : <span aria-hidden className="text-muted-foreground">└</span>}
-          <span className="font-medium text-foreground">{row.original.name}</span>
+          {row.original.parentSportLeagueId === null ? null : <Text aria-hidden tone="muted">└</Text>}
+          <Text variant="strong">{row.original.name}</Text>
           <Button
             aria-label={`${row.original.name} settings`}
             data-testid={`root-admin-sports-settings-${row.original.id}`}

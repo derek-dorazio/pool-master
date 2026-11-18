@@ -100,6 +100,8 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
     failedAction: 'sportLeague.settings.failed',
     onSuccess: () => {
       showToast({ title: `Saved ${sportLeague.name}'s settings`, tone: 'success' });
+      // The saved values are the new baseline, so Edit again with no change leaves Save off.
+      form.reset(form.getValues());
       setMode('view');
     },
     refusedMessage: 'Sport league settings were refused',

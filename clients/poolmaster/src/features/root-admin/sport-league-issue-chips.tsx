@@ -6,6 +6,7 @@ import {
   DetailsPeek,
   SectionRow,
   SectionRows,
+  Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
@@ -27,7 +28,7 @@ export function SportLeagueIssueChips({
   overview: Pick<SportLeagueOverviewDto, 'id' | 'issues' | 'name' | 'sport'>;
 }) {
   if (overview.issues.length === 0) {
-    return <span className="text-muted-foreground">—</span>;
+    return <Text tone="muted">—</Text>;
   }
   return (
     <span className="inline-flex flex-wrap gap-1">

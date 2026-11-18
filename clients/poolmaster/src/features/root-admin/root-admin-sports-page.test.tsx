@@ -266,6 +266,26 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('root-admin-sport-league-settings-edit')).toBeInTheDocument();
   });
 
+  it('keeps Save off on a second Edit right after a save, so nothing unchanged is sent', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...mlb, tierProfileId: OTHER_TIER_PROFILE_ID } } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
+    await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
+    await screen.findByRole('option', { name: '6 tiers of 5' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-tier-profile-input'), '6 tiers of 5');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
+    await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
+
+    expect(screen.getByTestId('root-admin-sport-league-settings-save')).toBeDisabled();
+    expect(updateSportLeagueMock).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps Save off for an auto release outside 1 to 30 days, and Cancel goes back to the settings unsaved', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', pricingProfileId: STANDARD_PRICING_PROFILE_ID }) } });
