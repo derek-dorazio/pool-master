@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { StatusBadge, formatDateTimeDisplay, type DisplayPreferences } from '@/features/shared/ui';
+import { StatusBadge } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
 import { deriveSportEventReadiness, formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
 
@@ -12,6 +12,7 @@ export function sportEventNameColumn(eventLabel: string) {
   return columnHelper.accessor((row) => `${row.name} ${row.venue || ''}`.trim(), {
     id: 'name',
     header: eventLabel,
+    meta: { type: { kind: 'text' } },
     cell: ({ row }) => (
       <div>
         <div className="font-medium text-foreground">{row.original.name}</div>
@@ -24,15 +25,15 @@ export function sportEventNameColumn(eventLabel: string) {
 }
 
 /** When the event starts, and its status and readiness for contests. */
-export function sportEventScheduleColumns(displayPreferences: DisplayPreferences) {
+export function sportEventScheduleColumns() {
   return [
     columnHelper.accessor('startDate', {
       header: 'Starts',
-      cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
+      meta: { type: { kind: 'datetime', direction: 'both' } },
     }),
     columnHelper.accessor('status', {
       header: 'Status',
-      meta: { options: { label: formatSportEventStatus } },
+      meta: { type: { kind: 'enum', label: formatSportEventStatus } },
       cell: ({ getValue }) => (
         <StatusBadge tone={sportEventStatusTone(getValue())}>
           {formatSportEventStatus(getValue())}
@@ -42,7 +43,7 @@ export function sportEventScheduleColumns(displayPreferences: DisplayPreferences
     columnHelper.accessor((row) => deriveSportEventReadiness(row).label, {
       id: 'readiness',
       header: 'Readiness',
-      meta: { options: {} },
+      meta: { type: { kind: 'enum' } },
       cell: ({ row }) => {
         const readiness = deriveSportEventReadiness(row.original);
         return (

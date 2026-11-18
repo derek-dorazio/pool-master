@@ -158,7 +158,7 @@ describe('RootAdminManageLeaguesPage', () => {
     searchFor('League');
 
     expect(await screen.findByTestId('root-admin-manage-leagues-link-league-active-1'))
-      .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+      .toHaveTextContent('Apr 24, 2027');
     expect(screen.getByRole('columnheader', { name: 'Preview ends' })).toBeInTheDocument();
   });
 

@@ -39,6 +39,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
   return [
     {
       id: 'place',
+      meta: { type: { kind: 'number' } },
       header: 'Place',
       accessorFn: (row) => row.position,
       enableGlobalFilter: false,
@@ -47,6 +48,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
     ...afterPlace,
     {
       id: 'squad',
+      meta: { type: { kind: 'text' } },
       header: 'Team',
       accessorFn: (row) => row.squadName,
       cell: ({ row }) => (
@@ -62,6 +64,7 @@ export function squadStandingColumns<Row extends SquadStandingRow>({
     },
     {
       id: 'points',
+      meta: { type: { kind: 'number' } },
       header: 'Points',
       accessorFn: (row) => row.points,
       enableGlobalFilter: false,

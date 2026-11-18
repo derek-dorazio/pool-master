@@ -44,6 +44,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.name, {
     id: 'name',
     header: participantLabel,
+    meta: { type: { kind: 'text' } },
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
@@ -51,6 +52,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor('ranking', {
     // The ranking the sport league keeps for the participant (#236), not a world ranking.
     header: 'Ranking',
+    meta: { type: { kind: 'number' } },
     cell: ({ row, table }) => {
       const entry = row.original;
       const { draft, setDraft } = table.options.meta as RosterGridMeta;
@@ -88,7 +90,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.status, {
     id: 'status',
     header: 'Status',
-    meta: { options: {} },
+    meta: { type: { kind: 'enum' } },
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
         {getValue()}

@@ -14,10 +14,12 @@ type TestRow = {
 const columnHelper = createColumnHelper<TestRow>();
 const columns = [
   columnHelper.accessor("name", {
+    meta: { type: { kind: "text" } },
     header: "Name",
     cell: ({ getValue }) => getValue(),
   }),
   columnHelper.accessor("lifecycle", {
+    meta: { type: { kind: "text" } },
     header: "Lifecycle",
     cell: ({ getValue }) => getValue(),
   }),
@@ -51,10 +53,12 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   it("names a column's filter after its header, and never prints a header drawn by a function as code", () => {
     const drawnHeader = [
       columnHelper.accessor("name", {
+        meta: { type: { kind: "text" } },
         header: ({ table }) => `Team of ${String(table.getRowCount())}`,
         cell: ({ getValue }) => getValue(),
       }),
       columnHelper.accessor("lifecycle", {
+        meta: { type: { kind: "text" } },
         header: "Lifecycle",
         cell: ({ getValue }) => getValue(),
       }),
@@ -695,8 +699,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   });
   it("keeps a column marked pinned at the start stuck to the grid's left edge, header and cells, and leaves the others to scroll", () => {
     const pinnedColumns = [
-      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
-      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { type: { kind: "text" }, pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { meta: { type: { kind: "text" } }, header: "Lifecycle", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid
@@ -715,8 +719,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
   it("draws a row's detail rows under it, each cell under the column it is keyed to and the pinned column still pinned", () => {
     const pinnedColumns = [
-      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
-      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { type: { kind: "text" }, pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { meta: { type: { kind: "text" } }, header: "Lifecycle", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid
@@ -739,7 +743,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   it("spans a detail row's line across every column from the one it names to the end", () => {
     const threeColumns = [
       ...columns,
-      columnHelper.accessor("id", { header: "Id", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("id", { meta: { type: { kind: "text" } }, header: "Id", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid

@@ -16,7 +16,7 @@ const COLUMNS: ColumnDef<Sport>[] = [
   {
     accessorKey: "leagueKind",
     header: "Kind",
-    meta: { options: { values: optionsFromLabels(KINDS) } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(KINDS) } },
     cell: ({ getValue }) => KINDS[getValue<keyof typeof KINDS>()],
   },
 ];

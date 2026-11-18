@@ -131,7 +131,7 @@ describe('Members directory', () => {
     expect(first.queryByText(/Former/)).not.toBeInTheDocument();
     expect(first.queryByText('Inactive')).not.toBeInTheDocument();
 
-    expect(first.getByText('4/14/2026')).toBeInTheDocument();
+    expect(first.getByText('Apr 14, 2026')).toBeInTheDocument();
 
     const second = within(screen.getByTestId('league-team-team-2'));
     expect(second.getByText('Inactive')).toBeInTheDocument();

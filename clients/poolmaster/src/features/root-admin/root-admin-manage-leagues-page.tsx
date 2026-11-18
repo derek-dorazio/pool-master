@@ -13,9 +13,7 @@ import {
   PageHeader,
   SectionCard,
   StatusBadge,
-  formatDateDisplay,
   optionsFromLabels,
-  useDisplayPreferences,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -25,7 +23,6 @@ import { MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 const columnHelper = createColumnHelper<LeagueDto>();
 
 export function RootAdminManageLeaguesPage() {
-  const displayPreferences = useDisplayPreferences();
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const canSearch = isPlatformSearchTerm(term);
@@ -56,6 +53,7 @@ export function RootAdminManageLeaguesPage() {
     () => [
       columnHelper.accessor("name", {
         header: "League",
+        meta: { type: { kind: "text" } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-primary">{row.original.name}</div>
@@ -69,6 +67,7 @@ export function RootAdminManageLeaguesPage() {
       }),
       columnHelper.accessor("leagueCode", {
         header: "Code",
+        meta: { type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
@@ -78,7 +77,7 @@ export function RootAdminManageLeaguesPage() {
         {
           id: "lifecycle",
           header: "Lifecycle",
-          meta: { options: {} },
+          meta: { type: { kind: "enum" } },
           cell: ({ getValue }) => {
             const isActive = getValue() === "Active";
 
@@ -93,38 +92,28 @@ export function RootAdminManageLeaguesPage() {
       columnHelper.accessor((league) => league.planEntitlements.plan, {
         id: "plan",
         header: "Plan",
-        meta: { options: { values: optionsFromLabels(LEAGUE_PLAN_LABEL) } },
+        meta: { type: { kind: "enum", values: optionsFromLabels(LEAGUE_PLAN_LABEL) } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{LEAGUE_PLAN_LABEL[getValue()]}</span>
         ),
       }),
-      columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt, displayPreferences), {
+      columnHelper.accessor("planRenewsAt", {
         id: "planRenewsAt",
         header: "Preview ends",
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue()}</span>
-        ),
+        meta: { type: { kind: "date", direction: "both" } },
       }),
-      columnHelper.accessor((league) => String(league.memberCount), {
+      columnHelper.accessor("memberCount", {
         id: "memberCount",
         header: "Members",
-        cell: ({ row }) => (
-          <span className="font-medium text-foreground">
-            {row.original.memberCount}
-          </span>
-        ),
+        meta: { type: { kind: "number" } },
       }),
-      columnHelper.accessor((league) => String(league.activeContestCount), {
+      columnHelper.accessor("activeContestCount", {
         id: "activeContestCount",
         header: "Active contests",
-        cell: ({ row }) => (
-          <span className="font-medium text-foreground">
-            {row.original.activeContestCount}
-          </span>
-        ),
+        meta: { type: { kind: "number" } },
       }),
     ],
-    [displayPreferences],
+    [],
   );
 
   return (

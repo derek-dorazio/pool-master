@@ -8,7 +8,6 @@ import {
   LinkButton,
   StatusBadge,
   optionsFromLabels,
-  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -32,7 +31,6 @@ import { upperFirst } from '@/lib/upper-first';
 const columnHelper = createColumnHelper<SportEventDto>();
 
 export function RootAdminSportEventListPage() {
-  const displayPreferences = useDisplayPreferences();
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportName = definition.name.toLowerCase();
@@ -57,29 +55,29 @@ export function RootAdminSportEventListPage() {
       sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
-        meta: { options: { values: optionsFromLabels(SYNC_SCOPE_LABELS) } },
+        meta: { type: { kind: 'enum', values: optionsFromLabels(SYNC_SCOPE_LABELS) } },
         cell: ({ getValue }) => (
           <StatusBadge tone={syncScopeTone(getValue())}>
             {syncScopeLabel(getValue())}
           </StatusBadge>
         ),
       }),
-      ...sportEventScheduleColumns(displayPreferences),
+      ...sportEventScheduleColumns(),
       columnHelper.accessor('loadedParticipantCount', {
         header: 'Field',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor('tierCount', {
         header: 'Tiers',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
       columnHelper.accessor((row) => row.adminCounts?.contestCount ?? null, {
         id: 'contestCount',
         header: 'Contests',
-        cell: ({ getValue }) => getValue(),
+        meta: { type: { kind: 'number' } },
       }),
     ],
-    [displayPreferences, event.one],
+    [event.one],
   );
 
   return (

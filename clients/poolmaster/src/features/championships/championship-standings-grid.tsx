@@ -32,6 +32,7 @@ export function ChampionshipStandingsGrid({
       ...squadStandingColumns<ChampionshipStandingRowDto>({ focusSquadId, locale, testIdPrefix: 'championship' }),
       ...Array.from({ length: FINISH_MATRIX_PLACES }, (_, index): ColumnDef<ChampionshipStandingRowDto, string | number> => ({
         id: `finish-${index + 1}`,
+        meta: { type: { kind: 'number' } },
         header: formatOrdinal(index + 1),
         accessorFn: (row) => row.finishes[index] ?? 0,
         enableGlobalFilter: false,
@@ -52,6 +53,7 @@ export function ChampionshipStandingsGrid({
       })),
       {
         id: 'played',
+        meta: { type: { kind: 'number' } },
         header: 'Played',
         accessorFn: (row) => row.played,
         enableGlobalFilter: false,

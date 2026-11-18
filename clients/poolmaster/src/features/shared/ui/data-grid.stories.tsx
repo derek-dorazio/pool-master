@@ -93,14 +93,14 @@ const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
   {
     accessorKey: "stage",
     header: "Status",
-    meta: { options: { values: optionsFromLabels(EVENT_STATUS), initial: ["DRAFT", "SCHEDULED"] } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(EVENT_STATUS), initial: ["DRAFT", "SCHEDULED"] } },
     cell: ({ getValue }) => EVENT_STATUS[getValue<keyof typeof EVENT_STATUS>()],
   },
   {
     accessorKey: "issues",
     header: "Issues",
     enableSorting: false,
-    meta: { options: { values: optionsFromLabels(ISSUES), manyPerCell: true } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(ISSUES), manyPerCell: true } },
     cell: ({ getValue }) => getValue<string[]>().map((issue) => ISSUES[issue as keyof typeof ISSUES]).join(", ") || "—",
   },
   { accessorKey: "field", header: "Field" },

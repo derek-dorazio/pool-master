@@ -60,21 +60,24 @@ export function RootAdminParticipantListPage() {
     () => [
       columnHelper.accessor('name', {
         header: 'Name',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('shortName', {
         header: 'Short name',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('nationality', {
         header: 'Nationality',
+        meta: { type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        meta: { options: { values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
+        meta: { type: { kind: 'enum', values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}

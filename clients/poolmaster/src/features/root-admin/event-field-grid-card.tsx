@@ -120,6 +120,7 @@ function fieldColumnsFor(sport: Sport) {
   return [
     columnHelper.accessor((entry) => entry.participant.name, {
       id: 'participantName',
+      meta: { type: { kind: 'text' } },
       header: upperFirst(getSportDefinition(sport).vocabulary.participant.one),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">

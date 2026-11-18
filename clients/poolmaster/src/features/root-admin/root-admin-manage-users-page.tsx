@@ -52,6 +52,7 @@ export function RootAdminManageUsersPage() {
         {
           id: "username",
           header: "User",
+          meta: { type: { kind: "text" } },
           cell: ({ row }) => (
             <div>
               <div className="font-medium text-primary">
@@ -66,6 +67,7 @@ export function RootAdminManageUsersPage() {
       ),
       columnHelper.accessor("email", {
         header: "Email",
+        meta: { type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -73,7 +75,7 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
         id: "account",
         header: "Account",
-        meta: { options: {} },
+        meta: { type: { kind: "enum" } },
         cell: ({ getValue }) => {
           const isActive = getValue() === "Active";
 
@@ -84,19 +86,15 @@ export function RootAdminManageUsersPage() {
           );
         },
       }),
-      columnHelper.accessor((user) => (user.isRootAdmin ? "Yes" : "No"), {
+      columnHelper.accessor("isRootAdmin", {
         id: "rootAdmin",
         header: "Root admin",
-        meta: { options: {} },
-        cell: ({ getValue }) => {
-          const isRootAdmin = getValue() === "Yes";
-
-          return (
-            <StatusBadge tone={isRootAdmin ? "info" : "neutral"}>
-              {getValue()}
-            </StatusBadge>
-          );
-        },
+        meta: { type: { kind: "boolean" } },
+        cell: ({ getValue }) => (
+          <StatusBadge tone={getValue() ? "info" : "neutral"}>
+            {getValue() ? "Yes" : "No"}
+          </StatusBadge>
+        ),
       }),
     ],
     [],

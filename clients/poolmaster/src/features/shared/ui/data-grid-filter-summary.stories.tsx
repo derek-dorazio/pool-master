@@ -16,7 +16,7 @@ const COLUMNS: ColumnDef<League>[] = [
   {
     accessorKey: "state",
     header: "Status",
-    meta: { options: { values: optionsFromLabels(STATES), initial: ["ON"] } },
+    meta: { type: { kind: "enum", values: optionsFromLabels(STATES), initial: ["ON"] } },
     cell: ({ getValue }) => STATES[getValue<keyof typeof STATES>()],
   },
 ];

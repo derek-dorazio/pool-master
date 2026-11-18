@@ -1,7 +1,8 @@
 import type { Table } from "@tanstack/react-table";
 import { Funnel } from "lucide-react";
 import { Button } from "./button";
-import { columnOptions, describeFilter, type DataGridFilter } from "./data-grid-filters";
+import { columnOptions, columnTypeOf, describeFilter, type DataGridFilter } from "./data-grid-filters";
+import { useDisplayPreferences } from "./display-preferences";
 
 /**
  * The line above a filtered grid: every filter in force by its column's name, how many rows of
@@ -17,6 +18,7 @@ export function DataGridFilterSummary<TData>({
   table: Table<TData>;
   testId: string;
 }) {
+  const preferences = useDisplayPreferences();
   const filters = table.getState().columnFilters;
   if (filters.length === 0) {
     return null;
@@ -24,8 +26,8 @@ export function DataGridFilterSummary<TData>({
   const named = filters.map(({ id, value }) => {
     const column = table.getColumn(id);
     const filter = value as DataGridFilter;
-    const optionCount = column && filter.kind === "enum" ? columnOptions(table, column).length : 0;
-    return `${labelOf(id)} (${describeFilter(filter, optionCount)})`;
+    const options = column && filter.kind === "enum" ? columnOptions(table, column) : [];
+    return `${labelOf(id)} (${describeFilter(filter, options, preferences, column && columnTypeOf(column))})`;
   });
 
   return (

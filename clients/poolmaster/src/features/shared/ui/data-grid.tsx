@@ -24,7 +24,14 @@ import { ViewFilter, type ViewFilterOption } from "./view-filter";
 import { DataGridColumnFilter } from "./data-grid-column-filter";
 import { DataGridFilterSummary } from "./data-grid-filter-summary";
 import { DataGridSortButton } from "./data-grid-sort-button";
-import { getBlanksLastSortedRowModel, initialFilters, withGridFilters, type DataGridColumnOptions } from "./data-grid-filters";
+import {
+  columnTypeClassName,
+  getBlanksLastSortedRowModel,
+  initialFilters,
+  withGridFilters,
+  type DataGridColumnType,
+} from "./data-grid-filters";
+import { useDisplayPreferences } from "./display-preferences";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -185,10 +192,11 @@ declare module "@tanstack/react-table" {
      */
     pinned?: "start";
     /**
-     * The column holds values from a fixed set (a sport, a kind, a status): its filter lists a
-     * checkbox per value, and it sorts in the set's order.
+     * What the column holds (`DataGridColumnType`): text, a value from a fixed set, yes/no, a
+     * number, a date or a date range. The grid supplies its filter, its sort and, for numbers
+     * and dates, the cell's look. A column with no type neither sorts nor filters.
      */
-    options?: DataGridColumnOptions;
+    type?: DataGridColumnType;
   }
 }
 
@@ -276,7 +284,8 @@ export function DataGrid<TData>({
 }: DataGridProps<TData>) {
   // Null until the first render reads which enumerated columns start on some values only.
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState | null>(null);
-  const gridColumns = useMemo(() => withGridFilters(columns), [columns]);
+  const preferences = useDisplayPreferences();
+  const gridColumns = useMemo(() => withGridFilters(columns, preferences), [columns, preferences]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
   const globalFilter = searchTerm ?? ownSearchTerm;
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -502,6 +511,7 @@ export function DataGrid<TData>({
                         aria-sort={ARIA_SORT[String(column.getIsSorted())]}
                         className={cn(
                           "group/header px-4 py-3 font-medium",
+                          column.columnDef.meta?.type?.kind === "number" && "text-right",
                           column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, pinnedHeaderSurface],
                         )}
                         key={header.id}
@@ -566,6 +576,7 @@ export function DataGrid<TData>({
                           <td
                             className={cn(
                               "px-4 py-4",
+                              columnTypeClassName(cell.column.columnDef.meta?.type),
                               cell.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, PINNED_BODY_SURFACE],
                             )}
                             key={cell.id}

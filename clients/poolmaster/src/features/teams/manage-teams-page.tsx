@@ -79,6 +79,7 @@ export function ManageTeamsPage() {
       teamNameColumn<ManagedTeamRow>(leagueCode, { link: 'row' }),
       {
         id: 'owners',
+        meta: { type: { kind: 'text' } },
         header: 'Owners',
         accessorFn: (row) => row.ownerNames,
         cell: ({ getValue, row }) => (

@@ -207,3 +207,52 @@ export function timeZoneAbbreviation(date: Date, preferences: DisplayPreferences
       .find((part) => part.type === "timeZoneName")?.value ?? preferences.timeZone
   );
 }
+
+/** How a grid's date column writes its dates: month as a word (the default) or as a number. */
+export type DateDisplayFormat = "words" | "numeric";
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** True for a calendar date with no time, such as "2027-03-05": it names a day, not an instant. */
+export function isDateOnly(value: unknown): value is string {
+  return typeof value === "string" && DATE_ONLY.test(value);
+}
+
+/**
+ * A date as a grid cell writes it, every part padded so the rows line up (#1838): "Mar 05, 2027"
+ * or "03/05/2027" in en-US, "05 Mar 2027" or "05/03/2027" in en-GB, and with `withTime` the
+ * time on the member's clock, "03:04 PM" or "15:04". A calendar date ("2027-03-05") is that day
+ * wherever the member is; an instant is shown in their zone. Blank for no date.
+ */
+export function formatGridDate(
+  value: Date | string | null | undefined,
+  { format, withTime }: { format: DateDisplayFormat; withTime: boolean },
+  preferences: DisplayPreferences,
+): string {
+  const date = isDateOnly(value) ? new Date(`${value}T00:00:00Z`) : normalizeDate(value);
+  if (!date) {
+    return "";
+  }
+  return date.toLocaleString(preferences.locale, {
+    year: "numeric",
+    month: format === "words" ? "short" : "2-digit",
+    day: "2-digit",
+    ...(withTime && !isDateOnly(value)
+      ? { hour: "2-digit", minute: "2-digit", hour12: preferences.hour12 }
+      : {}),
+    timeZone: isDateOnly(value) ? "UTC" : preferences.timeZone,
+  });
+}
+
+/** The first instant of a calendar day in `timeZone`, as epoch milliseconds. */
+export function startOfZonedDay(year: number, month: number, day: number, timeZone: string): number {
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  const wall = `${utc.toISOString().slice(0, 10)}T00:00`;
+  return Date.parse(dateTimeLocalValueToIso(wall, timeZone) ?? `${wall}:00Z`);
+}
+
+/** The calendar day `instant` falls on in `timeZone`: year, month (1-12) and day. */
+export function zonedDay(instant: number, timeZone: string): { year: number; month: number; day: number } {
+  const wall = wallClockParts(new Date(instant), timeZone);
+  return { year: Number(wall.year), month: Number(wall.month), day: Number(wall.day) };
+}
