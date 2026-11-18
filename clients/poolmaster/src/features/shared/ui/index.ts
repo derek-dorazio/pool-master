@@ -34,7 +34,6 @@ export { ViewFilter, type ViewFilterOption } from "./view-filter";
 export { Eyebrow } from "./eyebrow";
 export { FormSection } from "./form-section";
 export { Heading } from "./heading";
-export { Pager } from "./pager";
 export { DateDisplay, DateTimeField } from "./date-time";
 export {
   DEFAULT_DISPLAY_PREFERENCES,

@@ -40,7 +40,7 @@ lives in its feature folder (*Product pieces*, near the end).
 | A save went through | a toast (`showToast` or `useMutationActionWorkflow`) |
 | A read is loading, failed or empty | `QueryState` |
 | A page that is only a status | `StatusPage` |
-| A table with search, sort or paging | `DataGrid` |
+| A table with search, sort or filters | `DataGrid` |
 | A small table | `SimpleTable` |
 | Labels beside values | `FactList` |
 | Any text that is not a title | `Text` |
@@ -385,11 +385,6 @@ A row's quick actions: things done or opened from the list without leaving it fi
   confirms before it acts), `label` naming the row ("Actions for Masters Pool").
 - **Story:** [row-actions-menu.stories.tsx](./row-actions-menu.stories.tsx)
 
-### `Pager`
-"1–25 of 140" with Previous and Next, for a list that is not a table.
-- **Don't use when:** the list is a `DataGrid`; give it `pageSize`.
-- **Story:** [pager.stories.tsx](./pager.stories.tsx)
-
 ## Forms
 
 ### `FormField` and its inputs
@@ -454,12 +449,13 @@ The file picker; a bare `<input type="file">` is barred in feature code.
 ## Tables
 
 ### `DataGrid`
-A table that needs search, sorting or paging.
+A table that needs search, sorting or filters. It never pages: every row shows, and
+filters and search narrow them.
 - **Props that matter:** `search` (one box over every text column) or the header's `searchTerm`;
   `views` (a `ViewFilter` in the card's header, `end` for a filter of the chosen view, `status`
-  standing in while the chosen view loads or fails); `pageSize`; `showColumnFilters` (on by
+  standing in while the chosen view loads or fails); `showColumnFilters` (on by
   default: each filterable header shows a funnel). A list that can grow to hundreds of rows uses
-  `search` and `pageSize`. Each column states its type in `meta.type` (`DataGridColumnType`):
+  `search`. Each column states its type in `meta.type` (`DataGridColumnType`):
   `text`, `enum`, `boolean` (`nullable` adds (Blank)), `number`, `date`, `datetime` or
   `dateRange` (`direction` required, `format` words or numeric, `blank` for an empty cell's
   words). The accessor returns the real value, and the grid writes number and date cells

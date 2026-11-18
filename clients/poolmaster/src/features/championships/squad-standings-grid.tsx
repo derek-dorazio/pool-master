@@ -1,10 +1,8 @@
 import { DataGrid } from '@/features/shared/ui';
 import type { SquadStandingColumn, SquadStandingRow } from './squad-standing-columns';
 
-const STANDINGS_PER_PAGE = 25;
-
 /**
- * A league's squad standings: the scoreboard grid a page at a time, with search by squad and a
+ * A league's squad standings: the scoreboard grid, every squad on it, with search by squad and a
  * jump to the focused squad's row (rules/ux-rules.md §12 rule 7). Without search, as on a squad's
  * own page, there is no jump either: the one row is already there.
  */
@@ -32,7 +30,6 @@ export function SquadStandingsGrid<Row extends SquadStandingRow>({
       emptyMessage={rows.length ? 'No team matches that search.' : 'No teams in this league yet.'}
       getRowId={(row) => row.squadId}
       jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: `${testIdPrefix}-standings-jump` } : undefined}
-      pageSize={STANDINGS_PER_PAGE}
       rowTestId={(row) => `${testIdPrefix}-standing-${row.squadId}`}
       search={searchable ? { label: 'Find a team', testId: `${testIdPrefix}-standings-search` } : undefined}
       showColumnFilters={false}

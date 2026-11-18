@@ -375,16 +375,17 @@ administration area (root admin included), reusing the same shared components.
    actions. Settings themselves are shown as labelled rows with one Edit for the
    group, in the title bar's trailing slot (§3 *Settings sections*). There is one
    row list: a settings row is a `SectionRow` too, never a component of its own.
-7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
-   assuming hundreds of rows: tables through `DataGrid`, other lists through
-   the same `Pager`. A contest leaderboard stays sorted by place, with the viewer's
+7. **Lists scale.** Member, owner and leaderboard lists have search and filters,
+   assuming thousands of rows, and never page: every row shows, and search and filters
+   narrow them (the owner, 2026-11-18). A list that would be too long to load is bounded by
+   what it is for, such as one event or one league, never by a page. A contest leaderboard stays sorted by place, with the viewer's
    entries marked where they fall, and offers a **My entries** switch while the viewer
    has an entry on it: on, the board lists only theirs, each at its real place, with
-   search and paging within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
+   search within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
    in `ScoreboardGrid` and the lineup board alike). A link can name one entry as
    `?entry=<id>`, as emails do: the page opens on it (a lineup row expands, a bracket's
    dialog opens, a squares entry's boxes light up as the viewer's own do, a standings row is
-   highlighted on its page) and scrolls to it, and closing it drops `?entry=` from the address
+   highlighted) and scrolls to it, and closing it drops `?entry=` from the address
    by replace. An entry the board doesn't show (unknown, or hidden by `?mine=1`) is ignored;
    before the contest locks only the viewer's own entries open. Once nothing is left to pick
    (the contest is final, or every event of a contest picked once per event has started), an

@@ -19,7 +19,6 @@ import {
   type ManagedParticipantStatus,
 } from './sport-admin-utils';
 import {
-  MANAGE_LIST_PAGE_SIZE,
   SEARCH_DEBOUNCE_MS,
   buildSportParticipantListPath,
   buildSportParticipantPath,
@@ -135,7 +134,6 @@ export function RootAdminParticipantListPage() {
         filterTestIdPrefix="root-admin-participant-list-filter"
         getRowId={(player) => player.id}
         getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
-        pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
         search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search', onChange: setSearch }}
         tableTestId="root-admin-participant-list-table"

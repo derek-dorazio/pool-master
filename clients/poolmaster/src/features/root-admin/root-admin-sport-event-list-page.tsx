@@ -19,7 +19,6 @@ import type { SportEventDto } from '@/lib/api';
 import {
   buildSportEventListPath,
   buildSportEventPath,
-  MANAGE_LIST_PAGE_SIZE,
 } from './manage-navigation';
 import { EventYearFilter } from './event-year-select';
 import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
@@ -110,7 +109,6 @@ export function RootAdminSportEventListPage() {
             filterTestIdPrefix="root-admin-sport-event-list-filter"
             getRowId={(tournament) => tournament.id}
             getRowLink={(tournament) => buildSportEventPath(sport, tournament.id)}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(tournament) => `root-admin-sport-event-row-${tournament.id}`}
             search={{ label: `Find a ${event.one}`, testId: 'root-admin-sport-event-list-search' }}
             tableTestId="root-admin-sport-event-list-table"

@@ -19,7 +19,7 @@ const COLUMNS: ColumnDef<Member>[] = [
   { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
 ];
 
-function MembersGrid(props: { pageSize?: number; showColumnFilters?: boolean; withSearch?: boolean }) {
+function MembersGrid(props: { showColumnFilters?: boolean; withSearch?: boolean }) {
   const { withSearch = true, ...rest } = props;
   return (
     <DataGrid
@@ -36,14 +36,13 @@ function MembersGrid(props: { pageSize?: number; showColumnFilters?: boolean; wi
 const meta = {
   title: "Tables/DataGrid",
   component: MembersGrid,
-  args: { pageSize: 10 },
 } satisfies Meta<typeof MembersGrid>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A table that needs search, sorting or paging. A list that can grow pages and searches. */
-export const SearchAndPages: Story = {};
+/** A table that needs search or sorting. Every row shows; the search and filters narrow them. */
+export const Search: Story = {};
 export const ColumnFilters: Story = { args: { showColumnFilters: true, withSearch: false } };
 
 function MembersWithViews() {
@@ -55,7 +54,6 @@ function MembersWithViews() {
       data={view === "owners" ? owners : MEMBERS}
       emptyMessage="No members match."
       getRowId={(member) => member.id}
-      pageSize={10}
       search={{ label: "Find a member" }}
       showColumnFilters={false}
       views={{

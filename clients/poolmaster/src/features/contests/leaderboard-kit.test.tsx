@@ -134,7 +134,7 @@ describe('ScoreboardGrid', () => {
     expect(screen.getByTestId('board-row-entry-2')).toBeInTheDocument();
   });
 
-  it('starts the board again from its first page when My entries is turned off from a later page of the viewer\'s entries', () => {
+  it('lists all of the viewer\'s entries with My entries on, and every entry once it is turned off, with no pages', () => {
     const board = Array.from({ length: 60 }, (_, index) => ({
       ...rows[0],
       entryId: `entry-${String(index + 1)}`,
@@ -145,12 +145,12 @@ describe('ScoreboardGrid', () => {
     }));
     renderBoard([placeColumn('board')], board, { address: '/?mine=1', mySquadId: 'squad-1' });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('26–30 of 30')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^board-row-entry-\d+$/)).toHaveLength(30);
 
     fireEvent.click(screen.getByTestId('contest-leaderboard-my-entries'));
 
-    expect(screen.getByText('1–25 of 60')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^board-row-entry-\d+$/)).toHaveLength(60);
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
   });
 
   it('starts with My entries on when the address carries ?mine=1, so a reload keeps the filter', () => {

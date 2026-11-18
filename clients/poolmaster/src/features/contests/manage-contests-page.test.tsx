@@ -316,7 +316,7 @@ describe('ManageContestsPage', () => {
     expect(screen.queryByTestId('manage-contests-row-contest-2')).not.toBeInTheDocument();
   });
 
-  it('shows 25 contests a page and pages to the rest', async () => {
+  it('shows every contest, with no pages', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
       contests: Array.from({ length: 30 }, (_, index) => buildContest({ id: `contest-${index}`, name: `Contest ${index}` })),
@@ -325,9 +325,8 @@ describe('ManageContestsPage', () => {
     renderManageContestsPage();
 
     await screen.findByTestId('manage-contests-row-contest-0');
-    expect(screen.getAllByRole('button', { name: /^Actions for Contest/ })).toHaveLength(25);
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getAllByRole('button', { name: /^Actions for Contest/ })).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: /^Actions for Contest/ })).toHaveLength(30);
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
   });
 
   it('opens a contest\'s Manage page from a click anywhere on its row', async () => {
