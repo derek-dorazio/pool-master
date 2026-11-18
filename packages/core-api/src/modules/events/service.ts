@@ -809,11 +809,7 @@ export class SportEventService {
       throw error;
     }
     await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
-    const tiersByEvent = await this.deps.tiers.createDefaultTiers(events.map((event) => ({
-      sportEventId: event.id,
-      definition: eventSportDefinition(event),
-      leagueTierCount: sportLeague.tierCount,
-    })));
+    const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
     return events.map((event): SportEventAdminSummary => {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {

@@ -64,7 +64,6 @@ function statPoolDefinition(definition: SportDefinition, composite: SportComposi
     scoringFamily: ScoringFamily.COMPOSITE,
     tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
     defaultRounds: composite.defaultGames,
-    defaultTierLayout: { tierCount: 6, tierSize: 5 },
     selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
     scoringDefinitions: ['COMPOSITE_TOTAL'],
     shootout: null,

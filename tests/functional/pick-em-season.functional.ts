@@ -44,7 +44,7 @@ import {
   SportEventBracketResponseSchema,
   type PickEmLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -203,7 +203,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- Two released weeks of four games -----------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Season Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

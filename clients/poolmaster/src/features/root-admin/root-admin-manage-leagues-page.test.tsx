@@ -151,6 +151,42 @@ describe('RootAdminManageLeaguesPage', () => {
     expect(screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1')).toHaveTextContent('Free');
   });
 
+  it('sorts Members by size, 9 before 10 before 120, and filters it by a number range', async () => {
+    const alpha = {
+      leagueCode: 'ACTIVE01',
+      description: null,
+      isActive: true,
+      iconKey: 'TROPHY',
+      activeContestCount: 0,
+      createdAt: '2026-04-10T12:00:00.000Z',
+      planEntitlements: buildPlanEntitlements(),
+      planRenewsAt: null,
+    };
+    listLeaguesMock.mockResolvedValue({
+      data: {
+        leagues: [
+          { ...alpha, id: 'league-120', name: 'Big League', memberCount: 120 },
+          { ...alpha, id: 'league-9', name: 'Small League', memberCount: 9 },
+          { ...alpha, id: 'league-10', name: 'Middle League', memberCount: 10 },
+        ],
+        memberships: [],
+      },
+    });
+    renderPage();
+    searchFor('league');
+    await screen.findByTestId('root-admin-manage-leagues-link-league-9');
+    const order = () => screen.getAllByTestId(/^root-admin-manage-leagues-link-/).map((link) => link.getAttribute('data-testid')?.split('-').at(-1));
+
+    fireEvent.click(screen.getByTestId('data-grid-sort-memberCount'));
+    expect(order()).toEqual(['9', '10', '120']);
+
+    fireEvent.click(screen.getByTestId('data-grid-filter-memberCount'));
+    fireEvent.change(screen.getByTestId('data-grid-filter-memberCount-from'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('data-grid-filter-memberCount-to'), { target: { value: '100' } });
+    fireEvent.click(screen.getByTestId('data-grid-filter-memberCount-apply'));
+    expect(order()).toEqual(['10']);
+  });
+
   it('shows when each league\'s Premium preview period ends in its own column', async () => {
     seedLeagues();
 
@@ -158,7 +194,7 @@ describe('RootAdminManageLeaguesPage', () => {
     searchFor('League');
 
     expect(await screen.findByTestId('root-admin-manage-leagues-link-league-active-1'))
-      .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+      .toHaveTextContent('Apr 24, 2027');
     expect(screen.getByRole('columnheader', { name: 'Preview ends' })).toBeInTheDocument();
   });
 

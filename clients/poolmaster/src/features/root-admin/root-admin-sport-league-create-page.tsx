@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { createSportLeague } from '@/lib/api';
-import { FormField, FormPage, Input } from '@/features/shared/ui';
+import { FormField, FormPage, Input, Select } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
@@ -11,16 +11,22 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { buildSportLeagueListPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
+import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
 import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
   matchKeyword: z.string().trim().optional(),
+  tierProfileId: z.string().min(1, 'Choose a tier profile'),
+  pricingProfileId: z.string().min(1, 'Choose a pricing profile'),
 });
 
 type NewTourValues = z.infer<typeof newTourSchema>;
 
-/** Create one of a sport's leagues (a golf tour, a racing circuit), then return to the list. */
+/**
+ * Create one of a sport's leagues (a golf tour, a racing circuit), naming the tier and pricing
+ * profiles it uses (#1844), then return to the list.
+ */
 export function RootAdminSportLeagueCreatePage() {
   const { sport, definition } = useManagedSport();
   const { sportLeague } = definition.vocabulary;
@@ -30,10 +36,12 @@ export function RootAdminSportLeagueCreatePage() {
     feature: 'root-admin-sport-league-create-page',
   });
   const navigate = useNavigate();
+  const tierProfiles = useTierProfilesQuery().data ?? [];
+  const pricingProfiles = usePricingProfilesQuery().data ?? [];
 
   const form = useForm<NewTourValues>({
     resolver: zodResolver(newTourSchema),
-    defaultValues: { name: '', matchKeyword: '' },
+    defaultValues: { name: '', matchKeyword: '', tierProfileId: '', pricingProfileId: '' },
     mode: 'onChange',
   });
 
@@ -43,6 +51,8 @@ export function RootAdminSportLeagueCreatePage() {
         body: {
           sport,
           name: values.name,
+          tierProfileId: values.tierProfileId,
+          pricingProfileId: values.pricingProfileId,
           ...(values.matchKeyword?.trim()
             ? { matchKeyword: values.matchKeyword.trim() }
             : {}),
@@ -88,6 +98,30 @@ export function RootAdminSportLeagueCreatePage() {
           data-testid="root-admin-sport-league-list-new-keyword"
           {...form.register('matchKeyword')}
         />
+      </FormField>
+      <FormField
+        error={form.formState.errors.tierProfileId?.message}
+        helperText="How many tiers a new event starts with, and how its field fills them."
+        label="Tier profile"
+      >
+        <Select data-testid="root-admin-sport-league-list-new-tier-profile" {...form.register('tierProfileId')}>
+          <option value="">Choose a tier profile</option>
+          {tierProfiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>{profile.name}</option>
+          ))}
+        </Select>
+      </FormField>
+      <FormField
+        error={form.formState.errors.pricingProfileId?.message}
+        helperText="The values a synced field is priced with."
+        label="Pricing profile"
+      >
+        <Select data-testid="root-admin-sport-league-list-new-pricing-profile" {...form.register('pricingProfileId')}>
+          <option value="">Choose a pricing profile</option>
+          {pricingProfiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>{profile.name}</option>
+          ))}
+        </Select>
       </FormField>
     </FormPage>
   );

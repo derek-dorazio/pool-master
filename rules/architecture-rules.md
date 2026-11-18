@@ -332,8 +332,9 @@ What differs between sports lives in exactly two places, so a new sport is added
 filling them in rather than by finding guards scattered through the code:
 
 - **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
-  type, scoring family, default tournament format, default round count and tier layout,
-  allowed selection types, scoring definitions, vocabulary and round labels. `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  type, scoring family, default tournament format, default round count,
+  allowed selection types, scoring definitions, vocabulary and round labels (never a league's choice such as its tier
+  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).

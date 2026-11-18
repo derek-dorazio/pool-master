@@ -274,7 +274,7 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.getByText('Completed event live scores sync for golf-masters-2026 (0 records).'),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
     expect(screen.getByText('Provider Records Returned')).toBeInTheDocument();
@@ -341,7 +341,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-provider-shape')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
 
@@ -497,7 +497,7 @@ describe('RootAdminSyncDashboardPage', () => {
       await screen.findByText('Events Hydrated: 1 · Participants Returned: 3 · Write Rows: 3'),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
 
@@ -528,7 +528,7 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
     expect(getProviderSyncRunMock).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('Sync run details')).toBeInTheDocument();
     expect(getProviderSyncRunMock).toHaveBeenCalledTimes(1);
@@ -559,7 +559,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('This run hasn\'t started yet, so it has no details.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-payload-provider')).not.toBeInTheDocument();
@@ -571,7 +571,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(
       await screen.findByText('Detailed diagnostics are kept for 30 days. None are stored for this run.'),
@@ -583,7 +583,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
 
     expect(await screen.findByText('No sync run sync-run-1')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-detail-rows')).not.toBeInTheDocument();

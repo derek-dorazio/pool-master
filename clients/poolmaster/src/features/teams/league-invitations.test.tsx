@@ -250,7 +250,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     expect(screen.getByTestId('league-invitation-email-2')).toBeInTheDocument();
   });
 
-  it('pages the invites 25 at a time', async () => {
+  it('lists every waiting invite, with no pages', async () => {
     const many = Array.from({ length: 30 }, (_, index) => emailInvite({
       id: `email-${String(index)}`,
       inviteCode: `code-${String(index)}`,
@@ -261,7 +261,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     renderInvitations();
 
     await screen.findByTestId('league-invitations-table');
-    expect(within(screen.getByTestId('league-invitations-table')).getAllByRole('row')).toHaveLength(26);
+    expect(within(screen.getByTestId('league-invitations-table')).getAllByRole('row')).toHaveLength(31);
   });
 
   it('resends an email invite and reloads the list, telling the commissioner the old link stopped working', async () => {

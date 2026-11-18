@@ -375,24 +375,30 @@ administration area (root admin included), reusing the same shared components.
    actions. Settings themselves are shown as labelled rows with one Edit for the
    group, in the title bar's trailing slot (§3 *Settings sections*). There is one
    row list: a settings row is a `SectionRow` too, never a component of its own.
-7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
-   assuming hundreds of rows: tables through `DataGrid`, other lists through
-   the same `Pager`. A contest leaderboard stays sorted by place, with the viewer's
+7. **Lists scale.** Member, owner and leaderboard lists have search and filters,
+   assuming thousands of rows, and never page: every row shows, and search and filters
+   narrow them (the owner, 2026-11-18). A grid's filters and sort live in the page link, so a
+   filtered list can be bookmarked or shared (`DataGrid`'s `urlKey`). A list that would be too long to load is bounded by
+   what it is for, such as one event or one league, never by a page. A contest leaderboard stays sorted by place, with the viewer's
    entries marked where they fall, and offers a **My entries** switch while the viewer
    has an entry on it: on, the board lists only theirs, each at its real place, with
-   search and paging within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
+   search within them, kept in the address as `?mine=1` (`MyEntriesToggle`,
    in `ScoreboardGrid` and the lineup board alike). A link can name one entry as
    `?entry=<id>`, as emails do: the page opens on it (a lineup row expands, a bracket's
    dialog opens, a squares entry's boxes light up as the viewer's own do, a standings row is
-   highlighted on its page) and scrolls to it, and closing it drops `?entry=` from the address
+   highlighted) and scrolls to it, and closing it drops `?entry=` from the address
    by replace. An entry the board doesn't show (unknown, or hidden by `?mine=1`) is ignored;
    before the contest locks only the viewer's own entries open. Once nothing is left to pick
    (the contest is final, or every event of a contest picked once per event has started), an
    entry's pick screen address lands there too, on `?entry=`. Any other long ranked list offers a
    way to jump to the viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
    In a manage list, the row opens the item (`DataGrid`'s `getRowLink`: the whole row
-   clicks, its first cell is the link a keyboard reaches), with no per-row Manage
-   button. Quick actions that need no page of their own sit in a `RowActionsMenu`
+   clicks, its first cell is the link a keyboard reaches, and a › at its right end says so),
+   with no per-row Manage or View details button. A row that opens a detail dialog instead
+   uses `openRowDialog`, which draws a ⤢ button there; a row never does both. A grid column
+   whose meaning isn't plain from its name explains itself in `meta.info`, which the header
+   shows behind an (i) after the name, never as text on the page; root admin grids explain
+   every column. Quick actions that need no page of their own sit in a `RowActionsMenu`
    ("⋯") in `DataGrid`'s `rowActions` column, pinned to the right edge so a phone
    reaches it without scrolling sideways; a destructive one confirms with `ConfirmDialog` and
    ends with a toast. A row with no quick actions shows no "⋯". A manage list's
@@ -403,9 +409,17 @@ administration area (root admin included), reusing the same shared components.
    `PageTabs` under the area's own. A `DataGrid` sorts and filters from its column headers,
    never from boxes under them: the name sorts (ascending, descending, off; one column at a
    time; blanks last), and a funnel opens the column's filter in a popup over the rows with
-   Clear, Cancel and Apply. A column whose values come from a fixed set declares the set
-   (`meta.options`): its filter ticks values, matching exactly, and it sorts in the set's order.
-   A line above the grid names each filter in force with Clear all filters.
+   Clear, Cancel and Apply. Every column declares what it holds (`meta.type`: text, enum,
+   yes/no, number, date, date and time, or date range), and the grid supplies the filter, the
+   sort and the cell's look for that type; a column with no type neither sorts nor filters.
+   The value is the real one (a number, a stored date), never a string the page formatted. An
+   enum column takes its shared enum's order (`meta.type.order`, `domain-model-conventions-rules.md`
+   §2): its filter ticks values, matching exactly, and it sorts in that order. Numbers sit
+   right-aligned in even-width figures. A date column states its direction (past, future or
+   both), which decides its quick list, and its format (month as a word, the default, or as a
+   number); dates follow the member's locale, zone and clock, padded so the rows line up, and a
+   date range shows both ends with both years. A line above the grid names each filter in force
+   with Clear all filters.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.

@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { DataGrid, DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
+import { DataGrid } from '@/features/shared/ui';
 import { sportEventNameColumn, sportEventScheduleColumns } from './sport-event-columns';
 import { sportEventFixture } from './sport-test-fixtures';
 
 function renderGrid() {
   render(
     <DataGrid
-      columns={[sportEventNameColumn('Tournament'), ...sportEventScheduleColumns(DEFAULT_DISPLAY_PREFERENCES)]}
+      columns={[sportEventNameColumn('Tournament'), ...sportEventScheduleColumns()]}
       data={[
         sportEventFixture({ id: 'masters', name: 'The Masters', venue: 'Augusta National' }),
         sportEventFixture({ id: 'open', name: 'The Open', venue: null }),

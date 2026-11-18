@@ -183,7 +183,7 @@ describe('RootAdminManageUsersPage', () => {
     expect(await screen.findByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
   });
 
-  it('shows 25 users a page and pages on to the rest', async () => {
+  it('shows every user the search returns, with no pages', async () => {
     adminListUsersMock.mockResolvedValue({
       data: {
         users: Array.from({ length: 30 }, (_, index) => ({
@@ -203,10 +203,7 @@ describe('RootAdminManageUsersPage', () => {
 
     searchFor('example');
     await screen.findByTestId('root-admin-manage-user-row-user-1');
-    expect(screen.queryByTestId('root-admin-manage-user-row-user-26')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /next/i }));
-
-    expect(await screen.findByTestId('root-admin-manage-user-row-user-26')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-user-row-user-30')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
   });
 });

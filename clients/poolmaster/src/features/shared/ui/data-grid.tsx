@@ -3,28 +3,35 @@ import {
   functionalUpdate,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
   type RowData,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import { Fragment, useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { Link } from "react-router";
+import { ChevronRight, Info, Maximize2 } from "lucide-react";
+import { Link, useInRouterContext, useSearchParams } from "react-router";
 import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
-import { Pager } from "./pager";
+import { InfoPopover } from "./info-popover";
 import { Tile } from "./tile";
 import { ViewFilter, type ViewFilterOption } from "./view-filter";
 import { DataGridColumnFilter } from "./data-grid-column-filter";
 import { DataGridFilterSummary } from "./data-grid-filter-summary";
 import { DataGridSortButton } from "./data-grid-sort-button";
-import { getBlanksLastSortedRowModel, initialFilters, withGridFilters, type DataGridColumnOptions } from "./data-grid-filters";
+import {
+  columnTypeClassName,
+  getBlanksLastSortedRowModel,
+  initialFilters,
+  withGridFilters,
+  type DataGridColumnType,
+} from "./data-grid-filters";
+import { useDisplayPreferences } from "./display-preferences";
+import { decodeGridState, encodeGridState, gridUrlColumns, type GridUrlState } from "./data-grid-url-state";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -40,8 +47,8 @@ export type DataGridSearch = {
 };
 
 /**
- * A "jump to my row" action (rules/ux-rules.md §12 rule 7): clears the search and filters, turns
- * to the page holding the row in the current sort, scrolls to it and highlights it. Needs
+ * A "jump to my row" action (rules/ux-rules.md §12 rule 7): clears the search and filters,
+ * scrolls to the row and highlights it. Needs
  * `getRowId`; the button shows only while the row is in the data.
  */
 export type DataGridJumpToRow = {
@@ -105,14 +112,6 @@ export type DataGridProps<TData> = {
   emptyMessage: string;
   filterTestIdPrefix?: string;
   getRowId?: (row: TData, index: number) => string;
-  /**
-   * Where a row leads: the whole row opens it (rules/ux-rules.md §12), and its first cell is the
-   * link a keyboard reaches. Buttons, links and menus inside the row keep their own clicks.
-   */
-  getRowLink?: (row: TData) => string;
-  getRowLinkProps?: (
-    row: TData,
-  ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
   /**
    * The row's quick actions, a `RowActionsMenu` ("⋯"), in a last column of its own. That column
@@ -128,8 +127,6 @@ export type DataGridProps<TData> = {
    * roster / field).
    */
   meta?: Record<string, unknown>;
-  /** Rows per page; omitted, every row shows on one page. */
-  pageSize?: number;
   /** Whether each filterable column's header offers its filter. On by default. */
   showColumnFilters?: boolean;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
@@ -142,21 +139,22 @@ export type DataGridProps<TData> = {
    */
   toolbarEnd?: ReactNode;
   /**
-   * Names a narrowing the caller applies to `data` itself, such as "mine" or "all": when it
-   * changes, the grid starts again from its first page, as it does for its own search.
-   */
-  pageResetKey?: string;
-  /**
    * The rows drawn under a row, such as an opened leaderboard entry's games; none while it is
    * closed. The caller decides which rows are open.
    */
   detailRows?: (row: TData) => readonly DataGridDetailRow[];
   /**
    * A row to open the grid on, such as the entry a link names: once it is among the rows, the
-   * grid turns to its page, highlights it as a jump does and scrolls it into view, once per id.
+   * grid highlights it as a jump does and scrolls it into view, once per id.
    * An id the grid doesn't hold is ignored.
    */
   landOnRowId?: string | null;
+  /**
+   * The page link's query parameter that keeps this grid's filters and sort (#1842), so a
+   * filtered grid can be bookmarked or shared; `grid` unless set. A page with two grids gives
+   * each its own.
+   */
+  urlKey?: string;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -174,6 +172,28 @@ export type DataGridProps<TData> = {
       search?: never;
       jumpToRow?: never;
     }
+) & (
+  | {
+      /**
+       * Where a row leads: the whole row opens it (rules/ux-rules.md §12), its first cell is the
+       * link a keyboard reaches, and a › at its right end says so. Buttons, links and menus
+       * inside the row keep their own clicks.
+       */
+      getRowLink?: (row: TData) => string;
+      getRowLinkProps?: (
+        row: TData,
+      ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
+      openRowDialog?: never;
+    }
+  | {
+      /**
+       * Opens a row's details in a dialog: the whole row opens it, and a ⤢ button at its right
+       * end is the way in a keyboard reaches. A row leads to a page or opens a dialog, never both.
+       */
+      openRowDialog: (row: TData) => void;
+      getRowLink?: never;
+      getRowLinkProps?: never;
+    }
 );
 
 declare module "@tanstack/react-table" {
@@ -185,10 +205,16 @@ declare module "@tanstack/react-table" {
      */
     pinned?: "start";
     /**
-     * The column holds values from a fixed set (a sport, a kind, a status): its filter lists a
-     * checkbox per value, and it sorts in the set's order.
+     * What the column holds and why, in one or two plain sentences of product copy: a small (i)
+     * after the column's name shows it. Explanations live only here, never as text on the page.
      */
-    options?: DataGridColumnOptions;
+    info?: string;
+    /**
+     * What the column holds (`DataGridColumnType`): text, a value from a fixed set, yes/no, a
+     * number, a date or a date range. The grid supplies its filter, its sort and, for numbers
+     * and dates, the cell's look. A column with no type neither sorts nor filters.
+     */
+    type?: DataGridColumnType;
   }
 }
 
@@ -232,7 +258,8 @@ const OWN_CLICK_SELECTOR = "a, button, input, select, textarea, label, [role='me
 
 /**
  * A click on a linked row opens it through the row's link, as if the link were clicked: the
- * router moves, and the link's own `onClick` runs. A click on a control in the row, one that
+ * router moves, and the link's own `onClick` runs. A row that opens a dialog does the same
+ * through its ⤢ button. A click on a control in the row, one that
  * reaches the row from a dialog or menu drawn elsewhere on the page, or the end of selecting the
  * row's text does not.
  */
@@ -244,13 +271,42 @@ function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
   if (target.closest(OWN_CLICK_SELECTOR) || window.getSelection()?.toString()) {
     return;
   }
-  event.currentTarget.querySelector<HTMLAnchorElement>("a[data-row-link]")?.click();
+  event.currentTarget.querySelector<HTMLElement>("a[data-row-link], button[data-row-dialog]")?.click();
+}
+
+/** Whether two grid states show the same rows in the same order. */
+function sameState(left: GridUrlState, right: GridUrlState): boolean {
+  return encodeGridState(left) === encodeGridState(right);
 }
 
 /** What a header tells a screen reader about its column's sort. */
 const ARIA_SORT: Record<string, "ascending" | "descending" | undefined> = { asc: "ascending", desc: "descending" };
 
-export function DataGrid<TData>({
+/** Where the grid keeps its filters and sort in the page link; none outside a router. */
+type GridUrlBinding = { value: string | null; write: (next: string | null) => void };
+
+export function DataGrid<TData>(props: DataGridProps<TData>) {
+  return useInRouterContext() ? <RoutedDataGrid {...props} /> : <DataGridBody {...props} url={null} />;
+}
+
+function RoutedDataGrid<TData>(props: DataGridProps<TData>) {
+  const key = props.urlKey ?? "grid";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const url: GridUrlBinding = {
+    value: searchParams.get(key),
+    // A new filter or sort is a step Back returns from, so it pushes; other parameters stay.
+    write: (next) =>
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        if (next === null) params.delete(key);
+        else params.set(key, next);
+        return params;
+      }),
+  };
+  return <DataGridBody {...props} url={url} />;
+}
+
+function DataGridBody<TData>({
   columns,
   data,
   emptyMessage,
@@ -258,37 +314,35 @@ export function DataGrid<TData>({
   getRowId,
   getRowLink,
   getRowLinkProps,
+  openRowDialog,
   rowTestId,
   rowActions,
   tableTestId,
   meta,
   search,
   searchTerm,
-  pageSize,
   showColumnFilters = true,
   jumpToRow,
   headerTone = "plain",
   views,
   toolbarEnd,
-  pageResetKey,
   detailRows,
   landOnRowId = null,
-}: DataGridProps<TData>) {
-  // Null until the first render reads which enumerated columns start on some values only.
+  url,
+}: DataGridProps<TData> & { url: GridUrlBinding | null }) {
+  // Null until the first render reads the link, or else which enumerated columns start on some
+  // values only.
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState | null>(null);
-  const gridColumns = useMemo(() => withGridFilters(columns), [columns]);
+  const preferences = useDisplayPreferences();
+  const gridColumns = useMemo(() => withGridFilters(columns, preferences), [columns, preferences]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
   const globalFilter = searchTerm ?? ownSearchTerm;
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: pageSize ?? Number.MAX_SAFE_INTEGER,
-  });
 
   // The last row jumped to: it stays highlighted until the next jump.
   const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
-  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's page alone.
+  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's scroll alone.
   const [landedRowId, setLandedRowId] = useState<string | null>(null);
   useEffect(() => {
     if (landedRowId === null) {
@@ -298,30 +352,6 @@ export function DataGrid<TData>({
       ?.querySelector(`[data-row-id="${CSS.escape(landedRowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [landedRowId]);
-
-  const resetPageIndex = () =>
-    setPagination((current) => ({ ...current, pageIndex: 0 }));
-
-  // A new term from the page's own box starts again from the first page, as the grid's box does.
-  const [pagedSearchTerm, setPagedSearchTerm] = useState(searchTerm);
-  if (searchTerm !== pagedSearchTerm) {
-    setPagedSearchTerm(searchTerm);
-    resetPageIndex();
-  }
-
-  // So does another narrowing the caller applies, such as a leaderboard's My entries.
-  const [pagedResetKey, setPagedResetKey] = useState(pageResetKey);
-  if (pageResetKey !== pagedResetKey) {
-    setPagedResetKey(pageResetKey);
-    resetPageIndex();
-  }
-
-  // Another view starts again from the first page and keeps what was typed in the search.
-  const [pagedView, setPagedView] = useState(views?.value);
-  if (views?.value !== pagedView) {
-    setPagedView(views?.value);
-    resetPageIndex();
-  }
 
   const table = useReactTable({
     data,
@@ -334,61 +364,78 @@ export function DataGrid<TData>({
     state: {
       columnFilters: columnFilters ?? [],
       globalFilter,
-      pagination,
       sorting,
     },
     globalFilterFn: "includesString",
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getBlanksLastSortedRowModel(),
-    // A new search, filter or sort starts again from the first page.
     onColumnFiltersChange: (updater) => {
-      setColumnFilters((current) => functionalUpdate(updater, current ?? []));
-      resetPageIndex();
+      keep({ sorting, filters: functionalUpdate(updater, columnFilters ?? []) });
     },
     onGlobalFilterChange: (updater: string) => {
       setOwnSearchTerm(updater);
-      resetPageIndex();
     },
-    onPaginationChange: setPagination,
     onSortingChange: (updater) => {
-      setSorting(updater);
-      resetPageIndex();
+      keep({ sorting: functionalUpdate(updater, sorting), filters: columnFilters ?? [] });
     },
     getRowId,
   });
 
-  // The columns' `initial` selections are read once, on the first render; a column that gains
-  // one later (columns built after the data loads) does not apply it.
-  if (columnFilters === null) {
-    setColumnFilters(initialFilters(table));
+  // What the grid shows with nothing in the link: no sort, and the columns' `initial`
+  // selections. It is read once, on the first render; a column that gains an `initial` later
+  // (columns built after the data loads) does not apply it.
+  const [startState, setStartState] = useState<GridUrlState | null>(null);
+  // The link's value the grid last showed, so Back and Forward, which change it, are followed.
+  const [shownUrlValue, setShownUrlValue] = useState<string | null>(null);
+  const restore = (value: string | null, start: GridUrlState) => {
+    const fromLink = decodeGridState(value, gridUrlColumns(table.getAllLeafColumns(), showColumnFilters), preferences);
+    setShownUrlValue(value);
+    setColumnFilters(fromLink?.filters ?? start.filters);
+    setSorting(fromLink?.sorting ?? start.sorting);
+  };
+  if (startState === null) {
+    const start = { sorting: [], filters: initialFilters(table) };
+    setStartState(start);
+    restore(url?.value ?? null, start);
+  } else if (url && url.value !== shownUrlValue) {
+    restore(url.value, startState);
+  }
+
+  /** Shows a new sort or set of filters and keeps it in the link; the start state keeps none. */
+  function keep(next: GridUrlState) {
+    setColumnFilters(next.filters);
+    setSorting(next.sorting);
+    if (!url) return;
+    const value = startState !== null && sameState(next, startState) ? null : (encodeGridState(next) ?? "{}");
+    setShownUrlValue(value);
+    url.write(value);
   }
 
   // The pinned header cell needs a solid fill, or the column names scroll through it.
+  // The pinned last column: the row's actions, then the › or ⤢ that says what the row opens.
+  const hasEndColumn = Boolean(rowActions ?? getRowLink ?? openRowDialog);
   const pinnedHeaderSurface = headerTone === "scoreboard" ? "bg-surface-inverse" : PINNED_PLAIN_HEADER_SURFACE;
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
   const visibleColumnCount = useMemo(
-    () => table.getVisibleLeafColumns().length + (rowActions ? 1 : 0),
-    [rowActions, table],
+    () => table.getVisibleLeafColumns().length + (hasEndColumn ? 1 : 0),
+    [hasEndColumn, table],
   );
 
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
 
-  // Each step renders before the next reads it: the unfiltered rows say which page holds the row,
-  // and that page is in the table to scroll to. A repeat jump scrolls again; a sort or page never does.
+  // Each step renders before the next reads it: clearing the search and filters puts the row in
+  // the table to scroll to. A repeat jump scrolls again; a sort never does.
   const jump = (rowId: string) => {
     flushSync(() => {
       setOwnSearchTerm("");
-      setColumnFilters([]);
+      keep({ sorting, filters: [] });
     });
-    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === rowId);
-    if (index < 0) {
+    if (!table.getRowModel().rows.some((row) => row.id === rowId)) {
       return;
     }
     flushSync(() => {
-      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
       setJumpedRowId(rowId);
     });
     tableRef.current
@@ -396,21 +443,9 @@ export function DataGrid<TData>({
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
 
-  if (landOnRowId !== null && landOnRowId !== landedRowId) {
-    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === landOnRowId);
-    if (index >= 0) {
-      setLandedRowId(landOnRowId);
-      setJumpedRowId(landOnRowId);
-      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
-    }
-  }
-
-  const matchingRowCount = table.getFilteredRowModel().rows.length;
-  const pageCount = table.getPageCount();
-  if (pagination.pageIndex > 0 && pagination.pageIndex >= pageCount) {
-    // The caller passed fewer rows than before (a refetch, or a narrower filter of its own):
-    // show the last page there still is rather than an empty one.
-    setPagination({ ...pagination, pageIndex: Math.max(pageCount - 1, 0) });
+  if (landOnRowId !== null && landOnRowId !== landedRowId && table.getRowModel().rows.some((row) => row.id === landOnRowId)) {
+    setLandedRowId(landOnRowId);
+    setJumpedRowId(landOnRowId);
   }
 
   const searchBox = search ? (
@@ -496,12 +531,27 @@ export function DataGrid<TData>({
                     const { column } = header;
                     const canFilter = showColumnFilters && column.getCanFilter();
                     const name = flexRender(column.columnDef.header, header.getContext());
+                    const columnInfo = column.columnDef.meta?.info;
+                    const info = columnInfo ? (
+                      <InfoPopover
+                        icon={<Info aria-hidden className="size-3.5" />}
+                        label={`About ${filterLabel(column.columnDef.header, column.id)}`}
+                        look="tooltip"
+                        testId={`data-grid-info-${column.id}`}
+                        trigger="inline"
+                      >
+                        <span className="block text-left text-sm font-normal normal-case leading-snug tracking-normal">
+                          {columnInfo}
+                        </span>
+                      </InfoPopover>
+                    ) : null;
 
                     return (
                       <th
                         aria-sort={ARIA_SORT[String(column.getIsSorted())]}
                         className={cn(
                           "group/header px-4 py-3 font-medium",
+                          column.columnDef.meta?.type?.kind === "number" && "text-right",
                           column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, pinnedHeaderSurface],
                         )}
                         key={header.id}
@@ -511,13 +561,19 @@ export function DataGrid<TData>({
                             {column.getCanSort() ? (
                               <DataGridSortButton
                                 direction={column.getIsSorted()}
+                                info={info}
                                 onClick={() => column.toggleSorting(undefined, false)}
                                 testId={`data-grid-sort-${column.id}`}
                                 tone={headerTone}
                               >
                                 {name}
                               </DataGridSortButton>
-                            ) : name}
+                            ) : (
+                              <>
+                                {name}
+                                {info}
+                              </>
+                            )}
                             {canFilter ? (
                               <DataGridColumnFilter
                                 column={column}
@@ -531,9 +587,9 @@ export function DataGrid<TData>({
                       </th>
                     );
                   })}
-                  {rowActions ? (
+                  {hasEndColumn ? (
                     <th className={cn(PINNED_END_CELL, "w-px px-2 py-3", pinnedHeaderSurface)} key="row-actions">
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">{rowActions ? "Actions" : "Open"}</span>
                     </th>
                   ) : null}
                 </tr>
@@ -560,12 +616,13 @@ export function DataGrid<TData>({
                         )}
                         data-row-id={row.id}
                         data-testid={rowTestId?.(row.original, index)}
-                        onClick={link ? openRowFromClick : undefined}
+                        onClick={link || openRowDialog ? openRowFromClick : undefined}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td
                             className={cn(
                               "px-4 py-4",
+                              columnTypeClassName(cell.column.columnDef.meta?.type),
                               cell.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, PINNED_BODY_SURFACE],
                             )}
                             key={cell.id}
@@ -588,7 +645,7 @@ export function DataGrid<TData>({
                             )}
                           </td>
                         ))}
-                        {rowActions ? (
+                        {hasEndColumn ? (
                           <td
                             className={cn(
                               PINNED_END_CELL,
@@ -596,7 +653,28 @@ export function DataGrid<TData>({
                             )}
                             data-testid="data-grid-row-actions"
                           >
-                            {rowActions(row.original)}
+                            <span className="inline-flex items-center justify-end gap-1">
+                              {rowActions?.(row.original)}
+                              {link ? (
+                                <ChevronRight
+                                  aria-hidden="true"
+                                  className="size-4 text-muted-foreground"
+                                  data-testid="data-grid-row-opens-page"
+                                />
+                              ) : null}
+                              {openRowDialog ? (
+                                <button
+                                  aria-label="Open details"
+                                  className="inline-flex rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  data-row-dialog=""
+                                  data-testid="data-grid-row-opens-dialog"
+                                  onClick={() => openRowDialog(row.original)}
+                                  type="button"
+                                >
+                                  <Maximize2 aria-hidden="true" className="size-4" />
+                                </button>
+                              ) : null}
+                            </span>
                           </td>
                         ) : null}
                       </tr>
@@ -618,7 +696,7 @@ export function DataGrid<TData>({
                               {detail.span?.fromColumnId === column.id ? detail.span.content : detail.cells[column.id]}
                             </td>
                           ))}
-                          {rowActions ? <td className={cn(PINNED_END_CELL, "bg-card")} /> : null}
+                          {hasEndColumn ? <td className={cn(PINNED_END_CELL, "bg-card")} /> : null}
                         </tr>
                       ))}
                     </Fragment>
@@ -639,16 +717,6 @@ export function DataGrid<TData>({
         </div>
         )}
       </Tile>
-      {pageSize && !views?.status ? (
-        <Pager
-          onNext={() => table.nextPage()}
-          onPrevious={() => table.previousPage()}
-          pageCount={pageCount}
-          pageIndex={pagination.pageIndex}
-          pageSize={pagination.pageSize}
-          total={matchingRowCount}
-        />
-      ) : null}
     </div>
   );
 }

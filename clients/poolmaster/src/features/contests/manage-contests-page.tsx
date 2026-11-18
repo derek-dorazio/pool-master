@@ -33,8 +33,6 @@ import {
   useLeagueFinishedContestsQuery,
 } from './use-league-contests-query';
 
-const CONTESTS_PER_PAGE = 25;
-
 type ContestFilter = 'active' | 'history';
 
 type ContestRow = {
@@ -237,7 +235,6 @@ export function ManageContestsPage() {
             : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
           getRowId={(row) => row.contest.id}
           getRowLink={(row) => buildLeagueAdminContestPath(leagueCode, row.contest.id)}
-          pageSize={CONTESTS_PER_PAGE}
           rowActions={(row) => (
             <ManageContestsRowActions
               contest={row.contest}

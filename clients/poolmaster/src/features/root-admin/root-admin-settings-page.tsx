@@ -18,7 +18,6 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { BillingSettingsForm } from '@/features/billing/billing-settings-form';
-import { BudgetPricingSettingsForm } from './root-admin-budget-pricing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
@@ -26,7 +25,6 @@ import { PLANS_PATH, SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeBilling,
-  summarizeBudgetPricing,
   summarizePlans,
   summarizeEmail,
   summarizeIngestionSchedule,
@@ -36,8 +34,8 @@ import {
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * its own pages under Settings, and Plans on its own Manage page; Email, budget pricing and
- * Payments are edited in their sections.
+ * its own pages under Settings, and Plans on its own Manage page; Email and Payments are edited in
+ * their sections. Pricing profiles are their own rows, not a settings group (#1844).
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
@@ -98,7 +96,6 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
                 <EmailTestForm />
               </>
             ) : null}
-            {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
             {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
             <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
               {group.updatedAt ? (
@@ -144,9 +141,6 @@ function groupContent(group: SettingsGroup, locale: string): { summary: Settings
     case 'EMAIL_CONFIG':
       // Edited in place: the section carries the form.
       return { summary: summarizeEmail(group.value), actions: null };
-    case 'BUDGET_PRICING_CONFIG':
-      // Edited in place: the section carries the form.
-      return { summary: summarizeBudgetPricing(group.value), actions: null };
     case 'PLAN_CONFIG':
       return {
         summary: summarizePlans(group.value, locale),

@@ -20,7 +20,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, findSportRow } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -89,7 +89,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A league that reseeds, and its playoff -------------------------------------------------
-    const league = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } });
+    const league = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } });
     expect(league.data?.sportLeague.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

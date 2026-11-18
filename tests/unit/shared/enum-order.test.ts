@@ -67,12 +67,19 @@ describe('enum orders', () => {
   });
 });
 
-/** Every `as const` enum object in enums.ts: string values, each equal to its own key. */
+/** An order's export name: `<Name>Order`, or a named priority order such as `ContestStatusOrderForHomeCurrent`. */
+const ORDER_NAME = /Order(?:For[A-Z]\w*)?$/;
+
+/**
+ * Every `as const` enum object in enums.ts: string values, each equal to its own key. The orders
+ * beside them are told apart by name, not by shape, so no enum is skipped for holding a member
+ * an order also has.
+ */
 function sharedEnums(): [string, Record<string, string>][] {
   return Object.entries(enums as Record<string, unknown>).filter((entry): entry is [string, Record<string, string>] => {
-    const [, value] = entry;
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-      && !('kind' in value)
+    const [name, value] = entry;
+    return !ORDER_NAME.test(name)
+      && typeof value === 'object' && value !== null && !Array.isArray(value)
       && Object.entries(value).every(([key, member]) => key === member);
   });
 }

@@ -14,6 +14,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -43,7 +44,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
-    create: { sportId: sport.id, name: leagueName },
+    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: leagueName },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });

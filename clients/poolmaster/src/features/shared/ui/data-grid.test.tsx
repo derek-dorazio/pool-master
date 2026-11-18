@@ -14,10 +14,12 @@ type TestRow = {
 const columnHelper = createColumnHelper<TestRow>();
 const columns = [
   columnHelper.accessor("name", {
+    meta: { type: { kind: "text" } },
     header: "Name",
     cell: ({ getValue }) => getValue(),
   }),
   columnHelper.accessor("lifecycle", {
+    meta: { type: { kind: "text" } },
     header: "Lifecycle",
     cell: ({ getValue }) => getValue(),
   }),
@@ -51,10 +53,12 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   it("names a column's filter after its header, and never prints a header drawn by a function as code", () => {
     const drawnHeader = [
       columnHelper.accessor("name", {
+        meta: { type: { kind: "text" } },
         header: ({ table }) => `Team of ${String(table.getRowCount())}`,
         cell: ({ getValue }) => getValue(),
       }),
       columnHelper.accessor("lifecycle", {
+        meta: { type: { kind: "text" } },
         header: "Lifecycle",
         cell: ({ getValue }) => getValue(),
       }),
@@ -264,8 +268,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByTestId("test-row-row-2")).toBeInTheDocument();
   });
 
-  it("pages rows, and a new search starts again from the first page", async () => {
-    const data = Array.from({ length: 5 }, (_, index) => ({
+  it("shows every row with no pager, however many there are, and a search narrows them", () => {
+    const data = Array.from({ length: 60 }, (_, index) => ({
       id: `row-${index + 1}`,
       lifecycle: "Active",
       name: `Name ${index + 1}`,
@@ -276,32 +280,23 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
         data={data}
         emptyMessage="No rows matched."
         getRowId={(row) => row.id}
-        pageSize={2}
         rowTestId={(row) => `test-row-${row.id}`}
         search={{ label: "Find a row" }}
       />,
     );
 
-    const pages = screen.getByRole("navigation", { name: "Pages" });
-    expect(pages).toHaveTextContent("1–2 of 5");
-    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getAllByTestId(/^test-row-/)).toHaveLength(60);
+    expect(screen.queryByRole("navigation", { name: "Pages" })).not.toBeInTheDocument();
 
-    expect(pages).toHaveTextContent("5–5 of 5");
-    expect(screen.getByTestId("test-row-row-5")).toBeInTheDocument();
-    expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), { target: { value: "Name 6" } });
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), {
-      target: { value: "Name" },
-    });
-
-    expect(await screen.findByTestId("test-row-row-1")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+    expect(screen.getAllByTestId(/^test-row-/).map((row) => row.getAttribute("data-testid"))).toEqual([
+      "test-row-row-6",
+      "test-row-row-60",
+    ]);
   });
 
-  it("narrows to a term from the page's own search box, drawing no box itself, and starts again from the first page", async () => {
+  it("narrows to a term from the page's own search box, drawing no box itself", () => {
     const data = Array.from({ length: 5 }, (_, index) => ({
       id: `row-${index + 1}`,
       lifecycle: "Active",
@@ -313,7 +308,6 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
         data={data}
         emptyMessage="No rows matched."
         getRowId={(row) => row.id}
-        pageSize={2}
         rowTestId={(row) => `test-row-${row.id}`}
         searchTerm={searchTerm}
         showColumnFilters={false}
@@ -322,56 +316,42 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     const { rerender } = render(grid(""));
 
     expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
-
-    rerender(grid("Name"));
-    expect(await screen.findByTestId("test-row-row-1")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+    expect(screen.getAllByTestId(/^test-row-/)).toHaveLength(5);
 
     rerender(grid("Name 4"));
     expect(screen.getByTestId("test-row-row-4")).toBeInTheDocument();
     expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
   });
 
-  it("shows no pager when every row fits on one page", () => {
+  it("renders, filters and sorts 2,000 rows quickly enough to stay smooth", () => {
+    const data = Array.from({ length: 2000 }, (_, index) => ({
+      id: `row-${index + 1}`,
+      lifecycle: index % 2 === 0 ? "Active" : "Inactive",
+      name: `Name ${index + 1}`,
+    }));
+    const started = performance.now();
     render(
       <DataGrid
         columns={columns}
-        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
-        emptyMessage="No rows matched."
-        pageSize={2}
-      />,
-    );
-
-    expect(screen.queryByRole("navigation", { name: "Pages" })).not.toBeInTheDocument();
-  });
-
-  it("moves back to the last page left when the caller passes fewer rows", async () => {
-    const data = Array.from({ length: 5 }, (_, index) => ({
-      id: `row-${index + 1}`,
-      lifecycle: "Active",
-      name: `Name ${index + 1}`,
-    }));
-    const grid = (rows: TestRow[]) => (
-      <DataGrid
-        columns={columns}
-        data={rows}
+        data={data}
         emptyMessage="No rows matched."
         getRowId={(row) => row.id}
-        pageSize={2}
-        rowTestId={(row) => `test-row-${row.id}`}
-      />
+        search={{ label: "Find a row" }}
+      />,
     );
-    const { rerender } = render(grid(data));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getAllByRole("row")).toHaveLength(2001);
 
-    rerender(grid(data.slice(0, 3)));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), { target: { value: "Name 199" } });
+    expect(screen.getAllByRole("row")).toHaveLength(1 + 11);
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), { target: { value: "" } });
+    fireEvent.click(screen.getByTestId("data-grid-sort-name"));
+    expect(screen.getAllByRole("row")).toHaveLength(2001);
 
-    expect(await screen.findByTestId("test-row-row-3")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–3 of 3");
-  });
+    // A generous ceiling for a shared CI runner under jsdom with coverage on, where one pass takes
+    // several seconds; a real browser is far quicker. The test's own timeout sits above it.
+    expect(performance.now() - started).toBeLessThan(20_000);
+  }, 30_000);
+
   describe("jump to a row", () => {
     const data = Array.from({ length: 5 }, (_, index) => ({
       id: `row-${index + 1}`,
@@ -385,13 +365,12 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
         emptyMessage="No rows matched."
         getRowId={(row) => row.id}
         jumpToRow={{ rowId, label: "Jump to Name 5", testId: "test-jump" }}
-        pageSize={2}
         rowTestId={(row) => `test-row-${row.id}`}
         search={{ label: "Find a row", testId: "test-search" }}
       />
     );
 
-    it("clears the search, turns to the row's page and highlights it, and only it", async () => {
+    it("clears the search, highlights the row, and only it", async () => {
       render(grid("row-5"));
       fireEvent.change(screen.getByTestId("test-search"), { target: { value: "Name 1" } });
 
@@ -400,21 +379,18 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       const target = await screen.findByTestId("test-row-row-5");
       expect(target).toHaveAttribute("aria-current", "true");
       expect(screen.getByTestId("test-search")).toHaveValue("");
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("5–5 of 5");
-      expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
+      expect(screen.getByTestId("test-row-row-1")).not.toHaveAttribute("aria-current");
     });
 
-    it("finds the row's page in the current sort", async () => {
+    it("keeps the current sort when it jumps", async () => {
       render(grid("row-5"));
-      // Sorted by name descending, Name 5 leads the first page.
       fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
       fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
 
       fireEvent.click(screen.getByTestId("test-jump"));
 
       expect(await screen.findByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+      expect(screen.getAllByTestId(/^test-row-/)[0]).toBe(screen.getByTestId("test-row-row-5"));
     });
 
     it("scrolls to the row on every jump, a repeat one included, and not on a later sort", async () => {
@@ -433,7 +409,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       scroll.mockRestore();
     });
 
-    it("scrolls the jumped row, on its page in the table, into view", () => {
+    it("scrolls the jumped row, in the table, into view", () => {
       const scrolled: Element[] = [];
       const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
         scrolled.push(this);
@@ -448,7 +424,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       scroll.mockRestore();
     });
 
-    it("clears a column filter that hides the row before turning to its page", () => {
+    it("clears a column filter that hides the row before scrolling to it", () => {
       render(grid("row-5"));
       applyTextFilter("data-grid-filter-name", "Name 2");
       expect(screen.queryByTestId("test-row-row-5")).not.toBeInTheDocument();
@@ -457,7 +433,6 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
       expect(screen.getByTestId("data-grid-filter-name")).toHaveAccessibleName("Filter Name");
       expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("5–5 of 5");
     });
 
     it("offers no jump for a row that is not in the data", () => {
@@ -480,12 +455,11 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
         emptyMessage="No rows matched."
         getRowId={(row) => row.id}
         landOnRowId={landOnRowId}
-        pageSize={2}
         rowTestId={(row) => `test-row-${row.id}`}
       />
     );
 
-    it("opens on the row's page with it highlighted and scrolled into view", () => {
+    it("opens with the row highlighted and scrolled into view", () => {
       const scrolled: Element[] = [];
       const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function scrollIntoView(this: Element) {
         scrolled.push(this);
@@ -494,32 +468,28 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       render(grid("row-3"));
 
       expect(screen.getByTestId("test-row-row-3")).toHaveAttribute("aria-current", "true");
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
       expect(scrolled).toEqual([screen.getByTestId("test-row-row-3")]);
       scroll.mockRestore();
     });
 
-    it("lands once the row arrives, and only once: a later page turn or new data stays where the viewer is", () => {
+    it("lands once the row arrives, and only once: new data leaves the viewer where they are", () => {
       const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
       const { rerender } = render(grid("row-5", []));
       expect(scroll).not.toHaveBeenCalled();
 
       rerender(grid("row-5"));
       expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
-      fireEvent.click(screen.getByRole("button", { name: "Previous" }));
       rerender(grid("row-5", [...data]));
 
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
       expect(scroll).toHaveBeenCalledTimes(1);
       scroll.mockRestore();
     });
 
-    it("ignores a row it doesn't hold, staying on the first page with nothing highlighted", () => {
+    it("ignores a row it doesn't hold, with nothing highlighted or scrolled", () => {
       const scroll = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
 
       render(grid("row-9"));
 
-      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
       expect(screen.getByTestId("test-row-row-1")).not.toHaveAttribute("aria-current");
       expect(scroll).not.toHaveBeenCalled();
       scroll.mockRestore();
@@ -581,35 +551,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByTestId("grid-search").compareDocumentPosition(screen.getByTestId("grid-toolbar-end")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("starts again from the first page when the caller's page reset key changes, and stays put while it doesn't", () => {
-    const data = [
-      { id: "row-1", lifecycle: "Active", name: "Alpha" },
-      { id: "row-2", lifecycle: "Active", name: "Beta" },
-    ];
-    const grid = (pageResetKey: string) => (
-      <DataGrid
-        columns={columns}
-        data={data}
-        emptyMessage="No rows matched."
-        getRowId={(row) => row.id}
-        pageResetKey={pageResetKey}
-        pageSize={1}
-        rowTestId={(row) => `test-row-${row.id}`}
-        showColumnFilters={false}
-      />
-    );
-    const { rerender } = render(grid("all"));
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    rerender(grid("all"));
-
-    expect(screen.getByTestId("test-row-row-2")).toBeInTheDocument();
-
-    rerender(grid("mine"));
-
-    expect(screen.getByTestId("test-row-row-1")).toBeInTheDocument();
-  });
-
-  it("draws a view's loading or error state in the card in place of the table and pager, keeping the views", () => {
+  it("draws a view's loading or error state in the card in place of the table, keeping the views", () => {
     render(
       <DataGrid
         columns={columns}
@@ -618,7 +560,6 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
           { id: "row-2", lifecycle: "Active", name: "Beta" },
         ]}
         emptyMessage="No rows matched."
-        pageSize={1}
         tableTestId="grid-table"
         views={{
           label: "Rows to show",
@@ -633,10 +574,9 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByTestId("grid-status")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "History" })).toBeChecked();
     expect(screen.queryByTestId("grid-table")).not.toBeInTheDocument();
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
-  it("starts another view from its first page and keeps what was typed in the search", () => {
+  it("keeps what was typed in the search when the view changes", () => {
     const rows = (prefix: string) => Array.from({ length: 5 }, (_, index) => ({ id: `${prefix}-${index + 1}`, lifecycle: "Active", name: `${prefix} ${index + 1}` }));
     function Grid({ view }: { view: string }) {
       return (
@@ -645,7 +585,6 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
           data={rows(view)}
           emptyMessage="No rows matched."
           getRowId={(row) => row.id}
-          pageSize={2}
           search={{ label: "Find a row" }}
           views={{
             label: "Rows to show",
@@ -659,13 +598,11 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     const { rerender } = render(<Grid view="Current" />);
     // Every row's lifecycle reads "Active", so the term keeps all five in either view.
     fireEvent.change(screen.getByRole("searchbox", { name: "Find a row" }), { target: { value: "Active" } });
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–4 of 5");
 
     rerender(<Grid view="History" />);
 
     expect(screen.getByRole("searchbox", { name: "Find a row" })).toHaveValue("Active");
-    expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+    expect(screen.getAllByRole("row")).toHaveLength(6);
   });
 
   it("draws a filter for the chosen view just after the views, before the search", () => {
@@ -695,8 +632,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   });
   it("keeps a column marked pinned at the start stuck to the grid's left edge, header and cells, and leaves the others to scroll", () => {
     const pinnedColumns = [
-      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
-      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { type: { kind: "text" }, pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { meta: { type: { kind: "text" } }, header: "Lifecycle", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid
@@ -715,8 +652,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
   it("draws a row's detail rows under it, each cell under the column it is keyed to and the pinned column still pinned", () => {
     const pinnedColumns = [
-      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { pinned: "start" } }),
-      columnHelper.accessor("lifecycle", { header: "Lifecycle", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("name", { header: "Name", cell: ({ getValue }) => getValue(), meta: { type: { kind: "text" }, pinned: "start" } }),
+      columnHelper.accessor("lifecycle", { meta: { type: { kind: "text" } }, header: "Lifecycle", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid
@@ -739,7 +676,7 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
   it("spans a detail row's line across every column from the one it names to the end", () => {
     const threeColumns = [
       ...columns,
-      columnHelper.accessor("id", { header: "Id", cell: ({ getValue }) => getValue() }),
+      columnHelper.accessor("id", { meta: { type: { kind: "text" } }, header: "Id", cell: ({ getValue }) => getValue() }),
     ];
     render(
       <DataGrid

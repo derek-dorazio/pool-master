@@ -24,8 +24,6 @@ import {
 } from './invites-page-helpers';
 import { InvitesPageRowActions } from './invites-page-row-actions';
 
-const INVITES_PER_PAGE = 25;
-
 type InvitesPageWaitingInvitesSectionProps = {
   invitations: LeagueInvitationDto[] | undefined;
   invitationsKey: QueryKey;
@@ -79,6 +77,7 @@ export function InvitesPageWaitingInvitesSection({
   const columns = useMemo<ColumnDef<InviteRow, string>[]>(() => [
     {
       id: 'invited',
+      meta: { type: { kind: 'text' } },
       header: 'Invited',
       accessorFn: (row) => row.label,
       cell: ({ row }) => {
@@ -116,6 +115,7 @@ export function InvitesPageWaitingInvitesSection({
     },
     {
       id: 'sentBy',
+      meta: { type: { kind: 'text' } },
       header: 'Sent by',
       enableGlobalFilter: false,
       accessorFn: (row) => row.sentBy,
@@ -133,12 +133,7 @@ export function InvitesPageWaitingInvitesSection({
       header: 'Expires',
       enableGlobalFilter: false,
       accessorFn: (row) => row.invitation.expiresAt ?? '',
-      cell: ({ row }) => {
-        const { expiresAt } = row.original.invitation;
-        return expiresAt
-          ? <DateDisplay timeStyle={null} value={expiresAt} />
-          : <Text size="inherit" tone="muted">Never</Text>;
-      },
+      meta: { type: { kind: 'date', direction: 'future', blank: 'Never' } },
     },
   ], []);
 
@@ -155,13 +150,13 @@ export function InvitesPageWaitingInvitesSection({
         <ErrorState body="We couldn't load pending invites right now." onRetry={onRetry} size="plain" testId="league-invitations-error" />
       ) : (
         <DataGrid
+          urlKey="invites"
           columns={columns}
           data={visibleRows}
           emptyMessage={rows.length
             ? (filter === 'expired' ? 'No expired invites.' : 'No pending invites.')
             : 'No invites are waiting on an answer.'}
           getRowId={(row) => row.invitation.id}
-          pageSize={INVITES_PER_PAGE}
           rowActions={(row) => (
             <InvitesPageRowActions
               invitationsKey={invitationsKey}

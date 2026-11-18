@@ -1,4 +1,4 @@
-import { DEFAULT_BUDGET_PRICING_PROFILES, SportEventStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus, type BudgetPricingProfile } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   SyncedFieldValuationService,
@@ -17,9 +17,11 @@ function tierDefinitions(count: number) {
   return Array.from({ length: count }, (_, index) => ({ tierKey: `tier-${index + 1}`, label: `Tier ${index + 1}`, tierNumber: index + 1 }));
 }
 
-async function setup(options: { status?: SportEventStatus; fieldSize?: number; tierCount?: number } = {}) {
+/** A synced draft of `fieldSize` with `tierCount` tiers, in a league naming Standard pricing or `pricing`. */
+async function setup(options: { status?: SportEventStatus; fieldSize?: number; tierCount?: number; pricing?: BudgetPricingProfile } = {}) {
   const store = new InMemorySportEvents();
-  const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, ...SYNCED });
+  const league = options.pricing && store.addLeagueWithPricingProfile(options.pricing);
+  const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, ...SYNCED, ...(league && { sportLeagueId: league.id }) });
   await store.addTiers(event.id, tierDefinitions(options.tierCount ?? 2));
   for (let index = 1; index <= (options.fieldSize ?? 4); index++) {
     // p-01 has the shortest odds.
@@ -31,14 +33,11 @@ async function setup(options: { status?: SportEventStatus; fieldSize?: number; t
     valuations: store.valuationRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
+    tierProfiles: store.tierProfileRepo(),
+    pricingProfiles: store.pricingProfileRepo(),
   });
-  const profiles = DEFAULT_BUDGET_PRICING_PROFILES.map((profile) => ({ ...profile }));
-  const valuation = new SyncedFieldValuationService({
-    sportEvents: store.sportEventRepo(),
-    tiers,
-    readPricingProfiles: () => ({ profiles }),
-  });
-  return { store, event, tiers, valuation, profiles };
+  const valuation = new SyncedFieldValuationService({ sportEvents: store.sportEventRepo(), tiers });
+  return { store, event, tiers, valuation };
 }
 
 function tierOf(store: InMemorySportEvents, participantId: string) {
@@ -48,7 +47,7 @@ function tierOf(store: InMemorySportEvents, participantId: string) {
 }
 
 describe('SyncedFieldValuationService — a field sync makes tiers and prices on a draft', () => {
-  it('tiers a synced draft field by odds over the event\'s own tiers and prices it with the first Budget pricing profile', async () => {
+  it('tiers a synced draft field by odds over the event\'s own tiers and prices it with its sport league\'s pricing profile (Standard)', async () => {
     const { store, event, valuation } = await setup();
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
@@ -82,7 +81,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     const { store, event, valuation } = await setup();
     await valuation.afterFieldLoad(SYNCED);
     const valuations = store.valuationRepo();
-    const assignTiers = jest.spyOn(valuations, 'assignTiers');
+    const assignTiers = jest.spyOn(valuations, 'assignEventTiers');
     const assignEventPrices = jest.spyOn(valuations, 'assignEventPrices');
     const watched = new SportEventTierService({
       sportEvents: store.sportEventRepo(),
@@ -90,13 +89,37 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
       valuations,
       field: store.fieldRepo(),
       participants: store.participantRepo(),
+      tierProfiles: store.tierProfileRepo(),
+      pricingProfiles: store.pricingProfileRepo(),
     });
 
-    const outcome = await watched.valueSyncedField(expectDefined(await store.sportEventRepo().findById(event.id)), standardEventPricing());
+    const outcome = await watched.valueSyncedField(expectDefined(await store.sportEventRepo().findById(event.id)));
 
     expect(outcome).toMatchObject({ tiers: { result: 'UNCHANGED', tierCount: 2 }, prices: { result: 'UNCHANGED', pricedCount: 4 } });
     expect(assignTiers).not.toHaveBeenCalled();
     expect(assignEventPrices).not.toHaveBeenCalled();
+  });
+
+  it('prices a never-priced field with the pricing profile its own sport league names, not the first profile there is', async () => {
+    const small = { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+    const { store, event, valuation } = await setup({ pricing: small });
+
+    const outcome = await valuation.afterFieldLoad(SYNCED);
+
+    expect(outcome).toMatchObject({ prices: { result: 'MADE', profileName: 'Small' } });
+    const { name, ...values } = small;
+    expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual({ profileName: name, ...values });
+    expect(store.valuationRows.every((row) => (row.price as number) <= 5000 && (row.price as number) % 10 === 0)).toBe(true);
+  });
+
+  it('records on the event the tier layout it was tiered with, named for the league\'s tier profile', async () => {
+    const { store, event, valuation } = await setup();
+
+    await valuation.afterFieldLoad(SYNCED);
+
+    expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
+      profileName: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+    });
   });
 
   it('prices a re-sync with the values the event was last priced with, not the default profile', async () => {
@@ -196,8 +219,8 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
   });
 
   it('answers a bad pricing profile as a failure, writing no tier or price, instead of throwing, so the field sync that wrote the field still completes', async () => {
-    const { store, valuation, profiles } = await setup();
-    profiles[0] = { ...expectDefined(profiles[0]), floorSharePercent: 90 };
+    const { store, valuation } = await setup();
+    Object.assign(expectDefined(store.pricingProfiles[0]), { floorSharePercent: 90 });
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
 

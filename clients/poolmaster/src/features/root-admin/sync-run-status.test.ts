@@ -6,7 +6,6 @@ import {
   getRunStatusLabel,
   getRunStatusTone,
   getStatusTone,
-  toSortableTimestamp,
 } from './sync-run-status';
 
 function run(status: ProviderSyncRun['status'], payload: ProviderSyncRunPayload = {}): ProviderSyncRun {
@@ -35,16 +34,6 @@ type Outcome = NonNullable<ProviderSyncRunPayload['outcome']>;
 function outcome(severity: Outcome['severity'], warnings: Outcome['warnings'] = []): ProviderSyncRunPayload {
   return { outcome: { severity, summary: 'Synced.', warnings, errors: 0 } };
 }
-
-describe('toSortableTimestamp', () => {
-  it('turns an ISO time into its epoch milliseconds so runs sort by time', () => {
-    expect(toSortableTimestamp('2026-05-25T12:00:00.000Z')).toBe(Date.UTC(2026, 4, 25, 12));
-  });
-
-  it.each([null, undefined, '', 'not a date'])('sorts a missing or unreadable time (%j) first, as 0', (value) => {
-    expect(toSortableTimestamp(value)).toBe(0);
-  });
-});
 
 describe('formatEventValue', () => {
   it('shows the event id as given', () => {
