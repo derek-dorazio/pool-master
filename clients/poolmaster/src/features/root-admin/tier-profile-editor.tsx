@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { findTierLayoutProblem, TierProfileLastTier } from '@poolmaster/shared/domain';
+import { explicitOrderValues, findTierLayoutProblem, TierProfileLastTier, TierProfileLastTierOrder } from '@poolmaster/shared/domain';
 import { TierProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createTierProfile, updateTierProfile, type TierProfileDto, type TierProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, Select, useMutationActionWorkflow } from '@/features/shared/ui';
@@ -102,7 +102,7 @@ export function TierProfileEditor({
                 },
               })}
             >
-              {Object.values(TierProfileLastTier).map((lastTier) => (
+              {explicitOrderValues(TierProfileLastTierOrder).map((lastTier) => (
                 <option key={lastTier} value={lastTier}>{LAST_TIER_LABELS[lastTier]}</option>
               ))}
             </Select>

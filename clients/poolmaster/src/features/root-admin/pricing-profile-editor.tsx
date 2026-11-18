@@ -30,7 +30,7 @@ const PricingProfileFormSchema = PricingProfileWriteRequestSchema.superRefine((v
 
 const NUMBER_FIELDS = [
   { key: 'salaryCap', label: 'Salary cap ($)', step: '1' },
-  { key: 'unit', label: 'Round prices to ($)', step: '1' },
+  { key: 'unit', label: 'Unit ($)', step: '1' },
   { key: 'topSharePercent', label: 'Top share (% of cap)', step: 'any' },
   { key: 'floorSharePercent', label: 'Floor share (% of cap)', step: 'any' },
   { key: 'steepness', label: 'Steepness', step: 'any' },
