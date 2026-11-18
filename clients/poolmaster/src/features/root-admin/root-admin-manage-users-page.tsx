@@ -73,6 +73,7 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
         id: "account",
         header: "Account",
+        meta: { options: {} },
         cell: ({ getValue }) => {
           const isActive = getValue() === "Active";
 
@@ -86,6 +87,7 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor((user) => (user.isRootAdmin ? "Yes" : "No"), {
         id: "rootAdmin",
         header: "Root admin",
+        meta: { options: {} },
         cell: ({ getValue }) => {
           const isRootAdmin = getValue() === "Yes";
 

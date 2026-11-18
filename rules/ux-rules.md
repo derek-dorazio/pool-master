@@ -400,7 +400,12 @@ administration area (root admin included), reusing the same shared components.
    search in one header inside the grid's card (`DataGrid`'s `views`), a filter of
    one view (History's season) beside it (`views.end`); the page's
    main action stays in its `PageHeader`, and the views are never a second row of
-   `PageTabs` under the area's own.
+   `PageTabs` under the area's own. A `DataGrid` sorts and filters from its column headers,
+   never from boxes under them: the name sorts (ascending, descending, off; one column at a
+   time; blanks last), and a funnel opens the column's filter in a popup over the rows with
+   Clear, Cancel and Apply. A column whose values come from a fixed set declares the set
+   (`meta.options`): its filter ticks values, matching exactly, and it sorts in the set's order.
+   A line above the grid names each filter in force with Clear all filters.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.

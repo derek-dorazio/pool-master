@@ -2,6 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { applyTextFilter } from "@/test/data-grid-filters";
 import { DataGrid } from "./data-grid";
 
 type TestRow = {
@@ -37,25 +38,17 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
       />,
     );
 
-    fireEvent.change(screen.getByTestId("data-grid-filter-name"), {
-      target: {
-        value: "Beta",
-      },
-    });
+    applyTextFilter("data-grid-filter-name", "Beta");
 
     expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("test-row-row-2")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId("data-grid-filter-name"), {
-      target: {
-        value: "Gamma",
-      },
-    });
+    applyTextFilter("data-grid-filter-name", "Gamma");
 
     expect(screen.getByText("No rows matched.")).toBeInTheDocument();
   });
 
-  it("names a filter box after its column's header, and never prints a header drawn by a function as code", () => {
+  it("names a column's filter after its header, and never prints a header drawn by a function as code", () => {
     const drawnHeader = [
       columnHelper.accessor("name", {
         header: ({ table }) => `Team of ${String(table.getRowCount())}`,
@@ -68,9 +61,8 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     ];
     render(<DataGrid columns={drawnHeader} data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]} emptyMessage="No rows." getRowId={(row) => row.id} />);
 
-    expect(screen.getByTestId("data-grid-filter-lifecycle")).toHaveAttribute("placeholder", "Filter Lifecycle");
-    expect(screen.getByTestId("data-grid-filter-name")).toHaveAttribute("placeholder", "Filter name");
-    expect(screen.getByTestId("data-grid-filter-name").getAttribute("placeholder")).not.toMatch(/=>|table/);
+    expect(screen.getByTestId("data-grid-filter-lifecycle")).toHaveAccessibleName("Filter Lifecycle");
+    expect(screen.getByTestId("data-grid-filter-name")).toHaveAccessibleName("Filter name");
   });
 
   it("draws a leaderboard's header row navy with gold column names, and other grids' headers plain", () => {
@@ -458,12 +450,12 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
     it("clears a column filter that hides the row before turning to its page", () => {
       render(grid("row-5"));
-      fireEvent.change(screen.getByTestId("data-grid-filter-name"), { target: { value: "Name 2" } });
+      applyTextFilter("data-grid-filter-name", "Name 2");
       expect(screen.queryByTestId("test-row-row-5")).not.toBeInTheDocument();
 
       fireEvent.click(screen.getByTestId("test-jump"));
 
-      expect(screen.getByTestId("data-grid-filter-name")).toHaveValue("");
+      expect(screen.getByTestId("data-grid-filter-name")).toHaveAccessibleName("Filter Name");
       expect(screen.getByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
       expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("5–5 of 5");
     });

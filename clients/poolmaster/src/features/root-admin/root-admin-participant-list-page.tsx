@@ -7,6 +7,7 @@ import {
   LinkButton,
   FilterPicker,
   StatusBadge,
+  optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -14,6 +15,7 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
+  PARTICIPANT_STATUS_LABELS,
   participantStatusLabel,
   participantStatusTone,
   type ManagedParticipantStatus,
@@ -72,6 +74,7 @@ export function RootAdminParticipantListPage() {
       }),
       columnHelper.accessor('status', {
         header: 'Status',
+        meta: { options: { values: optionsFromLabels(PARTICIPANT_STATUS_LABELS) } },
         cell: ({ getValue }) => (
           <StatusBadge tone={participantStatusTone(getValue())}>
             {participantStatusLabel(getValue())}

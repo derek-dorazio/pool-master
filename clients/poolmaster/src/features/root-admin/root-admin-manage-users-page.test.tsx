@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminManageUsersPage } from './root-admin-manage-users-page';
+import { applyTextFilter } from '@/test/data-grid-filters';
 
 const {
   adminListUsersMock,
@@ -163,11 +164,7 @@ describe('RootAdminManageUsersPage', () => {
     // else was sent, so no page and no pageSize.
     expect(adminListUsersMock).toHaveBeenLastCalledWith({ query: { search: 'example' } });
 
-    fireEvent.change(screen.getByTestId('data-grid-filter-username'), {
-      target: {
-        value: 'jamie',
-      },
-    });
+    applyTextFilter('data-grid-filter-username', 'jamie');
 
     expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();

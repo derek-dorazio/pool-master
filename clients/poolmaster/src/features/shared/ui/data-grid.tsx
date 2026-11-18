@@ -1,9 +1,9 @@
 import {
   flexRender,
+  functionalUpdate,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
@@ -21,6 +21,10 @@ import { Input } from "./form-field";
 import { Pager } from "./pager";
 import { Tile } from "./tile";
 import { ViewFilter, type ViewFilterOption } from "./view-filter";
+import { DataGridColumnFilter } from "./data-grid-column-filter";
+import { DataGridFilterSummary } from "./data-grid-filter-summary";
+import { DataGridSortButton } from "./data-grid-sort-button";
+import { getBlanksLastSortedRowModel, initialFilters, withGridFilters, type DataGridColumnOptions } from "./data-grid-filters";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -91,7 +95,10 @@ export type DataGridProps<TData> = {
   // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
   // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
   // TanStack's own documented shape for this position.
-  /** A filterable column needs a text header: its filter box is named by it, else by the raw column id. */
+  /**
+   * A filterable column needs a text header: its filter is named by it, else by the raw column id.
+   * A column whose `meta.options` names its fixed set of values filters by ticking them.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   data: TData[];
@@ -123,7 +130,7 @@ export type DataGridProps<TData> = {
   meta?: Record<string, unknown>;
   /** Rows per page; omitted, every row shows on one page. */
   pageSize?: number;
-  /** Whether each filterable column gets its own filter box. On by default. */
+  /** Whether each filterable column's header offers its filter. On by default. */
   showColumnFilters?: boolean;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
   headerTone?: "plain" | "scoreboard";
@@ -177,6 +184,11 @@ declare module "@tanstack/react-table" {
      * under it, such as a leaderboard's Entry column on a phone.
      */
     pinned?: "start";
+    /**
+     * The column holds values from a fixed set (a sport, a kind, a status): its filter lists a
+     * checkbox per value, and it sorts in the set's order.
+     */
+    options?: DataGridColumnOptions;
   }
 }
 
@@ -235,17 +247,8 @@ function openRowFromClick(event: MouseEvent<HTMLTableRowElement>) {
   event.currentTarget.querySelector<HTMLAnchorElement>("a[data-row-link]")?.click();
 }
 
-function getSortIndicator(direction: false | "asc" | "desc") {
-  if (direction === "asc") {
-    return "▲";
-  }
-
-  if (direction === "desc") {
-    return "▼";
-  }
-
-  return "↕";
-}
+/** What a header tells a screen reader about its column's sort. */
+const ARIA_SORT: Record<string, "ascending" | "descending" | undefined> = { asc: "ascending", desc: "descending" };
 
 export function DataGrid<TData>({
   columns,
@@ -271,7 +274,9 @@ export function DataGrid<TData>({
   detailRows,
   landOnRowId = null,
 }: DataGridProps<TData>) {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // Null until the first render reads which enumerated columns start on some values only.
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState | null>(null);
+  const gridColumns = useMemo(() => withGridFilters(columns), [columns]);
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
   const globalFilter = searchTerm ?? ownSearchTerm;
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -320,10 +325,14 @@ export function DataGrid<TData>({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: gridColumns,
     meta,
+    // A click sorts ascending, then descending, then not at all, one column at a time. Blank
+    // cells sort last whichever way (`getBlanksLastSortedRowModel`).
+    sortDescFirst: false,
+    enableMultiSort: false,
     state: {
-      columnFilters,
+      columnFilters: columnFilters ?? [],
       globalFilter,
       pagination,
       sorting,
@@ -332,10 +341,10 @@ export function DataGrid<TData>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: getBlanksLastSortedRowModel(),
     // A new search, filter or sort starts again from the first page.
     onColumnFiltersChange: (updater) => {
-      setColumnFilters(updater);
+      setColumnFilters((current) => functionalUpdate(updater, current ?? []));
       resetPageIndex();
     },
     onGlobalFilterChange: (updater: string) => {
@@ -349,6 +358,12 @@ export function DataGrid<TData>({
     },
     getRowId,
   });
+
+  // The columns' `initial` selections are read once, on the first render; a column that gains
+  // one later (columns built after the data loads) does not apply it.
+  if (columnFilters === null) {
+    setColumnFilters(initialFilters(table));
+  }
 
   // The pinned header cell needs a solid fill, or the column names scroll through it.
   const pinnedHeaderSurface = headerTone === "scoreboard" ? "bg-surface-inverse" : PINNED_PLAIN_HEADER_SURFACE;
@@ -434,6 +449,13 @@ export function DataGrid<TData>({
           {toolbarEnd}
         </div>
       ) : null}
+      {showColumnFilters ? (
+        <DataGridFilterSummary
+          labelOf={(columnId) => filterLabel(table.getColumn(columnId)?.columnDef.header, columnId)}
+          table={table}
+          testId={`${filterTestIdPrefix}-summary`}
+        />
+      ) : null}
       <Tile className="overflow-hidden" padding="none">
         {views ? (
           // The views read from the left and the search sits at the right; on a phone the search
@@ -471,40 +493,40 @@ export function DataGrid<TData>({
                   key={headerGroup.id}
                 >
                   {headerGroup.headers.map((header) => {
-                    const canSort = header.column.getCanSort();
+                    const { column } = header;
+                    const canFilter = showColumnFilters && column.getCanFilter();
+                    const name = flexRender(column.columnDef.header, header.getContext());
 
                     return (
                       <th
+                        aria-sort={ARIA_SORT[String(column.getIsSorted())]}
                         className={cn(
-                          "px-4 py-3 font-medium",
-                          header.column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, pinnedHeaderSurface],
+                          "group/header px-4 py-3 font-medium",
+                          column.columnDef.meta?.pinned === "start" && [PINNED_START_CELL, pinnedHeaderSurface],
                         )}
                         key={header.id}
                       >
-                        {header.isPlaceholder ? null : canSort ? (
-                          <button
-                            className={cn(
-                              "inline-flex items-center gap-2 text-left text-inherit transition",
-                              headerTone === "scoreboard" ? "hover:text-on-inverse" : "hover:text-foreground",
-                            )}
-                            onClick={header.column.getToggleSortingHandler()}
-                            type="button"
-                          >
-                            <span>
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                            </span>
-                            <span aria-hidden="true" className="text-[10px]">
-                              {getSortIndicator(header.column.getIsSorted())}
-                            </span>
-                          </button>
-                        ) : (
-                          flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )
+                        {header.isPlaceholder ? null : (
+                          <span className="inline-flex items-center gap-1.5">
+                            {column.getCanSort() ? (
+                              <DataGridSortButton
+                                direction={column.getIsSorted()}
+                                onClick={() => column.toggleSorting(undefined, false)}
+                                testId={`data-grid-sort-${column.id}`}
+                                tone={headerTone}
+                              >
+                                {name}
+                              </DataGridSortButton>
+                            ) : name}
+                            {canFilter ? (
+                              <DataGridColumnFilter
+                                column={column}
+                                label={filterLabel(column.columnDef.header, column.id)}
+                                table={table}
+                                testId={`${filterTestIdPrefix}-${column.id}`}
+                              />
+                            ) : null}
+                          </span>
                         )}
                       </th>
                     );
@@ -516,30 +538,6 @@ export function DataGrid<TData>({
                   ) : null}
                 </tr>
               ))}
-              {showColumnFilters ? headerGroups.map((headerGroup) => (
-                <tr
-                  className="border-b border-border bg-[var(--table-header-surface)] text-xs text-muted-foreground"
-                  key={`${headerGroup.id}-filters`}
-                >
-                  {headerGroup.headers.map((header) => (
-                    <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
-                      {header.isPlaceholder || !header.column.getCanFilter() ? null : (
-                        <input
-                          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-base normal-case sm:text-xs tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
-                          data-testid={`${filterTestIdPrefix}-${header.column.id}`}
-                          onChange={(event) =>
-                            header.column.setFilterValue(event.target.value)
-                          }
-                          placeholder={`Filter ${filterLabel(header.column.columnDef.header, header.column.id)}`}
-                          type="search"
-                          value={(header.column.getFilterValue() ?? "") as string}
-                        />
-                      )}
-                    </th>
-                  ))}
-                  {rowActions ? <th className={cn(PINNED_END_CELL, PINNED_PLAIN_HEADER_SURFACE)} key="row-actions-filter" /> : null}
-                </tr>
-              )) : null}
             </thead>
             <tbody>
               {rows.length > 0 ? (

@@ -88,6 +88,7 @@ const buildRosterColumns = (participantLabel: string) => [
   columnHelper.accessor((entry) => entry.participant.status, {
     id: 'status',
     header: 'Status',
+    meta: { options: {} },
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
         {getValue()}

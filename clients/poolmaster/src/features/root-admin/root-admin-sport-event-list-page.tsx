@@ -7,11 +7,13 @@ import {
   QueryState,
   LinkButton,
   StatusBadge,
+  optionsFromLabels,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
+  SYNC_SCOPE_LABELS,
   syncScopeLabel,
   syncScopeTone,
 } from './sport-admin-utils';
@@ -55,6 +57,7 @@ export function RootAdminSportEventListPage() {
       sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
+        meta: { options: { values: optionsFromLabels(SYNC_SCOPE_LABELS) } },
         cell: ({ getValue }) => (
           <StatusBadge tone={syncScopeTone(getValue())}>
             {syncScopeLabel(getValue())}

@@ -32,15 +32,17 @@ export function sportEventScheduleColumns(displayPreferences: DisplayPreferences
     }),
     columnHelper.accessor('status', {
       header: 'Status',
+      meta: { options: { label: formatSportEventStatus } },
       cell: ({ getValue }) => (
         <StatusBadge tone={sportEventStatusTone(getValue())}>
           {formatSportEventStatus(getValue())}
         </StatusBadge>
       ),
     }),
-    columnHelper.display({
+    columnHelper.accessor((row) => deriveSportEventReadiness(row).label, {
       id: 'readiness',
       header: 'Readiness',
+      meta: { options: {} },
       cell: ({ row }) => {
         const readiness = deriveSportEventReadiness(row.original);
         return (
@@ -54,7 +56,6 @@ export function sportEventScheduleColumns(displayPreferences: DisplayPreferences
           </div>
         );
       },
-      enableColumnFilter: false,
       enableSorting: false,
     }),
   ];

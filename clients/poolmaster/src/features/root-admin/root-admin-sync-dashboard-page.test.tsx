@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSyncDashboardPage } from './root-admin-sync-dashboard-page';
+import { applyEnumFilter } from '@/test/data-grid-filters';
 
 const {
   getProviderSyncRunMock,
@@ -195,11 +196,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     await screen.findByTestId('root-admin-sync-run-sync-run-1');
-    fireEvent.change(screen.getByTestId('data-grid-filter-status'), {
-      target: {
-        value: 'FAILED',
-      },
-    });
+    applyEnumFilter('data-grid-filter-status', ['FAILED']);
 
     expect(screen.queryByTestId('root-admin-sync-run-sync-run-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sync-run-sync-run-2')).toBeInTheDocument();

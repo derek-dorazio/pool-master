@@ -42,31 +42,30 @@ export function RootAdminContentConfigurationListPage() {
         ),
       }),
       columnHelper.accessor(
-        (template) => `${template.sport} ${template.contestFormat}`,
+        (template) => `${template.sport} · ${template.contestFormat}`,
         {
           id: 'scope',
           header: 'Scope',
-          cell: ({ row }) => (
-            <span className="text-muted-foreground">
-              {row.original.sport} · {row.original.contestFormat}
-            </span>
+          meta: { options: {} },
+          cell: ({ getValue }) => (
+            <span className="text-muted-foreground">{getValue()}</span>
           ),
         },
       ),
       columnHelper.accessor('selectionType', {
         header: 'Selection',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor(
-        (template) =>
-          [template.active ? 'Active' : 'Inactive', template.isDefault ? 'Default' : '']
-            .filter(Boolean)
-            .join(' '),
+        // Every badge the row shows, so ticking Default finds the defaults, active or not.
+        (template) => (template.isDefault ? [template.active ? 'Active' : 'Inactive', 'Default'] : [template.active ? 'Active' : 'Inactive']),
         {
           id: 'status',
           header: 'Status',
+          meta: { options: {} },
           cell: ({ row }) => (
             <div className="flex flex-wrap gap-2">
               <StatusBadge tone={row.original.active ? 'active' : 'neutral'}>

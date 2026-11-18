@@ -78,12 +78,14 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('sport', {
         header: 'Sport',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <StatusBadge tone="info">{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('providerId', {
         header: 'Source',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
@@ -94,12 +96,14 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('status', {
         header: 'Status',
+        meta: { options: {} },
         cell: ({ getValue }) => (
           <StatusBadge tone={sportEventStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('readinessStatus', {
         header: 'Readiness',
+        meta: { options: { label: formatReadiness } },
         cell: ({ row }) => (
           <div>
             <StatusBadge tone={readinessTone(row.original.readinessStatus)}>

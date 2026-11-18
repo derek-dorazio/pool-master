@@ -45,11 +45,13 @@ export function RootAdminSportLeagueListPage() {
         header: 'Current year',
         cell: ({ getValue }) => getValue() ?? '—',
       }),
-      columnHelper.accessor('isActive', {
+      columnHelper.accessor((league) => (league.isActive ? 'Active' : 'Inactive'), {
+        id: 'isActive',
         header: 'Active',
+        meta: { options: {} },
         cell: ({ getValue }) => (
-          <StatusBadge tone={getValue() ? 'active' : 'inactive'}>
-            {getValue() ? 'Active' : 'Inactive'}
+          <StatusBadge tone={getValue() === 'Active' ? 'active' : 'inactive'}>
+            {getValue()}
           </StatusBadge>
         ),
       }),
