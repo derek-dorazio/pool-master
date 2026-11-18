@@ -12,6 +12,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
+import { leagueProfiles } from '../../support/league-profiles';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -470,7 +471,7 @@ describe('events routes', () => {
       const admin = await createTestUser({ displayName: 'Years Read Admin', isRootAdmin: true });
       const viewer = await createTestUser({ displayName: 'Years Read Member' });
       const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-      const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Years Route Tour ${randomUUID()}` } });
+      const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Years Route Tour ${randomUUID()}` } });
       const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Years Route Classic' } });
       await prisma.sportEvent.createMany({
         data: [

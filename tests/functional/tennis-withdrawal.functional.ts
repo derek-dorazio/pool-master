@@ -22,7 +22,7 @@ import {
   SportEventParticipantResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -99,7 +99,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const sportId = expectDefined(findSportRow(expectMatchesSchema(SportListResponseSchema, (await listSports({ client: a })).data).sports, Sport.TENNIS)).id;
 
     // --- A tour, a draw in it, its field, tiers and prices --------------------------------------
-    const tour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
+    const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
     expect(tour.response?.status).toBe(201);
     const sportLeagueId = expectDefined(tour.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
@@ -158,7 +158,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
 
     // --- The lucky loser is on the tour's roster; a women's tour player is not, so is refused -------
     expect((await createParticipantLeagueAffiliation({ client: a, path: { sportLeagueId }, body: { participantId: expectDefined(playerIdOf.get(LUCKY_LOSER)) } })).error).toBeUndefined();
-    const womensTour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
+    const womensTour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
     const womensTourId = expectDefined(womensTour.data).sportLeague.id;
     created.sportLeagueIds.add(womensTourId);
     const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;

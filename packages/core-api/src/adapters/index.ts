@@ -52,6 +52,7 @@ export { lockContestEntryRow, lockContestRow, lockContestRows } from './contest-
 export { lockMemberRow } from './member-row-lock';
 export { PrismaSquaresRepository } from './prisma-squares-repository';
 export { PrismaCupRepository } from './prisma-cup-repository';
+export { PrismaPricingProfileRepository, PrismaTierProfileRepository } from './prisma-profile-repositories';
 export { PrismaChampionshipRepository } from './prisma-championship-repository';
 export { PrismaEventPageRepository } from './prisma-event-page-repository';
 export { PrismaLeagueYearReviewRepository } from './prisma-league-year-review-repository';

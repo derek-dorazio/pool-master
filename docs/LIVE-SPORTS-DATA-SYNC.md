@@ -245,8 +245,8 @@ merges or maps each by hand.
 Then, after its games (*2d*) and while the event is still a draft, the field is tiered and priced with no typing (#1822,
 `SyncedFieldValuationService`), the way the *Auto-assign* buttons would: in the field's one order
 (odds, then seed, then rank, by the first value every participant has, then name), on the event's
-own tiers, priced with the values the event was last priced with or else the first Budget pricing
-profile. It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
+own tiers in its sport league's tier profile, priced with the values the event was last priced with
+or else its sport league's pricing profile (#1844). It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
 tiers made from odds, `pricesMadeFromOdds: 64` the participants priced; `tiersUnchanged` and
 `pricesUnchanged` when nothing moved, so nothing was written). An admin's correction is kept: once
 any tier on the event was placed by hand, the sync leaves every tier alone (`tiersKeptAsEdited`),

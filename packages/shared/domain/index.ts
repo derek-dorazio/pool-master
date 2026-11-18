@@ -4,6 +4,7 @@ export * from './contest-validity';
 export * from './tiered-roster';
 export * from './contest-events';
 export * from './budget-pricing';
+export * from './tier-profiles';
 export * from './contest-rules';
 export * from './contest-rules-text';
 export * from './sport-event-lifecycle';

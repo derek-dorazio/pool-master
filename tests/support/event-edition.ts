@@ -12,6 +12,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
+import { leagueProfiles } from './league-profiles';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 /** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
@@ -20,7 +21,7 @@ const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries' | 'tierProfile' | 'pricingProfile'>;
 
 export interface EventEdition {
   eventSeriesId: string;
@@ -42,7 +43,7 @@ export async function freshEventEdition(
     ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
     : await prisma.sportLeague.upsert({
       where: { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } },
-      create: { sportId: sport.id, name: FIXTURE_TOUR_NAME },
+      create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: FIXTURE_TOUR_NAME },
       update: {},
     });
   const series = await prisma.eventSeries.create({

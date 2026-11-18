@@ -290,6 +290,9 @@ export const QueryKeys = {
     manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
     manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
+    // The platform's tier and pricing profiles (#1844), which sport leagues name.
+    tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
+    pricingProfiles: ['poolmaster', 'root-admin', 'pricing-profiles'] as const,
     // Every settings group (#450). History sits under the same prefix, so invalidating
     // `settings` after any save refreshes each group's recent changes too.
     settings: ['poolmaster', 'root-admin', 'settings'] as const,

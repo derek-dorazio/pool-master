@@ -8,6 +8,8 @@ import type {
   BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
+  EventTierConfig,
+  PricingProfile,
   MatchSide,
   ParticipantInactiveReason,
   Participant,
@@ -30,6 +32,8 @@ import type {
   SportEventSyncScope,
   SportEventTier,
   SportLeague,
+  TierLayoutValues,
+  TierProfile,
   ValuationSource,
 } from '../domain';
 
@@ -44,7 +48,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>>;
 
 /**
  * What still uses a sport league, each a reason it cannot be deleted (#1400). Its affiliations
@@ -72,7 +76,7 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -126,7 +130,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'parentEvent'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig' | 'parentEvent'> & {
   /** A Clutch Card event's parent and its rounds of it (#1820); the name is read back, not written. */
   parentEvent?: Omit<SportEventParent, 'name'>;
 };
@@ -254,7 +258,8 @@ export interface SportEventRepository {
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Active event participants with no tier, per event, for each id asked about (0 where none).
-   * An event can't be released while any remain (#431).
+   * An event can't be released while any remain (#431). One auto-tiering placed beyond a capped
+   * last tier (no tier, but a tier source) is not counted: the league's layout leaves it out (#1844).
    */
   countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**
@@ -476,7 +481,8 @@ export type SportEventTierCreate = SportEventTierDefinition & { sportEventId: st
 
 export interface TierAssignment {
   sportEventParticipantId: string;
-  sportEventTierId: string;
+  /** Null for a place beyond a capped last tier (#1844): ordered, but in no tier and not pickable. */
+  sportEventTierId: string | null;
   tierOrderIndex: number;
   source: ValuationSource;
 }
@@ -494,6 +500,15 @@ export interface SportEventParticipantValuationRepository {
   findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]>;
   /** Places field rows in tiers, all or none. Prices are untouched. */
   assignTiers(assignments: readonly TierAssignment[]): Promise<void>;
+  /**
+   * Auto-tiers field rows and records on the event the layout they were tiered with, all or none
+   * (#1844). Prices are untouched.
+   */
+  assignEventTiers(input: {
+    sportEventId: string;
+    tierConfig: EventTierConfig;
+    assignments: readonly TierAssignment[];
+  }): Promise<void>;
   /**
    * Prices field rows and records on the event the values they were priced with, all or none
    * (#93). Tiers are untouched.
@@ -513,3 +528,33 @@ export interface ParticipantMatchQuery {
   name?: string;
 }
 
+
+/** A profile write: its name and values. */
+export type TierProfileWrite = Pick<TierProfile, 'name'> & TierLayoutValues;
+export type PricingProfileWrite = Omit<PricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
+
+/**
+ * A profile kind's operation set (#1844): platform-level definitions each sport league names one
+ * of. Reference data, a handful of rows, never paged.
+ */
+export interface ProfileRepository<TProfile, TWrite> {
+  /** Every profile, by name. */
+  findAll(): Promise<TProfile[]>;
+  findById(id: string): Promise<TProfile | null>;
+  findByName(name: string): Promise<TProfile | null>;
+  /** The profile the sport league names. Null when no such sport league exists. */
+  findBySportLeague(sportLeagueId: string): Promise<TProfile | null>;
+  /** How many sport leagues name each profile, by profile id; a profile none names is absent. */
+  countSportLeagues(): Promise<Map<string, number>>;
+  create(input: TWrite): Promise<TProfile>;
+  update(id: string, input: TWrite): Promise<TProfile>;
+  /**
+   * Deletes the profile unless a sport league names it; the foreign key refuses a delete a league
+   * named meanwhile. Returns how many sport leagues name it: zero means it was deleted. Null when no such profile
+   * exists.
+   */
+  deleteUnlessUsed(id: string): Promise<number | null>;
+}
+
+export type TierProfileRepository = ProfileRepository<TierProfile, TierProfileWrite>;
+export type PricingProfileRepository = ProfileRepository<PricingProfile, PricingProfileWrite>;

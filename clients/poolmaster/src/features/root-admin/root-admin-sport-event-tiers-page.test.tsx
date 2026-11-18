@@ -7,8 +7,9 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventTiersPage } from './root-admin-sport-event-tiers-page';
 import {
   fieldEntryFixture,
-  budgetPricingGroupFixture,
   participantFixture,
+  pricingProfilesFixture,
+  sportLeagueFixture,
   sportEventFixture,
   tierFixture,
   valuationFixture,
@@ -26,7 +27,8 @@ const {
   autoAssignEventTiersMock,
   autoAssignEventPricesMock,
   updateEventParticipantsMock,
-  getSettingsGroupMock,
+  listPricingProfilesMock,
+  getSportLeagueMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -47,7 +49,8 @@ const {
     autoAssignEventTiersMock: vi.fn(),
     autoAssignEventPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
-    getSettingsGroupMock: vi.fn(),
+    listPricingProfilesMock: vi.fn(),
+    getSportLeagueMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -61,7 +64,8 @@ bindApiMocks({
   autoAssignEventTiers: autoAssignEventTiersMock,
   autoAssignEventPrices: autoAssignEventPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
-  getSettingsGroup: getSettingsGroupMock,
+  listPricingProfiles: listPricingProfilesMock,
+  getSportLeague: getSportLeagueMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -134,7 +138,8 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   listEventTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
-  getSettingsGroupMock.mockResolvedValue({ data: budgetPricingGroupFixture() });
+  listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture() } });
 }
 
 function renderPage() {
@@ -298,12 +303,13 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     );
   });
 
-  it('prices the field with the default profile, previewing the best and worst price, and with a changed one (#93)', async () => {
+  it('prices the field with its sport league\'s profile, previewing the best and worst price, and with a changed one (#93)', async () => {
     seed({ tournament: { pricing: null } });
     autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     expect(await screen.findByTestId('root-admin-tiers-pricing')).toHaveTextContent('Not priced yet.');
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
     expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Standard');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('50000');
@@ -327,15 +333,18 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     );
   });
 
-  it('reads the price dialog\'s profiles from the Budget pricing settings group alone, not the list of every group', async () => {
+  it('starts the price dialog on the sport league\'s pricing profile, not the first profile by name', async () => {
     seed({ tournament: { pricing: null } });
+    const [small] = pricingProfilesFixture();
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ pricingProfileId: small.id }) } });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Standard');
-    expect(getSettingsGroupMock).toHaveBeenCalledTimes(1);
-    const [request] = getSettingsGroupMock.mock.calls[0] as [{ path: { key: string } }];
-    expect(request.path.key).toBe('BUDGET_PRICING_CONFIG');
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Small');
+    expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('5000');
+    const [request] = getSportLeagueMock.mock.calls[0] as [{ path: { sportLeagueId: string } }];
+    expect(request.path.sportLeagueId).toBe('league-1');
   });
 
   it('pool-master-dyb deletes a tier, reassigning its golfers to another tier', async () => {
@@ -495,7 +504,8 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     seed();
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-prices'));
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
     const floor = screen.getByTestId('root-admin-tier-auto-prices-floorSharePercent');
     const confirm = screen.getByTestId('root-admin-tier-auto-prices-confirm');
 
@@ -518,6 +528,7 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
     expect(await screen.findByTestId('root-admin-tiers-pricing')).toHaveTextContent(
       'Priced with Standard: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4.',
     );
+    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
     expect(screen.getByTestId('root-admin-tier-auto-prices-topSharePercent')).toHaveValue('30');
     expect(screen.getByTestId('root-admin-tier-auto-prices-confirm')).toHaveTextContent('Replace prices');

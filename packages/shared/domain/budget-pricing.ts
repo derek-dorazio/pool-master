@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { DomainEntity } from './types';
 
 /**
  * Budget pricing (#93): how an event's field is priced for budget contests.
@@ -12,9 +13,10 @@ import { z } from 'zod';
  * A steepness of 1 is a straight line; higher keeps the top few expensive and drops the middle
  * of the field towards the floor, so the cap always binds and every pick is a trade-off.
  *
- * The values are kept as named profiles in the "Budget pricing" app settings, and the values an
- * event was actually priced with are stored on the event and lock with its prices at release. A
- * budget contest's salary cap is its event's.
+ * The values are kept as named pricing profiles, defined once for the platform; each sport league
+ * names one, which prices its events' fields after a sync (#1844). The values an event was
+ * actually priced with are stored on the event and lock with its prices at release. A budget
+ * contest's salary cap is its event's.
  */
 
 export const BUDGET_SALARY_CAP_MAX = 10_000_000;
@@ -35,7 +37,7 @@ export const BudgetPricingValuesSchema = z.object({
 }).describe('The values a field is priced with for budget contests.');
 export type BudgetPricingValues = z.infer<typeof BudgetPricingValuesSchema>;
 
-/** A named set of pricing values, kept in the Budget pricing app settings. */
+/** A named set of pricing values: a pricing profile's name and values. */
 export const BudgetPricingProfileSchema = BudgetPricingValuesSchema.extend({
   name: z.string().trim().min(1).max(50).describe('The profile\'s name, such as "Standard".'),
 }).describe('A named set of budget pricing values.');
@@ -51,11 +53,20 @@ export const EventPricingConfigSchema = BudgetPricingValuesSchema.extend({
 }).describe('The values an event\'s field was priced with for budget contests.');
 export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
 
-/** The two profiles the app starts with (Derek 2026-10-09): the same curve at two scales. */
-export const DEFAULT_BUDGET_PRICING_PROFILES: readonly BudgetPricingProfile[] = [
-  { name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
-  { name: 'Small', salaryCap: 5_000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
-];
+/** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.pricingProfileId`). */
+export interface PricingProfile extends DomainEntity, BudgetPricingProfile {}
+
+/** A profile as an event stores the values it was priced with. */
+export function eventPricingOf({ name, ...values }: BudgetPricingProfile): EventPricingConfig {
+  return {
+    profileName: name,
+    salaryCap: values.salaryCap,
+    unit: values.unit,
+    topSharePercent: values.topSharePercent,
+    floorSharePercent: values.floorSharePercent,
+    steepness: values.steepness,
+  };
+}
 
 /** Why a set of pricing values can't price a field, or null when it can. */
 export function findBudgetPricingProblem(values: BudgetPricingValues): string | null {

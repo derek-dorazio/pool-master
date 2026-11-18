@@ -19,6 +19,7 @@ import {
 } from '../helpers';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // An event's bracket against real Postgres (#698): the match port's one read and its writes, what
 // removing a field row or the event does to it, the play-in fill, and every database check the
@@ -54,7 +55,7 @@ async function createBracketEvent() {
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NCAA Division I Men' } },
-    create: { sportId: sport.id, name: 'NCAA Division I Men' },
+    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NCAA Division I Men' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });

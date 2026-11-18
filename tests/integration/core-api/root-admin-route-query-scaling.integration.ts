@@ -48,6 +48,7 @@ import {
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { linkedProviderEvent } from '../../support/event-edition';
+import { leagueProfiles } from '../../support/league-profiles';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -174,7 +175,7 @@ async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Activity Tour ${suffix}`, matchKeyword: `ACT${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Tour ${suffix}`, matchKeyword: `ACT${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
   const event = await prisma.sportEvent.create({
     data: {
@@ -250,7 +251,7 @@ async function seedAmbiguousFeedParticipants(rows: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Needs Linking ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Needs Linking ${suffix}` } });
   for (let index = 0; index < rows; index += 1) {
     const name = `Twin ${suffix} ${String(index)}`;
     const candidates = await prisma.participant.createManyAndReturn({
@@ -277,7 +278,7 @@ async function seedCatalogEvents(events: number) {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const tour = `Scaling Tour ${suffix}`;
-  const sportLeague = await getPrisma().sportLeague.create({ data: { sportId: sport.id, name: tour, matchKeyword: tour } });
+  const sportLeague = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: tour, matchKeyword: tour } });
   provider.events = Array.from({ length: events }, (_, index) => {
     const startDate = new Date(Date.now() + (index + 1) * 7 * DAY);
     return {

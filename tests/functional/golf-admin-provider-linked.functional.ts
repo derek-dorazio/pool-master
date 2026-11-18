@@ -16,7 +16,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -231,7 +231,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
-      body: { sport: 'GOLF', name: `USGA ${RUN}`, matchKeyword: 'U.S. Open' },
+      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), sport: 'GOLF', name: `USGA ${RUN}`, matchKeyword: 'U.S. Open' },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;

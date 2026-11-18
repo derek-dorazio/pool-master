@@ -97,6 +97,7 @@ export function RootAdminSportEventTiersPage() {
                 eventId={eventId}
                 field={field}
                 sport={tournament.sport}
+                sportLeagueId={tournament.sportLeagueId}
               />
             </div>
           </div>

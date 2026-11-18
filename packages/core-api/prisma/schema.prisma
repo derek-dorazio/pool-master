@@ -1103,10 +1103,13 @@ model SportLeague {
   /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
   /// Reference data, set by the migration that seeds the league.
   roundNames                 String[]                 @default([]) @map("round_names")
-  /// How many tiers a new event of the sport league starts with (#707: the College Football
-  /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
-  /// data, set by the migration that seeds the league.
-  tierCount                  Int?                     @map("tier_count")
+  /// The tier profile a new event of the sport league is tiered with (#1844): how many tiers it
+  /// starts with, how many participants auto-tiering puts in each, and what the last tier takes.
+  /// Every league names one; a new league gets its profile from the migration that seeds it.
+  tierProfileId              String                   @map("tier_profile_id") @db.Uuid
+  /// The pricing profile an event of the sport league is priced with after a field sync (#1844),
+  /// until an admin prices it with other values. Every league names one.
+  pricingProfileId           String                   @map("pricing_profile_id") @db.Uuid
   /// The periods its games are played in, when not its sport's (#786: men's college basketball
   /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
   /// league.
@@ -1168,6 +1171,8 @@ model SportLeague {
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   sport                     Sport                          @relation(fields: [sportId], references: [id])
+  tierProfile               TierProfile                    @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
+  pricingProfile            PricingProfile                 @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
   parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
   rounds                    SportLeague[]                  @relation("SportLeagueRounds")
   affiliations              ParticipantLeagueAffiliation[]
@@ -1179,7 +1184,58 @@ model SportLeague {
 
   @@unique([sportId, name])
   @@index([parentSportLeagueId])
+  @@index([tierProfileId])
+  @@index([pricingProfileId])
   @@map("sport_leagues")
+}
+
+/// What a tier profile's last tier takes (#1844).
+enum PrismaTierProfileLastTier {
+  /// Everyone left after the tiers before it are filled.
+  ALL_REMAINING
+  /// At most `lastTierMax`; anyone beyond is in no tier and can't be picked.
+  CAPPED
+}
+
+/// A tier layout, defined once for the platform (#1844): each sport league names one, and a new
+/// event of the league starts with its tiers and is auto-tiered by it. Nothing is set per sport.
+/// A field too small to reach the last tier is split evenly over the tiers, a rule fixed in code.
+model TierProfile {
+  id           String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String                    @unique @db.VarChar(50)
+  tierCount    Int                       @map("tier_count")
+  /// Participants auto-tiering puts in each tier before the last.
+  tierSize     Int                       @map("tier_size")
+  lastTier     PrismaTierProfileLastTier @default(ALL_REMAINING) @map("last_tier")
+  /// The most the last tier takes when it is CAPPED; null when it takes all remaining.
+  lastTierMax  Int?                      @map("last_tier_max")
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagues SportLeague[]
+
+  @@map("tier_profiles")
+}
+
+/// A set of budget pricing values (#93), defined once for the platform (#1844): each sport league
+/// names one, which prices its events' fields after a sync. Replaced the Budget pricing app
+/// settings list.
+model PricingProfile {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String        @unique @db.VarChar(50)
+  /// Whole dollars: the cap prices are a share of.
+  salaryCap         Int           @map("salary_cap")
+  /// Whole dollars: every price is rounded to a multiple of it.
+  unit              Int
+  topSharePercent   Float         @map("top_share_percent")
+  floorSharePercent Float         @map("floor_share_percent")
+  steepness         Float
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagues      SportLeague[]
+
+  @@map("pricing_profiles")
 }
 
 /// A recurring, named tournament that repeats year after year under one
@@ -2043,6 +2099,10 @@ model SportEvent {
   // EventPricingConfigSchema. Null until prices are assigned; written with the
   // prices in one transaction and locked with them at release.
   pricingConfig              Json?                     @map("pricing_config")
+  // The tier layout the field was last auto-tiered with (#1844), typed by EventTierConfigSchema:
+  // its sport league's tier profile at the time, with any tier size an admin sent instead. Null
+  // until the field is first auto-tiered; written with the tiers in one transaction.
+  tierConfig                 Json?                     @map("tier_config")
   // When the event's provider last sent a webhook notification about it (#1499). Null until one
   // arrives. The scheduler warns when play is underway and none has arrived for a while.
   lastProviderNotificationAt DateTime?                 @map("last_provider_notification_at") @db.Timestamptz
