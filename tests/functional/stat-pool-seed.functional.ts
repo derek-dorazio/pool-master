@@ -9,6 +9,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { createSeasonEvent, deleteSeasonEvents } from './season-events';
 
 // A championship stat pool's test seed end to end over HTTP (#935): the 2025 World Series as
 // played loads into the World Series league the migrations create, its field of position players
@@ -18,7 +19,7 @@ import { expectDefined } from '../support/expect-defined';
 const RUN = `stat-pool-seed-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
 
-const created = { sportLeagueIds: new Set<string>() };
+const created = { sportLeagueIds: new Set<string>(), seasonEventIds: [] as string[] };
 
 async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
@@ -36,6 +37,7 @@ async function cleanup(): Promise<void> {
     await db.sportEvent.deleteMany({ where: series });
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
+  await deleteSeasonEvents(created.seasonEventIds.splice(0));
   const participantIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
   await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: participantIds } } });
   await db.participant.deleteMany({ where: { id: { in: participantIds } } });
@@ -79,6 +81,11 @@ describe('SDK Functional: stat pool test seed', () => {
     const a = admin.client;
     const file = taggedSeed('baseball-2025-world-series-test.json');
     const sportLeagueId = await seededLeague(a, Sport.BASEBALL, 'World Series');
+    // A test seed's Clutch Card event names the latest test season event of its season league (#1820).
+    created.seasonEventIds.push(await createSeasonEvent(a, {
+      sport: Sport.BASEBALL, sportLeague: 'MLB', name: `Test- MLB Postseason ${RUN}`, eventYear: 2025,
+      startDate: '2025-09-30T17:00:00.000Z', endDate: '2025-11-02T12:00:00.000Z', rounds: 4,
+    }));
 
     const rows = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
     expect(rows.filter((row) => row.subject === LoadSubject.STATS).map((row) => row.action)).toEqual([LoadAction.ADD]);
@@ -112,6 +119,10 @@ describe('SDK Functional: stat pool test seed', () => {
     const file = taggedSeed('american-football-2026-nfl-championships-test.json');
     await seededLeague(a, Sport.AMERICAN_FOOTBALL, 'Championship Weekend');
     const sportLeagueId = await seededLeague(a, Sport.AMERICAN_FOOTBALL, 'Super Bowl');
+    created.seasonEventIds.push(await createSeasonEvent(a, {
+      sport: Sport.AMERICAN_FOOTBALL, sportLeague: 'NFL', name: `Test- NFL Playoffs ${RUN}`, eventYear: 2026,
+      startDate: '2026-01-10T18:00:00.000Z', endDate: '2026-02-09T12:00:00.000Z', rounds: 4,
+    }));
 
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
 

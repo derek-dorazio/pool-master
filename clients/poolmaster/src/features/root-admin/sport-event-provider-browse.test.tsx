@@ -220,6 +220,24 @@ describe('SportEventProviderBrowse', () => {
     expect(screen.queryByTestId('tournament-home')).not.toBeInTheDocument();
   });
 
+  it('says the provider tournament has already started when the server refuses to create it for that', async () => {
+    withSportProvider();
+    listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });
+    createEventFromProviderEventMock.mockResolvedValue({
+      error: { error: { code: 'SPORT_EVENT_ALREADY_STARTED', message: 'started' } },
+      response: { status: 409 },
+    });
+    renderBrowse();
+
+    await selectMasters();
+    fireEvent.click(await screen.findByTestId('root-admin-sport-event-create-provider-submit'));
+
+    expect(
+      await screen.findByText('This tournament has already started, so it can’t be added.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('tournament-home')).not.toBeInTheDocument();
+  });
+
   it('shows the server\'s reason when creating the linked tournament is refused for another cause', async () => {
     withSportProvider();
     listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [MASTERS] } });

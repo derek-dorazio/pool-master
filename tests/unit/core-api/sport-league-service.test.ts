@@ -34,6 +34,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     displayName: null,
     displayOrder: null,
     parentSportLeagueId: null,
+    parentRoundNumbers: [],
     currentEventYear: null,
     isActive: true,
     eventSyncProviderId: null,

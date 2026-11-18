@@ -119,7 +119,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -193,7 +193,7 @@ export class InMemorySportEvents {
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -314,7 +314,10 @@ export class InMemorySportEvents {
         }
         return inputs.map((input) => {
           const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+          const { parentEvent, ...event } = input;
+          // The parent's name is read back with the event, as the database's join reads it.
+          const parent = parentEvent && { ...parentEvent, name: this.events.find((row) => row.id === parentEvent.id)?.name ?? '' };
+          return this.addEvent({ ...event, ...(parent && { parentEvent: parent }), sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
         });
       },
       update: async (id, updates: SportEventUpdate, options) => {
@@ -361,6 +364,7 @@ export class InMemorySportEvents {
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
+      countClutchCardEvents: async (ids) => count(ids, (id) => this.events.filter((row) => row.parentEvent?.id === id).length),
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
         row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
       )).length),

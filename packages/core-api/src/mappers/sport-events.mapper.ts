@@ -73,6 +73,8 @@ export function mapSportEventToDto({
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType ?? null,
     scoringFamily: event.scoringFamily ?? null,
+    parentEvent: event.parentEvent ? { id: event.parentEvent.id, name: event.parentEvent.name } : null,
+    parentRoundNumbers: [...(event.parentEvent?.roundNumbers ?? [])],
     syncScope: event.syncScope,
     providerSynced: isProviderSyncedEvent(event),
     autoLifecycleEnabled: event.autoLifecycleEnabled,

@@ -132,9 +132,15 @@ details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreatio
 ingestion scheduler) runs the year import below for this calendar year and the next, for each
 active synced league. New events are born `DRAFT`; each releases itself once every ready check
 passes, within its league's `autoReleaseDaysBeforeStart` window (#1823, the `RELEASE_SPORT_EVENT`
-job in `docs/BACKGROUND-JOBS.md`), or by an admin's press before then. Setting
+job in `docs/BACKGROUND-JOBS.md`), or by an admin's press before then. A
+provider event whose start has already passed is never created (#1821): the import skips it as
+`ALREADY_STARTED` and the sweep's summary log counts those as `alreadyStartedCount`. Setting
 the provider is refused unless it is registered and covers the league's sport, and the league has
-a match keyword. One league's failed read is logged and the sweep goes on.
+a match keyword. One league's failed read is logged and the sweep goes on. Every season league
+goes before any Clutch Card league: a Clutch Card event names its season event (the World Series
+round names the MLB Postseason, #1820), so a new season event is created before its rounds are
+imported. A Clutch Card provider event whose season event is not on the site, or not one event, is
+skipped as `NO_PARENT_EVENT` and created by a later sweep.
 
 The same sweep then keeps the league's already-linked events current with what the provider just
 listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's
@@ -156,8 +162,8 @@ Every other league's events come from an admin, in one of three ways, all root a
 
 | Action | Route | What it writes |
 |---|---|---|
-| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped. |
-| Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`). |
+| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped, and so is a provider event whose start has passed (`ALREADY_STARTED`, #1821). |
+| Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`); 409 `SPORT_EVENT_ALREADY_STARTED` when its start has passed. |
 | Link an existing event | `PUT /:eventId/score-source` | `EventScoreSourceService.linkScoreSource` sets `provider_id`, `external_id` and `sync_scope = SCORES_ONLY` on an admin-made event. `DELETE` puts it back to the manual-admin placeholder and `sync_scope = NONE`. |
 
 `sport_events` has `@@unique([provider_id, external_id])`, so one provider event links to at most

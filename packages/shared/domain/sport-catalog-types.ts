@@ -89,6 +89,13 @@ export interface SportLeague extends DomainEntity {
    * other's round. Reference data, set where the round league is seeded.
    */
   parentSportLeagueId: string | null;
+  /**
+   * The rounds of its parent league's season event each of its events covers (#1820: the World
+   * Series is round 4 of the MLB Postseason); set on every Clutch Card league and empty on any
+   * other. Copied onto each event it creates, with the parent event found for it. Reference data,
+   * set where the round league is seeded.
+   */
+  parentRoundNumbers: readonly number[];
 }
 
 /**

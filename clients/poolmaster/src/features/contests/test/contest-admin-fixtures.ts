@@ -37,6 +37,8 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
     participantType: null,
     scoringFamily: null,
+    parentEvent: null,
+    parentRoundNumbers: [],
     syncScope: 'SCORES_ONLY',
     providerSynced: false,
     autoLifecycleEnabled: true,

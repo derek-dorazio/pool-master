@@ -2048,7 +2048,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event
-         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
+         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -2093,7 +2093,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport event
-         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. Root admin only.
+         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its season event. Root admin only.
          */
         delete: operations["deleteEvent"];
         options?: never;
@@ -2116,7 +2116,7 @@ export interface paths {
         put?: never;
         /**
          * Clone a sport league's event year forward
-         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.
+         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. A Clutch Card league's event names its season event of the target year (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["cloneEventYear"];
         delete?: never;
@@ -2136,7 +2136,7 @@ export interface paths {
         put?: never;
         /**
          * Import a tour's event year from a provider
-         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
          */
         post: operations["importEventYearFromProvider"];
         delete?: never;
@@ -2156,7 +2156,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event from a provider event
-         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. Root admin only.
+         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["createEventFromProviderEvent"];
         delete?: never;
@@ -9551,6 +9551,8 @@ export interface components {
              * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
              */
             parentSportLeagueId: string | null;
+            /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
+            parentRoundNumbers: number[];
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -9645,6 +9647,8 @@ export interface components {
                  * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
                  */
                 parentSportLeagueId: string | null;
+                /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
+                parentRoundNumbers: number[];
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -9730,6 +9734,8 @@ export interface components {
                  * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
                  */
                 parentSportLeagueId: string | null;
+                /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
+                parentRoundNumbers: number[];
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -10319,6 +10325,18 @@ export interface components {
              * @enum {string|null}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+            /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
+            parentEvent: {
+                /**
+                 * Format: uuid
+                 * @description The parent event's identifier.
+                 */
+                id: string;
+                /** @description The parent event's name, such as "MLB Postseason". */
+                name: string;
+            } | null;
+            /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
+            parentRoundNumbers: number[];
             /**
              * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
              * @enum {string}
@@ -10534,6 +10552,18 @@ export interface components {
                  * @enum {string|null}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
+                parentEvent: {
+                    /**
+                     * Format: uuid
+                     * @description The parent event's identifier.
+                     */
+                    id: string;
+                    /** @description The parent event's name, such as "MLB Postseason". */
+                    name: string;
+                } | null;
+                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
+                parentRoundNumbers: number[];
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -10744,6 +10774,18 @@ export interface components {
                  * @enum {string|null}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
+                parentEvent: {
+                    /**
+                     * Format: uuid
+                     * @description The parent event's identifier.
+                     */
+                    id: string;
+                    /** @description The parent event's name, such as "MLB Postseason". */
+                    name: string;
+                } | null;
+                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
+                parentRoundNumbers: number[];
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -10873,6 +10915,11 @@ export interface components {
             /** @description Round count; omitted, the sport's default round count (4 for golf). */
             rounds?: number;
             autoLifecycleEnabled?: boolean;
+            /**
+             * Format: uuid
+             * @description A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.
+             */
+            parentEventId?: string;
         };
         /** @description An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched. */
         CreateSportEventFromProviderEventRequest: {
@@ -10913,10 +10960,10 @@ export interface components {
             providerId: string;
         };
         /**
-         * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+         * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
          * @enum {string}
          */
-        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "EDITION_EXISTS";
+        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
         /** @description What an event-year import created and skipped. Running it again creates nothing new. */
         ImportSportEventYearFromProviderResponse: {
             /** @description The events created, in provider order. */
@@ -11010,6 +11057,18 @@ export interface components {
                  * @enum {string|null}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
+                parentEvent: {
+                    /**
+                     * Format: uuid
+                     * @description The parent event's identifier.
+                     */
+                    id: string;
+                    /** @description The parent event's name, such as "MLB Postseason". */
+                    name: string;
+                } | null;
+                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
+                parentRoundNumbers: number[];
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -11113,16 +11172,16 @@ export interface components {
                  */
                 updatedAt: string;
             }[];
-            /** @description Provider events left alone because PoolMaster already has them. */
+            /** @description Provider events left alone because PoolMaster already has them, or because they already started. */
             skipped: {
                 /** @description The provider event id. */
                 externalId: string;
                 name: string;
                 /**
-                 * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+                 * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
                  * @enum {string}
                  */
-                reason: "ALREADY_LINKED" | "EDITION_EXISTS";
+                reason: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
             }[];
         };
         /** @description Changes to an event; omitted fields are left alone. */
