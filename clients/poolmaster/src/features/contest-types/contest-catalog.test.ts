@@ -179,10 +179,22 @@ describe('the contest types catalog', () => {
     expect(catalog.map(({ sport }) => sport)).toEqual(['AMERICAN_FOOTBALL', 'GOLF']);
   });
 
-  it('leaves out of the public page a sport league that offers no format', () => {
-    const catalog = buildPublicContestCatalog(TEMPLATES, [sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL' })]);
+  it('builds a sport\'s format tiles on the public page from sport-wide setups and active leagues\' own, never a switched-off league\'s', () => {
+    const catalog = buildPublicContestCatalog([
+      template('f1-budget', { sport: 'AUTO_RACING', sportLeagueId: 'f1', eventType: null, selectionType: 'BUDGET_PICK', isDefault: true }),
+      template('nascar-tiered', { sport: 'AUTO_RACING', sportLeagueId: 'nascar', eventType: null, isDefault: true }),
+    ], [
+      sportLeagueFixture({ id: 'f1', sport: 'AUTO_RACING', name: 'Formula 1' }),
+      sportLeagueFixture({ id: 'nascar', sport: 'AUTO_RACING', name: 'NASCAR Cup Series', isActive: false }),
+    ]);
 
-    expect(catalog.find(({ sport }) => sport === 'AMERICAN_FOOTBALL')?.leagues).toEqual([]);
+    expect(catalog.map(({ sport, groups }) => [sport, groups.map(({ featured }) => featured.templateKey)])).toEqual([['AUTO_RACING', ['f1-budget']]]);
+  });
+
+  it('leaves out of the public page a sport league that offers no format', () => {
+    const catalog = buildPublicContestCatalog(TEMPLATES, [...LEAGUES, sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL' })]);
+
+    expect(catalog.find(({ sport }) => sport === 'AMERICAN_FOOTBALL')?.leagues.map(({ name }) => name)).toEqual(['NFL', 'College Football Playoff']);
   });
 
   it('spells a name for the page\'s link in lower case with dashes and no accents', () => {

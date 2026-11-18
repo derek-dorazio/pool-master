@@ -194,9 +194,12 @@ export function buildPublicContestCatalog(
 ): PublicCatalogSport[] {
   return SPORTS_BY_POPULARITY.flatMap((sport) => {
     const definition = getSportDefinition(sport);
-    const sportTemplates = templates.filter((template) => template.sport === sport);
-    const groups = toFormatTiles(sport, sportTemplates, definition.selectionTypes, () => false);
     const activeLeagues = activeSportLeaguesOf(sport, sportLeagues);
+    // A switched-off league's own setups (#1812) shape none of its sport's tiles.
+    const activeLeagueIds = new Set(activeLeagues.map((sportLeague) => sportLeague.id));
+    const sportTemplates = templates.filter((template) => template.sport === sport
+      && (template.sportLeagueId === null || activeLeagueIds.has(template.sportLeagueId)));
+    const groups = toFormatTiles(sport, sportTemplates, definition.selectionTypes, () => false);
     const leagues = activeLeagues
       .map((sportLeague) => {
         const leagueDefinition = sportLeagueDefinitionOf(sport, sportLeague);
