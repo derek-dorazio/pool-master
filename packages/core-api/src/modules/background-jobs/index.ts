@@ -13,9 +13,11 @@ export {
   BACKGROUND_JOB_POLL_MS,
   BACKGROUND_JOB_RETRY_DELAYS_MS,
   BackgroundJobRunner,
+  PermanentBackgroundJobError,
   readBackgroundJobPollMs,
   type BackgroundJobContext,
   type BackgroundJobHandlers,
+  type BackgroundJobOutcome,
 } from './background-job-runner';
-export { BackgroundJobRetention, FAILED_BACKGROUND_JOBS_KEPT_DAYS, SUCCEEDED_BACKGROUND_JOBS_KEPT_DAYS } from './background-job-retention';
-export { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
+export { BackgroundJobRetention, FINISHED_BACKGROUND_JOBS_KEPT_DAYS } from './background-job-retention';
+export { BACKGROUND_JOB_PAYLOADS, BACKGROUND_JOB_SCOPES, type BackgroundJobPayload } from './background-job-payloads';

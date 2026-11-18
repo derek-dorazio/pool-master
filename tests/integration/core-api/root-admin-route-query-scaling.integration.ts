@@ -18,6 +18,7 @@ import {
   ProviderListResponseSchema,
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
+  ActivityListResponseSchema,
   SettingsChangeListSchema,
   SettingsGroupListSchema,
   SettingsGroupSchema,
@@ -154,6 +155,8 @@ async function seedSyncRuns(runs: number) {
   const suffix = randomUUID().slice(0, 8);
   await getPrisma().providerSyncRun.createMany({
     data: Array.from({ length: runs }, (_, index) => ({
+      kind: 'SCORES',
+      trigger: 'SCHEDULE',
       providerId: `provider-${suffix}-${String(index)}`,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
@@ -163,10 +166,47 @@ async function seedSyncRuns(runs: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
+/**
+ * A root admin, and a sport league with `jobs` background jobs on its Activity: half on the
+ * league itself, each with the sync run it ran, and half on one of its events.
+ */
+async function seedLeagueActivity(jobs: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Activity Tour ${suffix}`, matchKeyword: `ACT${suffix}` } });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
+  const event = await prisma.sportEvent.create({
+    data: {
+      eventSeriesId: series.id, eventYear: 2026, name: `Activity Open ${suffix}`, sport: Sport.GOLF,
+      providerId: provider.providerId, externalId: `activity-${suffix}`, startDate: new Date(Date.now() + 7 * DAY),
+    },
+  });
+  for (let index = 0; index < jobs; index += 1) {
+    const onLeague = index % 2 === 0;
+    const job = await prisma.backgroundJob.create({
+      data: onLeague
+        ? { type: 'SYNC_LEAGUE_EVENTS', payload: { sportLeagueId: sportLeague.id, eventYears: [2026], trigger: 'SCHEDULE' }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
+        : { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
+    });
+    if (onLeague) {
+      await prisma.providerSyncRun.create({
+        data: {
+          kind: 'EVENTS', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id,
+          backgroundJobId: job.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: { runType: 'LEAGUE_EVENTS_SYNC' },
+        },
+      });
+    }
+  }
+  return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 /** A root admin, and one sync run whose diagnostics hold `rows` written field rows. */
 async function seedSyncRunDetails(rows: number) {
   const run = await getPrisma().providerSyncRun.create({
     data: {
+      kind: 'SCORES',
+      trigger: 'SCHEDULE',
       providerId: provider.providerId,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
@@ -288,6 +328,15 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       seed: seedSyncRuns,
       call: (rootAdmin) => get('/api/v1/ingestion/sync-runs', rootAdmin),
       rowsShown: (response) => okBody(response, ProviderSyncRunListResponseSchema).syncRuns.length,
+    });
+  });
+
+  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/activity/',
+      seed: seedLeagueActivity,
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/activity/?sportLeagueId=${sportLeague.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, ActivityListResponseSchema).jobs.length,
     });
   });
 

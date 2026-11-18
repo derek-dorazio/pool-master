@@ -36,8 +36,11 @@ const golfRoundStarted: ProviderNotification = {
 
 const nflGameEnded: ProviderNotification = { ...nflPeriodEnded, notificationType: 'nfl.game.ended', phase: 'END' };
 
+/** PoolMaster's id for every notified event here; the job carries it as its Activity scope. */
+const LIVE_EVENT_ID = '7f3c2a10-1b4e-4c55-9a77-3e2f8d0c1a01';
+
 function liveEvent(externalId: string, sport: Sport, holdsGame = false, inProgress = true): ProviderNotifiedEvent {
-  return { sport, providerId: 'balldontlie', externalId, holdsGame, inProgress };
+  return { sportEventId: LIVE_EVENT_ID, sport, providerId: 'balldontlie', externalId, holdsGame, inProgress };
 }
 
 function setup(
@@ -75,7 +78,8 @@ describe('provider notifications (#1498)', () => {
     });
     expect(jobs.rows).toEqual([expect.objectContaining({
       type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-      payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11' },
+      payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+      sportEventId: LIVE_EVENT_ID,
       runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_COALESCE_MS),
       dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11',
     })]);
@@ -188,7 +192,8 @@ describe('provider notifications as play starts and ends (#1499)', () => {
       }),
       expect.objectContaining({
         type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-        payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11' },
+        payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+        sportEventId: LIVE_EVENT_ID,
         runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS),
         dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11',
       }),

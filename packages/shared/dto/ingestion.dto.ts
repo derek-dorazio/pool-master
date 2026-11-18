@@ -4,7 +4,7 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { IngestionJobStatus, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, ProviderSyncKind, ProviderSyncRunStatus, ProviderSyncTrigger, Sport } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema, UuidSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -76,6 +76,8 @@ export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 // --- Sync runs ---
 
 export const ProviderSyncRunStatusSchema = z.enum(ProviderSyncRunStatus);
+export const ProviderSyncKindSchema = z.enum(ProviderSyncKind).describe('What a sync run syncs: a sport league\'s EVENTS, an event\'s FIELD, or an event\'s SCORES.');
+export const ProviderSyncTriggerSchema = z.enum(ProviderSyncTrigger).describe('What started a sync run: its SCHEDULE, the provider\'s WEBHOOK, or an ADMIN\'s Sync now.');
 
 export const ProviderSyncOutcomeSeveritySchema = z.enum(['SUCCESS', 'WARNING', 'ERROR']);
 export type ProviderSyncOutcomeSeverity = z.infer<typeof ProviderSyncOutcomeSeveritySchema>;
@@ -217,6 +219,11 @@ export const ProviderSyncRunDtoSchema = z.object({
   providerId: z.string(),
   sport: SportDtoSchema,
   eventId: z.string().nullable().describe('Provider event identifier when the run was narrowed to one event; null for a whole-sport run.'),
+  kind: ProviderSyncKindSchema,
+  trigger: ProviderSyncTriggerSchema,
+  sportLeagueId: z.uuid().nullable().describe('The sport league an EVENTS run synced, or a FIELD or SCORES run\'s event\'s league, where known.'),
+  sportEventId: z.uuid().nullable().describe('The PoolMaster event a FIELD or SCORES run synced, where known.'),
+  backgroundJobId: z.uuid().nullable().describe('The background job that ran it (its Activity row); null when no job ran it.'),
   status: ProviderSyncRunStatusSchema,
   startedAt: DateTimeSchema.nullable(),
   completedAt: DateTimeSchema.nullable(),
@@ -229,6 +236,11 @@ export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({
   details: ProviderSyncRunDetailsDtoSchema.nullable().describe('The run\'s detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.'),
 }).describe('One feed\'s sync against a provider, with its summary and its detailed diagnostics.');
 export type ProviderSyncRunDetailDto = z.infer<typeof ProviderSyncRunDetailDtoSchema>;
+
+export const LeagueEventsSyncRequestSchema = z.object({
+  eventYear: z.number().int().min(1900).max(9999).optional().describe('The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.'),
+}).describe('A root admin\'s Sync now on a sport league\'s events.');
+export type LeagueEventsSyncRequest = z.infer<typeof LeagueEventsSyncRequestSchema>;
 
 export const ProviderSyncRunListQuerySchema = z.object({
   providerId: z.string().optional(),
@@ -372,6 +384,7 @@ registerSchema('ProviderSyncRunDetailDto', ProviderSyncRunDetailDtoSchema);
 registerSchema('ProviderSyncRunListQuery', ProviderSyncRunListQuerySchema);
 registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema);
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
+registerSchema('LeagueEventsSyncRequest', LeagueEventsSyncRequestSchema);
 registerSchema('UnmappedProviderParticipantDto', UnmappedProviderParticipantDtoSchema);
 registerSchema('UnmappedProviderParticipantListQuery', UnmappedProviderParticipantListQuerySchema);
 registerSchema('UnmappedProviderParticipantListResponse', UnmappedProviderParticipantListResponseSchema);

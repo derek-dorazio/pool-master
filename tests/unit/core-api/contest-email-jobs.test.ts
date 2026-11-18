@@ -116,6 +116,7 @@ describe('contest email job requests', () => {
     expect(contestStartedEmailsJob(queue, 'contest-1', 'sport-event-1')).toEqual({
       type: BackgroundJobType.CONTEST_STARTED_EMAILS,
       payload: { contestId: 'contest-1', sportEventId: 'sport-event-1' },
+      sportEventId: 'sport-event-1',
       runAt: undefined,
       dedupeKey: 'CONTEST_STARTED_EMAILS:contest-1',
     });
@@ -167,6 +168,7 @@ describe('contest email job requests', () => {
       expect(contestEventChangedEmailsJob(queue, 'contest-1', { id: 'sport-event-1', startDate: new Date('2026-04-16T11:40:00.000Z') }, { kind: 'POSTPONED' })).toEqual({
         type: BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS,
         payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED', startsAt: '2026-04-16T11:40:00.000Z' } },
+        sportEventId: 'sport-event-1',
         runAt: undefined,
         dedupeKey: 'CONTEST_EVENT_CHANGED_EMAILS:contest-1:sport-event-1:postponed-2026-04-16T11:40:00.000Z',
       });
@@ -218,6 +220,7 @@ describe('contest email job requests', () => {
       expect(contestReopenedEmailsJob(queue, 'contest-1', 'sport-event-1', new Date(reopen.startsAt))).toEqual({
         type: BackgroundJobType.CONTEST_REOPENED_EMAILS,
         payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: reopen.startsAt },
+        sportEventId: 'sport-event-1',
         runAt: undefined,
         dedupeKey: 'CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-2026-04-30T11:40:00.000Z',
       });

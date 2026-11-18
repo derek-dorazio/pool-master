@@ -73,7 +73,7 @@ async function queuedSyncs() {
 
 describe('BALLDONTLIE webhook receiver', () => {
   it('queues one live-score sync, a minute out, of the in-progress event whose match is linked to the ended game, and a reconciling one ten minutes out', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
+    const week = await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
     await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-postseason' });
 
     const response = await post(signedBalldontlieDelivery(PAYLOADS.nflGameEnded));
@@ -81,7 +81,7 @@ describe('BALLDONTLIE webhook receiver', () => {
     expect(response.statusCode).toBe(200);
     expectMatchesSchema(SuccessResponseSchema, response.json());
     const syncs = await queuedSyncs();
-    const payload = { sport: Sport.AMERICAN_FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11' };
+    const payload = { sport: Sport.AMERICAN_FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
     expect(syncs).toEqual([
       expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11' }),
       expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11' }),
@@ -115,12 +115,12 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('queues a golf tournament\'s sync when its round starts', async () => {
-    await linkedEvent({ sport: Sport.GOLF, externalId: '1133' });
+    const tournament = await linkedEvent({ sport: Sport.GOLF, externalId: '1133' });
 
     expect((await post(signedBalldontlieDelivery(PAYLOADS.pgaRoundStarted))).statusCode).toBe(200);
 
     expect(await queuedSyncs()).toEqual([expect.objectContaining({
-      payload: { sport: Sport.GOLF, providerId: PROVIDER, eventId: '1133' },
+      payload: { sport: Sport.GOLF, providerId: PROVIDER, eventId: '1133', sportEventId: tournament.id },
     })]);
   });
 

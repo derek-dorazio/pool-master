@@ -1,75 +1,40 @@
 /**
- * SyncedEventCreationScheduler — every six hours, a synced sport league's provider events become
- * its events without an admin pressing Import (ADR 0011, #1725), and the events already linked keep
- * their provider's name, venue and dates (#1727).
+ * SyncedEventCreationScheduler — every six hours, the schedule trigger of each synced sport
+ * league's events sync (ADR 0011, #1725; one sync framework, #1819). The sweep only queues: one
+ * SYNC_LEAGUE_EVENTS job per active synced league (`LeagueEventsSync.queueScheduled`), and the
+ * job runner does the provider calls in the background, recording each as an EVENTS sync run.
+ * An admin's Sync now queues the same job, so a league is created and kept current one way.
  *
  * A sport league is synced when a root admin has named the provider that creates its events
- * (`SportLeague.eventSyncProviderId`). For each active synced league, the sweep runs the admin's
- * own year import for this calendar year and the next: the provider's events whose tour is the
- * league's match keyword (`EventScoreSourceService.listTourEventsForYear`), created and linked for
- * scores by `SportEventService.importProviderEventYear`. It is the one creation path, so series,
- * rounds and default tiers are seeded the same way, and a re-run skips what is already there. A
- * provider event that has already started is never created (#1821); the sweep's summary counts
- * those skips as `alreadyStartedCount`. The
- * same provider events then update the league's linked events whose details moved
- * (`SportEventService.keepProviderEventsCurrent`): the provider wins over an admin's edit, and a
- * moved start is told to the leagues as an admin's move is. Status is never set here; the
- * lifecycle scheduler moves it on the new dates.
+ * (`SportLeague.eventSyncProviderId`). Every created event is born DRAFT, as any event is; status
+ * is never set here, the lifecycle scheduler moves it on the event's dates.
  *
- * Every created event is born DRAFT, as any event is. Release is a separate step that this sweep
- * does not take; for now an admin releases (Derek, 2026-11-13), an interim step, with automatic
- * release the aim once sync is stable (`rules/architecture-rules.md` §4 *A live provider sync is
- * the source of its league's events*).
- *
- * One league failing (its provider unreachable, its keyword matching nothing) is logged and the
- * sweep goes on to the next. Every server task runs this scheduler, and the sweep runs on the one
- * holding its job lock (#1159).
+ * Every server task runs this scheduler, and the sweep runs on the one holding its job lock
+ * (#1159). A league whose job still waits is not queued twice: its dedupe key holds one.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { SportLeagueRepository } from '@poolmaster/shared/db';
-import { isClutchCardLeague } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
-import { errorMessage } from '../../core/error-message';
-import type { EventScoreSourceService } from './event-score-source-service';
-import type { SportEventService } from './service';
+import type { LeagueEventsSync } from './league-events-sync';
 
-/** Often enough that a rescheduled game or round moves the same day; each pass is a handful of reads per league. */
+/** Often enough that a rescheduled game or round moves the same day; each pass queues one job per league. */
 const SWEEP_INTERVAL_MS = 6 * 60 * 60 * 1000;
 /** The first sweep comes a little after a task starts, so a deploy picks up new events the same day. */
 const FIRST_SWEEP_AFTER_MS = 10 * 60 * 1000;
 const SWEEP_LOCK_KEY = 'synced-event-creation';
-/** This calendar year and the next: a season that starts in the autumn lists next year's events early. */
-const YEARS_AHEAD = [0, 1] as const;
 
 export interface SyncedEventCreationSchedulerOptions {
-  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
-  scoreSource: Pick<EventScoreSourceService, 'listTourEventsForYear'>;
-  sportEvents: Pick<SportEventService, 'importProviderEventYear' | 'keepProviderEventsCurrent'>;
+  leagueEventsSync: Pick<LeagueEventsSync, 'queueScheduled'>;
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
   logger?: FastifyBaseLogger;
-  now?: () => Date;
-}
-
-/** What one league's import did in one year, for the sweep's summary line. */
-interface LeagueYearImport {
-  sportLeagueId: string;
-  eventYear: number;
-  createdCount: number;
-  skippedCount: number;
-  /** Of the skipped, the provider events not created because their start had passed (#1821). */
-  alreadyStartedCount: number;
-  updatedCount: number;
 }
 
 export class SyncedEventCreationScheduler {
   private readonly lockedSweep: LockedSweep;
-  private readonly now: () => Date;
 
   constructor(private readonly options: SyncedEventCreationSchedulerOptions) {
-    this.now = options.now ?? (() => new Date());
     this.lockedSweep = new LockedSweep({
       lockKey: SWEEP_LOCK_KEY,
       jobLock: options.jobLock,
@@ -95,50 +60,7 @@ export class SyncedEventCreationScheduler {
   }
 
   private async sweep(): Promise<void> {
-    const thisYear = this.now().getUTCFullYear();
-    // A Clutch Card league's events are rounds of its parent league's season event, which they
-    // link to when created (#1820), so every season league goes first: a new season event is on
-    // the site by the time its rounds are imported.
-    const leagues = [...await this.options.sportLeagues.findEventSynced()]
-      .sort((left, right) => Number(isClutchCardLeague(left)) - Number(isClutchCardLeague(right)));
-    const imports: LeagueYearImport[] = [];
-    let failedCount = 0;
-    for (const league of leagues) {
-      const providerId = league.eventSyncProviderId;
-      if (providerId === null) continue;
-      for (const offset of YEARS_AHEAD) {
-        const eventYear = thisYear + offset;
-        try {
-          const providerEvents = await this.options.scoreSource.listTourEventsForYear(providerId, league.id, eventYear);
-          const result = await this.options.sportEvents.importProviderEventYear({ sportLeagueId: league.id, eventYear, providerId, providerEvents });
-          const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId: league.id, providerId, providerEvents });
-          imports.push({
-            sportLeagueId: league.id,
-            eventYear,
-            createdCount: result.created.length,
-            skippedCount: result.skipped.length,
-            alreadyStartedCount: result.skipped.filter((row) => row.reason === 'ALREADY_STARTED').length,
-            updatedCount: updated.length,
-          });
-        } catch (error) {
-          failedCount += 1;
-          this.options.logger?.error({
-            sportLeagueId: league.id,
-            sportLeague: league.name,
-            providerId,
-            eventYear,
-            error: errorMessage(error),
-          }, 'Synced event creation failed for a sport league');
-        }
-      }
-    }
-    this.options.logger?.info({
-      leagueCount: leagues.length,
-      createdCount: imports.reduce((sum, item) => sum + item.createdCount, 0),
-      updatedCount: imports.reduce((sum, item) => sum + item.updatedCount, 0),
-      alreadyStartedCount: imports.reduce((sum, item) => sum + item.alreadyStartedCount, 0),
-      failedCount,
-      imports: imports.filter((item) => item.createdCount > 0 || item.updatedCount > 0 || item.alreadyStartedCount > 0),
-    }, 'Synced event creation sweep finished');
+    const queuedCount = await this.options.leagueEventsSync.queueScheduled();
+    this.options.logger?.info({ action: 'events.leagueSync.scheduled', data: { queuedCount } }, 'Queued each synced sport league\'s events sync');
   }
 }

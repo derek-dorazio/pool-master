@@ -229,6 +229,7 @@ enum PrismaBackgroundJobType {
   ADD_RELEASED_EDITION_TO_CONTEST
   PROVIDER_EVENT_SYNC
   CONTEST_REOPENED_EMAILS
+  SYNC_LEAGUE_EVENTS
   RELEASE_SPORT_EVENT
 }
 
@@ -592,6 +593,20 @@ enum PrismaProviderSyncRunStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+/// What a provider sync run syncs (#1819): a sport league's events, one event's field, or one event's scores.
+enum PrismaProviderSyncKind {
+  EVENTS
+  FIELD
+  SCORES
+}
+
+/// What started a provider sync run (#1819).
+enum PrismaProviderSyncTrigger {
+  SCHEDULE
+  WEBHOOK
+  ADMIN
 }
 
 // =============================================================================
@@ -2376,6 +2391,15 @@ model ProviderSyncRun {
   providerId  String                      @map("provider_id") @db.VarChar(100)
   sport       PrismaSport
   eventId     String?                     @map("event_id") @db.VarChar(255)
+  /// What the run syncs and what started it (#1819).
+  kind        PrismaProviderSyncKind
+  trigger     PrismaProviderSyncTrigger
+  /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run, the
+  /// event of a FIELD or SCORES run. Null on runs from before #1819 and where it is not known.
+  sportLeagueId   String?                 @map("sport_league_id") @db.Uuid
+  sportEventId    String?                 @map("sport_event_id") @db.Uuid
+  /// The background job that ran it, so Activity opens a job's runs (#1819). Kept after the job is deleted.
+  backgroundJobId String?                 @map("background_job_id") @db.Uuid
   status      PrismaProviderSyncRunStatus
   startedAt   DateTime?                   @map("started_at") @db.Timestamptz
   completedAt DateTime?                   @map("completed_at") @db.Timestamptz
@@ -2391,6 +2415,7 @@ model ProviderSyncRun {
   @@index([providerId, createdAt(sort: Desc)])
   @@index([sport, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
+  @@index([backgroundJobId])
   @@map("provider_sync_runs")
 }
 
@@ -2425,12 +2450,22 @@ model BackgroundJob {
   /// writes nothing. Cleared for good when the job is claimed, so a later enqueue (even while
   /// the job waits to be retried) queues a fresh job.
   dedupeKey   String?                   @unique @map("dedupe_key") @db.VarChar(200)
+  /// The job's scope (#1819), set from its payload when queued (`BACKGROUND_JOB_SCOPES`), so
+  /// Activity filters by sport league and event on indexed columns. A job on an event carries the
+  /// event; its league is read through the event.
+  sportLeagueId String?                 @map("sport_league_id") @db.Uuid
+  sportEventId  String?                 @map("sport_event_id") @db.Uuid
+  /// What a SUCCEEDED job's handler reported it did (#1819), shown on Activity; null when it reported nothing.
+  result      Json?
   createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   completedAt DateTime?                 @map("completed_at") @db.Timestamptz
 
   @@index([status, runAt])
   @@index([status, leaseUntil])
   @@index([status, completedAt])
+  @@index([createdAt(sort: Desc)])
+  @@index([sportLeagueId, createdAt(sort: Desc)])
+  @@index([sportEventId, createdAt(sort: Desc)])
   @@map("background_jobs")
 }
 

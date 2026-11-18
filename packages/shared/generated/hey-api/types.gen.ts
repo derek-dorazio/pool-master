@@ -26908,6 +26908,26 @@ export type ProviderSyncRunDto = {
      * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
      */
     eventId: string | null;
+    /**
+     * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+     */
+    kind: 'EVENTS' | 'FIELD' | 'SCORES';
+    /**
+     * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+     */
+    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+    /**
+     * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+     */
+    sportLeagueId: string | null;
+    /**
+     * The PoolMaster event a FIELD or SCORES run synced, where known.
+     */
+    sportEventId: string | null;
+    /**
+     * The background job that ran it (its Activity row); null when no job ran it.
+     */
+    backgroundJobId: string | null;
     status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * ISO 8601 datetime string.
@@ -27042,6 +27062,26 @@ export type ProviderSyncRunDetailDto = {
      * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
      */
     eventId: string | null;
+    /**
+     * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+     */
+    kind: 'EVENTS' | 'FIELD' | 'SCORES';
+    /**
+     * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+     */
+    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+    /**
+     * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+     */
+    sportLeagueId: string | null;
+    /**
+     * The PoolMaster event a FIELD or SCORES run synced, where known.
+     */
+    sportEventId: string | null;
+    /**
+     * The background job that ran it (its Activity row); null when no job ran it.
+     */
+    backgroundJobId: string | null;
     status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * ISO 8601 datetime string.
@@ -27349,6 +27389,26 @@ export type ProviderSyncRunListResponse = {
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
         eventId: string | null;
+        /**
+         * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+         */
+        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        /**
+         * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+         */
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+        /**
+         * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+         */
+        sportLeagueId: string | null;
+        /**
+         * The PoolMaster event a FIELD or SCORES run synced, where known.
+         */
+        sportEventId: string | null;
+        /**
+         * The background job that ran it (its Activity row); null when no job ran it.
+         */
+        backgroundJobId: string | null;
         status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * ISO 8601 datetime string.
@@ -27495,6 +27555,26 @@ export type ProviderManualSyncSubmissionResponse = {
          * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
          */
         eventId: string | null;
+        /**
+         * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+         */
+        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        /**
+         * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+         */
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+        /**
+         * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+         */
+        sportLeagueId: string | null;
+        /**
+         * The PoolMaster event a FIELD or SCORES run synced, where known.
+         */
+        sportEventId: string | null;
+        /**
+         * The background job that ran it (its Activity row); null when no job ran it.
+         */
+        backgroundJobId: string | null;
         status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * ISO 8601 datetime string.
@@ -27617,6 +27697,16 @@ export type ProviderManualSyncSubmissionResponse = {
             [key: string]: unknown;
         };
     }>;
+};
+
+/**
+ * A root admin's Sync now on a sport league's events.
+ */
+export type LeagueEventsSyncRequest = {
+    /**
+     * The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.
+     */
+    eventYear?: number;
 };
 
 /**
@@ -27918,6 +28008,211 @@ export type ProviderCatalogEventListResponse = {
          */
         fieldLocked: boolean;
     }>;
+};
+
+/**
+ * One background job on the Activity grid.
+ */
+export type ActivityJobDto = {
+    id: string;
+    /**
+     * The job's handler. Its kind follows from it.
+     */
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
+    /**
+     * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+     */
+    kind: 'SYNC' | 'EMAIL' | 'SETTLEMENT' | 'RELEASE' | 'OTHER';
+    /**
+     * QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+     */
+    status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+    /**
+     * The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+     */
+    sportLeagueId: string | null;
+    /**
+     * The event the job is about; null when it is about none.
+     */
+    sportEventId: string | null;
+    /**
+     * Tries so far, counting one in progress.
+     */
+    attempts: number;
+    /**
+     * When it is or was due: first queued, or retried after a failed try.
+     */
+    runAt: string;
+    /**
+     * When it was queued.
+     */
+    createdAt: string;
+    /**
+     * When it SUCCEEDED or FAILED.
+     */
+    completedAt: string | null;
+    /**
+     * The error of its last failed try.
+     */
+    lastError: string | null;
+    /**
+     * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
+     */
+    result: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts.
+     */
+    syncRunIds: Array<string>;
+};
+
+/**
+ * Filters over Activity. A queue-time window bounds it; nothing pages it.
+ */
+export type ActivityListQuery = {
+    /**
+     * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+     */
+    kind?: 'SYNC' | 'EMAIL' | 'SETTLEMENT' | 'RELEASE' | 'OTHER';
+    /**
+     * QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+     */
+    status?: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+    /**
+     * The league's own jobs and the jobs on any of its events.
+     */
+    sportLeagueId?: string;
+    sportEventId?: string;
+    /**
+     * Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept.
+     */
+    from?: string;
+    /**
+     * Latest queue time to include. Defaults to now.
+     */
+    to?: string;
+};
+
+/**
+ * The jobs queued inside the window that match the filters, newest first.
+ */
+export type ActivityListResponse = {
+    jobs: Array<{
+        id: string;
+        /**
+         * The job's handler. Its kind follows from it.
+         */
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
+        /**
+         * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+         */
+        kind: 'SYNC' | 'EMAIL' | 'SETTLEMENT' | 'RELEASE' | 'OTHER';
+        /**
+         * QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+         */
+        status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+        /**
+         * The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+         */
+        sportLeagueId: string | null;
+        /**
+         * The event the job is about; null when it is about none.
+         */
+        sportEventId: string | null;
+        /**
+         * Tries so far, counting one in progress.
+         */
+        attempts: number;
+        /**
+         * When it is or was due: first queued, or retried after a failed try.
+         */
+        runAt: string;
+        /**
+         * When it was queued.
+         */
+        createdAt: string;
+        /**
+         * When it SUCCEEDED or FAILED.
+         */
+        completedAt: string | null;
+        /**
+         * The error of its last failed try.
+         */
+        lastError: string | null;
+        /**
+         * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
+         */
+        result: {
+            [key: string]: unknown;
+        } | null;
+        /**
+         * The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts.
+         */
+        syncRunIds: Array<string>;
+    }>;
+};
+
+/**
+ * One background job, as Activity shows it.
+ */
+export type ActivityJobResponse = {
+    /**
+     * One background job on the Activity grid.
+     */
+    job: {
+        id: string;
+        /**
+         * The job's handler. Its kind follows from it.
+         */
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT';
+        /**
+         * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+         */
+        kind: 'SYNC' | 'EMAIL' | 'SETTLEMENT' | 'RELEASE' | 'OTHER';
+        /**
+         * QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+         */
+        status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+        /**
+         * The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+         */
+        sportLeagueId: string | null;
+        /**
+         * The event the job is about; null when it is about none.
+         */
+        sportEventId: string | null;
+        /**
+         * Tries so far, counting one in progress.
+         */
+        attempts: number;
+        /**
+         * When it is or was due: first queued, or retried after a failed try.
+         */
+        runAt: string;
+        /**
+         * When it was queued.
+         */
+        createdAt: string;
+        /**
+         * When it SUCCEEDED or FAILED.
+         */
+        completedAt: string | null;
+        /**
+         * The error of its last failed try.
+         */
+        lastError: string | null;
+        /**
+         * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
+         */
+        result: {
+            [key: string]: unknown;
+        } | null;
+        /**
+         * The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts.
+         */
+        syncRunIds: Array<string>;
+    };
 };
 
 export type ClientLogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
@@ -35334,6 +35629,45 @@ export type SubmitEventSyncResponses = {
 
 export type SubmitEventSyncResponse = SubmitEventSyncResponses[keyof SubmitEventSyncResponses];
 
+export type SyncLeagueEventsData = {
+    body: LeagueEventsSyncRequest;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sport-leagues/{sportLeagueId}/events-sync';
+};
+
+export type SyncLeagueEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type SyncLeagueEventsError = SyncLeagueEventsErrors[keyof SyncLeagueEventsErrors];
+
+export type SyncLeagueEventsResponses = {
+    /**
+     * One background job, as Activity shows it.
+     */
+    202: ActivityJobResponse;
+};
+
+export type SyncLeagueEventsResponse = SyncLeagueEventsResponses[keyof SyncLeagueEventsResponses];
+
 export type ListUnmappedProviderParticipantsData = {
     body?: never;
     path?: never;
@@ -35498,6 +35832,65 @@ export type ListProviderCatalogEventsResponses = {
 };
 
 export type ListProviderCatalogEventsResponse = ListProviderCatalogEventsResponses[keyof ListProviderCatalogEventsResponses];
+
+export type ListActivityData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+         */
+        kind?: 'SYNC' | 'EMAIL' | 'SETTLEMENT' | 'RELEASE' | 'OTHER';
+        /**
+         * QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+         */
+        status?: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+        /**
+         * The league's own jobs and the jobs on any of its events.
+         */
+        sportLeagueId?: string;
+        sportEventId?: string;
+        /**
+         * Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept.
+         */
+        from?: string;
+        /**
+         * Latest queue time to include. Defaults to now.
+         */
+        to?: string;
+    };
+    url: '/api/v1/activity/';
+};
+
+export type ListActivityErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListActivityError = ListActivityErrors[keyof ListActivityErrors];
+
+export type ListActivityResponses = {
+    /**
+     * The jobs queued inside the window that match the filters, newest first.
+     */
+    200: ActivityListResponse;
+};
+
+export type ListActivityResponse = ListActivityResponses[keyof ListActivityResponses];
 
 export type IngestClientLogsData = {
     body: ClientLogBatch;

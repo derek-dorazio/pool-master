@@ -3359,6 +3359,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ingestion/sport-leagues/{sportLeagueId}/events-sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync a sport league's events now
+         * @description Queues the sport league's events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider's events for the league's tour become its events, and the ones already linked take the provider's name, venue and dates. The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league's sync is already waiting to run, answers that job. 404 SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league's events.
+         */
+        post: operations["syncLeagueEvents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ingestion/unmapped-participants": {
         parameters: {
             query?: never;
@@ -3431,6 +3451,26 @@ export interface paths {
          * @description Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.
          */
         get: operations["listProviderCatalogEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/activity/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List background jobs for the Activity grid
+         * @description Every background job queued inside a window (syncs, emails, settlements, releases and the rest), filtered by kind, status, sport league and event, newest first. Nothing pages the result; the filters narrow it. `to` defaults to now; `from` to 24 hours before it, or to 30 days before it (every job kept) when a sportLeagueId or sportEventId narrows the read. A `from` after `to` answers 400 ACTIVITY_WINDOW_INVALID; more than 60 reads a minute from one address answer 429 ACTIVITY_RATE_LIMITED. A league's activity is its own jobs and the jobs on any of its events. Each sync job names the sync runs it ran; read one with getProviderSyncRun.
+         */
+        get: operations["listActivity"];
         put?: never;
         post?: never;
         delete?: never;
@@ -23280,6 +23320,31 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
             eventId: string | null;
+            /**
+             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+             * @enum {string}
+             */
+            kind: "EVENTS" | "FIELD" | "SCORES";
+            /**
+             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            /**
+             * Format: uuid
+             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+             */
+            sportLeagueId: string | null;
+            /**
+             * Format: uuid
+             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+             */
+            sportEventId: string | null;
+            /**
+             * Format: uuid
+             * @description The background job that ran it (its Activity row); null when no job ran it.
+             */
+            backgroundJobId: string | null;
             /** @enum {string} */
             status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
@@ -23388,6 +23453,31 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
             eventId: string | null;
+            /**
+             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+             * @enum {string}
+             */
+            kind: "EVENTS" | "FIELD" | "SCORES";
+            /**
+             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            /**
+             * Format: uuid
+             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+             */
+            sportLeagueId: string | null;
+            /**
+             * Format: uuid
+             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+             */
+            sportEventId: string | null;
+            /**
+             * Format: uuid
+             * @description The background job that ran it (its Activity row); null when no job ran it.
+             */
+            backgroundJobId: string | null;
             /** @enum {string} */
             status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
@@ -23625,6 +23715,31 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
+                /**
+                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                /**
+                 * Format: uuid
+                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The background job that ran it (its Activity row); null when no job ran it.
+                 */
+                backgroundJobId: string | null;
                 /** @enum {string} */
                 status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /**
@@ -23745,6 +23860,31 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
                 eventId: string | null;
+                /**
+                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                /**
+                 * Format: uuid
+                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The background job that ran it (its Activity row); null when no job ran it.
+                 */
+                backgroundJobId: string | null;
                 /** @enum {string} */
                 status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /**
@@ -23845,6 +23985,11 @@ export interface components {
                     [key: string]: unknown;
                 };
             }[];
+        };
+        /** @description A root admin's Sync now on a sport league's events. */
+        LeagueEventsSyncRequest: {
+            /** @description The one event year to sync; omitted, this calendar year and the next, as the schedule syncs. */
+            eventYear?: number;
         };
         /** @description A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is. */
         UnmappedProviderParticipantDto: {
@@ -24105,6 +24250,206 @@ export interface components {
                 /** @description Whether the provider has locked the field. */
                 fieldLocked: boolean;
             }[];
+        };
+        /** @description One background job on the Activity grid. */
+        ActivityJobDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description The job's handler. Its kind follows from it.
+             * @enum {string}
+             */
+            type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "ADD_RELEASED_EDITION_TO_CONTEST" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT";
+            /**
+             * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+             * @enum {string}
+             */
+            kind: "SYNC" | "EMAIL" | "SETTLEMENT" | "RELEASE" | "OTHER";
+            /**
+             * @description QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+             * @enum {string}
+             */
+            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+            /**
+             * Format: uuid
+             * @description The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+             */
+            sportLeagueId: string | null;
+            /**
+             * Format: uuid
+             * @description The event the job is about; null when it is about none.
+             */
+            sportEventId: string | null;
+            /** @description Tries so far, counting one in progress. */
+            attempts: number;
+            /**
+             * Format: date-time
+             * @description When it is or was due: first queued, or retried after a failed try.
+             */
+            runAt: string;
+            /**
+             * Format: date-time
+             * @description When it was queued.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When it SUCCEEDED or FAILED.
+             */
+            completedAt: string | null;
+            /** @description The error of its last failed try. */
+            lastError: string | null;
+            /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
+            result: {
+                [key: string]: unknown;
+            } | null;
+            /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
+            syncRunIds: string[];
+        };
+        /** @description Filters over Activity. A queue-time window bounds it; nothing pages it. */
+        ActivityListQuery: {
+            /**
+             * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+             * @enum {string}
+             */
+            kind?: "SYNC" | "EMAIL" | "SETTLEMENT" | "RELEASE" | "OTHER";
+            /**
+             * @description QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+             * @enum {string}
+             */
+            status?: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+            /**
+             * Format: uuid
+             * @description The league's own jobs and the jobs on any of its events.
+             */
+            sportLeagueId?: string;
+            /** Format: uuid */
+            sportEventId?: string;
+            /**
+             * Format: date-time
+             * @description Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept.
+             */
+            from?: string;
+            /**
+             * Format: date-time
+             * @description Latest queue time to include. Defaults to now.
+             */
+            to?: string;
+        };
+        /** @description The jobs queued inside the window that match the filters, newest first. */
+        ActivityListResponse: {
+            jobs: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description The job's handler. Its kind follows from it.
+                 * @enum {string}
+                 */
+                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "ADD_RELEASED_EDITION_TO_CONTEST" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT";
+                /**
+                 * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+                 * @enum {string}
+                 */
+                kind: "SYNC" | "EMAIL" | "SETTLEMENT" | "RELEASE" | "OTHER";
+                /**
+                 * @description QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+                 * @enum {string}
+                 */
+                status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                /**
+                 * Format: uuid
+                 * @description The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The event the job is about; null when it is about none.
+                 */
+                sportEventId: string | null;
+                /** @description Tries so far, counting one in progress. */
+                attempts: number;
+                /**
+                 * Format: date-time
+                 * @description When it is or was due: first queued, or retried after a failed try.
+                 */
+                runAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it was queued.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it SUCCEEDED or FAILED.
+                 */
+                completedAt: string | null;
+                /** @description The error of its last failed try. */
+                lastError: string | null;
+                /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
+                result: {
+                    [key: string]: unknown;
+                } | null;
+                /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
+                syncRunIds: string[];
+            }[];
+        };
+        /** @description One background job, as Activity shows it. */
+        ActivityJobResponse: {
+            /** @description One background job on the Activity grid. */
+            job: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description The job's handler. Its kind follows from it.
+                 * @enum {string}
+                 */
+                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "ADD_RELEASED_EDITION_TO_CONTEST" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT";
+                /**
+                 * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
+                 * @enum {string}
+                 */
+                kind: "SYNC" | "EMAIL" | "SETTLEMENT" | "RELEASE" | "OTHER";
+                /**
+                 * @description QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.
+                 * @enum {string}
+                 */
+                status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                /**
+                 * Format: uuid
+                 * @description The sport league a whole-league job is about, such as its events sync; null for a job on one event.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The event the job is about; null when it is about none.
+                 */
+                sportEventId: string | null;
+                /** @description Tries so far, counting one in progress. */
+                attempts: number;
+                /**
+                 * Format: date-time
+                 * @description When it is or was due: first queued, or retried after a failed try.
+                 */
+                runAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it was queued.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it SUCCEEDED or FAILED.
+                 */
+                completedAt: string | null;
+                /** @description The error of its last failed try. */
+                lastError: string | null;
+                /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
+                result: {
+                    [key: string]: unknown;
+                } | null;
+                /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
+                syncRunIds: string[];
+            };
         };
         /** @enum {string} */
         ClientLogLevel: "debug" | "info" | "warn" | "error" | "fatal";
@@ -34900,6 +35245,68 @@ export interface operations {
             };
         };
     };
+    syncLeagueEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeagueEventsSyncRequest"];
+            };
+        };
+        responses: {
+            /** @description One background job, as Activity shows it. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityJobResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     listUnmappedProviderParticipants: {
         parameters: {
             query?: {
@@ -35104,6 +35511,74 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listActivity: {
+        parameters: {
+            query?: {
+                /** @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER. */
+                kind?: "SYNC" | "EMAIL" | "SETTLEMENT" | "RELEASE" | "OTHER";
+                /** @description QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again. */
+                status?: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                /** @description The league's own jobs and the jobs on any of its events. */
+                sportLeagueId?: string;
+                sportEventId?: string;
+                /** @description Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept. */
+                from?: string;
+                /** @description Latest queue time to include. Defaults to now. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The jobs queued inside the window that match the filters, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

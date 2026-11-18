@@ -22,6 +22,8 @@ export interface ProviderSyncRunUpdate {
   payload: Record<string, unknown>;
   /** The run's detailed diagnostics; omitted, the stored ones are kept. */
   details?: Record<string, unknown>;
+  /** The background job running it (#1819), when a job picks up a run submitted before it; omitted, kept. */
+  backgroundJobId?: string;
 }
 
 /**
@@ -54,6 +56,8 @@ export interface ProviderSyncRunRepository {
   findById(id: string): Promise<ProviderSyncRunWithDetails | null>;
   /** The runs with these ids that exist, in one read, without the detailed diagnostics. */
   findManyByIds(ids: readonly string[]): Promise<ProviderSyncRun[]>;
+  /** The runs these background jobs ran, in one read, without the detailed diagnostics (#1819). */
+  findByBackgroundJobIds(backgroundJobIds: readonly string[]): Promise<ProviderSyncRun[]>;
   /**
    * Clears the detailed diagnostics of up to `limit` runs submitted before `before` that still
    * have them; returns how many. Open-ended, so a missed night or a backfilled run is still

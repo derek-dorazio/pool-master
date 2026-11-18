@@ -393,6 +393,7 @@ export class InMemorySportEvents {
             && row.autoLifecycleEnabled && row.startDate <= query.startedBy))
           && ('externalId' in query ? row.externalId === query.externalId : row.externalId.startsWith(query.externalIdPrefix)))
         .map((row) => ({
+          sportEventId: row.id,
           sport: row.sport,
           providerId: row.providerId,
           externalId: row.externalId,

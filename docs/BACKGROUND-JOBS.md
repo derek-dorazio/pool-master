@@ -15,6 +15,7 @@ on one server task*). The job table is for one-off work.
 |---|---|---|---|
 | `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It runs only the runs still `SUBMITTED`, so a feed an earlier try started never runs twice; on a retry, a run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted (#1445). A feed whose failure could not be written fails the job after the other feeds, so that retry happens. A feed that fails is recorded on its run; the job still succeeds |
 | `PROVIDER_EVENT_SYNC` | A verified provider webhook about a game or tournament linked to an in-progress event (`ProviderNotificationService.receive`, #1498): one job per notified event, due about 60 seconds out so a burst coalesces. Payload: the sport, the provider and the event's external id; dedupe key `provider-event-sync:<providerId>:<externalId>` (hashed when too long), released when a worker claims the job | `IngestionScheduler.runNotifiedEventSync`: one live-score sync of the event, recorded as a `WEBHOOK_EVENT_SYNC` run; skipped when the sport is not scheduled or its live scores are off. The flow is in `docs/LIVE-SPORTS-DATA-SYNC.md` | It reads the provider's current scores over REST and writes them through the same writers as the scheduled sweep, so a repeat writes the same state, and nothing from the delivery itself is stored |
+| `SYNC_LEAGUE_EVENTS` | A root admin's **Sync now** on a synced sport league (`POST /api/v1/ingestion/sport-leagues/:id/events-sync`, the one asked year or this year and next), and the synced league sweep every 6 hours (`LeagueEventsSync.queueScheduled`, one job per synced league, #1819). Payload: the league, its years, the trigger (`ADMIN` or `SCHEDULE`) and who asked; dedupe key `SYNC_LEAGUE_EVENTS:<sportLeagueId>:<years>`, so a press for another year gets its own job | `LeagueEventsSync.run`: one `EVENTS` sync run per job, created `IN_PROGRESS` with the job's id; for each year it lists the provider's events, creates the new ones and keeps the rest current, writing progress to the run; the run ends `COMPLETED` with what changed, and the job's result carries the counts. A league gone or no longer synced, or a provider refusal that would repeat, is a `PermanentBackgroundJobError` | Creating an event is keyed by the provider and its external id, so a retry updates what an earlier try created; on a retry the run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted |
 | `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
 | `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
 | `CONTEST_REOPENED_EMAILS` | Each live contest a postponement takes back to `OPEN` while its event's start is ahead (`EventLifecycleService.followPostponedStart`, #1808), with its move. Payload: the contest, the event and the start the reopen set; dedupe key `CONTEST_REOPENED_EMAILS:<contestId>:<sportEventId>:reopened-<start>` | `ContestEmailJobs.contestReopened`: reads the contest and event again and queues "Picks are open again" to the league; a contest no longer open to that start, or gone, is skipped | Keyed by the contest, the event, the start and the person, so a retry queues only what an earlier try did not |
@@ -23,12 +24,35 @@ on one server task*). The job table is for one-off work.
 | `SETTLE_GAME_CONTESTS` | A game decided by `MatchResultService` (#1460): its result saved, a quarter score entered after its result, or the game cancelled. Written in the same transaction as the match write. Payload: the event, the game and the moment it was decided; dedupe key `SETTLE_GAME_CONTESTS:<sportEventMatchId>` | `EventLifecycleService.settleFinishedGameContests`: settles the squares contests on the game through `ContestSettlementService.settleFinishedGame`, from the game as it stands when the job runs | A contest already `COMPLETED` is skipped, and a contest's winners and standings are replaced in place, so a retry settles only the contests an earlier try did not finish |
 | `REBUILD_LEADERBOARDS` | Any write that changes what live leaderboards are computed from (#1463), through `JobLeaderboardRebuilds`: an admin's event write (scores, field, status), a provider sync, live scores, a pick'em or survivor week submitted or sent back, and a settlement (one job for the settled event, however many contests it settled). One job per event or contest named. An admin's event write (a score, result, bracket, field, start or status change), a provider sync that changes a field row and a live-score tick (with its last write, the ranks) write their event's job in the same transaction as the change (`LeaderboardRebuilds.forEvent`, #1466), and a pick'em or survivor week submitted or sent back to draft writes its contest's job with the week (`LeaderboardRebuilds.forContest`), so a write that fails queues none and one whose job fails to insert is rolled back and answers an error. A field sync that changes no row writes none. A settlement queues its job once its contests are settled, inside the settle job: its per-contest writes are separate transactions, and a contest it completed has changed, so a read of that contest computes its board again whether or not the job was written. Payload: the subject (`EVENT` or `CONTEST`) and its id; dedupe key `REBUILD_LEADERBOARDS:<subject>:<id>`, so a burst of writes to one event waits as one job, and a write made while it runs queues one more | `ContestService.rebuildLeaderboardSnapshots`: rebuilds every stored board of the contests on the event, or of the one contest, from the data as it stands when the job runs | A rebuild only stores a board computed from newer data than the stored one, so a repeated rebuild changes nothing a viewer sees; a board left stale by a failed rebuild is still caught by a read (`isSnapshotCurrent`) |
 | `ADD_RELEASED_EDITION_TO_CONTEST` | A root admin's release of an edition (`EventLifecycleService.transition`, #1318): one job for each contest made from a template covering the edition's series that can still take it (a majors pool and its next major), found by `ContestManagementService.releasedEditionJobs` and written in the same write as the release, so a lost race queues nothing. Payload: the contest and the edition; dedupe key `ADD_RELEASED_EDITION_TO_CONTEST:<contestId>:<sportEventId>` | `ContestManagementService.addReleasedEditionToContest`: adds the edition to the contest's events under the commissioner's own rules; a contest gone or already holding it is left alone, and one whose rules now refuse it (drawn, finished, another salary cap) is logged and skipped | A retry finds the edition already added and changes nothing. Two editions' jobs on one pool at once cannot drop either: the write is refused under the contest's row lock if its events changed since the job read them (`ContestEventsChangedError`), and the retry adds its edition beside the other |
-| `RELEASE_SPORT_EVENT` | The hourly automatic release sweep (`SportEventAutoReleaseScheduler`, #1823): one job per synced DRAFT event inside its sport league's `autoReleaseDaysBeforeStart` window, in one insert. Payload: the event and the trigger (`SCHEDULE`); dedupe key `RELEASE_SPORT_EVENT:<sportEventId>`, so a sweep that finds the event again before its job runs queues nothing | `SportEventService.autoReleaseEvent`: reads the event again; one no longer a synced draft in its window is skipped. Judges every ready check; all passing releases it through the manual button's path, any failing holds it as a draft for the next sweep. Its result is every check with its value, or why it was skipped | A released event is skipped as `NOT_DRAFT`, so a retry never releases twice; a held attempt changes nothing |
+| `RELEASE_SPORT_EVENT` | The hourly automatic release sweep (`SportEventAutoReleaseScheduler`, #1823): one job per synced DRAFT event inside its sport league's `autoReleaseDaysBeforeStart` window, in one insert. Payload: the event and the trigger (`SCHEDULE`); dedupe key `RELEASE_SPORT_EVENT:<sportEventId>`, so a sweep that finds the event again before its job runs queues nothing | `SportEventService.autoReleaseEvent`: reads the event again; one no longer a synced draft in its window is skipped. Judges every ready check; all passing releases it through the manual button's path, any failing holds it as a draft for the next sweep. Its result, kept on the job and shown in Activity under the Release kind, is the outcome with every check and its value, or why it was skipped | A released event is skipped as `NOT_DRAFT`, so a retry never releases twice; a held attempt changes nothing |
 
 Adding a type: a value in `BackgroundJobType` (domain enum and Prisma enum, by migration), its
-payload schema in `BACKGROUND_JOB_PAYLOADS`, and its handler where index.ts builds the runner.
-Both registries are exhaustive over the enum, so a type missing either fails typecheck. Say in
-the table above how the handler is idempotent.
+payload schema in `BACKGROUND_JOB_PAYLOADS`, its scope in `BACKGROUND_JOB_SCOPES`, its kind in
+`BACKGROUND_JOB_KINDS`, and its handler where index.ts builds the runner. Every registry is
+exhaustive over the enum, so a type missing one fails typecheck. Say in the table above how the
+handler is idempotent.
+
+## Kind, scope and result (#1819)
+
+- **Kind** (`SYNC`, `EMAIL`, `SETTLEMENT`, `RELEASE`, `OTHER`) groups the types for Activity. It
+  is derived from the type (`BACKGROUND_JOB_KINDS`) and never stored, so moving a type to
+  another kind needs no migration.
+- **Scope**: the queue fills `sport_league_id` and `sport_event_id` from the payload
+  (`BACKGROUND_JOB_SCOPES`) when the job is built. An event's job names only its event; a
+  league's Activity reads its events' ids first and takes their jobs too, so no insert pays a
+  lookup. The columns carry no foreign keys: a job outlives a deleted event as a record.
+- **Result**: a handler may return a small JSON object, stored on the job when it succeeds
+  (the league events sync returns its run's id and counts).
+- A handler throws `PermanentBackgroundJobError` for a failure every try would repeat; the job
+  is `FAILED` at once, with no retry.
+
+## Activity
+
+`GET /api/v1/activity` (root admin) lists jobs newest first, narrowed by kind, status, league or
+event, each with the ids of the sync runs it recorded. There is no paging: the read is bounded
+by its window instead, `from` to `to`, which defaults to the last 24 hours, or the whole 30 days
+kept when a league or event narrows it; a `from` after `to` answers 400 `ACTIVITY_WINDOW_INVALID`. One address may read it 60 times a minute (`@fastify/rate-limit` on this route only, per process); more answer 429 `ACTIVITY_RATE_LIMITED`. It costs the same statements for any number of jobs
+(pinned in `root-admin-route-query-scaling.integration.ts`).
 
 ## Queueing
 
@@ -78,12 +102,18 @@ job runs outside any request: its own reads, no request query budget.
 | What happens | The job becomes |
 |---|---|
 | Claimed | `RUNNING`, one more attempt, leased for 5 minutes |
-| The handler finishes | `SUCCEEDED` |
+| The handler finishes | `SUCCEEDED`, with its result if it returned one |
 | The handler throws | `QUEUED` again, due 1, 5 then 30 minutes later; on the fourth failure, `FAILED` |
 | Its stored payload fails its schema | `FAILED` at once: every try would fail alike |
+| The handler throws `PermanentBackgroundJobError` | `FAILED` at once |
 | Its task stops mid-run | still `RUNNING` until the lease ends, then due again on any task |
 | Its leases lapsed on every try | `FAILED` |
 | A try outlives its lease and another task claims it | the newer attempt's outcome: each mark is fenced to the attempt that claimed it, so the late one writes nothing |
+
+A handler whose work can outlast one lease calls `context.renewLease()` between steps: the
+claim is held for another lease from now, fenced to this attempt, and `false` means another task
+has claimed the job, so the try stops (the league events sync renews before each year, since a
+provider's rate limit can hold one year's reads for minutes).
 
 On shutdown a task stops claiming and gives its jobs in flight 10 seconds; anything still running
 is re-run once its lease ends.
@@ -104,8 +134,8 @@ Every line carries `action` and the job's id, type and attempt (`docs/LOGGING-OP
 
 ## Retention
 
-The nightly cleanup deletes `SUCCEEDED` jobs 7 days after they finish and `FAILED` jobs after
-30 days (`BackgroundJobRetention`).
+The nightly cleanup deletes every finished job, `SUCCEEDED` or `FAILED`, 30 days after it
+finishes (`BackgroundJobRetention`), so Activity reaches back the same 30 days for both.
 
 ## Testing
 

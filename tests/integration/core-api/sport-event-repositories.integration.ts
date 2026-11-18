@@ -885,7 +885,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     expect(large.filter(({ sql }) => sql.startsWith('INSERT'))).toHaveLength(1);
   });
 
-  it('queues one job per event however often it sweeps, until a worker claims it, then the next sweep queues a fresh try', async () => {
+  it('queues one job per event, scoped to that event, however often it sweeps, until a worker claims it, then the next sweep queues a fresh try', async () => {
     const league = await syncedLeague('balldontlie');
     const event = await draftIn(league.id, 3);
     const { scheduler, jobs } = sweeper();
@@ -902,6 +902,8 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     const queued = await releaseJobs();
     expect(queued).toHaveLength(2);
     expect(queued.map((job) => job.payload)).toEqual([{ sportEventId: event.id, trigger: 'SCHEDULE' }, { sportEventId: event.id, trigger: 'SCHEDULE' }]);
+    // Each job is scoped to its event, so Activity finds it on the event and on its league.
+    expect(queued.map((job) => job.sportEventId)).toEqual([event.id, event.id]);
   });
 
 });

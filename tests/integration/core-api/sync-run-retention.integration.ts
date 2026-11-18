@@ -2,6 +2,7 @@
  * #1174 — the nightly cleanup's sync-run steps against Postgres: a run's detailed diagnostics are
  * cleared 30 days after submission, and the run itself is deleted a year after it.
  */
+import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { Prisma } from '@prisma/client';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
@@ -29,6 +30,7 @@ function daysAgo(days: number): Date {
 async function seedRun(label: string, createdAt: Date, details: object | null = DETAILS) {
   const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
   const run = await repo.create({
+    ...SCHEDULED_SCORES_RUN,
     providerId: 'retention-feed',
     sport: Sport.GOLF,
     eventId: label,

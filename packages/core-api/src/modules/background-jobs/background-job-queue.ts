@@ -8,8 +8,8 @@
  */
 
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
-import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
+import type { BackgroundJob, BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
+import { BACKGROUND_JOB_PAYLOADS, BACKGROUND_JOB_SCOPES, type BackgroundJobPayload } from './background-job-payloads';
 
 /**
  * The jobs a write carries into its own transaction, and what to call once that write has
@@ -48,7 +48,7 @@ export class InvalidBackgroundJobPayloadError extends Error {
 export class BackgroundJobQueue {
   private runner?: { wake(): void };
 
-  constructor(private readonly options: { jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll'> }) {}
+  constructor(private readonly options: { jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll' | 'enqueueReturning'> }) {}
 
   /**
    * The runner a queued job wakes, so a job on an idle system starts at once on the task that
@@ -66,7 +66,9 @@ export class BackgroundJobQueue {
   ): BackgroundJobRequest {
     const parsed = BACKGROUND_JOB_PAYLOADS[type].safeParse(payload);
     if (!parsed.success) throw new InvalidBackgroundJobPayloadError(type, parsed.error.message);
-    return { type, payload: parsed.data, runAt: options.runAt, dedupeKey: options.dedupeKey };
+    // The registries are exhaustive over the type, so the scope for `type` reads this payload.
+    const scopeOf = BACKGROUND_JOB_SCOPES[type] as (payload: unknown) => ReturnType<(typeof BACKGROUND_JOB_SCOPES)[T]>;
+    return { type, payload: parsed.data, runAt: options.runAt, dedupeKey: options.dedupeKey, ...scopeOf(parsed.data) };
   }
 
   /** Queues one job on its own and wakes the runner; resolves to whether it was written. */
@@ -78,6 +80,25 @@ export class BackgroundJobQueue {
     const written = await this.options.jobs.enqueue(this.request(type, payload, options));
     this.queued();
     return written;
+  }
+
+  /**
+   * Queues one job on its own, wakes the runner, and answers the job (#1819): the one written, or
+   * the job waiting for its first try that already holds its dedupe key.
+   */
+  async enqueueReturning<T extends BackgroundJobType>(
+    type: T,
+    payload: BackgroundJobPayload<T>,
+    options: BackgroundJobOptions = {},
+  ): Promise<BackgroundJob> {
+    return this.enqueueRequestReturning(this.request(type, payload, options));
+  }
+
+  /** `enqueueReturning` for a job already built with `request`. */
+  async enqueueRequestReturning(request: BackgroundJobRequest): Promise<BackgroundJob> {
+    const job = await this.options.jobs.enqueueReturning(request);
+    this.queued();
+    return job;
   }
 
   /** Queues jobs built with `request` in one write and wakes the runner; resolves to how many were written. */

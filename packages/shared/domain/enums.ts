@@ -370,6 +370,28 @@ export const ProviderSyncRunStatus = {
 } as const;
 export type ProviderSyncRunStatus = (typeof ProviderSyncRunStatus)[keyof typeof ProviderSyncRunStatus];
 
+/** What a provider sync run syncs (#1819). */
+export const ProviderSyncKind = {
+  /** A sport league's events for a year: created, kept current with the provider. */
+  EVENTS: 'EVENTS',
+  /** One event's field. */
+  FIELD: 'FIELD',
+  /** One event's scores. */
+  SCORES: 'SCORES',
+} as const;
+export type ProviderSyncKind = (typeof ProviderSyncKind)[keyof typeof ProviderSyncKind];
+
+/** What started a provider sync run (#1819). Each kind has all three. */
+export const ProviderSyncTrigger = {
+  /** The sync's own timer. */
+  SCHEDULE: 'SCHEDULE',
+  /** The provider's webhook said something changed. */
+  WEBHOOK: 'WEBHOOK',
+  /** A root admin pressed Sync now. */
+  ADMIN: 'ADMIN',
+} as const;
+export type ProviderSyncTrigger = (typeof ProviderSyncTrigger)[keyof typeof ProviderSyncTrigger];
+
 /** Where one in-memory ingestion job is; a provider sync run records the job's outcome. */
 export const IngestionJobStatus = {
   PENDING: 'PENDING',
@@ -1033,10 +1055,30 @@ export const BackgroundJobType = {
   REBUILD_LEADERBOARDS: 'REBUILD_LEADERBOARDS',
   /** Adds a released edition to one contest made from a template covering its series, a majors pool's major (#1318). */
   ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
+  /** Syncs one sport league's events from the provider that creates them, for one or more years (#1819). */
+  SYNC_LEAGUE_EVENTS: 'SYNC_LEAGUE_EVENTS',
   /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */
   RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
+
+/**
+ * What a background job is about, as Activity groups and filters it (#1819). Derived from the
+ * job's type (`BACKGROUND_JOB_KINDS`), never stored.
+ */
+export const BackgroundJobKind = {
+  /** A provider sync: a sport league's events, an event's field or its scores. */
+  SYNC: 'SYNC',
+  /** Emails queued to a league. */
+  EMAIL: 'EMAIL',
+  /** Contests settled when their event or game is decided. */
+  SETTLEMENT: 'SETTLEMENT',
+  /** An event released for contests, and what its release sets off. */
+  RELEASE: 'RELEASE',
+  /** Anything else, such as a leaderboard rebuild. */
+  OTHER: 'OTHER',
+} as const;
+export type BackgroundJobKind = (typeof BackgroundJobKind)[keyof typeof BackgroundJobKind];
 
 /** Where one background job stands. */
 export const BackgroundJobStatus = {
