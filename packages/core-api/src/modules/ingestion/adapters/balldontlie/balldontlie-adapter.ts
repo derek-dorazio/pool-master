@@ -103,6 +103,7 @@ import {
   BALLDONTLIE_PROVIDER_ID,
   fieldPlayerIds,
   isClassifiedTournament,
+  PGA_TOUR_NAME,
   requireStrokePlay,
   toFieldParticipants,
   toGolfRoundUpdates,
@@ -132,11 +133,11 @@ const MAX_SEASONS_FETCHED_ONE_BY_ONE = 3;
 
 /**
  * What the adapter reads for one league: its events in a date range, and everyone who plays in
- * it. `tour` is the `metadata.tour` its events carry, the sport league's match keyword; null for
- * golf, whose tournaments are read as one list.
+ * it. `tour` is the `metadata.tour` its events carry, the sport league's match keyword (golf's is
+ * the PGA TOUR, so a refused golf import names its league too).
  */
 interface LeagueReads {
-  tour: string | null;
+  tour: string;
   events(dateRange?: DateRange): Promise<SportEvent[]>;
   participants(): Promise<ProviderParticipant[]>;
 }
@@ -203,7 +204,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     // the World Cup need the GOAT tier, college football a paid one) or whose read fails is
     // left out of its sport's list and logged, and its neighbours still list.
     this.leagues = new Map<Sport, readonly LeagueReads[]>([
-      [Sport.GOLF, [{ tour: null, events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }]],
+      [Sport.GOLF, [{ tour: PGA_TOUR_NAME, events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() }]],
       [Sport.AMERICAN_FOOTBALL, [reads(NFL_LEAGUE_NAME, this.nfl), reads(CFP_LEAGUE.tour, this.ncaaf)]],
       [Sport.BASKETBALL, [
         reads(NCAA_MEN.tour, this.ncaa.ncaab),
@@ -239,13 +240,13 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]> {
     const leagues = this.leagues.get(sport) ?? [];
     const tour = options?.tour?.trim().toLowerCase();
-    const named = tour ? leagues.filter((league) => league.tour?.toLowerCase() === tour) : [];
+    const named = tour ? leagues.filter((league) => league.tour.toLowerCase() === tour) : [];
     if (named.length > 0) {
       return (await Promise.all(named.map(async (league) => {
         try {
           return await league.events(dateRange);
         } catch (error) {
-          if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour ?? sport, error.status, { cause: error });
+          if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour, error.status, { cause: error });
           throw error;
         }
       }))).flat();

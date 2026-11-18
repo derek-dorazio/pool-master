@@ -30,8 +30,8 @@ const nflRoutes: Record<string, FakeRoute> = {
 };
 const freePlan: Record<string, FakeRoute> = { ...nflRoutes, '/ncaaf/v1/games': refused, '/ncaaf/v1/teams': refused };
 
-function setup(routes: Record<string, FakeRoute>, logger?: FastifyBaseLogger): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
-  const api = createFakeBalldontlie({ league: ['nfl', 'ncaaf'], apiKey: API_KEY, routes });
+function setup(routes: Record<string, FakeRoute>, logger?: FastifyBaseLogger, league: string[] = ['nfl', 'ncaaf']): { adapter: BalldontlieAdapter; api: FakeBalldontlie; restore: () => void } {
+  const api = createFakeBalldontlie({ league, apiKey: API_KEY, routes });
   const originalFetch = global.fetch;
   global.fetch = api.fetch;
   let now = NOW;
@@ -123,6 +123,16 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
 
     await expect(read).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', league: 'CFP', status: 401 });
+  });
+
+  it('throws a league refusal naming the PGA TOUR when the plan refuses golf\'s tournaments, so a refused golf import gets the clear error too', async () => {
+    const harness = setup({ '/pga/v2/tournaments': refused }, undefined, ['pga']);
+    restore = harness.restore;
+
+    const read = harness.adapter.getUpcomingEvents(Sport.GOLF, YEAR_2026, { tour: 'PGA TOUR' });
+
+    await expect(read).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
+    await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', league: 'PGA TOUR', status: 401 });
   });
 
   it('passes on any other failure of the one tour asked for unchanged, so an outage still shows as one', async () => {
