@@ -67,9 +67,9 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },
   ]);
   const names = ['Duke', 'Houston', 'Auburn', 'Florida'];
-  const teams = await Promise.all(names.map((name) => prisma.participant.create({ data: { sportId: sport.id, name, participantType: 'TEAM' } })));
+  const teams = await Promise.all(names.map((name) => prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name, participantType: 'TEAM' } })));
   await prisma.participantProviderMapping.createMany({
-    data: teams.map((team, index) => ({ participantId: team.id, providerId: PROVIDER, externalId: `${externalId}-team-${String(index + 1)}` })),
+    data: teams.map((team, index) => ({ participantId: team.id, sportLeagueId: sportLeague.id, providerId: PROVIDER, externalId: `${externalId}-team-${String(index + 1)}` })),
   });
   const field = new PrismaSportEventParticipantRepository(getAppPrisma());
   await field.createMany(event.id, teams.map((team, index) => ({ participantId: team.id, seedNumber: index + 1 })));
@@ -197,9 +197,9 @@ describe('game scores from a provider', () => {
     const prisma = getPrisma();
     await prisma.sportEventMatch.updateMany({ where: { sportEventId: event.id }, data: { externalGameId: null } });
     // Houston's place is the play-in place "UMBC / Howard" instead; UMBC, linked to the provider, won it.
-    const sportId = (await prisma.participant.findUniqueOrThrow({ where: { id: entryOf('Houston').participantId } })).sportId;
-    const [pairing, umbc] = await Promise.all(['UMBC / Howard', 'UMBC Retrievers'].map((name) => prisma.participant.create({ data: { sportId, name, participantType: 'TEAM' } })));
-    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, providerId: PROVIDER, externalId: `${externalId}-team-umbc` } });
+    const { sportLeagueId } = await prisma.participant.findUniqueOrThrow({ where: { id: entryOf('Houston').participantId } });
+    const [pairing, umbc] = await Promise.all(['UMBC / Howard', 'UMBC Retrievers'].map((name) => prisma.participant.create({ data: { sportLeagueId, name, participantType: 'TEAM' } })));
+    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, sportLeagueId, providerId: PROVIDER, externalId: `${externalId}-team-umbc` } });
     const place = entryOf('Houston');
     await prisma.sportEventParticipant.update({ where: { id: place.id }, data: { participantId: pairing.id, isPlayInPlace: true } });
     const roundOf64 = { externalGameId: 'p-1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: `${externalId}-team-umbc`, playInWinnerTeamExternalId: `${externalId}-team-umbc` };

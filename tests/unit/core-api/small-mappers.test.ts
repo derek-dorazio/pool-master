@@ -12,7 +12,6 @@ import {
   PlanFeature,
   PredictedResult,
   type EmailMessage,
-  type ParticipantLeagueAffiliation,
   type SportConfig,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -30,8 +29,7 @@ import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/
 import { mapRaceResultPreviewToDto } from '../../../packages/core-api/src/mappers/race-results.mapper';
 import { toSelectionGroupDto } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
-  mapAffiliationToDto,
-  mapAffiliationUploadPreviewRowToDto,
+  mapRankingUploadPreviewRowToDto,
   mapSportLeagueToDto,
   mapSportToDto,
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
@@ -299,18 +297,18 @@ describe('sport catalog mappers', () => {
   it('sends a sport league with a copy of its round names and its counts', () => {
     const roundNames = ['Round 1', 'Final'];
     const summary = {
-      id: 'sl1', sportId: 's1', sport: 'NFL', name: 'NFL', roundNames, parentRoundNumbers: [], affiliationCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
+      id: 'sl1', sportId: 's1', sport: 'NFL', name: 'NFL', roundNames, parentRoundNumbers: [], participantCount: 32, sportEventCount: 18, createdAt: AT, updatedAt: AT,
     } as unknown as SportLeagueSummary;
 
     const dto = mapSportLeagueToDto(summary);
 
     expect(dto.roundNames).toEqual(roundNames);
     expect(dto.roundNames).not.toBe(roundNames);
-    expect(dto).toEqual(expect.objectContaining({ affiliationCount: 32, sportEventCount: 18, createdAt: ISO }));
+    expect(dto).toEqual(expect.objectContaining({ participantCount: 32, sportEventCount: 18, createdAt: ISO }));
   });
 
   it('sends a playoff round\'s sport league with the id of the season league it belongs to, and a season league with none', () => {
-    const base = { sportId: 's1', sport: 'HOCKEY', roundNames: [], parentRoundNumbers: [], affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const base = { sportId: 's1', sport: 'HOCKEY', roundNames: [], parentRoundNumbers: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
     const round = { ...base, id: 'stanley-cup-final', name: 'Stanley Cup Final', parentSportLeagueId: 'nhl' } as unknown as SportLeagueSummary;
     const season = { ...base, id: 'nhl', name: 'NHL', parentSportLeagueId: null } as unknown as SportLeagueSummary;
 
@@ -320,7 +318,7 @@ describe('sport catalog mappers', () => {
 
   it('sends a Clutch Card league with a copy of the rounds of its season league\'s event it covers', () => {
     const parentRoundNumbers = [4];
-    const worldSeries = { sportId: 's1', sport: 'BASEBALL', id: 'world-series', name: 'World Series', roundNames: [], parentSportLeagueId: 'mlb', parentRoundNumbers, affiliationCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT } as unknown as SportLeagueSummary;
+    const worldSeries = { sportId: 's1', sport: 'BASEBALL', id: 'world-series', name: 'World Series', roundNames: [], parentSportLeagueId: 'mlb', parentRoundNumbers, participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT } as unknown as SportLeagueSummary;
 
     const dto = mapSportLeagueToDto(worldSeries);
 
@@ -328,25 +326,8 @@ describe('sport catalog mappers', () => {
     expect(dto.parentRoundNumbers).not.toBe(parentRoundNumbers);
   });
 
-  it('sends an affiliation with its participant embedded', () => {
-    const affiliation = {
-      id: 'a1',
-      sportLeagueId: 'sl1',
-      participantId: 'p1',
-      ranking: 4,
-      participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT },
-      createdAt: AT,
-      updatedAt: AT,
-    } as unknown as ParticipantLeagueAffiliation;
-
-    const dto = mapAffiliationToDto(affiliation);
-
-    expect(dto).toEqual(expect.objectContaining({ id: 'a1', ranking: 4, createdAt: ISO }));
-    expect(dto.participant.id).toBe('p1');
-  });
-
-  it('sends an affiliation upload row\'s resolution and participant', () => {
-    expect(mapAffiliationUploadPreviewRowToDto({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' } as never))
+  it('sends a ranking upload row\'s resolution and participant', () => {
+    expect(mapRankingUploadPreviewRowToDto({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' } as never))
       .toEqual({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' });
   });
 });

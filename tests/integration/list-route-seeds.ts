@@ -70,6 +70,8 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     const tour = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Scaling Tour ${suffix}` } });
     await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
   }
+  // The field's golfers belong to the event's sport league (#1853).
+  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId }, select: { sportLeagueId: true } });
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
@@ -85,7 +87,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
   const field = [];
   for (let index = 0; index < golfers; index += 1) {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Golfer ${suffix} ${index}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      data: { sportLeagueId, name: `Golfer ${suffix} ${index}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
   }
@@ -141,7 +143,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   const matches = [];
   for (let matchNumber = 1; matchNumber <= games; matchNumber += 1) {
     const team = async (side: string) => {
-      const participant = await prisma.participant.create({ data: { sportId: sport.id, name: `${side} ${suffix} ${matchNumber}`, participantType: 'TEAM' } });
+      const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${side} ${suffix} ${matchNumber}`, participantType: 'TEAM' } });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);

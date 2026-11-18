@@ -22,7 +22,6 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    affiliations: store.affiliationRepo(),
     matches: store.matchRepo(),
     leaderboards,
     random: () => 0.5,
@@ -52,11 +51,10 @@ describe('SportEventParticipantService.listEventParticipants', () => {
     expect(view.rounds).toEqual([expect.objectContaining({ round: expect.objectContaining({ roundNumber: 1 }), golf: expect.objectContaining({ strokes: 70 }) })]);
   });
 
-  it('flags a participant affiliated with the event\'s sport league, and one invited from elsewhere', async () => {
+  it('flags a participant of the event\'s sport league, and one invited from another league', async () => {
     const { store, service, sport, sportLeague, event } = setup();
-    const member = store.addParticipant(sport.id, 'Member');
-    const guest = store.addParticipant(sport.id, 'Guest');
-    store.affiliate(sportLeague.id, member.id);
+    const member = store.addParticipant(sport.id, 'Member', { sportLeagueId: sportLeague.id });
+    const guest = store.addParticipant(sport.id, 'Guest', { sportLeagueId: store.addSportLeague(sport.id, 'LIV Golf').id });
     store.addToField(event.id, member.id, { seedNumber: 1 });
     store.addToField(event.id, guest.id, { seedNumber: 2 });
 
@@ -88,7 +86,6 @@ describe('SportEventParticipantService — the field viewers share', () => {
       sportEvents: context.store.sportEventRepo(),
       field: context.store.fieldRepo(),
       participants: context.store.participantRepo(),
-      affiliations: context.store.affiliationRepo(),
       matches: context.store.matchRepo(),
       fieldCache,
       now: () => now,
@@ -208,7 +205,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({
       sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
-      affiliations: store.affiliationRepo(), matches: store.matchRepo(), random: () => 0.5,
+      matches: store.matchRepo(), random: () => 0.5,
     });
     const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
     const moved = store.addToField(event.id, store.addParticipant(sport.id, 'Moved').id, { ranking: 5, oddsToWin: 30 });
@@ -429,7 +426,6 @@ describe('SportEventParticipantService — field upload', () => {
       sportEvents: store.sportEventRepo(),
       field: fieldRepo,
       participants: store.participantRepo(),
-      affiliations: store.affiliationRepo(),
       matches: store.matchRepo(),
     });
 
@@ -485,7 +481,7 @@ describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
   it('writes the event\'s rebuild job with each field write (seed, add, grid save, removal) and wakes the runner after each', async () => {
     const { store, service, sport, sportLeague, event, leaderboards } = setup();
     store.affiliate(sportLeague.id, store.addParticipant(sport.id, 'Seeded').id, 1);
-    const guest = store.addParticipant(sport.id, 'Guest');
+    const guest = store.addParticipant(sport.id, 'Guest', { sportLeagueId: store.addSportLeague(sport.id, 'LIV Golf').id });
 
     await service.seedFromSportLeague(event.id);
     await service.addParticipants(event.id, [guest.id]);

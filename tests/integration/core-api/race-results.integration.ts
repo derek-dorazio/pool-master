@@ -17,6 +17,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The finish-position extension (#622) against real Postgres: what the admin's finishing order
 // leaves in the tables, that it is all or none, the constraints the table holds on its own, and a
@@ -57,7 +58,7 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   const field = [];
   for (const [index, name] of RUNNERS.entries()) {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' },
     });
     field.push(await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id, isActive: index < 3 },

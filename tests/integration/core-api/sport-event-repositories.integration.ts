@@ -31,6 +31,7 @@ import { createRoundRows, createSportEventRow, createTierRows, seriesNamed } fro
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -90,9 +91,9 @@ async function createEvent(name = 'Repository Open', eventYear?: number) {
 }
 
 async function createParticipants(names: string[]) {
-  const sportId = await golfSportId();
+  const sportLeagueId = await participantLeagueId(getPrisma(), await golfSportId());
   return Promise.all(names.map((name) => getPrisma().participant.create({
-    data: { sportId, name, participantType: 'INDIVIDUAL' },
+    data: { sportLeagueId, name, participantType: 'INDIVIDUAL' },
   })));
 }
 
@@ -731,18 +732,22 @@ describe('Golf extension repositories', () => {
 });
 
 describe('Participant and provider-mapping repositories — additions', () => {
-  it('finds participants by ids, and provider mappings by participants and by a provider\'s identifiers', async () => {
+  it('finds participants by ids, and provider mappings by participants and by a provider\'s identifiers within a sport league or a sport, none in another sport', async () => {
     const { participants, mappings } = repos();
     const [ana] = await createParticipants(['Ana']);
     await getPrisma().participantProviderMapping.create({
-      data: { participantId: ana.id, providerId: 'integration-test', externalId: 'pg-1', confidence: 'EXACT' },
+      data: { participantId: ana.id, sportLeagueId: ana.sportLeagueId, providerId: 'integration-test', externalId: 'pg-1', confidence: 'EXACT' },
     });
 
     await expect(participants.findByIds([ana.id, randomUUID()])).resolves.toEqual([expect.objectContaining({ id: ana.id })]);
     await expect(mappings.findByParticipant(ana.id)).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
-    await expect(mappings.findByProviderExternalIds('integration-test', ['pg-1', 'pg-2'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: ana.sportLeagueId }, ['pg-1', 'pg-2'])).resolves.toEqual([
       expect.objectContaining({ participantId: ana.id }),
     ]);
+    await expect(mappings.findByProviderExternalIds('integration-test', { sport: Sport.GOLF }, ['pg-1'])).resolves.toEqual([
+      expect.objectContaining({ participantId: ana.id }),
+    ]);
+    await expect(mappings.findByProviderExternalIds('integration-test', { sport: Sport.TENNIS }, ['pg-1'])).resolves.toEqual([]);
   });
 });
 
@@ -841,15 +846,11 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
   });
 
-  it('counts an event\'s rounds, its active golfers the provider has no mapping for, and the active setups its league offers, in three statements', async () => {
+  it('counts an event\'s rounds and the active setups its league offers, in two statements', async () => {
     const league = await syncedLeague('balldontlie');
     const event = await draftIn(league.id, 3);
-    const { rounds, field, mappings } = repos();
+    const { rounds } = repos();
     await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
-    const [linked, unlinked, withdrawn] = await createParticipants(['Linked Golfer', 'Unlinked Golfer', 'Withdrawn Golfer']);
-    await field.createMany(event.id, [{ participantId: linked.id }, { participantId: unlinked.id }, { participantId: withdrawn.id }]);
-    await getPrisma().sportEventParticipant.updateMany({ where: { sportEventId: event.id, participantId: withdrawn.id }, data: { isActive: false } });
-    await mappings.bind({ participantId: linked.id, providerId: 'balldontlie', externalId: `bdl-${randomUUID()}`, confidence: 'EXACT', mappedAt: NOW });
     const template = { sport: Sport.GOLF, contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
     await getPrisma().contestConfigTemplate.createMany({
       data: [
@@ -858,15 +859,12 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
       ],
     });
 
-    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: 'balldontlie' }));
+    const { result, statements } = await recordStatements(() => repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id }));
 
     expect(result.scheduledRoundCount).toBe(2);
-    expect(result.unlinkedParticipantCount).toBe(1);
     // Its own active setup; the retired one is not counted.
     expect(result.contestSetupCount).toBe(1);
-    expect(statements).toHaveLength(3);
-    await expect(repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id, linkProviderId: null }))
-      .resolves.toMatchObject({ unlinkedParticipantCount: null });
+    expect(statements).toHaveLength(2);
   });
 
   it('sweeps 20 events in its window in the same statements as 2: one candidates read and one insert of every job', async () => {

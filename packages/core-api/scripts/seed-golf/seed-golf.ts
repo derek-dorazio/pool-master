@@ -61,7 +61,6 @@ import {
   applyEventGameStatLines,
   applyEventGolfRoundScores,
   applyEventRaceResults,
-  applyParticipantLeagueAffiliationUpload,
   bindParticipantProviderMapping,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -72,11 +71,10 @@ import {
   getEventBracket,
   getSettingsGroup,
   listEventParticipants,
-  listParticipantLeagueAffiliations,
   listEvents,
   listParticipants,
   listSportLeagues,
-  listSportProviderMappings,
+  listSportLeagueProviderMappings,
   listSports,
   loadEventBracket,
   proposeEventRoundMatchups,
@@ -397,7 +395,7 @@ class Loader {
 
   private readonly file: SportDataFile;
 
-  constructor(file: SportDataFile, private readonly options: LoadSportDataOptions, private readonly sportId: string) {
+  constructor(file: SportDataFile, private readonly options: LoadSportDataOptions) {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
     this.testSeed = this.contents.has(SportDataContent.RESULTS);
@@ -481,25 +479,21 @@ class Loader {
   }
 
   /**
-   * Each player's participant id (null in a dry run that would create it): the participant a
-   * provider maps the player's feed id to (#1850), else found by externalId, then exact name,
-   * else created. A feed id no participant holds yet is bound to the player's participant, so
-   * the provider's sync fields that participant rather than creating a second. A player not yet
-   * on the league joins it at the file's ranking; one already on it keeps the ranking it has.
+   * Each player's participant id (null in a dry run that would create it): the league's participant
+   * a provider maps the player's feed id to (#1850), else the league's participant found by
+   * externalId, then exact name, else created in the league at the file's ranking (#1853). A
+   * participant belongs to one sport league, so a player is only ever found among the league's
+   * own. A feed id the league has no participant mapped to yet is bound to the player's
+   * participant, so the provider's sync fields that participant rather than creating a second. A
+   * player already in the league keeps the ranking it has.
    */
   private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string | null): Promise<Map<string, string | null>> {
-    const { participants } = await must(listParticipants({ client, query: { sportId: this.sportId } }), 'List players');
+    const participants = sportLeagueId === null ? [] : (await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`)).participants;
     const byExternalId = new Map(participants.flatMap((p) => (p.externalId ? [[p.externalId, p.id] as const] : [])));
     const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
-    const byFeedId = await this.feedIdsOnSite(client, league);
-    const affiliated = new Set<string>();
-    if (sportLeagueId) {
-      const { affiliations } = await must(listParticipantLeagueAffiliations({ client, path: { sportLeagueId } }), `List ${league.name} players`);
-      for (const affiliation of affiliations) affiliated.add(affiliation.participantId);
-    }
+    const byFeedId = sportLeagueId === null ? new Map<string, string>() : await this.feedIdsOnSite(client, league, sportLeagueId);
 
     const ids = new Map<string, string | null>();
-    const joins: Array<{ participantId: string; ranking: number }> = [];
     const binds: Array<{ participantId: string | null; player: SportDataPlayer; providerId: string; externalId: string }> = [];
     for (const player of league.players) {
       const feedIds = Object.entries(player.feedIds ?? {});
@@ -517,7 +511,8 @@ class Loader {
           const created = await must(createParticipant({
             client,
             body: {
-              sportId: this.sportId,
+              sportLeagueId: found(sportLeagueId ?? undefined, `${league.name}'s id`),
+              ranking: player.ranking,
               participantType: this.definitionOf(league).participantType,
               name: player.name,
               externalId: player.key,
@@ -528,11 +523,7 @@ class Loader {
             },
           }), `Create player ${player.name}`);
           id = created.participant.id;
-          joins.push({ participantId: id, ranking: player.ranking });
         }
-      } else if (!affiliated.has(id)) {
-        this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.UPDATE, name: player.name, detail: `joins ${league.name}, ranked ${player.ranking}` });
-        joins.push({ participantId: id, ranking: player.ranking });
       } else {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.SKIP, name: player.name, detail: null });
       }
@@ -551,21 +542,18 @@ class Loader {
         }), `Bind ${providerId} ${externalId} to ${player.name}`);
       }
     }
-    if (this.apply && joins.length > 0) {
-      await must(applyParticipantLeagueAffiliationUpload({ client, path: { sportLeagueId: found(sportLeagueId ?? undefined, `${league.name}'s id`) }, body: { rows: joins } }), `Add players to ${league.name}`);
-    }
     return ids;
   }
 
   /**
-   * The participant each provider maps a feed id to, among the sport's participants, keyed by
-   * `feedKey`: one read per provider the league's players name a feed id of, none when none does.
+   * The participant each provider maps a feed id to, among the sport league's participants, keyed
+   * by `feedKey`: one read per provider the league's players name a feed id of, none when none does.
    */
-  private async feedIdsOnSite(client: Client, league: SportDataLeague): Promise<Map<string, string>> {
+  private async feedIdsOnSite(client: Client, league: SportDataLeague, sportLeagueId: string): Promise<Map<string, string>> {
     const providers = new Set(league.players.flatMap((player) => Object.keys(player.feedIds ?? {})));
     const byFeedId = new Map<string, string>();
     for (const providerId of providers) {
-      const { providerMappings } = await must(listSportProviderMappings({ client, query: { providerId, sportId: this.sportId } }), `List ${providerId} feed ids`);
+      const { providerMappings } = await must(listSportLeagueProviderMappings({ client, query: { providerId, sportLeagueId } }), `List ${providerId} feed ids`);
       for (const mapping of providerMappings) byFeedId.set(feedKey(mapping.providerId, mapping.externalId), mapping.participantId);
     }
     return byFeedId;
@@ -1244,9 +1232,8 @@ export async function selectTestSeedEventsOnSite(
 /** Loads the file, or in a dry run reports what loading it would do. Returns one row per subject. */
 export async function loadSportData(file: SportDataFile, options: LoadSportDataOptions): Promise<LoadRow[]> {
   const { sports } = await must(listSports({ client: await options.getClient() }), 'List sports');
-  const sportRow = findSportRow(sports, file.scope.sport);
-  if (!sportRow) throw new Error(`No ${file.scope.sport} sport row; the reference-data migration has not run.`);
-  const loader = new Loader(file, options, sportRow.id);
+  if (!findSportRow(sports, file.scope.sport)) throw new Error(`No ${file.scope.sport} sport row; the reference-data migration has not run.`);
+  const loader = new Loader(file, options);
   if (isTestSlate(file)) {
     if (!options.event?.trim()) throw new Error('A test slate fills one event: name it (--event).');
     await loader.runSlate(options.event);

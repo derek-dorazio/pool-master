@@ -34,7 +34,7 @@ function writer(matches: SportEventMatch[], unmappedTeams: readonly string[] = [
   const recordResult = jest.fn<ReturnType<GameScoreWriterDeps['results']['recordResult']>, Parameters<GameScoreWriterDeps['results']['recordResult']>>()
     .mockResolvedValue([]);
   const findByIds = jest.fn(async (ids: readonly string[]) => ids.map((id) => ({ id, participantId: id.replace('sep-', 'p-') })));
-  const findByProviderExternalIds = jest.fn(async (providerId: string, ids: readonly string[]) => ids
+  const findByProviderExternalIds = jest.fn(async (providerId: string, _scope: unknown, ids: readonly string[]) => ids
     .filter((id) => !unmappedTeams.includes(id))
     .map((externalId) => ({ id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-') })));
   const logger = fakeLogger();
@@ -536,6 +536,6 @@ describe('writeGameScores', () => {
     expect(findByIds).toHaveBeenCalledTimes(1);
     expect(findByIds).toHaveBeenCalledWith(['sep-KC', 'sep-BUF', 'sep-PHI', 'sep-DAL']);
     expect(findByProviderExternalIds).toHaveBeenCalledTimes(1);
-    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', ['bdl-KC', 'bdl-BUF', 'bdl-PHI', 'bdl-DAL']);
+    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', { sportEventId: 'event-1' }, ['bdl-KC', 'bdl-BUF', 'bdl-PHI', 'bdl-DAL']);
   });
 });

@@ -167,7 +167,7 @@ export class GolfScoreService {
 
     const externalIds = [...new Set(rounds.map((round) => round.participantExternalId))];
     const participantIdByExternalId = new Map(
-      (await this.deps.mappings.findByProviderExternalIds(providerId, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
+      (await this.deps.mappings.findByProviderExternalIds(providerId, { sportEventId }, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
     );
     const entryIdByParticipantId = new Map(
       (await this.deps.field.findBySportEvent(sportEventId)).map((entry) => [entry.participantId, entry.id]),

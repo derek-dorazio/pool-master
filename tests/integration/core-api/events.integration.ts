@@ -12,6 +12,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
+import { participantLeagueIdForSport } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -72,11 +73,7 @@ describe('events routes', () => {
     await prisma.participant.create({
       data: {
         id: participantId,
-        sport: {
-          connect: {
-            sport: Sport.GOLF,
-          },
-        },
+        sportLeagueId: await participantLeagueIdForSport(prisma, Sport.GOLF),
         participantType: 'INDIVIDUAL',
         name: 'Ready Golfer',
       },
@@ -186,11 +183,7 @@ describe('events routes', () => {
     await prisma.participant.create({
       data: {
         id: participantId,
-        sport: {
-          connect: {
-            sport: Sport.GOLF,
-          },
-        },
+        sportLeagueId: await participantLeagueIdForSport(prisma, Sport.GOLF),
         participantType: 'INDIVIDUAL',
         name: 'Locked Golfer',
       },
@@ -277,7 +270,7 @@ describe('events routes', () => {
       await prisma.participant.create({
         data: {
           id: participantId,
-          sport: { connect: { sport: Sport.GOLF } },
+          sportLeagueId: await participantLeagueIdForSport(prisma, Sport.GOLF),
           participantType: 'INDIVIDUAL',
           name: 'Release Route Golfer',
         },

@@ -37,6 +37,7 @@ import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-e
 import { seededSportLeagueId } from '../support/contest-setups';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { participantLeagueId } from '../support/participant-league';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -184,7 +185,7 @@ async function seedImportedGolfEvent(options: {
   for (let index = 0; index < options.participantCount; index += 1) {
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Managed Contest Golfer ${index + 1}-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
@@ -932,7 +933,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Entry Detail Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
@@ -1097,7 +1098,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Functional Contest Player ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
@@ -1247,7 +1248,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
@@ -1395,7 +1396,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `List Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},

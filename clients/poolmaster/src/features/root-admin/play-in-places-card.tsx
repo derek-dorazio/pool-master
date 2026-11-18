@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, Input, SectionCard, Select } from '@/features/shared/ui';
+import { Button, InlineError, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -160,8 +160,7 @@ function PlayInWinnerPicker({
   vocabulary: SportVocabulary;
 }) {
   const [participantId, setParticipantId] = useState(NONE);
-  const [search, setSearch] = useState('');
-  const teamsQuery = useEventLeagueCandidatesQuery(event, search);
+  const teamsQuery = useEventLeagueCandidatesQuery(event);
   const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (teamsQuery.data ?? []).filter((participant) => !inEvent.has(participant.id));
@@ -190,15 +189,6 @@ function PlayInWinnerPicker({
 
   return (
     <>
-      {teamsQuery.needsSearch ? (
-        <Input
-          aria-label={`Find a ${vocabulary.participant.one}`}
-          data-testid={`root-admin-play-in-winner-search-${place.id}`}
-          onChange={(change) => { setSearch(change.target.value); setParticipantId(NONE); }}
-          type="search"
-          value={search}
-        />
-      ) : null}
       <Select
         aria-label={`Who fills ${place.participant.name}'s ${playInWord(vocabulary)} place`}
         data-testid={`root-admin-play-in-winner-select-${place.id}`}
@@ -206,7 +196,7 @@ function PlayInWinnerPicker({
         onChange={(change) => setParticipantId(change.target.value)}
         value={participantId}
       >
-        <option value={NONE}>{candidatePrompt(teamsQuery, `Choose the winning ${vocabulary.participant.one}`, vocabulary.participant.one)}</option>
+        <option value={NONE}>{candidatePrompt(teamsQuery, `Choose the winning ${vocabulary.participant.one}`)}</option>
         {candidates.map((participant) => (
           <option key={participant.id} value={participant.id}>{participant.name}</option>
         ))}

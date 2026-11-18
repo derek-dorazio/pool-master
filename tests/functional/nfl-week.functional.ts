@@ -14,7 +14,6 @@ import {
   listEventParticipants,
   listEvents,
   listSportLeagues,
-  listSports,
   loadEventBracket,
   postponeEventMatch,
   recordEventMatchResult,
@@ -28,7 +27,6 @@ import {
   MatchStatus,
   SelectionType,
   Sport,
-  findSportRow,
 } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
@@ -89,7 +87,6 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   const seededIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
-  await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: seededIds } } });
   await db.participant.deleteMany({ where: { id: { in: seededIds } } });
   if (created.sportLeagueIds.size) {
     await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
@@ -114,7 +111,6 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Week Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.AMERICAN_FOOTBALL)).id;
 
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
     const nfl = await createSportLeague({
@@ -125,7 +121,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${team} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${team} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);

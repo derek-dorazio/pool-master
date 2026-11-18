@@ -13,8 +13,8 @@ import type {
   GolfRoundWrite,
   GolfStandingWrite,
   EventSeriesRepository,
-  ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
+  ProviderMappingScope,
   ParticipantRepository,
   SportEventCreate,
   SportEventParticipantCreate,
@@ -44,7 +44,6 @@ import type {
   GolfRoundResult,
   GolfStandingResult,
   Participant,
-  ParticipantLeagueAffiliation,
   ParticipantProviderMapping,
   SportConfig,
   SportEvent,
@@ -76,13 +75,15 @@ export const NO_PICKS_ON_EVENT: Pick<SportEventBracketServiceDeps, 'predictions'
   predictions: { hasAnyOnMatch: async () => false },
 };
 
+/** The sport league of an event or participant made without one. */
+const UNPLACED_SPORT_LEAGUE_ID = 'sport-league-unplaced';
+
 export class InMemorySportEvents {
   private sequence = 0;
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
-  affiliationRows: Array<Omit<ParticipantLeagueAffiliation, 'participant'>> = [];
   eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
   contestsByEvent = new Map<string, number>();
@@ -124,17 +125,29 @@ export class InMemorySportEvents {
     return sportLeague;
   }
 
+  /**
+   * A participant of the sport's first sport league (#1853: every participant belongs to one), or
+   * of `overrides.sportLeagueId`. A sport with no league yet places the participant in the league an
+   * event made by `addEvent` defaults to, so a field and its feed lookups agree.
+   */
   addParticipant(sportId: string, name: string, overrides: Partial<Participant> = {}): Participant {
+    const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
-      id: this.id('participant'), sportId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, externalIds: {}, ...overrides,
+      id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
+      injuryStatus: { status: 'HEALTHY' }, externalIds: {}, ranking: null, ...overrides,
     });
     this.participants.push(participant);
     return participant;
   }
 
+  /** The sport league a participant belongs to, for binding a provider mapping in that league. */
+  leagueOf(participantId: string): string {
+    return (this.participants.find((row) => row.id === participantId) as Participant).sportLeagueId;
+  }
+
+  /** Moves a participant into a sport league, with a ranking there. */
   affiliate(sportLeagueId: string, participantId: string, ranking: number | null = null): void {
-    this.affiliationRows.push(stamp({ id: this.id('affiliation'), sportLeagueId, participantId, ranking }));
+    Object.assign(this.participants.find((row) => row.id === participantId) as Participant, { sportLeagueId, ranking });
   }
 
   /**
@@ -144,7 +157,7 @@ export class InMemorySportEvents {
   addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     const event: SportEvent = stamp({
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', name: 'Open',
-      eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: 'sport-league-unplaced',
+      eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...overrides,
     });
@@ -211,57 +224,46 @@ export class InMemorySportEvents {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
       search: async () => [...this.participants],
-      findMatchingAny: async (sportId, queries) => this.participants.filter((row) => row.sportId === sportId && queries.some((query) => (
+      findMatchingAny: async (sportLeagueId, queries) => this.participants.filter((row) => row.sportLeagueId === sportLeagueId && queries.some((query) => (
         (query.id === undefined || row.id === query.id)
         && (query.externalId === undefined || row.externalId === query.externalId)
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
+      findBySportLeague: async (sportLeagueId) => this.participants
+        .filter((row) => row.sportLeagueId === sportLeagueId)
+        .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
+      updateRankings: async () => undefined,
+      countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
   }
 
+  /** The sport league a mapping lookup is scoped to holds the participant (#1853). */
+  private inScope(participantId: string, scope: ProviderMappingScope): boolean {
+    const participant = this.participants.find((row) => row.id === participantId);
+    if (!participant) return false;
+    if ('sportLeagueId' in scope) return participant.sportLeagueId === scope.sportLeagueId;
+    if ('sportEventId' in scope) return this.events.find((event) => event.id === scope.sportEventId)?.sportLeagueId === participant.sportLeagueId;
+    const league = this.sportLeagues.find((row) => row.id === participant.sportLeagueId);
+    return this.sports.some((sport) => sport.id === league?.sportId && sport.sport === scope.sport);
+  }
+
   mappingRepo(): ParticipantProviderMappingRepository {
     return {
       findByParticipant: async (participantId) => this.mappings.filter((row) => row.participantId === participantId),
-      findByProviderExternalIds: async (providerId, externalIds) => this.mappings.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
-      findByProviderAndSport: async (providerId, sportId) => this.mappings.filter((row) => row.providerId === providerId
-        && this.participants.some((participant) => participant.id === row.participantId && participant.sportId === sportId)),
+      findByProviderExternalIds: async (providerId, scope, externalIds) => this.mappings.filter((row) => row.providerId === providerId
+        && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
+      findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
+        && row.sportLeagueId === sportLeagueId),
       bind: async (mapping) => {
-        this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId));
+        this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId
+          && row.sportLeagueId === mapping.sportLeagueId));
         const row = stamp({ id: this.id('mapping'), ...mapping });
         this.mappings.push(row);
         return row;
       },
-    };
-  }
-
-  affiliationRepo(): ParticipantLeagueAffiliationRepository {
-    const withParticipant = (row: Omit<ParticipantLeagueAffiliation, 'participant'>): ParticipantLeagueAffiliation => ({
-      ...row,
-      participant: this.participants.find((participant) => participant.id === row.participantId) as Participant,
-    });
-    return {
-      findBySportLeague: async (sportLeagueId) => this.affiliationRows
-        .filter((row) => row.sportLeagueId === sportLeagueId)
-        .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity))
-        .map(withParticipant),
-      find: async (sportLeagueId, participantId) => {
-        const row = this.affiliationRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.participantId === participantId);
-        return row ? withParticipant(row) : null;
-      },
-      create: async (sportLeagueId, participantId) => {
-        const row = stamp({ id: this.id('affiliation'), sportLeagueId, participantId, ranking: null });
-        this.affiliationRows.push(row);
-        return withParticipant(row);
-      },
-      delete: async (sportLeagueId, participantId) => {
-        this.affiliationRows = this.affiliationRows.filter((row) => !(row.sportLeagueId === sportLeagueId && row.participantId === participantId));
-      },
-      updateRankings: async () => undefined,
-      upsertRankings: async () => undefined,
-      countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.affiliationRows.filter((row) => row.sportLeagueId === id).length])),
     };
   }
 
@@ -401,11 +403,6 @@ export class InMemorySportEvents {
       },
       findReleaseFacts: async (event) => ({
         scheduledRoundCount: this.roundRows.filter((round) => round.sportEventId === event.id).length,
-        unlinkedParticipantCount: event.linkProviderId === null ? null : this.field.filter((entry) => (
-          entry.sportEventId === event.id
-          && entry.isActive
-          && !this.mappings.some((mapping) => mapping.participantId === entry.participantId && mapping.providerId === event.linkProviderId)
-        )).length,
         contestSetupCount: this.contestSetupCounts.get(event.sportLeagueId) ?? 1,
       }),
       findAutoReleaseCandidates: async (now, horizon) => this.events.flatMap((row) => {
@@ -649,7 +646,7 @@ export class InMemorySportEvents {
         .filter((match) => match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id)
         .sort((left, right) => left.matchNumber - right.matchNumber)
         .map((match) => ({ ...match, periodScores: [...match.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) })),
-      affiliatedWithSportLeague: this.affiliationRows.some((row) => row.sportLeagueId === sportLeagueId && row.participantId === entry.participantId),
+      affiliatedWithSportLeague: this.participants.some((row) => row.id === entry.participantId && row.sportLeagueId === sportLeagueId),
     };
   }
 

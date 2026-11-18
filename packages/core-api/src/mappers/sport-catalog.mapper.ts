@@ -1,17 +1,15 @@
 /**
- * Sport catalog mapper (#236) — Sport, SportLeague and the affiliation edge to their
- * canonical DTOs. The affiliation embeds the canonical participant.
+ * Sport catalog mapper (#236) — Sport, SportLeague and a ranking upload's preview rows to their
+ * canonical DTOs.
  */
 
-import type { ParticipantLeagueAffiliation, SportConfig } from '@poolmaster/shared/domain';
+import type { SportConfig } from '@poolmaster/shared/domain';
 import type {
-  ParticipantLeagueAffiliationDto,
-  ParticipantLeagueAffiliationUploadPreviewRowDto,
   SportDto,
   SportLeagueDto,
+  SportLeagueRankingUploadPreviewRowDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
-import type { AffiliationUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
-import { mapParticipantToDto } from './participants.mapper';
+import type { RankingUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
 
 export function mapSportToDto(sport: SportConfig): SportDto {
   return {
@@ -46,25 +44,13 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     displayOrder: sportLeague.displayOrder,
     parentSportLeagueId: sportLeague.parentSportLeagueId,
     parentRoundNumbers: [...sportLeague.parentRoundNumbers],
-    affiliationCount: sportLeague.affiliationCount,
+    participantCount: sportLeague.participantCount,
     sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),
     updatedAt: sportLeague.updatedAt.toISOString(),
   };
 }
 
-export function mapAffiliationToDto(affiliation: ParticipantLeagueAffiliation): ParticipantLeagueAffiliationDto {
-  return {
-    id: affiliation.id,
-    sportLeagueId: affiliation.sportLeagueId,
-    participantId: affiliation.participantId,
-    ranking: affiliation.ranking,
-    participant: mapParticipantToDto(affiliation.participant),
-    createdAt: affiliation.createdAt.toISOString(),
-    updatedAt: affiliation.updatedAt.toISOString(),
-  };
-}
-
-export function mapAffiliationUploadPreviewRowToDto(row: AffiliationUploadPreviewRow): ParticipantLeagueAffiliationUploadPreviewRowDto {
+export function mapRankingUploadPreviewRowToDto(row: RankingUploadPreviewRow): SportLeagueRankingUploadPreviewRowDto {
   return { row: row.row, resolution: row.resolution, participantId: row.participantId, participantName: row.participantName };
 }

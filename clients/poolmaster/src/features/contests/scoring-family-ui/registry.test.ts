@@ -29,7 +29,8 @@ const cutGolfer: SportEventParticipantDto = {
   isPlayInPlace: false,
   participant: {
     id: 'participant-1',
-    sportId: 'sport-golf',
+    sportLeagueId: 'league-golf',
+    ranking: null,
     name: 'Cut Golfer',
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',

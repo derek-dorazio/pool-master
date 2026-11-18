@@ -23,6 +23,7 @@ import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/sc
 import { freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -59,7 +60,7 @@ async function createField(suffix: string) {
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth'].map(async (name, index) => {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
     });
     const sep = await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id },
@@ -344,8 +345,8 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     });
     await prisma.participantProviderMapping.createMany({
       data: [
-        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id },
-        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id },
+        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
+        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
       ],
     });
     const update = (participantExternalId: string, round: number, thru = 18) => ({
@@ -400,8 +401,8 @@ describe('Golf round scores — a live sync writes only what changed', () => {
     await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
     await prisma.participantProviderMapping.createMany({
       data: [
-        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id },
-        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id },
+        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
+        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
       ],
     });
     const tick = (jordanToPar: number) => publishLiveScoreUpdate({
@@ -483,7 +484,7 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
     const { event, rory } = await createField('live-rebuild');
     const prisma = getPrisma();
     await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
-    await prisma.participantProviderMapping.create({ data: { providerId: 'integration-test', externalId: 'ext-rory-live', participantId: rory.participant.id } });
+    await prisma.participantProviderMapping.create({ data: { providerId: 'integration-test', externalId: 'ext-rory-live', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId } });
 
     await publishLiveScoreUpdate({
       category: 'GOLF',

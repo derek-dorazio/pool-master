@@ -189,14 +189,10 @@ async function cleanup(): Promise<void> {
   if (sportLeagueIds.length) {
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   }
-  if (sportLeagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
-  }
 
   const allParticipantIds = new Set<string>([...created.participantIds, ...importedParticipantIds]);
   if (allParticipantIds.size) {
     const pids = [...allParticipantIds];
-    await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: pids } } });
     await db.participantProviderMapping.deleteMany({ where: { participantId: { in: pids } } });
     await db.participant.deleteMany({
       where: {
@@ -205,6 +201,11 @@ async function cleanup(): Promise<void> {
         providerMappings: { none: {} },
       },
     });
+  }
+
+  // After its participants (#1853): each belongs to a sport league.
+  if (sportLeagueIds.length) {
+    await db.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
   }
 
   if (created.userIds.size) {

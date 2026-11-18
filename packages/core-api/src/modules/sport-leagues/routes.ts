@@ -1,6 +1,6 @@
 /**
- * The SportLeague operation set and its child, the Participant↔SportLeague
- * affiliations (#236). A sport league's events are reached through the event list,
+ * The SportLeague operation set and its roster: the participants that belong to it and their
+ * ranks (#236, #1853). A sport league's events are reached through the event list,
  * filtered by sport league and event year (plans/147). Before #236 the same operations were reachable
  * only as `adminGetGolfLeagueRoster` and siblings, golf-named doors onto cross-sport
  * services. Reads need a signed-in user, except the list, which the public How to Play page reads;
@@ -12,6 +12,7 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
 import '@poolmaster/shared/dto/sport-catalog.dto';
+import '@poolmaster/shared/dto/participants.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
@@ -48,8 +49,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   const handler = createSportLeagueHandlers(services.sportLeagues, lists);
   const write = { onRequest: requireRootAdmin };
 
-  // An affiliation write changes which participants every event of the sport league flags as
-  // its own (#1163). Rare enough to forget every event field this container read. A write that
+  // A ranking write changes the participants every event of the sport league shows on its field
+  // (#1163, #1853). Rare enough to forget every event field this container read. A write that
   // lands also changes the public list, and the event pages that name the sport league (#1181).
   fastify.addHook('onSend', async (request, reply, payload) => {
     // An upload preview resolves rows and writes nothing.
@@ -134,88 +135,57 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.deleteSportLeague,
   });
 
-  fastify.get('/:sportLeagueId/affiliations', {
+  fastify.get('/:sportLeagueId/participants', {
     schema: {
       tags: TAGS,
-      summary: 'List a sport league\'s affiliations',
-      description: 'Who competes in the sport league and their current rank, each with the canonical participant.',
-      operationId: 'listParticipantLeagueAffiliations',
+      summary: 'List a sport league\'s participants',
+      description: 'Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.',
+      operationId: 'listSportLeagueParticipants',
       params: SPORT_LEAGUE_PARAMS,
-      response: { 200: schemaRef('ParticipantLeagueAffiliationListResponse'), ...errors(404) },
+      response: { 200: schemaRef('ParticipantListResponse'), ...errors(404) },
     },
-    handler: handler.listAffiliations,
+    handler: handler.listParticipants,
   });
 
-  fastify.post('/:sportLeagueId/affiliations', {
+  fastify.patch('/:sportLeagueId/participants/rankings', {
     ...write,
     schema: {
       tags: TAGS,
-      summary: 'Affiliate a participant with a sport league',
-      description: 'Root admin only. 409 when the participant is already affiliated.',
-      operationId: 'createParticipantLeagueAffiliation',
+      summary: 'Re-rank a sport league\'s participants',
+      description: 'Root admin only. All or none; every participant named must be the sport league\'s.',
+      operationId: 'updateSportLeagueParticipantRankings',
       params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('CreateParticipantLeagueAffiliationRequest'),
-      response: { 201: schemaRef('ParticipantLeagueAffiliationResponse'), ...errors(403, 404, 409) },
+      body: schemaRef('SportLeagueParticipantRankingsRequest'),
+      response: { 200: schemaRef('ParticipantListResponse'), ...errors(403, 404) },
     },
-    handler: handler.createAffiliation,
+    handler: handler.updateParticipantRankings,
   });
 
-  fastify.patch('/:sportLeagueId/affiliations', {
+  fastify.post('/:sportLeagueId/participants/rankings/upload/preview', {
     ...write,
     schema: {
       tags: TAGS,
-      summary: 'Re-rank a sport league\'s affiliations',
-      description: 'Root admin only. All or none.',
-      operationId: 'updateParticipantLeagueAffiliationRankings',
+      summary: 'Preview a ranking upload',
+      description: 'Resolves each row to a participant of the sport league and writes nothing. Root admin only.',
+      operationId: 'previewSportLeagueRankingUpload',
       params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('UpdateParticipantLeagueAffiliationRankingsRequest'),
-      response: { 200: schemaRef('ParticipantLeagueAffiliationListResponse'), ...errors(403, 404) },
+      body: schemaRef('SportLeagueRankingUploadRequest'),
+      response: { 200: schemaRef('SportLeagueRankingUploadPreviewResponse'), ...errors(403, 404) },
     },
-    handler: handler.updateAffiliationRankings,
+    handler: handler.previewRankingUpload,
   });
 
-  fastify.delete('/:sportLeagueId/affiliations/:participantId', {
+  fastify.post('/:sportLeagueId/participants/rankings/upload', {
     ...write,
     schema: {
       tags: TAGS,
-      summary: 'Remove a participant\'s affiliation',
-      description: 'Root admin only.',
-      operationId: 'deleteParticipantLeagueAffiliation',
-      params: {
-        type: 'object',
-        required: ['sportLeagueId', 'participantId'],
-        properties: { sportLeagueId: { type: 'string', format: 'uuid' }, participantId: { type: 'string', format: 'uuid' } },
-      },
-      response: { 204: { type: 'null' }, ...errors(403, 404) },
-    },
-    handler: handler.deleteAffiliation,
-  });
-
-  fastify.post('/:sportLeagueId/affiliations/upload/preview', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Preview an affiliation upload',
-      description: 'Resolves each row to a participant of the sport league\'s sport and writes nothing. Root admin only.',
-      operationId: 'previewParticipantLeagueAffiliationUpload',
+      summary: 'Apply a ranking upload',
+      description: 'Ranks every row\'s participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.',
+      operationId: 'applySportLeagueRankingUpload',
       params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('ParticipantLeagueAffiliationUploadRequest'),
-      response: { 200: schemaRef('ParticipantLeagueAffiliationUploadPreviewResponse'), ...errors(403, 404) },
+      body: schemaRef('SportLeagueRankingUploadRequest'),
+      response: { 200: schemaRef('ParticipantListResponse'), ...errors(403, 404, 422) },
     },
-    handler: handler.previewAffiliationUpload,
-  });
-
-  fastify.post('/:sportLeagueId/affiliations/upload', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Apply an affiliation upload',
-      description: 'Affiliates and ranks every row, all or none; 422 when any row does not resolve. Root admin only.',
-      operationId: 'applyParticipantLeagueAffiliationUpload',
-      params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('ParticipantLeagueAffiliationUploadRequest'),
-      response: { 200: schemaRef('ParticipantLeagueAffiliationListResponse'), ...errors(403, 404, 422) },
-    },
-    handler: handler.applyAffiliationUpload,
+    handler: handler.applyRankingUpload,
   });
 }

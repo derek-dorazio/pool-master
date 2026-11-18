@@ -36,7 +36,8 @@ function player(id: string, name: string, rounds: SportEventParticipantRoundDto[
     isPlayInPlace: false,
     participant: {
       id: `participant-${id}`,
-      sportId: 'sport-baseball',
+      sportLeagueId: 'league-baseball',
+      ranking: null,
       name,
       participantType: 'INDIVIDUAL',
       status: 'ACTIVE',

@@ -8,27 +8,23 @@ import { RootAdminSportLeagueEditPage } from './root-admin-sport-league-edit-pag
 import { RootAdminSportLeagueHomePage } from './root-admin-sport-league-home-page';
 import {
   GOLF_SPORT_FIXTURE,
-  affiliationFixture,
   participantFixture,
   sportEventFixture,
   sportLeagueFixture,
 } from './sport-test-fixtures';
 
 // A tour's page, /manage/sports/golf/leagues/:leagueId (pool-master-qqs): heading and details,
-// the Edit details page, the danger zone's active toggle, the roster grid (inline rank
-// edit, add, remove) and the bulk-upload flow.
+// the Edit details page, the danger zone's active toggle, the roster grid of the tour's own
+// participants (#1853: inline rank edit, a link to add one) and the bulk ranking upload.
 
 const {
   listSportLeaguesMock,
-  listParticipantLeagueAffiliationsMock,
+  listSportLeagueParticipantsMock,
   updateSportLeagueMock,
-  updateParticipantLeagueAffiliationRankingsMock,
-  listParticipantsMock,
+  updateSportLeagueParticipantRankingsMock,
   listSportsMock,
-  createParticipantLeagueAffiliationMock,
-  deleteParticipantLeagueAffiliationMock,
-  previewParticipantLeagueAffiliationUploadMock,
-  applyParticipantLeagueAffiliationUploadMock,
+  previewSportLeagueRankingUploadMock,
+  applySportLeagueRankingUploadMock,
   listEventsMock,
   listEventYearsMock,
   listProvidersMock,
@@ -45,15 +41,12 @@ const {
   logger.child.mockReturnValue(logger);
   return {
     listSportLeaguesMock: vi.fn(),
-    listParticipantLeagueAffiliationsMock: vi.fn(),
+    listSportLeagueParticipantsMock: vi.fn(),
     updateSportLeagueMock: vi.fn(),
-    updateParticipantLeagueAffiliationRankingsMock: vi.fn(),
-    listParticipantsMock: vi.fn(),
+    updateSportLeagueParticipantRankingsMock: vi.fn(),
     listSportsMock: vi.fn(),
-    createParticipantLeagueAffiliationMock: vi.fn(),
-    deleteParticipantLeagueAffiliationMock: vi.fn(),
-    previewParticipantLeagueAffiliationUploadMock: vi.fn(),
-    applyParticipantLeagueAffiliationUploadMock: vi.fn(),
+    previewSportLeagueRankingUploadMock: vi.fn(),
+    applySportLeagueRankingUploadMock: vi.fn(),
     listEventsMock: vi.fn(),
     listEventYearsMock: vi.fn(),
     listProvidersMock: vi.fn(),
@@ -63,15 +56,12 @@ const {
 
 bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
-  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
+  listSportLeagueParticipants: listSportLeagueParticipantsMock,
   updateSportLeague: updateSportLeagueMock,
-  updateParticipantLeagueAffiliationRankings: updateParticipantLeagueAffiliationRankingsMock,
-  listParticipants: listParticipantsMock,
+  updateSportLeagueParticipantRankings: updateSportLeagueParticipantRankingsMock,
   listSports: listSportsMock,
-  createParticipantLeagueAffiliation: createParticipantLeagueAffiliationMock,
-  deleteParticipantLeagueAffiliation: deleteParticipantLeagueAffiliationMock,
-  previewParticipantLeagueAffiliationUpload: previewParticipantLeagueAffiliationUploadMock,
-  applyParticipantLeagueAffiliationUpload: applyParticipantLeagueAffiliationUploadMock,
+  previewSportLeagueRankingUpload: previewSportLeagueRankingUploadMock,
+  applySportLeagueRankingUpload: applySportLeagueRankingUploadMock,
   listEvents: listEventsMock,
   listEventYears: listEventYearsMock,
   listProviders: listProvidersMock,
@@ -102,24 +92,19 @@ function league(overrides: Parameters<typeof sportLeagueFixture>[0] = {}) {
   return sportLeagueFixture({
     id: 'pga',
     currentEventYear: 2026,
-    affiliationCount: 2,
+    participantCount: 2,
     sportEventCount: 3,
     ...overrides,
   });
 }
 
-// #236: a roster entry is a ParticipantLeagueAffiliation embedding its participant.
+// #1853: a roster entry is one of the tour's own participants, with its ranking.
 function rosterEntry({
   participantId = 'p-rory',
   name = 'Rory McIlroy',
   ranking = 2,
 }: { participantId?: string; name?: string; ranking?: number | null } = {}) {
-  return affiliationFixture({
-    sportLeagueId: 'pga',
-    participantId,
-    ranking,
-    participant: participantFixture({ id: participantId, name, shortName: 'R. McIlroy', nationality: 'NIR' }),
-  });
+  return participantFixture({ id: participantId, sportLeagueId: 'pga', ranking, name, shortName: 'R. McIlroy', nationality: 'NIR' });
 }
 
 function seed() {
@@ -132,9 +117,9 @@ function seed() {
   listProvidersMock.mockResolvedValue({
     data: { providers: [provider('balldontlie', 'BALLDONTLIE', ['GOLF']), provider('soccer-feed', 'Soccer feed', ['SOCCER'])] },
   });
-  listParticipantLeagueAffiliationsMock.mockResolvedValue({
+  listSportLeagueParticipantsMock.mockResolvedValue({
     data: {
-      affiliations: [
+      participants: [
         rosterEntry(),
         rosterEntry({ participantId: 'p-scottie', name: 'Scottie Scheffler', ranking: 1 }),
       ],
@@ -187,7 +172,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
     const roster = await screen.findByRole('region', { name: /^Roster/ });
     expect(within(roster).getByRole('heading', { level: 3, name: 'Roster' })).toBeVisible();
-    expect(within(roster).getByRole('button', { name: /^Add / })).toBeVisible();
+    expect(within(roster).getByRole('link', { name: /^Add / })).toBeVisible();
     expect(await within(roster).findByText('Rory McIlroy')).toBeVisible();
     expect(screen.getByRole('region', { name: 'Bulk-update rankings' })).toBeVisible();
   });
@@ -199,7 +184,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     const identity = await screen.findByTestId('root-admin-sport-league-identity');
     expect(identity).toHaveTextContent('Active');
     expect(screen.getByTestId('root-admin-sport-league-counts')).toHaveTextContent(
-      `${league().affiliationCount} golfers · ${league().sportEventCount} tournaments`,
+      `${league().participantCount} golfers · ${league().sportEventCount} tournaments`,
     );
     const details = screen.getByTestId('root-admin-sport-league-details');
     expect(within(details).getByText('PGA')).toBeInTheDocument();
@@ -332,8 +317,8 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
     const dangerZone = await screen.findByTestId('root-admin-sport-league-danger-zone');
     expect(within(dangerZone).getByTestId('root-admin-sport-league-home-toggle-active')).toHaveTextContent('Deactivate league');
-    expect(await screen.findByText('2 golfers on this league.')).toBeInTheDocument();
-    expect(screen.queryByText(/on this tour/)).not.toBeInTheDocument();
+    expect(await screen.findByText('2 golfers in this league.')).toBeInTheDocument();
+    expect(screen.queryByText(/in this tour/)).not.toBeInTheDocument();
   });
 
   it('deactivates the tour from the danger zone only after the admin confirms', async () => {
@@ -387,8 +372,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
   it('pool-master-qqs shows a not-found state when the tour id is unknown', async () => {
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league()] } });
-    listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: {
-      affiliations: [] } });
+    listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants: [] } });
 
     renderPage('missing');
 
@@ -400,8 +384,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
       error: { error: { code: 'INTERNAL', message: 'Tour index offline' } },
       response: { status: 500 },
     });
-    listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: {
-      affiliations: [] } });
+    listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants: [] } });
 
     renderPage();
 
@@ -410,9 +393,8 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
 
   it('pool-master-qqs collects an inline ranking edit into a dirty bar and saves the changed row only', async () => {
     seed();
-    updateParticipantLeagueAffiliationRankingsMock.mockResolvedValue({
-      data: {
-      affiliations: [rosterEntry({ ranking: 5 })] },
+    updateSportLeagueParticipantRankingsMock.mockResolvedValue({
+      data: { participants: [rosterEntry({ ranking: 5 })] },
     });
     renderPage();
 
@@ -427,7 +409,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     await userEvent.click(screen.getByTestId('root-admin-sport-league-roster-save'));
 
     await waitFor(() =>
-      expect(updateParticipantLeagueAffiliationRankingsMock).toHaveBeenCalledWith(
+      expect(updateSportLeagueParticipantRankingsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { sportLeagueId: 'pga' },
           body: { rankings: [{ participantId: 'p-rory', ranking: 5 }] },
@@ -450,69 +432,18 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     expect(screen.getByTestId('root-admin-sport-league-roster-save')).toBeDisabled();
   });
 
-  it('pool-master-qqs searches the golf sport for a golfer to add only once 3 characters are typed, leaving out roster members', async () => {
+  it('links Add to a new golfer of this tour, and offers no remove: a golfer belongs to one tour', async () => {
     seed();
-    listParticipantsMock.mockResolvedValue({
-      data: {
-        participants: [
-          participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
-          participantFixture({ id: 'p-jon', name: 'Jon Rahm' }),
-        ],
-      },
-    });
-    createParticipantLeagueAffiliationMock.mockResolvedValue({
-      data: { affiliation: rosterEntry({ participantId: 'p-jon', name: 'Jon Rahm' }) },
-    });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sport-league-roster-add'));
-    const modal = await screen.findByTestId('root-admin-sport-league-roster-add-modal');
-    expect(within(modal).getByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
-    expect(listParticipantsMock).not.toHaveBeenCalled();
-
-    await userEvent.type(within(modal).getByRole('searchbox'), 'Rahm');
-    // Roster member Rory is left out of what the search returns; only Jon Rahm is offered.
-    await waitFor(() =>
-      expect(within(modal).getByText('Jon Rahm')).toBeInTheDocument(),
-    );
-    expect(within(modal).queryByText('Rory McIlroy')).not.toBeInTheDocument();
-    expect(listParticipantsMock).toHaveBeenCalledTimes(1);
-    expect(listParticipantsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rahm' } }),
-    );
-
-    await userEvent.click(within(modal).getByText('Jon Rahm'));
-    await userEvent.click(screen.getByTestId('root-admin-sport-league-roster-add-modal-apply'));
-
-    await waitFor(() =>
-      expect(createParticipantLeagueAffiliationMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { participantId: 'p-jon' } }),
-      ),
-    );
-  });
-
-  it('pool-master-qqs removes a golfer behind a confirmation', async () => {
-    seed();
-    deleteParticipantLeagueAffiliationMock.mockResolvedValue({ data: null, response: { status: 204 } });
-    renderPage();
-
-    await userEvent.click(
-      await screen.findByTestId('root-admin-sport-league-roster-remove-p-rory'),
-    );
-    await userEvent.click(
-      screen.getByTestId('root-admin-sport-league-roster-remove-confirm'),
-    );
-
-    await waitFor(() =>
-      expect(deleteParticipantLeagueAffiliationMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { sportLeagueId: 'pga', participantId: 'p-rory' } }),
-      ),
-    );
+    const add = await screen.findByTestId('root-admin-sport-league-roster-add');
+    expect(add).toHaveAttribute('href', '/manage/sports/golf/participants/new?sportLeague=pga');
+    expect(screen.queryByTestId('root-admin-sport-league-roster-remove-p-rory')).not.toBeInTheDocument();
   });
 
   it('pool-master-qqs previews then applies a roster bulk upload', async () => {
     seed();
-    previewParticipantLeagueAffiliationUploadMock.mockResolvedValue({
+    previewSportLeagueRankingUploadMock.mockResolvedValue({
       data: {
         rows: [
           {
@@ -524,9 +455,8 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
         ],
       },
     });
-    applyParticipantLeagueAffiliationUploadMock.mockResolvedValue({
-      data: {
-      affiliations: [rosterEntry()] },
+    applySportLeagueRankingUploadMock.mockResolvedValue({
+      data: { participants: [rosterEntry()] },
     });
     renderPage();
 
@@ -546,7 +476,7 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     await userEvent.click(screen.getByTestId('root-admin-sport-league-roster-upload-apply'));
 
     await waitFor(() =>
-      expect(applyParticipantLeagueAffiliationUploadMock).toHaveBeenCalledWith(
+      expect(applySportLeagueRankingUploadMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { sportLeagueId: 'pga' },
           body: { rows: [{ playerName: 'Rory McIlroy', ranking: 2 }] },

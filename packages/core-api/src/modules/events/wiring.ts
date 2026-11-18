@@ -11,7 +11,6 @@ import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestRepository,
   PrismaEventSeriesRepository,
-  PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaSportEventParticipantGolfRoundRepository,
@@ -141,7 +140,6 @@ export function createSportEventBracketService(
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
-    affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
@@ -220,7 +218,6 @@ export function createSportEventParticipantService(
     sportEvents: new PrismaSportEventRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
-    affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     fieldCache: eventFieldCache,
     leaderboards,
@@ -249,7 +246,6 @@ export function createSportEventServices(
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
   const events = new PrismaSportEventRepository(prisma);
-  const affiliations = new PrismaParticipantLeagueAffiliationRepository(prisma);
   const participants = new PrismaParticipantRepository(prisma);
 
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
@@ -286,7 +282,7 @@ export function createSportEventServices(
     raceResults: createRaceResultService(prisma, logger, leaderboards),
     statLines: createStatLineService(prisma, logger, leaderboards),
     matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
-    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, providers, logger }),
+    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, participants, providers, logger }),
   };
 }
 

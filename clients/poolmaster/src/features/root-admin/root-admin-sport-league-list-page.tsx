@@ -33,7 +33,7 @@ export function RootAdminSportLeagueListPage() {
         header: 'Match keyword',
         cell: ({ getValue }) => getValue() || '—',
       }),
-      columnHelper.accessor('affiliationCount', {
+      columnHelper.accessor('participantCount', {
         header: 'Roster size',
         cell: ({ getValue }) => getValue(),
       }),

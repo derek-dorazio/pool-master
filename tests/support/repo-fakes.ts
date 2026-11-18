@@ -67,7 +67,6 @@ import type {
   MembershipRepositories,
   MembershipTransaction,
   ParticipantContestScoringRuleRepository,
-  ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   SportEventParticipantRepository,
@@ -282,30 +281,7 @@ export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = 
     findEventSynced: many(),
     create: echoCreate('sport-league'),
     update: echoUpdate(),
-    deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 0, contestTemplateCount: 0, eventPageOfferCount: 0, cupCount: 0, roundCount: 0 }),
-    ...overrides,
-  };
-}
-
-export function fakeParticipantLeagueAffiliationRepo(
-  overrides: Partial<ParticipantLeagueAffiliationRepository> = {},
-): ParticipantLeagueAffiliationRepository {
-  return {
-    findBySportLeague: many(),
-    find: one(),
-    // Takes two ids rather than an input object, so it cannot use echoCreate.
-    create: jest.fn().mockImplementation(async (sportLeagueId: string, participantId: string) => ({
-      id: `affiliation-${participantId}`,
-      sportLeagueId,
-      participantId,
-      ranking: null,
-      createdAt: new Date('2026-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    })),
-    delete: nothing(),
-    updateRankings: nothing(),
-    upsertRankings: nothing(),
-    countBySportLeagues: noCounts(),
+    deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 0, contestTemplateCount: 0, eventPageOfferCount: 0, cupCount: 0, roundCount: 0, participantCount: 0 }),
     ...overrides,
   };
 }
@@ -335,7 +311,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findLiveNotifiedEvents: many(),
     recordProviderNotification: nothing(),
     findAutoLifecycleCandidates: many(),
-    findReleaseFacts: jest.fn().mockResolvedValue({ scheduledRoundCount: 4, unlinkedParticipantCount: null, contestSetupCount: 1 }),
+    findReleaseFacts: jest.fn().mockResolvedValue({ scheduledRoundCount: 4, contestSetupCount: 1 }),
     findAutoReleaseCandidates: many(),
     ...overrides,
   };
@@ -371,6 +347,9 @@ export function fakeParticipantRepo(
     findByIds: many(),
     search: many(),
     findMatchingAny: many(),
+    findBySportLeague: many(),
+    updateRankings: nothing(),
+    countBySportLeagues: noCounts(),
     create: echoCreate('participant'),
     update: echoUpdate(),
     deleteUnlessOnAField: jest.fn().mockResolvedValue(0),
@@ -385,7 +364,7 @@ export function fakeParticipantProviderMappingRepo(
     // findByProvider is a single row per the port; findByParticipant is a collection.
     findByParticipant: many(),
     findByProviderExternalIds: many(),
-    findByProviderAndSport: many(),
+    findByProviderAndSportLeague: many(),
     bind: echoCreate('participant-provider-mapping'),
     ...overrides,
   };

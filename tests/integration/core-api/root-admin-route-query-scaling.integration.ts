@@ -46,6 +46,7 @@ import {
 } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
+import { participantLeagueId } from '../../support/participant-league';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -108,9 +109,10 @@ async function seedParticipantsFound(participants: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const term = `scaling${randomUUID().slice(0, 8)}`;
+  const sportLeagueId = await participantLeagueId(prisma, sport.id);
   await prisma.participant.createMany({
     data: Array.from({ length: participants }, (_, index) => ({
-      sportId: sport.id, name: `${term} Golfer ${String(index)}`, participantType: 'INDIVIDUAL' as const, status: 'ACTIVE' as const,
+      sportLeagueId, name: `${term} Golfer ${String(index)}`, participantType: 'INDIVIDUAL' as const, status: 'ACTIVE' as const,
     })),
   });
   return { term, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -122,30 +124,31 @@ async function seedProviderMappings(mappings: number) {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const participant = await prisma.participant.create({
-    data: { sportId: sport.id, name: `Mapped Golfer ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+    data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Mapped Golfer ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
   });
   await prisma.participantProviderMapping.createMany({
     data: Array.from({ length: mappings }, (_, index) => ({
-      participantId: participant.id, providerId: `provider-${suffix}-${String(index)}`, externalId: `golfer-${suffix}`,
+      participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: `provider-${suffix}-${String(index)}`, externalId: `golfer-${suffix}`,
     })),
   });
   return { participant, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
-/** A root admin, and `mappings` golfers each bound to one feed id of a provider of their own. */
-async function seedSportProviderMappings(mappings: number) {
+/** A root admin, and `mappings` golfers of one sport league each bound to one feed id of a provider of their own. */
+async function seedSportLeagueProviderMappings(mappings: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const providerId = `provider-${randomUUID().slice(0, 8)}`;
+  const sportLeagueId = await participantLeagueId(prisma, sport.id);
   for (let index = 0; index < mappings; index += 1) {
     await prisma.participant.create({
       data: {
-        sportId: sport.id, name: `${providerId} Golfer ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-        providerMappings: { create: { providerId, externalId: `golfer-${String(index)}` } },
+        sportLeagueId, name: `${providerId} Golfer ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
+        providerMappings: { create: { sportLeagueId, providerId, externalId: `golfer-${String(index)}` } },
       },
     });
   }
-  return { providerId, sportId: sport.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+  return { providerId, sportLeagueId, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
 /**
@@ -248,9 +251,10 @@ async function seedUnmappedParticipants(unmapped: number) {
   });
   const mapped = Array.from({ length: unmapped }, (_, index) => golfer(index));
   provider.participants = [...mapped, ...Array.from({ length: unmapped }, (_, index) => golfer(unmapped + index))];
+  const sportLeagueId = await participantLeagueId(prisma, sport.id);
   for (const participant of mapped) {
-    const row = await prisma.participant.create({ data: { sportId: sport.id, name: participant.name, participantType: 'INDIVIDUAL', status: 'ACTIVE' } });
-    await prisma.participantProviderMapping.create({ data: { participantId: row.id, providerId: provider.providerId, externalId: participant.externalId } });
+    const row = await prisma.participant.create({ data: { sportLeagueId, name: participant.name, participantType: 'INDIVIDUAL', status: 'ACTIVE' } });
+    await prisma.participantProviderMapping.create({ data: { participantId: row.id, sportLeagueId, providerId: provider.providerId, externalId: participant.externalId } });
   }
   return createTestUser({ isRootAdmin: true });
 }
@@ -296,11 +300,11 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it("GET a provider's feed ids for a sport: the same statements for 2 mapped golfers as for 20", async () => {
+  it("GET a provider's feed ids for a sport league: the same statements for 2 mapped golfers as for 20", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/participants/provider-mappings',
-      seed: seedSportProviderMappings,
-      call: ({ providerId, sportId, rootAdmin }) => get(`/api/v1/participants/provider-mappings?providerId=${providerId}&sportId=${sportId}`, rootAdmin),
+      seed: seedSportLeagueProviderMappings,
+      call: ({ providerId, sportLeagueId, rootAdmin }) => get(`/api/v1/participants/provider-mappings?providerId=${providerId}&sportLeagueId=${sportLeagueId}`, rootAdmin),
       rowsShown: (response) => okBody(response, ParticipantProviderMappingListResponseSchema).providerMappings.length,
     });
   });

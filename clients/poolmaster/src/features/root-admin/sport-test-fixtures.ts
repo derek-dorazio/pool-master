@@ -1,6 +1,5 @@
 import type {
   ParticipantDto,
-  ParticipantLeagueAffiliationDto,
   ReleaseCheckDto,
   SettingsGroup,
   SportDto,
@@ -89,7 +88,8 @@ export function sportEventRoundFixture(overrides: Partial<SportEventRoundDto> = 
 export function participantFixture(overrides: Partial<ParticipantDto> = {}): ParticipantDto {
   return {
     id: 'participant-1',
-    sportId: 'sport-golf',
+    sportLeagueId: 'league-1',
+    ranking: null,
     name: 'Rory McIlroy',
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',
@@ -176,24 +176,8 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     parentRoundNumbers: [],
     currentEventYear: null,
     isActive: true,
-    affiliationCount: 0,
+    participantCount: 0,
     sportEventCount: 0,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-}
-
-export function affiliationFixture(
-  overrides: Partial<ParticipantLeagueAffiliationDto> = {},
-): ParticipantLeagueAffiliationDto {
-  const participantId = overrides.participantId ?? 'participant-1';
-  return {
-    id: `affiliation-${participantId}`,
-    sportLeagueId: 'league-1',
-    participantId,
-    ranking: null,
-    participant: participantFixture({ id: participantId }),
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,

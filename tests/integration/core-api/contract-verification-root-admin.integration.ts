@@ -112,6 +112,7 @@ import type { z } from 'zod';
 import { expectDefined } from '../../support/expect-defined';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -1218,7 +1219,7 @@ describe('Contract verification (root admin)', () => {
     });
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Avery Hart ${Date.now()}`,
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',
@@ -1672,9 +1673,6 @@ describe('Contract verification (root admin)', () => {
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
       if (created.participantIds.length) {
-        await prisma.participantLeagueAffiliation.deleteMany({
-          where: { participantId: { in: created.participantIds } },
-        });
         await prisma.participantProviderMapping.deleteMany({
           where: { participantId: { in: created.participantIds } },
         });
@@ -2105,7 +2103,7 @@ describe('Contract verification (root admin)', () => {
         },
       });
       for (const name of names) {
-        const participant = await prisma.participant.create({ data: { sportId, name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
+        const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
         await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
       }
       return event;
@@ -2151,7 +2149,7 @@ describe('Contract verification (root admin)', () => {
     await prisma.sportEventParticipant.create({
       data: {
         sportEventId: race.id,
-        participantId: (await prisma.participant.create({ data: { sportId: horseRacing.id, name: `Late ${stamp}`, participantType: 'INDIVIDUAL' } })).id,
+        participantId: (await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, horseRacing.id), name: `Late ${stamp}`, participantType: 'INDIVIDUAL' } })).id,
       },
     });
     await expectRefusal(await send('PUT', race.id, { isOfficial: true, rows: [finisher('Arrow', 1)] }), 422, 'RACE_RESULT_FIELD_INCOMPLETE');

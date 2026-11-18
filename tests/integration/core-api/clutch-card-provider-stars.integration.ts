@@ -49,7 +49,7 @@ function adapter() {
 /**
  * An NBA Finals Clutch Card linked to the provider's round, keyed as the migration keys the
  * seeded league, whose field already holds Jayson Tatum as the test data load leaves him:
- * affiliated with the league, ranked first, and his feed id bound by hand (#1850).
+ * the league's own participant, ranked first, and his feed id bound by hand (#1850, #1853).
  */
 async function finalsWithLoadedStar() {
   const prisma = getPrisma();
@@ -82,20 +82,19 @@ async function finalsWithLoadedStar() {
   });
   const tatum = await prisma.participant.create({
     data: {
-      sportId: basketball.id, name: 'Jayson Tatum', participantType: 'INDIVIDUAL',
-      leagueAffiliations: { create: { sportLeagueId: league.id, ranking: 1 } },
-      providerMappings: { create: { providerId: PROVIDER, externalId: 'nba-player-3202', confidence: 'MANUAL' } },
+      sportLeagueId: league.id, ranking: 1, name: 'Jayson Tatum', participantType: 'INDIVIDUAL',
+      providerMappings: { create: { sportLeagueId: league.id, providerId: PROVIDER, externalId: 'nba-player-3202', confidence: 'MANUAL' } },
     },
   });
   const tatumEntry = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: tatum.id, ranking: 1 } });
   return { event, league, tatum, tatumEntry };
 }
 
-/** A star loaded into the Clutch Card's field with no feed id: affiliated with its league and ranked, with no provider mapping. */
+/** A star loaded into the Clutch Card's field with no feed id: one of its league's participants, ranked, with no provider mapping. */
 async function loadedStar(eventId: string, league: { id: string; sportId: string }, name: string, ranking: number) {
   const prisma = getPrisma();
   const star = await prisma.participant.create({
-    data: { sportId: league.sportId, name, participantType: 'INDIVIDUAL', leagueAffiliations: { create: { sportLeagueId: league.id, ranking } } },
+    data: { sportLeagueId: league.id, ranking, name, participantType: 'INDIVIDUAL' },
   });
   await prisma.sportEventParticipant.create({ data: { sportEventId: eventId, participantId: star.id, ranking } });
   return star;
@@ -103,13 +102,13 @@ async function loadedStar(eventId: string, league: { id: string; sportId: string
 
 describe('a Clutch Card\'s stars and box scores from the provider', () => {
   it('loads the round\'s field onto the star whose feed id is bound, keeping his ranking, and adds the rest of both rosters', async () => {
-    const { event, tatum, tatumEntry } = await finalsWithLoadedStar();
+    const { event, league, tatum, tatumEntry } = await finalsWithLoadedStar();
     const detail = await roundDetail(adapter());
 
     await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
 
     const prisma = getPrisma();
-    await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-3202' } } }))
+    await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId: 'nba-player-3202', sportLeagueId: league.id } } }))
       .resolves.toMatchObject({ participantId: tatum.id, confidence: 'MANUAL' });
     await expect(prisma.participant.count({ where: { name: 'Jayson Tatum' } })).resolves.toBe(1);
     const field = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true }, orderBy: { participant: { name: 'asc' } } });
@@ -131,7 +130,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
     const result = await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(adapter()));
 
     const prisma = getPrisma();
-    await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId: { providerId: PROVIDER, externalId: 'nba-player-132' } } }))
+    await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId: 'nba-player-132', sportLeagueId: league.id } } }))
       .resolves.toMatchObject({ participantId: expect.not.stringMatching(doncic.id) as unknown, confidence: 'EXACT' });
     await expect(prisma.participant.count({ where: { name: { in: ['Luka Doncic', 'Luka Dončić'] } } })).resolves.toBe(2);
     expect(result.unlinkedRankedParticipants).toEqual([

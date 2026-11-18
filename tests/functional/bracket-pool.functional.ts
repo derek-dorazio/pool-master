@@ -17,7 +17,6 @@ import {
   getEventBracket,
   getGamePicks,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   openContest,
   proposeEventRoundMatchups,
@@ -40,7 +39,6 @@ import {
   PredictedResult,
   SelectionType,
   Sport,
-  findSportRow,
 } from '@poolmaster/shared/domain';
 import {
   BracketLeaderboardResponseSchema,
@@ -147,7 +145,6 @@ async function releasedKnockout(options: {
   const admin = await buildRegisteredUser({ displayName: `${options.label} Director` });
   await promoteToRootAdmin(admin);
   const a = admin.client;
-  const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
   const sportLeague = await createSportLeague({
     client: a,
@@ -164,7 +161,7 @@ async function releasedKnockout(options: {
 
   const teamIds: string[] = [];
   for (const seed of options.seeds) {
-    const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `Seed ${seed} ${options.label} ${RUN}` } });
+    const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `Seed ${seed} ${options.label} ${RUN}` } });
     const id = expectDefined(participant.data).participant.id;
     created.participantIds.add(id);
     teamIds.push(id);

@@ -169,7 +169,7 @@ export class ProviderGameSlateService {
       ...(input.bracket ?? []).flatMap((match) => [match.homeTeamExternalId, match.awayTeamExternalId]).filter((team) => team !== null),
     ])];
     const [mappings, field] = await Promise.all([
-      this.deps.mappings.findByProviderExternalIds(input.providerId, teamIds),
+      this.deps.mappings.findByProviderExternalIds(input.providerId, { sportEventId: event.id }, teamIds),
       this.deps.field.findBySportEvent(event.id),
     ]);
     const participantByTeam = new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));

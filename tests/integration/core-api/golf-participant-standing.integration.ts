@@ -11,6 +11,7 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
+import { participantLeagueId } from '../../support/participant-league';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
@@ -46,7 +47,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     });
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         externalId: 'golf-standing-player-1',
         name: 'Golf Standing Player',
         participantType: 'INDIVIDUAL',
@@ -56,6 +57,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     await prisma.participantProviderMapping.create({
       data: {
         participantId: participant.id,
+        sportLeagueId: participant.sportLeagueId,
         providerId: 'integration-test',
         externalId: 'golf-standing-player-1',
       },
@@ -193,10 +195,10 @@ describe('Golf live-score persistence', () => {
     for (const key of golferKeys) {
       const externalId = `${suffix}-${key}`;
       const participant = await prisma.participant.create({
-        data: { sportId: sport.id, name: `Golfer ${externalId}`, participantType: 'INDIVIDUAL' },
+        data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Golfer ${externalId}`, participantType: 'INDIVIDUAL' },
       });
       await prisma.participantProviderMapping.create({
-        data: { participantId: participant.id, providerId: PROVIDER, externalId },
+        data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId },
       });
       // The same golfer is also in a second event, so scoping to the named event is observable.
       sepByKey.set(key, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } })).id);

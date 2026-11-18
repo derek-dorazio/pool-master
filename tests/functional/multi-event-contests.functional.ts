@@ -16,7 +16,6 @@ import {
   listContestConfigTemplates,
   listContestEntries,
   listEventParticipants,
-  listSports,
   openContest,
   releaseEvent,
   setContestSportEvents,
@@ -24,7 +23,7 @@ import {
   selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestEntryListResponseSchema,
   ContestEntryResponseSchema,
@@ -90,11 +89,12 @@ async function cleanup(): Promise<void> {
   if (leagueIds.length) {
     await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-    await db.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
+  }
+  if (leagueIds.length) {
+    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
 }
 
@@ -118,7 +118,6 @@ async function buildTwoTournamentContest(
   const admin = await buildRegisteredUser({ displayName: 'Tour Director' });
   await promoteToRootAdmin(admin);
   const a = admin.client;
-  const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.GOLF)).id;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
   const tour = await createSportLeague({ client: a, body: { sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
@@ -129,7 +128,7 @@ async function buildTwoTournamentContest(
 
   const golferIds: string[] = [];
   for (const golfer of GOLFERS) {
-    const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${golfer} ${RUN}${tag}` } });
+    const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${golfer} ${RUN}${tag}` } });
     const id = expectDefined(participant.data).participant.id;
     created.participantIds.add(id);
     golferIds.push(id);

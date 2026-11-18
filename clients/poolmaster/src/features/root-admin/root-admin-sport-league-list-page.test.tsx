@@ -49,7 +49,7 @@ function league(overrides: Record<string, unknown> = {}) {
     isActive: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    affiliationCount: 144,
+    participantCount: 144,
     sportEventCount: 3,
     ...overrides,
   };
@@ -86,7 +86,7 @@ describe('pool-master-qqs RootAdminSportLeagueListPage', () => {
             id: 'liv',
             name: 'LIV Golf',
             isActive: false,
-            affiliationCount: 54,
+            participantCount: 54,
             sportEventCount: 1,
             currentEventYear: null,
           }),

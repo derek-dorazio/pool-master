@@ -23,13 +23,14 @@ import type {
   LeagueRole,
   Participant,
   ParticipantProviderMapping,
+  Sport,
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
   User, ParticipantStatus, TimeFormat, ColorScheme
 } from '../domain';
 
-import type { ParticipantMatchQuery } from './sport-catalog-ports';
+import type { ParticipantMatchQuery, ParticipantRanking } from './sport-catalog-ports';
 import type { EmailMessageRepository } from './email-ports';
 
 // --- Identity ---
@@ -472,7 +473,7 @@ export interface InvitationEmailTransaction {
 // --- Sport & Participant ---
 
 export interface ParticipantSearchFilters {
-  sportId?: string;
+  sportLeagueId?: string;
   status?: ParticipantStatus;
 }
 
@@ -482,30 +483,46 @@ export interface ParticipantRepository {
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
   /**
-   * Candidates for a whole upload within one sport, in one read (#1183): every participant any
-   * of the queries matches, exactly on each identifier a query gives. Ordered by name.
+   * Candidates for a whole upload within one sport league, in one read (#1183): every participant
+   * any of the queries matches, exactly on each identifier a query gives. Ordered by name.
    */
-  findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
+  findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
+  /** A sport league's roster (#1853): best rank first, unranked last, then by name. Never paged. */
+  findBySportLeague(sportLeagueId: string): Promise<Participant[]>;
+  /** Re-ranks participants of the sport league, all or none. */
+  updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
+  /** Participants per sport league, for each id asked about (0 where none). */
+  countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
   /**
-   * Deletes the participant unless an event field holds them (#1400), with their sport league
-   * affiliations and provider identities, in one transaction that locks the participant first, so
+   * Deletes the participant unless an event field holds them (#1400), with their provider
+   * identities, in one transaction that locks the participant first, so
    * no field can add them between the count and the delete. Returns how many fields hold them,
    * counted under the lock: 0 means they were deleted. Null when no such participant exists.
    */
   deleteUnlessOnAField(id: string): Promise<number | null>;
 }
 
+/**
+ * Where a provider identity is looked up (#1853): one sport league, the sport league of one event,
+ * or any sport league of a sport.
+ */
+export type ProviderMappingScope = { sportLeagueId: string } | { sportEventId: string } | { sport: Sport };
+
 export interface ParticipantProviderMappingRepository {
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
-  /** Every mapping a provider has for these of its identifiers. */
-  findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
-  /** Every mapping a provider has for the participants of one sport, in one read (#1850). Never paged. */
-  findByProviderAndSport(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]>;
   /**
-   * Binds a provider identity to a participant. A provider identity maps to one participant,
-   * so an identity already bound elsewhere moves to this one.
+   * Every mapping a provider has for these of its identifiers within the scope (#1853): a feed id
+   * names one participant per sport league, so a lookup is always scoped to a league, the league
+   * of the event being synced, or every league of a sport.
+   */
+  findByProviderExternalIds(providerId: string, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
+  /** Every mapping a provider has for the participants of one sport league, in one read. Never paged. */
+  findByProviderAndSportLeague(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]>;
+  /**
+   * Binds a provider identity to a participant. A provider identity maps to one participant per
+   * sport league, so an identity already bound to another of the league's participants moves here.
    */
   bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
 }

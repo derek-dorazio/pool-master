@@ -13,7 +13,6 @@ import {
   generateInviteLink,
   getGamePicks,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   openContest,
   releaseEvent,
@@ -31,7 +30,6 @@ import {
   PredictedResult,
   SelectionType,
   Sport,
-  findSportRow,
 } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
@@ -109,7 +107,6 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Pickem Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- An event of two first-round games and a final, released ----------------------------
     const firstKickoff = new Date(Date.now() + 2 * DAY);
@@ -127,7 +124,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
 
     const teamIds: string[] = [];
     for (const name of TEAMS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${name} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${name} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);

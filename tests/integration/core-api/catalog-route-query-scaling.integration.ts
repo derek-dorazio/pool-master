@@ -11,7 +11,7 @@
 import { randomUUID } from 'crypto';
 import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
-  ParticipantLeagueAffiliationListResponseSchema,
+  ParticipantListResponseSchema,
   SportEventBracketResponseSchema,
   SportEventListResponseSchema,
   SportEventResponseSchema,
@@ -57,8 +57,8 @@ async function golf() {
   });
 }
 
-/** A golf sport league of its own, with `affiliations` golfers affiliated and ranked, and one event. */
-async function seedSportLeague(affiliations: number) {
+/** A golf sport league of its own, with `participants` golfers of its own, ranked, and one event. */
+async function seedSportLeague(participants: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
@@ -70,16 +70,15 @@ async function seedSportLeague(affiliations: number) {
       sport: Sport.GOLF, name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
     },
   });
-  for (let index = 0; index < affiliations; index += 1) {
-    const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Affiliated Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+  for (let index = 0; index < participants; index += 1) {
+    await prisma.participant.create({
+      data: { sportLeagueId: sportLeague.id, ranking: index + 1, name: `League Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
-    await prisma.participantLeagueAffiliation.create({ data: { participantId: participant.id, sportLeagueId: sportLeague.id, ranking: index + 1 } });
   }
   return sportLeague;
 }
 
-/** A root admin, and `sportLeagues` golf sport leagues of their own, each with an affiliation and an event. */
+/** A root admin, and `sportLeagues` golf sport leagues of their own, each with a golfer and an event. */
 async function seedSportLeagues(sportLeagues: number) {
   for (let index = 0; index < sportLeagues; index += 1) {
     await seedSportLeague(1);
@@ -106,7 +105,7 @@ async function seedSportLeagueEvents(events: number) {
     const field = [];
     for (let golfer = 0; golfer < 2; golfer += 1) {
       const participant = await prisma.participant.create({
-        data: { sportId: sportLeague.sportId, name: `Event Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+        data: { sportLeagueId: sportLeague.id, name: `Event Golfer ${randomUUID().slice(0, 8)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
       });
       field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
     }
@@ -182,7 +181,7 @@ async function seedReseededRound(matchups: number) {
   let matchNumber = 0;
   for (let game = 0; game < firstRoundGames; game += 1) {
     const team = async (seedNumber: number) => {
-      const participant = await prisma.participant.create({ data: { sportId: sport.id, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
+      const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true, seedNumber } });
     };
     // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
@@ -214,21 +213,21 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
     });
   });
 
-  it('GET a sport league: the same statements for 2 affiliated golfers as for 20', async () => {
+  it('GET a sport league: the same statements for 2 of its golfers as for 20', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/{sportLeagueId}',
-      seed: async (affiliations) => ({ sportLeague: await seedSportLeague(affiliations), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      seed: async (participants) => ({ sportLeague: await seedSportLeague(participants), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
       call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportLeagueResponseSchema).sportLeague.affiliationCount,
+      rowsShown: (response) => okBody(response, SportLeagueResponseSchema).sportLeague.participantCount,
     });
   });
 
-  it("GET a sport league's affiliations: the same statements for 2 affiliated golfers as for 20", async () => {
+  it("GET a sport league's participants: the same statements for 2 of its golfers as for 20 (#1853)", async () => {
     await expectConstantQueries({
-      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/affiliations',
-      seed: async (affiliations) => ({ sportLeague: await seedSportLeague(affiliations), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
-      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}/affiliations`, rootAdmin),
-      rowsShown: (response) => okBody(response, ParticipantLeagueAffiliationListResponseSchema).affiliations.length,
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/participants',
+      seed: async (participants) => ({ sportLeague: await seedSportLeague(participants), rootAdmin: await createTestUser({ isRootAdmin: true }) }),
+      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeague.id}/participants`, rootAdmin),
+      rowsShown: (response) => okBody(response, ParticipantListResponseSchema).participants.length,
     });
   });
 

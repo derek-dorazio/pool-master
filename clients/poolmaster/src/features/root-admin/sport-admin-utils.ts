@@ -6,7 +6,7 @@ import {
 import type {
   GolfRoundScoreUploadRequest,
   ParticipantDto,
-  ParticipantLeagueAffiliationUploadRequest,
+  SportLeagueRankingUploadRequest,
   ReleaseCheckDto,
   SportEventDto,
   SportEventParticipantDto,
@@ -163,8 +163,6 @@ export function describeFailedReleaseChecks(
         return ['Schedule its rounds.'];
       case 'FIELD_LOADED':
         return ['Load the field.'];
-      case 'FIELD_LINKED':
-        return [`Link the ${some(check.value)} the provider does not know yet.`];
       case 'TIERS_ASSIGNED':
         return [check.value === 1 ? `Put the ${some(1)} without a tier into a tier.` : `Put the ${some(check.value)} without a tier into tiers.`];
       case 'TIERS_FILLED':
@@ -420,7 +418,7 @@ export function participantFieldActionLabel(
 // `playerName` (or an explicit `participantId`) plus `ranking`.
 
 export type RosterUploadRow =
-  ParticipantLeagueAffiliationUploadRequest['rows'][number];
+  SportLeagueRankingUploadRequest['rows'][number];
 
 export const ROSTER_UPLOAD_HEADERS = [
   'externalId',
@@ -444,7 +442,7 @@ const rosterUploadRowSchema = z
   );
 
 /**
- * Parse pasted / uploaded league-roster text into `previewParticipantLeagueAffiliationUpload`
+ * Parse pasted / uploaded league-roster text into `previewSportLeagueRankingUpload`
  * request rows. Throws an `Error` with a user-facing message on malformed input
  * or a row missing every identifier — the panel renders that inline.
  */

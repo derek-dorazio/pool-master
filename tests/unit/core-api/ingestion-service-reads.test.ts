@@ -208,7 +208,7 @@ describe('IngestionService.getUnmappedParticipants', () => {
 
     expect(provider.getParticipants).toHaveBeenCalledTimes(1);
     expect(provider.getParticipants).toHaveBeenCalledWith(Sport.GOLF);
-    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', ['p-1', 'p-2']);
+    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', { sport: Sport.GOLF }, ['p-1', 'p-2']);
     expect(unmapped).toEqual([
       { providerId: 'feed', providerName: 'Feed', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
     ]);
@@ -228,7 +228,7 @@ describe('IngestionService.getUnmappedParticipants', () => {
       registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader(),
     }).getUnmappedParticipants({ providerId: 'feed', externalId: 'p-2' });
 
-    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', ['p-2']);
+    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', { sport: Sport.GOLF }, ['p-2']);
     expect(unmapped).toEqual([
       { providerId: 'feed', providerName: 'Feed', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
     ]);

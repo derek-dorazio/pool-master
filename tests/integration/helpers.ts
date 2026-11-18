@@ -943,7 +943,6 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
-  await prisma.participantLeagueAffiliation.deleteMany();
   await prisma.participant.deleteMany();
   // SportEventTier and SportEventRound both have RESTRICT FKs to
   // SportEvent, so they must clear before the SportEvent delete below.

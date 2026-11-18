@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
-import { affiliationFixture, fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // MSW hands path parameters over as strings, so a match number reads '1'.
 // #698, #700: a basketball tournament's results page shows its bracket round by round, chosen by
@@ -28,10 +28,8 @@ const {
   updateEventParticipantsMock,
   setEventPlayInWinnerMock,
   replaceEventParticipantMock,
-  listSportsMock,
-  listParticipantsMock,
   listSportLeaguesMock,
-  listParticipantLeagueAffiliationsMock,
+  listSportLeagueParticipantsMock,
   listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -58,10 +56,8 @@ const {
     updateEventParticipantsMock: vi.fn(),
     setEventPlayInWinnerMock: vi.fn(),
     replaceEventParticipantMock: vi.fn(),
-    listSportsMock: vi.fn(),
-    listParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
-    listParticipantLeagueAffiliationsMock: vi.fn(),
+    listSportLeagueParticipantsMock: vi.fn(),
     listProvidersMock: vi.fn(),
     mockLogger: logger,
   };
@@ -81,10 +77,8 @@ bindApiMocks({
   updateEventParticipants: updateEventParticipantsMock,
   setEventPlayInWinner: setEventPlayInWinnerMock,
   replaceEventParticipant: replaceEventParticipantMock,
-  listSports: listSportsMock,
-  listParticipants: listParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
-  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
+  listSportLeagueParticipants: listSportLeagueParticipantsMock,
   listProviders: listProvidersMock,
 });
 
@@ -139,16 +133,14 @@ function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; f
     data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [], matchPeriodLayout: options.matchPeriodLayout ?? null })] },
   });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: options.field ?? [duke, vermont, houston, texas] } });
-  // No roster: every active team of the sport may be named.
-  listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
+  // No roster: no team may be named.
+  listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });
 }
 
-/** The tournament's league roster: once it has one, only its teams replace or win a place (#830). */
+/** The tournament's league roster: only its active teams replace or win a place (#830, #1853). */
 function rosterOf(...participants: ReturnType<typeof participantFixture>[]) {
-  listParticipantLeagueAffiliationsMock.mockResolvedValue({
-    data: { affiliations: participants.map((participant) => affiliationFixture({ sportLeagueId: tournament.sportLeagueId, participantId: participant.id, participant })) },
-  });
+  listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants } });
 }
 
 
@@ -751,11 +743,10 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       isPlayInPlace: true,
       participant: participantFixture({ id: 'p-5', name: 'Texas / Xavier' }),
     });
-    const xavier = participantFixture({ id: 'p-6', name: 'Xavier', sportId: 'sport-basketball' });
+    const xavier = participantFixture({ id: 'p-6', name: 'Xavier', sportLeagueId: tournament.sportLeagueId });
 
     function seedPlayIn() {
       seed([], { field: [duke, vermont, houston, texas, pairing] });
-      listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
       rosterOf(duke.participant, texas.participant, xavier);
     }
 
@@ -775,63 +766,22 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
-    it('offers the teams on the tournament\'s league roster without reading the sport\'s whole list of teams', async () => {
+    it('offers only the active teams of the tournament\'s own league, reading that league\'s roster', async () => {
       seedPlayIn();
+      rosterOf(duke.participant, texas.participant, xavier, participantFixture({ id: 'p-7', name: 'Retired U', status: 'INACTIVE' }));
       renderPage();
 
       const select = await screen.findByTestId('root-admin-play-in-winner-select-sep-5');
       await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose the winning team', 'Xavier']));
-      expect(listParticipantsMock).not.toHaveBeenCalled();
-      expect(screen.queryByTestId('root-admin-play-in-winner-search-sep-5')).not.toBeInTheDocument();
+      expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: tournament.sportLeagueId } }));
     });
 
-    it('asks for 3 characters of a team\'s name when the league has no roster, then offers the matching teams not in the tournament', async () => {
+    it('shows a failed roster read beside the picker', async () => {
       seedPlayIn();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockResolvedValue({ data: { participants: [texas.participant, xavier] } });
+      listSportLeagueParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
       renderPage();
-
-      const select = await screen.findByTestId('root-admin-play-in-winner-select-sep-5');
-      await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Type at least 3 characters to find a team']));
-      expect(select).toBeDisabled();
-      expect(listParticipantsMock).not.toHaveBeenCalled();
-
-      await userEvent.type(screen.getByTestId('root-admin-play-in-winner-search-sep-5'), 'Xav');
-
-      await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose the winning team', 'Xavier']));
-      expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
-    });
-
-    it('clears the chosen winner when a new search no longer lists it, so Set winner cannot save a team the admin no longer sees', async () => {
-      seedPlayIn();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [xavier] : [] } }));
-      renderPage();
-
-      const search = await screen.findByTestId('root-admin-play-in-winner-search-sep-5');
-      await userEvent.type(search, 'Xav');
-      const select = screen.getByTestId('root-admin-play-in-winner-select-sep-5');
-      await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(2));
-      await userEvent.selectOptions(select, 'p-6');
-      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeEnabled();
-
-      await userEvent.clear(search);
-      await userEvent.type(search, 'Hou');
-
-      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
-      expect(screen.getByTestId('root-admin-play-in-winner-save-sep-5')).toBeDisabled();
-    });
-
-    it('keeps the search box beside a failed search, so the admin can change the name and try again', async () => {
-      seedPlayIn();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
-      renderPage();
-
-      await userEvent.type(await screen.findByTestId('root-admin-play-in-winner-search-sep-5'), 'Xav');
 
       expect(await screen.findByRole('alert')).toHaveTextContent('boom');
-      expect(screen.getByTestId('root-admin-play-in-winner-search-sep-5')).toHaveValue('Xav');
     });
 
     it('lists only the marked places', async () => {
@@ -859,7 +809,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
   // #704 slice 3: a team that withdraws before its first game is replaced in its place.
   describe('withdrawals', () => {
-    const replacement = participantFixture({ id: 'p-6', name: 'Xavier', sportId: 'sport-basketball' });
+    const replacement = participantFixture({ id: 'p-6', name: 'Xavier', sportLeagueId: tournament.sportLeagueId });
     const firstRound = [
       match({ id: 'm1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME' }),
       match({ id: 'm2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4' }),
@@ -867,7 +817,6 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
     function seedWithdrawals(matches: SportEventMatchDto[] = firstRound) {
       seed(matches);
-      listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
       rosterOf(duke.participant, replacement);
     }
 
@@ -891,62 +840,13 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
-    it('offers replacements from the tournament\'s league roster without reading the sport\'s whole list of teams', async () => {
+    it('offers replacements from the tournament\'s own league roster', async () => {
       seedWithdrawals();
       renderPage();
 
       const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
       await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
-      expect(listParticipantsMock).not.toHaveBeenCalled();
-    });
-
-    it('asks for 3 characters of a replacement\'s name when the league has no roster, then searches the sport for it', async () => {
-      seedWithdrawals();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockResolvedValue({ data: { participants: [replacement] } });
-      renderPage();
-
-      const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
-      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Type at least 3 characters to find a team']));
-      expect(listParticipantsMock).not.toHaveBeenCalled();
-
-      await userEvent.type(screen.getByTestId('root-admin-withdrawal-replacement-search'), 'Xav');
-
-      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
-      expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Xav' } }));
-    });
-
-    it('clears the chosen replacement when a new search no longer lists it, so Replace cannot submit a team the admin no longer sees', async () => {
-      seedWithdrawals();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockImplementation((options: { query: { q: string } }) => Promise.resolve({ data: { participants: options.query.q === 'Xav' ? [replacement] : [] } }));
-      renderPage();
-
-      const search = await screen.findByTestId('root-admin-withdrawal-replacement-search');
-      await userEvent.selectOptions(screen.getByTestId('root-admin-withdrawal-select'), 'sep-4');
-      await userEvent.type(search, 'Xav');
-      const replacedBy = screen.getByTestId('root-admin-withdrawal-replacement-select');
-      await waitFor(() => expect(within(replacedBy).getAllByRole('option')).toHaveLength(2));
-      await userEvent.selectOptions(replacedBy, 'p-6');
-      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeEnabled();
-
-      await userEvent.clear(search);
-      await userEvent.type(search, 'Hou');
-
-      await waitFor(() => expect(listParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportId: 'sport-basketball', status: 'ACTIVE', q: 'Hou' } })));
-      expect(screen.getByTestId('root-admin-withdrawal-replace')).toBeDisabled();
-    });
-
-    it('keeps the replacement search box beside a failed search, so the admin can change the name and try again', async () => {
-      seedWithdrawals();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
-      listParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
-      renderPage();
-
-      await userEvent.type(await screen.findByTestId('root-admin-withdrawal-replacement-search'), 'Xav');
-
-      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
-      expect(screen.getByTestId('root-admin-withdrawal-replacement-search')).toHaveValue('Xav');
+      expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: tournament.sportLeagueId } }));
     });
 
     it('titles the card Withdrawals, holding the withdrawn team and replacement pickers', async () => {

@@ -1,6 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   DataGrid,
   ErrorState,
@@ -10,8 +9,6 @@ import {
   optionsFromLabels,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
-import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantDto } from '@/lib/api';
 import {
   PARTICIPANT_STATUSES,
@@ -22,40 +19,37 @@ import {
 } from './sport-admin-utils';
 import {
   MANAGE_LIST_PAGE_SIZE,
-  SEARCH_DEBOUNCE_MS,
   buildSportParticipantListPath,
   buildSportParticipantPath,
 } from './manage-navigation';
-import { useParticipantsQuery } from './use-sport-catalog';
+import { useLeagueRosterQuery, useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { SportSectionMenu } from './sport-section-menu';
+import { upperFirst } from '@/lib/upper-first';
 
 const columnHelper = createColumnHelper<ParticipantDto>();
 
 /**
- * /manage/sports/:sport/participants. A sport's master roster (golfers, horses): a grid of one
- * status at a time that reads nothing until a search is typed (#1313), as the user and league
- * lists do, with Add opening its own page and rows linking to each.
+ * /manage/sports/:sport/participants. One sport league's participants (golfers, horses) at a time
+ * (#1853): a participant belongs to one league, so the page picks the league, reads its whole
+ * roster once and narrows it by status and name in the browser, with Add opening its own page and
+ * rows linking to each.
  */
 export function RootAdminParticipantListPage() {
   const { sport, definition } = useManagedSport();
-  const { participant } = definition.vocabulary;
+  const { participant, sportLeague } = definition.vocabulary;
   // One status at a time, ACTIVE first, as the golf player list this replaced did.
-  // listParticipants would list every status if asked without one; the single-select
-  // keeps the page's behaviour.
   const [status, setStatus] = useState<ManagedParticipantStatus>('ACTIVE');
-
-  const [search, setSearch] = useState('');
-  const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
-  const canSearch = isPlatformSearchTerm(term);
-  const playersQuery = useParticipantsQuery({
-    sport,
-    queryKey: QueryKeys.rootAdmin.manageSport.participantSearch(sport, term, status),
-    status,
-    q: term,
-    enabled: canSearch,
-    keepPrevious: true,
-  });
+  const leaguesQuery = useSportLeaguesQuery(sport);
+  const [chosenLeagueId, setChosenLeagueId] = useState<string | null>(null);
+  // The sport's first league until another is chosen.
+  const sportLeagueId = chosenLeagueId ?? leaguesQuery.data?.at(0)?.id ?? '';
+  const rosterQuery = useLeagueRosterQuery(sportLeagueId);
+  const players = useMemo(
+    // poolmaster-allow-list-lookup: the league's whole roster, read once and cached; the status picker narrows it on screen
+    () => (rosterQuery.data ?? []).filter((player) => player.status === status),
+    [rosterQuery.data, status],
+  );
   const columns = useMemo(
     () => [
       columnHelper.accessor('name', {
@@ -63,6 +57,11 @@ export function RootAdminParticipantListPage() {
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
+      }),
+      columnHelper.accessor('ranking', {
+        header: 'Ranking',
+        cell: ({ getValue }) => getValue() ?? '—',
+        enableColumnFilter: false,
       }),
       columnHelper.accessor('shortName', {
         header: 'Short name',
@@ -91,13 +90,21 @@ export function RootAdminParticipantListPage() {
         actions={(
           <LinkButton
             data-testid="root-admin-participant-list-new"
-            to={`${buildSportParticipantListPath(sport)}/new`}
+            to={`${buildSportParticipantListPath(sport)}/new${sportLeagueId ? `?sportLeague=${sportLeagueId}` : ''}`}
           >
             {`Add ${participant.one}`}
           </LinkButton>
         )}
         current="participants"
         tabsEnd={(
+          <div className="flex flex-wrap gap-2">
+          <FilterPicker
+            label={upperFirst(sportLeague.one)}
+            onChange={setChosenLeagueId}
+            options={(leaguesQuery.data ?? []).map((league) => ({ label: league.name, value: league.id }))}
+            testId="root-admin-participant-list-league"
+            value={sportLeagueId}
+          />
           <FilterPicker
             label="Status"
             onChange={(value) => {
@@ -110,33 +117,31 @@ export function RootAdminParticipantListPage() {
             testId="root-admin-participant-list-status"
             value={status}
           />
+          </div>
         )}
       />
 
-      {playersQuery.isError ? (
+      {rosterQuery.isError || leaguesQuery.isError ? (
         <ErrorState
-          body={extractErrorMessage(playersQuery.error, { fallback: `We could not load ${participant.many} right now.` })}
-          onRetry={() => void playersQuery.refetch()}
+          body={extractErrorMessage(rosterQuery.error ?? leaguesQuery.error, { fallback: `We could not load ${participant.many} right now.` })}
+          onRetry={() => void (leaguesQuery.isError ? leaguesQuery.refetch() : rosterQuery.refetch())}
           testId="root-admin-participant-list-error"
         />
       ) : null}
       <DataGrid
         columns={columns}
-        // The server searched already. On an error the grid stays, empty, so its box can retry.
-        data={canSearch && !playersQuery.isError ? (playersQuery.data ?? []) : []}
+        data={players}
         emptyMessage={
-          !canSearch
-            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participant.one}.`
-            : playersQuery.isFetching
-                ? `Searching ${participant.many}...`
-                : `No ${participantStatusLabel(status).toLowerCase()} ${participant.many} matched the search.`
+          rosterQuery.isFetching || leaguesQuery.isFetching
+            ? `Loading ${participant.many}...`
+            : `No ${participantStatusLabel(status).toLowerCase()} ${participant.many} in this ${sportLeague.one}.`
         }
         filterTestIdPrefix="root-admin-participant-list-filter"
         getRowId={(player) => player.id}
         getRowLink={(player) => buildSportParticipantPath(sport, player.id)}
         pageSize={MANAGE_LIST_PAGE_SIZE}
         rowTestId={(player) => `root-admin-participant-row-${player.id}`}
-        search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search', onChange: setSearch }}
+        search={{ label: `Find a ${participant.one}`, testId: 'root-admin-participant-list-search' }}
         tableTestId="root-admin-participant-list-table"
       />
     </section>

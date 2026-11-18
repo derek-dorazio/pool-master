@@ -15,7 +15,6 @@ import {
   getSelectionState,
   listContestConfigTemplates,
   listEventParticipants,
-  listSports,
   openContest,
   previewEventRaceResults,
   releaseEvent,
@@ -23,7 +22,7 @@ import {
   transitionEvent,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -69,10 +68,12 @@ async function cleanup(): Promise<void> {
   if (leagueIds.length) {
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
+  }
+  if (leagueIds.length) {
+    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
 }
 
@@ -93,7 +94,6 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const admin = await buildRegisteredUser({ displayName: 'Race Admin' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.HORSE_RACING)).id;
 
     // --- The race and its field ------------------------------------------------------------
     const circuit = await createSportLeague({ client: a, body: { sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
@@ -116,7 +116,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     for (const horse of HORSES) {
       const participant = await createParticipant({
         client: a,
-        body: { sportId, participantType: 'INDIVIDUAL', name: `${horse} ${RUN}` },
+        body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${horse} ${RUN}` },
       });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);

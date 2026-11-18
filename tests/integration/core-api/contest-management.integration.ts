@@ -26,6 +26,7 @@ import type {
 import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { expectDefined } from '../../support/expect-defined';
+import { participantLeagueId } from '../../support/participant-league';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -63,7 +64,7 @@ describe('Contest management integration', () => {
       const rank = currentParticipantCount + index + 1;
       const participant = await prisma.participant.create({
         data: {
-          sportId,
+          sportLeagueId: await participantLeagueId(prisma, sportId),
           name: `Template Golfer ${rank}`,
           participantType: 'INDIVIDUAL',
           status: 'ACTIVE',
@@ -106,7 +107,7 @@ describe('Contest management integration', () => {
 
     const topParticipant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: 'Top Golfer',
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',
@@ -116,7 +117,7 @@ describe('Contest management integration', () => {
 
     const secondParticipant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: 'Second Golfer',
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',

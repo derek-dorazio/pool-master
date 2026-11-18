@@ -696,12 +696,10 @@ export class SportEventService {
   /** The event's ready checks as it stands now (#1823): its admin counts, its release facts and its bracket. */
   private async releaseChecksFor(summary: SportEventAdminSummary): Promise<ReleaseCheck[]> {
     const { event } = summary;
-    const synced = isProviderSyncedEvent(event);
     const [facts, bracketBlockers] = await Promise.all([
       this.deps.sportEvents.findReleaseFacts({
         id: event.id,
         sportLeagueId: event.sportLeagueId,
-        linkProviderId: synced ? event.providerId : null,
       }),
       eventPlaysMatches(event) ? this.deps.bracket.releaseBlockers(event) : Promise.resolve(null),
     ]);
@@ -710,7 +708,6 @@ export class SportEventService {
       now: this.now(),
       scheduledRoundCount: facts.scheduledRoundCount,
       loadedParticipantCount: summary.loadedParticipantCount,
-      unlinkedParticipantCount: facts.unlinkedParticipantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
       emptyTierLabels: summary.adminCounts.emptyTierLabels,
       isPriced: event.pricingConfig !== undefined,

@@ -12,6 +12,7 @@ import { createScheduledEventReader } from '../../../packages/core-api/src/modul
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import { participantLeagueId } from '../../support/participant-league';
 
 const PROVIDER = 'integration-test';
 const now = new Date('2026-04-26T22:30:00.000Z');
@@ -54,7 +55,7 @@ async function createEvent(
   if (withField) {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Golfer ${randomUUID()}`, participantType: 'INDIVIDUAL' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Golfer ${randomUUID()}`, participantType: 'INDIVIDUAL' },
     });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
   }

@@ -33,7 +33,8 @@ function runner(
     isPlayInPlace: false,
     participant: {
       id: 'participant-1',
-      sportId: 'sport-horse-racing',
+      sportLeagueId: 'league-horse-racing',
+      ranking: null,
       name: 'Arrow',
       participantType: 'INDIVIDUAL',
       status: 'ACTIVE',

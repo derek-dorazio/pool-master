@@ -31,7 +31,6 @@ export {
 } from './prisma-contest-management-repositories';
 export {
   PrismaEventSeriesRepository,
-  PrismaParticipantLeagueAffiliationRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,

@@ -13,11 +13,6 @@ export const ReleaseCheckKey = {
   ROUNDS_SCHEDULED: 'ROUNDS_SCHEDULED',
   /** Its field is loaded. Value: how many participants are in it. */
   FIELD_LOADED: 'FIELD_LOADED',
-  /**
-   * Every active field participant is linked to the event's provider by its feed id, so its
-   * scores reach them. Only a provider-synced event has it. Value: how many are not.
-   */
-  FIELD_LINKED: 'FIELD_LINKED',
   /** Every active field participant is in a tier. Value: how many are not. */
   TIERS_ASSIGNED: 'TIERS_ASSIGNED',
   /** No tier is empty: no entry could pick from one. Value: the empty tiers' labels. */
@@ -34,12 +29,11 @@ export type ReleaseCheckKey = (typeof ReleaseCheckKey)[keyof typeof ReleaseCheck
 /**
  * The checks only the automatic release waits for (#1823). A root admin's "Release for contests"
  * is refused by the others alone, as it was before the automatic release: the admin judges an
- * event whose rounds, provider links or league setups are not in place yet, which the sweep never
+ * event whose rounds or league setups are not in place yet, which the sweep never
  * does on its own.
  */
 const AUTOMATIC_RELEASE_ONLY_CHECKS: ReadonlySet<ReleaseCheckKey> = new Set([
   ReleaseCheckKey.ROUNDS_SCHEDULED,
-  ReleaseCheckKey.FIELD_LINKED,
   ReleaseCheckKey.CONTEST_SETUPS_ON,
 ]);
 
@@ -53,7 +47,6 @@ export type ReleaseCheck =
   | { key: typeof ReleaseCheckKey.NOT_STARTED; passed: boolean; value: Date }
   | { key: typeof ReleaseCheckKey.ROUNDS_SCHEDULED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.FIELD_LOADED; passed: boolean; value: number }
-  | { key: typeof ReleaseCheckKey.FIELD_LINKED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.TIERS_ASSIGNED; passed: boolean; value: number }
   | { key: typeof ReleaseCheckKey.TIERS_FILLED; passed: boolean; value: string[] }
   | { key: typeof ReleaseCheckKey.PRICES_ASSIGNED; passed: boolean; value: number | null }

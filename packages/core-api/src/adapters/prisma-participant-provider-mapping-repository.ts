@@ -2,8 +2,8 @@
  * Prisma adapter for ParticipantProviderMappingRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
-import type { ParticipantProviderMappingRepository } from '@poolmaster/shared/db';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import type { ParticipantProviderMappingRepository, ProviderMappingScope } from '@poolmaster/shared/db';
 import type { ParticipantProviderMapping, MappingConfidence } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantProviderMappingRepository implements ParticipantProviderMappingRepository {
@@ -16,17 +16,17 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
     return rows.map(mapToMapping);
   }
 
-  async findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]> {
+  async findByProviderExternalIds(providerId: string, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]> {
     if (externalIds.length === 0) return [];
     const rows = await this.prisma.participantProviderMapping.findMany({
-      where: { providerId, externalId: { in: [...externalIds] } },
+      where: { providerId, externalId: { in: [...externalIds] }, ...scopeWhere(scope) },
     });
     return rows.map(mapToMapping);
   }
 
-  async findByProviderAndSport(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]> {
+  async findByProviderAndSportLeague(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]> {
     const rows = await this.prisma.participantProviderMapping.findMany({
-      where: { providerId, participant: { sportId } },
+      where: { providerId, sportLeagueId },
       orderBy: { externalId: 'asc' },
     });
     return rows.map(mapToMapping);
@@ -41,17 +41,25 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
       mappedAt: mapping.mappedAt,
     };
     const row = await this.prisma.participantProviderMapping.upsert({
-      where: { providerId_externalId: { providerId: mapping.providerId, externalId: mapping.externalId } },
-      create: { ...binding, providerId: mapping.providerId, externalId: mapping.externalId },
+      where: { providerId_externalId_sportLeagueId: { providerId: mapping.providerId, externalId: mapping.externalId, sportLeagueId: mapping.sportLeagueId } },
+      create: { ...binding, providerId: mapping.providerId, externalId: mapping.externalId, sportLeagueId: mapping.sportLeagueId },
       update: binding,
     });
     return mapToMapping(row);
   }
 }
 
+/** The mappings in a lookup's scope: the league's own column, or the league reached by its event or sport, in the same read. */
+function scopeWhere(scope: ProviderMappingScope): Prisma.ParticipantProviderMappingWhereInput {
+  if ('sportLeagueId' in scope) return { sportLeagueId: scope.sportLeagueId };
+  if ('sportEventId' in scope) return { sportLeague: { eventSeries: { some: { sportEvents: { some: { id: scope.sportEventId } } } } } };
+  return { sportLeague: { sport: { sport: scope.sport } } };
+}
+
 function mapToMapping(row: {
   id: string;
   participantId: string;
+  sportLeagueId: string;
   providerId: string;
   externalId: string;
   confidence: MappingConfidence;
@@ -62,6 +70,7 @@ function mapToMapping(row: {
   return {
     id: row.id,
     participantId: row.participantId,
+    sportLeagueId: row.sportLeagueId,
     providerId: row.providerId,
     externalId: row.externalId,
     confidence: row.confidence,

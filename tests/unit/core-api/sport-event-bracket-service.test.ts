@@ -43,7 +43,6 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    affiliations: store.affiliationRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -380,7 +379,6 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const service = new SportEventBracketService({
       sportEvents: store.sportEventRepo(),
       sportLeagues: store.sportLeagueRepo(),
-      affiliations: store.affiliationRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
@@ -455,13 +453,13 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
     expect(store.field.find((entry) => entry.id === slot.id)?.participantId).not.toBe(duke.participantId);
   });
 
-  it('refuses (404 PARTICIPANT_NOT_FOUND) a winner from another sport or an inactive one', async () => {
+  it('refuses an inactive winner (404 PARTICIPANT_NOT_FOUND), and one of another sport, whose league is not the event\'s (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE)', async () => {
     const { service, store, event, slot } = withPlayInPlace();
     const golfer = store.addParticipant(store.addSport(Sport.GOLF).id, 'Ana');
     const retired = store.addParticipant(store.sports[0].id, 'Retired U', { status: ParticipantStatus.INACTIVE });
 
-    await expect(service.fillPlayInSlot(event.id, slot.id, golfer.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
-    await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND' });
+    await expect(service.fillPlayInSlot(event.id, slot.id, golfer.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
+    await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
   });
 
   it('refuses (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) a winner off the event\'s league roster, as a women\'s team in a men\'s bracket, and leaves the place alone', async () => {
@@ -704,14 +702,14 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_IS_PLAY_IN_PLACE', statusCode: 409 });
   });
 
-  it('refuses (409 EVENT_PARTICIPANT_ALREADY_ON_FIELD) a replacement already on the field, and (404 PARTICIPANT_NOT_FOUND) one from another sport', async () => {
+  it('refuses (409 EVENT_PARTICIPANT_ALREADY_ON_FIELD) a replacement already on the field, and (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) one of another sport', async () => {
     const { service, store, event, vermont, houston } = await released();
     const golfer = store.addParticipant(store.addSport(Sport.GOLF).id, 'Ana');
 
     await expect(service.replaceWithdrawn(event.id, vermont.id, houston.participantId))
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD', statusCode: 409 });
     await expect(service.replaceWithdrawn(event.id, vermont.id, golfer.id))
-      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
   });
 
   it('refuses (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) a replacement off the event\'s league roster, as a WTA player in an ATP draw, and changes nothing', async () => {

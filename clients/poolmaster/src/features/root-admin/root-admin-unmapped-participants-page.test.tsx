@@ -5,11 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminMapCompetitorPage } from './root-admin-map-competitor-page';
 import { RootAdminUnmappedParticipantsPage } from './root-admin-unmapped-participants-page';
+import { participantFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 const {
   listUnmappedProviderParticipantsMock,
-  listSportsMock,
-  listParticipantsMock,
+  listSportLeaguesMock,
+  listSportLeagueParticipantsMock,
   bindParticipantProviderMappingMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -25,8 +26,8 @@ const {
 
   return {
     listUnmappedProviderParticipantsMock: vi.fn(),
-    listSportsMock: vi.fn(),
-    listParticipantsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
+    listSportLeagueParticipantsMock: vi.fn(),
     bindParticipantProviderMappingMock: vi.fn(),
     mockLogger,
   };
@@ -34,8 +35,8 @@ const {
 
 bindApiMocks({
   listUnmappedProviderParticipants: listUnmappedProviderParticipantsMock,
-  listSports: listSportsMock,
-  listParticipants: listParticipantsMock,
+  listSportLeagues: listSportLeaguesMock,
+  listSportLeagueParticipants: listSportLeagueParticipantsMock,
   bindParticipantProviderMapping: bindParticipantProviderMappingMock,
 });
 
@@ -72,14 +73,19 @@ function renderPage(path = '/manage/sync/unmapped-participants') {
 describe('RootAdminUnmappedParticipantsPage', () => {
   beforeEach(() => {
     listUnmappedProviderParticipantsMock.mockReset();
-    listSportsMock.mockReset();
-    listParticipantsMock.mockReset();
+    listSportLeaguesMock.mockReset();
+    listSportLeagueParticipantsMock.mockReset();
     bindParticipantProviderMappingMock.mockReset();
 
     listUnmappedProviderParticipantsMock.mockResolvedValue({ data: { participants: [COMPETITOR] } });
-    listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-golf', sport: 'GOLF' }] } });
-    listParticipantsMock.mockResolvedValue({
-      data: { participants: [{ id: 'participant-1', name: 'Ludvig Åberg', nationality: 'SWE' }] },
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: 'pga', name: 'PGA Tour' })] } });
+    listSportLeagueParticipantsMock.mockResolvedValue({
+      data: {
+        participants: [
+          participantFixture({ id: 'participant-1', name: 'Ludvig Åberg', nationality: 'SWE', sportLeagueId: 'pga' }),
+          participantFixture({ id: 'participant-2', name: 'Tom Kim', sportLeagueId: 'pga' }),
+        ],
+      },
     });
     bindParticipantProviderMappingMock.mockResolvedValue({
       data: {
@@ -142,19 +148,23 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     expect(screen.getByText('Tom Kim')).toBeInTheDocument();
   });
 
-  it('binds the competitor\'s provider identity to the chosen participant of the same sport, then returns to the refreshed list', async () => {
+  it('binds the competitor\'s provider identity to the chosen participant of the chosen sport league, then returns to the refreshed list', async () => {
     renderPage(MAP_PATH);
 
     expect(await screen.findByTestId('root-admin-unmapped-participant-map-page')).toBeInTheDocument();
-    // The search starts from the provider's spelling, scoped to the competitor's sport.
-    expect(screen.getByTestId('root-admin-unmapped-participant-map-search')).toHaveValue('Ludvig Aberg');
-    await waitFor(() => {
-      expect(listParticipantsMock).toHaveBeenCalledWith({ query: { sportId: 'sport-golf', q: 'Ludvig Aberg' } });
-    });
     expect(screen.getByTestId('root-admin-unmapped-participant-map-save')).toBeDisabled();
+    expect(listSportLeaguesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'GOLF' } }));
+    const league = screen.getByTestId('root-admin-unmapped-participant-map-league');
+    await waitFor(() => expect(league).toHaveTextContent('PGA Tour'));
+    fireEvent.change(league, { target: { value: 'pga' } });
 
+    // The name box starts from the provider's spelling and narrows the league's roster.
+    fireEvent.change(screen.getByTestId('root-admin-unmapped-participant-map-search'), { target: { value: 'Ludvig' } });
     const picker = screen.getByTestId('root-admin-unmapped-participant-map-participant');
     await waitFor(() => expect(picker).toBeEnabled());
+    expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'pga' } }));
+    expect(picker).toHaveTextContent('Ludvig Åberg (SWE)');
+    expect(picker).not.toHaveTextContent('Tom Kim');
     fireEvent.change(picker, { target: { value: 'participant-1' } });
     listUnmappedProviderParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     fireEvent.click(screen.getByTestId('root-admin-unmapped-participant-map-save'));
@@ -177,7 +187,11 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     });
     renderPage(MAP_PATH);
 
-    const picker = await screen.findByTestId('root-admin-unmapped-participant-map-participant');
+    const league = await screen.findByTestId('root-admin-unmapped-participant-map-league');
+    await waitFor(() => expect(league).toHaveTextContent('PGA Tour'));
+    fireEvent.change(league, { target: { value: 'pga' } });
+    fireEvent.change(screen.getByTestId('root-admin-unmapped-participant-map-search'), { target: { value: '' } });
+    const picker = screen.getByTestId('root-admin-unmapped-participant-map-participant');
     await waitFor(() => expect(picker).toBeEnabled());
     fireEvent.change(picker, { target: { value: 'participant-1' } });
     fireEvent.click(screen.getByTestId('root-admin-unmapped-participant-map-save'));

@@ -11,7 +11,6 @@ import type {
   MatchSide,
   ParticipantInactiveReason,
   Participant,
-  ParticipantLeagueAffiliation,
   Sport,
   SportConfig,
   SportEvent,
@@ -61,6 +60,8 @@ export interface SportLeagueUses {
   cupCount: number;
   /** Playoff round sport leagues that name it as their season league (#1701). */
   roundCount: number;
+  /** Its participants (#1853): each belongs to it alone, so they go first. */
+  participantCount: number;
 }
 
 export interface SportLeagueRepository {
@@ -87,20 +88,6 @@ export interface SportLeagueRepository {
 export interface ParticipantRanking {
   participantId: string;
   ranking: number | null;
-}
-
-export interface ParticipantLeagueAffiliationRepository {
-  /** Best rank first, unranked last, then by participant name. */
-  findBySportLeague(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]>;
-  find(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation | null>;
-  create(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation>;
-  delete(sportLeagueId: string, participantId: string): Promise<void>;
-  /** Re-ranks existing affiliations, all or none. */
-  updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
-  /** Creates missing affiliations and re-ranks existing ones, all or none. */
-  upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
-  /** Affiliations per sport league, for each id asked about (0 where none). */
-  countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
 }
 
 export interface SportEventFilters {
@@ -201,8 +188,6 @@ export interface ProviderNotificationReceipt {
 /** The counts a release's ready checks read of one event besides its admin counts (#1823). */
 export interface SportEventReleaseFacts {
   scheduledRoundCount: number;
-  /** Null when no provider syncs the event. */
-  unlinkedParticipantCount: number | null;
   contestSetupCount: number;
 }
 
@@ -272,11 +257,9 @@ export interface SportEventRepository {
   findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
   /**
    * What only a release's ready checks read of one event (#1823), each a count: its scheduled
-   * rounds; its active field participants with no mapping from `linkProviderId` (null for an
-   * event no provider syncs, which skips the count); and the active contest setups its sport
-   * league offers.
+   * rounds, and the active contest setups its sport league offers.
    */
-  findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts>;
+  findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts>;
   /**
    * The automatic release sweep's candidates (#1823): DRAFT events starting after `now` and by
    * `horizon`, of an active sport league whose event sync names a provider and whose automatic

@@ -52,6 +52,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -301,11 +302,7 @@ describe('Contract verification (web)', () => {
     await prisma.participant.create({
       data: {
         id: participantId,
-        sport: {
-          connect: {
-            sport: Sport.GOLF,
-          },
-        },
+        sportLeagueId: await participantLeagueIdForSport(getPrisma(), Sport.GOLF),
         participantType: 'INDIVIDUAL',
         firstName: 'Scottie',
         lastName: 'Scheffler',
@@ -561,11 +558,7 @@ describe('Contract verification (web)', () => {
         name: `Tiger Contract Contest ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',
-        sport: {
-          connect: {
-            sport: Sport.GOLF,
-          },
-        },
+        sportLeagueId: await participantLeagueIdForSport(getPrisma(), Sport.GOLF),
       },
     });
 
@@ -599,11 +592,7 @@ describe('Contract verification (web)', () => {
           name: `Contract Field Golfer ${index} ${randomUUID().slice(0, 8)}`,
           participantType: 'INDIVIDUAL',
           status: 'ACTIVE',
-          sport: {
-            connect: {
-              sport: Sport.GOLF,
-            },
-          },
+          sportLeagueId: await participantLeagueIdForSport(getPrisma(), Sport.GOLF),
         },
       });
       await getPrisma().sportEventParticipant.create({
@@ -931,7 +920,7 @@ describe('Contract verification (web)', () => {
       },
     });
     const golfer = await prisma.participant.create({
-      data: { sportId: sport.id, name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL', externalIds: {} },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL', externalIds: {} },
     });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true } });
     // The event added after the entry, as "Events in this contest" adds one: the entry gets a
@@ -1009,7 +998,7 @@ describe('Contract verification (web)', () => {
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
     const [home, away] = await Promise.all(['Contract Home', 'Contract Away'].map(async (name) => {
-      const team = await prisma.participant.create({ data: { sportId: sport.id, name, participantType: 'TEAM', externalIds: {} } });
+      const team = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'TEAM', externalIds: {} } });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
     }));
     const game = await prisma.sportEventMatch.create({

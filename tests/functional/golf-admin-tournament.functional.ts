@@ -1,9 +1,8 @@
-import { findSportRow, Sport } from '@poolmaster/shared/domain';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
   applyEventParticipantUpload,
-  applyParticipantLeagueAffiliationUpload,
+  applySportLeagueRankingUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   cloneEventYear,
@@ -17,7 +16,6 @@ import {
   listEventRounds,
   listEvents,
   listEventTiers,
-  listSports,
   previewEventGolfRoundScores,
   previewEventParticipantUpload,
   releaseEvent,
@@ -113,17 +111,16 @@ async function cleanup(): Promise<void> {
   const leagueIds = [...created.sportLeagueIds];
   if (created.participantIds.size) {
     const pids = [...created.participantIds];
-    await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: pids } } });
     await db.participantProviderMapping.deleteMany({ where: { participantId: { in: pids } } });
   }
   if (leagueIds.length) {
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
-  if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
-  }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
+  }
+  if (leagueIds.length) {
+    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   }
   if (created.userIds.size) {
     await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
@@ -146,7 +143,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const golfSportId = expectDefined(findSportRow(expectDefined((await listSports({ client: c })).data).sports, Sport.GOLF)).id;
 
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
@@ -158,13 +154,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.sportLeagueIds.add(sportLeagueId);
     expect(expectDefined(league.data).sportLeague.currentEventYear).toBeNull();
 
-    // --- 20 participants + affiliation upload (incl. a tied ranking pair) ------
+    // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
     const players: Array<{ id: string; externalId: string; rank: number }> = [];
     for (let i = 0; i < 20; i += 1) {
       const externalId = `${RUN}-p${i}`;
       const p = await createParticipant({
         client: c,
-        body: { sportId: golfSportId, participantType: 'INDIVIDUAL', name: `${RUN} Player ${i}`, shortName: `P${i}`, nationality: 'USA', externalId },
+        body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${RUN} Player ${i}`, shortName: `P${i}`, nationality: 'USA', externalId },
       });
       expect(p.response?.status).toBe(201);
       created.participantIds.add(expectDefined(p.data).participant.id);
@@ -172,13 +168,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       players.push({ id: expectDefined(p.data).participant.id, externalId, rank: i >= 18 ? 19 : i + 1 });
     }
 
-    const rosterApply = await applyParticipantLeagueAffiliationUpload({
+    const rosterApply = await applySportLeagueRankingUpload({
       client: c,
       path: { sportLeagueId },
       body: { rows: players.map((p) => ({ externalId: p.externalId, ranking: p.rank })) },
     });
     expect(rosterApply.response?.status).toBe(200);
-    expect(expectDefined(rosterApply.data).affiliations.length).toBe(20);
+    expect(expectDefined(rosterApply.data).participants.length).toBe(20);
 
     // --- Event: seeds 4 rounds + 6 default tiers --------------------------------
     const tournament = await createEvent({
@@ -234,10 +230,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     });
     expect(wd.response?.status).toBe(200);
 
-    // --- 21st, non-affiliated participant added straight to the field ----------
+    // --- 21st participant, of another tour, added straight to the field -------
+    const guestTour = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `LIV ${RUN}` } });
+    const guestTourId = expectDefined(guestTour.data).sportLeague.id;
+    created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
       client: c,
-      body: { sportId: golfSportId, participantType: 'INDIVIDUAL', name: `${RUN} LIV Guest`, shortName: 'GUEST', nationality: 'ESP', externalId: `${RUN}-guest` },
+      body: { sportLeagueId: guestTourId, participantType: 'INDIVIDUAL', name: `${RUN} LIV Guest`, shortName: 'GUEST', nationality: 'ESP', externalId: `${RUN}-guest` },
     });
     const guestId = expectDefined(guest.data).participant.id;
     created.participantIds.add(guestId);
@@ -563,6 +562,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       client: c,
       body: { sportLeagueId: ANY_UUID, eventYear: 2030, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
     }), deny);
-    expectFunctionalError(await createParticipant({ client: c, body: { sportId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
+    expectFunctionalError(await createParticipant({ client: c, body: { sportLeagueId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });
 });

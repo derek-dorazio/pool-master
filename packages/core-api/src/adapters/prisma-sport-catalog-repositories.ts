@@ -1,6 +1,6 @@
 /**
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
- * Sport, SportLeague, ParticipantLeagueAffiliation, SportEvent, EventSeries,
+ * Sport, SportLeague, SportEvent, EventSeries,
  * SportEventRound, SportEventParticipant, SportEventTier,
  * and SportEventParticipantValuation.
  *
@@ -13,8 +13,6 @@ import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   EventSeriesRepository,
-  ParticipantLeagueAffiliationRepository,
-  ParticipantRanking,
   PriceAssignment,
   ReplacementValuation,
   SportEventCreate,
@@ -51,7 +49,6 @@ import type {
   BackgroundJobRequest,
   EventPricingConfig,
   EventSeries,
-  ParticipantLeagueAffiliation,
   Sport,
   SportConfig,
   SportEvent,
@@ -178,9 +175,9 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
         // A round inserted meanwhile takes FOR KEY SHARE on this row too, so it is counted or fails.
         roundCount: await tx.sportLeague.count({ where: { parentSportLeagueId: id } }),
+        participantCount: await tx.participant.count({ where: { sportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
-      await tx.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: id } });
       await tx.eventSeries.deleteMany({ where: { sportLeagueId: id } });
       // A muted list is checked when set, not a foreign key, and a league saves its whole list
       // back: an id left in it would make that save fail. Prisma cannot remove an array element.
@@ -188,94 +185,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       await tx.sportLeague.delete({ where: { id } });
       return uses;
     }));
-  }
-}
-
-export class PrismaParticipantLeagueAffiliationRepository implements ParticipantLeagueAffiliationRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findBySportLeague(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]> {
-    const rows = await this.prisma.participantLeagueAffiliation.findMany({
-      where: { sportLeagueId },
-      orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
-      include: { participant: true },
-    });
-    return rows.map(toAffiliation);
-  }
-
-  async find(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation | null> {
-    const row = await this.prisma.participantLeagueAffiliation.findUnique({
-      where: { participantId_sportLeagueId: { participantId, sportLeagueId } },
-      include: { participant: true },
-    });
-    return row ? toAffiliation(row) : null;
-  }
-
-  async create(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation> {
-    return toAffiliation(await this.prisma.participantLeagueAffiliation.create({
-      data: { participantId, sportLeagueId },
-      include: { participant: true },
-    }));
-  }
-
-  async delete(sportLeagueId: string, participantId: string): Promise<void> {
-    await this.prisma.participantLeagueAffiliation.delete({
-      where: { participantId_sportLeagueId: { participantId, sportLeagueId } },
-    });
-  }
-
-  async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    await this.rewriteRankings(sportLeagueId, rankings, { createMissing: false });
-  }
-
-  async upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
-    await this.rewriteRankings(sportLeagueId, rankings, { createMissing: true });
-  }
-
-  /**
-   * Each ranking written in a fixed number of statements, whatever the list's length (#1252):
-   * Prisma has no update of many rows to different values, and nothing points at an
-   * affiliation row, so the rows named are deleted and inserted again, each keeping its id and
-   * creation time. A ranking for a participant with no affiliation is added when
-   * `createMissing`, and is an error otherwise, as an update of a missing row is.
-   */
-  private async rewriteRankings(
-    sportLeagueId: string,
-    rankings: readonly ParticipantRanking[],
-    { createMissing }: { createMissing: boolean },
-  ): Promise<void> {
-    // A participant ranked twice keeps the later ranking, as two updates in a row would leave it.
-    const latest = [...new Map(rankings.map((entry) => [entry.participantId, entry])).values()];
-    if (latest.length === 0) return;
-    await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.participantLeagueAffiliation.findMany({
-        where: { sportLeagueId, participantId: { in: latest.map((entry) => entry.participantId) } },
-        select: { id: true, participantId: true, createdAt: true },
-      });
-      const existingByParticipantId = new Map(existing.map((row) => [row.participantId, row]));
-      const missing = latest.filter((entry) => !existingByParticipantId.has(entry.participantId));
-      if (!createMissing && missing.length > 0) {
-        throw new Error(`No ${sportLeagueId} affiliation to rank for participant(s) ${missing.map((entry) => entry.participantId).join(', ')}.`);
-      }
-      await tx.participantLeagueAffiliation.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
-      await tx.participantLeagueAffiliation.createMany({
-        data: latest.map((entry) => ({
-          ...existingByParticipantId.get(entry.participantId),
-          participantId: entry.participantId,
-          sportLeagueId,
-          ranking: entry.ranking,
-        })),
-      });
-    });
-  }
-
-  async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.participantLeagueAffiliation.groupBy({
-      by: ['sportLeagueId'],
-      where: { sportLeagueId: { in: [...sportLeagueIds] } },
-      _count: { _all: true },
-    });
-    return countMap(sportLeagueIds, groups.map((group) => [group.sportLeagueId, group._count._all]));
   }
 }
 
@@ -512,22 +421,13 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return labels;
   }
 
-  async findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts> {
-    const [scheduledRoundCount, unlinkedParticipantCount, contestSetupCount] = await Promise.all([
+  async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
+    const [scheduledRoundCount, contestSetupCount] = await Promise.all([
       this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
-      event.linkProviderId === null
-        ? Promise.resolve(null)
-        : this.prisma.sportEventParticipant.count({
-          where: {
-            sportEventId: event.id,
-            isActive: true,
-            participant: { providerMappings: { none: { providerId: event.linkProviderId } } },
-          },
-        }),
       // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
       this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
     ]);
-    return { scheduledRoundCount, unlinkedParticipantCount, contestSetupCount };
+    return { scheduledRoundCount, contestSetupCount };
   }
 
   async findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]> {
@@ -769,11 +669,11 @@ const FIELD_ORDER = [
 /**
  * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
  * statement on one connection, so the whole field is a handful of sequential queries; empty
- * relations, such as a golf event's race results, return nothing. Affiliation is read as ids.
+ * relations, such as a golf event's race results, return nothing.
  */
-function fieldRowInclude(sportLeagueIds: readonly string[]) {
+function fieldRowInclude() {
   return {
-    participant: { include: { leagueAffiliations: { where: { sportLeagueId: { in: [...sportLeagueIds] } }, select: { sportLeagueId: true } } } },
+    participant: true,
     valuation: true,
     standing: { include: { golf: true } },
     rounds: {
@@ -788,13 +688,12 @@ function fieldRowInclude(sportLeagueIds: readonly string[]) {
 
 type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typeof fieldRowInclude> }>;
 
-/** A field row, its participant's affiliation flagged against `sportLeagueId`, its event's. */
+/** A field row, flagged when its participant belongs to `sportLeagueId`, its event's. */
 function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipantView {
   const { participant, valuation, standing, rounds, raceResult, homeMatches, awayMatches, ...entry } = row;
-  const { leagueAffiliations, ...participantRow } = participant;
   return {
     entry: toSportEventParticipant(entry),
-    participant: mapToParticipant(participantRow),
+    participant: mapToParticipant(participant),
     valuation: valuation ? toValuation(valuation) : null,
     standing: standing
       ? {
@@ -830,7 +729,7 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
     matches: [...homeMatches, ...awayMatches]
       .sort((left, right) => left.matchNumber - right.matchNumber)
       .map(toSportEventMatch),
-    affiliatedWithSportLeague: leagueAffiliations.some((affiliation) => affiliation.sportLeagueId === sportLeagueId),
+    affiliatedWithSportLeague: participant.sportLeagueId === sportLeagueId,
   };
 }
 
@@ -865,7 +764,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   async findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]> {
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
-      include: fieldRowInclude([sportLeagueId]),
+      include: fieldRowInclude(),
       orderBy: FIELD_ORDER,
     });
     return rows.map((row) => toFieldRow(row, sportLeagueId));
@@ -875,7 +774,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     if (events.length === 0) return [];
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId: { in: events.map((event) => event.sportEventId) } },
-      include: fieldRowInclude([...new Set(events.map((event) => event.sportLeagueId))]),
+      include: fieldRowInclude(),
       orderBy: FIELD_ORDER,
     });
     return events.flatMap(({ sportEventId, sportLeagueId }) => rows
@@ -886,7 +785,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
     const row = await this.prisma.sportEventParticipant.findFirst({
       where: { id: sportEventParticipantId, sportEventId },
-      include: fieldRowInclude([sportLeagueId]),
+      include: fieldRowInclude(),
     });
     return row ? toFieldRow(row, sportLeagueId) : null;
   }
@@ -1202,20 +1101,6 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     scoringFamily: row.scoringFamily,
     parentSportLeagueId: row.parentSportLeagueId,
     parentRoundNumbers: row.parentRoundNumbers,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toAffiliation(
-  row: Prisma.ParticipantLeagueAffiliationGetPayload<{ include: { participant: true } }>,
-): ParticipantLeagueAffiliation {
-  return {
-    id: row.id,
-    participantId: row.participantId,
-    sportLeagueId: row.sportLeagueId,
-    ranking: row.ranking,
-    participant: mapToParticipant(row.participant),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
