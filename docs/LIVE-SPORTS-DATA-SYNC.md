@@ -129,10 +129,15 @@ The keyword each league is seeded with in the baseline, and the tour it matches.
 A sport league whose `event_sync_provider_id` a root admin has set (the sport league's Edit
 details, "Event sync"; #1725) is **synced**: every six hours `SyncedEventCreationScheduler`
 (`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
-ingestion scheduler) runs the year import below for this calendar year and the next, for each
-active synced league. New events are born `DRAFT` and wait for an admin's release, for now. Setting
+ingestion scheduler) queues one `SYNC_LEAGUE_EVENTS` background job per active synced league
+(#1819), and a root admin's **Sync now** (`POST /api/v1/ingestion/sport-leagues/:sportLeagueId/events-sync`,
+202 with the queued job; 422 `SPORT_LEAGUE_NOT_SYNCED` on a league with no event sync) queues the
+same job. `LeagueEventsSync.run` (`events/league-events-sync.ts`) runs the year import below for
+this calendar year and the next (or the one year Sync now names), recording one `EVENTS` sync run
+with its trigger, progress and what it created and updated (`docs/BACKGROUND-JOBS.md`). Sync now
+replaces the Year import action below, which stays until the admin UI moves to it. New events are born `DRAFT` and wait for an admin's release, for now. Setting
 the provider is refused unless it is registered and covers the league's sport, and the league has
-a match keyword. One league's failed read is logged and the sweep goes on.
+a match keyword. One league's failed read fails only its own job, which retries.
 
 The same sweep then keeps the league's already-linked events current with what the provider just
 listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's
@@ -341,6 +346,12 @@ checks the source and actor agree.
 | Manual sync | `MANUAL` / `ROOT_ADMIN` | `MANUAL_EVENT_SYNC` | `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` → `IngestionService.syncEventData` → `MANUAL_EVENT_SYNC` job → `runManualEventSync` | Either feed. The field refresh button uses the same path. |
 | Webhook | `WEBHOOK` / `SYSTEM:webhook` | `WEBHOOK_EVENT_SYNC` | `POST /api/v1/provider-webhooks/balldontlie` → `ProviderNotificationService.receive` → `PROVIDER_EVENT_SYNC` job → `IngestionScheduler.runNotifiedEventSync` | See below. |
 | Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
+
+Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`), its **trigger** (`SCHEDULE`,
+`WEBHOOK` or `ADMIN`), the league or event it covers, and the background job that ran it, so
+Activity (`GET /api/v1/activity`) shows each job with its runs (#1819). The league events sync is
+an `EVENTS` run outside this ledger, on the `SYNC_LEAGUE_EVENTS` job. The field and live-score
+loops still run on their own timers; their runs carry no job yet.
 
 ### The webhook path (#1498)
 

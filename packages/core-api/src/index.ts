@@ -69,6 +69,7 @@ import {
   PrismaSportEventParticipantStatLineRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
+  PrismaSportRepository,
   PrismaSquaresRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
@@ -89,6 +90,9 @@ import { EventLifecycleScheduler } from './modules/events/event-lifecycle-schedu
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
+import { LeagueEventsSync } from './modules/events/league-events-sync';
+import { activityModule } from './modules/activity/routes';
+import { ActivityService } from './modules/activity/activity-service';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -296,13 +300,17 @@ export function buildApp() {
   // One set of event services for the admin routes and the synced event creation sweep.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
-  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
+  // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
+  const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
+    sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, registry, app.log),
     sportEvents: sportEventServices.sportEvents,
-    jobLock,
+    syncRuns: providerSyncRuns,
+    jobs: backgroundJobs,
     logger: app.log,
   });
+  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({ leagueEventsSync, jobLock, logger: app.log });
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
@@ -327,7 +335,7 @@ export function buildApp() {
     jobs: backgroundJobRepository,
     handlers: {
       MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
-      PROVIDER_EVENT_SYNC: async (payload) => { await ingestionScheduler.runNotifiedEventSync(payload); },
+      PROVIDER_EVENT_SYNC: async (payload, context) => { await ingestionScheduler.runNotifiedEventSync(payload, { jobId: context.jobId }); },
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
       CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
@@ -336,6 +344,7 @@ export function buildApp() {
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+      SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -386,7 +395,11 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
-  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
+  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync });
+  app.register(activityModule, {
+    prefix: '/api/v1/activity',
+    activity: new ActivityService({ jobs: backgroundJobRepository, syncRuns: providerSyncRuns }),
+  });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
   app.register(providerWebhooksModule, {
     prefix: '/api/v1/provider-webhooks',

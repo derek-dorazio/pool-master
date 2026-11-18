@@ -65175,6 +65175,48 @@
               "null"
             ]
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "EVENTS",
+              "FIELD",
+              "SCORES"
+            ],
+            "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "SCHEDULE",
+              "WEBHOOK",
+              "ADMIN"
+            ],
+            "description": "What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now."
+          },
+          "sportLeagueId": {
+            "description": "The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "description": "The PoolMaster event a FIELD or SCORES run synced, where known.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "backgroundJobId": {
+            "description": "The background job that ran it (its Activity row); null when no job ran it.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -65445,6 +65487,11 @@
           "providerId",
           "sport",
           "eventId",
+          "kind",
+          "trigger",
+          "sportLeagueId",
+          "sportEventId",
+          "backgroundJobId",
           "status",
           "startedAt",
           "completedAt",
@@ -65485,6 +65532,48 @@
               "string",
               "null"
             ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "EVENTS",
+              "FIELD",
+              "SCORES"
+            ],
+            "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "SCHEDULE",
+              "WEBHOOK",
+              "ADMIN"
+            ],
+            "description": "What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now."
+          },
+          "sportLeagueId": {
+            "description": "The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "description": "The PoolMaster event a FIELD or SCORES run synced, where known.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "backgroundJobId": {
+            "description": "The background job that ran it (its Activity row); null when no job ran it.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "status": {
             "type": "string",
@@ -66037,6 +66126,11 @@
           "providerId",
           "sport",
           "eventId",
+          "kind",
+          "trigger",
+          "sportLeagueId",
+          "sportEventId",
+          "backgroundJobId",
           "status",
           "startedAt",
           "completedAt",
@@ -66130,6 +66224,48 @@
                     "null"
                   ]
                 },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "EVENTS",
+                    "FIELD",
+                    "SCORES"
+                  ],
+                  "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
+                },
+                "trigger": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULE",
+                    "WEBHOOK",
+                    "ADMIN"
+                  ],
+                  "description": "What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now."
+                },
+                "sportLeagueId": {
+                  "description": "The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "sportEventId": {
+                  "description": "The PoolMaster event a FIELD or SCORES run synced, where known.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "backgroundJobId": {
+                  "description": "The background job that ran it (its Activity row); null when no job ran it.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -66400,6 +66536,11 @@
                 "providerId",
                 "sport",
                 "eventId",
+                "kind",
+                "trigger",
+                "sportLeagueId",
+                "sportEventId",
+                "backgroundJobId",
                 "status",
                 "startedAt",
                 "completedAt",
@@ -66490,6 +66631,48 @@
                     "null"
                   ]
                 },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "EVENTS",
+                    "FIELD",
+                    "SCORES"
+                  ],
+                  "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
+                },
+                "trigger": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULE",
+                    "WEBHOOK",
+                    "ADMIN"
+                  ],
+                  "description": "What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now."
+                },
+                "sportLeagueId": {
+                  "description": "The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "sportEventId": {
+                  "description": "The PoolMaster event a FIELD or SCORES run synced, where known.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "backgroundJobId": {
+                  "description": "The background job that ran it (its Activity row); null when no job ran it.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -66760,6 +66943,11 @@
                 "providerId",
                 "sport",
                 "eventId",
+                "kind",
+                "trigger",
+                "sportLeagueId",
+                "sportEventId",
+                "backgroundJobId",
                 "status",
                 "startedAt",
                 "completedAt",
@@ -66780,6 +66968,19 @@
         ],
         "additionalProperties": false,
         "description": "A manual sync submission. The runs execute asynchronously after the request is accepted."
+      },
+      "LeagueEventsSyncRequest": {
+        "type": "object",
+        "properties": {
+          "eventYear": {
+            "description": "The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.",
+            "type": "integer",
+            "minimum": 1900,
+            "maximum": 9999
+          }
+        },
+        "additionalProperties": false,
+        "description": "A root admin's Sync now on a sport league's events."
       },
       "UnmappedProviderParticipantDto": {
         "type": "object",
@@ -67160,6 +67361,457 @@
         ],
         "additionalProperties": false,
         "description": "Live provider catalog browse results — serves both tournament-creation browse and score-source linking."
+      },
+      "ActivityJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MANUAL_EVENT_SYNC",
+              "PROVIDER_EVENT_SYNC",
+              "CONTEST_STARTED_EMAILS",
+              "CONTEST_SETTLED_EMAILS",
+              "CONTEST_EVENT_CHANGED_EMAILS",
+              "CONTEST_REOPENED_EMAILS",
+              "SETTLE_SPORT_EVENT_CONTESTS",
+              "SETTLE_GAME_CONTESTS",
+              "REBUILD_LEADERBOARDS",
+              "ADD_RELEASED_EDITION_TO_CONTEST",
+              "SYNC_LEAGUE_EVENTS"
+            ],
+            "description": "The job's handler. Its kind follows from it."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SYNC",
+              "EMAIL",
+              "SETTLEMENT",
+              "RELEASE",
+              "OTHER"
+            ],
+            "description": "What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED"
+            ],
+            "description": "QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again."
+          },
+          "sportLeagueId": {
+            "description": "The sport league a whole-league job is about, such as its events sync; null for a job on one event.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "description": "The event the job is about; null when it is about none.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Tries so far, counting one in progress."
+          },
+          "runAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it is or was due: first queued, or retried after a failed try."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was queued."
+          },
+          "completedAt": {
+            "description": "When it SUCCEEDED or FAILED.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "description": "The error of its last failed try.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "description": "What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "syncRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "kind",
+          "status",
+          "sportLeagueId",
+          "sportEventId",
+          "attempts",
+          "runAt",
+          "createdAt",
+          "completedAt",
+          "lastError",
+          "result",
+          "syncRunIds"
+        ],
+        "additionalProperties": false,
+        "description": "One background job on the Activity grid."
+      },
+      "ActivityListQuery": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SYNC",
+              "EMAIL",
+              "SETTLEMENT",
+              "RELEASE",
+              "OTHER"
+            ],
+            "description": "What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED"
+            ],
+            "description": "QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again."
+          },
+          "sportLeagueId": {
+            "description": "The league's own jobs and the jobs on any of its events.",
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "description": "Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "description": "Latest queue time to include. Defaults to now.",
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters over Activity. A queue-time window bounds it; nothing pages it."
+      },
+      "ActivityListResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "MANUAL_EVENT_SYNC",
+                    "PROVIDER_EVENT_SYNC",
+                    "CONTEST_STARTED_EMAILS",
+                    "CONTEST_SETTLED_EMAILS",
+                    "CONTEST_EVENT_CHANGED_EMAILS",
+                    "CONTEST_REOPENED_EMAILS",
+                    "SETTLE_SPORT_EVENT_CONTESTS",
+                    "SETTLE_GAME_CONTESTS",
+                    "REBUILD_LEADERBOARDS",
+                    "ADD_RELEASED_EDITION_TO_CONTEST",
+                    "SYNC_LEAGUE_EVENTS"
+                  ],
+                  "description": "The job's handler. Its kind follows from it."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "SYNC",
+                    "EMAIL",
+                    "SETTLEMENT",
+                    "RELEASE",
+                    "OTHER"
+                  ],
+                  "description": "What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "SUCCEEDED",
+                    "FAILED"
+                  ],
+                  "description": "QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again."
+                },
+                "sportLeagueId": {
+                  "description": "The sport league a whole-league job is about, such as its events sync; null for a job on one event.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "sportEventId": {
+                  "description": "The event the job is about; null when it is about none.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Tries so far, counting one in progress."
+                },
+                "runAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it is or was due: first queued, or retried after a failed try."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was queued."
+                },
+                "completedAt": {
+                  "description": "When it SUCCEEDED or FAILED.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "lastError": {
+                  "description": "The error of its last failed try.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "result": {
+                  "description": "What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {}
+                },
+                "syncRunIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "description": "The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts."
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "kind",
+                "status",
+                "sportLeagueId",
+                "sportEventId",
+                "attempts",
+                "runAt",
+                "createdAt",
+                "completedAt",
+                "lastError",
+                "result",
+                "syncRunIds"
+              ],
+              "additionalProperties": false,
+              "description": "One background job on the Activity grid."
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false,
+        "description": "The jobs queued inside the window that match the filters, newest first."
+      },
+      "ActivityJobResponse": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "MANUAL_EVENT_SYNC",
+                  "PROVIDER_EVENT_SYNC",
+                  "CONTEST_STARTED_EMAILS",
+                  "CONTEST_SETTLED_EMAILS",
+                  "CONTEST_EVENT_CHANGED_EMAILS",
+                  "CONTEST_REOPENED_EMAILS",
+                  "SETTLE_SPORT_EVENT_CONTESTS",
+                  "SETTLE_GAME_CONTESTS",
+                  "REBUILD_LEADERBOARDS",
+                  "ADD_RELEASED_EDITION_TO_CONTEST",
+                  "SYNC_LEAGUE_EVENTS"
+                ],
+                "description": "The job's handler. Its kind follows from it."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "SYNC",
+                  "EMAIL",
+                  "SETTLEMENT",
+                  "RELEASE",
+                  "OTHER"
+                ],
+                "description": "What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "QUEUED",
+                  "RUNNING",
+                  "SUCCEEDED",
+                  "FAILED"
+                ],
+                "description": "QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again."
+              },
+              "sportLeagueId": {
+                "description": "The sport league a whole-league job is about, such as its events sync; null for a job on one event.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "sportEventId": {
+                "description": "The event the job is about; null when it is about none.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Tries so far, counting one in progress."
+              },
+              "runAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When it is or was due: first queued, or retried after a failed try."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When it was queued."
+              },
+              "completedAt": {
+                "description": "When it SUCCEEDED or FAILED.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastError": {
+                "description": "The error of its last failed try.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "result": {
+                "description": "What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {}
+              },
+              "syncRunIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts."
+              }
+            },
+            "required": [
+              "id",
+              "type",
+              "kind",
+              "status",
+              "sportLeagueId",
+              "sportEventId",
+              "attempts",
+              "runAt",
+              "createdAt",
+              "completedAt",
+              "lastError",
+              "result",
+              "syncRunIds"
+            ],
+            "additionalProperties": false,
+            "description": "One background job on the Activity grid."
+          }
+        },
+        "required": [
+          "job"
+        ],
+        "additionalProperties": false,
+        "description": "One background job, as Activity shows it."
       },
       "ClientLogLevel": {
         "type": "string",
@@ -81749,6 +82401,89 @@
         }
       }
     },
+    "/api/v1/ingestion/sport-leagues/{sportLeagueId}/events-sync": {
+      "post": {
+        "operationId": "syncLeagueEvents",
+        "summary": "Sync a sport league's events now",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Queues the sport league's events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider's events for the league's tour become its events, and the ones already linked take the provider's name, venue and dates. The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league's sync is already waiting to run, answers that job. 404 SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league's events.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeagueEventsSyncRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "One background job, as Activity shows it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityJobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ingestion/unmapped-participants": {
       "get": {
         "operationId": "listUnmappedProviderParticipants",
@@ -81919,6 +82654,120 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity/": {
+      "get": {
+        "operationId": "listActivity",
+        "summary": "List background jobs for the Activity grid",
+        "tags": [
+          "Activity"
+        ],
+        "description": "Every background job queued inside a window (syncs, emails, settlements, releases and the rest), filtered by kind, status, sport league and event, newest first. Nothing pages the result; the filters narrow it. `to` defaults to now; `from` to 24 hours before it, or to 30 days before it (every job kept) when a sportLeagueId or sportEventId narrows the read. A league's activity is its own jobs and the jobs on any of its events. Each sync job names the sync runs it ran; read one with getProviderSyncRun.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SYNC",
+                "EMAIL",
+                "SETTLEMENT",
+                "RELEASE",
+                "OTHER"
+              ]
+            },
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "description": "What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "QUEUED",
+                "RUNNING",
+                "SUCCEEDED",
+                "FAILED"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": false,
+            "description": "The league's own jobs and the jobs on any of its events."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "sportEventId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "description": "Earliest queue time to include. Defaults to 24 hours before `to`, or with a sportLeagueId or sportEventId, to 30 days before it: every job kept."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "description": "Latest queue time to include. Defaults to now."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The jobs queued inside the window that match the filters, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

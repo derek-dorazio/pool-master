@@ -213,6 +213,8 @@ export interface NotifiedEventSync {
   sport: Sport;
   providerId: string;
   eventId: string;
+  /** PoolMaster's event, when the job that asks knows it (#1819). */
+  sportEventId?: string;
 }
 
 export class IngestionScheduler {
@@ -622,7 +624,7 @@ export class IngestionScheduler {
    * over REST, so a duplicated, late or out-of-order notification writes nothing stale. It runs
    * only where the scheduled sweep would: a sport scheduled for ingestion, with live scores on.
    */
-  async runNotifiedEventSync(request: NotifiedEventSync): Promise<IngestionJobRecord | null> {
+  async runNotifiedEventSync(request: NotifiedEventSync, context: { jobId?: string } = {}): Promise<IngestionJobRecord | null> {
     const feed = 'EVENTLIVESCORES' as const;
     if (!(await this.isSportScheduled(request.sport))) {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
@@ -647,7 +649,7 @@ export class IngestionScheduler {
     const { scope } = normalized;
     return this.executeScheduledSyncRun(normalized, () =>
       this.pollLiveScores(scope.sport, scope.providerId, scope.eventId, scope.providerOptions),
-    'WEBHOOK_EVENT_SYNC');
+    'WEBHOOK_EVENT_SYNC', { backgroundJobId: context.jobId, sportEventId: request.sportEventId });
   }
 
   private normalizeScheduledEventSync(input: {
@@ -673,6 +675,7 @@ export class IngestionScheduler {
     normalizedRequest: NormalizedSyncRequest,
     run: () => Promise<IngestionJobRecord>,
     runType: 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC' = 'SCHEDULED_EVENT_SYNC',
+    scope: { backgroundJobId?: string; sportEventId?: string } = {},
   ): Promise<IngestionJobRecord> {
     const syncRunLedger = this.options.syncRunLedger;
     if (!syncRunLedger) {
@@ -684,6 +687,7 @@ export class IngestionScheduler {
       providerId: normalizedRequest.scope.providerId,
       submittedAt: this.getNow(),
       runType,
+      ...scope,
     });
     const syncRun = syncRuns.at(0);
 

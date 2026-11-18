@@ -176,6 +176,8 @@ export type ProviderNotifiedEventQuery = {
 
 /** A provider-linked event a notification may sync, and whether it holds the notified game. */
 export interface ProviderNotifiedEvent {
+  /** PoolMaster's own id for the event (#1819). */
+  sportEventId: string;
   sport: Sport;
   providerId: string;
   externalId: string;

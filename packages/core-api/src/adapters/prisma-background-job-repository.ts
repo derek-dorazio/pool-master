@@ -7,7 +7,9 @@ import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/sh
 import {
   BackgroundJobStatus,
   type BackgroundJob,
+  type BackgroundJobActivityFilter,
   type BackgroundJobRequest,
+  type BackgroundJobResult,
 } from '@poolmaster/shared/domain';
 
 /** The stored error is cut to this many characters: a stack or a provider body can be long. */
@@ -22,6 +24,44 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
 
   enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number> {
     return insertBackgroundJobs(this.prisma, requests);
+  }
+
+  async enqueueReturning(request: BackgroundJobRequest): Promise<BackgroundJob> {
+    // A dedupe key a waiting job holds writes, and answers, no row.
+    const written = await this.prisma.backgroundJob.createManyAndReturn({ data: [toCreateData(request)], skipDuplicates: true });
+    if (written.length > 0) return toBackgroundJob(written[0]);
+    const waiting = request.dedupeKey === undefined
+      ? null
+      : await this.prisma.backgroundJob.findUnique({ where: { dedupeKey: request.dedupeKey } });
+    if (!waiting) throw new Error(`A ${request.type} job was neither written nor found waiting`);
+    return toBackgroundJob(waiting);
+  }
+
+  async findActivity(filter: BackgroundJobActivityFilter): Promise<BackgroundJob[]> {
+    // A league's activity is its own jobs and its events' jobs: its events' ids in one read, then
+    // the jobs on the (sport_league_id, created_at) and (sport_event_id, created_at) indexes.
+    const leagueEventIds = filter.sportLeagueId === undefined
+      ? undefined
+      : (await this.prisma.sportEvent.findMany({
+        where: { eventSeries: { sportLeagueId: filter.sportLeagueId } },
+        select: { id: true },
+      })).map((event) => event.id);
+    const rows = await this.prisma.backgroundJob.findMany({
+      where: {
+        ...(filter.types !== undefined && { type: { in: [...filter.types] } }),
+        ...(filter.status !== undefined && { status: filter.status }),
+        ...(filter.sportEventId !== undefined && { sportEventId: filter.sportEventId }),
+        ...(filter.sportLeagueId !== undefined && {
+          OR: [
+            { sportLeagueId: filter.sportLeagueId },
+            ...(leagueEventIds && leagueEventIds.length > 0 ? [{ sportEventId: { in: leagueEventIds } }] : []),
+          ],
+        }),
+        createdAt: { gte: filter.createdFrom, lte: filter.createdTo },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return rows.map(toBackgroundJob);
   }
 
   async claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]> {
@@ -53,8 +93,13 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     });
   }
 
-  async markSucceeded(claim: BackgroundJobClaim, completedAt: Date): Promise<boolean> {
-    return this.markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: null });
+  async markSucceeded(claim: BackgroundJobClaim, completedAt: Date, result?: BackgroundJobResult): Promise<boolean> {
+    return this.markClaimed(claim, {
+      status: BackgroundJobStatus.SUCCEEDED,
+      completedAt,
+      leaseUntil: null,
+      ...(result !== undefined && { result: result as Prisma.InputJsonObject }),
+    });
   }
 
   async markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean> {
@@ -124,15 +169,18 @@ export async function insertBackgroundJobs(
  * Only for a non-empty `requests`.
  */
 export function backgroundJobsInsert(db: PrismaClient | Prisma.TransactionClient, requests: readonly BackgroundJobRequest[]) {
-  return db.backgroundJob.createMany({
-    data: requests.map((request) => ({
-      type: request.type,
-      payload: request.payload as Prisma.InputJsonValue,
-      ...(request.runAt && { runAt: request.runAt }),
-      dedupeKey: request.dedupeKey ?? null,
-    })),
-    skipDuplicates: true,
-  });
+  return db.backgroundJob.createMany({ data: requests.map(toCreateData), skipDuplicates: true });
+}
+
+function toCreateData(request: BackgroundJobRequest): Prisma.BackgroundJobCreateManyInput {
+  return {
+    type: request.type,
+    payload: request.payload as Prisma.InputJsonValue,
+    ...(request.runAt && { runAt: request.runAt }),
+    dedupeKey: request.dedupeKey ?? null,
+    sportLeagueId: request.sportLeagueId ?? null,
+    sportEventId: request.sportEventId ?? null,
+  };
 }
 
 function truncateError(error: string): string {
@@ -149,6 +197,9 @@ function toBackgroundJob(row: BackgroundJobRow): BackgroundJob {
     attempts: row.attempts,
     leaseUntil: row.leaseUntil ?? undefined,
     lastError: row.lastError ?? undefined,
+    sportLeagueId: row.sportLeagueId ?? undefined,
+    sportEventId: row.sportEventId ?? undefined,
+    result: (row.result ?? undefined) as BackgroundJobResult | undefined,
     createdAt: row.createdAt,
     completedAt: row.completedAt ?? undefined,
   };

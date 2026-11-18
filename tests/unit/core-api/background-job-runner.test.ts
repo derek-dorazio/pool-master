@@ -3,9 +3,11 @@ import {
   BACKGROUND_JOB_LEASE_MS,
   BackgroundJobQueue,
   BackgroundJobRunner,
+  PermanentBackgroundJobError,
   readBackgroundJobPollMs,
   type BackgroundJobContext,
   type BackgroundJobHandlers,
+  type BackgroundJobOutcome,
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
@@ -34,7 +36,7 @@ function clock() {
 }
 
 function setup(options: {
-  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<void>;
+  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
   concurrency?: number;
 } = {}) {
   const time = clock();
@@ -71,6 +73,36 @@ describe('background job runner (#1440)', () => {
     expect(handler).toHaveBeenCalledWith(syncPayload(), expect.objectContaining({ jobId: job.id, attempt: 1 }));
     expect(job).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 1, completedAt: time.now() });
     expect(job.leaseUntil).toBeUndefined();
+  });
+
+  it('keeps what a handler reports it did on the SUCCEEDED job, for Activity to show (#1819)', async () => {
+    const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ created: 2, updated: 1 }) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, result: { created: 2, updated: 1 } });
+  });
+
+  it('keeps no result on a job whose handler reports nothing', async () => {
+    const { jobs, runner, queue } = setup();
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs).result).toBeUndefined();
+  });
+
+  it('marks a job whose handler throws a permanent failure FAILED on that try, without retrying it, and logs an error (#1819)', async () => {
+    const { jobs, runner, queue, logger, handler } = setup({ handler: () => Promise.reject(new PermanentBackgroundJobError('PROVIDER_LEAGUE_REFUSED: not in the plan')) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1 });
+    expect(only(jobs).lastError).toContain('PROVIDER_LEAGUE_REFUSED');
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.failed' }), expect.any(String));
   });
 
   it('leaves a job queued for later untouched until its run time comes', async () => {

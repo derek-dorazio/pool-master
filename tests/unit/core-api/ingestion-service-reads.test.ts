@@ -1,4 +1,5 @@
 import { expectDefined } from '../../support/expect-defined';
+import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { expect } from '@jest/globals';
 import {
   DEFAULT_SYNC_RUN_WINDOW_HOURS,
@@ -324,7 +325,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     status: 'COMPLETED', recordsProcessed: 0, errors: 0, errorLog: [], warnings: [],
   };
 
-  it('returns the SUBMITTED runs before any feed runs, with one queued MANUAL_EVENT_SYNC job naming them', async () => {
+  it('returns the SUBMITTED runs before any feed runs, with one queued MANUAL_EVENT_SYNC job naming them and scoped to the linked event', async () => {
     const runs = syncRuns();
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
@@ -340,12 +341,16 @@ describe('IngestionService manual sync job (#1441)', () => {
     expect(runs.create).not.toHaveBeenCalled();
     expect(runs.jobs.rows).toEqual([expect.objectContaining({
       type: 'MANUAL_EVENT_SYNC',
-      payload: { syncRunIds: submitted.syncRuns.map((run) => run.id), sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' },
+      payload: { syncRunIds: submitted.syncRuns.map((run) => run.id), sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', sportEventId: 'event-1' },
+      sportEventId: 'event-1',
     })]);
+    expect(submitted.syncRuns.map((run) => [run.kind, run.trigger, run.sportEventId])).toEqual([['FIELD', 'ADMIN', 'event-1'], ['SCORES', 'ADMIN', 'event-1']]);
 
     await ingestion.jobsDone();
     expect(runEventSync).toHaveBeenCalledTimes(2);
     expect(runs.jobs.rows[0].status).toBe('SUCCEEDED');
+    // The job that ran them is named on each run, so Activity opens a job's runs.
+    expect(runs.rows.map((run) => run.backgroundJobId)).toEqual([runs.jobs.rows[0].id, runs.jobs.rows[0].id]);
   });
 
   it('runs each requested feed as its own run, and keeps going after one feed fails', async () => {
@@ -378,15 +383,17 @@ describe('IngestionService manual sync job (#1441)', () => {
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
     const waiting = await runs.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const started = await runs.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
-    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 2 });
+    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 2, jobId: 'job-1' });
 
     expect(runEventSync).toHaveBeenCalledTimes(1);
     expect(runEventSync).toHaveBeenCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
@@ -404,11 +411,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
     const started = await runs.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
-    await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 1 });
+    await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 1, jobId: 'job-1' });
 
     expect(runEventSync).not.toHaveBeenCalled();
     expect(runs.rows.find((run) => run.id === started.id)?.status).toBe('IN_PROGRESS');
@@ -419,7 +427,7 @@ describe('IngestionService manual sync job (#1441)', () => {
 
     await expect(ingestion.runManualEventSync({
       syncRunIds: ['00000000-0000-4000-8000-000000000001'], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1',
-    }, { attempt: 1 })).rejects.toThrow('Ingestion scheduler is required for manual event sync');
+    }, { attempt: 1, jobId: 'job-1' })).rejects.toThrow('Ingestion scheduler is required for manual event sync');
   });
 
   it('runs the other feeds, then fails the job when a failed feed\'s run could not be marked FAILED, so the retry marks it interrupted (#1445)', async () => {
@@ -439,20 +447,22 @@ describe('IngestionService manual sync job (#1441)', () => {
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
     const failing = await runs.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const healthy = await runs.create({
+      ...SCHEDULED_SCORES_RUN,
       providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
     const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' };
 
-    await expect(ingestion.runManualEventSync(payload, { attempt: 1 })).rejects.toThrow(`without a recorded outcome: ${failing.id}`);
+    await expect(ingestion.runManualEventSync(payload, { attempt: 1, jobId: 'job-1' })).rejects.toThrow(`without a recorded outcome: ${failing.id}`);
     expect(runs.rows.find((run) => run.id === failing.id)?.status).toBe('IN_PROGRESS');
     expect(runs.rows.find((run) => run.id === healthy.id)?.status).toBe('COMPLETED');
 
-    await ingestion.runManualEventSync(payload, { attempt: 2 });
+    await ingestion.runManualEventSync(payload, { attempt: 2, jobId: 'job-1' });
 
     expect(runs.rows.find((run) => run.id === failing.id)?.status).toBe('FAILED');
     expect(runEventSync).toHaveBeenCalledTimes(2);

@@ -13,5 +13,7 @@ export const ProviderEventSyncJobPayloadSchema = z.object({
   providerId: z.string().min(1),
   /** The event's id at that provider. */
   eventId: z.string().min(1),
+  /** The PoolMaster event linked to it, when known when queued (#1819): Activity's scope. */
+  sportEventId: z.string().min(1).optional(),
 });
 export type ProviderEventSyncJobPayload = z.infer<typeof ProviderEventSyncJobPayloadSchema>;

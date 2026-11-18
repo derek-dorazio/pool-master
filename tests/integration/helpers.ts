@@ -97,8 +97,15 @@ import {
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportLeagueRepository,
+  PrismaSportRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
+import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
+import { EventScoreSourceService } from '../../packages/core-api/src/modules/events/event-score-source-service';
+import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
+import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
+import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -290,8 +297,19 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     ingestionConfigReader: ingestionConfigService,
     jobs: backgroundJobs.queue,
   });
+  // A sport league's events sync (#1819), its Sync now and its job, as index.ts wires them.
+  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
+  const leagueEventsSync = new LeagueEventsSync({
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    sports: new PrismaSportRepository(prisma),
+    scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
+    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, leaderboards, providerRegistry).sportEvents,
+    syncRuns: providerSyncRuns,
+    jobs: backgroundJobs.queue,
+  });
   const runner = backgroundJobs.runWith({
     MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
+    SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
@@ -342,7 +360,11 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
-  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
+  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync });
+  testApp.register(activityModule, {
+    prefix: '/api/v1/activity',
+    activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),
+  });
   testApp.register(emailEventsModule, {
     prefix: '/api/v1/email',
     deliveryEvents: outbox.deliveryEvents,

@@ -49,6 +49,16 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     return rows.map(toProviderSyncRun);
   }
 
+  async findByBackgroundJobIds(backgroundJobIds: readonly string[]): Promise<ProviderSyncRun[]> {
+    if (backgroundJobIds.length === 0) return [];
+    const rows = await this.prisma.providerSyncRun.findMany({
+      where: { backgroundJobId: { in: [...backgroundJobIds] } },
+      omit: { detailsJson: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map(toProviderSyncRun);
+  }
+
   async update(id: string, update: ProviderSyncRunUpdate): Promise<void> {
     await this.prisma.providerSyncRun.update({
       where: { id },
@@ -58,6 +68,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
         completedAt: update.completedAt,
         payloadJson: update.payload as Prisma.InputJsonValue,
         ...(update.details && { detailsJson: update.details as Prisma.InputJsonValue }),
+        ...(update.backgroundJobId !== undefined && { backgroundJobId: update.backgroundJobId }),
       },
     });
   }
@@ -120,6 +131,11 @@ function toProviderSyncRun(row: Omit<ProviderSyncRunRow, 'detailsJson'>): Provid
     providerId: row.providerId,
     sport: row.sport,
     eventId: row.eventId,
+    kind: row.kind,
+    trigger: row.trigger,
+    sportLeagueId: row.sportLeagueId,
+    sportEventId: row.sportEventId,
+    backgroundJobId: row.backgroundJobId,
     status: row.status,
     startedAt: row.startedAt,
     completedAt: row.completedAt,
@@ -140,6 +156,11 @@ function toCreateData(input: ProviderSyncRunCreate) {
     providerId: input.providerId,
     sport: input.sport,
     eventId: input.eventId,
+    kind: input.kind,
+    trigger: input.trigger,
+    sportLeagueId: input.sportLeagueId,
+    sportEventId: input.sportEventId,
+    backgroundJobId: input.backgroundJobId,
     status: input.status,
     startedAt: input.startedAt,
     completedAt: input.completedAt,

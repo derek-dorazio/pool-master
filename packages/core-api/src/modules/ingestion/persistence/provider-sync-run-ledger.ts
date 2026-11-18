@@ -1,7 +1,14 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSyncRunCreate, ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import { IngestionJobStatus, ProviderSyncRunStatus, type BackgroundJobRequest, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import {
+  IngestionJobStatus,
+  ProviderSyncKind,
+  ProviderSyncRunStatus,
+  ProviderSyncTrigger,
+  type BackgroundJobRequest,
+  type ProviderSyncRun,
+} from '@poolmaster/shared/domain';
 import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
@@ -54,9 +61,14 @@ export class ProviderSyncRunLedger {
     return this.syncRuns.createWithJob(submissionRuns(input), input.job);
   }
 
+  /**
+   * Runs one submitted run's feed and records its outcome. `backgroundJobId` names the job that
+   * picked up a run submitted before it (an admin's sync, #1819), so Activity opens its runs.
+   */
   async executeFeedRun(
     syncRun: ProviderSyncRun,
     run: () => Promise<IngestionJobRecord | IngestionJobRecord[]>,
+    options: { backgroundJobId?: string } = {},
   ): Promise<IngestionJobRecord> {
     const startedAt = new Date();
     // Every run the ledger creates names its feed; the caller has already checked it.
@@ -77,6 +89,7 @@ export class ProviderSyncRunLedger {
       completedAt: null,
       payload: startedPayload,
       details: startedDetails,
+      ...(options.backgroundJobId !== undefined && { backgroundJobId: options.backgroundJobId }),
     });
     this.logger?.debug({
       syncRunId: syncRun.id,
@@ -214,6 +227,7 @@ export class ProviderSyncRunLedger {
       completedAt?: Date | null;
       payload: Record<string, unknown>;
       details: Record<string, unknown>;
+      backgroundJobId?: string;
     },
   ): Promise<void> {
     await this.syncRuns.update(syncRunId, update);
@@ -359,11 +373,30 @@ export function isEventSyncFeedType(
     || feed === 'EVENTLIVESCORES';
 }
 
+/** What started a feed run, as its payload's `runType` has always named it. */
+export type FeedRunType = 'MANUAL_EVENT_SYNC' | 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC';
+
+const FEED_RUN_TRIGGERS: Record<FeedRunType, ProviderSyncTrigger> = {
+  MANUAL_EVENT_SYNC: ProviderSyncTrigger.ADMIN,
+  SCHEDULED_EVENT_SYNC: ProviderSyncTrigger.SCHEDULE,
+  WEBHOOK_EVENT_SYNC: ProviderSyncTrigger.WEBHOOK,
+};
+
+const FEED_KINDS: Record<IngestionFeedType, ProviderSyncKind> = {
+  EVENTPARTICIPANTS: ProviderSyncKind.FIELD,
+  EVENTLIVESCORES: ProviderSyncKind.SCORES,
+};
+
 interface SubmissionInput {
   normalizedRequest: NormalizedSyncRequest;
   providerId: string;
   submittedAt: Date;
-  runType: string;
+  runType: FeedRunType;
+  /** The job the runs are created in, when one is (a webhook's sync, #1819). */
+  backgroundJobId?: string;
+  /** PoolMaster's event the provider event is linked to, when the caller knows it. */
+  sportEventId?: string;
+  sportLeagueId?: string;
 }
 
 /** One SUBMITTED run per requested feed, as the sync history shows it before it starts. */
@@ -374,6 +407,11 @@ function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
     providerId: input.providerId,
     sport,
     eventId,
+    kind: FEED_KINDS[feed],
+    trigger: FEED_RUN_TRIGGERS[input.runType],
+    sportLeagueId: input.sportLeagueId ?? null,
+    sportEventId: input.sportEventId ?? null,
+    backgroundJobId: input.backgroundJobId ?? null,
     status: 'SUBMITTED',
     startedAt: null,
     completedAt: null,

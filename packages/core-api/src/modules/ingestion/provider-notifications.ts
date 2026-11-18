@@ -98,12 +98,12 @@ export class ProviderNotificationService {
     const after = (ms: number) => new Date(now.getTime() + ms);
     const syncs = events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
-      { sport: event.sport, providerId: event.providerId, eventId: event.externalId },
+      { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
       { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event) },
     ));
     const reconciles = notification.phase !== 'END' ? [] : events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
-      { sport: event.sport, providerId: event.providerId, eventId: event.externalId },
+      { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
       { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event) },
     ));
     const queued = await this.deps.jobs.enqueueAll([...syncs, ...reconciles]);

@@ -305,6 +305,8 @@ describe('SDK Functional: Root Admin', () => {
     await getFunctionalPrisma().providerSyncRun.createMany({
       data: [
         {
+          kind: 'SCORES',
+          trigger: 'SCHEDULE',
           id: completedRunId,
           providerId,
           sport: 'GOLF',
@@ -324,6 +326,8 @@ describe('SDK Functional: Root Admin', () => {
           },
         },
         {
+          kind: 'SCORES',
+          trigger: 'SCHEDULE',
           id: randomUUID(),
           providerId,
           sport: 'GOLF',

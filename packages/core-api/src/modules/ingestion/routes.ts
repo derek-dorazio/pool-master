@@ -9,13 +9,15 @@
  * module rather than here.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto/ingestion.dto';
+import '@poolmaster/shared/dto/activity.dto';
+import type { LeagueEventsSyncRequest } from '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { EventScoreSourceService } from '../events/event-score-source-service';
@@ -23,10 +25,15 @@ import type { ProviderRegistry } from './core/provider-registry';
 import type { IngestionService } from './ingestion-service';
 import { createIngestionHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import { requireAuthUser } from '../../plugins/auth-guard';
+import { toActivityJobDto } from '../../mappers';
+import type { LeagueEventsSync } from '../events/league-events-sync';
 
 export interface IngestionModuleOptions {
   ingestionService: IngestionService;
   providerRegistry: ProviderRegistry;
+  /** A sport league's events sync (#1819), for its Sync now. */
+  leagueEventsSync: Pick<LeagueEventsSync, 'syncNow'>;
 }
 
 const SPORT_PARAM = { type: 'string', enum: Object.values(Sport) };
@@ -98,6 +105,32 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       response: { 202: schemaRef('ProviderManualSyncSubmissionResponse'), ...errors(404, 409, 422) },
     },
     handler: handler.submitEventSync,
+  });
+
+  fastify.post('/sport-leagues/:sportLeagueId/events-sync', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'Sync a sport league\'s events now',
+      description: 'Queues the sport league\'s events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider\'s events for the league\'s tour become its events, and the ones already linked take the provider\'s name, venue and dates. '
+        + 'The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league\'s sync is already waiting to run, answers that job. '
+        + '404 SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league\'s events.',
+      operationId: 'syncLeagueEvents',
+      params: {
+        type: 'object',
+        required: ['sportLeagueId'],
+        properties: { sportLeagueId: { type: 'string', format: 'uuid' } },
+      },
+      body: schemaRef('LeagueEventsSyncRequest'),
+      response: { 202: schemaRef('ActivityJobResponse'), ...errors(404, 422) },
+    },
+    handler: async (request: FastifyRequest<{ Params: { sportLeagueId: string }; Body: LeagueEventsSyncRequest }>, reply: FastifyReply) => {
+      const job = await opts.leagueEventsSync.syncNow({
+        sportLeagueId: request.params.sportLeagueId,
+        eventYear: request.body.eventYear,
+        requestedByUserId: requireAuthUser(request).userId,
+      });
+      return reply.code(202).send({ job: toActivityJobDto(job, []) });
+    },
   });
 
   fastify.get('/unmapped-participants', {

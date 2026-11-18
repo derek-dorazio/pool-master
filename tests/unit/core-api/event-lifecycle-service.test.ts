@@ -77,6 +77,7 @@ function startedEmailsJob(contestId: string) {
   return {
     type: BackgroundJobType.CONTEST_STARTED_EMAILS,
     payload: { contestId, sportEventId: 'sport-event-1' },
+    sportEventId: 'sport-event-1',
     runAt: undefined,
     dedupeKey: `CONTEST_STARTED_EMAILS:${contestId}`,
   };
@@ -87,6 +88,7 @@ function settleJob(completedAt: Date) {
   return {
     type: BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS,
     payload: { sportEventId: 'sport-event-1', completedAt: completedAt.toISOString() },
+    sportEventId: 'sport-event-1',
     runAt: undefined,
     dedupeKey: 'SETTLE_SPORT_EVENT_CONTESTS:sport-event-1',
   };
@@ -580,6 +582,7 @@ describe('EventLifecycleService settling a decided game\'s squares contests in a
     expect(settlement.jobs).toEqual([{
       type: BackgroundJobType.SETTLE_GAME_CONTESTS,
       payload: { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: decidedAt.toISOString() },
+      sportEventId: 'sport-event-1',
       runAt: undefined,
       dedupeKey: 'SETTLE_GAME_CONTESTS:game-1',
     }]);
@@ -990,6 +993,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(written).toEqual([{
       type: BackgroundJobType.CONTEST_REOPENED_EMAILS,
       payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: NEW_START.toISOString() },
+      sportEventId: 'sport-event-1',
       runAt: undefined,
       dedupeKey: `CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-${NEW_START.toISOString()}`,
     }]);

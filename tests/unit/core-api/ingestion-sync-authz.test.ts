@@ -63,6 +63,7 @@ async function buildIngestionSyncApp() {
     prefix: '/api/v1/ingestion',
     ingestionService: providerService as unknown as IngestionService,
     providerRegistry: {} as unknown as ProviderRegistry,
+    leagueEventsSync: { syncNow: jest.fn() },
   });
   await app.ready();
 
