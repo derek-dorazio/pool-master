@@ -128,6 +128,7 @@ function fieldColumnsFor(sport: Sport) {
   return [
     columnHelper.accessor((entry) => entry.participant.name, {
       id: 'participantName',
+      meta: { type: { kind: 'text' } },
       header: upperFirst(getSportDefinition(sport).vocabulary.participant.one),
       meta: { info: "The participant's name. Guest marks one from outside the sport league.", type: { kind: 'text' } },
       cell: ({ row }) => (
