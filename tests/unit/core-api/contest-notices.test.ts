@@ -347,6 +347,70 @@ describe('ContestNotices', () => {
     });
   });
 
+  describe('contestReopened ("Picks are open again")', () => {
+    const NEW_START = new Date('2026-04-16T11:40:00.000Z');
+    const reopenOf = (contestId: string, sportEventId: string, startsAt: Date = NEW_START) => ({ contestId, sportEventId, startsAt: startsAt.toISOString() });
+
+    it('tells every active league member, entered or not, that the postponed event\'s contest takes picks again until the new start, with a link to it', async () => {
+      const league = world.addLeague({ leagueCode: 'OFFICE24' });
+      const other = world.addLeague();
+      const event = world.addSportEvent({ name: 'Masters Tournament', startDate: NEW_START });
+      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [event.id] });
+      const nora = member(league.id, 'Nora');
+      const sam = member(league.id, 'Sam');
+      member(league.id, 'Gone', { membership: LeagueMembershipStatus.INACTIVE });
+      member(other.id, 'Elsewhere');
+
+      await notices().contestReopened(contest, event, reopenOf(contest.id, event.id));
+
+      expect(recipientIds()).toEqual([nora.user.id, sam.user.id].sort());
+      expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_REOPENED')).toBe(true);
+      const text = textTo(nora.user.id);
+      expect(text).toContain('Masters Tournament was postponed, so Masters Pick 6 is open again.');
+      expect(text).toContain('Picks close: Thu, Apr 16, 2026');
+      expect(text).toContain(`Make your picks: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+    });
+
+    it('tells each member once per reopen, and again when a second postponement reopens it to a later start', async () => {
+      const league = world.addLeague();
+      const event = world.addSportEvent({ startDate: NEW_START });
+      const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+      member(league.id, 'Nora');
+
+      await notices().contestReopened(contest, event, reopenOf(contest.id, event.id));
+      await notices().contestReopened(contest, event, reopenOf(contest.id, event.id));
+      expect(outbox.rows).toHaveLength(1);
+
+      await notices().contestReopened(contest, event, reopenOf(contest.id, event.id, new Date('2026-04-23T11:40:00.000Z')));
+      expect(outbox.rows).toHaveLength(2);
+    });
+
+    it('sends nothing, and says why, when the contest\'s league or the event\'s sport league is gone', async () => {
+      const event = world.addSportEvent({ startDate: NEW_START });
+      const orphan = world.addContest('no-such-league', { sportEventIds: [event.id] });
+      const league = world.addLeague();
+      member(league.id, 'Nora');
+      const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+
+      await notices().contestReopened(orphan, event, reopenOf(orphan.id, event.id));
+      await notices({ sportLeagues: { findById: async () => null } }).contestReopened(contest, event, reopenOf(contest.id, event.id));
+
+      expect(outbox.rows).toHaveLength(0);
+      expect(logger.warn).toHaveBeenCalledTimes(2);
+      expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'email.contestReopened.skipped' }), expect.any(String));
+    });
+
+    it('throws when the email cannot be queued, so the job that asked retries it', async () => {
+      const league = world.addLeague();
+      const event = world.addSportEvent({ startDate: NEW_START });
+      const contest = world.addContest(league.id, { sportEventIds: [event.id] });
+      member(league.id, 'Nora');
+      outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
+
+      await expect(notices().contestReopened(contest, event, reopenOf(contest.id, event.id))).rejects.toThrow('database unavailable');
+    });
+  });
+
   describe('contestSettled (F1, F2, F3)', () => {
     /** A settled place for an entry of the squad, as `readFinalStandings` answers it. */
     function place(squad: { id: string; name: string }, entryName: string, position: number, displayPosition: string, score: number) {

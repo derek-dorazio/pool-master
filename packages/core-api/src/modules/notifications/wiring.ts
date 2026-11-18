@@ -96,7 +96,7 @@ export function createContestNotices(prisma: PrismaClient, options: {
 
 /** The handlers of the contest email jobs (#1387, #1458), over `notices`. */
 export function createContestEmailJobs(prisma: PrismaClient, options: {
-  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled' | 'contestEventChanged'>;
+  notices: Pick<ContestNotices, 'contestStarted' | 'contestSettled' | 'contestEventChanged' | 'contestReopened'>;
   logger: FastifyBaseLogger;
 }): ContestEmailJobs {
   return new ContestEmailJobs({

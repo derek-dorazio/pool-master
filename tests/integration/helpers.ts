@@ -295,6 +295,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
+    CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),

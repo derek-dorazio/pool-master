@@ -32,7 +32,7 @@ import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, type Ev
 import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
-import { contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
+import { contestReopenedEmailsJob, contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
 import { settleSportEventContestsJob, type SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
 import { NO_JOBS_FOR_WRITE, type BackgroundJobQueue, type JobsForWrite } from '../background-jobs';
@@ -377,19 +377,29 @@ export class EventLifecycleService {
       const startsAt = Math.min(...contest.sportEventIds.map((id) => startById.get(id)?.getTime() ?? sportEvent.startDate.getTime()));
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), contest.id]);
     }
-    for (const [startsAt, contestIds] of dueByStart) {
-      // poolmaster-allow-query-in-loop: one write per start moment of the reopened contests, not per contest
-      const reopened = await this.contestDeps.contests.transitionStatuses(contestIds, {
-        from: REOPENABLE,
-        to: ContestStatus.OPEN,
-        startsAt: new Date(startsAt),
-      });
-      for (const contestId of reopened) {
-        this.logger?.info(
-          { action: 'events.postponed.contestReopened', data: { contestId, sportEventId: sportEvent.id, startsAt: new Date(startsAt).toISOString() } },
-          'Reopened a live contest for entries because its postponed event has not started',
-        );
+    const { jobs } = this;
+    let reopenedCount = 0;
+    try {
+      for (const [startsAt, contestIds] of dueByStart) {
+        // poolmaster-allow-query-in-loop: one write per start moment of the reopened contests, not per contest
+        const reopened = await this.contestDeps.contests.transitionStatuses(contestIds, {
+          from: REOPENABLE,
+          to: ContestStatus.OPEN,
+          startsAt: new Date(startsAt),
+          // "Picks are open again" (#1808): one job per contest that reopened, written with its move.
+          ...(jobs && { jobs: (movedIds) => movedIds.map((contestId) => contestReopenedEmailsJob(jobs, contestId, sportEvent.id, new Date(startsAt))) }),
+        });
+        for (const contestId of reopened) {
+          this.logger?.info(
+            { action: 'events.postponed.contestReopened', data: { contestId, sportEventId: sportEvent.id, startsAt: new Date(startsAt).toISOString() } },
+            'Reopened a live contest for entries because its postponed event has not started',
+          );
+        }
+        reopenedCount += reopened.length;
       }
+    } finally {
+      // The jobs of the contests already reopened have committed with them, even when a later write fails.
+      if (reopenedCount > 0) jobs?.queued();
     }
   }
 

@@ -969,6 +969,8 @@ export const EmailTemplateKey = {
   CONTEST_EXPANDED: 'CONTEST_EXPANDED',
   /** A league's Premium preview period ends in 30, 7 or 1 days, for its commissioners (#986). */
   LEAGUE_PLAN_PREVIEW_ENDING: 'LEAGUE_PLAN_PREVIEW_ENDING',
+  /** A postponement took a live contest back to open before the event's new start, for the league (#1808). */
+  CONTEST_REOPENED: 'CONTEST_REOPENED',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 
@@ -1022,6 +1024,8 @@ export const BackgroundJobType = {
   CONTEST_SETTLED_EMAILS: 'CONTEST_SETTLED_EMAILS',
   /** Queues "Event postponed", "New date" or "Event cancelled" (C6, C7) to the league of one contest on the event (#1458). */
   CONTEST_EVENT_CHANGED_EMAILS: 'CONTEST_EVENT_CHANGED_EMAILS',
+  /** Queues "Picks are open again" to the league of one contest a postponement took back to open (#1808). */
+  CONTEST_REOPENED_EMAILS: 'CONTEST_REOPENED_EMAILS',
   /** Settles the contests of one event that just completed or was cancelled (#1448). */
   SETTLE_SPORT_EVENT_CONTESTS: 'SETTLE_SPORT_EVENT_CONTESTS',
   /** Settles the squares contests played on one game once the game is decided (#711). */

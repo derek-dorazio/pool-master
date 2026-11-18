@@ -465,6 +465,21 @@ export interface ContestEventChangedEmailData {
   contestUrl: string;
 }
 
+/**
+ * "Picks are open again" (#1808): a postponement took a live contest back to open, so its members
+ * can make or change picks until the event's new start.
+ */
+export interface ContestReopenedEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  /** The postponed event, as a strip across the top; its start is the new one. */
+  event: EmailEventHeader;
+  /** When the reopened contest's picks close: its first event's new start. */
+  closesAt: Date;
+  contestUrl: string;
+}
+
 /** The league's contest on an event's previous edition, and who won it. */
 export interface PreviousContestWinners {
   contestName: string;
@@ -754,6 +769,7 @@ export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_JOINED: LeagueMemberJoinedEmailData;
   CONTEST_EXPANDED: ContestExpandedEmailData;
   LEAGUE_PLAN_PREVIEW_ENDING: LeaguePlanPreviewEndingEmailData;
+  CONTEST_REOPENED: ContestReopenedEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -844,6 +860,7 @@ export interface EmailTemplateScopeByKey {
   LEAGUE_MEMBER_JOINED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_EXPANDED: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_PLAN_PREVIEW_ENDING: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_REOPENED: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -1110,6 +1127,15 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderLeaguePlanPreviewEndingEmail,
+  },
+  CONTEST_REOPENED: {
+    // "New contest open" again, so the same switch and plan feature turn it off.
+    category: EmailCategory.CONTEST_UPDATES,
+    planFeature: PlanFeature.EMAIL_CONTEST_OPENED,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestReopenedEmail,
   },
 };
 
@@ -2041,6 +2067,41 @@ function renderContestEventChangedEmail(
       button('View contest', data.contestUrl),
     ].join(''),
     textLines: [`Hi ${data.userName},`, '', ...sentences, '', `View contest: ${data.contestUrl}`],
+  });
+}
+
+function renderContestReopenedEmail(
+  data: ContestReopenedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const closesLabel = 'Picks close';
+  const closesLine = formatDay(data.closesAt, context);
+  const intro = `${data.event.eventName} was postponed, so ${data.contestName} is open again.`;
+  const ask = 'Make or change your picks before the new start.';
+  return buildMessage(context, {
+    templateKey: 'CONTEST_REOPENED',
+    subject: `Picks are open again: ${data.contestName}`,
+    preheader: intro,
+    title: 'Picks open again',
+    leagueName: data.leagueName,
+    eventStrip: { event: data.event, line: formatDay(data.event.startsAt, context) },
+    notAffiliatedWith: [data.event.sportLeagueName],
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(`${escapeHtml(data.event.eventName)} was postponed, so ${strong(data.contestName)} is open again.`),
+      paragraph(escapeHtml(ask)),
+      goldBand(closesLabel, closesLine),
+      button('Make your picks', data.contestUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      intro,
+      ask,
+      '',
+      `${closesLabel}: ${closesLine}`,
+      `Make your picks: ${data.contestUrl}`,
+    ],
   });
 }
 

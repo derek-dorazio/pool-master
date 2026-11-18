@@ -591,6 +591,18 @@ contests a cancellation tells is decided before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
 
+Picks are open again (`CONTEST_REOPENED`, #1808) goes when a postponement takes a live contest
+back to `OPEN` because its event's start is ahead again (#1792): on the postponement itself, or
+at the lifecycle sweep after an edit moves the start out. The guarded write that reopens the
+contests writes one `CONTEST_REOPENED_EMAILS` job per contest it moved, as going live writes
+"Contest is live". The job tells every active league member, entered or not, that the contest
+is open again, with the event's new start, when picks close and a link to the contest. A
+contest that went live again, or reopened to another start, before the job ran is told nothing.
+It is in the Contest updates category and under the same plan feature as "New contest open". The
+idempotency key is the contest, the event and the start it reopened to, so a second
+postponement to a later start tells the league again. A postponement that already carries a
+new start also sends "Event postponed" to the commissioners and entrants a few seconds earlier.
+
 Commissioner event emails (#845 C1, C2 and C4) are the third kind of clock-driven email,
 in the Commissioner updates category:
 

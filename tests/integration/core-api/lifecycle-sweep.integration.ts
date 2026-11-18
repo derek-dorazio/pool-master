@@ -67,6 +67,7 @@ function lifecycleSweep(now: Date) {
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
     CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
+    CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
   });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),

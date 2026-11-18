@@ -801,6 +801,30 @@ describe('contest expanded', () => {
   });
 });
 
+describe('picks are open again', () => {
+  it('says the postponed event\'s contest is open again, with the new start under the event, when picks close and a Make your picks button to the contest', () => {
+    const data = EMAIL_TEMPLATE_FIXTURES.CONTEST_REOPENED;
+    const message = renderSystemEmailTemplate('CONTEST_REOPENED', data, UTC);
+
+    expect(message.subject).toBe('Picks are open again: Masters Pick 6');
+    expect(message.text).toContain('Picks open again\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
+    expect(message.text).toContain('The Masters was postponed, so Masters Pick 6 is open again.\nMake or change your picks before the new start.');
+    expect(message.text).toContain('Picks close: Thu, Apr 15, 2027');
+    expect(message.text).toContain(`Make your picks: ${data.contestUrl}`);
+    expect(message.html).toContain(`href="${data.contestUrl}"`);
+    expect(message.text).toContain('Not affiliated with PGA Tour or any sports league.');
+  });
+
+  it('escapes the contest\'s and event\'s names', () => {
+    const data = EMAIL_TEMPLATE_FIXTURES.CONTEST_REOPENED;
+    const message = renderSystemEmailTemplate('CONTEST_REOPENED', { ...data, contestName: 'Pool <b>One</b>', event: { ...data.event, eventName: 'Open <i>' } }, UTC);
+
+    expect(message.html).toContain('Open &lt;i&gt; was postponed, so <strong');
+    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt;</strong> is open again.');
+    expect(message.html).not.toContain('<b>One</b>');
+  });
+});
+
 describe('Premium preview period ending', () => {
   it('frames the end as the close of a gifted preview period, with the end time in the reader\'s zone, what Free allows, and a See your plan button', () => {
     const message = renderSystemEmailTemplate('LEAGUE_PLAN_PREVIEW_ENDING', EMAIL_TEMPLATE_FIXTURES.LEAGUE_PLAN_PREVIEW_ENDING, { timeZone: 'America/New_York' });
@@ -865,6 +889,7 @@ describe('the email template registry', () => {
       LEAGUE_MEMBER_JOINED: EmailCategory.COMMISSIONER_UPDATES,
       CONTEST_EXPANDED: EmailCategory.ACCOUNT,
       LEAGUE_PLAN_PREVIEW_ENDING: EmailCategory.ACCOUNT,
+      CONTEST_REOPENED: EmailCategory.CONTEST_UPDATES,
     });
   });
 
@@ -894,13 +919,14 @@ describe('the email template registry', () => {
       LEAGUE_MEMBER_JOINED: PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED,
       CONTEST_EXPANDED: null,
       LEAGUE_PLAN_PREVIEW_ENDING: null,
+      CONTEST_REOPENED: PlanFeature.EMAIL_CONTEST_OPENED,
     });
   });
 
-  it('sends every email plan feature from one template, the weekly digest sharing "Coming up soon"\'s, so no email feature on the Plans page switches nothing', () => {
+  it('sends every email plan feature from one template, the weekly digest sharing "Coming up soon"\'s and "Picks are open again" "New contest open"\'s, so no email feature on the Plans page switches nothing', () => {
     const emailFeatures = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === PlanFeatureGroup.EMAILS);
     const sentBy = Object.entries(EMAIL_TEMPLATES)
-      .filter(([key]) => key !== 'EVENT_WEEKLY_DIGEST')
+      .filter(([key]) => key !== 'EVENT_WEEKLY_DIGEST' && key !== 'CONTEST_REOPENED')
       .map(([, template]) => template.planFeature)
       .filter((feature) => feature !== null);
 

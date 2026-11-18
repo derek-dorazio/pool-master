@@ -197,6 +197,14 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     },
     contestUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
   },
+  CONTEST_REOPENED: {
+    userName: 'Morgan Member',
+    leagueName: 'Office League',
+    contestName: 'Masters Pick 6',
+    event: { ...MASTERS_HEADER, startsAt: new Date('2027-04-15T12:00:00.000Z') },
+    closesAt: new Date('2027-04-15T12:00:00.000Z'),
+    contestUrl: `${QA_HOST}/league/OFFICE24/contests/contest-1`,
+  },
   EVENT_COMING_UP: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
