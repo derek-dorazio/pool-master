@@ -54,16 +54,19 @@ ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_parent_event_id_fkey" FO
 ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_parent_with_rounds"
   CHECK (("parent_event_id" IS NULL) = (COALESCE(cardinality("parent_round_numbers"), 0) = 0));
 
--- Backfill: each Clutch Card event already on the site links to the one event of its parent league
--- that was under way when it started (started by then and within the year before, not ended
--- before) and has the rounds, as the service finds a new event's parent. An
--- event with no such parent, or with more than one, is left unlinked: its parent was never loaded
--- (test data of another season, a test event with rolled dates).
+-- Backfill: each Clutch Card event already on the site links to the event of its parent league that
+-- was under way when it started (started by then and within the year before, not ended before),
+-- has the rounds and is not cancelled; of several, the one of its own event year. That is how the
+-- service finds a new event's parent. An event with no such parent, or with several and not one of
+-- its year, is left unlinked: its parent was never loaded (test data of another season, a test
+-- event with rolled dates).
 WITH candidates AS (
   SELECT child."id" AS "child_id",
          parent."id" AS "parent_id",
          child_league."parent_round_numbers" AS "parent_round_numbers",
-         count(*) OVER (PARTITION BY child."id") AS "candidate_count"
+         parent."event_year" = child."event_year" AS "same_year",
+         count(*) OVER (PARTITION BY child."id") AS "candidate_count",
+         count(*) FILTER (WHERE parent."event_year" = child."event_year") OVER (PARTITION BY child."id") AS "same_year_count"
   FROM "sport_events" AS child
   JOIN "event_series" AS child_series ON child_series."id" = child."event_series_id"
   JOIN "sport_leagues" AS child_league ON child_league."id" = child_series."sport_league_id"
@@ -72,6 +75,7 @@ WITH candidates AS (
   WHERE child_league."scoring_family" = 'COMPOSITE'
     AND cardinality(child_league."parent_round_numbers") > 0
     AND parent."sport" = child."sport"
+    AND parent."status" <> 'CANCELLED'
     AND parent."start_date" <= child."start_date"
     AND parent."start_date" > child."start_date" - interval '366 days'
     AND (parent."end_date" IS NULL OR parent."end_date" >= child."start_date")
@@ -83,4 +87,4 @@ SET "parent_event_id" = candidates."parent_id",
     "parent_round_numbers" = candidates."parent_round_numbers"
 FROM candidates
 WHERE child."id" = candidates."child_id"
-  AND candidates."candidate_count" = 1;
+  AND (candidates."candidate_count" = 1 OR (candidates."same_year_count" = 1 AND candidates."same_year"));

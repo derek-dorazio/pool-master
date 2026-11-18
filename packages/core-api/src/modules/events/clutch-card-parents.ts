@@ -12,7 +12,7 @@
  */
 
 import type { SportEventRepository } from '@poolmaster/shared/db';
-import { isClutchCardLeague, type SportEvent, type SportEventParent, type SportLeague } from '@poolmaster/shared/domain';
+import { isClutchCardLeague, SportEventStatus, type SportEvent, type SportEventParent, type SportLeague } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 
 /** How far before a Clutch Card event its season event may start: a season's playoffs never run a year. */
@@ -23,11 +23,19 @@ export type ClutchCardParentLookup =
   | { parentEvent: Omit<SportEventParent, 'name'> | undefined }
   | { refusal: SportEventError };
 
+/** What a new event is matched to its season event by: when it starts, and the season it is branded with. */
+export interface NewClutchCardEvent {
+  startDate: Date;
+  eventYear: number;
+}
+
 /**
- * The parent of each new event of the sport league, in the order of `starts`, in one read however
- * many: for a Clutch Card league, the one event of its parent league that was under way when the
- * new event starts (started by then and within the year before, not ended before) and has the
- * league's rounds. A season event whose end is not known yet counts as under way for that year. `parentEventId`
+ * The parent of each new event of the sport league, in the order given, in one read however many:
+ * for a Clutch Card league, the one event of its parent league that was under way when the new
+ * event starts (started by then and within the year before, not ended before), has the league's
+ * rounds and is not cancelled. A season event whose end is not known yet counts as under way for
+ * that year. When several are, the one of the new event's own event year is it: a site's test
+ * season events (QA's, loaded with moved dates) run beside the real season's. `parentEventId`
  * names the parent instead, for a caller that knows it: a test seed, whose events' dates are moved
  * and no longer line up with their parent's. An event of any other league has no parent, and naming
  * one is refused.
@@ -35,9 +43,10 @@ export type ClutchCardParentLookup =
 export async function findClutchCardParents(
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findById'>,
   sportLeague: SportLeague,
-  starts: readonly Date[],
+  newEvents: readonly NewClutchCardEvent[],
   options: { parentEventId?: string } = {},
 ): Promise<ClutchCardParentLookup[]> {
+  const starts = newEvents.map((event) => event.startDate);
   if (!isClutchCardLeague(sportLeague)) {
     if (options.parentEventId === undefined) return starts.map(() => ({ parentEvent: undefined }));
     const refusal = new SportEventError(
@@ -72,12 +81,14 @@ export async function findClutchCardParents(
     sportLeagueId: parentLeagueId,
     startsFrom: new Date(Math.min(...times) - SEASON_EVENT_LOOKBACK_MS + 1),
     startsBefore: new Date(Math.max(...times) + 1),
-  })).filter(hasRounds);
-  return starts.map((start): ClutchCardParentLookup => {
+  })).filter((event) => hasRounds(event) && event.status !== SportEventStatus.CANCELLED);
+  return newEvents.map(({ startDate: start, eventYear }): ClutchCardParentLookup => {
     const spanning = candidates.filter((event) => event.startDate.getTime() <= start.getTime()
       && event.startDate.getTime() > start.getTime() - SEASON_EVENT_LOOKBACK_MS
       && (event.endDate === undefined || event.endDate.getTime() >= start.getTime()));
+    const sameSeason = spanning.filter((event) => event.eventYear === eventYear);
     if (spanning.length === 1) return { parentEvent: { id: spanning[0].id, roundNumbers } };
+    if (sameSeason.length === 1) return { parentEvent: { id: sameSeason[0].id, roundNumbers } };
     if (spanning.length === 0) {
       return {
         refusal: new SportEventError(
@@ -89,7 +100,7 @@ export async function findClutchCardParents(
     }
     return {
       refusal: new SportEventError(
-        `${spanning.length} events of ${sportLeague.name}'s parent league are under way on ${start.toISOString()} (${spanning.map((event) => event.name).join(', ')}); name the parent event.`,
+        `${spanning.length} events of ${sportLeague.name}'s parent league are under way on ${start.toISOString()} (${spanning.map((event) => event.name).join(', ')}), and not one of them is of ${eventYear}; name the parent event.`,
         'PARENT_EVENT_AMBIGUOUS',
         422,
       ),

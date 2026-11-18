@@ -111,7 +111,9 @@ describe('Clutch Card parent event in Postgres (#1820)', () => {
     const worldSeriesLeague = await baseballLeague('World Series');
     const lcsLeague = await baseballLeague('League Championship Series');
     const postseason = await eventRow(mlb.id, { name: 'MLB Postseason', rounds: 4, startDate: '2025-09-30T17:00:00Z', endDate: '2025-11-02T04:00:00Z' });
-    // A one-round event of the parent league the same days is no season event of the World Series.
+    // A one-round event of the parent league the same days is no season event of the World Series,
+    // and a test season event of another year under way the same days gives way to the real one.
+    await eventRow(mlb.id, { name: 'Test- MLB Postseason', rounds: 4, startDate: '2025-10-01T12:00:00Z', endDate: '2025-11-03T12:00:00Z', eventYear: 2023 });
     await eventRow(mlb.id, { name: 'MLB Exhibition', rounds: 1, startDate: '2025-10-01T17:00:00Z', endDate: '2025-11-01T04:00:00Z' });
     const linked = await eventRow(worldSeriesLeague.id, { name: 'World Series', rounds: 7, startDate: '2025-10-24T23:00:00Z', endDate: '2025-11-02T04:00:00Z' });
     // Next season's World Series, whose season event was never loaded.

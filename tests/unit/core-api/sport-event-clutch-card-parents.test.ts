@@ -126,6 +126,27 @@ describe('SportEventService links each new Clutch Card event to its season event
       .rejects.toMatchObject({ code: 'PARENT_EVENT_AMBIGUOUS', statusCode: 422 });
   });
 
+  it('links to the season event of the Clutch Card event\'s own year when a test season event of another year is under way too', async () => {
+    const { service, worldSeries, addPostseason } = setup();
+    // QA's test seed: last season's postseason, its dates moved onto this season's.
+    addPostseason({ name: 'Test- MLB Postseason', eventYear: 2024, startDate: new Date('2025-10-01T12:00:00.000Z'), endDate: new Date('2025-11-03T12:00:00.000Z') });
+    const real = addPostseason();
+
+    const created = await service.createEvent({ sportLeagueId: worldSeries.id, ...WORLD_SERIES });
+
+    expect(created.event.parentEvent?.id).toBe(real.id);
+  });
+
+  it('passes over a cancelled season event', async () => {
+    const { service, worldSeries, addPostseason } = setup();
+    addPostseason({ status: 'CANCELLED' });
+    const kept = addPostseason({ name: 'MLB Postseason (rescheduled)', eventYear: 2024 });
+
+    const created = await service.createEvent({ sportLeagueId: worldSeries.id, ...WORLD_SERIES });
+
+    expect(created.event.parentEvent?.id).toBe(kept.id);
+  });
+
   it('links to the parent event the caller names, whatever its dates, when it is a parent league event with the rounds', async () => {
     const { service, worldSeries, addPostseason } = setup();
     const named = addPostseason({ startDate: new Date('2027-01-04T12:00:00.000Z'), endDate: new Date('2027-02-04T12:00:00.000Z') });

@@ -98,9 +98,8 @@ async function siteEnvironment(baseUrl: string): Promise<string> {
   return version.data.environment;
 }
 
-/** Every data file in the folder, by name. Test slates sit in their own folder, so none is listed. */
 /**
- * Every data file, by name, with the files that carry box scores (the Clutch Card rounds') after
+ * Every data file in the folder (test slates sit in their own folder, so none is listed), by name, with the files that carry box scores (the Clutch Card rounds') after
  * the rest: a test Clutch Card event names its league's test season event as its parent (#1820),
  * so the season league's file loads first.
  */

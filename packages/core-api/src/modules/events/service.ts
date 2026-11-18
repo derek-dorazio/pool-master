@@ -212,7 +212,7 @@ export class SportEventService {
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [input.startDate], { parentEventId: input.parentEventId }))[0]);
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [input], { parentEventId: input.parentEventId }))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
@@ -265,7 +265,7 @@ export class SportEventService {
         409,
       );
     }
-    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [input.providerEvent.startDate]))[0]);
+    const parentEvent = parentOrThrow((await findClutchCardParents(this.deps.sportEvents, sportLeague, [{ startDate: input.providerEvent.startDate, eventYear: input.eventYear }]))[0]);
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
     const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId }, parentEvent);
     const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
@@ -303,7 +303,7 @@ export class SportEventService {
       ? []
       : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, eventYear: input.eventYear })).map((event) => event.eventSeriesId));
 
-    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, unlinked.map((providerEvent) => providerEvent.startDate));
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, unlinked.map((providerEvent) => ({ startDate: providerEvent.startDate, eventYear: input.eventYear })));
     const parentByExternalId = new Map(unlinked.map((providerEvent, index) => [providerEvent.externalId, parents[index]]));
 
     const editions: NewEdition[] = [];
@@ -427,7 +427,7 @@ export class SportEventService {
       );
     }
 
-    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, sourceEvents.map((event) => shiftYears(event.startDate, shift)));
+    const parents = await findClutchCardParents(this.deps.sportEvents, sportLeague, sourceEvents.map((event) => ({ startDate: shiftYears(event.startDate, shift), eventYear: targetYear })));
     const parentEvents = parents.map(parentOrThrow);
     const seriesIdByName = await this.resolveSeries(sportLeague, sourceEvents.map((event) => event.name));
     const defaultRounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;

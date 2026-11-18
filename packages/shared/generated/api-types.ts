@@ -2048,7 +2048,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event
-         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
+         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -2093,7 +2093,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport event
-         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. Root admin only.
+         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its season event. Root admin only.
          */
         delete: operations["deleteEvent"];
         options?: never;
@@ -2116,7 +2116,7 @@ export interface paths {
         put?: never;
         /**
          * Clone a sport league's event year forward
-         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.
+         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. A Clutch Card league's event names its season event of the target year (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["cloneEventYear"];
         delete?: never;
@@ -2136,7 +2136,7 @@ export interface paths {
         put?: never;
         /**
          * Import a tour's event year from a provider
-         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
          */
         post: operations["importEventYearFromProvider"];
         delete?: never;
@@ -2156,7 +2156,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event from a provider event
-         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. Root admin only.
+         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
          */
         post: operations["createEventFromProviderEvent"];
         delete?: never;
