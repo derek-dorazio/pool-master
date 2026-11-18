@@ -69,15 +69,20 @@ describe('The migration to tier and pricing profiles', () => {
   });
 });
 
+/** A write the test expects to succeed: its profile, failing the test on `'nameTaken'`. */
+function written<T>(result: T | 'nameTaken'): T {
+  if (result === 'nameTaken') throw new Error('expected the write to succeed, but the name was taken');
+  return result;
+}
+
 describe('PrismaTierProfileRepository', () => {
-  it('creates, finds by id and name, updates and lists a profile, a capped one reading back its cap', async () => {
+  it('creates, finds by id, updates and lists a profile, a capped one reading back its cap', async () => {
     const repo = new PrismaTierProfileRepository(getAppPrisma());
     const name = uniqueName('Capped');
-    const created = await repo.create({ name, tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.CAPPED, lastTierMax: 15 });
+    const created = written(await repo.create({ name, tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.CAPPED, lastTierMax: 15 }));
     made.tierProfileIds.add(created.id);
 
     await expect(repo.findById(created.id)).resolves.toMatchObject({ name, lastTier: 'CAPPED', lastTierMax: 15 });
-    await expect(repo.findByName(name)).resolves.toMatchObject({ id: created.id });
     const updated = await repo.update(created.id, { name: `${name} b`, tierCount: 4, tierSize: 8, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null });
     expect(updated).toMatchObject({ id: created.id, name: `${name} b`, tierCount: 4, tierSize: 8, lastTier: 'ALL_REMAINING', lastTierMax: null });
     const all = await repo.findAll();
@@ -94,7 +99,7 @@ describe('PrismaTierProfileRepository', () => {
   it('reads a sport league\'s tier profile, counts the leagues naming each profile, and answers an unknown league with null', async () => {
     const prisma = getPrisma();
     const repo = new PrismaTierProfileRepository(getAppPrisma());
-    const profile = await repo.create({ name: uniqueName('Counted'), tierCount: 3, tierSize: 3, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null });
+    const profile = written(await repo.create({ name: uniqueName('Counted'), tierCount: 3, tierSize: 3, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.tierProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const leagues = await Promise.all([1, 2].map(async (index) => prisma.sportLeague.create({
@@ -105,13 +110,28 @@ describe('PrismaTierProfileRepository', () => {
     await expect(repo.findBySportLeague(expectDefined(leagues[0]).id)).resolves.toMatchObject({ id: profile.id });
     await expect(repo.findBySportLeague(randomUUID())).resolves.toBeNull();
     expect((await repo.countSportLeagues()).get(profile.id)).toBe(2);
+    await expect(repo.countSportLeaguesNaming(profile.id)).resolves.toBe(2);
+    await expect(repo.countSportLeaguesNaming(randomUUID())).resolves.toBe(0);
+  });
+
+  it('answers a create or rename onto a name another tier profile has with nameTaken, writing nothing', async () => {
+    const repo = new PrismaTierProfileRepository(getAppPrisma());
+    const layout = { tierCount: 3, tierSize: 3, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+    const first = written(await repo.create({ name: uniqueName('Taken'), ...layout }));
+    const second = written(await repo.create({ name: uniqueName('Other'), ...layout }));
+    made.tierProfileIds.add(first.id);
+    made.tierProfileIds.add(second.id);
+
+    await expect(repo.create({ name: first.name, ...layout, tierSize: 4 })).resolves.toBe('nameTaken');
+    await expect(repo.update(second.id, { name: first.name, ...layout })).resolves.toBe('nameTaken');
+    await expect(repo.findById(second.id)).resolves.toMatchObject({ name: second.name });
   });
 
   it('refuses to delete a profile a sport league names, answering how many name it and keeping it; deletes one none names; answers an unknown one with null', async () => {
     const prisma = getPrisma();
     const repo = new PrismaTierProfileRepository(getAppPrisma());
-    const used = await repo.create({ name: uniqueName('Used'), tierCount: 2, tierSize: 2, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null });
-    const unused = await repo.create({ name: uniqueName('Unused'), tierCount: 2, tierSize: 2, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null });
+    const used = written(await repo.create({ name: uniqueName('Used'), tierCount: 2, tierSize: 2, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
+    const unused = written(await repo.create({ name: uniqueName('Unused'), tierCount: 2, tierSize: 2, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null }));
     made.tierProfileIds.add(used.id);
     made.tierProfileIds.add(unused.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
@@ -131,16 +151,18 @@ describe('PrismaPricingProfileRepository', () => {
     const prisma = getPrisma();
     const repo = new PrismaPricingProfileRepository(getAppPrisma());
     const name = uniqueName('Pricey');
-    const profile = await repo.create({ name, ...STANDARD_VALUES, steepness: 2.5 });
+    const profile = written(await repo.create({ name, ...STANDARD_VALUES, steepness: 2.5 }));
     made.pricingProfileIds.add(profile.id);
     const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
     const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), pricingProfileId: profile.id, sportId: golf.id, name: uniqueName('Priced tour') } });
     made.sportLeagueIds.add(league.id);
 
-    await expect(repo.findByName(name)).resolves.toMatchObject({ id: profile.id, steepness: 2.5 });
+    await expect(repo.findById(profile.id)).resolves.toMatchObject({ name, steepness: 2.5 });
     await expect(repo.findBySportLeague(league.id)).resolves.toMatchObject({ id: profile.id });
     await expect(repo.findBySportLeague(randomUUID())).resolves.toBeNull();
     await expect(repo.update(profile.id, { name, ...STANDARD_VALUES, unit: 50 })).resolves.toMatchObject({ unit: 50, steepness: 4 });
+    await expect(repo.create({ name, ...STANDARD_VALUES })).resolves.toBe('nameTaken');
+    await expect(repo.countSportLeaguesNaming(profile.id)).resolves.toBe(1);
     expect((await repo.countSportLeagues()).get(profile.id)).toBe(1);
     await expect(repo.deleteUnlessUsed(profile.id)).resolves.toBe(1);
     await expect(repo.findById(profile.id)).resolves.not.toBeNull();

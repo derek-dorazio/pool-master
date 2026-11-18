@@ -541,13 +541,16 @@ export interface ProfileRepository<TProfile, TWrite> {
   /** Every profile, by name. */
   findAll(): Promise<TProfile[]>;
   findById(id: string): Promise<TProfile | null>;
-  findByName(name: string): Promise<TProfile | null>;
   /** The profile the sport league names. Null when no such sport league exists. */
   findBySportLeague(sportLeagueId: string): Promise<TProfile | null>;
   /** How many sport leagues name each profile, by profile id; a profile none names is absent. */
   countSportLeagues(): Promise<Map<string, number>>;
-  create(input: TWrite): Promise<TProfile>;
-  update(id: string, input: TWrite): Promise<TProfile>;
+  /** How many sport leagues name this one profile. */
+  countSportLeaguesNaming(id: string): Promise<number>;
+  /** The new profile, or `'nameTaken'` when another profile of the kind has the name (its unique index). */
+  create(input: TWrite): Promise<TProfile | 'nameTaken'>;
+  /** The replaced profile, or `'nameTaken'` when another profile of the kind has the name (its unique index). */
+  update(id: string, input: TWrite): Promise<TProfile | 'nameTaken'>;
   /**
    * Deletes the profile unless a sport league names it; the foreign key refuses a delete a league
    * named meanwhile. Returns how many sport leagues name it: zero means it was deleted. Null when no such profile

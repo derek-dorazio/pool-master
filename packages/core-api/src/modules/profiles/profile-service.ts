@@ -73,16 +73,16 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
 
   /** 404 when no such profile exists. */
   async get(id: string): Promise<ProfileUse<TProfile>> {
-    const [profile, counts] = await Promise.all([this.deps.profiles.findById(id), this.deps.profiles.countSportLeagues()]);
+    const [profile, sportLeagueCount] = await Promise.all([this.deps.profiles.findById(id), this.deps.profiles.countSportLeaguesNaming(id)]);
     if (!profile) throw this.notFound(id);
-    return { profile, sportLeagueCount: counts.get(id) ?? 0 };
+    return { profile, sportLeagueCount };
   }
 
   /** 422 when the values contradict each other; 409 when another profile of the kind has the name. */
   async create(input: TWrite): Promise<ProfileUse<TProfile>> {
     this.assertValid(input);
-    await this.assertNameFree(input.name);
     const profile = await this.deps.profiles.create(input);
+    if (profile === 'nameTaken') throw this.nameTaken(input.name);
     this.deps.logger?.info({ profileId: profile.id, name: profile.name, kind: this.deps.kind.label }, 'Created profile');
     return { profile, sportLeagueCount: 0 };
   }
@@ -94,8 +94,8 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
   async update(id: string, input: TWrite): Promise<ProfileUse<TProfile>> {
     if (!(await this.deps.profiles.findById(id))) throw this.notFound(id);
     this.assertValid(input);
-    await this.assertNameFree(input.name, id);
     const profile = await this.deps.profiles.update(id, input);
+    if (profile === 'nameTaken') throw this.nameTaken(input.name);
     this.deps.logger?.info({ profileId: id, name: profile.name, kind: this.deps.kind.label }, 'Updated profile');
     return this.get(id);
   }
@@ -120,11 +120,9 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
     if (problem) throw new ProfileError(problem, this.deps.kind.codes.invalid, 422);
   }
 
-  private async assertNameFree(name: string, exceptId?: string): Promise<void> {
-    const named = await this.deps.profiles.findByName(name);
-    if (named && named.id !== exceptId) {
-      throw new ProfileError(`Another ${this.deps.kind.label.toLowerCase()} is already named "${name}".`, this.deps.kind.codes.nameTaken, 409);
-    }
+  /** The name's unique index decides, so two writes racing for one name get 409, not a 500. */
+  private nameTaken(name: string): ProfileError {
+    return new ProfileError(`Another ${this.deps.kind.label.toLowerCase()} is already named "${name}".`, this.deps.kind.codes.nameTaken, 409);
   }
 
   private notFound(id: string): ProfileError {

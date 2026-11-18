@@ -71,19 +71,20 @@ INSERT INTO "tier_profiles" ("name", "tier_count", "tier_size", "updated_at")
   FROM "sport_leagues" WHERE "tier_count" IS NOT NULL
   ON CONFLICT ("name") DO NOTHING;
 
--- Every profile the Budget pricing app settings hold, in their order; the defaults the app used
--- when none were saved.
+-- Every profile the Budget pricing app settings hold, in their order (a repeated name once); the
+-- defaults the app used when the settings hold none.
 INSERT INTO "pricing_profiles" ("name", "salary_cap", "unit", "top_share_percent", "floor_share_percent", "steepness", "updated_at")
   SELECT profile->>'name', (profile->>'salaryCap')::INTEGER, (profile->>'unit')::INTEGER,
     (profile->>'topSharePercent')::DOUBLE PRECISION, (profile->>'floorSharePercent')::DOUBLE PRECISION,
     (profile->>'steepness')::DOUBLE PRECISION, now()
   FROM "platform_runtime_configs", jsonb_array_elements("config_json"->'profiles') AS profile
-  WHERE "config_key" = 'BUDGET_PRICING_CONFIG';
+  WHERE "config_key" = 'BUDGET_PRICING_CONFIG'
+  ON CONFLICT ("name") DO NOTHING;
 INSERT INTO "pricing_profiles" ("name", "salary_cap", "unit", "top_share_percent", "floor_share_percent", "steepness", "updated_at")
   SELECT name, salary_cap, unit, top_share_percent, floor_share_percent, steepness, now()
   FROM (VALUES ('Standard', 50000, 100, 24.0, 12.0, 4.0), ('Small', 5000, 10, 24.0, 12.0, 4.0))
     AS defaults (name, salary_cap, unit, top_share_percent, floor_share_percent, steepness)
-  WHERE NOT EXISTS (SELECT 1 FROM "platform_runtime_configs" WHERE "config_key" = 'BUDGET_PRICING_CONFIG');
+  WHERE NOT EXISTS (SELECT 1 FROM "pricing_profiles");
 
 -- Every league names the layout it uses today, and the profile a field sync priced with: the
 -- settings' first, Standard unless an admin reordered them.

@@ -60,6 +60,19 @@ async function deleteUnlessUsed(remove: () => Promise<unknown>, countUses: () =>
   }
 }
 
+/**
+ * Runs a create or update, answering `'nameTaken'` when the name's unique index (P2002) refuses it:
+ * two writes racing for one name both pass a read-first check, so the index decides.
+ */
+async function unlessNameTaken<T>(write: () => Promise<T>): Promise<T | 'nameTaken'> {
+  try {
+    return await write();
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'nameTaken';
+    throw error;
+  }
+}
+
 export class PrismaTierProfileRepository implements TierProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -69,11 +82,6 @@ export class PrismaTierProfileRepository implements TierProfileRepository {
 
   async findById(id: string): Promise<TierProfile | null> {
     const row = await this.prisma.tierProfile.findUnique({ where: { id } });
-    return row ? toTierProfile(row) : null;
-  }
-
-  async findByName(name: string): Promise<TierProfile | null> {
-    const row = await this.prisma.tierProfile.findUnique({ where: { name } });
     return row ? toTierProfile(row) : null;
   }
 
@@ -87,18 +95,22 @@ export class PrismaTierProfileRepository implements TierProfileRepository {
     return new Map(groups.map((group) => [group.tierProfileId, group._count._all]));
   }
 
-  async create(input: TierProfileWrite): Promise<TierProfile> {
-    return toTierProfile(await this.prisma.tierProfile.create({ data: tierProfileData(input) }));
+  async countSportLeaguesNaming(id: string): Promise<number> {
+    return this.prisma.sportLeague.count({ where: { tierProfileId: id } });
   }
 
-  async update(id: string, input: TierProfileWrite): Promise<TierProfile> {
-    return toTierProfile(await this.prisma.tierProfile.update({ where: { id }, data: tierProfileData(input) }));
+  async create(input: TierProfileWrite): Promise<TierProfile | 'nameTaken'> {
+    return unlessNameTaken(async () => toTierProfile(await this.prisma.tierProfile.create({ data: tierProfileData(input) })));
+  }
+
+  async update(id: string, input: TierProfileWrite): Promise<TierProfile | 'nameTaken'> {
+    return unlessNameTaken(async () => toTierProfile(await this.prisma.tierProfile.update({ where: { id }, data: tierProfileData(input) })));
   }
 
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
       () => this.prisma.tierProfile.delete({ where: { id }, select: { id: true } }),
-      () => this.prisma.sportLeague.count({ where: { tierProfileId: id } }),
+      () => this.countSportLeaguesNaming(id),
     );
   }
 }
@@ -115,11 +127,6 @@ export class PrismaPricingProfileRepository implements PricingProfileRepository 
     return row ? toPricingProfile(row) : null;
   }
 
-  async findByName(name: string): Promise<PricingProfile | null> {
-    const row = await this.prisma.pricingProfile.findUnique({ where: { name } });
-    return row ? toPricingProfile(row) : null;
-  }
-
   async findBySportLeague(sportLeagueId: string): Promise<PricingProfile | null> {
     const row = await this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { pricingProfile: true } });
     return row ? toPricingProfile(row.pricingProfile) : null;
@@ -130,18 +137,22 @@ export class PrismaPricingProfileRepository implements PricingProfileRepository 
     return new Map(groups.map((group) => [group.pricingProfileId, group._count._all]));
   }
 
-  async create(input: PricingProfileWrite): Promise<PricingProfile> {
-    return toPricingProfile(await this.prisma.pricingProfile.create({ data: pricingProfileData(input) }));
+  async countSportLeaguesNaming(id: string): Promise<number> {
+    return this.prisma.sportLeague.count({ where: { pricingProfileId: id } });
   }
 
-  async update(id: string, input: PricingProfileWrite): Promise<PricingProfile> {
-    return toPricingProfile(await this.prisma.pricingProfile.update({ where: { id }, data: pricingProfileData(input) }));
+  async create(input: PricingProfileWrite): Promise<PricingProfile | 'nameTaken'> {
+    return unlessNameTaken(async () => toPricingProfile(await this.prisma.pricingProfile.create({ data: pricingProfileData(input) })));
+  }
+
+  async update(id: string, input: PricingProfileWrite): Promise<PricingProfile | 'nameTaken'> {
+    return unlessNameTaken(async () => toPricingProfile(await this.prisma.pricingProfile.update({ where: { id }, data: pricingProfileData(input) })));
   }
 
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
       () => this.prisma.pricingProfile.delete({ where: { id }, select: { id: true } }),
-      () => this.prisma.sportLeague.count({ where: { pricingProfileId: id } }),
+      () => this.countSportLeaguesNaming(id),
     );
   }
 }

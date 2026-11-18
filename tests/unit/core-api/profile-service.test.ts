@@ -30,15 +30,18 @@ function memoryProfiles<TProfile extends { id: string; name: string }, TWrite ex
   const repo: ProfileRepository<TProfile, TWrite> = {
     findAll: async () => [...rows].sort((left, right) => left.name.localeCompare(right.name)),
     findById: async (id) => rows.find((row) => row.id === id) ?? null,
-    findByName: async (name) => rows.find((row) => row.name === name) ?? null,
     findBySportLeague: async () => null,
     countSportLeagues: async () => new Map(uses),
+    countSportLeaguesNaming: async (id) => uses.get(id) ?? 0,
+    // The unique index on name, as the adapter answers it.
     create: async (write) => {
+      if (rows.some((row) => row.name === write.name)) return 'nameTaken';
       const row = build(`profile-${++sequence}`, write);
       rows.push(row);
       return row;
     },
     update: async (id, write) => {
+      if (rows.some((row) => row.name === write.name && row.id !== id)) return 'nameTaken';
       const index = rows.findIndex((row) => row.id === id);
       rows[index] = build(id, write);
       return rows[index];
