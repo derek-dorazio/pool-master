@@ -20,12 +20,15 @@ describe('which events a contest template is offered on', () => {
 
     expect([isTemplateOfferedOn(squares, playoffs), isTemplateOfferedOn(squares, week)]).toEqual([true, true]);
     expect(isTemplateOfferedOn(squares, { ...playoffs, sportLeagueId: CFP })).toBe(false);
-    expect(isTemplateOfferedOn({ sport: Sport.GOLF, sportLeagueId: null }, playoffs)).toBe(false);
+    expect(isTemplateOfferedOn({ sport: Sport.GOLF, sportLeagueId: NFL }, playoffs)).toBe(false);
   });
 
-  it('offers a sport-wide template on every league of its sport', () => {
-    const golfWide = { sport: Sport.GOLF, sportLeagueId: null };
+  it('offers a golf setup only on its own tour\'s events, so the PGA TOUR\'s copy is never offered on an LPGA Tour event', () => {
+    const pgaCopy = { sport: Sport.GOLF, sportLeagueId: 'pga' };
 
-    expect(isTemplateOfferedOn(golfWide, { sport: Sport.GOLF, sportLeagueId: 'lpga', rounds: 4 })).toBe(true);
+    expect([
+      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, sportLeagueId: 'pga', rounds: 4 }),
+      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, sportLeagueId: 'lpga', rounds: 4 }),
+    ]).toEqual([true, false]);
   });
 });

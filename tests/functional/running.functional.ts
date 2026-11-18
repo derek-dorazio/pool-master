@@ -148,7 +148,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
-    // The series' templates come with the sport-wide ones, and never the women's series'.
+    // The series' own templates, never the women's series'.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
       query: { sport: Sport.RUNNING, sportLeagueId: majorsMen.id, active: true },

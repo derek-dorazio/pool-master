@@ -146,7 +146,7 @@ describe('contest-management dto schemas', () => {
     const template = ContestConfigTemplateDtoSchema.parse({
       id: '11111111-1111-4111-8111-111111111111',
       sport: 'GOLF',
-      sportLeagueId: null,
+      sportLeagueId: '22222222-2222-4222-8222-222222222222',
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateKey: 'golf-tiered-pick-6',
@@ -187,6 +187,8 @@ describe('contest-management dto schemas', () => {
     });
 
     expect(template.name).toContain('Select one');
+    // Every template is one sport league's: one with no league is not a template the API answers.
+    expect(ContestConfigTemplateDtoSchema.safeParse({ ...template, sportLeagueId: null }).success).toBe(false);
   });
 
   // pool-master-41t — the commissioner management detail echoes the linked

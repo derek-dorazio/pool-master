@@ -44,8 +44,8 @@ export function testLeagueName(sport: Sport, sportLeagueName: string): string {
 
 /**
  * The template a test contest on this event is created from: a tiered or budget one offered on the
- * event's kind of event (#816), as Create contest offers it, its sport league's ahead of a
- * sport-wide one, the default first. A draw deals its picks to every entry at once and closes
+ * event's kind of event (#816) in its sport league, as Create contest offers it, the default
+ * first. A draw deals its picks to every entry at once and closes
  * them, so the run picks for itself instead. Null when none is offered: a week of a season's games
  * is picked game by game, so it has no roster template.
  */
@@ -53,8 +53,7 @@ export function chooseContestTemplate(templates: readonly Template[], event: Pic
   const pickable = templates.filter((template) => isTemplateOfferedOn(template, event)
     && template.contestFormat === ContestFormat.ROSTER
     && template.selectionType !== SelectionType.RANDOM_DRAW);
-  const ranked = [...pickable].sort((left, right) => Number(right.sportLeagueId !== null) - Number(left.sportLeagueId !== null)
-    || Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
+  const ranked = [...pickable].sort((left, right) => Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
   return ranked.at(0) ?? null;
 }
 
