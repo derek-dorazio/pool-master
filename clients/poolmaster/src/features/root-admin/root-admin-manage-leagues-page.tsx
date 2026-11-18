@@ -54,7 +54,7 @@ export function RootAdminManageLeaguesPage() {
     () => [
       columnHelper.accessor("name", {
         header: "League",
-        meta: { type: { kind: "text" } },
+        meta: { info: "The league's name.", type: { kind: "text" } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-primary">{row.original.name}</div>
@@ -68,7 +68,7 @@ export function RootAdminManageLeaguesPage() {
       }),
       columnHelper.accessor("leagueCode", {
         header: "Code",
-        meta: { type: { kind: "text" } },
+        meta: { info: "The league's short code, used in its web address.", type: { kind: "text" } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
@@ -78,14 +78,14 @@ export function RootAdminManageLeaguesPage() {
         {
           id: "lifecycle",
           header: "Lifecycle",
-          meta: { type: { kind: "enum" } },
+          meta: { info: "Whether the league is active.", type: { kind: "enum" } },
           cell: ({ getValue }) => <ActiveStatusBadge status={getValue()} />,
         },
       ),
       columnHelper.accessor((league) => league.planEntitlements.plan, {
         id: "plan",
         header: "Plan",
-        meta: { type: { kind: "enum", order: LeaguePlanOrder, label: leaguePlanLabel } },
+        meta: { info: "The plan the league is on, which decides the features it gets.", type: { kind: "enum", order: LeaguePlanOrder, label: leaguePlanLabel } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{LEAGUE_PLAN_LABEL[getValue()]}</span>
         ),
@@ -93,17 +93,17 @@ export function RootAdminManageLeaguesPage() {
       columnHelper.accessor("planRenewsAt", {
         id: "planRenewsAt",
         header: "Preview ends",
-        meta: { type: { kind: "date", direction: "both" } },
+        meta: { info: "When the league's Premium preview period ends, if it has one.", type: { kind: "date", direction: "both" } },
       }),
       columnHelper.accessor("memberCount", {
         id: "memberCount",
         header: "Members",
-        meta: { type: { kind: "number" } },
+        meta: { info: "How many members the league has.", type: { kind: "number" } },
       }),
       columnHelper.accessor("activeContestCount", {
         id: "activeContestCount",
         header: "Active contests",
-        meta: { type: { kind: "number" } },
+        meta: { info: "How many of the league's contests are not yet final.", type: { kind: "number" } },
       }),
     ],
     [],

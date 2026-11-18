@@ -60,6 +60,13 @@ function inactiveReasonsFor(sport: Sport): readonly EventFieldInactiveReason[] {
   );
 }
 
+const NUMERIC_COLUMN_INFO: Record<EventFieldNumericKey, string> = {
+  ranking: 'The ranking the sport league keeps for the participant.',
+  oddsToWin: "The participant's odds to win the event.",
+  seedNumber: "The participant's seed in the event.",
+  price: 'What the participant costs to pick in a budget contest. Locked once the event is released.',
+};
+
 const NUMERIC_COLUMN_LABEL: Record<EventFieldNumericKey, string> = {
   ranking: 'Ranking',
   oddsToWin: 'Odds',
@@ -84,6 +91,7 @@ function numericCell(key: EventFieldNumericKey) {
   return columnHelper.display({
     id: key,
     header: NUMERIC_COLUMN_LABEL[key],
+    meta: { info: NUMERIC_COLUMN_INFO[key] },
     cell: ({ row, table }) => {
       const { draft, setDraft, pricesLocked } = table.options.meta as FieldGridMeta;
       const entry = row.original;
@@ -120,8 +128,8 @@ function fieldColumnsFor(sport: Sport) {
   return [
     columnHelper.accessor((entry) => entry.participant.name, {
       id: 'participantName',
-      meta: { type: { kind: 'text' } },
       header: upperFirst(getSportDefinition(sport).vocabulary.participant.one),
+      meta: { info: "The participant's name. Guest marks one from outside the sport league.", type: { kind: 'text' } },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground">
@@ -136,6 +144,7 @@ function fieldColumnsFor(sport: Sport) {
     columnHelper.display({
       id: 'active',
       header: 'In field',
+      meta: { info: "Whether the participant is in the event's field, and why not if they left it." },
       cell: ({ row, table }) => {
         const { draft, setDraft, sport } = table.options.meta as FieldGridMeta;
         const entry = row.original;

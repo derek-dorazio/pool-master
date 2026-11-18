@@ -54,7 +54,7 @@ export function RootAdminSportEventListPage() {
       sportEventNameColumn(upperFirst(event.one)),
       columnHelper.accessor('syncScope', {
         header: 'Sync',
-        meta: { type: { kind: 'enum', order: SportEventSyncScopeOrder, label: syncScopeLabel } },
+        meta: { info: 'How much of the event the provider sync keeps up to date.', type: { kind: 'enum', order: SportEventSyncScopeOrder, label: syncScopeLabel } },
         cell: ({ getValue }) => (
           <StatusBadge tone={syncScopeTone(getValue())}>
             {syncScopeLabel(getValue())}
@@ -64,16 +64,16 @@ export function RootAdminSportEventListPage() {
       ...sportEventScheduleColumns(),
       columnHelper.accessor('loadedParticipantCount', {
         header: 'Field',
-        meta: { type: { kind: 'number' } },
+        meta: { info: "How many participants are loaded into the event's field.", type: { kind: 'number' } },
       }),
       columnHelper.accessor('tierCount', {
         header: 'Tiers',
-        meta: { type: { kind: 'number' } },
+        meta: { info: "How many tiers the event's field is split into for tier contests.", type: { kind: 'number' } },
       }),
       columnHelper.accessor((row) => row.adminCounts?.contestCount ?? null, {
         id: 'contestCount',
         header: 'Contests',
-        meta: { type: { kind: 'number' } },
+        meta: { info: 'How many contests are built on the event.', type: { kind: 'number' } },
       }),
     ],
     [event.one],

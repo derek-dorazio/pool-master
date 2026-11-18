@@ -25,31 +25,31 @@ export function RootAdminSportLeagueListPage() {
     () => [
       columnHelper.accessor('name', {
         header: upperFirst(sportLeague.one),
-        meta: { type: { kind: 'text' } },
+        meta: { info: "The sport league's name.", type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
       columnHelper.accessor('matchKeyword', {
         header: 'Match keyword',
-        meta: { type: { kind: 'text' } },
+        meta: { info: 'The keyword used to match provider data to this sport league.', type: { kind: 'text' } },
         cell: ({ getValue }) => getValue() || '—',
       }),
       columnHelper.accessor('affiliationCount', {
         header: 'Roster size',
-        meta: { type: { kind: 'number' } },
+        meta: { info: "How many participants are on the sport league's roster.", type: { kind: 'number' } },
       }),
       columnHelper.accessor('sportEventCount', {
         header: upperFirst(event.many),
-        meta: { type: { kind: 'number' } },
+        meta: { info: 'How many events the sport league has.', type: { kind: 'number' } },
       }),
       columnHelper.accessor('currentEventYear', {
         header: 'Current year',
-        meta: { type: { kind: 'number' } },
+        meta: { info: 'The season year the sport league is in now.', type: { kind: 'number' } },
       }),
       columnHelper.accessor('isActive', {
         header: 'Active',
-        meta: { type: { kind: 'boolean' } },
+        meta: { info: 'Whether the sport league is active.', type: { kind: 'boolean' } },
         cell: ({ getValue }) => (
           <StatusBadge tone={getValue() ? 'active' : 'inactive'}>
             {getValue() ? 'Active' : 'Inactive'}

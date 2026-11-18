@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -114,12 +114,12 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens Map competitor on its own page for the row\'s provider and id', async () => {
+  it('opens Map competitor on its own page when the competitor\'s row is chosen', async () => {
     renderPage();
 
-    expect(
-      await screen.findByTestId('root-admin-unmapped-participant-map-mock-contest-feed:golfer-77'),
-    ).toHaveAttribute('href', MAP_PATH);
+    const row = await screen.findByTestId('root-admin-unmapped-participant-row-mock-contest-feed:golfer-77');
+
+    expect(within(row).getByRole('link', { name: /Ludvig Aberg/ })).toHaveAttribute('href', MAP_PATH);
   });
 
   it('narrows the unmapped list with the search box', async () => {

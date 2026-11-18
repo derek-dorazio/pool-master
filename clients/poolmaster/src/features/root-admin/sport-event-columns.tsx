@@ -13,7 +13,7 @@ export function sportEventNameColumn(eventLabel: string) {
   return columnHelper.accessor((row) => `${row.name} ${row.venue || ''}`.trim(), {
     id: 'name',
     header: eventLabel,
-    meta: { type: { kind: 'text' } },
+    meta: { info: "The event's name, with its venue underneath.", type: { kind: 'text' } },
     cell: ({ row }) => (
       <div>
         <div className="font-medium text-foreground">{row.original.name}</div>
@@ -30,11 +30,11 @@ export function sportEventScheduleColumns() {
   return [
     columnHelper.accessor('startDate', {
       header: 'Starts',
-      meta: { type: { kind: 'datetime', direction: 'both' } },
+      meta: { info: 'When the event starts, in your time zone.', type: { kind: 'datetime', direction: 'both' } },
     }),
     columnHelper.accessor('status', {
       header: 'Status',
-      meta: { type: { kind: 'enum', order: SportEventStatusOrder, label: formatSportEventStatus } },
+      meta: { info: 'Where the event is in its life: Draft, Scheduled, Postponed, In progress, Completed or Cancelled.', type: { kind: 'enum', order: SportEventStatusOrder, label: formatSportEventStatus } },
       cell: ({ getValue }) => (
         <StatusBadge tone={sportEventStatusTone(getValue())}>
           {formatSportEventStatus(getValue())}
@@ -44,7 +44,7 @@ export function sportEventScheduleColumns() {
     columnHelper.accessor((row) => deriveSportEventReadiness(row).label, {
       id: 'readiness',
       header: 'Readiness',
-      meta: { type: { kind: 'enum' } },
+      meta: { info: 'Whether the event is ready for contests, and what is missing if not.', type: { kind: 'enum' } },
       cell: ({ row }) => {
         const readiness = deriveSportEventReadiness(row.original);
         return (

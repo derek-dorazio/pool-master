@@ -60,7 +60,7 @@ export function RootAdminEventsPage() {
       eventColumnHelper.accessor('name', {
         id: 'event',
         header: 'Event',
-        meta: { type: { kind: 'text' } },
+        meta: { info: "The event's name, with the provider's id for it underneath.", type: { kind: 'text' } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">{row.original.name}</div>
@@ -72,32 +72,32 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('sport', {
         header: 'Sport',
-        meta: { type: { kind: 'enum', order: SportOrder } },
+        meta: { info: 'The sport the event belongs to.', type: { kind: 'enum', order: SportOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone="info">{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('providerId', {
         header: 'Source',
-        meta: { type: { kind: 'enum' } },
+        meta: { info: 'The data provider the event came from.', type: { kind: 'enum' } },
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
       }),
       eventColumnHelper.accessor('startDate', {
         header: 'Starts',
-        meta: { type: { kind: 'datetime', direction: 'both' } },
+        meta: { info: 'When the event starts, in your time zone.', type: { kind: 'datetime', direction: 'both' } },
       }),
       eventColumnHelper.accessor('status', {
         header: 'Status',
-        meta: { type: { kind: 'enum', order: SportEventStatusOrder } },
+        meta: { info: 'Where the event is in its life: Draft, Scheduled, Postponed, In progress, Completed or Cancelled.', type: { kind: 'enum', order: SportEventStatusOrder } },
         cell: ({ getValue }) => (
           <StatusBadge tone={sportEventStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('readinessStatus', {
         header: 'Readiness',
-        meta: { type: { kind: 'enum', label: formatReadiness } },
+        meta: { info: 'Whether the event is ready for contests, and what is missing if not.', type: { kind: 'enum', label: formatReadiness } },
         cell: ({ row }) => (
           <div>
             <StatusBadge tone={readinessTone(row.original.readinessStatus)}>
@@ -114,7 +114,7 @@ export function RootAdminEventsPage() {
       eventColumnHelper.accessor('loadedParticipantCount', {
         id: 'field',
         header: 'Field',
-        meta: { type: { kind: 'number' } },
+        meta: { info: "How many participants are loaded into the event's field, with the provider's own count underneath.", type: { kind: 'number' } },
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">
@@ -129,6 +129,7 @@ export function RootAdminEventsPage() {
       eventColumnHelper.display({
         id: 'participants',
         header: 'Participants',
+        meta: { info: "Opens the event's field, where its participants are managed." },
         // The field lives on the event's own Field page, in its sport's Manage section.
         cell: ({ row }) => (
           <LinkButton

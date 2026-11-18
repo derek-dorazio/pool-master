@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { SportOrder } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { type UnmappedProviderParticipantDto } from '@/lib/api';
-import { DataGrid, HelpTip, Input, LinkButton, PageHeader, QueryState } from '@/features/shared/ui';
+import { DataGrid, HelpTip, Input, PageHeader, QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { MANAGE_LIST_PAGE_SIZE, buildMapCompetitorPath } from './manage-navigation';
 import { useUnmappedCompetitorsQuery } from './use-unmapped-competitors';
@@ -27,27 +27,14 @@ export function RootAdminUnmappedParticipantsPage() {
     () => [
       columnHelper.accessor('externalName', {
         header: 'Competitor',
-        meta: { type: { kind: 'text' } },
+        meta: { info: 'The name the provider sent for a participant it could not match to one we hold.', type: { kind: 'text' } },
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor('sport', { header: 'Sport', meta: { type: { kind: 'enum', order: SportOrder } } }),
-      columnHelper.accessor('providerName', { header: 'Provider', meta: { type: { kind: 'enum' } } }),
-      columnHelper.accessor('externalId', { header: 'Provider id', meta: { type: { kind: 'text' } } }),
-      columnHelper.display({
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <LinkButton
-            data-testid={`root-admin-unmapped-participant-map-${rowKey(row.original)}`}
-            to={buildMapCompetitorPath(row.original.providerId, row.original.externalId)}
-            variant="secondary"
-          >
-            Map
-          </LinkButton>
-        ),
-      }),
+      columnHelper.accessor('sport', { header: 'Sport', meta: { info: 'The sport the provider sent the participant for.', type: { kind: 'enum', order: SportOrder } } }),
+      columnHelper.accessor('providerName', { header: 'Provider', meta: { info: 'The data provider that sent the participant.', type: { kind: 'enum' } } }),
+      columnHelper.accessor('externalId', { header: 'Provider id', meta: { info: "The provider's own id for the participant.", type: { kind: 'text' } } }),
     ],
     [],
   );
@@ -89,6 +76,7 @@ export function RootAdminUnmappedParticipantsPage() {
             emptyMessage="Every competitor the providers report is mapped to a participant."
             filterTestIdPrefix="root-admin-unmapped-participants-filter"
             getRowId={rowKey}
+            getRowLink={(row) => buildMapCompetitorPath(row.providerId, row.externalId)}
             pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(row) => `root-admin-unmapped-participant-row-${rowKey(row)}`}
             searchTerm={searchTerm}
