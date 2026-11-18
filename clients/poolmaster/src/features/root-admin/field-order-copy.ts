@@ -1,10 +1,11 @@
 import { FieldOrderBasis, fieldOrderDecision, type SportNoun } from '@poolmaster/shared/domain';
 import type { EventFieldEntry } from './event-field-patch';
 
-const VALUE_WORD: Record<Exclude<FieldOrderBasis, typeof FieldOrderBasis.NAME>, string> = {
-  [FieldOrderBasis.ODDS]: 'odds',
-  [FieldOrderBasis.SEED]: 'seed',
-  [FieldOrderBasis.RANKING]: 'rank',
+/** Each value as the order names it, and as a participant without it is said to lack it. */
+const VALUE_WORD: Record<Exclude<FieldOrderBasis, typeof FieldOrderBasis.NAME>, { name: string; missing: string }> = {
+  [FieldOrderBasis.ODDS]: { name: 'odds', missing: 'odds' },
+  [FieldOrderBasis.SEED]: { name: 'seed', missing: 'a seed' },
+  [FieldOrderBasis.RANKING]: { name: 'rank', missing: 'a rank' },
 };
 
 /**
@@ -24,7 +25,7 @@ export function describeFieldOrder(
   }
   const word = VALUE_WORD[basis];
   if (!coversField) {
-    return `Ordered by ${word}, ${participant.many} without one last (no value is set for every ${participant.one}).`;
+    return `Ordered by ${word.name}, ${participant.many} without ${word.missing} last (no value is set for every ${participant.one}).`;
   }
   switch (basis) {
     case FieldOrderBasis.ODDS:

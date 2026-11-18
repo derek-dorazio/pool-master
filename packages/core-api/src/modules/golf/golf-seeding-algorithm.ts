@@ -39,6 +39,9 @@ const ODDS_JITTER_OFFSET = 0.15;
  * (1..N) becomes seedNumber directly. oddsToWin is derived from position
  * (not the raw, tie-having ranking) via an inverse-weighted,
  * jitter-randomized probability distribution normalized across the field.
+ * The jittered weights are handed out largest first, so a better seed never
+ * gets longer odds: odds outrank seed in the field's order (#1807), and
+ * placeholder odds must not reorder the seeds they came from.
  */
 export function deriveSeedNumbersAndOdds(
   roster: SeedingRosterEntry[],
@@ -50,7 +53,7 @@ export function deriveSeedNumbersAndOdds(
     const position = index + 1;
     const jitter = 1 + (random() * ODDS_JITTER_RANGE - ODDS_JITTER_OFFSET);
     return (1 / position) * jitter;
-  });
+  }).sort((left, right) => right - left);
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
 
   return ordered.map((entry, index) => {

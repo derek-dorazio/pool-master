@@ -31,6 +31,6 @@ describe('describeFieldOrder — which value auto-assigned tiers and prices orde
 
   it('says the partial value, those without it last, when no value covers the field', () => {
     expect(describeFieldOrder([row('A', { oddsToWin: 3 }), row('B')], participant))
-      .toBe('Ordered by odds, teams without one last (no value is set for every team).');
+      .toBe('Ordered by odds, teams without odds last (no value is set for every team).');
   });
 });

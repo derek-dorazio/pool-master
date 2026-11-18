@@ -73,6 +73,16 @@ describe('deriveSeedNumbersAndOdds', () => {
     expect(result[1].oddsToWin).toBeLessThan(result[2].oddsToWin);
   });
 
+  it('never gives a better seed longer odds, however the jitter falls, so placeholder odds keep the seed order they came from', () => {
+    // Alternating the jitter's extremes (0.85, 1.15, ...) would otherwise give seed 4 a larger
+    // weight than seed 3, and so shorter odds.
+    const roster = Array.from({ length: 6 }, (_, index) => ({ participantId: `p-${index + 1}`, ranking: index + 1 }));
+
+    const odds = deriveSeedNumbersAndOdds(roster, fixedSequence([0, 1])).map((r) => r.oddsToWin);
+
+    expect(odds).toEqual([...odds].sort((left, right) => left - right));
+  });
+
   it('pool-master-2re returns an empty array for an empty roster', () => {
     expect(deriveSeedNumbersAndOdds([], fixedSequence([0.5]))).toEqual([]);
   });
