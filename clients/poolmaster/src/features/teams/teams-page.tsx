@@ -10,7 +10,6 @@ import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory'
 import { teamNameColumn } from './team-name-column';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
-const TEAMS_PER_PAGE = 25;
 const SEARCH_LABEL = 'Find a member or owner';
 
 /** Teams: the league's directory of teams and their owners, for every member. */
@@ -98,7 +97,6 @@ export function TeamsPage() {
           data={rows}
           emptyMessage={rows.length ? 'No members match that search.' : 'No one has joined this league yet.'}
           getRowId={(row) => row.team.id}
-          pageSize={TEAMS_PER_PAGE}
           rowTestId={(row) => `league-team-${row.team.id}`}
           searchTerm={searchTerm}
           showColumnFilters={false}

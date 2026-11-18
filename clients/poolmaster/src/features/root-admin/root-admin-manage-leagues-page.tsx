@@ -17,7 +17,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
-import { MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 const columnHelper = createColumnHelper<LeagueDto>();
 
@@ -145,7 +145,6 @@ export function RootAdminManageLeaguesPage() {
           }
           getRowId={(league) => league.id}
           getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-          pageSize={MANAGE_LIST_PAGE_SIZE}
           rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
           searchTerm={search}
           tableTestId="root-admin-manage-leagues-table"

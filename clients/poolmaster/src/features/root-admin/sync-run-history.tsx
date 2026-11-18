@@ -12,7 +12,6 @@ import {
   getProviderName,
   type ProviderSyncRun,
 } from './root-admin-sync-utils';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 import { formatEventValue, getRunStatusLabel, getRunStatusTone } from './sync-run-status';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
@@ -123,7 +122,6 @@ export function SyncRunHistory({
             emptyMessage="No sync runs matched the current filters."
             getRowId={(run) => run.id}
             openRowDialog={onOpenRun}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(run) => `root-admin-sync-run-${run.id}`}
             tableTestId="root-admin-sync-history-table"
           />

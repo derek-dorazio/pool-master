@@ -4,7 +4,7 @@ import { DataGrid, LinkButton, QueryState, StatusBadge } from '@/features/shared
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { useSportLeaguesQuery } from './use-sport-catalog';
-import { MANAGE_LIST_PAGE_SIZE, buildSportLeagueListPath, buildSportLeaguePath } from './manage-navigation';
+import { buildSportLeagueListPath, buildSportLeaguePath } from './manage-navigation';
 import { SportSectionMenu } from './sport-section-menu';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -90,7 +90,6 @@ export function RootAdminSportLeagueListPage() {
             filterTestIdPrefix="root-admin-sport-league-list-filter"
             getRowId={(league) => league.id}
             getRowLink={(league) => buildSportLeaguePath(sport, league.id)}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(league) => `root-admin-sport-league-row-${league.id}`}
             search={{ label: `Find a ${sportLeague.one}`, testId: 'root-admin-sport-league-list-search' }}
             tableTestId="root-admin-sport-league-list-table"

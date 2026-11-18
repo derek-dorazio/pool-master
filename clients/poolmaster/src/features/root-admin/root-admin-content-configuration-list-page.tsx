@@ -10,7 +10,6 @@ import {
 import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 import { useContestConfigTemplatesQuery } from './use-contest-config-templates-query';
-import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
@@ -127,7 +126,6 @@ export function RootAdminContentConfigurationListPage() {
                 );
               },
             })}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             searchTerm={searchTerm}
           />
         )}

@@ -18,7 +18,7 @@ import {
   sportEventStatusTone,
 } from './sport-admin-utils';
 import { EventYearFilter } from './event-year-select';
-import { buildSportEventPath, MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
+import { buildSportEventPath } from './manage-navigation';
 
 type AdminEvent = SportEventDto;
 
@@ -179,7 +179,6 @@ export function RootAdminEventsPage() {
             emptyMessage={`No events in ${eventYear}.`}
             filterTestIdPrefix="root-admin-events-filter"
             getRowId={(event) => event.id}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(event) => `root-admin-event-row-${event.id}`}
             searchTerm={searchTerm}
             tableTestId="root-admin-events-table"

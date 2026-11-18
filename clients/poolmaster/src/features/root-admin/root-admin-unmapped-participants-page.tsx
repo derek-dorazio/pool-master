@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { type UnmappedProviderParticipantDto } from '@/lib/api';
 import { DataGrid, HelpTip, Input, PageHeader, QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { MANAGE_LIST_PAGE_SIZE, buildMapCompetitorPath } from './manage-navigation';
+import { buildMapCompetitorPath } from './manage-navigation';
 import { useUnmappedCompetitorsQuery } from './use-unmapped-competitors';
 
 const columnHelper = createColumnHelper<UnmappedProviderParticipantDto>();
@@ -77,7 +77,6 @@ export function RootAdminUnmappedParticipantsPage() {
             filterTestIdPrefix="root-admin-unmapped-participants-filter"
             getRowId={rowKey}
             getRowLink={(row) => buildMapCompetitorPath(row.providerId, row.externalId)}
-            pageSize={MANAGE_LIST_PAGE_SIZE}
             rowTestId={(row) => `root-admin-unmapped-participant-row-${rowKey(row)}`}
             searchTerm={searchTerm}
             tableTestId="root-admin-unmapped-participants-table"

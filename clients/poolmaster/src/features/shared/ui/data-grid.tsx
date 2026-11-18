@@ -3,11 +3,9 @@ import {
   functionalUpdate,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
   type RowData,
   type SortingState,
   useReactTable,
@@ -20,7 +18,6 @@ import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
 import { InfoPopover } from "./info-popover";
-import { Pager } from "./pager";
 import { Tile } from "./tile";
 import { ViewFilter, type ViewFilterOption } from "./view-filter";
 import { DataGridColumnFilter } from "./data-grid-column-filter";
@@ -49,8 +46,8 @@ export type DataGridSearch = {
 };
 
 /**
- * A "jump to my row" action (rules/ux-rules.md §12 rule 7): clears the search and filters, turns
- * to the page holding the row in the current sort, scrolls to it and highlights it. Needs
+ * A "jump to my row" action (rules/ux-rules.md §12 rule 7): clears the search and filters,
+ * scrolls to the row and highlights it. Needs
  * `getRowId`; the button shows only while the row is in the data.
  */
 export type DataGridJumpToRow = {
@@ -129,8 +126,6 @@ export type DataGridProps<TData> = {
    * roster / field).
    */
   meta?: Record<string, unknown>;
-  /** Rows per page; omitted, every row shows on one page. */
-  pageSize?: number;
   /** Whether each filterable column's header offers its filter. On by default. */
   showColumnFilters?: boolean;
   /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
@@ -143,18 +138,13 @@ export type DataGridProps<TData> = {
    */
   toolbarEnd?: ReactNode;
   /**
-   * Names a narrowing the caller applies to `data` itself, such as "mine" or "all": when it
-   * changes, the grid starts again from its first page, as it does for its own search.
-   */
-  pageResetKey?: string;
-  /**
    * The rows drawn under a row, such as an opened leaderboard entry's games; none while it is
    * closed. The caller decides which rows are open.
    */
   detailRows?: (row: TData) => readonly DataGridDetailRow[];
   /**
    * A row to open the grid on, such as the entry a link names: once it is among the rows, the
-   * grid turns to its page, highlights it as a jump does and scrolls it into view, once per id.
+   * grid highlights it as a jump does and scrolls it into view, once per id.
    * An id the grid doesn't hold is ignored.
    */
   landOnRowId?: string | null;
@@ -295,13 +285,11 @@ export function DataGrid<TData>({
   meta,
   search,
   searchTerm,
-  pageSize,
   showColumnFilters = true,
   jumpToRow,
   headerTone = "plain",
   views,
   toolbarEnd,
-  pageResetKey,
   detailRows,
   landOnRowId = null,
 }: DataGridProps<TData>) {
@@ -312,15 +300,11 @@ export function DataGrid<TData>({
   const [ownSearchTerm, setOwnSearchTerm] = useState("");
   const globalFilter = searchTerm ?? ownSearchTerm;
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: pageSize ?? Number.MAX_SAFE_INTEGER,
-  });
 
   // The last row jumped to: it stays highlighted until the next jump.
   const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
-  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's page alone.
+  // The row the grid last landed on (`landOnRowId`), so a later render leaves the viewer's scroll alone.
   const [landedRowId, setLandedRowId] = useState<string | null>(null);
   useEffect(() => {
     if (landedRowId === null) {
@@ -330,30 +314,6 @@ export function DataGrid<TData>({
       ?.querySelector(`[data-row-id="${CSS.escape(landedRowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [landedRowId]);
-
-  const resetPageIndex = () =>
-    setPagination((current) => ({ ...current, pageIndex: 0 }));
-
-  // A new term from the page's own box starts again from the first page, as the grid's box does.
-  const [pagedSearchTerm, setPagedSearchTerm] = useState(searchTerm);
-  if (searchTerm !== pagedSearchTerm) {
-    setPagedSearchTerm(searchTerm);
-    resetPageIndex();
-  }
-
-  // So does another narrowing the caller applies, such as a leaderboard's My entries.
-  const [pagedResetKey, setPagedResetKey] = useState(pageResetKey);
-  if (pageResetKey !== pagedResetKey) {
-    setPagedResetKey(pageResetKey);
-    resetPageIndex();
-  }
-
-  // Another view starts again from the first page and keeps what was typed in the search.
-  const [pagedView, setPagedView] = useState(views?.value);
-  if (views?.value !== pagedView) {
-    setPagedView(views?.value);
-    resetPageIndex();
-  }
 
   const table = useReactTable({
     data,
@@ -366,28 +326,19 @@ export function DataGrid<TData>({
     state: {
       columnFilters: columnFilters ?? [],
       globalFilter,
-      pagination,
       sorting,
     },
     globalFilterFn: "includesString",
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getBlanksLastSortedRowModel(),
-    // A new search, filter or sort starts again from the first page.
     onColumnFiltersChange: (updater) => {
       setColumnFilters((current) => functionalUpdate(updater, current ?? []));
-      resetPageIndex();
     },
     onGlobalFilterChange: (updater: string) => {
       setOwnSearchTerm(updater);
-      resetPageIndex();
     },
-    onPaginationChange: setPagination,
-    onSortingChange: (updater) => {
-      setSorting(updater);
-      resetPageIndex();
-    },
+    onSortingChange: setSorting,
     getRowId,
   });
 
@@ -410,19 +361,17 @@ export function DataGrid<TData>({
 
   const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
 
-  // Each step renders before the next reads it: the unfiltered rows say which page holds the row,
-  // and that page is in the table to scroll to. A repeat jump scrolls again; a sort or page never does.
+  // Each step renders before the next reads it: clearing the search and filters puts the row in
+  // the table to scroll to. A repeat jump scrolls again; a sort never does.
   const jump = (rowId: string) => {
     flushSync(() => {
       setOwnSearchTerm("");
       setColumnFilters([]);
     });
-    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === rowId);
-    if (index < 0) {
+    if (!table.getRowModel().rows.some((row) => row.id === rowId)) {
       return;
     }
     flushSync(() => {
-      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
       setJumpedRowId(rowId);
     });
     tableRef.current
@@ -430,21 +379,9 @@ export function DataGrid<TData>({
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
 
-  if (landOnRowId !== null && landOnRowId !== landedRowId) {
-    const index = table.getSortedRowModel().rows.findIndex((row) => row.id === landOnRowId);
-    if (index >= 0) {
-      setLandedRowId(landOnRowId);
-      setJumpedRowId(landOnRowId);
-      setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
-    }
-  }
-
-  const matchingRowCount = table.getFilteredRowModel().rows.length;
-  const pageCount = table.getPageCount();
-  if (pagination.pageIndex > 0 && pagination.pageIndex >= pageCount) {
-    // The caller passed fewer rows than before (a refetch, or a narrower filter of its own):
-    // show the last page there still is rather than an empty one.
-    setPagination({ ...pagination, pageIndex: Math.max(pageCount - 1, 0) });
+  if (landOnRowId !== null && landOnRowId !== landedRowId && table.getRowModel().rows.some((row) => row.id === landOnRowId)) {
+    setLandedRowId(landOnRowId);
+    setJumpedRowId(landOnRowId);
   }
 
   const searchBox = search ? (
@@ -716,16 +653,6 @@ export function DataGrid<TData>({
         </div>
         )}
       </Tile>
-      {pageSize && !views?.status ? (
-        <Pager
-          onNext={() => table.nextPage()}
-          onPrevious={() => table.previousPage()}
-          pageCount={pageCount}
-          pageIndex={pagination.pageIndex}
-          pageSize={pagination.pageSize}
-          total={matchingRowCount}
-        />
-      ) : null}
     </div>
   );
 }

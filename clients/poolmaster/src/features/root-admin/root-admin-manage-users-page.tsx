@@ -14,7 +14,7 @@ import {
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
-import { buildManageUserPath, MANAGE_LIST_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './manage-navigation';
+import { buildManageUserPath, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 // #202 step 3.4 — the canonical named component, not an index into the response map.
 type RootAdminUser = UserDto;
@@ -129,7 +129,6 @@ export function RootAdminManageUsersPage() {
           }
           getRowId={(user) => user.id}
           getRowLink={(user) => buildManageUserPath(user.id)}
-          pageSize={MANAGE_LIST_PAGE_SIZE}
           rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
           searchTerm={search}
           tableTestId="root-admin-manage-users-table"

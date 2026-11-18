@@ -24,8 +24,6 @@ import {
 } from './invites-page-helpers';
 import { InvitesPageRowActions } from './invites-page-row-actions';
 
-const INVITES_PER_PAGE = 25;
-
 type InvitesPageWaitingInvitesSectionProps = {
   invitations: LeagueInvitationDto[] | undefined;
   invitationsKey: QueryKey;
@@ -158,7 +156,6 @@ export function InvitesPageWaitingInvitesSection({
             ? (filter === 'expired' ? 'No expired invites.' : 'No pending invites.')
             : 'No invites are waiting on an answer.'}
           getRowId={(row) => row.invitation.id}
-          pageSize={INVITES_PER_PAGE}
           rowActions={(row) => (
             <InvitesPageRowActions
               invitationsKey={invitationsKey}
