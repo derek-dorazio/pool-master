@@ -10,9 +10,21 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, SportLeagueNoun, TournamentFormat } from '../domain/enums';
+import {
+  BracketAdvancement,
+  MatchPeriodLayout,
+  ParticipantType,
+  ProviderSyncKind,
+  Sport,
+  SportLeagueIssueTargetType,
+  SportLeagueIssueType,
+  SportLeagueKind,
+  SportLeagueNoun,
+  SportLeagueSyncHealth,
+  TournamentFormat,
+} from '../domain/enums';
 import { ScoringFamily } from '../domain/sports/scoring-family';
-import { AUTO_RELEASE_DAYS_MAX } from '../domain/release-checks';
+import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -174,6 +186,67 @@ export const ParticipantLeagueAffiliationUploadPreviewResponseSchema = z.object(
 }).describe('A dry run of an affiliation upload. Nothing is written.');
 export type ParticipantLeagueAffiliationUploadPreviewResponse = z.infer<typeof ParticipantLeagueAffiliationUploadPreviewResponseSchema>;
 
+// --- Sport league overview: the root admin's Sports page (#1847) -----------------
+
+const SportLeagueIssueTargetDtoSchema = z.object({
+  type: z.enum(SportLeagueIssueTargetType).describe('What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event\'s page.'),
+  id: z.uuid().describe('The sync run\'s or event\'s id.'),
+}).describe('What an issue item links to.');
+
+const issueItemFields = {
+  label: z.string().describe('The item\'s name as data, never a sentence: a failed run\'s outcome summary as the sync history shows it (its sync kind when it has none), or an event\'s name.'),
+  occurredAt: DateTimeSchema.describe('When the run was written, or the event was last checked.'),
+  target: SportLeagueIssueTargetDtoSchema,
+};
+
+export const SportLeagueSyncIssueDtoSchema = z.object({
+  type: z.literal(SportLeagueIssueType.SYNC),
+  count: z.number().int().min(1).describe('How many of its syncs\' latest runs failed.'),
+  items: z.array(z.object({
+    ...issueItemFields,
+    syncKind: z.enum(ProviderSyncKind).describe('Which sync failed: the event list (EVENTS, a Clutch Card\'s parent\'s), the field (FIELD) or live scores and results (SCORES).'),
+  }).describe('A sync whose latest run failed; its target is that run.')).describe('Event list, then field, then scores.'),
+}).describe('Syncs whose latest run failed.');
+
+export const SportLeagueReleaseIssueDtoSchema = z.object({
+  type: z.literal(SportLeagueIssueType.RELEASE),
+  count: z.number().int().min(1).describe('How many draft events the latest automatic release check held.'),
+  items: z.array(z.object({
+    ...issueItemFields,
+    failedChecks: z.array(z.enum(ReleaseCheckKey)).min(1).describe('The ready checks that held it, in check order.'),
+  }).describe('A draft event its latest automatic release check held; its target is the event.')).describe('By event name.'),
+}).describe('Draft events held by a failed ready check.');
+
+export const SportLeagueIssueDtoSchema = z.discriminatedUnion('type', [
+  SportLeagueSyncIssueDtoSchema,
+  SportLeagueReleaseIssueDtoSchema,
+]).describe('One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.');
+export type SportLeagueIssueDto = z.infer<typeof SportLeagueIssueDtoSchema>;
+
+export const SportLeagueOverviewDtoSchema = z.object({
+  id: z.uuid(),
+  sport: z.enum(Sport),
+  name: z.string(),
+  parentSportLeagueId: z.uuid().nullable().describe('The season league it is a round of: a Clutch Card\'s parent league, the NHL for the Stanley Cup Final. Null for a league that is no other\'s round.'),
+  kind: z.enum(SportLeagueKind).describe('REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card\'s stat pool league, whose events are rounds of its parent league\'s season event.'),
+  providerId: z.string().nullable().describe('The provider that syncs its events; a Clutch Card\'s parent league\'s, since its parent\'s event list sync creates its events. Null when none does.'),
+  isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
+  syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention.'),
+  season: z.object({
+    start: DateTimeSchema.describe('The start of its first event.'),
+    end: DateTimeSchema.describe('The end of its last event, or its start when it has no end.'),
+  }).nullable().describe('The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card\'s spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.'),
+  nextEventStartsAt: DateTimeSchema.nullable().describe('The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.'),
+  eventCount: z.number().int().min(0).describe('Its events, past and upcoming, cancelled ones included.'),
+}).describe('One sport league on the root admin\'s Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts.');
+export type SportLeagueOverviewDto = z.infer<typeof SportLeagueOverviewDtoSchema>;
+
+export const SportLeagueOverviewListResponseSchema = z.object({
+  sportLeagues: z.array(SportLeagueOverviewDtoSchema).describe('Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league.'),
+}).describe('The root admin\'s Sports page.');
+export type SportLeagueOverviewListResponse = z.infer<typeof SportLeagueOverviewListResponseSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('SportDto', SportDtoSchema);
 registerSchema('SportListResponse', SportListResponseSchema);
@@ -183,6 +256,8 @@ registerSchema('SportLeagueListResponse', SportLeagueListResponseSchema);
 registerSchema('SportLeagueResponse', SportLeagueResponseSchema);
 registerSchema('CreateSportLeagueRequest', CreateSportLeagueRequestSchema);
 registerSchema('UpdateSportLeagueRequest', UpdateSportLeagueRequestSchema);
+registerSchema('SportLeagueOverviewDto', SportLeagueOverviewDtoSchema);
+registerSchema('SportLeagueOverviewListResponse', SportLeagueOverviewListResponseSchema);
 registerSchema('ParticipantLeagueAffiliationDto', ParticipantLeagueAffiliationDtoSchema);
 registerSchema('ParticipantLeagueAffiliationListResponse', ParticipantLeagueAffiliationListResponseSchema);
 registerSchema('ParticipantLeagueAffiliationResponse', ParticipantLeagueAffiliationResponseSchema);

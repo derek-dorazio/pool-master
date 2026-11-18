@@ -303,7 +303,7 @@ export function buildApp() {
     },
   };
 
-  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
+  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma));
   // One set of event services for the admin routes and the synced event creation sweep.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
