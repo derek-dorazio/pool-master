@@ -393,7 +393,8 @@ checks the source and actor agree.
 | Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
 
 Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`) and its **trigger**
-(`SCHEDULE`, `WEBHOOK` or `ADMIN`), and a run a background job ran names that job, so Activity
+(`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER` or `SYSTEM`, the job's own when a job ran it,
+#1861), and a run a background job ran names that job, so Activity
 (`GET /api/v1/activity`) shows each job with its runs (#1819). What scope a run records depends
 on how it started:
 

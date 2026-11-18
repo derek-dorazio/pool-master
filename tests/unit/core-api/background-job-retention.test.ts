@@ -1,6 +1,6 @@
 import { BackgroundJobStatus, BackgroundJobType } from '@poolmaster/shared/domain';
 import { BackgroundJobRetention } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START } from '../../support/in-memory-background-jobs';
 
 const NOW = new Date('2026-11-07T08:00:00.000Z');
 const DAY_MS = 24 * 60 * 60_000;
@@ -15,11 +15,11 @@ describe('background job retention (#1440)', () => {
       failedLastWeek: { status: BackgroundJobStatus.FAILED, daysAgo: 8 },
     };
     for (const [key, { status, daysAgo }] of Object.entries(finished)) {
-      await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key }, dedupeKey: key });
+      await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key }, dedupeKey: key, start: TEST_JOB_START });
       const row = jobs.rows[jobs.rows.length - 1];
       Object.assign(row, { status, completedAt: new Date(NOW.getTime() - daysAgo * DAY_MS) });
     }
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key: 'queued' }, dedupeKey: 'queued' });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key: 'queued' }, dedupeKey: 'queued', start: TEST_JOB_START });
 
     await expect(new BackgroundJobRetention(jobs).purge(NOW)).resolves.toBe(2);
 

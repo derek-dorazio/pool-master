@@ -14,7 +14,9 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { JobTrigger } from '@poolmaster/shared/domain';
 import { readRequestAccessToken, verifyAccessToken, type AuthUser } from '../plugins/auth-guard';
+import { actsAs } from '../plugins/request-job-start';
 import { readJwtSecret } from './config';
 import { sendError } from './error-handler';
 
@@ -32,6 +34,8 @@ export async function requireRootAdmin(request: FastifyRequest, reply: FastifyRe
     return;
   }
   if (user.isRootAdmin) {
+    // A job this route queues records ADMIN and the admin (#1861).
+    actsAs(request, JobTrigger.ADMIN);
     return;
   }
   (request.contextLogger ?? request.log).warn(

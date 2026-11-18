@@ -6,7 +6,7 @@
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
-import { BackgroundJobStatus, BackgroundJobType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, Sport } from '@poolmaster/shared/domain';
 import {
   getAppPrisma,
   getPrisma,
@@ -19,7 +19,7 @@ import {
   insertBackgroundJobs,
 } from '../../../packages/core-api/src/adapters/prisma-background-job-repository';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
-import { jobHandlers } from '../../support/in-memory-background-jobs';
+import { jobHandlers, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { expectDefined } from '../../support/expect-defined';
 import {
   BackgroundJobQueue,
@@ -52,7 +52,7 @@ function repository() {
 describe('background job table (#1440)', () => {
   it('runs each of many jobs exactly once when two runners drain the table at the same time', async () => {
     const jobs = repository();
-    const queue = new BackgroundJobQueue({ jobs });
+    const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
     const eventIds = Array.from({ length: 8 }, (_, index) => `two-runners-${String(index)}`);
     for (const eventId of eventIds) {
       await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(eventId));
@@ -64,6 +64,7 @@ describe('background job table (#1440)', () => {
         MANUAL_EVENT_SYNC: async (payload) => {
           ran.push(payload.eventId);
           await new Promise((resolve) => { setTimeout(resolve, 5); });
+          return { changedCount: 1 };
         },
       }),
     });
@@ -77,7 +78,7 @@ describe('background job table (#1440)', () => {
 
   it('claims a running job again only once its lease has ended, counting one more attempt', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('lease') });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('lease'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [claimed] = await jobs.claimDue({ now, limit: 5, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     expect(claimed).toMatchObject({ status: BackgroundJobStatus.RUNNING, attempts: 1 });
@@ -92,14 +93,14 @@ describe('background job table (#1440)', () => {
 
   it('writes no mark from a stale claim once the job was claimed again on a later attempt', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('stale') });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('stale'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [stale] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const [current] = await jobs.claimDue({ now: new Date(now.getTime() + 5 * MINUTE), limit: 1, leaseUntil: new Date(now.getTime() + 10 * MINUTE) });
 
-    await expect(jobs.markSucceeded(current, now)).resolves.toBe(true);
-    await expect(jobs.markRetry(stale, { runAt: now, error: 'late failure' })).resolves.toBe(false);
-    await expect(jobs.markFailed(stale, { error: 'late failure', completedAt: now })).resolves.toBe(false);
+    await expect(jobs.markSucceeded(current, now, { changedCount: 0 })).resolves.toBe(true);
+    await expect(jobs.markRetry(stale, { runAt: now, error: 'late failure', errorType: JobErrorType.OTHER })).resolves.toBe(false);
+    await expect(jobs.markFailed(stale, { error: 'late failure', errorType: JobErrorType.OTHER, completedAt: now })).resolves.toBe(false);
 
     const row = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: current.id } });
     expect(row).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2, lastError: null });
@@ -107,11 +108,11 @@ describe('background job table (#1440)', () => {
 
   it('lets a new job with the same dedupe key queue while the first waits to be retried', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry-key'), dedupeKey: 'MANUAL_EVENT_SYNC:retry-key' };
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry-key'), dedupeKey: 'MANUAL_EVENT_SYNC:retry-key', start: TEST_JOB_START };
     await jobs.enqueue(request);
     const now = soonAfterQueued();
     const [claimed] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
-    await jobs.markRetry(claimed, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out' });
+    await jobs.markRetry(claimed, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out', errorType: JobErrorType.TIMEOUT });
 
     await expect(jobs.enqueue(request)).resolves.toBe(true);
     await expect(getPrisma().backgroundJob.count({ where: { status: BackgroundJobStatus.QUEUED } })).resolves.toBe(2);
@@ -119,7 +120,7 @@ describe('background job table (#1440)', () => {
 
   it('leaves no job behind when the transaction that queued it rolls back', async () => {
     await expect(getAppPrisma().$transaction(async (tx) => {
-      await insertBackgroundJobs(tx, [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('rolled-back') }]);
+      await insertBackgroundJobs(tx, [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('rolled-back'), start: TEST_JOB_START }]);
       throw new Error('the change that caused the job failed');
     })).rejects.toThrow('the change that caused the job failed');
 
@@ -128,7 +129,7 @@ describe('background job table (#1440)', () => {
 
   it('coalesces queued jobs sharing a dedupe key, and queues a fresh one once the first is claimed', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('dedupe'), dedupeKey: 'MANUAL_EVENT_SYNC:dedupe' };
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('dedupe'), dedupeKey: 'MANUAL_EVENT_SYNC:dedupe', start: TEST_JOB_START };
 
     await expect(jobs.enqueue(request)).resolves.toBe(true);
     await expect(jobs.enqueue(request)).resolves.toBe(false);
@@ -145,21 +146,21 @@ describe('background job table (#1440)', () => {
     ]);
   });
 
-  it('records a retry as QUEUED at its new run time and a failure as FAILED, each keeping the error cut to its limit', async () => {
+  it('records a retry as QUEUED at its new run time and a failure as FAILED, each keeping its error type and the error cut to its limit, with no changed count', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry') });
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('fail') });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('fail'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [retried, failed] = await jobs.claimDue({ now, limit: 2, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const longError = 'x'.repeat(BACKGROUND_JOB_ERROR_MAX_LENGTH + 50);
 
-    await jobs.markRetry(retried, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out' });
-    await jobs.markFailed(failed, { error: longError, completedAt: now });
+    await jobs.markRetry(retried, { runAt: new Date(now.getTime() + MINUTE), error: 'provider timed out', errorType: JobErrorType.TIMEOUT });
+    await jobs.markFailed(failed, { error: longError, errorType: JobErrorType.PROVIDER_ERROR, completedAt: now });
 
     const retriedRow = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: retried.id } });
     const failedRow = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: failed.id } });
-    expect(retriedRow).toMatchObject({ status: BackgroundJobStatus.QUEUED, runAt: new Date(now.getTime() + MINUTE), leaseUntil: null, lastError: 'provider timed out' });
-    expect(failedRow).toMatchObject({ status: BackgroundJobStatus.FAILED, completedAt: now, leaseUntil: null });
+    expect(retriedRow).toMatchObject({ status: BackgroundJobStatus.QUEUED, runAt: new Date(now.getTime() + MINUTE), leaseUntil: null, lastError: 'provider timed out', errorType: JobErrorType.TIMEOUT, changedCount: null });
+    expect(failedRow).toMatchObject({ status: BackgroundJobStatus.FAILED, completedAt: now, leaseUntil: null, errorType: JobErrorType.PROVIDER_ERROR, changedCount: null });
     expect(failedRow.lastError).toHaveLength(BACKGROUND_JOB_ERROR_MAX_LENGTH);
   });
 
@@ -175,7 +176,7 @@ describe('background job table (#1440)', () => {
     };
     for (const [eventId, row] of Object.entries(rows)) {
       await getPrisma().backgroundJob.create({
-        data: { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(eventId), createdAt: ago(60), runAt: ago(60), ...row },
+        data: { type: BackgroundJobType.MANUAL_EVENT_SYNC, trigger: JobTrigger.SYSTEM, payload: syncPayload(eventId), createdAt: ago(60), runAt: ago(60), ...row },
       });
     }
 
@@ -221,9 +222,9 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('writes each job\'s scope to its own columns when it is queued, alone or in a batch', async () => {
     const { sportLeague, event } = await leagueWithEvent();
-    const queue = new BackgroundJobQueue({ jobs: repository() });
+    const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
-    await queue.enqueue(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId: sportLeague.id, eventYears: [2026], trigger: 'SCHEDULE' });
+    await queue.enqueue(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId: sportLeague.id, eventYears: [2026] });
     await queue.enqueueAll([queue.request(BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS, { sportEventId: event.id, completedAt: new Date().toISOString() })]);
 
     const rows = await getPrisma().backgroundJob.findMany({ orderBy: { createdAt: 'asc' } });
@@ -235,7 +236,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('answers the job it queued, and the waiting job when its dedupe key is held', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('returning'), dedupeKey: 'returning-key' };
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('returning'), dedupeKey: 'returning-key', start: TEST_JOB_START };
 
     const first = await jobs.enqueueReturning(request);
     const second = await jobs.enqueueReturning(request);
@@ -246,7 +247,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('writes the request\'s own job when a worker claims the waiting one between the skipped insert and its read', async () => {
     const plain = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced'), dedupeKey: 'raced-key' };
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced'), dedupeKey: 'raced-key', start: TEST_JOB_START };
     const waiting = await plain.enqueueReturning(request);
     let claimedBetween = false;
     // A client whose first skipped insert is followed by a worker's claim, which frees the key.
@@ -273,14 +274,15 @@ describe('Activity reads and job results (#1819)', () => {
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(2);
   });
 
-  it('keeps a succeeded job\'s reported result', async () => {
+  it('keeps a succeeded job\'s changed count and reported result, with no error type', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result') });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result'), start: TEST_JOB_START });
     const [claimed] = await jobs.claimDue({ now: soonAfterQueued(), limit: 1, leaseUntil: new Date(Date.now() + MINUTE) });
 
-    await expect(jobs.markSucceeded(expectDefined(claimed), new Date(), { created: 3 })).resolves.toBe(true);
+    await expect(jobs.markSucceeded(expectDefined(claimed), new Date(), { changedCount: 3, result: { created: 3 } })).resolves.toBe(true);
 
-    await expect(getPrisma().backgroundJob.findFirstOrThrow()).resolves.toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, result: { created: 3 } });
+    await expect(getPrisma().backgroundJob.findFirstOrThrow())
+      .resolves.toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, changedCount: 3, errorType: null, result: { created: 3 } });
   });
 
   it('lists a league\'s own jobs and its events\' jobs, newest first, inside the window, narrowed by type and status', async () => {
@@ -289,12 +291,12 @@ describe('Activity reads and job results (#1819)', () => {
     const now = Date.now();
     const at = (hoursAgo: number) => new Date(now - hoursAgo * HOUR);
     const prisma = getPrisma();
-    const leagueSync = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', payload: {}, sportLeagueId: sportLeague.id, createdAt: at(1), status: 'SUCCEEDED', completedAt: at(1) } });
-    const eventSettle = await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: {}, sportEventId: event.id, createdAt: at(2) } });
-    const oldEventSettle = await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: {}, sportEventId: event.id, createdAt: at(48) } });
-    await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', payload: {}, sportLeagueId: other.sportLeague.id, createdAt: at(1) } });
-    await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: {}, sportEventId: other.event.id, createdAt: at(1) } });
-    await prisma.backgroundJob.create({ data: { type: 'REBUILD_LEADERBOARDS', payload: {}, createdAt: at(1) } });
+    const leagueSync = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: sportLeague.id, createdAt: at(1), status: 'SUCCEEDED', completedAt: at(1) } });
+    const eventSettle = await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: JobTrigger.SYSTEM, payload: {}, sportEventId: event.id, createdAt: at(2) } });
+    const oldEventSettle = await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: JobTrigger.SYSTEM, payload: {}, sportEventId: event.id, createdAt: at(48) } });
+    await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: other.sportLeague.id, createdAt: at(1) } });
+    await prisma.backgroundJob.create({ data: { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: JobTrigger.SYSTEM, payload: {}, sportEventId: other.event.id, createdAt: at(1) } });
+    await prisma.backgroundJob.create({ data: { type: 'REBUILD_LEADERBOARDS', trigger: JobTrigger.SYSTEM, payload: {}, createdAt: at(1) } });
     const window = { createdFrom: at(24), createdTo: at(0) };
     const ids = (found: Array<{ id: string }>) => found.map((job) => job.id);
 
@@ -315,14 +317,14 @@ describe('Activity reads and job results (#1819)', () => {
       update: {},
     });
     const empty = await prisma.sportLeague.create({ data: { sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
-    const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', payload: {}, sportLeagueId: empty.id } });
+    const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: empty.id } });
 
     await expect(repository().findActivity({ sportLeagueId: empty.id, createdFrom: new Date(Date.now() - HOUR), createdTo: new Date(Date.now() + HOUR) }))
       .resolves.toEqual([expect.objectContaining({ id: job.id, sportLeagueId: empty.id })]);
   });
 
   it('finds only the sync runs the named jobs ran, leaving out a run with no job, and answers none for no jobs', async () => {
-    const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', payload: {} } });
+    const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', trigger: JobTrigger.SYSTEM, payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
       providerId: 'integration-background-jobs', sport: Sport.GOLF, eventId: 'e', ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
@@ -352,7 +354,7 @@ describe('manual sync runs and their job (#1441)', () => {
   });
 
   it('writes the runs, in the order given, and the job naming them in one transaction', async () => {
-    const queue = new BackgroundJobQueue({ jobs: repository() });
+    const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
     const runs = await new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
       [run('EVENTPARTICIPANTS'), run('EVENTLIVESCORES')],
@@ -373,7 +375,7 @@ describe('manual sync runs and their job (#1441)', () => {
   });
 
   it('writes neither the runs nor a job when the job cannot be built', async () => {
-    const queue = new BackgroundJobQueue({ jobs: repository() });
+    const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
       [run('EVENTPARTICIPANTS')],

@@ -68,11 +68,11 @@ async function linkedEvent(input: {
 
 async function queuedSyncs() {
   const jobs = await getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.PROVIDER_EVENT_SYNC }, orderBy: [{ runAt: 'asc' }, { createdAt: 'asc' }] });
-  return jobs.map((job) => ({ payload: job.payload, dedupeKey: job.dedupeKey, runAt: job.runAt, createdAt: job.createdAt }));
+  return jobs.map((job) => ({ payload: job.payload, dedupeKey: job.dedupeKey, runAt: job.runAt, createdAt: job.createdAt, trigger: job.trigger, startedByUserId: job.startedByUserId }));
 }
 
 describe('BALLDONTLIE webhook receiver', () => {
-  it('queues one live-score sync, a minute out, of the in-progress event whose match is linked to the ended game, and a reconciling one ten minutes out', async () => {
+  it('queues one live-score sync, a minute out, of the in-progress event whose match is linked to the ended game, and a reconciling one ten minutes out, both recorded as started by the webhook', async () => {
     const week = await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
     await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-postseason' });
 
@@ -83,8 +83,8 @@ describe('BALLDONTLIE webhook receiver', () => {
     const syncs = await queuedSyncs();
     const payload = { sport: Sport.AMERICAN_FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
     expect(syncs).toEqual([
-      expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11' }),
-      expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11' }),
+      expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
+      expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
     ]);
     const delaysMs = syncs.map((sync) => sync.runAt.getTime() - sync.createdAt.getTime());
     expect(delaysMs[0]).toBeGreaterThanOrEqual(55_000);

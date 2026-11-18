@@ -12,6 +12,7 @@
 
 import type { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
+import { JobErrorType } from '@poolmaster/shared/domain';
 
 // --- Provider Interface ---
 
@@ -148,6 +149,9 @@ export interface ProviderEventListOptions {
  * league alone; a sport's whole list leaves a refused league out instead.
  */
 export class ProviderLeagueRefusedError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.PROVIDER_ERROR;
+
   constructor(
     readonly providerName: string,
     readonly league: string,

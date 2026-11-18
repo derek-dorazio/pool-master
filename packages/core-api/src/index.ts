@@ -10,12 +10,14 @@ import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { requestLoggingContext } from './plugins/request-logging-context';
 import { requestReadMemo } from './plugins/request-read-memo';
+import { requestJobStart } from './plugins/request-job-start';
 import { requestQueryUsage } from './plugins/request-query-usage';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
 import { readTrustProxy } from './core/config';
+import { currentJobStart } from './core/job-start';
 import { readTaskRole, taskRolePlan } from './core/task-role';
 import { PostgresJobLock } from './core/job-lock';
 import { NightlyCleanupScheduler } from './core/nightly-cleanup';
@@ -89,7 +91,8 @@ import { createEventLifecycleService, createSportEventServices, eventFieldCache 
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
-import { releaseAttemptResultToJson } from './modules/events/release-sport-event-job';
+import { releaseAttemptJobOutcome } from './modules/events/release-sport-event-job';
+import { syncChangedRows } from './modules/ingestion/core/sync-write-diagnostics';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
@@ -173,7 +176,8 @@ export function buildApp() {
   const appBaseUrl = readApplicationBaseUrl(process.env);
   // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
   const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
-  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository });
+  // Each job records what started it: the request, sweep or job's handler under way (#1861).
+  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository, currentStart: currentJobStart });
   const contestNotices = createContestNotices(prisma, { email, jobs: backgroundJobs, appBaseUrl, logger: app.log });
   // A contest going live or completing queues its league's email as a job (#1387).
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: app.log });
@@ -252,6 +256,7 @@ export function buildApp() {
   // Core plugins
   // =========================================================================
   app.register(requestReadMemo);
+  app.register(requestJobStart);
   app.register(requestQueryUsage);
   app.register(swaggerPlugin);
   app.register(healthPlugin);
@@ -354,17 +359,19 @@ export function buildApp() {
     jobs: backgroundJobRepository,
     handlers: {
       MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
-      PROVIDER_EVENT_SYNC: async (payload, context) => { await ingestionScheduler.runNotifiedEventSync(payload, { jobId: context.jobId }); },
+      PROVIDER_EVENT_SYNC: async (payload, context) => ({
+        changedCount: syncChangedRows((await ingestionScheduler.runNotifiedEventSync(payload, { jobId: context.jobId, trigger: context.trigger }))?.writeDiagnostics),
+      }),
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
       CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
       CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
-      REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
+      REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
-      RELEASE_SPORT_EVENT: async (payload) => releaseAttemptResultToJson(await sportEventServices.sportEvents.autoReleaseEvent(payload.sportEventId)),
+      RELEASE_SPORT_EVENT: async (payload) => releaseAttemptJobOutcome(await sportEventServices.sportEvents.autoReleaseEvent(payload.sportEventId)),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

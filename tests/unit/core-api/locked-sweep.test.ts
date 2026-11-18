@@ -6,6 +6,8 @@
 import type { PrismaClient } from '@prisma/client';
 import { LockedSweep, type LockedSweepOptions } from '../../../packages/core-api/src/core/locked-sweep';
 import { memoizedRead, ReadMemoKey } from '../../../packages/core-api/src/core/request-read-memo';
+import { currentJobStart } from '../../../packages/core-api/src/core/job-start';
+import { JobTrigger, type JobStart } from '@poolmaster/shared/domain';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
 
@@ -23,6 +25,14 @@ function lockedSweep(work: () => Promise<void>, options: Partial<LockedSweepOpti
 }
 
 describe('LockedSweep', () => {
+  it('runs its work as SCHEDULE, so every job the sweep queues records the schedule (#1861)', async () => {
+    let start: JobStart | undefined;
+
+    await lockedSweep(async () => { start = currentJobStart(); }).run();
+
+    expect(start).toEqual({ trigger: JobTrigger.SCHEDULE });
+  });
+
   it('runs its work under its lock', async () => {
     const keys: string[] = [];
     const work = jest.fn(async () => undefined);

@@ -12,11 +12,11 @@ import {
   nextKickoffAfter,
   readLeaderboardSnapshotMaxAgeMs,
 } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
-import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 function setup() {
   const jobs = inMemoryBackgroundJobs();
-  const queue = new BackgroundJobQueue({ jobs });
+  const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const runner = { wake: jest.fn() };
   queue.wakes(runner);
   return { jobs, queue, runner, rebuilds: new JobLeaderboardRebuilds(queue) };
@@ -37,6 +37,7 @@ describe('JobLeaderboardRebuilds', () => {
       payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' },
       sportEventId: 'event-1',
       dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:EVENT:event-1`,
+      start: TEST_JOB_START,
     }]);
     expect(waiting(jobs)).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();
@@ -53,6 +54,7 @@ describe('JobLeaderboardRebuilds', () => {
       type: BackgroundJobType.REBUILD_LEADERBOARDS,
       payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' },
       dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:CONTEST:contest-9`,
+      start: TEST_JOB_START,
     }]);
     expect(waiting(jobs)).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();

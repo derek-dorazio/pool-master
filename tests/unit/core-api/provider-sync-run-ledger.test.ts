@@ -1,12 +1,13 @@
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { BackgroundJobType, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
+import { TEST_JOB_START } from '../../support/in-memory-background-jobs';
 
 function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -115,13 +116,14 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'mock-provider',
       submittedAt: now,
       runType: 'MANUAL_EVENT_SYNC',
-      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) } }),
+      trigger: JobTrigger.ADMIN,
+      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) }, start: TEST_JOB_START }),
     });
 
     expect(syncRuns.create).not.toHaveBeenCalled();
-    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt])).toEqual([
-      ['SUBMITTED', 'EVENTPARTICIPANTS', now],
-      ['SUBMITTED', 'EVENTLIVESCORES', now],
+    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt, run.trigger])).toEqual([
+      ['SUBMITTED', 'EVENTPARTICIPANTS', now, JobTrigger.ADMIN],
+      ['SUBMITTED', 'EVENTLIVESCORES', now, JobTrigger.ADMIN],
     ]);
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ payload: { ids: runs.map((run) => run.id) } })]);
   });
@@ -150,6 +152,7 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'mock-provider',
       submittedAt: now,
       runType: 'SCHEDULED_EVENT_SYNC',
+      trigger: JobTrigger.SCHEDULE,
     });
 
     expect(runs).toHaveLength(1);

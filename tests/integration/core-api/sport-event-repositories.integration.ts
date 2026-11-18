@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobType, BracketAdvancement, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import {
@@ -786,7 +787,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
       jobs,
       scheduler: new SportEventAutoReleaseScheduler({
         sportEvents: repos().events,
-        jobs: new BackgroundJobQueue({ jobs }),
+        jobs: new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart }),
         jobLock: { runExclusive: async (_key, work) => { await work(); return true; } },
         now: () => NOW,
       }),

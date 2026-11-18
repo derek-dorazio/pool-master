@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -1257,7 +1257,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
       await reads;
       return replaceSportEvents.apply(this, args);
     });
-    let outcomes: PromiseSettledResult<void>[];
+    let outcomes: PromiseSettledResult<BackgroundJobOutcome>[];
     try {
       outcomes = await Promise.allSettled([pga, open].map((sportEventId) => contestManagement.addReleasedEditionToContest({ contestId: expectDefined(poolId), sportEventId: expectDefined(sportEventId) })));
     } finally {

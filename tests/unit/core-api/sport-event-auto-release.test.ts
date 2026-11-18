@@ -1,24 +1,26 @@
 import { expect, jest } from '@jest/globals';
 import {
   BackgroundJobType,
+  JobErrorType,
   ReleaseAttemptOutcome,
   ReleaseAttemptSkipReason,
   ReleaseCheckKey,
   Sport,
   SportEventStatus,
   SportEventSyncScope,
+  type ReleaseAttemptResult,
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { releaseAttemptResultToJson } from '../../../packages/core-api/src/modules/events/release-sport-event-job';
+import { releaseAttemptJobOutcome, releaseAttemptResultToJson } from '../../../packages/core-api/src/modules/events/release-sport-event-job';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
 import { SportEventAutoReleaseScheduler } from '../../../packages/core-api/src/modules/events/sport-event-auto-release-scheduler';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { standardEventPricing } from '../../support/budget-pricing';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
 
@@ -64,7 +66,7 @@ function setup() {
   const jobRows = inMemoryBackgroundJobs(() => NOW);
   const scheduler = new SportEventAutoReleaseScheduler({
     sportEvents,
-    jobs: new BackgroundJobQueue({ jobs: jobRows }),
+    jobs: new BackgroundJobQueue({ jobs: jobRows, currentStart: testCurrentJobStart }),
     jobLock: { runExclusive: async (_key, work) => { await work(); return true; } },
     now: () => NOW,
   });
@@ -202,6 +204,16 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
     const json = releaseAttemptResultToJson(await service.autoReleaseEvent(event.id));
 
     expect(json).toMatchObject({ outcome: 'RELEASED', checks: expect.arrayContaining([{ key: 'NOT_STARTED', passed: true, value: event.startDate.toISOString() }]) });
+  });
+
+  it('reports a release as one changed event, a hold as CHECK_FAILED with nothing changed, and a skip as nothing changed, each with the attempt as its result (#1861)', () => {
+    const released: ReleaseAttemptResult = { outcome: ReleaseAttemptOutcome.RELEASED, checks: [{ key: ReleaseCheckKey.FIELD_LOADED, passed: true, value: 3 }] };
+    const held: ReleaseAttemptResult = { outcome: ReleaseAttemptOutcome.HELD, checks: [{ key: ReleaseCheckKey.FIELD_LOADED, passed: false, value: 0 }] };
+    const skipped: ReleaseAttemptResult = { outcome: ReleaseAttemptOutcome.SKIPPED, reason: ReleaseAttemptSkipReason.NOT_DRAFT };
+
+    expect(releaseAttemptJobOutcome(released)).toEqual({ changedCount: 1, result: releaseAttemptResultToJson(released) });
+    expect(releaseAttemptJobOutcome(held)).toEqual({ changedCount: 0, heldBack: JobErrorType.CHECK_FAILED, result: releaseAttemptResultToJson(held) });
+    expect(releaseAttemptJobOutcome(skipped)).toEqual({ changedCount: 0, result: { outcome: 'SKIPPED', reason: 'NOT_DRAFT' } });
   });
 });
 

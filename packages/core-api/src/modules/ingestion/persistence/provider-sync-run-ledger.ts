@@ -5,7 +5,7 @@ import {
   IngestionJobStatus,
   ProviderSyncKind,
   ProviderSyncRunStatus,
-  ProviderSyncTrigger,
+  type JobTrigger,
   type BackgroundJobRequest,
   type ProviderSyncRun,
 } from '@poolmaster/shared/domain';
@@ -376,12 +376,6 @@ export function isEventSyncFeedType(
 /** What started a feed run, as its payload's `runType` has always named it. */
 export type FeedRunType = 'MANUAL_EVENT_SYNC' | 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC';
 
-const FEED_RUN_TRIGGERS: Record<FeedRunType, ProviderSyncTrigger> = {
-  MANUAL_EVENT_SYNC: ProviderSyncTrigger.ADMIN,
-  SCHEDULED_EVENT_SYNC: ProviderSyncTrigger.SCHEDULE,
-  WEBHOOK_EVENT_SYNC: ProviderSyncTrigger.WEBHOOK,
-};
-
 const FEED_KINDS: Record<IngestionFeedType, ProviderSyncKind> = {
   EVENTPARTICIPANTS: ProviderSyncKind.FIELD,
   EVENTLIVESCORES: ProviderSyncKind.SCORES,
@@ -392,6 +386,8 @@ interface SubmissionInput {
   providerId: string;
   submittedAt: Date;
   runType: FeedRunType;
+  /** What started the runs (#1861): the job's trigger when a job runs them, else the request's or the schedule's. */
+  trigger: JobTrigger;
   /** The job the runs are created in, when one is (a webhook's sync, #1819). */
   backgroundJobId?: string;
   /** PoolMaster's event the provider event is linked to, when the caller knows it. */
@@ -408,7 +404,7 @@ function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
     sport,
     eventId,
     kind: FEED_KINDS[feed],
-    trigger: FEED_RUN_TRIGGERS[input.runType],
+    trigger: input.trigger,
     sportLeagueId: input.sportLeagueId ?? null,
     sportEventId: input.sportEventId ?? null,
     backgroundJobId: input.backgroundJobId ?? null,
