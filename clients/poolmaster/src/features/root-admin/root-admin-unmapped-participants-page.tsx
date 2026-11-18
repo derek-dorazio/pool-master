@@ -30,8 +30,8 @@ export function RootAdminUnmappedParticipantsPage() {
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor('sport', { header: 'Sport' }),
-      columnHelper.accessor('providerName', { header: 'Provider' }),
+      columnHelper.accessor('sport', { header: 'Sport', meta: { options: {} } }),
+      columnHelper.accessor('providerName', { header: 'Provider', meta: { options: {} } }),
       columnHelper.accessor('externalId', { header: 'Provider id' }),
       columnHelper.display({
         id: 'actions',

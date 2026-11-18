@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { RootAdminManageLeaguesPage } from './root-admin-manage-leagues-page';
+import { applyTextFilter } from '@/test/data-grid-filters';
 
 const {
   extendRunningPlanRenewalsMock,
@@ -221,9 +222,7 @@ describe('RootAdminManageLeaguesPage', () => {
     );
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
-    fireEvent.change(screen.getByTestId('data-grid-filter-name'), {
-      target: { value: 'Archive' },
-    });
+    applyTextFilter('data-grid-filter-name', 'Archive');
 
     expect(
       screen.queryByTestId('root-admin-manage-leagues-link-league-active-1'),

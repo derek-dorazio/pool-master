@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { DataGrid } from "./data-grid";
+import { optionsFromLabels } from "./data-grid-filters";
 
 type Member = { id: string; name: string; role: string; entries: number };
 
@@ -72,3 +73,44 @@ function MembersWithViews() {
 
 /** A manage list: the views at the left of the card's header, the search at its right. */
 export const ViewsAndSearch: StoryObj = { render: () => <MembersWithViews /> };
+
+type SportEvent = { id: string; name: string; stage: string; issues: string[]; field?: number };
+
+const EVENT_STATUS = { DRAFT: "Draft", SCHEDULED: "Scheduled", IN_PROGRESS: "In progress", COMPLETED: "Completed", CANCELLED: "Cancelled" };
+const ISSUES = { SYNC: "Sync", RELEASE: "Release", LINKING: "Linking", OVERDUE: "Overdue" };
+
+const EVENTS: SportEvent[] = [
+  { id: "1", name: "Arnold Palmer Invitational", stage: "DRAFT", issues: ["LINKING"], field: 72 },
+  { id: "2", name: "Genesis Invitational", stage: "SCHEDULED", issues: [], field: 70 },
+  { id: "3", name: "Phoenix Open", stage: "SCHEDULED", issues: ["SYNC", "RELEASE"], field: 132 },
+  { id: "4", name: "Pebble Beach Pro-Am", stage: "DRAFT", issues: [] },
+  { id: "5", name: "The American Express", stage: "COMPLETED", issues: ["OVERDUE"], field: 156 },
+  { id: "6", name: "The Sentry", stage: "CANCELLED", issues: [], field: 59 },
+];
+
+const EVENT_COLUMNS: ColumnDef<SportEvent>[] = [
+  { accessorKey: "name", header: "Name" },
+  {
+    accessorKey: "stage",
+    header: "Status",
+    meta: { options: { values: optionsFromLabels(EVENT_STATUS), initial: ["DRAFT", "SCHEDULED"] } },
+    cell: ({ getValue }) => EVENT_STATUS[getValue<keyof typeof EVENT_STATUS>()],
+  },
+  {
+    accessorKey: "issues",
+    header: "Issues",
+    enableSorting: false,
+    meta: { options: { values: optionsFromLabels(ISSUES), manyPerCell: true } },
+    cell: ({ getValue }) => getValue<string[]>().map((issue) => ISSUES[issue as keyof typeof ISSUES]).join(", ") || "—",
+  },
+  { accessorKey: "field", header: "Field" },
+];
+
+/**
+ * Sort and filter from the header: ⇅ sorts (blanks last), the funnel opens the column's filter
+ * over the rows. Status is an enum column that starts on Draft and Scheduled; Issues holds several
+ * values per cell, so its filter offers Match any or Match all.
+ */
+export const HeaderFilters: StoryObj = {
+  render: () => <DataGrid columns={EVENT_COLUMNS} data={EVENTS} emptyMessage="No events match." getRowId={(event) => event.id} />,
+};

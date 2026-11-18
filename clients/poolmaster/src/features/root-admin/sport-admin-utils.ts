@@ -384,7 +384,7 @@ type _ParticipantStatusExhaustive =
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
 
-const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
+export const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
   ACTIVE: 'Active',
   INACTIVE: 'Inactive',
   RETIRED: 'Retired',
