@@ -264,7 +264,9 @@ function foundOptions<TData>(table: Table<TData>, column: Column<TData>, label =
 }
 
 // TanStack's built-in sorts where one fits: `text` for words, `basic` for numbers and yes/no
-// (inverted, so Yes comes first), `datetime` for stored dates, which compare as written.
+// (inverted, so Yes comes first), `datetime` for stored dates, which compare as written. A date
+// or datetime accessor must return the API's ISO UTC string (ending in Z), or a date-only
+// YYYY-MM-DD: those sort correctly as text, while another offset or a Date object would not.
 const BUILT_IN_SORT: Partial<Record<DataGridColumnKind, "text" | "basic" | "datetime">> = {
   text: "text",
   number: "basic",

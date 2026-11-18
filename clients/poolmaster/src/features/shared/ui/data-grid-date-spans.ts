@@ -251,7 +251,8 @@ function parseDay(text: string, preferences: DisplayPreferences, thisYear: numbe
   } else if (dayFirst && monthOf(dayFirst[2]) > 0) {
     day = { year: Number(dayFirst[3] ?? thisYear), month: monthOf(dayFirst[2]), day: Number(dayFirst[1]) };
   } else if (numeric) {
-    // The member's locale decides which number is the month: en-US writes it first.
+    // The member's locale decides which number is the month: en-US writes it first. That covers
+    // the locales englishLocaleFor gives today; a new month-first locale (en-CA, en-PH) belongs here.
     const monthFirst = /-US$/i.test(preferences.locale);
     const [first, second] = [Number(numeric[1]), Number(numeric[2])];
     day = { year: Number(numeric[3] ?? thisYear), month: monthFirst ? first : second, day: monthFirst ? second : first };
