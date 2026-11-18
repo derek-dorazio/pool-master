@@ -103,11 +103,12 @@ export type EventLifecycleStage = {
   index: number;
 };
 
-const STAGE_INDEX_BY_STATUS: Partial<Record<SportEventDtoStatus, number>> = {
-  DRAFT: 0,
-  SCHEDULED: 1,
-  IN_PROGRESS: 2,
-  COMPLETED: 3,
+/** The rail stage each on-rail status sits at; Cancelled and Postponed are off the rail. */
+const RAIL_STAGE_BY_STATUS: Partial<Record<SportEventDtoStatus, EventLifecycleStageKey>> = {
+  DRAFT: 'DRAFT',
+  SCHEDULED: 'RELEASED',
+  IN_PROGRESS: 'LIVE',
+  COMPLETED: 'COMPLETED',
 };
 
 /**
@@ -116,12 +117,12 @@ const STAGE_INDEX_BY_STATUS: Partial<Record<SportEventDtoStatus, number>> = {
  * a plain status note instead.
  */
 export function resolveEventLifecycleStage(status: SportEventDtoStatus): EventLifecycleStage | null {
-  const index = STAGE_INDEX_BY_STATUS[status];
-  if (index === undefined) {
+  const key = RAIL_STAGE_BY_STATUS[status];
+  const index = EVENT_LIFECYCLE_STAGES.findIndex((stage) => stage.key === key);
+  if (index < 0) {
     return null;
   }
-  const stage = EVENT_LIFECYCLE_STAGES[index];
-  return { key: stage.key, label: stage.label, index };
+  return { key: EVENT_LIFECYCLE_STAGES[index].key, label: EVENT_LIFECYCLE_STAGES[index].label, index };
 }
 
 // --- Release (#431) ---
