@@ -34,6 +34,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       notices: {
         contestStarted: () => Promise.reject(new Error('No contest started email expected')),
         contestEventChanged: () => Promise.reject(new Error('No event changed email expected')),
+        contestReopened: () => Promise.reject(new Error('No picks are open again email expected')),
         contestSettled: async (contest: Contest, final: ContestFinalStandings) => { told.push({ contestId: contest.id, final }); },
       },
       logger: fakeLogger(),

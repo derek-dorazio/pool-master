@@ -1007,7 +1007,8 @@
           "EVENT_WEEKLY_DIGEST",
           "LEAGUE_MEMBER_JOINED",
           "CONTEST_EXPANDED",
-          "LEAGUE_PLAN_PREVIEW_ENDING"
+          "LEAGUE_PLAN_PREVIEW_ENDING",
+          "CONTEST_REOPENED"
         ],
         "description": "A system email template."
       },
@@ -1109,6 +1110,10 @@
                 "type": "boolean",
                 "description": "Whether this email is sent."
               },
+              "CONTEST_REOPENED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
               "EVENT_COMING_UP": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
@@ -1158,6 +1163,7 @@
               "CONTEST_STANDINGS",
               "CONTEST_RESULTS",
               "CONTEST_EVENT_CHANGED",
+              "CONTEST_REOPENED",
               "EVENT_COMING_UP",
               "EVENT_READY_FOR_CONTESTS",
               "EVENT_WEEKLY_DIGEST",
@@ -34784,6 +34790,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_REOPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "EVENT_COMING_UP": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -34833,6 +34843,7 @@
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
                       "CONTEST_EVENT_CHANGED",
+                      "CONTEST_REOPENED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
@@ -34957,6 +34968,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_REOPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "EVENT_COMING_UP": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -35006,6 +35021,7 @@
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
                       "CONTEST_EVENT_CHANGED",
+                      "CONTEST_REOPENED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
@@ -37127,6 +37143,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_REOPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "EVENT_COMING_UP": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -37176,6 +37196,7 @@
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
                             "CONTEST_EVENT_CHANGED",
+                            "CONTEST_REOPENED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
@@ -37300,6 +37321,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_REOPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "EVENT_COMING_UP": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -37349,6 +37374,7 @@
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
                             "CONTEST_EVENT_CHANGED",
+                            "CONTEST_REOPENED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
@@ -39108,6 +39134,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_REOPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "EVENT_COMING_UP": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -39157,6 +39187,7 @@
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
                       "CONTEST_EVENT_CHANGED",
+                      "CONTEST_REOPENED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
@@ -40560,6 +40591,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_REOPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "EVENT_COMING_UP": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -40609,6 +40644,7 @@
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
                       "CONTEST_EVENT_CHANGED",
+                      "CONTEST_REOPENED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
@@ -40732,6 +40768,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_REOPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "EVENT_COMING_UP": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -40781,6 +40821,7 @@
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
                       "CONTEST_EVENT_CHANGED",
+                      "CONTEST_REOPENED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
@@ -42833,6 +42874,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_REOPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "EVENT_COMING_UP": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -42882,6 +42927,7 @@
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
                             "CONTEST_EVENT_CHANGED",
+                            "CONTEST_REOPENED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
@@ -43005,6 +43051,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_REOPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "EVENT_COMING_UP": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -43054,6 +43104,7 @@
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
                             "CONTEST_EVENT_CHANGED",
+                            "CONTEST_REOPENED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",

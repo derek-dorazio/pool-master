@@ -123,6 +123,7 @@ export const EmailConfigSchema = z.object({
     CONTEST_STANDINGS: templateSwitch,
     CONTEST_RESULTS: templateSwitch,
     CONTEST_EVENT_CHANGED: templateSwitch,
+    CONTEST_REOPENED: templateSwitch,
     EVENT_COMING_UP: templateSwitch,
     EVENT_READY_FOR_CONTESTS: templateSwitch,
     EVENT_WEEKLY_DIGEST: templateSwitch,

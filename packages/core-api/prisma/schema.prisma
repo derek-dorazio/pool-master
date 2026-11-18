@@ -204,6 +204,7 @@ enum PrismaEmailTemplateKey {
   CONTEST_EXPANDED
   EMAIL_CHANGED
   LEAGUE_PLAN_PREVIEW_ENDING
+  CONTEST_REOPENED
 }
 
 enum PrismaEmailMessageStatus {
@@ -227,6 +228,7 @@ enum PrismaBackgroundJobType {
   REBUILD_LEADERBOARDS
   ADD_RELEASED_EDITION_TO_CONTEST
   PROVIDER_EVENT_SYNC
+  CONTEST_REOPENED_EMAILS
 }
 
 enum PrismaBackgroundJobStatus {

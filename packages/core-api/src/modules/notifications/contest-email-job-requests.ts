@@ -1,7 +1,8 @@
 /**
  * The contest email jobs: "Contest is live" and "Final results" as a contest's move writes them
  * (#1387), and the event postponed, moved and cancelled emails one job per contest on the event
- * (#1458). Their payloads and the requests that build them; the handlers are in contest-email-jobs.
+ * (#1458), and "Picks are open again" as a postponement reopens a contest (#1808). Their payloads
+ * and the requests that build them; the handlers are in contest-email-jobs.
  */
 
 import { z } from 'zod';
@@ -41,6 +42,15 @@ export const ContestEventChangedEmailsJobPayloadSchema = z.object({
   change: ContestEventChangedEmailsChangeSchema,
 });
 export type ContestEventChangedEmailsJobPayload = z.infer<typeof ContestEventChangedEmailsJobPayloadSchema>;
+
+export const ContestReopenedEmailsJobPayloadSchema = z.object({
+  contestId: z.string().min(1),
+  /** The postponed event whose later start reopened the contest. */
+  sportEventId: z.string().min(1),
+  /** The contest's start the reopen set, when its picks close again. */
+  startsAt: isoInstant,
+});
+export type ContestReopenedEmailsJobPayload = z.infer<typeof ContestReopenedEmailsJobPayloadSchema>;
 
 /** Builds the jobs a contest's move writes in its transaction. */
 export type ContestEmailJobRequests = Pick<BackgroundJobQueue, 'request'>;
@@ -88,5 +98,29 @@ export function contestEventChangedEmailsJob(
     : { kind: change.kind, startsAt };
   return jobs.request(BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS, { contestId, sportEventId: sportEvent.id, change: carried }, {
     dedupeKey: `${BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS}:${contestId}:${sportEventChangeAbout(sportEvent.id, carried)}`,
+  });
+}
+
+/**
+ * The outbox `about` of a reopen: the contest, the event and the start it reopened to, so a
+ * second postponement to a later start tells the league again and a retry does not.
+ */
+export function contestReopenedAbout(payload: ContestReopenedEmailsJobPayload): string {
+  return `${payload.contestId}:${payload.sportEventId}:reopened-${payload.startsAt}`;
+}
+
+/**
+ * "Picks are open again" for one contest a postponement took back to open (#1808), written with
+ * its move. Its dedupe key is the reopen itself, so the same reopen told twice queues one job.
+ */
+export function contestReopenedEmailsJob(
+  jobs: ContestEmailJobRequests,
+  contestId: string,
+  sportEventId: string,
+  startsAt: Date,
+): BackgroundJobRequest {
+  const payload: ContestReopenedEmailsJobPayload = { contestId, sportEventId, startsAt: startsAt.toISOString() };
+  return jobs.request(BackgroundJobType.CONTEST_REOPENED_EMAILS, payload, {
+    dedupeKey: `${BackgroundJobType.CONTEST_REOPENED_EMAILS}:${contestReopenedAbout(payload)}`,
   });
 }

@@ -53,6 +53,7 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
   ['CONTEST_STANDINGS', 'Live standings'],
   ['CONTEST_RESULTS', 'Final results'],
   ['CONTEST_EVENT_CHANGED', 'Event postponed or cancelled'],
+  ['CONTEST_REOPENED', 'Picks open again after a postponement'],
   ['EVENT_COMING_UP', 'Event coming up (commissioners)'],
   ['EVENT_READY_FOR_CONTESTS', 'Event ready for contests (commissioners)'],
   ['EVENT_WEEKLY_DIGEST', 'Weekly event digest (commissioners)'],
