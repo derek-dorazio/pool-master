@@ -1,4 +1,5 @@
 export * from './enums';
+export * from './enum-order';
 export * from './unvalidated';
 export * from './contest-validity';
 export * from './tiered-roster';

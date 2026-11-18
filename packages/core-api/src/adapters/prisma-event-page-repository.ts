@@ -4,7 +4,9 @@
 import type { PrismaClient } from '@prisma/client';
 import type { EventPageRepository, EventPageSeries } from '@poolmaster/shared/db';
 import {
+  compareByEnumOrder,
   SportEventStatus,
+  SportOrder,
   type EventPage,
   type EventPageEdition,
   type EventPageOffer,
@@ -55,9 +57,12 @@ export class PrismaEventPageRepository implements EventPageRepository {
     const rows = await this.prisma.eventPage.findMany({
       where: { isActive: true, ...(sport !== undefined && { sport }) },
       include: PAGE_INCLUDE,
-      orderBy: [{ sport: 'asc' }, { displayOrder: 'asc' }, { slug: 'asc' }],
+      orderBy: [{ displayOrder: 'asc' }, { slug: 'asc' }],
     });
-    return rows.map(mapEventPage);
+    // Grouped by sport in Sport's own order (`SportOrder`), not Postgres's enum declaration
+    // order; the sort is stable, so each sport keeps its pages' display order.
+    const bySportOrder = compareByEnumOrder(SportOrder);
+    return rows.map(mapEventPage).sort((left, right) => bySportOrder(left.sport, right.sport));
   }
 
   async findOffers(eventPageIds: readonly string[]): Promise<EventPageOffer[]> {

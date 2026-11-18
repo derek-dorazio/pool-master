@@ -1,13 +1,8 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, ContestStatusOrderForHomeCurrent, compareByEnumOrder } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import { listedContestStartsAt } from './use-contest-schedule';
 
-/** Where each current status stands in the list: open first, because that is where a step waits. */
-const RANK_OF_STATUS: Partial<Record<ContestStatus, number>> = {
-  [ContestStatus.OPEN]: 0,
-  [ContestStatus.ACTIVE]: 1,
-  [ContestStatus.DRAFT]: 2,
-};
+const byHomeStatus = compareByEnumOrder(ContestStatusOrderForHomeCurrent);
 
 /** Soonest start first; a contest with no event yet comes last. */
 export function bySoonestStart(left: ContestDto, right: ContestDto) {
@@ -27,7 +22,8 @@ export function bySoonestStart(left: ContestDto, right: ContestDto) {
 
 /**
  * A league's current contests in the order League Home lists them (#1763): Open with the soonest
- * close first, then Live, then Set up for commissioners only, each by start. A final contest is
+ * close first, then Live, then Set up for commissioners only (`ContestStatusOrderForHomeCurrent`),
+ * each by start. A final contest is
  * not current and is left out.
  */
 export function orderCurrentContests(
@@ -35,9 +31,6 @@ export function orderCurrentContests(
   { showDrafts }: { showDrafts: boolean },
 ): ContestDto[] {
   return contests
-    .filter((contest) => {
-      const rank = RANK_OF_STATUS[contest.status];
-      return rank !== undefined && (contest.status !== ContestStatus.DRAFT || showDrafts);
-    })
-    .sort((left, right) => (RANK_OF_STATUS[left.status] ?? 0) - (RANK_OF_STATUS[right.status] ?? 0) || bySoonestStart(left, right));
+    .filter((contest) => contest.status !== ContestStatus.COMPLETED && (contest.status !== ContestStatus.DRAFT || showDrafts))
+    .sort((left, right) => byHomeStatus(left.status, right.status) || bySoonestStart(left, right));
 }

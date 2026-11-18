@@ -222,6 +222,31 @@ that the values are:
 - reviewed
 - actively used in product/API flows
 
+### Every enum declares its order
+
+A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
+`<Name>Order`: `explicitOrder({...})` giving every value its place, or
+`alphabeticalOrder()` when the set has no natural order and its values sort A to Z
+by the words the screen shows for them. Every list, grid, picker and sort uses that
+order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
+`Record<Enum, number>` rank map of its own. A screen that genuinely needs another
+order (the Home page's current contests, Open before Live) gets a named order beside
+the enum, such as `ContestStatusOrderForHomeCurrent`, with a comment saying where it
+applies. `tests/unit/shared/enum-order.test.ts` refuses an enum without an order, and
+`rules:check:enum-order-maps` refuses an order map declared anywhere else.
+
+The Prisma enum declares its values in the same order, because an SQL `ORDER BY`
+on the column sorts by declaration order. Where that order cannot match (reordering
+a Postgres enum's values is a migration with a type swap), no read orders by the
+column in SQL: the read sorts in code with `compareByEnumOrder`, and the enum is
+listed with its reason in the test's `SORTED_IN_CODE`.
+
+### A yes/no field is a Boolean
+
+A field that answers yes or no is a non-null `Boolean`, shown as Yes or No. A
+third state ("not set", "not applicable", "unknown") is not a nullable Boolean: it
+is a named enum whose values say what each state means.
+
 ---
 
 ## 8. Typed-End-to-End DTO Conventions
