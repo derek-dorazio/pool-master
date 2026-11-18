@@ -9424,9 +9424,9 @@ export type ImportSportEventYearFromProviderRequest = {
 };
 
 /**
- * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+ * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
  */
-export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'EDITION_EXISTS';
+export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS';
 
 /**
  * What an event-year import created and skipped. Running it again creates nothing new.
@@ -9604,7 +9604,7 @@ export type ImportSportEventYearFromProviderResponse = {
         updatedAt: string;
     }>;
     /**
-     * Provider events left alone because PoolMaster already has them.
+     * Provider events left alone because PoolMaster already has them, or because they already started.
      */
     skipped: Array<{
         /**
@@ -9613,9 +9613,9 @@ export type ImportSportEventYearFromProviderResponse = {
         externalId: string;
         name: string;
         /**
-         * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+         * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
          */
-        reason: 'ALREADY_LINKED' | 'EDITION_EXISTS';
+        reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS';
     }>;
 };
 
