@@ -43,6 +43,7 @@ import { LeagueEventsTab } from '@/features/root-admin/league-events-tab';
 import { LeaguePageLayout } from '@/features/root-admin/league-page-layout';
 import { LeagueParticipantsTab } from '@/features/root-admin/league-participants-tab';
 import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
+import { ParticipantLinkRedirect } from '@/features/root-admin/participant-link-redirect';
 import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
@@ -436,7 +437,9 @@ export const router = createBrowserRouter([
                         ],
                       },
                       { path: 'participants/new', element: <RootAdminParticipantCreatePage /> },
-                      { path: 'participants/*', element: <Navigate replace to={SPORTS_PATH} /> },
+                      // A participant's old page opens its league's Participants tab (#1866).
+                      { path: 'participants/:participantId/*', element: <ParticipantLinkRedirect /> },
+                      { path: 'participants', element: <Navigate replace to={SPORTS_PATH} /> },
                     ],
                   },
                   {

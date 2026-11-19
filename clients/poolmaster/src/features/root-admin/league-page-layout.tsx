@@ -1,8 +1,8 @@
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
-import { Link, Navigate, Outlet, useLocation } from 'react-router';
-import { Button, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { Button, LinkButton, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
 import { isSyncedLeague, leaguePageTabs, type LeaguePageContext } from './league-page-context';
 import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
@@ -85,14 +85,15 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
               {providerText(overview, (id) => overviews.find((candidate) => candidate.id === id)?.name, (id) => providerNames.get(id) ?? id)}
             </Text>
             {clutchCards.map((clutchCard) => (
-              <Link
-                className="text-sm text-primary underline-offset-2 hover:underline"
+              <LinkButton
                 data-testid={`root-admin-league-clutch-card-${clutchCard.id}`}
                 key={clutchCard.id}
+                size="sm"
                 to={buildSportLeaguePath(clutchCard.sport, clutchCard.id)}
+                variant="link"
               >
                 {clutchCard.name}
-              </Link>
+              </LinkButton>
             ))}
           </span>
         )}
