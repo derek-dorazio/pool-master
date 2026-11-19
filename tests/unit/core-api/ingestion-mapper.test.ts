@@ -130,10 +130,11 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     requestsPerMinute: 600,
     webhooksEnabled: true,
     syncedSportLeagueCount: 16,
+    rateLimitedJobsLast24h: 3,
   } as unknown as Parameters<typeof toProviderSummaryDto>[0];
 
-  it('sends a provider\'s request rate, webhook switch and synced sport league count as they are', () => {
-    expect(toProviderSummaryDto(provider)).toMatchObject({ requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 16 });
+  it('sends a provider\'s request rate, webhook switch, synced sport league count and rate-limited job count as they are', () => {
+    expect(toProviderSummaryDto(provider)).toMatchObject({ requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 16, rateLimitedJobsLast24h: 3 });
   });
 
   it('sends a provider\'s last event time as ISO, and a provider that has sent none as null', () => {

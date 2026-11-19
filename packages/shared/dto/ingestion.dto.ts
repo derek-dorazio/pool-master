@@ -67,6 +67,10 @@ export const ProviderSummaryDtoSchema = z.object({
   requestsPerMinute: z.number().int().min(1).nullable().describe('The request rate core-api holds its calls to the provider to, a minute: the provider plan\'s limit, set in the deployment\'s provider bindings. Null when the provider is not paced.'),
   webhooksEnabled: z.boolean().describe('True when the provider\'s webhooks are on: its signing secret is set, so its notifications are accepted.'),
   syncedSportLeagueCount: z.number().int().min(0).describe('The active sport leagues whose events this provider\'s sync creates.'),
+  rateLimitedJobsLast24h: z.number().int().min(0).describe(
+    'Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. '
+    + 'A job belongs to the provider syncing its sport league, or the provider its event is linked to.',
+  ),
 }).describe('A registered sports-data provider with its live health.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
 

@@ -31,6 +31,7 @@ export function ProviderDialog({
         { id: 'rate', label: 'Requests a minute', value: requestsPerMinuteText(provider) },
         { id: 'checked', label: 'Checked', value: <DateDisplay value={checkedAt} /> },
         { id: 'error-rate', label: 'Error rate (1 h)', value: `${String(errorRatePercent(provider))}%` },
+        { id: 'rate-limited', label: 'Rate limited (24 h)', value: provider.rateLimitedJobsLast24h },
         { id: 'latency', label: 'Latency p95', value: `${String(provider.latencyMs)} ms` },
         { id: 'webhooks', label: 'Webhooks', value: provider.webhooksEnabled ? 'On' : 'Off' },
         { id: 'sport-leagues', label: 'Sport leagues', value: provider.syncedSportLeagueCount },

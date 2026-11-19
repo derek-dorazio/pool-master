@@ -92,6 +92,15 @@ and teams and logged as `balldontlie.league.unavailable` with the league, the st
 it was a refusal, so its neighbours still list; only when every league fails does the sport's list
 fail. Staging and prod refuse the mock unless an override with a reason is set.
 
+The root admin's Providers page (`GET /api/v1/ingestion/providers`) also counts each
+provider's **rate-limited jobs of the last 24 hours** (`rateLimitedJobsLast24h`, #1881): jobs
+whose latest try hit `RATE_LIMITED` (the client's 429), whether they ended `FAILED` in the window
+or wait `QUEUED` for a retry started in it; a job that later succeeded clears its error type and
+no longer counts. Jobs have no provider column, so a job belongs to the provider syncing its sport
+league (`event_sync_provider_id`) or the provider its event is linked to. One grouped count of
+the job table and one read of those jobs' events serve every provider; a job with neither scope,
+or on an unsynced league, counts for none.
+
 The *schedule* is the one runtime setting: the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's ingestion page. It is **one
 schedule for every sport league** (#1871): four policies, each with its own interval.

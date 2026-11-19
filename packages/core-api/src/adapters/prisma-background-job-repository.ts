@@ -3,7 +3,7 @@
  */
 
 import type { BackgroundJob as BackgroundJobRow, Prisma, PrismaClient, User } from '@prisma/client';
-import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
+import type { BackgroundJobClaim, BackgroundJobRepository, BackgroundJobScopeCount } from '@poolmaster/shared/db';
 import {
   BackgroundJobStatus,
   type BackgroundJob,
@@ -80,6 +80,25 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
       include: { startedBy: { select: STARTED_BY_SELECT } },
     });
     return rows.map((row) => toBackgroundJob(row, row.startedBy));
+  }
+
+  async countByScope(filter: { errorType: JobErrorType; since: Date }): Promise<BackgroundJobScopeCount[]> {
+    const groups = await this.prisma.backgroundJob.groupBy({
+      by: ['sportLeagueId', 'sportEventId'],
+      where: {
+        errorType: filter.errorType,
+        OR: [
+          { status: BackgroundJobStatus.FAILED, completedAt: { gte: filter.since } },
+          { status: BackgroundJobStatus.QUEUED, startedAt: { gte: filter.since } },
+        ],
+      },
+      _count: { _all: true },
+    });
+    return groups.map((group) => ({
+      sportLeagueId: group.sportLeagueId,
+      sportEventId: group.sportEventId,
+      count: group._count._all,
+    }));
   }
 
   async claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]> {

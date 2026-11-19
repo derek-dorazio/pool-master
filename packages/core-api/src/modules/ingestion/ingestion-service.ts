@@ -9,6 +9,8 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  BackgroundJobRepository,
+  BackgroundJobScopeCount,
   ParticipantProviderMappingRepository,
   ProviderSyncRunRepository,
   SportEventRepository,
@@ -16,6 +18,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
+  JobErrorType,
   JobTrigger,
   type ProviderHealthStatus,
   ProviderSyncRunStatus,
@@ -46,6 +49,9 @@ import type { BackgroundJobQueue } from '../background-jobs/background-job-queue
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 import { syncChangedRows } from './core/sync-write-diagnostics';
 
+/** The window the provider list counts rate-limited jobs over (#1881). */
+const DAY_MS = 24 * 3_600_000;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -68,6 +74,8 @@ export interface ProviderSummary {
   webhooksEnabled: boolean;
   /** The active sport leagues whose events its sync creates. */
   syncedSportLeagueCount: number;
+  /** Its jobs that ended on its rate limit, or wait to retry after it, in the last 24 hours (#1881). */
+  rateLimitedJobsLast24h: number;
 }
 
 export interface ProviderManualSyncSubmissionResult {
@@ -167,6 +175,9 @@ export interface IngestionServiceDependencies {
   sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   /** The providers whose webhooks are on (`readWebhookProviderIds`). */
   webhookProviderIds: readonly string[];
+  /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
+  jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
+  now?: () => Date;
   scheduler?: IngestionScheduler;
   ingestionConfigReader?: IngestionScheduleConfigReader;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -183,6 +194,8 @@ export class IngestionService {
   private readonly syncRuns: ProviderSyncRunRepository;
   private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   private readonly webhookProviderIds: ReadonlySet<string>;
+  private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
+  private readonly now: () => Date;
   private readonly scheduler?: IngestionScheduler;
   private readonly ingestionConfigReader?: IngestionScheduleConfigReader;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -197,6 +210,8 @@ export class IngestionService {
     this.syncRuns = deps.syncRuns;
     this.sportLeagues = deps.sportLeagues;
     this.webhookProviderIds = new Set(deps.webhookProviderIds);
+    this.jobHistory = deps.jobHistory;
+    this.now = deps.now ?? (() => new Date());
     this.scheduler = deps.scheduler;
     this.ingestionConfigReader = deps.ingestionConfigReader;
     this.jobs = deps.jobs;
@@ -310,16 +325,20 @@ export class IngestionService {
    */
   async listProviders(): Promise<ProviderSummary[]> {
     const providers = this.registry.getAllProviders();
-    const [eventSummaries, syncedLeagues] = await Promise.all([
+    const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
       this.sportEvents.summarizeByProviders(providers.map((provider) => provider.providerId)),
       this.sportLeagues.findEventSynced(),
+      this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
     ]);
     const syncedLeagueCounts = new Map<string, number>();
+    const leagueProviders = new Map<string, string>();
     for (const league of syncedLeagues) {
       if (league.eventSyncProviderId) {
         syncedLeagueCounts.set(league.eventSyncProviderId, (syncedLeagueCounts.get(league.eventSyncProviderId) ?? 0) + 1);
+        leagueProviders.set(league.id, league.eventSyncProviderId);
       }
     }
+    const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
     const summaries = await Promise.all(providers.map(async (provider): Promise<ProviderSummary> => {
       const health = await provider.healthCheck();
       const events = eventSummaries.get(provider.providerId);
@@ -338,9 +357,34 @@ export class IngestionService {
         requestsPerMinute: provider.requestsPerMinute ?? null,
         webhooksEnabled: this.webhookProviderIds.has(provider.providerId),
         syncedSportLeagueCount: syncedLeagueCounts.get(provider.providerId) ?? 0,
+        rateLimitedJobsLast24h: rateLimitedCounts.get(provider.providerId) ?? 0,
       };
     }));
     return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));
+  }
+
+  /**
+   * Job counts per provider (#1881): a sport league's own jobs belong to the provider that syncs
+   * the league, and an event's jobs to the provider the event is linked to, read in one more
+   * query for all such events. A job on neither, or on an unsynced league, counts for none.
+   */
+  private async countPerProvider(
+    scopes: readonly BackgroundJobScopeCount[],
+    leagueProviders: ReadonlyMap<string, string>,
+  ): Promise<Map<string, number>> {
+    const eventIds = [...new Set(scopes.flatMap((scope) => (scope.sportEventId ? [scope.sportEventId] : [])))];
+    const events = await this.sportEvents.findByIds(eventIds);
+    const eventProviders = new Map(events.flatMap((event) => (event.providerId ? [[event.id, event.providerId] as const] : [])));
+    const counts = new Map<string, number>();
+    for (const scope of scopes) {
+      const providerId = scope.sportEventId
+        ? eventProviders.get(scope.sportEventId)
+        : scope.sportLeagueId ? leagueProviders.get(scope.sportLeagueId) : undefined;
+      if (providerId) {
+        counts.set(providerId, (counts.get(providerId) ?? 0) + scope.count);
+      }
+    }
+    return counts;
   }
 
   /** Runs submitted inside the window; `from` defaults to DEFAULT_SYNC_RUN_WINDOW_HOURS before `to`, and `to` to now. */

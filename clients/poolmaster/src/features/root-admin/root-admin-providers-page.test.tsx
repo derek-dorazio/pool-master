@@ -33,6 +33,7 @@ function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryD
     requestsPerMinute: 5,
     webhooksEnabled: true,
     syncedSportLeagueCount: 16,
+    rateLimitedJobsLast24h: 7,
     ...overrides,
   };
 }
@@ -58,7 +59,7 @@ function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true):
   };
 }
 
-function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0 })], group = scheduleGroup() } = {}) {
+function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0 })], group = scheduleGroup() } = {}) {
   mocks.listProviders.mockResolvedValue({ data: { providers } });
   mocks.getSettingsGroup.mockResolvedValue({ data: group });
 }
@@ -86,7 +87,7 @@ describe('RootAdminProvidersPage', () => {
     expect(await screen.findByTestId('root-admin-providers-counts')).toHaveTextContent('2 providers · 1 up');
   });
 
-  it('lists each provider with its status in a word, its request rate, sport leagues, error rate as a percent and latency', async () => {
+  it('lists each provider with its status in a word, its request rate, sport leagues, error rate as a percent, rate-limited jobs of the last 24 hours and latency', async () => {
     seed();
     renderPage();
 
@@ -96,6 +97,7 @@ describe('RootAdminProvidersPage', () => {
     expect(balldontlie.getByText('5')).toBeInTheDocument();
     expect(balldontlie.getByText('16')).toBeInTheDocument();
     expect(balldontlie.getByText('0.4%')).toBeInTheDocument();
+    expect(balldontlie.getByText('7')).toBeInTheDocument();
     expect(balldontlie.getByText('420')).toBeInTheDocument();
     const mock = within(screen.getByTestId('root-admin-provider-mock'));
     expect(mock.getByText('Down')).toBeInTheDocument();
@@ -116,7 +118,7 @@ describe('RootAdminProvidersPage', () => {
     expect(shown).toEqual(['root-admin-provider-up', 'root-admin-provider-slow', 'root-admin-provider-down']);
   });
 
-  it('opens a provider in a view-only dialog with Close and Check now, no Edit (why sits behind its help), and Check now checks the providers again', async () => {
+  it('opens a provider in a view-only dialog with its rate-limited jobs, Close and Check now, no Edit (why sits behind its help), and Check now checks the providers again', async () => {
     seed();
     renderPage();
 
@@ -125,6 +127,8 @@ describe('RootAdminProvidersPage', () => {
     expect(dialog.getByText('Webhooks')).toBeInTheDocument();
     expect(dialog.getByText('On')).toBeInTheDocument();
     expect(dialog.getByText('420 ms')).toBeInTheDocument();
+    expect(dialog.getByText('Rate limited (24 h)')).toBeInTheDocument();
+    expect(dialog.getByText('7')).toBeInTheDocument();
     expect(dialog.getByText('Checked')).toBeInTheDocument();
     expect(dialog.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(dialog.queryByText(/set in Terraform/)).not.toBeInTheDocument();

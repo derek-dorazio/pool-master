@@ -15,7 +15,7 @@ import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-da
 import { stubInstance } from '../../support/stub-instance';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
-type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'webhookProviderIds'>;
+type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'webhookProviderIds' | 'jobHistory'>;
 
 function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns?: InMemorySyncRuns } = {}): IngestionPorts {
   const syncRuns = overrides.syncRuns ?? inMemorySyncRuns();
@@ -25,6 +25,7 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
     jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs, currentStart: testCurrentJobStart }),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     webhookProviderIds: [],
+    jobHistory: { countByScope: () => Promise.resolve([]) },
     ...overrides,
     syncRuns,
   };

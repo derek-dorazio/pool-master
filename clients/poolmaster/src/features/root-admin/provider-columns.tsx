@@ -35,6 +35,10 @@ export const providerColumns = [
     meta: { info: 'Share of calls that failed in the last hour, from the live check.', type: { kind: 'number' } },
     cell: ({ getValue }) => `${String(getValue())}%`,
   }),
+  columnHelper.accessor('rateLimitedJobsLast24h', {
+    header: 'Rate limited (24 h)',
+    meta: { info: 'Jobs for this provider that hit its rate limit in the last 24 hours.', type: { kind: 'number' } },
+  }),
   columnHelper.accessor('latencyMs', {
     header: 'Latency p95 (ms)',
     meta: { info: 'How long the slowest 5% of calls took, from the live check.', type: { kind: 'number' } },

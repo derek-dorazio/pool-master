@@ -55,6 +55,7 @@ function service(
     participantMappings: fakeParticipantProviderMappingRepo(),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     webhookProviderIds: [],
+    jobHistory: { countByScope: () => Promise.resolve([]) },
     logger: fakeLogger(),
     jobs,
     ...deps,
@@ -147,6 +148,41 @@ describe('IngestionService.listProviders', () => {
     expect(providers).toEqual([
       expect.objectContaining({ providerId: 'balldontlie', requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 2 }),
       expect.objectContaining({ providerId: 'mock', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0 }),
+    ]);
+  });
+
+  it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider, event jobs by the event\'s provider', async () => {
+    const registry = registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }));
+    registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' }), 'SECONDARY');
+    const nfl = buildSportLeague({ name: 'NFL', eventSyncProviderId: 'balldontlie' });
+    const countByScope = jest.fn().mockResolvedValue([
+      { sportLeagueId: nfl.id, sportEventId: null, count: 2 },
+      { sportLeagueId: null, sportEventId: 'event-bdl', count: 3 },
+      { sportLeagueId: null, sportEventId: 'event-mock', count: 1 },
+      // Neither scope, an unsynced league and an unlinked event count for no provider.
+      { sportLeagueId: null, sportEventId: null, count: 7 },
+      { sportLeagueId: 'unsynced-league', sportEventId: null, count: 5 },
+      { sportLeagueId: null, sportEventId: 'event-unlinked', count: 4 },
+    ]);
+    const findByIds = jest.fn().mockResolvedValue([
+      { id: 'event-bdl', providerId: 'balldontlie' } as SportEvent,
+      { id: 'event-mock', providerId: 'mock' } as SportEvent,
+      { id: 'event-unlinked', providerId: null },
+    ]);
+
+    const providers = await service({
+      registry,
+      sportEvents: fakeSportEventRepo({ findByIds }),
+      sportLeagues: { findEventSynced: () => Promise.resolve([nfl]) },
+      jobHistory: { countByScope },
+      now: () => new Date('2026-11-19T12:00:00.000Z'),
+    }).listProviders();
+
+    expect(countByScope).toHaveBeenCalledWith({ errorType: 'RATE_LIMITED', since: new Date('2026-11-18T12:00:00.000Z') });
+    expect(findByIds).toHaveBeenCalledWith(['event-bdl', 'event-mock', 'event-unlinked']);
+    expect(providers).toEqual([
+      expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 5 }),
+      expect.objectContaining({ providerId: 'mock', rateLimitedJobsLast24h: 1 }),
     ]);
   });
 

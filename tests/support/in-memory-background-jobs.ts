@@ -96,6 +96,7 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       return Promise.resolve(batch.length);
     },
     findActivity: () => Promise.reject(new Error('Activity reads are tested against Postgres in background-jobs.integration')),
+    countByScope: () => Promise.reject(new Error('Job counts by scope are tested against Postgres in background-jobs.integration')),
   };
 }
 

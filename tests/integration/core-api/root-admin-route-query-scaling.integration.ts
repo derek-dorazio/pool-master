@@ -222,6 +222,35 @@ async function seedLeagueActivity(jobs: number) {
   return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
+/**
+ * Rate-limited jobs on both providers: one failed on a sport league the golf provider syncs, and
+ * one waiting to retry tomorrow on an event of each provider, so the provider list reads their
+ * events, all at once.
+ */
+async function seedRateLimitedJobs() {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({
+    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Tour ${suffix}`, matchKeyword: `LIM${suffix}`, eventSyncProviderId: provider.providerId },
+  });
+  const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
+    data: {
+      eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Limited ${owner.providerName} ${suffix}` } })).id, eventYear: 2026, name: `Limited ${owner.providerName} ${suffix}`, sport: owner.sportsCovered[0],
+      providerId: owner.providerId, externalId: `limited-${owner.providerId}-${suffix}`, startDate: new Date(Date.now() + 7 * DAY),
+    },
+  })));
+  await prisma.backgroundJob.createMany({
+    data: [
+      { type: 'SYNC_LEAGUE_EVENTS', trigger: 'SYSTEM', payload: { sportLeagueId: sportLeague.id, eventYears: [2026] }, sportLeagueId: sportLeague.id, status: 'FAILED', errorType: 'RATE_LIMITED', completedAt: new Date() },
+      ...events.map((event) => ({
+        type: 'SETTLE_SPORT_EVENT_CONTESTS' as const, trigger: 'SYSTEM' as const, payload: { sportEventId: event.id, completedAt: new Date().toISOString() },
+        sportEventId: event.id, status: 'QUEUED' as const, errorType: 'RATE_LIMITED' as const, startedAt: new Date(), runAt: new Date(Date.now() + DAY),
+      })),
+    ],
+  });
+}
+
 /** A root admin, and one sync run whose diagnostics hold `rows` written field rows. */
 async function seedSyncRunDetails(rows: number) {
   const run = await getPrisma().providerSyncRun.create({
@@ -494,18 +523,19 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, and their synced sport leagues read in one more', async () => {
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues read in one more, and their rate-limited jobs counted in one grouped query, with the events of those jobs read once for all of them', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await seedRateLimitedJobs();
     await expectFixedQueries({
       route: 'GET /api/v1/ingestion/providers',
       fixedBy: 'the providers registered at startup',
       call: () => get('/api/v1/ingestion/providers', rootAdmin),
       rowsShown: (response) => {
         const { providers } = okBody(response, ProviderListResponseSchema);
-        expect(providers.map((summary) => summary.providerId)).toEqual([provider.providerId, tennisProvider.providerId]);
+        expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 1]]);
         return providers.length;
       },
-      statements: 3,
+      statements: 7,
     });
   });
 });

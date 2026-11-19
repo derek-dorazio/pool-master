@@ -28,6 +28,7 @@ import { linkedProviderEvent } from '../../support/event-edition';
 import { readStoredSyncRunDetails, readStoredSyncRunPayload } from '../../support/sync-run-payload';
 import {
   PrismaParticipantProviderMappingRepository,
+  PrismaBackgroundJobRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -770,6 +771,7 @@ describe('mock contest feed provider event-first verification', () => {
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
       webhookProviderIds: [],
+      jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
       ingestionConfigReader: configReader,
       syncRunLedger,
       jobs: backgroundJobs.queue,
@@ -924,6 +926,7 @@ describe('mock contest feed provider event-first verification', () => {
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
       webhookProviderIds: [],
+      jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });

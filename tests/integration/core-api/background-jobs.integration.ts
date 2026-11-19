@@ -165,6 +165,39 @@ describe('background job table (#1440)', () => {
     expect(failedRow.lastError).toHaveLength(BACKGROUND_JOB_ERROR_MAX_LENGTH);
   });
 
+  it('counts the jobs whose latest try hit an error type since a time, failed or waiting to retry, grouped by scope, leaving out older, succeeded and other-error jobs (#1881)', async () => {
+    const now = new Date();
+    const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 60 * MINUTE);
+    const later = new Date(now.getTime() + DAY_MS);
+    const leagueId = randomUUID();
+    const eventId = randomUUID();
+    const rows = [
+      { scope: { sportLeagueId: leagueId }, status: BackgroundJobStatus.FAILED, errorType: JobErrorType.RATE_LIMITED, completedAt: hoursAgo(2) },
+      { scope: { sportLeagueId: leagueId }, status: BackgroundJobStatus.QUEUED, errorType: JobErrorType.RATE_LIMITED, startedAt: hoursAgo(1) },
+      { scope: { sportEventId: eventId }, status: BackgroundJobStatus.FAILED, errorType: JobErrorType.RATE_LIMITED, completedAt: hoursAgo(3) },
+      { scope: {}, status: BackgroundJobStatus.FAILED, errorType: JobErrorType.RATE_LIMITED, completedAt: hoursAgo(4) },
+      // Left out: failed before the window, retried before it, a different error, and finished fine.
+      { scope: { sportLeagueId: leagueId }, status: BackgroundJobStatus.FAILED, errorType: JobErrorType.RATE_LIMITED, completedAt: hoursAgo(25) },
+      { scope: { sportEventId: eventId }, status: BackgroundJobStatus.QUEUED, errorType: JobErrorType.RATE_LIMITED, startedAt: hoursAgo(26) },
+      { scope: { sportEventId: eventId }, status: BackgroundJobStatus.FAILED, errorType: JobErrorType.TIMEOUT, completedAt: hoursAgo(1) },
+      { scope: { sportLeagueId: leagueId }, status: BackgroundJobStatus.SUCCEEDED, errorType: null, startedAt: hoursAgo(1), completedAt: hoursAgo(1) },
+    ];
+    for (const [index, { scope, ...row }] of rows.entries()) {
+      await getPrisma().backgroundJob.create({
+        data: { type: BackgroundJobType.MANUAL_EVENT_SYNC, trigger: JobTrigger.SYSTEM, payload: syncPayload(String(index)), runAt: later, ...scope, ...row },
+      });
+    }
+
+    const counts = await repository().countByScope({ errorType: JobErrorType.RATE_LIMITED, since: hoursAgo(24) });
+
+    const byScope = (count: { sportLeagueId: string | null; sportEventId: string | null }) => `${count.sportLeagueId ?? '-'}/${count.sportEventId ?? '-'}`;
+    expect([...counts].sort((a, b) => byScope(a).localeCompare(byScope(b)))).toEqual([
+      { sportLeagueId: null, sportEventId: null, count: 1 },
+      { sportLeagueId: null, sportEventId: eventId, count: 1 },
+      { sportLeagueId: leagueId, sportEventId: null, count: 2 },
+    ].sort((a, b) => byScope(a).localeCompare(byScope(b))));
+  });
+
   it('nightly retention deletes every job finished over 30 days ago, succeeded or failed, keeping newer and unfinished ones (#1819)', async () => {
     const now = new Date();
     const ago = (days: number) => new Date(now.getTime() - days * DAY_MS);
