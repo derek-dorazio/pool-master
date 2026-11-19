@@ -1611,12 +1611,140 @@
         "additionalProperties": false,
         "description": "One expansion band and its price."
       },
+      "PlanPrice": {
+        "type": "object",
+        "properties": {
+          "yearlyCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "A year of the plan, in US cents."
+          },
+          "monthlyCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "A month of the plan, in US cents."
+          }
+        },
+        "required": [
+          "yearlyCents",
+          "monthlyCents"
+        ],
+        "additionalProperties": false,
+        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+      },
       "BillingConfig": {
         "type": "object",
         "properties": {
           "paymentsEnabled": {
             "type": "boolean",
             "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+          },
+          "planPrices": {
+            "type": "object",
+            "properties": {
+              "FREE": {
+                "type": "object",
+                "properties": {
+                  "yearlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A year of the plan, in US cents."
+                  },
+                  "monthlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A month of the plan, in US cents."
+                  }
+                },
+                "required": [
+                  "yearlyCents",
+                  "monthlyCents"
+                ],
+                "additionalProperties": false,
+                "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+              },
+              "PRO": {
+                "type": "object",
+                "properties": {
+                  "yearlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A year of the plan, in US cents."
+                  },
+                  "monthlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A month of the plan, in US cents."
+                  }
+                },
+                "required": [
+                  "yearlyCents",
+                  "monthlyCents"
+                ],
+                "additionalProperties": false,
+                "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+              },
+              "PREMIUM": {
+                "type": "object",
+                "properties": {
+                  "yearlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A year of the plan, in US cents."
+                  },
+                  "monthlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A month of the plan, in US cents."
+                  }
+                },
+                "required": [
+                  "yearlyCents",
+                  "monthlyCents"
+                ],
+                "additionalProperties": false,
+                "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+              },
+              "PLATINUM": {
+                "type": "object",
+                "properties": {
+                  "yearlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A year of the plan, in US cents."
+                  },
+                  "monthlyCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000,
+                    "description": "A month of the plan, in US cents."
+                  }
+                },
+                "required": [
+                  "yearlyCents",
+                  "monthlyCents"
+                ],
+                "additionalProperties": false,
+                "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+              }
+            },
+            "required": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "additionalProperties": false,
+            "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
           },
           "expansionPrices": {
             "type": "object",
@@ -1647,7 +1775,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PRO": {
                 "maxItems": 10,
@@ -1675,7 +1803,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PREMIUM": {
                 "maxItems": 10,
@@ -1703,7 +1831,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PLATINUM": {
                 "maxItems": 10,
@@ -1731,7 +1859,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               }
             },
             "required": [
@@ -1746,10 +1874,11 @@
         },
         "required": [
           "paymentsEnabled",
+          "planPrices",
           "expansionPrices"
         ],
         "additionalProperties": false,
-        "description": "Payments: whether they are on, and what expanding a contest costs on each plan."
+        "description": "Payments: whether they are on, what each plan costs, and what expanding a contest costs on each plan."
       },
       "IngestionScheduleConfigPatch": {
         "type": "object",
@@ -2329,7 +2458,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PRO": {
                 "maxItems": 10,
@@ -2357,7 +2486,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PREMIUM": {
                 "maxItems": 10,
@@ -2385,7 +2514,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               },
               "PLATINUM": {
                 "maxItems": 10,
@@ -2413,7 +2542,7 @@
                   "additionalProperties": false,
                   "description": "One expansion band and its price."
                 },
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
+                "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
               }
             },
             "required": [
@@ -37347,120 +37476,100 @@
                     "type": "boolean",
                     "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
                   },
-                  "expansionPrices": {
+                  "planPrices": {
                     "type": "object",
                     "properties": {
                       "FREE": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PRO": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PREMIUM": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PLATINUM": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       }
                     },
                     "required": [
@@ -37470,22 +37579,7 @@
                       "PLATINUM"
                     ],
                     "additionalProperties": false,
-                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
-                  }
-                },
-                "required": [
-                  "paymentsEnabled",
-                  "expansionPrices"
-                ],
-                "additionalProperties": false,
-                "description": "The value in use."
-              },
-              "defaults": {
-                "type": "object",
-                "properties": {
-                  "paymentsEnabled": {
-                    "type": "boolean",
-                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                    "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
                   },
                   "expansionPrices": {
                     "type": "object",
@@ -37516,7 +37610,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PRO": {
                         "maxItems": 10,
@@ -37544,7 +37638,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PREMIUM": {
                         "maxItems": 10,
@@ -37572,7 +37666,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PLATINUM": {
                         "maxItems": 10,
@@ -37600,7 +37694,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       }
                     },
                     "required": [
@@ -37615,6 +37709,253 @@
                 },
                 "required": [
                   "paymentsEnabled",
+                  "planPrices",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "planPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PRO": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PREMIUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PLATINUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PRO": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PREMIUM": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PLATINUM": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "planPrices",
                   "expansionPrices"
                 ],
                 "additionalProperties": false,
@@ -39319,120 +39660,100 @@
                           "type": "boolean",
                           "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
                         },
-                        "expansionPrices": {
+                        "planPrices": {
                           "type": "object",
                           "properties": {
                             "FREE": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PRO": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PREMIUM": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PLATINUM": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             }
                           },
                           "required": [
@@ -39442,22 +39763,7 @@
                             "PLATINUM"
                           ],
                           "additionalProperties": false,
-                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
-                        }
-                      },
-                      "required": [
-                        "paymentsEnabled",
-                        "expansionPrices"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The value in use."
-                    },
-                    "defaults": {
-                      "type": "object",
-                      "properties": {
-                        "paymentsEnabled": {
-                          "type": "boolean",
-                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                          "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
                         },
                         "expansionPrices": {
                           "type": "object",
@@ -39488,7 +39794,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PRO": {
                               "maxItems": 10,
@@ -39516,7 +39822,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PREMIUM": {
                               "maxItems": 10,
@@ -39544,7 +39850,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PLATINUM": {
                               "maxItems": 10,
@@ -39572,7 +39878,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             }
                           },
                           "required": [
@@ -39587,6 +39893,253 @@
                       },
                       "required": [
                         "paymentsEnabled",
+                        "planPrices",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "planPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PRO": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PREMIUM": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PLATINUM": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PRO": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PREMIUM": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PLATINUM": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "planPrices",
                         "expansionPrices"
                       ],
                       "additionalProperties": false,
@@ -40400,6 +40953,111 @@
                     "type": "boolean",
                     "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
                   },
+                  "planPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PRO": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PREMIUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PLATINUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
+                  },
                   "expansionPrices": {
                     "type": "object",
                     "properties": {
@@ -40429,7 +41087,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PRO": {
                         "maxItems": 10,
@@ -40457,7 +41115,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PREMIUM": {
                         "maxItems": 10,
@@ -40485,7 +41143,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PLATINUM": {
                         "maxItems": 10,
@@ -40513,7 +41171,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       }
                     },
                     "required": [
@@ -40528,6 +41186,7 @@
                 },
                 "required": [
                   "paymentsEnabled",
+                  "planPrices",
                   "expansionPrices"
                 ],
                 "additionalProperties": false,
@@ -42177,120 +42836,100 @@
                     "type": "boolean",
                     "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
                   },
-                  "expansionPrices": {
+                  "planPrices": {
                     "type": "object",
                     "properties": {
                       "FREE": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PRO": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PREMIUM": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       },
                       "PLATINUM": {
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "entriesPerContest": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 100000,
-                              "description": "The band: the most entries an expanded contest takes."
-                            },
-                            "priceCents": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 1000000,
-                              "description": "What expanding a contest to this band costs, in US cents."
-                            }
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
                           },
-                          "required": [
-                            "entriesPerContest",
-                            "priceCents"
-                          ],
-                          "additionalProperties": false,
-                          "description": "One expansion band and its price."
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                       }
                     },
                     "required": [
@@ -42300,21 +42939,7 @@
                       "PLATINUM"
                     ],
                     "additionalProperties": false,
-                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
-                  }
-                },
-                "required": [
-                  "paymentsEnabled",
-                  "expansionPrices"
-                ],
-                "additionalProperties": false
-              },
-              "newValue": {
-                "type": "object",
-                "properties": {
-                  "paymentsEnabled": {
-                    "type": "boolean",
-                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                    "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
                   },
                   "expansionPrices": {
                     "type": "object",
@@ -42345,7 +42970,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PRO": {
                         "maxItems": 10,
@@ -42373,7 +42998,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PREMIUM": {
                         "maxItems": 10,
@@ -42401,7 +43026,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       },
                       "PLATINUM": {
                         "maxItems": 10,
@@ -42429,7 +43054,7 @@
                           "additionalProperties": false,
                           "description": "One expansion band and its price."
                         },
-                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                       }
                     },
                     "required": [
@@ -42444,6 +43069,252 @@
                 },
                 "required": [
                   "paymentsEnabled",
+                  "planPrices",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "planPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PRO": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PREMIUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      },
+                      "PLATINUM": {
+                        "type": "object",
+                        "properties": {
+                          "yearlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A year of the plan, in US cents."
+                          },
+                          "monthlyCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "A month of the plan, in US cents."
+                          }
+                        },
+                        "required": [
+                          "yearlyCents",
+                          "monthlyCents"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PRO": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PREMIUM": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      },
+                      "PLATINUM": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "planPrices",
                   "expansionPrices"
                 ],
                 "additionalProperties": false,
@@ -44093,120 +44964,100 @@
                           "type": "boolean",
                           "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
                         },
-                        "expansionPrices": {
+                        "planPrices": {
                           "type": "object",
                           "properties": {
                             "FREE": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PRO": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PREMIUM": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             },
                             "PLATINUM": {
-                              "maxItems": 10,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "entriesPerContest": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 100000,
-                                    "description": "The band: the most entries an expanded contest takes."
-                                  },
-                                  "priceCents": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 1000000,
-                                    "description": "What expanding a contest to this band costs, in US cents."
-                                  }
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
                                 },
-                                "required": [
-                                  "entriesPerContest",
-                                  "priceCents"
-                                ],
-                                "additionalProperties": false,
-                                "description": "One expansion band and its price."
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
                             }
                           },
                           "required": [
@@ -44216,21 +45067,7 @@
                             "PLATINUM"
                           ],
                           "additionalProperties": false,
-                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
-                        }
-                      },
-                      "required": [
-                        "paymentsEnabled",
-                        "expansionPrices"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "newValue": {
-                      "type": "object",
-                      "properties": {
-                        "paymentsEnabled": {
-                          "type": "boolean",
-                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                          "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
                         },
                         "expansionPrices": {
                           "type": "object",
@@ -44261,7 +45098,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PRO": {
                               "maxItems": 10,
@@ -44289,7 +45126,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PREMIUM": {
                               "maxItems": 10,
@@ -44317,7 +45154,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             },
                             "PLATINUM": {
                               "maxItems": 10,
@@ -44345,7 +45182,7 @@
                                 "additionalProperties": false,
                                 "description": "One expansion band and its price."
                               },
-                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
                             }
                           },
                           "required": [
@@ -44360,6 +45197,252 @@
                       },
                       "required": [
                         "paymentsEnabled",
+                        "planPrices",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "planPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PRO": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PREMIUM": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            },
+                            "PLATINUM": {
+                              "type": "object",
+                              "properties": {
+                                "yearlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A year of the plan, in US cents."
+                                },
+                                "monthlyCents": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 1000000,
+                                  "description": "A month of the plan, in US cents."
+                                }
+                              },
+                              "required": [
+                                "yearlyCents",
+                                "monthlyCents"
+                              ],
+                              "additionalProperties": false,
+                              "description": "What a plan costs a year and a month, in US cents. Nothing charges it while payments are off."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's yearly and monthly subscription price, set on the Pricing page."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PRO": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PREMIUM": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            },
+                            "PLATINUM": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "description": "The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "planPrices",
                         "expansionPrices"
                       ],
                       "additionalProperties": false,
