@@ -451,12 +451,13 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Update a sport event\'s field',
-      description: 'Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price would change: its tiers and prices are locked. '
-        + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change: the upset bonus reads the seeds as they stood at release.',
+      description: 'Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price or tier would change: its tiers and prices are locked. '
+        + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change: the upset bonus reads the seeds as they stood at release. '
+        + '422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for; 422 SPORT_EVENT_NOT_BRACKET for a play-in place on an event that plays no bracket.',
       operationId: 'updateEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventParticipantsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.updateEventParticipants,
   });
@@ -559,7 +560,8 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Replace a sport event\'s tiers',
-      description: '409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when a removed tier still has participants and no reassignOrphansTo is given. Root admin only.',
+      description: 'The event\'s optional override of the tiers it copied from its sport league\'s tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and '
+        + '409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. 409 SPORT_EVENT_TIERS_LOCKED once released. Root admin only.',
       operationId: 'replaceEventTiers',
       params: EVENT_PARAMS,
       body: schemaRef('ReplaceSportEventTiersRequest'),

@@ -696,7 +696,7 @@ Children of an event; always reached through it.
 |---|---|---|
 | List for an event | `authenticated` | `listEventRounds` in `roundNumber` order; `listEventTiers` in `tierNumber` order. Each round carries where it stands, read off its results in two grouped reads and never stored (#1889, `roundProgressOf`): a round with matches is `COMPLETED` once every match is finished or cancelled and `IN_PROGRESS` once any has started; a round without (a golf round) is `COMPLETED` once some participant rounds are recorded and none is under way. `resultCount` counts the matches with a result or the finished participant rounds; `completedAt` is the latest result's time once the round is `COMPLETED` |
 | Reschedule rounds | `rootAdmin` | `updateEventRounds` |
-| Replace tiers | `rootAdmin` | `replaceEventTiers`. 409 `TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS` unless `reassignOrphansTo` names a tier that survives; 409 `SPORT_EVENT_TIERS_LOCKED` once the event is released |
+| Replace tiers | `rootAdmin` | `replaceEventTiers`: the event's optional override of the tiers it copied from its sport league's tier profile (the Event page's ⚙ › *Edit tiers*). While no tier was placed by hand it then places the field in the new tiers, as `autoAssignEventTiers` does, in a second write that the next auto-assign or field sync repeats should it fail. Once one was (`MANUAL`), places are kept and 409 `TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS` answers a removal that would strand participants unless `reassignOrphansTo` names a tier that survives; 409 `SPORT_EVENT_TIERS_LOCKED` once the event is released |
 
 ### SportEventParticipant — the Participant↔SportEvent edge
 

@@ -2318,7 +2318,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event's field
-         * @description Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release.
+         * @description Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price or tier would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release. 422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for; 422 SPORT_EVENT_NOT_BRACKET for a play-in place on an event that plays no bracket.
          */
         patch: operations["updateEventParticipants"];
         trace?: never;
@@ -2437,7 +2437,7 @@ export interface paths {
         get: operations["listEventTiers"];
         /**
          * Replace a sport event's tiers
-         * @description 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when a removed tier still has participants and no reassignOrphansTo is given. Root admin only.
+         * @description The event's optional override of the tiers it copied from its sport league's tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. 409 SPORT_EVENT_TIERS_LOCKED once released. Root admin only.
          */
         put: operations["replaceEventTiers"];
         post?: never;
@@ -12723,7 +12723,7 @@ export interface components {
                 label: string;
                 tierNumber: number;
             }[];
-            /** @description A tierKey from this request; required when a removed tier still has participants in it. */
+            /** @description A tierKey from this request; where participants in a removed tier go once a tier was placed by hand, and required then when a removed tier still has participants. Ignored otherwise: the field is placed in the new tiers afresh. */
             reassignOrphansTo?: string;
         };
         /** @description Fills the event's tiers from the active field, in the order auto-assigned prices use too (#1807): odds, then seed, then rank, decided for the whole field by the first value every participant has, then name. */
@@ -33220,6 +33220,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

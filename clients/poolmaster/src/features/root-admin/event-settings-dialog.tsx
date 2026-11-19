@@ -29,8 +29,10 @@ import { QueryKeys } from '@/lib/query-keys';
 import { describeBudgetPricing } from './budget-pricing-format';
 import { buildEventPagePath } from '@/features/event-pages/event-page-paths';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
-import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
+import { EventTiersDialog } from './event-tiers-dialog';
+import { eventTiersLocked, formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
+import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
 import { settingsRequestBody, settingsSchema, TIER_ORDER_LABELS, valuesOf, type SettingsValues } from './event-settings-form';
 import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
 
@@ -59,6 +61,9 @@ export function EventSettingsDialog({
   const pricingProfilesQuery = usePricingProfilesQuery();
   const [transitionTarget, setTransitionTarget] = useState<SportEventDtoStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
+  const [tiersOpen, setTiersOpen] = useState(false);
+  const tiersQuery = useSportEventTiersQuery(event.id);
+  const fieldQuery = useSportEventFieldQuery(event.id);
   const current = valuesOf(event, timeZone);
 
   const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
@@ -124,6 +129,12 @@ export function EventSettingsDialog({
       : []),
     { id: 'feedId', label: 'Feed id', value: event.providerSynced ? event.externalId : 'None', testId: `${testId}-feed-id` },
     { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: `${testId}-tier-profile` },
+    {
+      id: 'tiers',
+      label: 'Tiers',
+      value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : tiersQuery.data.map((tier) => tier.label).join(' · '),
+      testId: `${testId}-tiers`,
+    },
     { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: `${testId}-pricing-profile` },
     {
       id: 'pricedWith',
@@ -151,6 +162,16 @@ export function EventSettingsDialog({
         <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={buildEventPagePath(event.sport, overview.eventPageSlug)} variant="secondary">
           Open event page ›
         </LinkButton>
+      ),
+    }]),
+    ...(eventTiersLocked(event.status) || tiersQuery.data === undefined || fieldQuery.data === undefined ? [] : [{
+      id: 'tiers',
+      name: 'Tiers',
+      description: 'Override the tiers copied from the sport league\'s tier profile, for this event only.',
+      control: (
+        <Button data-testid={`${testId}-edit-tiers`} onClick={() => setTiersOpen(true)} size="sm" variant="secondary">
+          Edit tiers
+        </Button>
       ),
     }]),
     ...event.allowedTransitions.map((toStatus) => ({
@@ -182,7 +203,7 @@ export function EventSettingsDialog({
     },
   ];
 
-  const confirmOpen = transitionTarget !== null || autoToggleOpen;
+  const confirmOpen = transitionTarget !== null || autoToggleOpen || tiersOpen;
 
   return (
     <>
@@ -232,6 +253,9 @@ export function EventSettingsDialog({
           ) : null}
         </div>
       </DetailEditModal>
+      {tiersOpen && tiersQuery.data !== undefined && fieldQuery.data !== undefined ? (
+        <EventTiersDialog event={event} field={fieldQuery.data} onClose={() => setTiersOpen(false)} tiers={tiersQuery.data} />
+      ) : null}
       <ConfirmDialog
         confirmLabel={transitionTarget ? `Move to ${formatSportEventStatus(transitionTarget)}` : 'Confirm'}
         confirmTestId="root-admin-sport-event-transition-confirm"
