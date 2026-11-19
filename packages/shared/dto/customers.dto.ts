@@ -50,7 +50,7 @@ export const CustomerUserDtoSchema = z.object({
   isActive: z.boolean().describe('False for a deactivated account: it is signed out and blocked until reactivated.'),
   leagues: z.array(CustomerUserLeagueDtoSchema).describe('The leagues the user is an active member of, by name. Its length is the user\'s league count.'),
   joinedAt: DateTimeSchema.describe('When the account was created.'),
-  lastSignInAt: DateTimeSchema.nullable().describe('When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).'),
+  lastSignInAt: DateTimeSchema.nullable().describe('When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.'),
 }).describe('One user on the root admin\'s Customers › Users grid.');
 export type CustomerUserDto = z.infer<typeof CustomerUserDtoSchema>;
 

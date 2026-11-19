@@ -12,6 +12,7 @@
  */
 import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
+import type { FastifyBaseLogger } from 'fastify';
 import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -269,6 +270,24 @@ describe('AuthService', () => {
       for (const [, at] of jest.mocked(users.recordSignIn).mock.calls) {
         expect(at.getTime()).toBeGreaterThanOrEqual(before);
       }
+    });
+
+    it('still signs the user in, and logs a warning, when stamping the last sign-in fails', async () => {
+      const passwordHash = await bcrypt.hash('Password123!', 10);
+      const users = fakeUserRepo({
+        findByIdentifier: jest.fn().mockResolvedValue(buildUser()),
+        recordSignIn: jest.fn().mockRejectedValue(new Error('connection reset')),
+      });
+      const warn = jest.fn();
+      const logger = { warn, info: jest.fn(), debug: jest.fn(), error: jest.fn() } as unknown as FastifyBaseLogger;
+
+      const result = await new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)), logger).login('userone', 'Password123!');
+
+      expect(result.tokens.accessToken).toEqual(expect.any(String));
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'authService.signIn.stampFailed', data: { userId: 'user-1' } }),
+        'Could not record the last sign-in',
+      );
     });
 
     it('does not stamp a sign-in when a refresh continues a session', async () => {

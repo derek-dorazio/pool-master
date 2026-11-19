@@ -346,7 +346,16 @@ export class AuthService {
    */
   private async startSession(user: User): Promise<TokenPair> {
     const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
-    await this.users.recordSignIn(user.id, new Date());
+    try {
+      await this.users.recordSignIn(user.id, new Date());
+    } catch (error) {
+      // Last sign-in is informational: a failed stamp is logged and the session still starts.
+      this.logger?.warn({
+        action: 'authService.signIn.stampFailed',
+        data: { userId: user.id },
+        err: error,
+      }, 'Could not record the last sign-in');
+    }
     return tokens;
   }
 

@@ -24829,7 +24829,7 @@ export interface components {
             joinedAt: string;
             /**
              * Format: date-time
-             * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+             * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
              */
             lastSignInAt: string | null;
         };
@@ -24861,7 +24861,7 @@ export interface components {
                 joinedAt: string;
                 /**
                  * Format: date-time
-                 * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+                 * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
                  */
                 lastSignInAt: string | null;
             }[];

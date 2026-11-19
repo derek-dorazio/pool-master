@@ -145,13 +145,6 @@ export class PrismaUserRepository implements UserRepository {
     return mapToUser(row);
   }
 
-  /**
-   * A field left out is untouched; a nullable field set to `null` is cleared.
-   *
-   * The `=== null ? null : toPrisma…` arms are the point of `UserUpdate`. Mapping a `null`
-   * through the enum `Record` would return `undefined`, which Prisma reads as "no change" —
-   * so clearing a preference would have silently done nothing.
-   */
   async recordSignIn(id: string, at: Date): Promise<void> {
     // `updateMany`, so a user deleted meanwhile is no error: there is nobody left to stamp.
     await forgettingReads(ReadMemoKey.user, () => this.prisma.user.updateMany({
@@ -160,6 +153,13 @@ export class PrismaUserRepository implements UserRepository {
     }));
   }
 
+  /**
+   * A field left out is untouched; a nullable field set to `null` is cleared.
+   *
+   * The `=== null ? null : toPrisma…` arms are the point of `UserUpdate`. Mapping a `null`
+   * through the enum `Record` would return `undefined`, which Prisma reads as "no change" —
+   * so clearing a preference would have silently done nothing.
+   */
   async update(id: string, updates: UserUpdate): Promise<User> {
     const row = await forgettingReads(ReadMemoKey.user, () => this.prisma.user.update({
       where: { id },

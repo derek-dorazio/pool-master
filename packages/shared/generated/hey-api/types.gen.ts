@@ -28030,7 +28030,7 @@ export type CustomerUserDto = {
      */
     joinedAt: string;
     /**
-     * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+     * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
      */
     lastSignInAt: string | null;
 };
@@ -28069,7 +28069,7 @@ export type CustomerUserListResponse = {
          */
         joinedAt: string;
         /**
-         * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+         * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
          */
         lastSignInAt: string | null;
     }>;
