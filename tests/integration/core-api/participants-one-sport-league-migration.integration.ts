@@ -1,7 +1,7 @@
 /**
  * #1853 — the migration that puts each participant in one sport league applies to a database that
- * already holds participants, affiliations and provider mappings, as QA's does, against real
- * Postgres. A scratch database gets every migration before it, the rows the old model allowed,
+ * already holds participants, affiliations, provider mappings and stored release holds, as QA's
+ * does, against real Postgres. A scratch database gets every migration before it, the rows the old model allowed,
  * then this migration; the rows it leaves are read back with the new client.
  */
 import { spawnSync } from 'node:child_process';
@@ -22,6 +22,10 @@ const ids = {
   rankedTwice: randomUUID(),
   unaffiliated: randomUUID(),
   mappedTwice: randomUUID(),
+};
+const events = {
+  heldOnlyUnlinked: randomUUID(),
+  heldUnlinkedAndUnpriced: randomUUID(),
 };
 
 let workDir = '';
@@ -58,6 +62,14 @@ INSERT INTO "participant_provider_mappings" ("participant_id", "provider_id", "e
   ('${ids.rankedTwice}', 'balldontlie', 'golfer-1', now()),
   ('${ids.mappedTwice}', 'balldontlie', 'tennis-1', now()),
   ('${ids.mappedTwice}', 'other-feed', 'tennis-1', now());
+INSERT INTO "event_series" ("id", "sport_league_id", "name", "updated_at") VALUES
+  ('${events.heldOnlyUnlinked}', (SELECT "id" FROM "sport_leagues" WHERE "name" = 'PGA TOUR'), 'Held Open ${events.heldOnlyUnlinked}', now());
+INSERT INTO "sport_events" ("id", "external_id", "provider_id", "sport", "name", "start_date", "event_series_id", "event_year", "status", "updated_at",
+  "auto_release_checked_at", "auto_release_outcome", "auto_release_failed_checks") VALUES
+  ('${events.heldOnlyUnlinked}', 'held-1', 'balldontlie', 'GOLF', 'Held Only Unlinked', now() + interval '3 days', '${events.heldOnlyUnlinked}', 2081, 'DRAFT', now(),
+    now(), 'HELD', ARRAY['FIELD_LINKED']::"PrismaReleaseCheckKey"[]),
+  ('${events.heldUnlinkedAndUnpriced}', 'held-2', 'balldontlie', 'GOLF', 'Held Unlinked And Unpriced', now() + interval '3 days', '${events.heldOnlyUnlinked}', 2082, 'DRAFT', now(),
+    now(), 'HELD', ARRAY['FIELD_LINKED', 'PRICES_ASSIGNED']::"PrismaReleaseCheckKey"[]);
 `;
 
 beforeAll(async () => {
@@ -96,7 +108,11 @@ describe('the participants-in-one-sport-league migration on a database with rows
         select: { participantId: true, providerId: true, sportLeague: { select: { name: true } } },
         orderBy: [{ participantId: 'asc' }, { providerId: 'asc' }],
       });
-      return { participants: new Map(participants.map((row) => [row.id, row])), mappings };
+      const holds = await scratch.sportEvent.findMany({
+        where: { id: { in: Object.values(events) } },
+        select: { id: true, autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true },
+      });
+      return { participants: new Map(participants.map((row) => [row.id, row])), mappings, holds: new Map(holds.map((row) => [row.id, row])) };
     } finally {
       await scratch.$disconnect();
     }
@@ -122,5 +138,18 @@ describe('the participants-in-one-sport-league migration on a database with rows
       { participantId: ids.mappedTwice, providerId: 'other-feed', sportLeague: { name: 'WTA' } },
     ]);
     expect(mappings.find((mapping) => mapping.participantId === ids.rankedTwice)).toMatchObject({ sportLeague: { name: 'LPGA Tour' } });
+  });
+
+  it('clears a stored release hold whose only reason was the dropped FIELD_LINKED check, as if never checked', async () => {
+    const { holds } = await readBack();
+
+    expect(holds.get(events.heldOnlyUnlinked)).toMatchObject({ autoReleaseCheckedAt: null, autoReleaseOutcome: null, autoReleaseFailedChecks: [] });
+  });
+
+  it('keeps a stored release hold with another reason, without FIELD_LINKED', async () => {
+    const { holds } = await readBack();
+
+    expect(holds.get(events.heldUnlinkedAndUnpriced)).toMatchObject({ autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['PRICES_ASSIGNED'] });
+    expect(holds.get(events.heldUnlinkedAndUnpriced)?.autoReleaseCheckedAt).toBeInstanceOf(Date);
   });
 });

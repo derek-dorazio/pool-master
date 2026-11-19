@@ -69,8 +69,13 @@ ALTER TABLE "participants" ADD CONSTRAINT "participants_sport_league_id_fkey" FO
 ALTER TABLE "participant_provider_mappings" ADD CONSTRAINT "participant_provider_mappings_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- The FIELD_LINKED ready check goes: every field participant is the event league's, made by the
--- sync with its feed id, so there is nothing left to link. A stored hold forgets it.
-UPDATE "sport_events" SET "auto_release_failed_checks" = array_remove("auto_release_failed_checks", 'FIELD_LINKED');
+-- sync with its feed id, so there is nothing left to link. A stored hold forgets it, and a hold
+-- whose only reason it was is cleared, as if never checked: the next check decides the event.
+UPDATE "sport_events"
+SET "auto_release_checked_at" = NULL, "auto_release_outcome" = NULL, "auto_release_failed_checks" = ARRAY[]::"PrismaReleaseCheckKey"[]
+WHERE "auto_release_outcome" = 'HELD' AND "auto_release_failed_checks" = ARRAY['FIELD_LINKED']::"PrismaReleaseCheckKey"[];
+UPDATE "sport_events" SET "auto_release_failed_checks" = array_remove("auto_release_failed_checks", 'FIELD_LINKED')
+WHERE 'FIELD_LINKED' = ANY("auto_release_failed_checks");
 ALTER TYPE "PrismaReleaseCheckKey" RENAME TO "PrismaReleaseCheckKey_old";
 CREATE TYPE "PrismaReleaseCheckKey" AS ENUM ('NOT_STARTED', 'ROUNDS_SCHEDULED', 'FIELD_LOADED', 'TIERS_ASSIGNED', 'TIERS_FILLED', 'PRICES_ASSIGNED', 'BRACKET_COMPLETE', 'CONTEST_SETUPS_ON');
 ALTER TABLE "sport_events" ALTER COLUMN "auto_release_failed_checks" DROP DEFAULT;
