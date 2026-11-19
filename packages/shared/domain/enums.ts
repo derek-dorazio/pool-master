@@ -622,8 +622,8 @@ export const SportLeagueIssueType = {
   /** A draft event whose latest automatic release check held it. */
   RELEASE: 'RELEASE',
   /**
-   * An event still not completed or cancelled well after its last round or match should have
-   * ended (#1865): its results are missing.
+   * A released event still not completed or cancelled well after its last round or match should
+   * have ended (#1865): its results are missing. A never-released draft never is (#1908).
    */
   OVERDUE: 'OVERDUE',
 } as const;
