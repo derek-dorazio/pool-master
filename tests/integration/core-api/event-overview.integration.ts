@@ -20,7 +20,7 @@ import {
 import { SportEventOverviewResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody, seedEventWithField } from '../list-route-seeds';
-import { expectConstantQueries } from '../query-scaling';
+import { expectConstantQueries, measureQueryScaling } from '../query-scaling';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -28,6 +28,14 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 beforeEach(() => cleanupTestData());
+
+/**
+ * The overview's whole cost, the root admin's session check included: the event; then its league,
+ * its latest run of each kind, whether it is overdue (the event, its rounds and their last match
+ * starts) and its field; then those latest runs and the field's provider mappings. A new read, or
+ * one sent per field row, moves it.
+ */
+const OVERVIEW_STATEMENTS = 10;
 
 /**
  * A draft golf event `golfers` strong in a synced tour of its own that releases a week out, each
@@ -105,5 +113,15 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventOverviewResponseSchema).overview.fieldFeed.length,
     });
+  });
+
+  it('sends exactly 10 statements, the session check included, for a field of 2 and of 20 alike', async () => {
+    const { small, large } = await measureQueryScaling({
+      seed: seedSyncedEvent,
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventOverviewResponseSchema).overview.fieldFeed.length,
+    });
+
+    expect([small.length, large.length]).toEqual([OVERVIEW_STATEMENTS, OVERVIEW_STATEMENTS]);
   });
 });
