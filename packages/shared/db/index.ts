@@ -182,7 +182,9 @@ export type {
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,
+  EmailSendSummary,
   EmailSuppressionRepository,
+  SentEmailContent,
 } from './email-ports';
 export type { BackgroundJobClaim, BackgroundJobRepository } from './background-job-ports';
 export type {
