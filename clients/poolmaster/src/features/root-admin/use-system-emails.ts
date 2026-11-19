@@ -54,7 +54,7 @@ export function useSendLatestToMe() {
       }
       return response.data;
     },
-    // The copy counts as a send of the email once it goes.
+    // A copy is never counted as a send (#1877); refreshing the list keeps it current all the same.
     invalidates: [QueryKeys.rootAdmin.systemEmails],
   });
 }
