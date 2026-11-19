@@ -84,6 +84,35 @@ const DEFAULT_EMAIL: SettingsGroup = {
   defaults: EMAIL_DEFAULTS,
 };
 
+const PLAN_PRICES = {
+  FREE: { yearlyCents: 0, monthlyCents: 0 },
+  PRO: { yearlyCents: 9900, monthlyCents: 999 },
+  PREMIUM: { yearlyCents: 0, monthlyCents: 0 },
+  PLATINUM: { yearlyCents: 0, monthlyCents: 0 },
+};
+
+const BILLING_DEFAULTS = {
+  paymentsEnabled: false,
+  planPrices: PLAN_PRICES,
+  expansionPrices: {
+    FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2000 }],
+    PRO: [{ entriesPerContest: 100, priceCents: 1500 }],
+    PREMIUM: [],
+    PLATINUM: [{ entriesPerContest: 1000, priceCents: 3000 }],
+  },
+};
+
+const DEFAULT_BILLING: SettingsGroup = {
+  key: 'BILLING_CONFIG',
+  title: 'Payments',
+  description: 'Whether payments are on, and what expanding a contest costs on each plan.',
+  source: 'defaults',
+  updatedAt: null,
+  updatedBy: null,
+  value: BILLING_DEFAULTS,
+  defaults: BILLING_DEFAULTS,
+};
+
 const INGESTION_CHANGE: SettingsChange = {
   id: '0c9e1b6e-7a77-4f41-9c3e-5c0b5f6b4a10',
   key: 'INGESTION_SCHEDULE_CONFIG',
@@ -114,16 +143,24 @@ describe('RootAdminSettingsPage', () => {
   });
 
   it('shows one card per group with its values, whether they are saved or the defaults, and who last changed them', async () => {
+    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [SAVED_INGESTION, DEFAULT_BILLING] } });
     renderPage();
 
     const ingestion = within(await screen.findByTestId('root-admin-settings-group-INGESTION_SCHEDULE_CONFIG'));
-    const email = within(screen.getByTestId('root-admin-settings-group-EMAIL_CONFIG'));
+    const billing = within(screen.getByTestId('root-admin-settings-group-BILLING_CONFIG'));
 
     expect(ingestion.getByText('Saved')).toBeInTheDocument();
     expect(ingestion.getByText('Every 45 s')).toBeInTheDocument();
     expect(ingestion.getByTestId('root-admin-settings-last-change-INGESTION_SCHEDULE_CONFIG')).toHaveTextContent('Last changed by Ada Admin');
-    expect(email.getByText('Defaults')).toBeInTheDocument();
-    expect(email.getByText('Never changed: using the defaults.')).toBeInTheDocument();
+    expect(billing.getByText('Defaults')).toBeInTheDocument();
+    expect(billing.getByText('Never changed: using the defaults.')).toBeInTheDocument();
+  });
+
+  it('leaves the email settings out: they are Notifications\' Email settings', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-settings-group-INGESTION_SCHEDULE_CONFIG')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-settings-group-EMAIL_CONFIG')).not.toBeInTheDocument();
   });
 
   it('links the ingestion schedule section to the Providers page, where it is edited', async () => {
@@ -151,211 +188,6 @@ describe('RootAdminSettingsPage', () => {
 
     expect(await screen.findByTestId('root-admin-settings-error')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-settings-group-INGESTION_SCHEDULE_CONFIG')).not.toBeInTheDocument();
-  });
-});
-
-describe('RootAdminSettingsPage email card', () => {
-  beforeEach(() => {
-    listSettingsGroupsMock.mockReset();
-    listSettingsGroupHistoryMock.mockReset();
-    updateSettingsGroupMock.mockReset();
-    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [DEFAULT_EMAIL] } });
-  });
-
-  it('saves email switched off with one template off and an allow list, sending the version it was read at', async () => {
-    updateSettingsGroupMock.mockImplementation(({ body }: { body: { value: typeof EMAIL_DEFAULTS } }) => Promise.resolve({
-      data: { ...DEFAULT_EMAIL, source: 'stored', updatedAt: '2026-10-07T13:00:00.000Z', updatedBy: ADMIN, value: body.value },
-    }));
-    renderPage();
-
-    fireEvent.click(await screen.findByTestId('root-admin-email-settings-template-CONTEST_STARTED_SUMMARY'));
-    fireEvent.change(screen.getByTestId('root-admin-email-settings-allowed-recipients'), { target: { value: 'tester@gmail.com' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-enabled'));
-    expect(screen.getByTestId('root-admin-email-settings-off-warning')).toHaveTextContent('No system email is sent');
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    expect(updateSettingsGroupMock.mock.calls[0][0]).toEqual(expect.objectContaining({
-      path: { key: 'EMAIL_CONFIG' },
-      body: {
-        key: 'EMAIL_CONFIG',
-        expectedUpdatedAt: null,
-        value: {
-          enabled: false,
-          allowedRecipients: ['tester@gmail.com'],
-          sendRatePerSecond: 10,
-          entryReminderHours: [48, 24, 3],
-          standingsBufferMinutes: 30,
-          weeklyDigestHour: 3,
-          templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
-        },
-      },
-    }));
-  });
-
-  it('saves the allow list one address or @domain per line, lowercased, skipping blank lines', async () => {
-    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-allowed-recipients'), {
-      target: { value: 'Derek+Alice@Gmail.com\n\n  @simulator.amazonses.com  \n' },
-    });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { allowedRecipients: string[] } } }];
-    expect(request.body.value.allowedRecipients).toEqual(['derek+alice@gmail.com', '@simulator.amazonses.com']);
-  });
-
-  it('saves the send rate as a number', async () => {
-    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '5' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { sendRatePerSecond: number } } }];
-    expect(request.body.value.sendRatePerSecond).toBe(5);
-  });
-
-  it('refuses to save a send rate below one email a second', async () => {
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '0' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    expect(await screen.findByText('From 1 to 100 emails a second.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('says a send rate must be whole when it is a fraction inside the range', async () => {
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '2.5' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    expect(await screen.findByText('Whole emails a second only.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('saves the standings email delay as a number of minutes', async () => {
-    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
-    renderPage();
-
-    const field = await screen.findByTestId('root-admin-email-settings-standings-buffer');
-    expect(field).toHaveValue(30);
-    fireEvent.change(field, { target: { value: '45' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { standingsBufferMinutes: number } } }];
-    expect(request.body.value.standingsBufferMinutes).toBe(45);
-  });
-
-  it('saves the weekly event digest hour, and refuses one past 23', async () => {
-    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
-    renderPage();
-
-    const field = await screen.findByTestId('root-admin-email-settings-digest-hour');
-    expect(field).toHaveValue(3);
-    fireEvent.change(field, { target: { value: '24' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-    expect(await screen.findByText('An hour from 0 to 23.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-
-    fireEvent.change(field, { target: { value: '5' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { weeklyDigestHour: number } } }];
-    expect(request.body.value.weeklyDigestHour).toBe(5);
-  });
-
-  it('refuses to save a standings email delay over 240 minutes', async () => {
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-standings-buffer'), { target: { value: '300' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    expect(await screen.findByText('From 0 to 240 minutes.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('saves the entry reminder hours typed with commas as a list of numbers', async () => {
-    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
-    renderPage();
-
-    const field = await screen.findByTestId('root-admin-email-settings-reminder-hours');
-    expect(field).toHaveValue('48, 24, 3');
-    fireEvent.change(field, { target: { value: '72, 24,, 2 ' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { entryReminderHours: number[] } } }];
-    expect(request.body.value.entryReminderHours).toEqual([72, 24, 2]);
-  });
-
-  it('refuses to save entry reminder hours that are not whole numbers from 1 to 168', async () => {
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-reminder-hours'), { target: { value: '48, soon' } });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    expect(await screen.findByText('List 1 to 5 whole numbers of hours from 1 to 168, separated by commas.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('shows the saved allow list one per line', async () => {
-    listSettingsGroupsMock.mockResolvedValue({
-      data: { groups: [{ ...DEFAULT_EMAIL, value: { ...EMAIL_DEFAULTS, allowedRecipients: ['a@gmail.com', '@b.com'] } }] },
-    });
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-email-settings-allowed-recipients')).toHaveValue('a@gmail.com\n@b.com');
-  });
-
-  it('refuses to save an allow list line that is not an address or @domain, naming the line', async () => {
-    renderPage();
-
-    fireEvent.change(await screen.findByTestId('root-admin-email-settings-allowed-recipients'), {
-      target: { value: 'a@gmail.com\ngmail.com' },
-    });
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    expect(await screen.findByText('"gmail.com" is not an email address or @domain.')).toBeInTheDocument();
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('when another admin saved first, loads their newer settings on request and saves against that newer version', async () => {
-    const theirs: SettingsGroup = {
-      ...DEFAULT_EMAIL,
-      source: 'stored',
-      updatedAt: '2026-10-07T14:00:00.000Z',
-      updatedBy: ADMIN,
-      value: { ...EMAIL_DEFAULTS, allowedRecipients: ['theirs@gmail.com'] },
-    };
-    updateSettingsGroupMock.mockResolvedValueOnce({
-      error: { error: { code: 'SETTINGS_CONFLICT', message: 'Settings group EMAIL_CONFIG was changed by someone else; reload and try again.' } },
-    });
-    updateSettingsGroupMock.mockResolvedValueOnce({ data: theirs });
-    renderPage();
-
-    fireEvent.click(await screen.findByTestId('root-admin-email-settings-enabled'));
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    const error = await screen.findByTestId('root-admin-email-settings-error');
-    expect(error).toHaveTextContent('changed by someone else');
-    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [theirs] } });
-    fireEvent.click(within(error).getByRole('button', { name: 'Load the latest settings' }));
-
-    await waitFor(() => expect(screen.getByTestId('root-admin-email-settings-allowed-recipients')).toHaveValue('theirs@gmail.com'));
-    expect(screen.queryByTestId('root-admin-email-settings-error')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-email-settings-enabled')).toBeChecked();
-    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-
-    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(2));
-    const [retry] = updateSettingsGroupMock.mock.calls[1] as [{ body: { expectedUpdatedAt: string | null } }];
-    expect(retry.body.expectedUpdatedAt).toBe('2026-10-07T14:00:00.000Z');
   });
 });
 
@@ -409,27 +241,6 @@ describe('RootAdminSettingsPage plans card', () => {
   });
 });
 
-const BILLING_DEFAULTS = {
-  paymentsEnabled: false,
-  expansionPrices: {
-    FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2000 }],
-    PRO: [{ entriesPerContest: 100, priceCents: 1500 }],
-    PREMIUM: [],
-    PLATINUM: [{ entriesPerContest: 1000, priceCents: 3000 }],
-  },
-};
-
-const DEFAULT_BILLING: SettingsGroup = {
-  key: 'BILLING_CONFIG',
-  title: 'Payments',
-  description: 'Whether payments are on, and what expanding a contest costs on each plan.',
-  source: 'defaults',
-  updatedAt: null,
-  updatedBy: null,
-  value: BILLING_DEFAULTS,
-  defaults: BILLING_DEFAULTS,
-};
-
 describe('RootAdminSettingsPage payments card', () => {
   beforeEach(() => {
     listSettingsGroupsMock.mockReset();
@@ -448,7 +259,7 @@ describe('RootAdminSettingsPage payments card', () => {
     expect(card.getByText('None')).toBeInTheDocument();
   });
 
-  it('saves a changed price and an added size in cents, keeping payments off, with the version it was read at', async () => {
+  it('saves a changed price and an added size in cents, keeping payments off and the plan prices as stored, with the version it was read at', async () => {
     updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_BILLING });
     renderPage();
 
@@ -466,6 +277,7 @@ describe('RootAdminSettingsPage payments card', () => {
         expectedUpdatedAt: null,
         value: {
           paymentsEnabled: false,
+          planPrices: PLAN_PRICES,
           expansionPrices: {
             FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2250 }],
             PRO: [{ entriesPerContest: 100, priceCents: 1500 }],

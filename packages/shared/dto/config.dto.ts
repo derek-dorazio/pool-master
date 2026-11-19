@@ -208,17 +208,36 @@ export const ExpansionPriceSchema = z.object({
 export type ExpansionPrice = z.infer<typeof ExpansionPriceSchema>;
 
 const ExpansionPriceListSchema = z.array(ExpansionPriceSchema).max(10).describe(
-  'The plan\'s bands, smallest first; each band and each price above the one before.',
+  'The plan\'s bands, smallest first; each band and each price above the one before. '
+  + 'A band at or below the plan\'s included entries (PLAN_CONFIG\'s ENTRIES_PER_CONTEST cap) is never offered.',
 );
 
+const subscriptionCents = z.number().int().min(0).max(1_000_000);
+
+/** One plan's subscription price (#1885): set by a root admin on the Pricing page, charged by nothing yet. */
+export const PlanPriceSchema = z.object({
+  yearlyCents: subscriptionCents.describe('A year of the plan, in US cents.'),
+  monthlyCents: subscriptionCents.describe('A month of the plan, in US cents.'),
+}).describe('What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.');
+export type PlanPrice = z.infer<typeof PlanPriceSchema>;
+
 /**
- * BILLING_CONFIG (#980): whether payments are on, and each plan's expansion price list
- * (plans/payments.md §3, §9). While payments are off, expanding a contest is free and recorded
- * as a $0 line in the league's payment history.
+ * BILLING_CONFIG (#980): whether payments are on, each plan's subscription price (#1885) and each
+ * plan's expansion price list (plans/payments.md §3, §9). While payments are off, expanding a
+ * contest is free and recorded as a $0 line in the league's payment history. A row saved before
+ * plan prices existed loads with every plan's price at its default.
  */
 export const BillingConfigSchema = z.object({
   paymentsEnabled: z.boolean().describe(
     'Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.',
+  ),
+  planPrices: z.object({
+    FREE: PlanPriceSchema,
+    PRO: PlanPriceSchema,
+    PREMIUM: PlanPriceSchema,
+    PLATINUM: PlanPriceSchema,
+  } satisfies Record<LeaguePlan, typeof PlanPriceSchema>).describe(
+    'Each plan\'s yearly and monthly subscription price, set on the Pricing page.',
   ),
   expansionPrices: z.object({
     FREE: ExpansionPriceListSchema,
@@ -228,7 +247,7 @@ export const BillingConfigSchema = z.object({
   } satisfies Record<LeaguePlan, typeof ExpansionPriceListSchema>).describe(
     'Each plan\'s expansion price list. A contest is offered the bands above its cap; a step up costs the difference.',
   ),
-}).describe('Payments: whether they are on, and what expanding a contest costs on each plan.');
+}).describe('Payments: whether they are on, what each plan costs, and what expanding a contest costs on each plan.');
 export type BillingConfig = z.infer<typeof BillingConfigSchema>;
 
 registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
@@ -236,6 +255,7 @@ registerSchema('EmailConfig', EmailConfigSchema);
 registerSchema('PlanCapRow', PlanCapRowSchema);
 registerSchema('PlanConfig', PlanConfigSchema);
 registerSchema('ExpansionPrice', ExpansionPriceSchema);
+registerSchema('PlanPrice', PlanPriceSchema);
 registerSchema('BillingConfig', BillingConfigSchema);
 registerSchema('IngestionScheduleConfigPatch', IngestionScheduleConfigPatchSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);

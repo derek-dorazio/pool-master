@@ -50,19 +50,25 @@ export function buildSportLeagueCreatePath(sport: Sport) {
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
 export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 
+/** Every system email and the email settings (#1872). */
+export const NOTIFICATIONS_PATH = '/manage/notifications';
+
+/** The old settings page, the second tab under Notifications until its groups get pages of their own. */
+export const SETTINGS_PATH = '/manage/settings';
+
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans. Activity and Notifications have no pages of their own yet, so each opens today's page for
- * it: the sync runs and the settings. Providers keeps Run event sync and Unmapped participants lit
- * until they move.
+ * Plans. Activity has no page of its own yet, so it opens today's sync runs. Notifications (#1872)
+ * keeps the old Settings page, for its groups that are not email, as its second tab until their own
+ * pages take them. Providers keeps Run event sync and Unmapped participants lit until they move.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, '/manage/events', '/manage/content-configuration'] },
   { key: 'activity', title: 'Activity', to: '/manage/sync', paths: ['/manage/sync'] },
-  { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
+  { key: 'notifications', title: 'Notifications', to: NOTIFICATIONS_PATH, paths: [NOTIFICATIONS_PATH, SETTINGS_PATH] },
   {
     key: 'providers',
     title: 'Providers',
@@ -116,8 +122,17 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
   }));
 }
 
-/** Manage's second row, null where a tool has none: under Customers, Leagues and Users. */
+/** Manage's second row, null where a tool has none: under Notifications, Emails and the old Settings page; under Customers, Leagues and Users. */
 export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
+  if (isAtOrUnder(pathname, NOTIFICATIONS_PATH) || isAtOrUnder(pathname, SETTINGS_PATH)) {
+    return {
+      label: 'Notifications',
+      items: [
+        { isActive: isAtOrUnder(pathname, NOTIFICATIONS_PATH), label: 'Emails', testId: 'root-admin-manage-menu-emails', to: NOTIFICATIONS_PATH },
+        { isActive: isAtOrUnder(pathname, SETTINGS_PATH), label: 'Settings', testId: 'root-admin-manage-menu-settings', to: SETTINGS_PATH },
+      ],
+    };
+  }
   if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
     return {
       label: 'Customers',
@@ -135,7 +150,8 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   events: 'Events',
   'content-configuration': 'Contest templates',
   sync: 'Activity',
-  settings: 'Notifications',
+  notifications: 'Notifications',
+  settings: 'Settings',
   leagues: 'Leagues',
   users: 'Users',
   plans: 'Plans',

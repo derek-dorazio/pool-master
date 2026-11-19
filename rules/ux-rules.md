@@ -631,8 +631,10 @@ administration area (root admin included), reusing the same shared components.
     page reads the same for every sport. A settings dialog in Manage opens in view
     mode, its settings as facts with Close and Edit, and Edit swaps in the form
     with Cancel and Save (`DetailEditModal`). Every Manage dialog does this,
-    not only settings: a participant, a contest template, a profile. A dialog
-    with nothing to change has only Close.
+    not only settings: a participant, a contest template, a profile. What the
+    thing itself can do, such as an email's Preview and Send me this email, sits
+    between Close and Edit (`viewActions`), never in the form. A thing with
+    nothing to change has no Edit.
 15. **› navigates, ⤢ opens a dialog.** A Manage grid row ends in › when it
     leads to a page of its own (a sport league, an event), and in ⤢ when its
     details open in a dialog over the grid (a participant, a contest template,

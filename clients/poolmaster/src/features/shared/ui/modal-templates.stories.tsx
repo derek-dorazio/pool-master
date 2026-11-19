@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { FormField, Input } from "./form-field";
+import { Button } from "./button";
 import { DetailEditModal, FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
 import { Text } from "./text";
 
@@ -114,3 +115,32 @@ function DetailEditDemo() {
 
 /** Settings open as facts with Close and Edit; Edit swaps in the form with Cancel and Save. */
 export const DetailEdit: StoryObj = { render: () => <DetailEditDemo /> };
+
+/** A view with buttons of its own between Close and Edit, such as an email's Preview and Send me this email. */
+export const DetailEditWithViewActions: StoryObj = {
+  render: () => (
+    <DetailEditModal
+      facts={[
+        { id: "audience", label: "Audience", value: "Members" },
+        { id: "status", label: "Status", value: "On" },
+      ]}
+      mode="view"
+      onCancel={() => undefined}
+      onCancelEdit={() => undefined}
+      onEdit={() => undefined}
+      onOpenChange={() => undefined}
+      onSave={() => undefined}
+      open
+      saveLabel="Save"
+      title="Final results"
+      viewActions={(
+        <>
+          <Button type="button" variant="secondary">Preview</Button>
+          <Button type="button" variant="secondary">Send me this email</Button>
+        </>
+      )}
+    >
+      {null}
+    </DetailEditModal>
+  ),
+};
