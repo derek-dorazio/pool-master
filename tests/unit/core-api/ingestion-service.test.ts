@@ -10,7 +10,7 @@ import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../su
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
-import { jobHandlers } from '../../support/in-memory-background-jobs';
+import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -22,7 +22,7 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
   return {
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
-    jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs }),
+    jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs, currentStart: testCurrentJobStart }),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     webhookProviderIds: [],
     ...overrides,

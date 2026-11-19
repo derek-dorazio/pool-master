@@ -16,7 +16,7 @@ import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/s
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
-import { jobHandlers } from '../../support/in-memory-background-jobs';
+import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { buildSportLeague } from '../../factories';
 import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
@@ -49,7 +49,7 @@ function service(
   deps: Partial<Omit<IngestionServiceDependencies, 'syncRuns'>> & Pick<IngestionServiceDependencies, 'registry'> & { syncRuns?: InMemorySyncRuns },
 ) {
   const runs = deps.syncRuns ?? syncRuns();
-  const jobs = new BackgroundJobQueue({ jobs: runs.jobs });
+  const jobs = new BackgroundJobQueue({ jobs: runs.jobs, currentStart: testCurrentJobStart });
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),

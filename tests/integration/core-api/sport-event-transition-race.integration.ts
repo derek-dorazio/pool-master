@@ -32,8 +32,8 @@ beforeEach(() => cleanupTestData());
  */
 function lifecycleCountingSettlements() {
   const settlement: FinishedSportEventSettlement = {
-    settleFinishedSportEvent: async () => undefined,
-    settleFinishedGame: async () => undefined,
+    settleFinishedSportEvent: async () => ({ contestsSettled: 0 }),
+    settleFinishedGame: async () => 0,
   };
   const service = new EventLifecycleService(
     {

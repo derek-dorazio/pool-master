@@ -1,4 +1,4 @@
-import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { SportEventChangedNotice } from '../../packages/core-api/src/modules/notifications';
 import { mockFn } from './mock-fn';
 
@@ -8,6 +8,7 @@ export function eventChangedJob(sportEventId: string, kind: string): BackgroundJ
     type: BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS,
     payload: { sportEventId, kind },
     dedupeKey: `CONTEST_EVENT_CHANGED_EMAILS:${sportEventId}:${kind}`,
+    start: { trigger: JobTrigger.SYSTEM },
   };
 }
 

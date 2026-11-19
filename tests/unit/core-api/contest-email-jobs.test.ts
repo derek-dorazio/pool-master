@@ -12,7 +12,7 @@ import {
   type ContestEmailJobDeps,
 } from '../../../packages/core-api/src/modules/notifications';
 import { BackgroundJobQueue, InvalidBackgroundJobPayloadError } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { buildContest } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -23,10 +23,10 @@ function setup(options: { contest?: ReturnType<typeof buildContest> | null; spor
   const sportEvent = options.sportEvent === undefined ? SPORT_EVENT : options.sportEvent;
   const logger = fakeLogger();
   const notices = {
-    contestStarted: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestStarted']>>(async () => undefined),
-    contestSettled: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestSettled']>>(async () => undefined),
-    contestEventChanged: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestEventChanged']>>(async () => undefined),
-    contestReopened: jest.fn<Promise<void>, Parameters<ContestEmailJobDeps['notices']['contestReopened']>>(async () => undefined),
+    contestStarted: jest.fn<Promise<number>, Parameters<ContestEmailJobDeps['notices']['contestStarted']>>(async () => 2),
+    contestSettled: jest.fn<Promise<number>, Parameters<ContestEmailJobDeps['notices']['contestSettled']>>(async () => 2),
+    contestEventChanged: jest.fn<Promise<number>, Parameters<ContestEmailJobDeps['notices']['contestEventChanged']>>(async () => 2),
+    contestReopened: jest.fn<Promise<number>, Parameters<ContestEmailJobDeps['notices']['contestReopened']>>(async () => 2),
   };
   const standings = [
     { contestEntryId: 'entry-2', position: 2, displayPosition: '2', totalScore: 1 },
@@ -56,7 +56,7 @@ describe('ContestEmailJobs', () => {
   it('asks for the good luck emails of the contest and the event its job names', async () => {
     const { jobs, notices, contest } = setup();
 
-    await jobs.contestStarted({ contestId: 'contest-1', sportEventId: SPORT_EVENT.id });
+    await expect(jobs.contestStarted({ contestId: 'contest-1', sportEventId: SPORT_EVENT.id })).resolves.toEqual({ changedCount: 2 });
 
     expect(notices.contestStarted).toHaveBeenCalledWith(contest, SPORT_EVENT);
   });
@@ -65,7 +65,7 @@ describe('ContestEmailJobs', () => {
     for (const gone of [{ contest: null }, { sportEvent: null }]) {
       const { jobs, notices, logger } = setup(gone);
 
-      await jobs.contestStarted({ contestId: 'contest-1', sportEventId: SPORT_EVENT.id });
+      await expect(jobs.contestStarted({ contestId: 'contest-1', sportEventId: SPORT_EVENT.id })).resolves.toEqual({ changedCount: 0 });
 
       expect(notices.contestStarted).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(
@@ -110,7 +110,7 @@ describe('ContestEmailJobs', () => {
 });
 
 describe('contest email job requests', () => {
-  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
 
   it('keys each job by its type and contest, so a second move before it runs queues nothing more', () => {
     expect(contestStartedEmailsJob(queue, 'contest-1', 'sport-event-1')).toEqual({
@@ -118,12 +118,14 @@ describe('contest email job requests', () => {
       payload: { contestId: 'contest-1', sportEventId: 'sport-event-1' },
       sportEventId: 'sport-event-1',
       runAt: undefined,
+      start: TEST_JOB_START,
       dedupeKey: 'CONTEST_STARTED_EMAILS:contest-1',
     });
     expect(contestSettledEmailsJob(queue, 'contest-1')).toEqual({
       type: BackgroundJobType.CONTEST_SETTLED_EMAILS,
       payload: { contestId: 'contest-1' },
       runAt: undefined,
+      start: TEST_JOB_START,
       dedupeKey: 'CONTEST_SETTLED_EMAILS:contest-1',
     });
   });
@@ -163,13 +165,14 @@ describe('contest email job requests', () => {
     });
 
     it('builds a job keyed by the contest and the change, and refuses a change with no start', () => {
-      const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+      const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
 
       expect(contestEventChangedEmailsJob(queue, 'contest-1', { id: 'sport-event-1', startDate: new Date('2026-04-16T11:40:00.000Z') }, { kind: 'POSTPONED' })).toEqual({
         type: BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS,
         payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED', startsAt: '2026-04-16T11:40:00.000Z' } },
         sportEventId: 'sport-event-1',
         runAt: undefined,
+        start: TEST_JOB_START,
         dedupeKey: 'CONTEST_EVENT_CHANGED_EMAILS:contest-1:sport-event-1:postponed-2026-04-16T11:40:00.000Z',
       });
       expect(() => queue.request(BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS, { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED' } } as never))
@@ -215,13 +218,14 @@ describe('contest email job requests', () => {
     });
 
     it('builds a job keyed by the contest, the event and the new start, so a later reopen is its own job', () => {
-      const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+      const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
 
       expect(contestReopenedEmailsJob(queue, 'contest-1', 'sport-event-1', new Date(reopen.startsAt))).toEqual({
         type: BackgroundJobType.CONTEST_REOPENED_EMAILS,
         payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: reopen.startsAt },
         sportEventId: 'sport-event-1',
         runAt: undefined,
+        start: TEST_JOB_START,
         dedupeKey: 'CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-2026-04-30T11:40:00.000Z',
       });
     });

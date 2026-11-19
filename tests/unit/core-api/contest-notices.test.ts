@@ -22,7 +22,7 @@ import type { ContestFinalStandings } from '../../../packages/core-api/src/modul
 import { ContestEventChangeKind, EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestEmailJobs, ContestNotices, type ContestEventChangedEmailsJobPayload, type ContestNoticeDeps, type SportEventChange } from '../../../packages/core-api/src/modules/notifications';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -110,7 +110,7 @@ describe('ContestNotices', () => {
       squadMemberships: world.squadMembershipRepo(),
       users: world.userRepo(),
       email,
-      jobs: new BackgroundJobQueue({ jobs: jobRows }),
+      jobs: new BackgroundJobQueue({ jobs: jobRows, currentStart: testCurrentJobStart }),
       appBaseUrl: 'https://app.example.test/',
       logger,
       now: () => NOW,
@@ -294,15 +294,15 @@ describe('ContestNotices', () => {
       expect(textTo(onlooker.user.id)).toContain('You didn\'t enter this one');
     });
 
-    it('queues the good luck email once per member and event, however often it is asked', async () => {
+    it('queues the good luck email once per member and event, however often it is asked, counting only the emails each ask queued', async () => {
       const league = world.addLeague();
       const event = world.addSportEvent({ startDate: STARTS_AT, rounds: 4 });
       const contest = world.addContest(league.id, { sportEventIds: [event.id] });
       world.addConfiguration(contest.id);
       member(league.id, 'Nora');
 
-      await notices().contestStarted(contest, event);
-      await notices().contestStarted(contest, event);
+      await expect(notices().contestStarted(contest, event)).resolves.toBe(1);
+      await expect(notices().contestStarted(contest, event)).resolves.toBe(0);
 
       expect(outbox.rows).toHaveLength(1);
       expect(outbox.rows[0]?.textBody).toContain('Event: 4 rounds');

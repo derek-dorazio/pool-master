@@ -18,6 +18,7 @@ import type { ContestEntryRepository, ContestRepository, LeagueRepository, Squad
 import {
   ContestEntryStatus,
   ContestStatus,
+  EmailMessageStatus,
   LeagueRole,
   PARTICIPANT_SCORING_DEFINITIONS,
   SportEventStatus,
@@ -143,9 +144,9 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
   /**
    * E1: wishes every active member good luck as the contest goes live for `sportEvent`, with the
    * event, the rules and how many entries are in. No entry list: the leaderboard has it. A
-   * failure to queue throws, for its job to retry.
+   * failure to queue throws, for its job to retry. Answers how many it queued (#1861).
    */
-  async contestStarted(contest: Contest, sportEvent: SportEvent): Promise<void> {
+  async contestStarted(contest: Contest, sportEvent: SportEvent): Promise<number> {
     const shared = shareSummaryReads(this.deps, [sportEvent]);
     const [league, summary, entries] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
@@ -154,14 +155,14 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     ]);
     if (!league || !summary) {
       this.skipped('email.contestStarted.skipped', contest, 'Skipped the contest is live email because its league, rules or events are gone');
-      return;
+      return 0;
     }
     const submitted = entries.filter((entry) => contestEntryEventStatus(entry, sportEvent.id) === ContestEntryStatus.SUBMITTED);
     const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
       .map((owner) => owner.userId));
     const eventFormat = await describeEventFormat(shared, sportEvent);
     const leaderboardUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
-    await this.queueEach('CONTEST_STARTED_SUMMARY', await activeLeagueMembers(this.deps, league.id), (user) => ({
+    return this.queueEach('CONTEST_STARTED_SUMMARY', await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about: `${contest.id}:${sportEvent.id}`,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -186,16 +187,16 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
    * F1, with F3 folded in: tells every active member who won, the final top 10 and where their
    * own entries finished, and congratulates the owners of the winning entries. F2 instead, to the
    * commissioners and the members with an entry, when the contest ended with no scores. A
-   * failure to queue throws, for its job to retry.
+   * failure to queue throws, for its job to retry. Answers how many it queued (#1861).
    */
-  async contestSettled(contest: Contest, final: ContestFinalStandings): Promise<void> {
+  async contestSettled(contest: Contest, final: ContestFinalStandings): Promise<number> {
     const [league, members] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
       activeLeagueMembersWithRoles(this.deps, contest.leagueId),
     ]);
     if (!league) {
       this.skipped('email.contestSettled.skipped', contest, 'Skipped the final results email because its league is gone');
-      return;
+      return 0;
     }
     const leaderboardUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const resultsFor = (user: User, outcome: ContestResultsOutcome): EmailSendInput<'CONTEST_RESULTS'> => ({
@@ -219,8 +220,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       const recipients = members
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
         .map(({ user }) => user);
-      await this.queueEach('CONTEST_RESULTS', recipients, (user) => resultsFor(user, outcome));
-      return;
+      return this.queueEach('CONTEST_RESULTS', recipients, (user) => resultsFor(user, outcome));
     }
 
     const format = final.scoringDefinitionId === null ? String : PARTICIPANT_SCORING_DEFINITIONS[final.scoringDefinitionId].format;
@@ -231,7 +231,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     const leaders = leaderCount(final.entries);
     const entryUrlOf = (entryId: string): string => buildContestEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entryId);
     const winners = final.entries.filter((entry) => entry.position === 1);
-    await this.queueEach('CONTEST_RESULTS', members.map(({ user }) => user), (user) => {
+    return this.queueEach('CONTEST_RESULTS', members.map(({ user }) => user), (user) => {
       const squadIds = squadsByOwner.get(user.id) ?? new Set<string>();
       const lines = final.entries.map((entry): StandingsLine => ({
         place: entry.displayPosition,
@@ -290,9 +290,9 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
    * job's. The contest is told whatever its status now, since a cancellation's job may run after
    * settlement has finished a contest that goes on to other events. A failure to queue throws,
    * for its job to retry; the outbox key is the contest, the change and the person, so a retry
-   * queues only what the failed try did not.
+   * queues only what the failed try did not. Answers how many it queued (#1861).
    */
-  async contestEventChanged(contest: Contest, sportEvent: SportEvent, change: ContestEventChangedEmailsJobPayload['change']): Promise<void> {
+  async contestEventChanged(contest: Contest, sportEvent: SportEvent, change: ContestEventChangedEmailsJobPayload['change']): Promise<number> {
     const [league, sportLeague, members, entrants] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
       this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
@@ -301,7 +301,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     ]);
     if (!league) {
       this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
-      return;
+      return 0;
     }
     const now = this.deps.now?.() ?? new Date();
     const picksOpen = areEventPicksOpen(contest, sportEvent, now);
@@ -316,7 +316,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     const recipients = members
       .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
       .map(({ user }) => user);
-    await this.queueEach('CONTEST_EVENT_CHANGED', recipients, (user) => ({
+    return this.queueEach('CONTEST_EVENT_CHANGED', recipients, (user) => ({
       to: emailRecipientOf(user),
       about: `${contest.id}:${about}`,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -328,22 +328,22 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
   /**
    * "Picks are open again", from its job (#1808): tells every active member the postponed event's
    * contest takes picks again until `reopen.startsAt`, each once per reopen. A failure to queue
-   * throws, for its job to retry.
+   * throws, for its job to retry. Answers how many it queued (#1861).
    */
-  async contestReopened(contest: Contest, sportEvent: SportEvent, reopen: ContestReopenedEmailsJobPayload): Promise<void> {
+  async contestReopened(contest: Contest, sportEvent: SportEvent, reopen: ContestReopenedEmailsJobPayload): Promise<number> {
     const [league, sportLeague] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
       this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
     ]);
     if (!league || !sportLeague) {
       this.skipped('email.contestReopened.skipped', contest, 'Skipped the picks are open again email because its league or sport league is gone');
-      return;
+      return 0;
     }
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeague.name);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const about = contestReopenedAbout(reopen);
     const closesAt = new Date(reopen.startsAt);
-    await this.queueEach('CONTEST_REOPENED', await activeLeagueMembers(this.deps, league.id), (user) => ({
+    return this.queueEach('CONTEST_REOPENED', await activeLeagueMembers(this.deps, league.id), (user) => ({
       to: emailRecipientOf(user),
       about,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
@@ -369,14 +369,19 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     return new Set(owners.map((owner) => owner.userId));
   }
 
-  /** Queues the email to every recipient in one batch (#1173), a few queries however large the league. */
+  /**
+   * Queues the email to every recipient in one batch (#1173), a few queries however large the
+   * league. Answers how many it newly queued to send (#1861): not one a retry finds already
+   * written, nor one skipped for a suppressed or opted-out address.
+   */
   private async queueEach<Key extends SystemEmailTemplateKey>(
     templateKey: Key,
     recipients: User[],
     inputFor: (user: User) => EmailSendInput<Key>,
-  ): Promise<void> {
-    if (recipients.length === 0) return;
-    await this.deps.email.sendMany(templateKey, recipients.map(inputFor));
+  ): Promise<number> {
+    if (recipients.length === 0) return 0;
+    const states = await this.deps.email.sendMany(templateKey, recipients.map(inputFor));
+    return states.filter((state) => state.created && state.status === EmailMessageStatus.QUEUED).length;
   }
 
   /**

@@ -10,7 +10,7 @@ import {
   providerEventSyncKey,
   type ProviderNotification,
 } from '../../../packages/core-api/src/modules/ingestion/provider-notifications';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 
 const NOW = new Date('2026-11-15T18:00:00.000Z');
@@ -48,7 +48,7 @@ function setup(
   delays: { coalesceMs?: number; startingSyncDelayMs?: number; reconcileDelayMs?: number } = {},
 ) {
   const jobs = inMemoryBackgroundJobs(() => NOW);
-  const queue = new BackgroundJobQueue({ jobs });
+  const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const findLiveNotifiedEvents = jest.fn((_query: ProviderNotifiedEventQuery) => Promise.resolve(live));
   const recordProviderNotification = jest.fn((_receipt: ProviderNotificationReceipt) => Promise.resolve());
   const service = new ProviderNotificationService({

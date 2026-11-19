@@ -8,7 +8,9 @@
 import { z } from 'zod';
 import {
   BackgroundJobType,
+  JobErrorType,
   ReleaseAttemptOutcome,
+  type BackgroundJobOutcome,
   ReleaseAttemptTrigger,
   type BackgroundJobRequest,
   type ReleaseAttemptResult,
@@ -44,4 +46,16 @@ export type ReleaseAttemptResultJson =
 
 export function releaseAttemptResultToJson(result: ReleaseAttemptResult): ReleaseAttemptResultJson {
   return result.outcome === ReleaseAttemptOutcome.SKIPPED ? result : { outcome: result.outcome, checks: result.checks.map(mapReleaseCheckToDto) };
+}
+
+/**
+ * What the job reports (#1861): a release changed the one event; a hold changed nothing and is
+ * CHECK_FAILED, since a ready check failed; a skip changed nothing. The attempt is its result.
+ */
+export function releaseAttemptJobOutcome(result: ReleaseAttemptResult): BackgroundJobOutcome {
+  return {
+    changedCount: result.outcome === ReleaseAttemptOutcome.RELEASED ? 1 : 0,
+    ...(result.outcome === ReleaseAttemptOutcome.HELD && { heldBack: JobErrorType.CHECK_FAILED }),
+    result: releaseAttemptResultToJson(result),
+  };
 }

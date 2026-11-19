@@ -190,7 +190,8 @@ async function seedSyncRuns(runs: number) {
 
 /**
  * A root admin, and a sport league with `jobs` background jobs on its Activity: half on the
- * league itself, each with the sync run it ran, and half on one of its events.
+ * league itself, each started by an admin of its own (#1861) and with the sync run it ran, and
+ * half on one of its events.
  */
 async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
@@ -208,8 +209,8 @@ async function seedLeagueActivity(jobs: number) {
     const onLeague = index % 2 === 0;
     const job = await prisma.backgroundJob.create({
       data: onLeague
-        ? { type: 'SYNC_LEAGUE_EVENTS', payload: { sportLeagueId: sportLeague.id, eventYears: [2026], trigger: 'SCHEDULE' }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
-        : { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
+        ? { type: 'SYNC_LEAGUE_EVENTS', trigger: 'ADMIN', startedByUserId: (await createTestUser()).user.id, payload: { sportLeagueId: sportLeague.id, eventYears: [2026] }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
+        : { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: 'SYSTEM', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
     });
     if (onLeague) {
       await prisma.providerSyncRun.create({
@@ -458,7 +459,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs', async () => {
+  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs and the admin who started it', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/activity/',
       seed: seedLeagueActivity,

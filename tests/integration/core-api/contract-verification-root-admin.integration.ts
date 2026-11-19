@@ -2107,6 +2107,12 @@ describe('Contract verification (root admin)', () => {
       const [job] = jobs;
       expect(job).toMatchObject({ id: queued.id, status: 'SUCCEEDED', result: { eventYears: [2085], created: 2, updated: 0, skipped: 0 } });
       expect(job.syncRunIds).toHaveLength(1);
+      // #1861: the admin who asked, what the job changed, and how long its try took.
+      expect(queued).toMatchObject({ trigger: 'ADMIN', startedBy: { id: rootAdmin.user.id, displayName: rootAdmin.user.displayName }, startedAt: null, durationSeconds: null });
+      expect(job).toMatchObject({
+        trigger: 'ADMIN', startedBy: { id: rootAdmin.user.id, displayName: rootAdmin.user.displayName }, changedCount: 2, errorType: null,
+        startedAt: expect.any(String), durationSeconds: expect.any(Number),
+      });
 
       const runRes = await app.inject({ method: 'GET', url: `/api/v1/ingestion/sync-runs/${job.syncRunIds[0]}`, headers: rootAdmin.headers });
       expect(runRes.statusCode).toBe(200);
