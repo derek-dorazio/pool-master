@@ -233,8 +233,9 @@ The Field and Scores timers still run outside the job table; moving them onto jo
 step (#1835).
 
 **Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
-4 hours after it should have ended; a draft never released is never overdue (its last round's end, else its last start plus the sport's typical
-play). A Clutch Card event is judged by the parent rounds it covers. One function:
+4 hours after it should have ended (its last round's end, else its last start plus the sport's
+typical play). A draft never released is never overdue. A Clutch Card event is judged by the
+parent rounds it covers. One function:
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
 
 ### Webhooks
