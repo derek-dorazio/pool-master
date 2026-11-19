@@ -156,8 +156,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   });
 
   const circuitId = await test.step('create a racing circuit', async () => {
-    await page.goto('/manage/sports/horse-racing/leagues');
-    await page.getByTestId('root-admin-sport-league-list-new').click();
+    await page.goto('/manage/sports/horse-racing/leagues/new');
     await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
     // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
     await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '3 tiers of 3' });
@@ -168,8 +167,9 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
       'POST',
       '/api/v1/sport-leagues',
     );
-    await page.getByTestId('root-admin-sport-league-list-search').fill(run.tourName);
-    await expect(page.getByTestId(`root-admin-sport-league-row-${created.sportLeague.id}`)).toBeVisible();
+    // Creating returns to the Sports page, whose one grid lists every sport league.
+    await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
+    await expect(page.getByTestId(`root-admin-sports-row-${created.sportLeague.id}`)).toBeVisible();
     return created.sportLeague.id;
   });
 

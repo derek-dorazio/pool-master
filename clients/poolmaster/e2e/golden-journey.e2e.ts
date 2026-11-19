@@ -183,8 +183,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('the manage pages load without an error state', async () => {
       await expect(page.getByTestId('account-menu-trigger')).toBeVisible();
       await page.goto('/manage');
-      await expect(page).toHaveURL(/\/manage\/leagues$/);
+      await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
       await expect(page.getByTestId('root-admin-manage-menu-sports')).toBeVisible();
+      await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
@@ -194,8 +195,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     const tourId = await test.step('create a golf tour', async () => {
-      await page.goto('/manage/sports/golf/leagues');
-      await page.getByTestId('root-admin-sport-league-list-new').click();
+      await page.goto('/manage/sports/golf/leagues/new');
       await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
       // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
       await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '6 tiers of 10' });
@@ -207,9 +207,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         '/api/v1/sport-leagues',
       );
       const id = created.sportLeague.id;
-      // The tours list pages at 25 rows, so find the new tour by its run-unique name.
-      await page.getByTestId('root-admin-sport-league-list-search').fill(run.tourName);
-      await expect(page.getByTestId(`root-admin-sport-league-row-${id}`)).toBeVisible();
+      // Creating returns to the Sports page, whose one grid lists every sport league.
+      await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
+      await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
       return id;
     });
     journey.tourId = tourId;

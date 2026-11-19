@@ -118,6 +118,7 @@ export { Toaster } from "./toaster";
 export { dismissAllToasts, dismissToast, showToast, type ToastMessage } from "./toast-store";
 export { useMutationActionWorkflow, type MutationActionWorkflowResult } from "./mutation-action-workflow";
 export {
+  DetailEditModal,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,

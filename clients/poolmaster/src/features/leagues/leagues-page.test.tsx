@@ -111,8 +111,8 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
             path="/league/:leagueCode"
           />
           <Route
-            element={<div data-testid="manage-leagues-destination" />}
-            path="/manage/leagues"
+            element={<div data-testid="manage-sports-destination" />}
+            path="/manage/sports"
           />
         </Routes>
       </MemoryRouter>
@@ -222,14 +222,14 @@ describe('Landing a signed-in user on a league', () => {
     id: 'league-inactive', leagueCode: 'GONE1', isActive: false, createdAt: '2026-05-01T00:00:00.000Z',
   });
 
-  it('lands a root admin on Manage leagues, not on a league page', async () => {
+  it('lands a root admin on Manage\'s Sports page, not on a league page', async () => {
     authState.isRootAdmin = true;
     document.cookie = `${RECENT_LEAGUE_COOKIE}=ACTIVE1; Path=/`;
     mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([activeOlder])));
 
     renderWelcomePage();
 
-    expect(await screen.findByTestId('manage-leagues-destination')).toBeInTheDocument();
+    expect(await screen.findByTestId('manage-sports-destination')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-destination')).not.toBeInTheDocument();
   });
 

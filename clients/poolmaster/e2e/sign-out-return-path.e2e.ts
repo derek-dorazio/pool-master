@@ -76,7 +76,7 @@ test('a root admin who signs in after a member signed out on a league page lands
     await page.getByTestId('auth-login-identifier').fill(credentials.identifier);
     await page.getByTestId('auth-login-password').fill(credentials.password);
     await page.getByTestId('auth-login-submit').click();
-    await expect(page).toHaveURL(/\/manage\/leagues$/);
-    await expect(page.getByTestId('root-admin-manage-leagues-page')).toBeVisible();
+    await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
+    await expect(page.getByTestId('root-admin-sports-page')).toBeVisible();
   });
 });

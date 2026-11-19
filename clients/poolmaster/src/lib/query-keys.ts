@@ -226,6 +226,10 @@ export const QueryKeys = {
       all: ['poolmaster', 'root-admin', 'manage-sport'] as const,
       leagues: ['poolmaster', 'root-admin', 'manage-sport', 'leagues'] as const,
       sportLeagues: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', sport] as const,
+      // Every sport league's overview row (the Sports page, #1848), under `leagues` so a league's
+      // change refreshes it.
+      overviews: ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'overview'] as const,
+      sportLeague: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'one', sportLeagueId] as const,
       // A sport league's participants (#1853). Under the `participants` prefix, so a participant's
       // create or edit refreshes its league's roster, and NOT under `leagues`: a league rename
       // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
