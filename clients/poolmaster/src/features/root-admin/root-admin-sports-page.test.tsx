@@ -294,6 +294,53 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('root-admin-sport-league-settings-edit')).toBeInTheDocument();
   });
 
+  it('locks the Provider of a Clutch Card with no match keyword, explained behind (i), and a Save leaves the provider unsent', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    const worldSeries = sportLeagueFixture({
+      id: 'ws', sport: 'BASEBALL', name: 'World Series', matchKeyword: null, scoringFamily: 'COMPOSITE',
+      parentSportLeagueId: 'mlb', parentRoundNumbers: [4],
+    });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: worldSeries } });
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...worldSeries, tierProfileId: OTHER_TIER_PROFILE_ID } } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-ws'));
+    expect(await screen.findByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('None');
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-help')).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-edit'));
+
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toHaveDisplayValue('None');
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input-help')).toBeInTheDocument();
+    await screen.findByRole('option', { name: '6 tiers of 5' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-tier-profile-input'), '6 tiers of 5');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
+
+    await waitFor(() => expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { sportLeagueId: 'ws' },
+      body: { tierProfileId: OTHER_TIER_PROFILE_ID },
+    })));
+  });
+
+  it('keeps the Provider editable on a Clutch Card with its own match keyword, which a provider can sync', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({
+      id: 'ws', sport: 'BASEBALL', name: 'World Series', matchKeyword: 'World Series', scoringFamily: 'COMPOSITE',
+      parentSportLeagueId: 'mlb', parentRoundNumbers: [4],
+    }) } });
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-ws'));
+    await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
+
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeEnabled();
+    expect(screen.queryByTestId('root-admin-sport-league-settings-provider-help')).not.toBeInTheDocument();
+  });
+
   it('keeps Save off on a second Edit right after a save, so nothing unchanged is sent', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });

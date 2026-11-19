@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AUTO_RELEASE_DAYS_MAX } from '@poolmaster/shared/domain';
+import { AUTO_RELEASE_DAYS_MAX, isClutchCardLeague } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import {
   DetailEditModal,
   ErrorState,
   FormField,
+  HelpTip,
   Input,
   LoadingState,
   ReadOnlyDetailModal,
@@ -44,6 +45,21 @@ function valuesOf(sportLeague: SportLeagueDto): SettingsValues {
     tierProfileId: sportLeague.tierProfileId,
     pricingProfileId: sportLeague.pricingProfileId,
   };
+}
+
+/**
+ * A Clutch Card league with no match keyword and no provider of its own: no provider can sync its
+ * events (the server refuses one with SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD), so its Provider is shown
+ * locked rather than offered and then refused.
+ */
+function isProviderLocked(sportLeague: SportLeagueDto): boolean {
+  return isClutchCardLeague(sportLeague)
+    && sportLeague.eventSyncProviderId === null
+    && !sportLeague.matchKeyword?.trim();
+}
+
+function lockedProviderHelp(sportLeague: SportLeagueDto): string {
+  return `${sportLeague.name} is a Clutch Card with no match keyword, so no provider syncs its events. An admin adds them, and each is linked to its parent league's season event.`;
 }
 
 function autoReleaseText(days: number | null): string {
@@ -89,6 +105,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   const tierProfilesQuery = useTierProfilesQuery();
   const pricingProfilesQuery = usePricingProfilesQuery();
   const current = valuesOf(sportLeague);
+  const providerLocked = isProviderLocked(sportLeague);
 
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
@@ -132,7 +149,19 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
 
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
-    { id: 'provider', label: 'Provider', value: sportLeague.eventSyncProviderId === null ? 'No provider' : providerName(sportLeague.eventSyncProviderId), testId: 'root-admin-sport-league-settings-provider' },
+    providerLocked
+      ? {
+          id: 'provider',
+          label: (
+            <span className="inline-flex items-center gap-1.5">
+              Provider
+              <HelpTip label="About Provider" testId="root-admin-sport-league-settings-provider-help">{lockedProviderHelp(sportLeague)}</HelpTip>
+            </span>
+          ),
+          value: 'None',
+          testId: 'root-admin-sport-league-settings-provider',
+        }
+      : { id: 'provider', label: 'Provider', value: sportLeague.eventSyncProviderId === null ? 'No provider' : providerName(sportLeague.eventSyncProviderId), testId: 'root-admin-sport-league-settings-provider' },
     { id: 'autoRelease', label: 'Auto release', value: autoReleaseText(sportLeague.autoReleaseDaysBeforeStart), testId: 'root-admin-sport-league-settings-auto-release' },
     { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: 'root-admin-sport-league-settings-tier-profile' },
     { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: 'root-admin-sport-league-settings-pricing-profile' },
@@ -170,17 +199,25 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
             <option value="off">Off</option>
           </Select>
         </FormField>
-        <FormField label="Provider">
-          <Select data-testid="root-admin-sport-league-settings-provider-input" {...form.register('eventSyncProviderId')}>
-            <option value="">No provider</option>
-            {current.eventSyncProviderId !== '' && !providers.some((provider) => provider.providerId === current.eventSyncProviderId)
-              ? <option value={current.eventSyncProviderId}>{current.eventSyncProviderId}</option>
-              : null}
-            {providers.map((provider) => (
-              <option key={provider.providerId} value={provider.providerId}>{provider.providerName}</option>
-            ))}
-          </Select>
-        </FormField>
+        {providerLocked ? (
+          <FormField help={lockedProviderHelp(sportLeague)} id="root-admin-sport-league-settings-provider-input" label="Provider">
+            <Select data-testid="root-admin-sport-league-settings-provider-input" disabled value="">
+              <option value="">None</option>
+            </Select>
+          </FormField>
+        ) : (
+          <FormField label="Provider">
+            <Select data-testid="root-admin-sport-league-settings-provider-input" {...form.register('eventSyncProviderId')}>
+              <option value="">No provider</option>
+              {current.eventSyncProviderId !== '' && !providers.some((provider) => provider.providerId === current.eventSyncProviderId)
+                ? <option value={current.eventSyncProviderId}>{current.eventSyncProviderId}</option>
+                : null}
+              {providers.map((provider) => (
+                <option key={provider.providerId} value={provider.providerId}>{provider.providerName}</option>
+              ))}
+            </Select>
+          </FormField>
+        )}
         <FormField error={form.formState.errors.autoReleaseDays?.message} label="Auto release, days before start">
           <Input
             data-testid="root-admin-sport-league-settings-auto-release-input"
