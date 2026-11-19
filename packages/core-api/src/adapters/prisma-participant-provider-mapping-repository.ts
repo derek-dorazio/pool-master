@@ -24,6 +24,14 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
     return rows.map(mapToMapping);
   }
 
+  async findByProviderAndSport(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]> {
+    const rows = await this.prisma.participantProviderMapping.findMany({
+      where: { providerId, participant: { sportId } },
+      orderBy: { externalId: 'asc' },
+    });
+    return rows.map(mapToMapping);
+  }
+
   async bind(
     mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ParticipantProviderMapping> {

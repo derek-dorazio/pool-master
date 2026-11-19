@@ -940,9 +940,9 @@ usually faster than any targeted repair:
 4. **Deploy QA** (*Deploying QA* above), so the current `main` rolls out. If the reset
    followed a deploy run whose migrate step failed, re-running that run's failed jobs does
    the same without testing again.
-5. Optionally, **Actions -> Load sport data -> Run workflow** with mode `apply` to load the
-   2026 tournaments for manual league and contest testing (`docs/SPORT-DATA-LOADING.md`, *Seeded 2026
-   tournaments*). A reset leaves none.
+5. Turn on each synced league's sync, so the real events and fields come back, then optionally
+   **Actions -> Load test data -> Run workflow** with mode `apply` for test events to try
+   contests on (`docs/SPORT-DATA-LOADING.md` *Loading test data*). A reset leaves neither.
 
 The reset wipes every row, re-applies every migration — which restores the reference data
 (sports, sport leagues, contest config templates, event pages) — and runs `bootstrap-users.mjs` for

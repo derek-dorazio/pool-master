@@ -46,7 +46,7 @@ afterAll(async () => {
 
 /** The seed with its sport league and horses tagged with this run, so they never meet another suite's. */
 function taggedSeed(): SportDataFile {
-  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, 'horse-racing-2026-test.json'), 'utf8')) as unknown, { allowTestData: true });
+  const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, 'horse-racing-2026-test.json'), 'utf8')) as unknown);
   const leagueName = `US Thoroughbred ${RUN}`;
   file.scope.sportLeagues = [leagueName];
   const [league] = file.sportLeagues;

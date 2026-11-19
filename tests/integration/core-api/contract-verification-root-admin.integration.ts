@@ -65,7 +65,6 @@ import type {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
-import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
 import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -363,7 +362,6 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     ingestionService,
     providerRegistry: registry,
     leagueEventsSync,
-    ingestionPersistence: new IngestionPersistence(prisma),
   });
   await app.register(activityModule, {
     prefix: '/api/v1/activity',

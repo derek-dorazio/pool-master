@@ -67,3 +67,21 @@ export const ReadOnlyDetail: StoryObj = {
     />
   ),
 };
+
+/** "See it, then Edit": the view with Edit beside Close, which turns the dialog into its form. */
+export const ReadOnlyDetailWithEdit: StoryObj = {
+  render: () => (
+    <ReadOnlyDetailModal
+      detailContent={<Text>PGA Tour · LPGA Tour</Text>}
+      details={[
+        { id: "cap", label: "Salary cap", value: "$50,000" },
+        { id: "unit", label: "Unit", value: "$100" },
+      ]}
+      onCancel={() => undefined}
+      onEdit={() => undefined}
+      onOpenChange={() => undefined}
+      open
+      title="Standard"
+    />
+  ),
+};

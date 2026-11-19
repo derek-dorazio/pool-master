@@ -68,12 +68,13 @@ describe('RootAdminManageLayout', () => {
     expect(screen.queryByRole('navigation', { name: 'Sports' })).not.toBeInTheDocument();
   });
 
-  it('under Sports, adds a second row with one tab per sport, marking the sport being managed', () => {
+  it('under Sports, adds a second row with one tab per sport and Profiles, marking the sport being managed', () => {
     renderManage('/manage/sports/golf/events');
 
     expect(screen.getByTestId('root-admin-manage-menu-sports')).toHaveAttribute('aria-current', 'page');
     const sports = screen.getByRole('navigation', { name: 'Sports' });
-    expect(within(sports).getAllByRole('link')).toHaveLength(11);
+    expect(within(sports).getAllByRole('link')).toHaveLength(12);
+    expect(screen.getByTestId('root-admin-manage-menu-profiles')).not.toHaveAttribute('aria-current');
     expect(screen.getByTestId('root-admin-manage-menu-golf')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('root-admin-manage-menu-tennis')).not.toHaveAttribute('aria-current');
   });

@@ -9,7 +9,6 @@
  */
 
 import type {
-  AmbiguousFeedParticipantRepository,
   SportEventParticipantStatLineRepository,
   GolfRoundWrite,
   GolfStandingWrite,
@@ -119,8 +118,6 @@ export class InMemorySportEvents {
   backgroundJobs: BackgroundJobRequest[] = [];
   /** Active contest setups each sport league offers (#1823); a league not listed offers one. */
   contestSetupCounts = new Map<string, number>();
-  /** Open Needs linking rows each event's field sent (#1824), by event id; none when absent. */
-  needsLinkingCounts = new Map<string, number>();
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -191,10 +188,6 @@ export class InMemorySportEvents {
 
   // --- Ports ---------------------------------------------------------------------------
 
-  needsLinkingRepo(): Pick<AmbiguousFeedParticipantRepository, 'countOpenForEvent'> {
-    return { countOpenForEvent: async (sportEventId) => this.needsLinkingCounts.get(sportEventId) ?? 0 };
-  }
-
   sportRepo(): SportRepository {
     return {
       findById: async (id) => this.sports.find((sport) => sport.id === id) ?? null,
@@ -247,6 +240,8 @@ export class InMemorySportEvents {
     return {
       findByParticipant: async (participantId) => this.mappings.filter((row) => row.participantId === participantId),
       findByProviderExternalIds: async (providerId, externalIds) => this.mappings.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
+      findByProviderAndSport: async (providerId, sportId) => this.mappings.filter((row) => row.providerId === providerId
+        && this.participants.some((participant) => participant.id === row.participantId && participant.sportId === sportId)),
       bind: async (mapping) => {
         this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId));
         const row = stamp({ id: this.id('mapping'), ...mapping });

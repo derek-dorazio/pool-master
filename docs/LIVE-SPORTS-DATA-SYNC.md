@@ -27,7 +27,10 @@ The plan behind the work, and the decisions Derek made on it, are in
   `publishLiveScoreUpdate` → the event's scoring family's writer.
 - **Each league adds a reader, not a pipeline.** A league is a scope id format, a few vendor
   reads, a mapping into one of three shared shapes (`GOLF`, `GAME`, `STAT_LINE`), and a
-  `match_keyword` on its sport league so imports and name links find it.
+  `match_keyword` on its sport league so imports find it and a new participant joins it.
+- **A feed participant is matched by its feed id alone** (#1850). An id no participant is mapped
+  to is a new participant; names are never compared. Test data shares a row with the sync by
+  carrying the same feed id ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Feed ids*).
 
 ## The pieces
 
@@ -102,7 +105,7 @@ the order it happens.
 | Table | Row | Why the sync needs it |
 |---|---|---|
 | `sports` | One per sport (baseline). | Participants and events hang off it. |
-| `sport_leagues` | One per league or Clutch Card league (baseline `20271119000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import and the participant name link find the league's provider events and teams. |
+| `sport_leagues` | One per league or Clutch Card league (baseline `20271119000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import finds the league's provider events, and the league a new feed participant joins (#1800). |
 | `sport_leagues.match_keyword` | Every league below is set in the baseline. A league added later gets a small migration that sets it only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
 | `sport_leagues.round_series_lengths` | Baseline: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
 | `background_jobs` enum | Baseline `20271119000000_baseline_schema` carries `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
@@ -194,11 +197,8 @@ participants* switch widens it to every linked event. The route queues a `MANUAL
 flowchart TD
   D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id?}
   M -- yes --> U[update participants row if a value changed]
-  M -- no --> N{site participants of this sport<br/>with this name, no mapping from this<br/>provider, and in the league whose<br/>keyword = metadata.tour? Within a<br/>league the name is folded}
-  N -- exactly one --> LK[link it: new mapping, confidence HIGH]
-  N -- none --> CR[create participants row + mapping, confidence EXACT]
-  N -- two or more --> H[hold it as needs linking:<br/>ambiguous_feed_participants + a sighting<br/>in this event; no mapping, no field row]
-  U & LK & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
+  M -- no --> CR[create participants row + mapping, confidence EXACT,<br/>and join the league its tour names]
+  U & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
   J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
   W --> G[games, 2d]
@@ -208,36 +208,19 @@ flowchart TD
 
 | Table | Key | Written |
 |---|---|---|
-| `participants` | `id` | Created only when no mapping and no unique same-name match exists. The same-name match reads through `participants_sport_id_name_idx` (#1537). |
-| `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when created, `HIGH` when linked by name. This mapping is how every later sync finds the participant. |
+| `participants` | `id` | Created for every feed id no participant is mapped to (#1850), whatever the site already holds by that name. |
+| `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when the sync created it, `MANUAL` when bound by hand or by the test data load. This mapping is how every later sync finds the participant. |
 | `participant_league_affiliations` | `@@unique([participant_id, sport_league_id])` | Each participant whose tour (`metadata.tour`) names one of the site's sport leagues by match keyword joins that league (#1800), in the same transaction that creates it, so a team the feed brings that the site lacked is on the league's roster rather than a guest in the field. A participant the feed already links joins too, so a sync puts right one created before this. One read of the sports' keyed leagues and one insert that skips affiliations already there, whatever the field's size. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
-| `ambiguous_feed_participants` | `@@unique([provider_id, external_id])` | "Needs linking" (#1824): a feed participant with two or more candidates, its feed name, the candidate participant ids and the sport league of the event it was first seen in. A later sync that still finds it ambiguous updates the row (and reopens it), never adds one; one that finds one answer links it and resolves the row. Read only when the field has unmapped participants, by the row's unique key. |
-| `ambiguous_feed_participant_sightings` | `@@unique([ambiguous_feed_participant_id, sport_event_id])` | Each event whose field sent it, with the provider participant as that field sent it. The event's "every participant linked" ready check fails while an open row has a sighting in it. |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
 
-The name link is what stops a team loaded from a data file being created twice. A tour on the
-participant narrows the match to the league's own affiliated participants, so a school's men's and
-women's teams each link to their own row. Within that league the name is compared folded
-(`participantNameKey`, #1664): accents, case and punctuation dropped and a trailing Jr., Sr., II,
-III or IV left off, so the feed's "Luka Doncic" links to a data file's "Luka Dončić". A suffix
-only one side carries is forgiven; a Jr. never links to a Sr. of the same name. A participant
-naming no league links by its exact name only, since the sport's every spelling of it is not read.
-A participant the provider already maps is some other feed id's, so it is no candidate. Where two
-of a league's candidates fold to one name, only the one spelled exactly as the feed spells it links.
-A name two candidates share, or one the feed sends twice where the site has a candidate, is never
-guessed (#1824): it is neither linked nor created, and waits as "needs linking", off the field.
-
-A root admin lists the open ones (`GET /api/v1/ingestion/ambiguous-participants`, by sport league)
-and resolves each (`POST /api/v1/ingestion/ambiguous-participants/:id/resolve`): linked to one of
-its candidates (mapping `MANUAL`) or created from the feed's latest copy (mapping `EXACT`). Either
-writes its field row in every event that sent it at once, from the sighting, with the event's
-leaderboard rebuild, and then, in one transaction, resolves the row, maps the feed id and
-affiliates the participant with the leagues its tour names, as a sync would; a failure part way
-leaves the row open for a retry. The mapping is what lets the next sync link it on its own.
-Binding the feed id by hand on the participant page resolves the row too, and so does a later sync
-that finds one answer; neither writes the other events' field rows, which those events' own next
-field loads do once the feed id is mapped (an event that no longer syncs keeps its field as it was).
+Names are never compared (#1850). Matching by name once linked a data file's team to the feed's,
+and held a name two candidates shared as "needs linking"; both went, because a guessed link puts
+one feed's scores on the wrong row, and the site's real participants now all come from the sync.
+A participant the site holds under the feed's name but no mapping (an old row, or test data loaded
+without its feed id) stays as it was beside the new one: merge them, or bind the feed id on the
+participant page (`PUT /api/v1/participants/{id}/provider-mappings`) before the sync first sees it.
+The test data load binds each test player's feed id the same way, so the sync fields that row.
 
 After the field is written, its ranked rows with no mapping from the event's provider are listed,
 best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names
@@ -598,8 +581,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 ### NFL (#1496 parts 1 to 2c)
 
 - **Registration.** NFL sport league, keyword `NFL` (baseline). An event is a regular season week
-  or the postseason; its event year is the calendar year it is played in. Teams link by name to
-  the data-file teams the first time, then by mapping.
+  or the postseason; its event year is the calendar year it is played in. Teams are found by
+  their feed id (`nfl-team-<id>`); the test data's teams carry it (#1850).
 - **Sync.** `NflReader.liveScores(scope)` reads the scope's games and returns every game as a
   `GameScoreUpdate`; the writer links each to its match by the two teams.
 - **Key code.** `nfl-mapping.ts` `parseNflScope`, `nflScopeId`, `nflTeamExternalId`;
@@ -610,8 +593,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **Registration.** College Football Playoff sport league, keyword `CFP` (migration
   `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
   (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
-  own four. Teams carry the tour `CFP`, so a provider team links by name only to the site's
-  teams affiliated with the playoff league.
+  own four. Teams carry the tour `CFP`, so a team the sync creates joins the playoff league.
 - **The date rule.** The vendor's college games carry no postseason flag, bowl name or venue. So
   a season's playoff games are every game from noon UTC on the day after the first Saturday of
   December (conference championship day) through January 31 of the next year:
@@ -632,7 +614,7 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 - **The sport's team list is long by design.** `getParticipants(AMERICAN_FOOTBALL)` returns the
   NFL's 32 teams and every college team `/ncaaf/v1/teams` lists, as basketball's returns every
   Division I team. The admin's unmapped teams for football are therefore mostly college teams;
-  a college team links by name only to the playoff league's teams, so none takes an NFL row.
+  each has its own feed id (`ncaaf-team-<id>`), so none takes an NFL row.
 - **Key code.** `ncaaf-mapping.ts` `CFP_LEAGUE`, `cfpGameWindow`, `cfpGamesOf`,
   `parseCfpScope`; `ncaaf-reader.ts`.
 
@@ -735,8 +717,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
   Clutch Card sport leagues, *NBA Finals* and *NBA Conference Finals*, are keyed to their own names
   (baseline), so each league's import finds only its round, and the NBA league's import
   finds only the season. Rounds 1 and 2 are listed but no sport league imports them. The field is
-  the round's teams' active players, `nba-player-<id>`, toured by the round name so they link by
-  name to the stars already loaded from the round's data file. The existing Load Participant Field
+  the round's teams' active players, `nba-player-<id>`, toured by the round name so a star the sync creates joins the round's league; a test star
+  carrying the same `nba-player-<id>` is the same row. The existing Load Participant Field
   does this, so no "load stars" endpoint is needed.
 - **Round numbering.** The vendor names no round, so `playoffSeries` works it out: a team's first
   series is round 1, and each later series is one past the later of its two teams' previous

@@ -1,6 +1,6 @@
-# Fetch public sources for the load-sport-data skill and commit them to the branch the
+# Fetch public sources for writing test data files and commit them to the branch the
 # workflow runs on, under sport-sources/. Cloud agent sessions cannot reach data feeds, tour
-# or reference sites; GitHub Actions can, so the skill reads and cross-checks them from the
+# or reference sites; GitHub Actions can, so an agent writing a test data file reads and cross-checks them from the
 # branch, then deletes the folder before its data file is merged. JSON feeds (ESPN) are saved
 # as they are; pages that fill themselves in with scripts (tour field pages) are rendered in
 # headless Chromium first.
@@ -65,7 +65,7 @@ jobs:
             echo "Nothing new to commit."
             exit 0
           fi
-          git commit -m "Fetched sport sources for the load-sport-data skill"
+          git commit -m "Fetched sport sources for writing test data files"
           git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Summary
         if: always()

@@ -55,7 +55,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
     ]);
   });
 
-  it('under Sports, lists each supported sport by name as a second row and marks the one being managed', () => {
+  it('under Sports, lists each supported sport by name as a second row, then Profiles, and marks the one being managed', () => {
     const sports = buildManageSportTabs('/manage/sports/horse-racing/events/evt-1');
 
     expect(sports?.map((tab) => [tab.label, tab.isActive])).toEqual([
@@ -70,7 +70,15 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Baseball', false],
       ['Soccer', false],
       ['Tennis', false],
+      ['Profiles', false],
     ]);
+  });
+
+  it('marks Profiles, and no sport, on the profiles page, and names its trail Profiles', () => {
+    const tabs = buildManageSportTabs('/manage/sports/profiles');
+
+    expect(tabs?.filter((tab) => tab.isActive).map((tab) => tab.label)).toEqual(['Profiles']);
+    expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
   });
 
   it('has no second row of sports outside Sports', () => {
