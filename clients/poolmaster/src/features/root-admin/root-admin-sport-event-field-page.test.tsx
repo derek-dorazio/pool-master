@@ -7,12 +7,9 @@ import { bindApiMocks } from '@/test/msw-api';
 import { Toaster } from '@/features/shared/ui';
 import { RootAdminSportEventFieldPage } from './root-admin-sport-event-field-page';
 import {
-  affiliationFixture,
   fieldEntryFixture,
   participantFixture,
-  GOLF_SPORT_FIXTURE,
   sportEventFixture,
-  sportLeagueFixture,
   valuationFixture,
 } from './sport-test-fixtures';
 
@@ -26,9 +23,7 @@ const {
   refreshEventParticipantsMock,
   addEventParticipantsMock,
   listSportLeaguesMock,
-  listParticipantLeagueAffiliationsMock,
-  listParticipantsMock,
-  listSportsMock,
+  listSportLeagueParticipantsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -48,9 +43,7 @@ const {
     refreshEventParticipantsMock: vi.fn(),
     addEventParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
-    listParticipantLeagueAffiliationsMock: vi.fn(),
-    listParticipantsMock: vi.fn(),
-    listSportsMock: vi.fn(),
+    listSportLeagueParticipantsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -63,9 +56,7 @@ bindApiMocks({
   refreshEventParticipants: refreshEventParticipantsMock,
   addEventParticipants: addEventParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
-  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
-  listParticipants: listParticipantsMock,
-  listSports: listSportsMock,
+  listSportLeagueParticipants: listSportLeagueParticipantsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -326,26 +317,13 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     ).toHaveTextContent('Added 140');
   });
 
-  it('pool-master-za4 adds participants from a browsed league roster', async () => {
+  it('pool-master-za4 adds participants from the event\'s own league roster', async () => {
     seed();
-    listSportLeaguesMock.mockResolvedValue({
-      data: { sportLeagues: [sportLeagueFixture({ id: 'liv', name: 'LIV Golf', matchKeyword: 'LIV' })] },
-    });
-    listParticipantLeagueAffiliationsMock.mockResolvedValue({
+    listSportLeagueParticipantsMock.mockResolvedValue({
       data: {
-        affiliations: [
-          affiliationFixture({
-            sportLeagueId: 'liv',
-            participantId: 'p-jon',
-            ranking: 3,
-            participant: participantFixture({ id: 'p-jon', name: 'Jon Rahm' }),
-          }),
-          affiliationFixture({
-            sportLeagueId: 'liv',
-            participantId: 'p-rory',
-            ranking: 2,
-            participant: participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
-          }),
+        participants: [
+          participantFixture({ id: 'p-rory', name: 'Rory McIlroy', ranking: 2 }),
+          participantFixture({ id: 'p-jon', name: 'Jon Rahm', ranking: 3 }),
         ],
       },
     });
@@ -355,16 +333,13 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-event-field-add'));
-    await userEvent.selectOptions(
-      await screen.findByTestId('root-admin-event-field-add-league'),
-      'liv',
-    );
 
     // Rory is already in the field -> not offered.
-    expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon')).toHaveTextContent('Ranking 3');
     expect(
       screen.queryByTestId('root-admin-event-field-add-candidate-p-rory'),
     ).not.toBeInTheDocument();
+    expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'league-1' } }));
 
     await userEvent.click(screen.getByTestId('root-admin-event-field-add-candidate-p-jon'));
     await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
@@ -504,16 +479,11 @@ describe('Field editor header actions: refusals, singular counts and closing dia
   });
 
   describe('add more participants', () => {
-    function rosterOf(...golfers: Array<{ id: string; name: string }>) {
+    function rosterOf(...golfers: Array<{ id: string; name: string; status?: 'ACTIVE' | 'INACTIVE' }>) {
       return {
         data: {
-          affiliations: golfers.map((golfer, index) =>
-            affiliationFixture({
-              sportLeagueId: 'liv',
-              participantId: golfer.id,
-              ranking: index + 1,
-              participant: participantFixture({ id: golfer.id, name: golfer.name }),
-            }),
+          participants: golfers.map((golfer, index) =>
+            participantFixture({ id: golfer.id, name: golfer.name, ranking: index + 1, status: golfer.status ?? 'ACTIVE' }),
           ),
         },
       };
@@ -524,24 +494,15 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       return screen.findByTestId('root-admin-event-field-add-modal');
     }
 
-    function seedLeagues() {
-      listSportLeaguesMock.mockResolvedValue({
-        data: { sportLeagues: [sportLeagueFixture({ id: 'liv', name: 'LIV Golf', matchKeyword: 'LIV' })] },
-      });
-      listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
-    }
-
-    it('selects every browsed golfer with select-all, clears them again, and reports a plural add with skips', async () => {
+    it('selects every offered golfer with select-all, clears them again, and reports a plural add with skips', async () => {
       seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(
+      listSportLeagueParticipantsMock.mockResolvedValue(
         rosterOf({ id: 'p-jon', name: 'Jon Rahm' }, { id: 'p-cam', name: 'Cameron Smith' }),
       );
       addEventParticipantsMock.mockResolvedValue({ data: { added: 2, skipped: 1, total: 3 } });
       renderPage();
 
       await openAddModal();
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
       await screen.findByTestId('root-admin-event-field-add-candidate-p-jon');
 
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-roster-select-all'));
@@ -565,12 +526,10 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
     it('unticks a golfer that was ticked, so it is not added', async () => {
       seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
+      listSportLeagueParticipantsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
       renderPage();
 
       await openAddModal();
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
       const select = await screen.findByTestId('root-admin-event-field-add-candidate-p-jon');
       await userEvent.click(select);
       expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (1)');
@@ -580,117 +539,57 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toBeDisabled();
     });
 
-    it('says every roster golfer is already in the field when the browsed roster adds no one new', async () => {
+    it('offers no inactive golfer, and says every active golfer is already in the field when the roster adds no one new', async () => {
       seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-rory', name: 'Rory McIlroy' }));
+      listSportLeagueParticipantsMock.mockResolvedValue(rosterOf({ id: 'p-rory', name: 'Rory McIlroy' }, { id: 'p-old', name: 'Old Timer', status: 'INACTIVE' }));
       renderPage();
 
       await openAddModal();
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
 
-      expect(
-        await screen.findByText('Every golfer on that tour’s roster is already in this field.'),
-      ).toBeInTheDocument();
+      expect(await screen.findByText('Every active golfer in this tour is already in the field.')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-old')).not.toBeInTheDocument();
     });
 
-    it('shows the server\'s reason when the browsed league roster cannot be loaded', async () => {
+    it('shows the server\'s reason when the league roster cannot be loaded', async () => {
       seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(
-        refusal('SPORT_LEAGUE_NOT_FOUND', 'Sport league liv was not found.', 404),
+      listSportLeagueParticipantsMock.mockResolvedValue(
+        refusal('SPORT_LEAGUE_NOT_FOUND', 'Sport league league-1 was not found.', 404),
       );
       renderPage();
 
       await openAddModal();
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
 
-      expect(await screen.findByText('Sport league liv was not found.')).toBeInTheDocument();
+      expect(await screen.findByText('Sport league league-1 was not found.')).toBeInTheDocument();
     });
 
-    it('falls back to the name search when the league list cannot be loaded', async () => {
+    it('narrows the roster to the typed name, and says no new golfers matched when none does', async () => {
       seed();
-      listSportLeaguesMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The league store is unavailable.', 500));
-      renderPage();
-
-      await openAddModal();
-
-      expect(await screen.findByText('Tours unavailable')).toBeInTheDocument();
-      expect(screen.queryByTestId('root-admin-event-field-add-league')).not.toBeInTheDocument();
-      expect(screen.getByTestId('root-admin-event-field-add-search')).toBeInTheDocument();
-    });
-
-    it('lists searched golfers who are not in the field, adds a ticked one, and hides golfers already in it', async () => {
-      seed();
-      seedLeagues();
-      listParticipantsMock.mockResolvedValue({
-        data: {
-          participants: [
-            participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
-            participantFixture({ id: 'p-off', name: 'Rory Sabbatini', nationality: 'SVK' }),
-          ],
-        },
-      });
-      addEventParticipantsMock.mockResolvedValue({ data: { added: 1, skipped: 0, total: 1 } });
-      renderPage();
-
-      await openAddModal();
-      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Rory' } });
-
-      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-off')).toHaveTextContent('Rory Sabbatini');
-      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-rory')).not.toBeInTheDocument();
-      expect(listParticipantsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rory' } }),
+      listSportLeagueParticipantsMock.mockResolvedValue(
+        rosterOf({ id: 'p-jon', name: 'Jon Rahm' }, { id: 'p-cam', name: 'Cameron Smith' }),
       );
-
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-candidate-p-off'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
-
-      await waitFor(() =>
-        expect(addEventParticipantsMock).toHaveBeenCalledWith(
-          expect.objectContaining({ body: { participantIds: ['p-off'] } }),
-        ),
-      );
-      expect(await screen.findByTestId('app-toast')).toHaveTextContent('Added 1 golfer to the field');
-    });
-
-    it('says no new golfers matched when the search finds only golfers already in the field', async () => {
-      seed();
-      seedLeagues();
-      listParticipantsMock.mockResolvedValue({
-        data: { participants: [participantFixture({ id: 'p-rory', name: 'Rory McIlroy' })] },
-      });
       renderPage();
 
       await openAddModal();
-      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Rory' } });
+      await screen.findByTestId('root-admin-event-field-add-candidate-p-jon');
+      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'cam' } });
 
+      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-cam')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-jon')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-event-field-add-roster-select-all')).toHaveTextContent('Select all 1');
+
+      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Nobody' } });
       expect(await screen.findByText('No new golfers matched that search.')).toBeInTheDocument();
-    });
-
-    it('shows the server\'s reason when the golfer search fails', async () => {
-      seed();
-      seedLeagues();
-      listParticipantsMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'Participant search is unavailable.', 500));
-      renderPage();
-
-      await openAddModal();
-      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'Ro' } });
-
-      expect(await screen.findByText('Participant search is unavailable.')).toBeInTheDocument();
     });
 
     it('shows the server\'s reason and keeps the selection when adding golfers is refused', async () => {
       seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
+      listSportLeagueParticipantsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
       addEventParticipantsMock.mockResolvedValue(
         refusal('SPORT_EVENT_FIELD_LOCKED', 'The field is locked for this tournament.', 409),
       );
       renderPage();
 
       await openAddModal();
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
       await userEvent.click(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon'));
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
@@ -699,30 +598,9 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       expect(screen.queryByTestId('app-toast')).not.toBeInTheDocument();
     });
 
-    it('asks for a tour or a name before offering anyone, then narrows the browsed roster to the typed name', async () => {
-      seed();
-      seedLeagues();
-      listParticipantLeagueAffiliationsMock.mockResolvedValue(
-        rosterOf({ id: 'p-jon', name: 'Jon Rahm' }, { id: 'p-cam', name: 'Cameron Smith' }),
-      );
-      listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-      renderPage();
-
-      await openAddModal();
-      expect(await screen.findByText('Pick a tour or search by name.')).toBeInTheDocument();
-
-      await userEvent.selectOptions(await screen.findByTestId('root-admin-event-field-add-league'), 'liv');
-      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon')).toHaveTextContent('Ranking 1');
-      fireEvent.change(screen.getByTestId('root-admin-event-field-add-search'), { target: { value: 'cam' } });
-
-      expect(await screen.findByTestId('root-admin-event-field-add-candidate-p-cam')).toBeInTheDocument();
-      expect(screen.queryByTestId('root-admin-event-field-add-candidate-p-jon')).not.toBeInTheDocument();
-      expect(screen.getByTestId('root-admin-event-field-add-roster-select-all')).toHaveTextContent('Select all 1');
-    });
-
     it('closes the add dialog from its close button without adding anyone', async () => {
       seed();
-      seedLeagues();
+      listSportLeagueParticipantsMock.mockResolvedValue(rosterOf());
       renderPage();
 
       const modal = await openAddModal();

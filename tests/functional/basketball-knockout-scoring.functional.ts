@@ -17,7 +17,6 @@ import {
   getSelectionState,
   listContestEntries,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   openContest,
   recordEventMatchResult,
@@ -26,7 +25,7 @@ import {
   selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, MatchSide, MatchStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, MatchSide, MatchStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestEntryDetailResponseSchema,
   ContestEntryListResponseSchema,
@@ -114,7 +113,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A released two-round tournament ------------------------------------------------------
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
@@ -129,7 +127,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
 
     const teamIds: string[] = [];
     for (const { name } of FIELD) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${name} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${name} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);

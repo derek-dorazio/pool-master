@@ -27,7 +27,7 @@ export function SportLeagueHeading({ sportLeague }: { sportLeague: SportLeagueDt
       icon={<Route aria-hidden size={22} />}
       meta={(
         <span data-testid="root-admin-sport-league-counts">
-          {`${sportLeague.affiliationCount} ${sportLeague.affiliationCount === 1 ? participant.one : participant.many} · ${sportLeague.sportEventCount} ${sportLeague.sportEventCount === 1 ? event.one : event.many}`}
+          {`${sportLeague.participantCount} ${sportLeague.participantCount === 1 ? participant.one : participant.many} · ${sportLeague.sportEventCount} ${sportLeague.sportEventCount === 1 ? event.one : event.many}`}
         </span>
       )}
       status={(
@@ -62,7 +62,7 @@ export function SportLeagueDetailsSection({ sportLeague }: { sportLeague: SportL
       <SectionRows>
         <SectionRow layout="setting" name="Match keyword" value={sportLeague.matchKeyword || 'Not set'} />
         <SectionRow layout="setting" name="Event sync" value={sportLeague.eventSyncProviderId ?? 'Off'} />
-        <SectionRow layout="setting" name="Roster size" value={sportLeague.affiliationCount} />
+        <SectionRow layout="setting" name="Roster size" value={sportLeague.participantCount} />
         <SectionRow layout="setting" name={upperFirst(definition.vocabulary.event.many)} value={sportLeague.sportEventCount} />
         <SectionRow layout="setting" name="Current year" value={sportLeague.currentEventYear ?? 'Not set'} />
       </SectionRows>

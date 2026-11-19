@@ -1,6 +1,6 @@
 /**
  * requireSport — resolves a `Sport` enum value to its persisted `Sport` row
- * (`Participant.sportId`, `SportLeague.sportId`, etc. are real FKs to this
+ * (`SportLeague.sportId`, etc. are real FKs to this
  * row, not the bare enum). The one "no Sport row exists for this sport"
  * failure mode for every caller.
  */

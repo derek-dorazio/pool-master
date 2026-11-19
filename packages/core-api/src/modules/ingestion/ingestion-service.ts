@@ -275,6 +275,8 @@ export class IngestionService {
       // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
       const mapped = await this.participantMappings.findByProviderExternalIds(
         provider.providerId,
+        // A feed id is mapped once per sport league (#1853): one mapped in any of the sport's counts.
+        { sport },
         participants.map((participant) => participant.externalId),
       );
       const mappedIds = new Set(mapped.map((mapping) => mapping.externalId));

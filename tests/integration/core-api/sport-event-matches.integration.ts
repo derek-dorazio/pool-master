@@ -78,12 +78,12 @@ async function createBracketEvent() {
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
   ]);
   const teams = await Promise.all(['Duke', 'Vermont', 'Houston', 'Texas'].map((name) => prisma.participant.create({
-    data: { sportId: sport.id, name, participantType: 'TEAM' },
+    data: { sportLeagueId: sportLeague.id, name, participantType: 'TEAM' },
   })));
   await field.createMany(event.id, teams.map((team, index) => ({ participantId: team.id, seedNumber: index + 1 })));
   const entries = await field.findBySportEvent(event.id);
   const entryOf = (name: string) => expectDefined(entries.find((entry) => entry.participantId === teams.find((team) => team.name === name)?.id), name);
-  return { event, sport, entries, entryOf };
+  return { event, sport, sportLeague, entries, entryOf };
 }
 
 /** Two semifinals feeding a final, with ids chosen up front so the links can name them. */
@@ -398,10 +398,10 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
 
 describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
   it('points the field row at the winning team, ends its play-in place and inactivates the pairing, together', async () => {
-    const { event, sport, entryOf } = await createBracketEvent();
+    const { event, sportLeague, entryOf } = await createBracketEvent();
     const prisma = getPrisma();
-    const pairing = await prisma.participant.create({ data: { sportId: sport.id, name: 'Texas / Xavier', participantType: 'TEAM' } });
-    const xavier = await prisma.participant.create({ data: { sportId: sport.id, name: 'Xavier', participantType: 'TEAM' } });
+    const pairing = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Texas / Xavier', participantType: 'TEAM' } });
+    const xavier = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Xavier', participantType: 'TEAM' } });
     await repos().field.createMany(event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
     const slot = expectDefined((await repos().field.findBySportEvent(event.id)).find((entry) => entry.participantId === pairing.id));
     expect(entryOf('Duke')).toBeDefined();
@@ -417,11 +417,11 @@ describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
 
 describe('PrismaSportEventParticipantRepository.replaceWithdrawn', () => {
   it('adds the replacement with its valuation, names it on the withdrawn row\'s side and inactivates that row as WITHDRAWN, together', async () => {
-    const { event, sport, entryOf } = await createBracketEvent();
+    const { event, sportLeague, entryOf } = await createBracketEvent();
     const prisma = getPrisma();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 } });
-    const luckyLoser = await prisma.participant.create({ data: { sportId: sport.id, name: 'Lucky Loser', participantType: 'TEAM' } });
+    const luckyLoser = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: 'Lucky Loser', participantType: 'TEAM' } });
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     const replacementId = await repos().field.replaceWithdrawn({
@@ -501,7 +501,7 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
     };
   }],
   ['teams added to the field', async (context) => {
-    const team = await getPrisma().participant.create({ data: { sportId: context.sport.id, name: `Added ${randomUUID()}`, participantType: 'TEAM' } });
+    const team = await getPrisma().participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Added ${randomUUID()}`, participantType: 'TEAM' } });
     return { write: (jobs) => repos().field.createMany(context.event.id, [{ participantId: team.id }], jobs), state: () => fieldRows(context.event.id) };
   }],
   ['a grid save', async (context) => ({
@@ -514,8 +514,8 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
   })],
   ['a play-in place filled', async (context) => {
     const prisma = getPrisma();
-    const pairing = await prisma.participant.create({ data: { sportId: context.sport.id, name: `Pairing ${randomUUID()}`, participantType: 'TEAM' } });
-    const winner = await prisma.participant.create({ data: { sportId: context.sport.id, name: `Winner ${randomUUID()}`, participantType: 'TEAM' } });
+    const pairing = await prisma.participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Pairing ${randomUUID()}`, participantType: 'TEAM' } });
+    const winner = await prisma.participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Winner ${randomUUID()}`, participantType: 'TEAM' } });
     await repos().field.createMany(context.event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
     const slot = expectDefined((await repos().field.findBySportEvent(context.event.id)).find((entry) => entry.participantId === pairing.id));
     return {
@@ -525,7 +525,7 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
   }],
   ['a withdrawn team replaced', async (context) => {
     const [first] = await loadedBracket(context);
-    const luckyLoser = await getPrisma().participant.create({ data: { sportId: context.sport.id, name: `Lucky ${randomUUID()}`, participantType: 'TEAM' } });
+    const luckyLoser = await getPrisma().participant.create({ data: { sportLeagueId: context.sportLeague.id, name: `Lucky ${randomUUID()}`, participantType: 'TEAM' } });
     return {
       write: (jobs) => repos().field.replaceWithdrawn({
         withdrawnId: context.entryOf('Vermont').id, matchId: expectDefined(first).id, side: MatchSide.AWAY, replacementParticipantId: luckyLoser.id, valuation: null,

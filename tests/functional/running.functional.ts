@@ -15,14 +15,13 @@ import {
   listContestConfigTemplates,
   listEventParticipants,
   listSportLeagues,
-  listSports,
   openContest,
   releaseEvent,
   submitContestEntry,
   selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -88,7 +87,6 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     const admin = await buildRegisteredUser({ displayName: 'Race Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.RUNNING)).id;
 
     // --- The seeded series, a race in it, and its field ----------------------------------------
     const series = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.RUNNING } })).data).sportLeagues;
@@ -106,7 +104,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
 
     const runnerIds: string[] = [];
     for (const runner of RUNNERS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId: majorsMen.id, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       runnerIds.push(id);

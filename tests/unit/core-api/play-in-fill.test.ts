@@ -53,7 +53,7 @@ function game(home: string, away: string, playInWinner?: string, externalGameId 
 
 function filler(field: readonly SportEventParticipant[] = FIELD, unmappedTeams: readonly string[] = []) {
   const findBySportEvent = mockFn<PlayInFillDeps['eventParticipants']['findBySportEvent']>(async () => [...field]);
-  const findByProviderExternalIds = mockFn<PlayInFillDeps['mappings']['findByProviderExternalIds']>(async (providerId, ids) => ids
+  const findByProviderExternalIds = mockFn<PlayInFillDeps['mappings']['findByProviderExternalIds']>(async (providerId, _scope, ids) => ids
     .filter((id) => !unmappedTeams.includes(id))
     .map((externalId) => ({
       id: `map-${externalId}`, providerId, externalId, participantId: externalId.replace('bdl-', 'p-'),
@@ -80,7 +80,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
 
     expect(fillPlayInSlot).toHaveBeenCalledTimes(1);
     expect(fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-PLAYIN16', 'p-UMBC');
-    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', ['bdl-UMBC', 'bdl-HOU']);
+    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', { sportEventId: EVENT_ID }, ['bdl-UMBC', 'bdl-HOU']);
   });
 
   it('finds the place whichever side the provider lists the winner on, and whichever side of the match the place is', async () => {

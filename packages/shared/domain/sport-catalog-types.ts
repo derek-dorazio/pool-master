@@ -7,7 +7,7 @@
 
 import type { ScoringFamily } from './sports/scoring-family';
 import type { SportStat } from './sports/sport-stats';
-import type { DomainEntity, Participant } from './types';
+import type { DomainEntity } from './types';
 import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
@@ -98,19 +98,6 @@ export interface SportLeague extends DomainEntity {
    * set where the round league is seeded.
    */
   parentRoundNumbers: readonly number[];
-}
-
-/**
- * The Participant↔SportLeague edge: a competitor's membership of a sport league and
- * their current rank there. Carries the canonical Participant, as a membership edge
- * carries the canonical User.
- */
-export interface ParticipantLeagueAffiliation extends DomainEntity {
-  participantId: string;
-  sportLeagueId: string;
-  /** Current rank in this sport league; 1 is best. */
-  ranking: number | null;
-  participant: Participant;
 }
 
 /** A scheduled sub-period of an event — a golf round, a match day. */

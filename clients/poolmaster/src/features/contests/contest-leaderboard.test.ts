@@ -64,7 +64,8 @@ function participantFixture(
     isPlayInPlace: false,
     participant: {
       id: `participant-${overrides.id}`,
-      sportId: 'sport-golf',
+      sportLeagueId: 'league-golf',
+      ranking: null,
       name,
       participantType: 'INDIVIDUAL',
       status: 'ACTIVE',

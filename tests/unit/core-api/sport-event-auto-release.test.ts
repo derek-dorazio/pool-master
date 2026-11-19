@@ -50,7 +50,6 @@ function setup() {
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
-      affiliations: store.affiliationRepo(),
       matches: store.matchRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
@@ -73,7 +72,7 @@ function setup() {
 
 /**
  * A synced DRAFT golf event starting `daysAhead` days from now with a round, a field of three
- * golfers each linked to the provider, in a tier and priced: every ready check passes.
+ * golfers in a tier and priced: every ready check passes.
  */
 async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: string, daysAhead: number, overrides: Partial<SportEvent> = {}) {
   const event = store.addEvent({
@@ -90,7 +89,6 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
   const tierId = store.tierRows.find((tier) => tier.sportEventId === event.id)?.id ?? '';
   const entries = ['a', 'b', 'c'].map((name) => {
     const participantId = `participant-${event.id}-${name}`;
-    store.mappings.push({ id: `mapping-${participantId}`, participantId, providerId: PROVIDER, externalId: participantId, confidence: 'EXACT', mappedAt: NOW, createdAt: NOW, updatedAt: NOW });
     return store.addToField(event.id, participantId);
   });
   await store.valuationRepo().assignTiers(entries.map((entry, index) => ({ sportEventParticipantId: entry.id, sportEventTierId: tierId, tierOrderIndex: index + 1, source: 'MANUAL' })));
@@ -119,7 +117,6 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
         { key: ReleaseCheckKey.NOT_STARTED, passed: true, value: event.startDate },
         { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: true, value: 1 },
         { key: ReleaseCheckKey.FIELD_LOADED, passed: true, value: 3 },
-        { key: ReleaseCheckKey.FIELD_LINKED, passed: true, value: 0 },
         { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: true, value: 0 },
         { key: ReleaseCheckKey.TIERS_FILLED, passed: true, value: [] },
         { key: ReleaseCheckKey.PRICES_ASSIGNED, passed: true, value: 0 },
@@ -127,18 +124,6 @@ describe('SportEventService.autoReleaseEvent: one automatic release attempt (#18
       ],
     });
     expect(statusOf(store, event.id)).toBe(SportEventStatus.SCHEDULED);
-  });
-
-  it('holds a draft with one golfer the provider does not know, logging the failing link check and its count, and leaves it a draft', async () => {
-    const { store, service, sportLeague } = setup();
-    const event = await readySyncedDraft(store, sportLeague.id, 3);
-    store.mappings.splice(0, 1);
-
-    const result = await service.autoReleaseEvent(event.id);
-
-    expect(result.outcome).toBe(ReleaseAttemptOutcome.HELD);
-    expect(result).toMatchObject({ checks: expect.arrayContaining([{ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: 1 }]) });
-    expect(statusOf(store, event.id)).toBe(SportEventStatus.DRAFT);
   });
 
   it('holds a draft whose sport league offers no active contest setup, and one with no rounds scheduled', async () => {
@@ -198,26 +183,16 @@ describe('SportEventService ready checks on a root admin\'s read (#1823)', () =>
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
 
-    expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toHaveLength(8);
+    expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toHaveLength(7);
     expect((await service.requireSummary(event.id, { adminCounts: false })).releaseChecks).toBeUndefined();
     await service.releaseEvent(event.id);
     expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toBeUndefined();
   });
 
-  it('leaves the provider link check off an event no provider syncs', async () => {
-    const { store, service, sportLeague } = setup();
-    const event = await readySyncedDraft(store, sportLeague.id, 3, { providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE });
-
-    const keys = (await service.requireSummary(event.id, { adminCounts: true })).releaseChecks?.map((check) => check.key);
-
-    expect(keys).not.toContain(ReleaseCheckKey.FIELD_LINKED);
-  });
-
-  it('lets a root admin release a draft the automatic release would hold for its rounds, provider links or league setups', async () => {
+  it('lets a root admin release a draft the automatic release would hold for its rounds or league setups', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
     store.contestSetupCounts.set(sportLeague.id, 0);
-    store.mappings.splice(0, 1);
     store.roundRows = store.roundRows.filter((round) => round.sportEventId !== event.id);
 
     await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD });
@@ -244,7 +219,6 @@ describe('SportEventService stores each automatic release check on the event (#1
   it('stores a held check with its time and the keys of the checks that failed, so the Sports page can count it', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);
-    store.mappings.splice(0, 1);
     store.contestSetupCounts.set(sportLeague.id, 0);
 
     await service.autoReleaseEvent(event.id);
@@ -252,7 +226,7 @@ describe('SportEventService stores each automatic release check on the event (#1
     expect(store.autoReleaseChecks.get(event.id)).toEqual({
       checkedAt: NOW,
       outcome: AutoReleaseCheckOutcome.HELD,
-      failedChecks: [ReleaseCheckKey.FIELD_LINKED, ReleaseCheckKey.CONTEST_SETUPS_ON],
+      failedChecks: [ReleaseCheckKey.CONTEST_SETUPS_ON],
     });
   });
 

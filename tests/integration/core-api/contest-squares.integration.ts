@@ -20,6 +20,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { freshEventEdition } from '../../support/event-edition';
 import { recordStatements } from '../statement-log';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -69,7 +70,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   });
   const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Squares ${side} ${suffix}`, participantType: ParticipantType.TEAM, externalIds: {} },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Squares ${side} ${suffix}`, participantType: ParticipantType.TEAM, externalIds: {} },
     });
     return prisma.sportEventParticipant.create({ data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true } });
   }));

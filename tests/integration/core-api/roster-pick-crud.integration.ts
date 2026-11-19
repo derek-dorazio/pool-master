@@ -26,6 +26,7 @@ import type {
   LeagueContextResponse,
 } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -64,7 +65,7 @@ describe('RosterPick CRUD integration', () => {
 
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Tiger Roster Pick CRUD ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},

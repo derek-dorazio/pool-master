@@ -28,8 +28,10 @@ The plan behind the work, and the decisions Derek made on it, are in
 - **Each league adds a reader, not a pipeline.** A league is a scope id format, a few vendor
   reads, a mapping into one of three shared shapes (`GOLF`, `GAME`, `STAT_LINE`), and a
   `match_keyword` on its sport league so imports find it and a new participant joins it.
-- **A feed participant is matched by its feed id alone** (#1850). An id no participant is mapped
-  to is a new participant; names are never compared. Test data shares a row with the sync by
+- **A feed participant is matched by its feed id alone** (#1850), within the event's sport league
+  (#1853). An id no participant of that league is mapped to is a new participant of that league;
+  names are never compared. A Clutch Card league owns its players, so the World Series and the
+  ALCS each have a row for one player, under the same feed id. Test data shares a row with the sync by
   carrying the same feed id ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Feed ids*).
 
 ## The pieces
@@ -209,9 +211,9 @@ participants* switch widens it to every linked event. The route queues a `MANUAL
 
 ```mermaid
 flowchart TD
-  D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id?}
+  D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id<br/>in the event's sport league?}
   M -- yes --> U[update participants row if a value changed]
-  M -- no --> CR[create participants row + mapping, confidence EXACT,<br/>and join the league its tour names]
+  M -- no --> CR[create participants row in the event's sport league<br/>+ mapping, confidence EXACT]
   U & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
   F --> J[REBUILD_LEADERBOARDS job in the same transaction]
   J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
@@ -222,9 +224,8 @@ flowchart TD
 
 | Table | Key | Written |
 |---|---|---|
-| `participants` | `id` | Created for every feed id no participant is mapped to (#1850), whatever the site already holds by that name. |
-| `participant_provider_mappings` | `@@unique([provider_id, external_id])` | One per provider participant. `EXACT` when the sync created it, `MANUAL` when bound by hand or by the test data load. This mapping is how every later sync finds the participant. |
-| `participant_league_affiliations` | `@@unique([participant_id, sport_league_id])` | Each participant whose tour (`metadata.tour`) names one of the site's sport leagues by match keyword joins that league (#1800), in the same transaction that creates it, so a team the feed brings that the site lacked is on the league's roster rather than a guest in the field. A participant the feed already links joins too, so a sync puts right one created before this. One read of the sports' keyed leagues and one insert that skips affiliations already there, whatever the field's size. |
+| `participants` | `id` | Created in the event's sport league (#1853) for every feed id no participant of that league is mapped to (#1850), whatever the site already holds by that name, with the sport's participant type. All of a field's new participants go in one insert. |
+| `participant_provider_mappings` | `@@unique([provider_id, external_id, sport_league_id])` | One per provider participant per sport league (#1853), carrying its participant's league; every feed id lookup names the event's league. `EXACT` when the sync created it, `MANUAL` when bound by hand or by the test data load. This mapping is how every later sync finds the participant. |
 | `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
 | `sport_events.participant_count` | | Updated if the provider's count changed. |
 

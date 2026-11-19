@@ -1,56 +1,38 @@
-import { findSportRow } from '@poolmaster/shared/domain';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   bindParticipantProviderMapping,
-  listParticipants,
-  listSports,
   type UnmappedProviderParticipantDto,
 } from '@/lib/api';
-import { FormField, FormPage, Input, QueryState, Select } from '@/features/shared/ui';
+import { ErrorState, FormField, FormPage, Input, LOADING_TEXT, QueryState, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
+import { useLeagueRosterQuery, useSportLeaguesQuery } from './use-sport-catalog';
 import { useUnmappedCompetitorQuery } from './use-unmapped-competitors';
 
+/**
+ * The competitor's sport league, then its participant: a participant belongs to one sport league
+ * (#1853), so the identity is mapped within the league chosen. The league's roster is read whole
+ * and narrowed by the name box in the browser.
+ */
 function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderParticipantDto }) {
   const logger = getLogger().child({ feature: 'root-admin-map-competitor-page' });
   const navigate = useNavigate();
+  const [sportLeagueId, setSportLeagueId] = useState('');
   // Seeded from the provider's spelling, the likeliest match.
   const [search, setSearch] = useState(competitor.externalName);
   const [participantId, setParticipantId] = useState('');
-  const trimmedSearch = search.trim();
+  const needle = search.trim().toLowerCase();
 
-  const sportQuery = useQuery({
-    queryKey: QueryKeys.sports.list,
-    queryFn: async () => {
-      const response = await listSports();
-      if (!response.data?.sports) {
-        throwApiError(response.error, 'Sport list response is missing data.');
-      }
-      return response.data.sports;
-    },
-    staleTime: Infinity,
-    retry: false,
-  });
-  const sportId = findSportRow(sportQuery.data ?? [], competitor.sport)?.id ?? null;
-
-  const candidatesQuery = useQuery({
-    enabled: sportId !== null && trimmedSearch.length > 0,
-    queryKey: QueryKeys.rootAdmin.participantCandidates(sportId, trimmedSearch),
-    queryFn: async () => {
-      const response = await listParticipants({ query: { sportId: sportId ?? undefined, q: trimmedSearch } });
-      if (!response.data?.participants) {
-        throwApiError(response.error, 'Participant search response is missing data.');
-      }
-      return response.data.participants;
-    },
-    retry: false,
-  });
-  const candidates = candidatesQuery.data ?? [];
+  const leaguesQuery = useSportLeaguesQuery(competitor.sport);
+  const rosterQuery = useLeagueRosterQuery(sportLeagueId);
+  const candidates = useMemo(
+    () => (rosterQuery.data ?? []).filter((candidate) => needle === '' || candidate.name.toLowerCase().includes(needle)),
+    [needle, rosterQuery.data],
+  );
 
   const bindMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -63,7 +45,7 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
       }
       return response.data.providerMapping;
     },
-    invalidates: [QueryKeys.rootAdmin.unmappedProviderParticipants],
+    invalidates: [QueryKeys.rootAdmin.unmappedProviderParticipants, QueryKeys.rootAdmin.manageSport.participants],
     onSuccess: () => navigate(UNMAPPED_COMPETITORS_PATH),
     onError: (error) => {
       logger.warn(
@@ -76,7 +58,7 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
   return (
     <FormPage
       cancelTo={UNMAPPED_COMPETITORS_PATH}
-      help={`Choose the ${competitor.sport} participant this ${competitor.providerName} competitor is.`}
+      help={`Choose the sport league and the participant in it this ${competitor.providerName} competitor is.`}
       meta={`${competitor.providerName} reports ${competitor.externalName} (${competitor.externalId}) · ${competitor.sport}`}
       errorMessage={bindMutation.isError
         ? extractErrorMessage(bindMutation.error, { fallback: 'We could not map this competitor.' })
@@ -95,6 +77,28 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
       testId="root-admin-unmapped-participant-map-page"
       title={competitor.externalName}
     >
+      {leaguesQuery.isError || rosterQuery.isError ? (
+        <ErrorState
+          body={extractErrorMessage(leaguesQuery.error ?? rosterQuery.error, { fallback: 'We could not load the participants to choose from right now.' })}
+          onRetry={() => void (leaguesQuery.isError ? leaguesQuery.refetch() : rosterQuery.refetch())}
+          testId="root-admin-unmapped-participant-map-error"
+        />
+      ) : null}
+      <FormField label="Sport league">
+        <Select
+          data-testid="root-admin-unmapped-participant-map-league"
+          onChange={(event) => {
+            setSportLeagueId(event.target.value);
+            setParticipantId('');
+          }}
+          value={sportLeagueId}
+        >
+          <option value="">{leaguesQuery.data ? 'Choose a sport league' : LOADING_TEXT}</option>
+          {(leaguesQuery.data ?? []).map((league) => (
+            <option key={league.id} value={league.id}>{league.name}</option>
+          ))}
+        </Select>
+      </FormField>
       <FormField label="Search participants">
         <Input
           data-testid="root-admin-unmapped-participant-map-search"
@@ -105,12 +109,7 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
           value={search}
         />
       </FormField>
-      <FormField
-        error={candidatesQuery.isError
-          ? extractErrorMessage(candidatesQuery.error, { fallback: 'We could not search participants right now.' })
-          : undefined}
-        label="Participant"
-      >
+      <FormField label="Participant">
         <Select
           data-testid="root-admin-unmapped-participant-map-participant"
           disabled={candidates.length === 0}
@@ -118,8 +117,10 @@ function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderPartici
           value={participantId}
         >
           <option value="">
-            {candidatesQuery.isFetching
-              ? 'Searching...'
+            {sportLeagueId === ''
+              ? 'Choose a sport league first'
+              : rosterQuery.isFetching
+              ? LOADING_TEXT
               : candidates.length === 0
                 ? 'No matching participants'
                 : 'Choose a participant'}

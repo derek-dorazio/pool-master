@@ -100,7 +100,7 @@ function overviews(): SportLeagueOverviewDto[] {
             label: 'NBA Cup 2027',
             occurredAt: '2026-11-18T19:00:00.000Z',
             target: { type: 'SPORT_EVENT', id: 'evt-cup' },
-            failedChecks: ['FIELD_LINKED', 'PRICES_ASSIGNED'],
+            failedChecks: ['TIERS_ASSIGNED', 'PRICES_ASSIGNED'],
           }],
         },
       ],
@@ -202,7 +202,7 @@ describe('RootAdminSportsPage', () => {
 
     const item = await screen.findByTestId('root-admin-sports-issue-event-evt-cup');
     expect(item).toHaveTextContent('NBA Cup 2027');
-    expect(item).toHaveTextContent('Every field participant linked, Prices made failed');
+    expect(item).toHaveTextContent('Every participant in a tier, Prices made failed');
     expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-cup');
   });
 

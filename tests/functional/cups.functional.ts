@@ -28,7 +28,6 @@ import {
   listCups,
   listEventParticipants,
   listSportLeagues,
-  listSports,
   openContest,
   releaseEvent,
   setContestCupWeight,
@@ -37,7 +36,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind, championshipYear } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -116,12 +115,11 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const admin = await buildRegisteredUser({ displayName: 'Cup Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.RUNNING)).id;
     const majorsMen = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.RUNNING } })).data)
       .sportLeagues.find((league) => league.name === 'World Marathon Majors (men)'));
     const runnerIds: string[] = [];
     for (const runner of RUNNERS) {
-      const id = expectDefined((await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } })).data).participant.id;
+      const id = expectDefined((await createParticipant({ client: a, body: { sportLeagueId: majorsMen.id, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } })).data).participant.id;
       created.participantIds.add(id);
       runnerIds.push(id);
     }

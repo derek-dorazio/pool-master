@@ -10,7 +10,7 @@ import { mockFn } from '../../support/mock-fn';
 function buildParticipant(overrides: Record<string, unknown> = {}) {
   return {
     id: 'participant-1',
-    sportId: 'sport-1',
+    sportLeagueId: 'league-1',
     name: 'Scottie Scheffler',
     participantType: 'INDIVIDUAL' as const,
     externalId: 'provider-1',
@@ -43,7 +43,7 @@ describe('participant service', () => {
     );
 
     const participant = await service.create({
-      sportId: 'sport-1',
+      sportLeagueId: 'league-1',
       name: 'Scottie Scheffler',
       participantType: 'INDIVIDUAL',
     });
@@ -90,8 +90,10 @@ describe('participant service', () => {
 
       await expect(service.bindProviderMapping('participant-1', 'mock-contest-feed', 'golfer-77'))
         .resolves.toEqual(mapping);
+      // In the participant's own sport league (#1853).
       expect(mappingRepo.bind).toHaveBeenCalledWith({
         participantId: 'participant-1',
+        sportLeagueId: 'league-1',
         providerId: 'mock-contest-feed',
         externalId: 'golfer-77',
         confidence: MappingConfidence.MANUAL,

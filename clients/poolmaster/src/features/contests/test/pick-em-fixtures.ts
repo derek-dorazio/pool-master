@@ -352,7 +352,8 @@ export function pickEmEventFieldFixture(sportEventId: string): SportEventPartici
     isPlayInPlace: false,
     participant: {
       id: NFL_TEAMS[key].participantId,
-      sportId: 'sport-nfl',
+      sportLeagueId: 'league-nfl',
+      ranking: null,
       name: NFL_TEAMS[key].name,
       shortName: SHORT_NAMES[key],
       participantType: 'TEAM',

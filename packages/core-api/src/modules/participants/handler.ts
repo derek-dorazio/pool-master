@@ -11,7 +11,7 @@ import type {
   CreateParticipantRequest,
   ParticipantListQuery,
   ParticipantListResponse,
-  SportProviderMappingListQuery,
+  SportLeagueProviderMappingListQuery,
   UpdateParticipantRequest,
 } from '@poolmaster/shared/dto/participants.dto';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
@@ -30,7 +30,7 @@ export function createParticipantHandlers(
     updateParticipant,
     deleteParticipant,
     listProviderMappings,
-    listSportProviderMappings,
+    listSportLeagueProviderMappings,
     bindProviderMapping,
   };
 
@@ -38,19 +38,19 @@ export function createParticipantHandlers(
     request: FastifyRequest<{ Querystring: ParticipantListQuery }>,
     reply: FastifyReply,
   ): Promise<ParticipantListResponse> {
-    const { q, sportId, status } = request.query;
-    // Every sport's catalog at once is the largest list there is, and nothing pages it (§16), so
-    // it takes a sport or a search term (#1180).
-    if (!sportId && !isPlatformSearchTerm(q)) {
-      request.log.warn({ action: 'participants.search.filterRequired' }, 'Rejected a participant list without a sport or search term');
+    const { q, sportLeagueId, status } = request.query;
+    // Every league's catalog at once is the largest list there is, and nothing pages it (§16), so
+    // it takes a sport league or a search term (#1180).
+    if (!sportLeagueId && !isPlatformSearchTerm(q)) {
+      request.log.warn({ action: 'participants.search.filterRequired' }, 'Rejected a participant list without a sport league or search term');
       return sendError(
         reply,
         400,
         'SEARCH_TERM_REQUIRED',
-        `Choose a sport, or type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a participant.`,
+        `Choose a sport league, or type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a participant.`,
       );
     }
-    const filters: ParticipantSearchFilters = { sportId, status };
+    const filters: ParticipantSearchFilters = { sportLeagueId, status };
 
     const participants = await participantService.search({ query: q?.trim(), filters });
     return { participants: participants.map(mapParticipantToDto) };
@@ -75,9 +75,9 @@ export function createParticipantHandlers(
     return reply.status(204).send();
   }
 
-  async function listSportProviderMappings(request: FastifyRequest<{ Querystring: SportProviderMappingListQuery }>) {
-    const { providerId, sportId } = request.query;
-    const providerMappings = await participantService.listSportProviderMappings(providerId, sportId);
+  async function listSportLeagueProviderMappings(request: FastifyRequest<{ Querystring: SportLeagueProviderMappingListQuery }>) {
+    const { providerId, sportLeagueId } = request.query;
+    const providerMappings = await participantService.listSportLeagueProviderMappings(providerId, sportLeagueId);
     return { providerMappings: providerMappings.map(mapParticipantProviderMappingToDto) };
   }
 
@@ -169,7 +169,7 @@ export function createParticipantHandlers(
       {
         action: 'participants.route.create.start',
         data: {
-          sportId: body.sportId,
+          sportLeagueId: body.sportLeagueId,
           participantType: body.participantType,
         },
       },
@@ -178,7 +178,8 @@ export function createParticipantHandlers(
 
     try {
       const participant = await participantService.create({
-        sportId: body.sportId,
+        sportLeagueId: body.sportLeagueId,
+        ranking: body.ranking,
         name: body.name,
         participantType: body.participantType,
         externalId: body.externalId,
@@ -196,7 +197,7 @@ export function createParticipantHandlers(
           action: 'participants.route.create.success',
           data: {
             participantId: participant.id,
-            sportId: participant.sportId,
+            sportLeagueId: participant.sportLeagueId,
           },
         },
         'Participant create succeeded',
@@ -209,7 +210,7 @@ export function createParticipantHandlers(
           action: 'participants.route.create.failed',
           err: error,
           data: {
-            sportId: body.sportId,
+            sportLeagueId: body.sportLeagueId,
             participantType: body.participantType,
           },
         },

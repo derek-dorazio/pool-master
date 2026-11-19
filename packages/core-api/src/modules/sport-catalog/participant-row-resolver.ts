@@ -1,6 +1,6 @@
 /**
  * The one resolver for an uploaded row that names a participant (#236). Two uploads use
- * it — a sport league's affiliation rankings and an event's round scores — and they
+ * it — a sport league's participant rankings and an event's round scores — and they
  * differ only in where candidates come from: the sport's whole catalog, or the event's
  * field. Before #236 each carried its own copy of the precedence below.
  *

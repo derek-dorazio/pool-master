@@ -14,7 +14,6 @@ import type {
   MatchSide,
   ParticipantInactiveReason,
   Participant,
-  ParticipantLeagueAffiliation,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
@@ -56,8 +55,8 @@ export interface SportLeagueFilters {
 export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>>;
 
 /**
- * What still uses a sport league, each a reason it cannot be deleted (#1400). Its affiliations
- * and its series with no events are its own and go with it, so they are not counted.
+ * What still uses a sport league, each a reason it cannot be deleted (#1400). Its series with
+ * no events are its own and go with it, so they are not counted; its participants are (#1853).
  */
 export interface SportLeagueUses {
   /** Events across every series of the sport league, every year. */
@@ -70,6 +69,8 @@ export interface SportLeagueUses {
   cupCount: number;
   /** Playoff round sport leagues that name it as their season league (#1701). */
   roundCount: number;
+  /** Its participants (#1853): each belongs to it alone, so they go first. */
+  participantCount: number;
 }
 
 export interface SportLeagueRepository {
@@ -86,7 +87,7 @@ export interface SportLeagueRepository {
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
    * it and its series first, so nothing can start using it between the count and the delete. Its
-   * affiliations and its series go with it, and every league that muted its event emails forgets
+   * series go with it, and every league that muted its event emails forgets
    * it. Returns what uses it, counted under the lock: all zero means it was deleted. Null when no
    * such sport league exists.
    */
@@ -96,20 +97,6 @@ export interface SportLeagueRepository {
 export interface ParticipantRanking {
   participantId: string;
   ranking: number | null;
-}
-
-export interface ParticipantLeagueAffiliationRepository {
-  /** Best rank first, unranked last, then by participant name. */
-  findBySportLeague(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]>;
-  find(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation | null>;
-  create(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation>;
-  delete(sportLeagueId: string, participantId: string): Promise<void>;
-  /** Re-ranks existing affiliations, all or none. */
-  updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
-  /** Creates missing affiliations and re-ranks existing ones, all or none. */
-  upsertRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
-  /** Affiliations per sport league, for each id asked about (0 where none). */
-  countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
 }
 
 export interface SportEventFilters {
@@ -210,8 +197,6 @@ export interface ProviderNotificationReceipt {
 /** The counts a release's ready checks read of one event besides its admin counts (#1823). */
 export interface SportEventReleaseFacts {
   scheduledRoundCount: number;
-  /** Null when no provider syncs the event. */
-  unlinkedParticipantCount: number | null;
   contestSetupCount: number;
 }
 
@@ -282,11 +267,9 @@ export interface SportEventRepository {
   findEmptyTierLabels(sportEventIds: readonly string[]): Promise<Map<string, string[]>>;
   /**
    * What only a release's ready checks read of one event (#1823), each a count: its scheduled
-   * rounds; its active field participants with no mapping from `linkProviderId` (null for an
-   * event no provider syncs, which skips the count); and the active contest setups its sport
-   * league offers.
+   * rounds, and the active contest setups its sport league offers.
    */
-  findReleaseFacts(event: { id: string; sportLeagueId: string; linkProviderId: string | null }): Promise<SportEventReleaseFacts>;
+  findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts>;
   /**
    * The automatic release sweep's candidates (#1823): DRAFT events starting after `now` and by
    * `horizon`, of an active sport league whose event sync names a provider and whose automatic
@@ -417,12 +400,12 @@ export interface SportEventParticipantRepository {
    * The event's field as every reader sees it, in one read (#1163): each row with its
    * participant, valuation, standing, rounds, race result and matches, in seed order, unseeded
    * last. Every scoring family's rows come along; a family's empty ones cost nothing.
-   * `sportLeagueId` is the event's, against which each participant's affiliation is flagged.
+   * `sportLeagueId` is the event's, against which each participant's league is flagged.
    */
   findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]>;
   /**
    * `findFieldForEvent` for several events in the same few statements (#1315), each event's
-   * affiliations flagged against its own sport league: in the order of `events`, then in seed order.
+   * participants flagged against its own sport league: in the order of `events`, then in seed order.
    */
   findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]>;
   /** One field row of the event, read as `findFieldForEvent` reads each, or null when the event has no such row. */

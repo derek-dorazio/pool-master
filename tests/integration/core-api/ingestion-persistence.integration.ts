@@ -13,7 +13,6 @@ import type { SportEventDetail } from '../../../packages/core-api/src/modules/in
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
 
 const rankedEventIds = [
   'integration-ingestion-event',
@@ -66,7 +65,6 @@ afterAll(async () => {
   await prisma.participantProviderMapping.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
-  await prisma.participantLeagueAffiliation.deleteMany({ where: { participant: { name: { startsWith: 'Linkable ' } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
   await prisma.sportLeague.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
   await prisma.participant.deleteMany({
@@ -597,41 +595,21 @@ describe('IngestionPersistence', () => {
     await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
   });
 
-  // A team the feed brings that the site lacks joins the league its tour names, so it is on the
-  // league's roster and not a guest in the field; one already linked without it is put right by
-  // the next sync.
-  it('adds a participant the feed creates to the sport league its tour names, in the same write, and on the next sync one already linked that lacks it', async () => {
+  // #1853 — a participant belongs to one sport league: the one of the event the sync fields them
+  // in, whatever tour the feed names, so the league's roster holds every player its events field.
+  it('creates every participant the feed brings in the synced event\'s sport league, in one insert, whatever tour the feed names', async () => {
     const prisma = getPrisma();
-    const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: 'Joinable League', matchKeyword: 'JOINTEST' } });
-    const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: `Joinable ${externalId}`, metadata: { tour } });
-    const first = rankedFieldDetail('integration-joins-league', [golfer('ingestion-join-new', 'jointest'), golfer('ingestion-join-none', 'NO-SUCH-LEAGUE')]);
-    await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: first.externalId, name: first.name, startDate: first.startDate });
-    const persistence = new IngestionPersistence(getAppPrisma());
-    const leaguesOf = async (externalId: string) => (await prisma.participant.findFirstOrThrow({
-      where: { externalId },
-      select: { leagueAffiliations: { select: { sportLeagueId: true } } },
-    })).leagueAffiliations.map((affiliation) => affiliation.sportLeagueId);
+    const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: `League ${externalId}`, metadata: { tour } });
+    const detail = rankedFieldDetail('integration-event-league', [golfer('ingestion-league-a', 'pga'), golfer('ingestion-league-b', 'NO-SUCH-LEAGUE')]);
+    const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
+    const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
 
-    const { statements } = await recordStatements(() => persistence.persistEventDetailWithDiagnostics(first));
+    const { statements } = await recordStatements(() => new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail));
 
-    await expect(leaguesOf('ingestion-join-new')).resolves.toEqual([league.id]);
-    // A tour no league of the site carries joins nothing.
-    await expect(leaguesOf('ingestion-join-none')).resolves.toEqual([]);
-    // The leagues are read once, and the affiliations written in one statement, whatever the field's size.
-    expect(statementsOn(statements, StatementVerb.SELECT, 'sport_leagues').filter(({ sql }) => sql.includes('match_keyword'))).toHaveLength(1);
-    expect(statementsOn(statements, StatementVerb.INSERT, 'participant_league_affiliations')).toHaveLength(1);
-
-    // Created before the sync joined new teams to their league: linked by the feed, in no league.
-    await prisma.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: league.id } });
-    const repeat = await recordStatements(() => persistence.persistEventDetailWithDiagnostics(first));
-
-    await expect(leaguesOf('ingestion-join-new')).resolves.toEqual([league.id]);
-    expect(statementsOn(repeat.statements, StatementVerb.INSERT, 'participant_league_affiliations')).toHaveLength(1);
-
-    // A sync with every affiliation in place adds none twice.
-    await persistence.persistEventDetailWithDiagnostics(first);
-    await expect(prisma.participantLeagueAffiliation.count({ where: { sportLeagueId: league.id } })).resolves.toBe(1);
+    const created = await prisma.participant.findMany({ where: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] } }, select: { sportLeagueId: true } });
+    expect(created).toEqual([{ sportLeagueId }, { sportLeagueId }]);
+    await expect(prisma.participantProviderMapping.count({ where: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] }, sportLeagueId } })).resolves.toBe(2);
+    expect(statementsOn(statements, StatementVerb.INSERT, 'participants')).toHaveLength(1);
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

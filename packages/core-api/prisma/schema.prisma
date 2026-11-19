@@ -614,7 +614,6 @@ enum PrismaReleaseCheckKey {
   NOT_STARTED
   ROUNDS_SCHEDULED
   FIELD_LOADED
-  FIELD_LINKED
   TIERS_ASSIGNED
   TIERS_FILLED
   PRICES_ASSIGNED
@@ -1095,7 +1094,6 @@ model Sport {
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz
 
-  participants Participant[]
   sportLeagues SportLeague[]
 
   @@map("sports")
@@ -1195,7 +1193,8 @@ model SportLeague {
   pricingProfile            PricingProfile                 @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
   parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
   rounds                    SportLeague[]                  @relation("SportLeagueRounds")
-  affiliations              ParticipantLeagueAffiliation[]
+  participants              Participant[]
+  providerMappings          ParticipantProviderMapping[]
   eventSeries               EventSeries[]
   contestConfigTemplates    ContestConfigTemplate[]
   cups                      Cup[]
@@ -1284,26 +1283,14 @@ model EventSeries {
 /// their current ranking there. Sport-league-scoped, not season-scoped — a
 /// competitor's membership and ranking don't reset every year. Current value
 /// only, no history. See plans/124 §4.2.
-model ParticipantLeagueAffiliation {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  participantId String   @map("participant_id") @db.Uuid
-  sportLeagueId String   @map("sport_league_id") @db.Uuid
-  /// The competitor's current rank in this sport league (1 is best).
-  ranking       Int?
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  participant Participant @relation(fields: [participantId], references: [id])
-  sportLeague SportLeague @relation(fields: [sportLeagueId], references: [id])
-
-  @@unique([participantId, sportLeagueId])
-  @@index([sportLeagueId, ranking])
-  @@map("participant_league_affiliations")
-}
-
+/// A competitor of one sport league (#1853): the provider's ids are per league, so the same
+/// person or club in two leagues (a star in the LCS and the World Series) is two participants.
+/// The sport is the league's.
 model Participant {
   id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportId         String                @map("sport_id") @db.Uuid
+  sportLeagueId   String                @map("sport_league_id") @db.Uuid
+  /// The competitor's current rank in their sport league (1 is best).
+  ranking         Int?
   name            String
   participantType PrismaParticipantType @map("participant_type")
   externalId      String?               @map("external_id")
@@ -1324,14 +1311,15 @@ model Participant {
   photoLastUpdated DateTime?               @map("photo_last_updated") @db.Timestamptz
   externalIds      Json                    @default("{}") @map("external_ids")
 
-  sport                  Sport                          @relation(fields: [sportId], references: [id])
+  sportLeague            SportLeague                  @relation(fields: [sportLeagueId], references: [id])
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
-  leagueAffiliations     ParticipantLeagueAffiliation[]
 
-  @@index([sportId, status])
-  /// A sport's participants by name: the catalog list's filter and order.
-  @@index([sportId, name])
+  @@index([sportLeagueId, status])
+  /// A sport league's participants by name: the catalog list's filter and order.
+  @@index([sportLeagueId, name])
+  /// A sport league's roster in rank order.
+  @@index([sportLeagueId, ranking])
   /// Trigram indexes serve the participant search across sports, a substring match on each column (#1180).
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_name_trgm_idx")
   @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_first_name_trgm_idx")
@@ -1344,6 +1332,9 @@ model Participant {
 model ParticipantProviderMapping {
   id            String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   participantId String                             @map("participant_id") @db.Uuid
+  /// The participant's sport league (#1853): one feed id names one competitor per league, so
+  /// the same `mlb-player-<id>` maps to the LCS star and the World Series star.
+  sportLeagueId String                             @map("sport_league_id") @db.Uuid
   providerId    String                             @map("provider_id") @db.VarChar(100)
   externalId    String                             @map("external_id") @db.VarChar(255)
   confidence    PrismaParticipantMappingConfidence @default(EXACT)
@@ -1352,8 +1343,11 @@ model ParticipantProviderMapping {
   updatedAt     DateTime                           @updatedAt @map("updated_at") @db.Timestamptz
 
   participant Participant @relation(fields: [participantId], references: [id])
+  sportLeague SportLeague @relation(fields: [sportLeagueId], references: [id])
 
-  @@unique([providerId, externalId])
+  @@unique([providerId, externalId, sportLeagueId])
+  /// One provider's feed ids in one sport league: the test data load's read, and the sync's within an event's league.
+  @@index([sportLeagueId, providerId])
   @@index([participantId])
   @@map("participant_provider_mappings")
 }

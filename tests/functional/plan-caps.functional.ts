@@ -14,13 +14,12 @@ import {
   listContestConfigTemplates,
   listSportLeagues,
   listSportLeaguesUsed,
-  listSports,
   releaseEvent,
   resetSettingsGroup,
   updateLeaguePlan,
   updateSettingsGroup,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, LeaguePlan, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, LeaguePlan, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -67,13 +66,12 @@ describe('SDK Functional: plan caps (#947)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Caps Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.RUNNING)).id;
     const runningLeagues = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.RUNNING } })).data).sportLeagues;
     const majorsMen = expectDefined(runningLeagues.find((league) => league.name === 'World Marathon Majors (men)'));
     const majorsWomen = expectDefined(runningLeagues.find((league) => league.name === 'World Marathon Majors (women)'));
     const runnerIds: string[] = [];
     for (const runner of RUNNERS) {
-      const id = expectDefined((await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } })).data).participant.id;
+      const id = expectDefined((await createParticipant({ client: a, body: { sportLeagueId: majorsMen.id, participantType: 'INDIVIDUAL', name: `${runner} ${RUN}` } })).data).participant.id;
       created.participantIds.add(id);
       runnerIds.push(id);
     }

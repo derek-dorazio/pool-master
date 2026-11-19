@@ -137,14 +137,6 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
       throw new Error('the root admin could not sign in to the API');
     }
 
-    const { sports } = await (await expectOk(api.get('/api/v1/sports/', { headers }), 'list sports')).json() as {
-      sports: Array<{ id: string; sport: string }>;
-    };
-    const sportId = sports.find((row) => row.sport === 'BASKETBALL')?.id;
-    if (!sportId) {
-      throw new Error('basketball is not in the sports table');
-    }
-
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
       sport: 'BASKETBALL',
       name: run.tourName,
@@ -164,7 +156,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     const participantIds: string[] = [];
     for (const { name } of FIELD) {
       const { participant } = await postJson<{ participant: { id: string } }>(api, headers, '/api/v1/participants/', {
-        sportId,
+        sportLeagueId: sportLeague.id,
         participantType: 'TEAM',
         name: teamName(run, name),
       });

@@ -10,7 +10,6 @@ import { seriesNamed } from '../../support/sport-event-rows';
 import { BracketAdvancement, Sport, SPORTS_BY_POPULARITY, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
-  PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaSportEventParticipantRepository,
@@ -21,6 +20,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { freshEventEdition } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The catalog and event-core ports against real Postgres: each query returns the right
 // rows, scoping actually scopes, ordering is what the port promises, and the bulk writes
@@ -56,8 +56,12 @@ async function createEvent(tag: string, overrides: Record<string, unknown> = {})
 }
 
 async function createParticipant(sportId: string, name: string, externalId?: string) {
+  return createLeagueParticipant(await participantLeagueId(getPrisma(), sportId), name, externalId);
+}
+
+async function createLeagueParticipant(sportLeagueId: string, name: string, externalId?: string) {
   return getPrisma().participant.create({
-    data: { sportId, name, participantType: 'INDIVIDUAL', ...(externalId ? { externalId } : {}) },
+    data: { sportLeagueId, name, participantType: 'INDIVIDUAL', ...(externalId ? { externalId } : {}) },
   });
 }
 
@@ -318,81 +322,86 @@ describe('SportEventRepository — series and event year', () => {
   });
 });
 
-describe('ParticipantLeagueAffiliationRepository', () => {
+describe('ParticipantRepository — a sport league\'s roster (#1853)', () => {
   async function setup() {
     const sport = await golfSport();
-    const pga = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
+    const suffix = randomUUID().slice(0, 8);
+    const pga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: `Roster Tour ${suffix}`, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const lpga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: `Roster Women's Tour ${suffix}`, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const [ben, al, cy] = [
-      await createParticipant(sport.id, 'Ben'),
-      await createParticipant(sport.id, 'Al'),
-      await createParticipant(sport.id, 'Cy'),
+      await createLeagueParticipant(pga.id, 'Ben'),
+      await createLeagueParticipant(pga.id, 'Al'),
+      await createLeagueParticipant(pga.id, 'Cy'),
     ];
-    return { pga, ben, al, cy, affiliations: new PrismaParticipantLeagueAffiliationRepository(getAppPrisma()) };
+    const nelly = await createLeagueParticipant(lpga.id, 'Nelly');
+    return { pga, lpga, ben, al, cy, nelly, participants: new PrismaParticipantRepository(getAppPrisma()) };
   }
 
-  it('lists best rank first, unranked last, then by name, carrying the canonical participant', async () => {
-    const { pga, ben, al, cy, affiliations } = await setup();
-    for (const person of [ben, al, cy]) await affiliations.create(pga.id, person.id);
-    await affiliations.updateRankings(pga.id, [{ participantId: cy.id, ranking: 1 }]);
+  it('lists only the league\'s own participants, best rank first, unranked last, then by name, and counts each league\'s', async () => {
+    const { pga, lpga, cy, participants } = await setup();
+    await participants.updateRankings(pga.id, [{ participantId: cy.id, ranking: 1 }]);
 
-    const rows = await affiliations.findBySportLeague(pga.id);
+    const rows = await participants.findBySportLeague(pga.id);
 
-    expect(rows.map((row) => [row.participant.name, row.ranking])).toEqual([['Cy', 1], ['Al', null], ['Ben', null]]);
-    expect(await affiliations.countBySportLeagues([pga.id])).toEqual(new Map([[pga.id, 3]]));
+    expect(rows.map((row) => [row.name, row.ranking])).toEqual([['Cy', 1], ['Al', null], ['Ben', null]]);
+    const none = randomUUID();
+    expect(await participants.countBySportLeagues([pga.id, lpga.id, none])).toEqual(new Map([[pga.id, 3], [lpga.id, 1], [none, 0]]));
   });
 
-  it('re-ranks all or nothing: one unknown participant leaves every ranking as it was', async () => {
-    const { pga, ben, al, affiliations } = await setup();
-    await affiliations.create(pga.id, ben.id);
+  it('re-ranks all or nothing: a participant of another league leaves every ranking as it was', async () => {
+    const { pga, ben, nelly, participants } = await setup();
 
-    await expect(affiliations.updateRankings(pga.id, [
+    await expect(participants.updateRankings(pga.id, [
       { participantId: ben.id, ranking: 7 },
-      { participantId: al.id, ranking: 8 },
+      { participantId: nelly.id, ranking: 8 },
     ])).rejects.toThrow();
 
-    await expect(affiliations.find(pga.id, ben.id)).resolves.toMatchObject({ ranking: null });
+    await expect(participants.findById(ben.id)).resolves.toMatchObject({ ranking: null });
+    await expect(participants.findById(nelly.id)).resolves.toMatchObject({ ranking: null });
   });
 
-  it('upserts rankings, creating missing affiliations and re-ranking existing ones, then deletes one', async () => {
-    const { pga, ben, al, affiliations } = await setup();
-    await affiliations.create(pga.id, ben.id);
+  it('re-ranks several participants at once, the later of two rankings for one participant winning', async () => {
+    const { pga, ben, al, participants } = await setup();
 
-    await affiliations.upsertRankings(pga.id, [
+    await participants.updateRankings(pga.id, [
       { participantId: ben.id, ranking: 2 },
       { participantId: al.id, ranking: 1 },
+      { participantId: ben.id, ranking: 3 },
     ]);
-    await affiliations.delete(pga.id, ben.id);
 
-    expect((await affiliations.findBySportLeague(pga.id)).map((row) => [row.participant.name, row.ranking])).toEqual([['Al', 1]]);
+    expect((await participants.findBySportLeague(pga.id)).map((row) => [row.name, row.ranking])).toEqual([['Al', 1], ['Ben', 3], ['Cy', null]]);
   });
 });
 
 describe('ParticipantRepository — search and matching', () => {
-  it('returns every match unpaged, and matches upload identifiers exactly within one sport', async () => {
+  it('returns every match unpaged, and matches upload identifiers exactly within one sport league', async () => {
     const sport = await golfSport();
+    const league = await participantLeagueId(getPrisma(), sport.id);
     const participants = new PrismaParticipantRepository(getAppPrisma());
     for (let index = 0; index < 60; index += 1) {
       await createParticipant(sport.id, `Search Golfer ${String(index).padStart(2, '0')}`);
     }
     const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
 
-    expect(await participants.search('Search Golfer', { sportId: sport.id })).toHaveLength(60);
-    await expect(participants.findMatchingAny(sport.id, [{ name: 'rory mcilroy' }])).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
-    await expect(participants.findMatchingAny(sport.id, [{ externalId: 'owgr-rory' }])).resolves.toHaveLength(1);
-    await expect(participants.findMatchingAny(sport.id, [{ name: 'Rory' }])).resolves.toEqual([]);
+    expect(await participants.search('Search Golfer', { sportLeagueId: league })).toHaveLength(60);
+    await expect(participants.findMatchingAny(league, [{ name: 'rory mcilroy' }])).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
+    await expect(participants.findMatchingAny(league, [{ externalId: 'owgr-rory' }])).resolves.toHaveLength(1);
+    await expect(participants.findMatchingAny(league, [{ name: 'Rory' }])).resolves.toEqual([]);
     await expect(participants.findMatchingAny(randomUUID(), [{ id: rory.id }])).resolves.toEqual([]);
-    await expect(participants.findMatchingAny(sport.id, [])).resolves.toEqual([]);
+    await expect(participants.findMatchingAny(league, [])).resolves.toEqual([]);
   });
 
-  it('reads the candidates for a whole upload at once: every participant of the sport any row\'s identifier matches, and no other', async () => {
+  it('reads the candidates for a whole upload at once: every participant of the sport league any row\'s identifier matches, and no other', async () => {
     const sport = await golfSport();
+    const league = await participantLeagueId(getPrisma(), sport.id);
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
     const jon = await createParticipant(sport.id, 'Jon Rahm', 'owgr-jon');
     const scottie = await createParticipant(sport.id, 'Scottie Scheffler', 'owgr-scottie');
     await createParticipant(sport.id, 'Ludvig Aberg', 'owgr-ludvig');
 
-    const found = await participants.findMatchingAny(sport.id, [{ id: rory.id }, { externalId: 'owgr-jon' }, { name: 'SCOTTIE scheffler' }, { name: 'Nobody' }]);
+    const found = await participants.findMatchingAny(league, [{ id: rory.id }, { externalId: 'owgr-jon' }, { name: 'SCOTTIE scheffler' }, { name: 'Nobody' }]);
 
     expect(found.map((candidate) => candidate.id).sort()).toEqual([rory.id, jon.id, scottie.id].sort());
   });
@@ -402,7 +411,8 @@ describe('ParticipantRepository — search and matching', () => {
     const participants = new PrismaParticipantRepository(getAppPrisma());
 
     const created = await participants.create({
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(getPrisma(), sport.id),
+      ranking: 12,
       name: 'Ludvig Aberg',
       participantType: 'INDIVIDUAL',
       nationality: 'SWE',
@@ -417,6 +427,7 @@ describe('ParticipantRepository — search and matching', () => {
       id: created.id,
       name: 'Ludvig Åberg',
       status: 'INACTIVE',
+      ranking: 12,
       nationality: 'SWE',
       role: 'GOLFER',
       injuryStatus: { status: 'HEALTHY' },
@@ -426,21 +437,22 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(participants.findById(randomUUID())).resolves.toBeNull();
   });
 
-  it('searches by status within a sport, and an empty search lists every participant of the sport by name', async () => {
+  it('searches by status within a sport league, and an empty search lists every participant of the league by name', async () => {
     const sport = await golfSport();
+    const league = await participantLeagueId(getPrisma(), sport.id);
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const active = await createParticipant(sport.id, 'Active Golfer');
-    const retired = await getPrisma().participant.create({ data: { sportId: sport.id, name: 'Retired Golfer', participantType: 'INDIVIDUAL', status: 'INACTIVE' } });
+    const retired = await getPrisma().participant.create({ data: { sportLeagueId: league, name: 'Retired Golfer', participantType: 'INDIVIDUAL', status: 'INACTIVE' } });
 
-    await expect(participants.search('Golfer', { sportId: sport.id, status: 'INACTIVE' })).resolves.toEqual([expect.objectContaining({ id: retired.id })]);
-    expect((await participants.search('  ', { sportId: sport.id })).map((participant) => participant.id)).toEqual([active.id, retired.id]);
+    await expect(participants.search('Golfer', { sportLeagueId: league, status: 'INACTIVE' })).resolves.toEqual([expect.objectContaining({ id: retired.id })]);
+    expect((await participants.search('  ', { sportLeagueId: league })).map((participant) => participant.id)).toEqual([active.id, retired.id]);
   });
 
   it('updates every field it is given, reading the injury dates back as dates', async () => {
     const sport = await golfSport();
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const created = await participants.create({
-      sportId: sport.id, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, externalIds: {},
+      sportLeagueId: await participantLeagueId(getPrisma(), sport.id), ranking: null, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, externalIds: {},
     });
     const expectedReturn = new Date('2026-06-01T00:00:00.000Z');
     const injuryUpdatedAt = new Date('2026-05-20T00:00:00.000Z');
@@ -471,12 +483,12 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(participants.findById(created.id)).resolves.toEqual(updated);
   });
 
-  it('deletes a participant on no field with its affiliations and provider identities, keeps one on a field and says how many rows hold it, and answers null for no participant', async () => {
+  it('deletes a participant on no field with its provider identities, keeps one on a field and says how many rows hold it, and answers null for no participant', async () => {
     const sport = await golfSport();
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const free = await createParticipant(sport.id, 'Free Golfer');
     await new PrismaParticipantProviderMappingRepository(getAppPrisma())
-      .bind({ providerId: 'integration-test', externalId: 'feed-free', confidence: 'MANUAL', participantId: free.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+      .bind({ providerId: 'integration-test', externalId: 'feed-free', confidence: 'MANUAL', participantId: free.id, sportLeagueId: free.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
     const fielded = await createParticipant(sport.id, 'Fielded Golfer');
     const event = await createEvent('delete-participant');
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: event.id, participantId: fielded.id } });
@@ -490,29 +502,36 @@ describe('ParticipantRepository — search and matching', () => {
     await expect(participants.findById(fielded.id)).resolves.toEqual(expect.objectContaining({ id: fielded.id }));
   });
 
-  it('binds a provider identity once: binding it again moves it to the new participant instead of duplicating it', async () => {
+  it('binds a provider identity once per sport league: binding it again in the league moves it, binding it in another league adds a second', async () => {
     const sport = await golfSport();
     const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
     const [first, second] = [await createParticipant(sport.id, 'First'), await createParticipant(sport.id, 'Second')];
+    const lcs = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: 'Other league', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const elsewhere = await createLeagueParticipant(lcs.id, 'First elsewhere');
     const identity = { providerId: 'integration-test', externalId: 'feed-42', confidence: 'MANUAL' as const };
 
-    await mappings.bind({ ...identity, participantId: first.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
-    const moved = await mappings.bind({ ...identity, participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') });
+    await mappings.bind({ ...identity, participantId: first.id, sportLeagueId: first.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+    const moved = await mappings.bind({ ...identity, participantId: second.id, sportLeagueId: second.sportLeagueId, mappedAt: new Date('2026-05-02T00:00:00.000Z') });
+    await mappings.bind({ ...identity, participantId: elsewhere.id, sportLeagueId: lcs.id, mappedAt: new Date('2026-05-03T00:00:00.000Z') });
 
     expect(moved).toMatchObject({ participantId: second.id, externalId: 'feed-42' });
     await expect(mappings.findByParticipant(first.id)).resolves.toEqual([]);
-    await expect(mappings.findByProviderExternalIds('integration-test', ['feed-42'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: second.sportLeagueId }, ['feed-42'])).resolves.toEqual([
       expect.objectContaining({ participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') }),
     ]);
+    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: lcs.id }, ['feed-42'])).resolves.toEqual([
+      expect.objectContaining({ participantId: elsewhere.id }),
+    ]);
+    await expect(mappings.findByProviderAndSportLeague('integration-test', lcs.id)).resolves.toEqual([expect.objectContaining({ participantId: elsewhere.id })]);
   });
 
   it('reads no provider identities when asked about no external ids, though the provider has some', async () => {
     const sport = await golfSport();
     const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
     const participant = await createParticipant(sport.id, 'Unasked');
-    await mappings.bind({ providerId: 'integration-test', externalId: 'feed-7', confidence: 'MANUAL', participantId: participant.id, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+    await mappings.bind({ providerId: 'integration-test', externalId: 'feed-7', confidence: 'MANUAL', participantId: participant.id, sportLeagueId: participant.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
 
-    await expect(mappings.findByProviderExternalIds('integration-test', [])).resolves.toEqual([]);
+    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: participant.sportLeagueId }, [])).resolves.toEqual([]);
   });
 });
 
@@ -629,9 +648,8 @@ describe('SportEvent core repositories', () => {
     const pgaEvent = await createEvent('pga-field', { eventSeriesId: (await seriesNamed(series, pga.id, 'Field Open')).id, eventYear: 2026 });
     const lpgaEvent = await createEvent('lpga-field', { eventSeriesId: (await seriesNamed(series, lpga.id, 'Field Classic')).id, eventYear: 2026 });
     const unasked = await createEvent('unasked-field');
-    const member = await createParticipant(sport.id, 'PGA Member');
+    const member = await createLeagueParticipant(pga.id, 'PGA Member');
     const guest = await createParticipant(sport.id, 'Guest');
-    await getPrisma().participantLeagueAffiliation.create({ data: { participantId: member.id, sportLeagueId: pga.id } });
     for (const event of [pgaEvent, lpgaEvent, unasked]) {
       await getPrisma().sportEventParticipant.createMany({ data: [member, guest].map((golfer) => ({ sportEventId: event.id, participantId: golfer.id })) });
     }
