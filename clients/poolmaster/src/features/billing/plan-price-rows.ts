@@ -67,9 +67,9 @@ export const PlanPriceFormSchema = z.object({
   monthly: dollars('a monthly price'),
   bands: z.array(BandSchema).max(MAX_EXPANSION_BANDS, `At most ${String(MAX_EXPANSION_BANDS)} bands.`),
 }).superRefine((form, context) => {
-  form.bands.forEach((band, index) => {
-    const below = form.bands[index - 1];
-    if (!below) return;
+  form.bands.forEach((band, index, bands) => {
+    if (index === 0) return;
+    const below = bands[index - 1];
     if (band.entriesPerContest <= below.entriesPerContest) {
       context.addIssue({ code: 'custom', path: ['bands', index, 'entriesPerContest'], message: `Above ${String(below.entriesPerContest)}, the band before.` });
     }

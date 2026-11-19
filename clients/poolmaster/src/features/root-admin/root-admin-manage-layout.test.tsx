@@ -47,7 +47,7 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports');
   });
 
-  it('shows Manage on the tools frame: a band with the way out, then the menu Sports to Plans as top tabs, marking the open one', () => {
+  it('shows Manage on the tools frame: a band with the way out, then the menu Sports to Pricing as top tabs, marking the open one', () => {
     renderManage('/manage/plans');
 
     const band = screen.getByTestId('root-admin-manage-layout-band');
@@ -61,6 +61,7 @@ describe('RootAdminManageLayout', () => {
       'Providers',
       'Customers',
       'Plans',
+      'Pricing',
     ]);
     expect(screen.getByTestId('root-admin-manage-menu-plans')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('root-admin-manage-menu-sports')).not.toHaveAttribute('aria-current');
