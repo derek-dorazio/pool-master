@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { SelectionType, Sport } from '@poolmaster/shared/domain';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
   deleteUser,
   disableUser,
@@ -12,7 +12,6 @@ import {
   listProviderCatalogEvents,
   listProviderSyncRuns,
   resetUserPassword,
-  resetSportIngestionOverride,
   getUser,
   listUsers,
   updateContestConfigTemplate,
@@ -389,7 +388,7 @@ describe('SDK Functional: Root Admin', () => {
     });
   });
 
-  it('allows a promoted root-admin user to update persisted system configuration', async () => {
+  it('lets a promoted root-admin user change the live score and event list intervals of the one ingestion schedule', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Config User',
     });
@@ -410,13 +409,12 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(ingestionRead.data?.eventLiveScores.intervalSeconds).toBe(45);
 
-    const resetSportOverride = await resetSportIngestionOverride({
+    const eventListUpdate = await updateIngestionSchedule({
       client: user.client,
-      path: {
-        sport: 'GOLF',
-      },
+      body: { eventList: { intervalMinutes: 120 } },
     });
-    expect(resetSportOverride.data?.perSportOverrides[Sport.GOLF]).toBeUndefined();
+    expect(eventListUpdate.data?.eventList).toEqual({ enabled: true, intervalMinutes: 120 });
+    expect(eventListUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
   });
 
   it('allows a promoted root-admin user to search, inactivate, and delete leagues', async () => {

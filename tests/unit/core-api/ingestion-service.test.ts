@@ -15,7 +15,7 @@ import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-da
 import { stubInstance } from '../../support/stub-instance';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
-type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs'>;
+type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'webhookProviderIds'>;
 
 function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns?: InMemorySyncRuns } = {}): IngestionPorts {
   const syncRuns = overrides.syncRuns ?? inMemorySyncRuns();
@@ -23,6 +23,8 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
     jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs }),
+    sportLeagues: { findEventSynced: () => Promise.resolve([]) },
+    webhookProviderIds: [],
     ...overrides,
     syncRuns,
   };
@@ -41,9 +43,8 @@ describe('IngestionService manual sync submission', () => {
         healthCheck: { enabled: true, intervalMinutes: 5 },
         eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        perSportOverrides: {},
+        eventList: { enabled: true, intervalMinutes: 360 },
       }),
-      getPerSportConfig: jest.fn(),
     };
     const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
     const service = new IngestionService({
@@ -94,9 +95,8 @@ describe('IngestionService manual sync submission', () => {
         healthCheck: { enabled: true, intervalMinutes: 5 },
         eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        perSportOverrides: {},
+        eventList: { enabled: true, intervalMinutes: 360 },
       }),
-      getPerSportConfig: jest.fn(),
     };
     const service = new IngestionService({
       // pool-master-cgb — no local SportEvent row exists yet for this
@@ -168,7 +168,6 @@ describe('IngestionService manual sync submission', () => {
       const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
       const ingestionConfigReader = {
         getConfig: jest.fn().mockResolvedValue({ scheduledSports: [Sport.GOLF] }),
-        getPerSportConfig: jest.fn(),
       };
       return new IngestionService({
         ...ports({ sportEvents: fakeSportEventRepo({ findByProviderRef }) }),

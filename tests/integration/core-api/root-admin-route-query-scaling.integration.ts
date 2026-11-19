@@ -501,7 +501,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each', async () => {
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, and their synced sport leagues read in one more', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await expectFixedQueries({
       route: 'GET /api/v1/ingestion/providers',
@@ -512,7 +512,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
         expect(providers.map((summary) => summary.providerId)).toEqual([provider.providerId, tennisProvider.providerId]);
         return providers.length;
       },
-      statements: 2,
+      statements: 3,
     });
   });
 });

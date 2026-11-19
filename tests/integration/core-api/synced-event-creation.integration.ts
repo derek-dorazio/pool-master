@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSportRepository } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
+import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
 import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
@@ -60,7 +61,11 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     now: () => NOW,
   });
   const runner = backgroundJobs.runWith({ SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context) });
-  const sweeper = new SyncedEventCreationScheduler({ leagueEventsSync, jobLock: heldHere() });
+  const sweeper = new SyncedEventCreationScheduler({
+    leagueEventsSync,
+    schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
+    jobLock: heldHere(),
+  });
   /** One sweep, and the jobs it queued run to the end. */
   const scheduler = {
     async runSweep(): Promise<void> {

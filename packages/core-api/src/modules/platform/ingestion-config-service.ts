@@ -5,29 +5,31 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { SUPPORTED_SPORTS, type Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import type {
   IngestionFeedSchedulePolicy,
   IngestionScheduleConfig,
-  IngestionScheduleConfigBody,
-  IngestionScheduleConfigOverride,
+  IngestionScheduleConfigPatch,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
 import type { AppSettingsService } from './app-settings-service';
 import { defineSettingsGroup } from './settings-group';
 
-type FeedPolicyKey = keyof Omit<IngestionScheduleConfigBody, 'scheduledSports'>;
-
 export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionScheduleConfig>({
   key: 'INGESTION_SCHEDULE_CONFIG',
   title: 'Ingestion schedule',
-  description: 'Which sports sync on a schedule, and how often each provider feed runs.',
+  description: 'Which sports sync on a schedule, and how often each provider feed runs: one schedule for every sport league.',
   schema: IngestionScheduleConfigSchema,
   defaults: () => ({
     scheduledSports: [...SUPPORTED_SPORTS],
     healthCheck: {
       enabled: true,
       intervalMinutes: 5,
+    },
+    // The synced sport leagues' events sync, every six hours (#1871; was a constant).
+    eventList: {
+      enabled: true,
+      intervalMinutes: 360,
     },
     eventParticipants: {
       enabled: false,
@@ -38,7 +40,6 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
       enabled: true,
       intervalSeconds: 300,
     },
-    perSportOverrides: {},
   }),
 });
 
@@ -64,7 +65,7 @@ export class IngestionConfigService {
   }
 
   async updateConfig(
-    partial: IngestionScheduleConfigOverride,
+    partial: IngestionScheduleConfigPatch,
     rootAdminUserId: string,
   ): Promise<IngestionScheduleConfig> {
     this.logger?.debug({
@@ -74,10 +75,7 @@ export class IngestionConfigService {
       },
     }, 'Updating ingestion config');
 
-    const saved = await this.update((current) => ({
-      ...mergeBasePolicies(current, partial),
-      perSportOverrides: current.perSportOverrides,
-    }), rootAdminUserId);
+    const saved = await this.update((current) => applyPatch(current, partial), rootAdminUserId);
 
     this.logger?.info({
       action: 'adminIngestionConfig.update.success',
@@ -85,92 +83,6 @@ export class IngestionConfigService {
         keys: Object.keys(partial),
       },
     }, 'Updated ingestion config');
-    return saved;
-  }
-
-  getPerSportConfig(sport: string): Promise<IngestionScheduleConfig> {
-    return new Promise((resolve) => resolve(this.perSportConfig(sport)));
-  }
-
-  private perSportConfig(sport: string): IngestionScheduleConfig {
-    this.logger?.debug({
-      action: 'adminIngestionConfig.getPerSport.start',
-      data: { sport },
-    }, 'Loading per-sport ingestion config');
-
-    const baseConfig = this.current();
-    // Widened to Partial: a sport with no override is a miss, which the record type hides.
-    const overrides: Partial<Record<string, IngestionScheduleConfigOverride>> = baseConfig.perSportOverrides;
-    const override = overrides[sport];
-    if (!override) {
-      this.logger?.info({
-        action: 'adminIngestionConfig.getPerSport.globalFallback',
-        data: { sport },
-      }, 'No per-sport override found; returning global ingestion config');
-      return baseConfig;
-    }
-
-    const merged = {
-      ...mergeBasePolicies(baseConfig, override),
-      perSportOverrides: baseConfig.perSportOverrides,
-    };
-    this.logger?.info({
-      action: 'adminIngestionConfig.getPerSport.success',
-      data: { sport },
-    }, 'Loaded per-sport ingestion config');
-    return merged;
-  }
-
-  async setPerSportOverride(
-    sport: Sport,
-    config: IngestionScheduleConfigOverride,
-    rootAdminUserId: string,
-  ): Promise<IngestionScheduleConfig> {
-    this.logger?.debug({
-      action: 'adminIngestionConfig.setOverride.start',
-      data: {
-        sport,
-        keys: Object.keys(config),
-      },
-    }, 'Setting per-sport ingestion override');
-
-    const saved = await this.update((current) => ({
-      ...current,
-      perSportOverrides: {
-        ...current.perSportOverrides,
-        [sport]: mergeOverride(current.perSportOverrides[sport] ?? {}, config),
-      },
-    }), rootAdminUserId);
-
-    this.logger?.info({
-      action: 'adminIngestionConfig.setOverride.success',
-      data: {
-        sport,
-        keys: Object.keys(config),
-      },
-    }, 'Set per-sport ingestion override');
-    return saved;
-  }
-
-  async clearPerSportOverride(
-    sport: Sport,
-    rootAdminUserId: string,
-  ): Promise<IngestionScheduleConfig> {
-    this.logger?.debug({
-      action: 'adminIngestionConfig.clearOverride.start',
-      data: { sport },
-    }, 'Clearing per-sport ingestion override');
-
-    const saved = await this.update((current) => {
-      const remainingOverrides = { ...current.perSportOverrides };
-      delete remainingOverrides[sport];
-      return { ...current, perSportOverrides: remainingOverrides };
-    }, rootAdminUserId);
-
-    this.logger?.info({
-      action: 'adminIngestionConfig.clearOverride.success',
-      data: { sport },
-    }, 'Cleared per-sport ingestion override');
     return saved;
   }
 
@@ -203,62 +115,25 @@ export class IngestionConfigService {
   }
 }
 
-function mergeBasePolicies(
+function applyPatch(
   config: IngestionScheduleConfig,
-  override: IngestionScheduleConfigOverride,
-): IngestionScheduleConfigBody {
+  patch: IngestionScheduleConfigPatch,
+): IngestionScheduleConfig {
   return {
-    scheduledSports: override.scheduledSports
-      ? [...override.scheduledSports]
-      : [...config.scheduledSports],
-    healthCheck: mergePolicy(config.healthCheck, override.healthCheck),
-    eventParticipants: mergePolicy(config.eventParticipants, override.eventParticipants),
-    eventLiveScores: mergePolicy(config.eventLiveScores, override.eventLiveScores),
+    scheduledSports: patch.scheduledSports ? [...patch.scheduledSports] : [...config.scheduledSports],
+    healthCheck: mergePolicy(config.healthCheck, patch.healthCheck),
+    eventList: mergePolicy(config.eventList, patch.eventList),
+    eventParticipants: mergePolicy(config.eventParticipants, patch.eventParticipants),
+    eventLiveScores: mergePolicy(config.eventLiveScores, patch.eventLiveScores),
   };
-}
-
-function mergeOverride(
-  existing: IngestionScheduleConfigOverride,
-  incoming: IngestionScheduleConfigOverride,
-): IngestionScheduleConfigOverride {
-  const merged = {} as IngestionScheduleConfigOverride;
-  for (const key of policyKeys()) {
-    const nextPolicy = mergePolicyPatch(existing[key], incoming[key]);
-    if (nextPolicy) {
-      merged[key] = nextPolicy;
-    }
-  }
-  return merged;
 }
 
 function mergePolicy(
   base: IngestionFeedSchedulePolicy,
-  override?: Partial<IngestionFeedSchedulePolicy>,
+  patch?: Partial<IngestionFeedSchedulePolicy>,
 ): IngestionFeedSchedulePolicy {
   return {
     ...base,
-    ...override,
+    ...patch,
   };
-}
-
-function mergePolicyPatch(
-  existing?: Partial<IngestionFeedSchedulePolicy>,
-  incoming?: Partial<IngestionFeedSchedulePolicy>,
-): Partial<IngestionFeedSchedulePolicy> | undefined {
-  if (!existing && !incoming) {
-    return undefined;
-  }
-
-  return {
-    ...(existing ?? {}),
-    ...(incoming ?? {}),
-  };
-}
-
-function policyKeys(): FeedPolicyKey[] {
-  return [
-    'healthCheck',
-    'eventParticipants',
-    'eventLiveScores',
-  ];
 }

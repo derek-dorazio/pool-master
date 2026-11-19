@@ -38,10 +38,10 @@ const SENT_STATUSES = [
  */
 const ALL_TEMPLATE_KEYS = Object.values(EmailTemplateKey);
 
-/** A sent row whose content is still kept: subject and both bodies. */
 /** Not a root admin's copy of a send (#1870): copies are not sends. */
 const NOT_ADMIN_COPY = { idempotencyKey: { not: { contains: ADMIN_COPY_KEY_MARKER } } } as const;
 
+/** A sent row whose content is still kept: subject and both bodies. */
 const KEEPS_CONTENT = { subject: { not: null }, textBody: { not: null }, htmlBody: { not: null } } as const;
 
 export class PrismaEmailMessageRepository implements EmailMessageRepository {

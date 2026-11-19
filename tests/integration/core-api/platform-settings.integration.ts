@@ -87,20 +87,20 @@ describe('settings registry on Postgres', () => {
     expect(secondTask.get(EMAIL_SETTINGS).allowedRecipients).toEqual(['help@example.test']);
   });
 
-  it('a sport override saved on one task survives a global schedule update made on a second task before its refresh', async () => {
+  it('an event list interval saved on one task survives a live score update made on a second task before its refresh', async () => {
     const admin = await createTestUser({ displayName: 'Settings Race Admin', isRootAdmin: true });
     const taskA = coreApiTask();
     const taskB = coreApiTask();
     await taskA.load();
     await taskB.load();
 
-    await new IngestionConfigService(taskA).setPerSportOverride('GOLF', { eventLiveScores: { intervalSeconds: 20 } }, admin.user.id);
+    await new IngestionConfigService(taskA).updateConfig({ eventList: { intervalMinutes: 90 } }, admin.user.id);
     await new IngestionConfigService(taskB).updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, admin.user.id);
 
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: INGESTION_SCHEDULE_SETTINGS.key } });
     expect(stored?.configJson).toEqual(expect.objectContaining({
       eventLiveScores: { enabled: true, intervalSeconds: 45 },
-      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
+      eventList: { enabled: true, intervalMinutes: 90 },
     }));
   });
 

@@ -33,15 +33,22 @@ export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolic
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one feed scheduling property must be provided.',
   })
-  .describe('Partial feed-scheduling override payload.');
+  .describe('Partial feed-scheduling update payload.');
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
 
-export const IngestionScheduleConfigBodySchema = z.object({
+/**
+ * One schedule for every sport league (#1871): there are no per-sport overrides. A stored value
+ * saved before then still loads, because a settings group drops keys its schema does not name.
+ */
+export const IngestionScheduleConfigSchema = z.object({
   scheduledSports: z.array(SportSchema).min(1).default([...SUPPORTED_SPORTS]).describe(
     'Sports that scheduled ingestion is allowed to run automatically.',
   ),
   healthCheck: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for provider health checks.',
+  ),
+  eventList: IngestionFeedSchedulePolicySchema.describe(
+    'Scheduling policy for the event list sync: how often each synced sport league\'s events sync is queued.',
   ),
   eventParticipants: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.',
@@ -49,25 +56,22 @@ export const IngestionScheduleConfigBodySchema = z.object({
   eventLiveScores: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for live score polling.',
   ),
-}).describe('Base ingestion scheduling configuration without per-sport overrides.');
-export type IngestionScheduleConfigBody = z.infer<typeof IngestionScheduleConfigBodySchema>;
+}).describe('Feed-aware ingestion scheduling configuration, one schedule for every sport league.');
+export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
 
-export const IngestionScheduleConfigOverrideSchema = z.object({
+/** The feed policies of the schedule, each with its own interval. */
+export type IngestionFeedPolicyKey = keyof Omit<IngestionScheduleConfig, 'scheduledSports'>;
+
+export const IngestionScheduleConfigPatchSchema = z.object({
   scheduledSports: z.array(SportSchema).min(1).optional(),
   healthCheck: IngestionFeedSchedulePolicyPatchSchema.optional(),
+  eventList: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventParticipants: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventLiveScores: IngestionFeedSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {
-  message: 'At least one ingestion feed override must be provided.',
-}).describe('Partial ingestion scheduling override used for global updates and per-sport overrides.');
-export type IngestionScheduleConfigOverride = z.infer<typeof IngestionScheduleConfigOverrideSchema>;
-
-export const IngestionScheduleConfigSchema = IngestionScheduleConfigBodySchema.extend({
-  perSportOverrides: z.record(z.string(), IngestionScheduleConfigOverrideSchema).describe(
-    'Per-sport scheduling overrides applied on top of the global feed policies.',
-  ),
-}).describe('Feed-aware ingestion scheduling configuration exposed to root-admin tooling.');
-export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
+  message: 'At least one ingestion schedule change must be provided.',
+}).describe('Partial ingestion schedule update: only the policies and properties it names change.');
+export type IngestionScheduleConfigPatch = z.infer<typeof IngestionScheduleConfigPatchSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
 // Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
@@ -233,5 +237,5 @@ registerSchema('PlanCapRow', PlanCapRowSchema);
 registerSchema('PlanConfig', PlanConfigSchema);
 registerSchema('ExpansionPrice', ExpansionPriceSchema);
 registerSchema('BillingConfig', BillingConfigSchema);
-registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
+registerSchema('IngestionScheduleConfigPatch', IngestionScheduleConfigPatchSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);

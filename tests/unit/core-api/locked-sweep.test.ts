@@ -166,5 +166,77 @@ describe('LockedSweep', () => {
       expect(work).toHaveBeenCalledTimes(1);
       sweep.stop();
     });
+
+    describe('with an interval read after each run', () => {
+      it('first runs after the given delay, then waits the interval it reads after each run, so a changed setting applies from the next run', async () => {
+        const work = jest.fn(async () => undefined);
+        let intervalMs = 30 * INTERVAL_MS;
+        const sweep = lockedSweep(work, { intervalMs: () => Promise.resolve(intervalMs), firstRunAfterMs: INTERVAL_MS });
+
+        sweep.start();
+        await jest.advanceTimersByTimeAsync(INTERVAL_MS);
+        expect(work).toHaveBeenCalledTimes(1);
+        intervalMs = 5 * INTERVAL_MS;
+        await jest.advanceTimersByTimeAsync(30 * INTERVAL_MS - 1);
+        expect(work).toHaveBeenCalledTimes(1);
+        await jest.advanceTimersByTimeAsync(1);
+        expect(work).toHaveBeenCalledTimes(2);
+        await jest.advanceTimersByTimeAsync(5 * INTERVAL_MS);
+        expect(work).toHaveBeenCalledTimes(3);
+        sweep.stop();
+        await jest.advanceTimersByTimeAsync(100 * INTERVAL_MS);
+
+        expect(work).toHaveBeenCalledTimes(3);
+      });
+
+      it('first runs a minute after starting when no first delay is given', async () => {
+        const work = jest.fn(async () => undefined);
+        const sweep = lockedSweep(work, { intervalMs: () => Promise.resolve(60 * INTERVAL_MS) });
+
+        sweep.start();
+        await jest.advanceTimersByTimeAsync(60_000);
+
+        expect(work).toHaveBeenCalledTimes(1);
+        sweep.stop();
+      });
+
+      it('logs an interval it cannot read and tries again a minute later, rather than stopping', async () => {
+        const work = jest.fn(async () => undefined);
+        const logger = fakeLogger();
+        const readInterval = jest.fn<Promise<number>, []>().mockRejectedValueOnce(new Error('settings unreadable')).mockResolvedValue(60 * INTERVAL_MS);
+        const sweep = lockedSweep(work, { intervalMs: readInterval, firstRunAfterMs: INTERVAL_MS, logger });
+
+        sweep.start();
+        await jest.advanceTimersByTimeAsync(INTERVAL_MS);
+        await jest.advanceTimersByTimeAsync(60_000);
+
+        expect(work).toHaveBeenCalledTimes(2);
+        expect(logger.error).toHaveBeenCalledWith(
+          { action: 'lockedSweep.intervalReadFailed', data: { lockKey: 'test-sweep', error: 'settings unreadable' } },
+          expect.any(String),
+        );
+        sweep.stop();
+      });
+
+      it('schedules nothing more when stopped while a run is under way, and restarts cleanly', async () => {
+        let finishRun!: () => void;
+        const work = jest.fn<Promise<void>, []>()
+          .mockImplementationOnce(() => new Promise<void>((resolve) => { finishRun = resolve; }))
+          .mockResolvedValue(undefined);
+        const sweep = lockedSweep(work, { intervalMs: () => Promise.resolve(INTERVAL_MS), firstRunAfterMs: INTERVAL_MS });
+
+        sweep.start();
+        await jest.advanceTimersByTimeAsync(INTERVAL_MS);
+        sweep.stop();
+        finishRun();
+        await jest.advanceTimersByTimeAsync(10 * INTERVAL_MS);
+        expect(work).toHaveBeenCalledTimes(1);
+
+        sweep.start();
+        await jest.advanceTimersByTimeAsync(2 * INTERVAL_MS);
+        expect(work).toHaveBeenCalledTimes(3);
+        sweep.stop();
+      });
+    });
   });
 });

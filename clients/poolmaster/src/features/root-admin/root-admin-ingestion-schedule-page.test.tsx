@@ -47,7 +47,7 @@ const REFETCHED_SCHEDULE = {
     healthCheck: { enabled: true, intervalMinutes: 10 },
     eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
     eventLiveScores: { enabled: true, intervalSeconds: 60 },
-    perSportOverrides: {},
+    eventList: { enabled: true, intervalMinutes: 360 },
   },
 };
 
@@ -66,7 +66,7 @@ describe('RootAdminIngestionSchedulePage', () => {
           lookaheadDays: 14,
         },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
-        perSportOverrides: {},
+        eventList: { enabled: true, intervalMinutes: 360 },
       },
     };
 
@@ -90,6 +90,7 @@ describe('RootAdminIngestionSchedulePage', () => {
       expect(updateIngestionScheduleMock).toHaveBeenCalledWith({
         body: {
           healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventList: { enabled: true, intervalMinutes: 360 },
           eventParticipants: {
             enabled: true,
             intervalMinutes: 360,
@@ -169,7 +170,7 @@ describe('RootAdminIngestionSchedulePage load failure, toggles, blank values and
       healthCheck: { enabled: true, intervalMinutes: 5 },
       eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
       eventLiveScores: { enabled: true, intervalSeconds: 30 },
-      perSportOverrides: {},
+      eventList: { enabled: true, intervalMinutes: 360 },
     },
   };
 

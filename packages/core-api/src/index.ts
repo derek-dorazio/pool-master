@@ -50,7 +50,7 @@ import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
-import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
+import { providerWebhooksModule, readBalldontlieWebhookSecret, readWebhookProviderIds } from './modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
 import { readNotifiedProviderCadence } from './modules/ingestion/notified-provider-cadence';
 import { IngestionService } from './modules/ingestion/ingestion-service';
@@ -319,7 +319,6 @@ export function buildApp() {
     tiers: sportEventServices.tiers,
     logger: app.log.child({ module: 'events.syncedFieldValuation' }),
   });
-  // A synced sport league's events are created by its provider's sync once a day (ADR 0011, #1725).
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -330,7 +329,12 @@ export function buildApp() {
     jobs: backgroundJobs,
     logger: app.log,
   });
-  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({ leagueEventsSync, jobLock, logger: app.log });
+  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
+    leagueEventsSync,
+    schedule: ingestionConfigService,
+    jobLock,
+    logger: app.log,
+  });
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
@@ -343,6 +347,8 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: providerSyncRuns,
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    webhookProviderIds: readWebhookProviderIds(process.env),
     scheduler: ingestionScheduler,
     ingestionConfigReader: ingestionConfigService,
     syncRunLedger: providerSyncRunLedger,
