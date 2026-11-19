@@ -24,9 +24,8 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null> {
     const league = await this.league(sportLeagueId);
     if (league === null) return null;
-    const clutchCard = isClutchCardLeague(league) && league.parentSportLeagueId !== null;
     // A Clutch Card's events come from its parent's event list sync, so that run stands for its own.
-    const scopes = clutchCard && league.parentSportLeagueId !== null
+    const scopes = isClutchCardLeague(league) && league.parentSportLeagueId !== null
       ? [{ sportLeagueId, kind: { not: ProviderSyncKind.EVENTS } }, { sportLeagueId: league.parentSportLeagueId, kind: ProviderSyncKind.EVENTS }]
       : [{ sportLeagueId }];
     const latest = await this.prisma.providerSyncRun.groupBy({
@@ -79,7 +78,9 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const runsByEvent = new Map<string, SportLeaguePageRun[]>();
     for (const row of runRows) {
       if (row.sportEventId === null) continue;
-      runsByEvent.set(row.sportEventId, [...(runsByEvent.get(row.sportEventId) ?? []), toRun(row)]);
+      const eventRuns = runsByEvent.get(row.sportEventId);
+      if (eventRuns === undefined) runsByEvent.set(row.sportEventId, [toRun(row)]);
+      else eventRuns.push(toRun(row));
     }
     return {
       league,
