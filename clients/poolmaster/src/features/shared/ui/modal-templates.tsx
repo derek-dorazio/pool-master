@@ -4,6 +4,7 @@ import { Button } from "./button";
 import { cn } from "./class-names";
 import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
+import { Eyebrow } from "./eyebrow";
 import { FormField, Input } from "./form-field";
 import { Notice } from "./notice";
 import { FactList, type Fact } from "./fact-list";
@@ -129,6 +130,11 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
    * facts sit in a Details section and these in an Actions section.
    */
   actions?: DetailAction[];
+  /**
+   * The facts' section title, such as "Subscription", when the dialog has more than one
+   * section; `viewContent` then carries the others under their own `Eyebrow`.
+   */
+  factsTitle?: string;
   /** More to see under the facts in `view`, such as the sport leagues naming a profile. */
   viewContent?: ReactNode;
   /** The form's fields, shown in `edit`. */
@@ -170,6 +176,7 @@ export function DetailEditModal({
   error,
   errorFallback,
   facts,
+  factsTitle,
   isPending = false,
   mode,
   onCancel,
@@ -223,7 +230,7 @@ export function DetailEditModal({
     >
       {mode === "view" && actions ? (
         <div className="space-y-5">
-          <DialogSection testId={testId ? `${testId}-details` : undefined} title="Details">
+          <DialogSection testId={testId ? `${testId}-details` : undefined} title={factsTitle ?? "Details"}>
             <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
             {viewContent ? <div className="mt-4">{viewContent}</div> : null}
           </DialogSection>
@@ -244,6 +251,7 @@ export function DetailEditModal({
         </div>
       ) : mode === "view" ? (
         <>
+          {factsTitle ? <Eyebrow tone="muted">{factsTitle}</Eyebrow> : null}
           <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
           {viewContent ? <div className="mt-4">{viewContent}</div> : null}
         </>

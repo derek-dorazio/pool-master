@@ -63,8 +63,8 @@ In `system-email-templates.ts`:
    entry mirrors the HTML: same facts, every link on its own line.
 
 The compiler now lists what is missing. Work through it: the switch in `config.dto.ts` and its
-default in `email-settings.ts`, its label in the root admin settings page
-(`root-admin-settings-utils.ts`), and an example in `tests/support/email-template-fixtures.ts`.
+default in `email-settings.ts`, its label on the root admin Notifications page
+(`system-email-labels.ts`), and an example in `tests/support/email-template-fixtures.ts`.
 
 ## Step 4 — queue it
 
@@ -115,7 +115,7 @@ Work down this list; each step is in `docs/EMAIL-DELIVERY.md` under the section 
    "Only send to" do not apply. An AccessDenied on `identity/<recipient>` is the hand-made IAM
    grant on the deploy user, not the code (*Previewing Emails*). In the SES sandbox the address
    must also be verified.
-2. **A real send on QA.** Ask the user to press *Send a test email* on `/manage/settings`: its
+2. **A real send on QA.** Ask the user to press *Check delivery* under Notifications → ⚙ Email settings: its
    answer names the skip reason or the provider's error (*Sending a Test Email*). Settings
    changes take up to 30 seconds to reach every task.
 3. **The outbox row.** Every email is a row with a status: `SKIPPED` with its reason

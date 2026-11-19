@@ -61,14 +61,14 @@ import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
 import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { CUSTOMER_LEAGUES_PATH, CUSTOMER_USERS_PATH, PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
+import { CUSTOMER_LEAGUES_PATH, CUSTOMER_USERS_PATH, PRICING_PATH, PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminCustomerLeaguesPage } from '@/features/root-admin/root-admin-customer-leagues-page';
 import { RootAdminCustomerUsersPage } from '@/features/root-admin/root-admin-customer-users-page';
 import { RootAdminProfilesPage } from '@/features/root-admin/root-admin-profiles-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminNotificationsPage } from '@/features/root-admin/root-admin-notifications-page';
-import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
+import { RootAdminPricingPage } from '@/features/root-admin/root-admin-pricing-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
@@ -467,8 +467,9 @@ export const router = createBrowserRouter([
                     element: <RootAdminNotificationsPage />,
                   },
                   {
+                    // Every settings group has its own page now; Pricing took the last (#1886).
                     path: 'settings',
-                    element: <RootAdminSettingsPage />,
+                    element: <Navigate replace to={PRICING_PATH} />,
                   },
                   {
                     // The schedule moved to the Providers page (#1873).
@@ -478,6 +479,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'providers',
                     element: <RootAdminProvidersPage />,
+                  },
+                  {
+                    path: 'pricing',
+                    element: <RootAdminPricingPage />,
                   },
                 ],
               },

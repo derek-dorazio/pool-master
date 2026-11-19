@@ -347,6 +347,22 @@ describe("pool-master-3ew: shared modal templates", () => {
       expect(screen.getByLabelText("Name")).toBeInTheDocument();
     });
 
+    it("titles the facts as a section in view mode when given a facts title, and not in edit mode", () => {
+      const { rerender } = render(
+        <DetailEditModal facts={facts} factsTitle="Subscription" mode="view" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Pro">
+          <input aria-label="Yearly" />
+        </DetailEditModal>,
+      );
+      expect(screen.getByText("Subscription")).toBeInTheDocument();
+
+      rerender(
+        <DetailEditModal facts={facts} factsTitle="Subscription" mode="edit" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Pro">
+          <input aria-label="Yearly" />
+        </DetailEditModal>,
+      );
+      expect(screen.queryByText("Subscription")).not.toBeInTheDocument();
+    });
+
     it("disables Save while the form cannot be saved", () => {
       showDetailEdit("edit", { canSave: false });
 
