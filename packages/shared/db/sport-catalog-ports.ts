@@ -86,6 +86,11 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
+  /**
+   * The event-synced leagues, as `findEventSynced` reads them, and each active Clutch Card league
+   * whose parent is one of them (#1881), whose events its parent's sync creates. In one query.
+   */
+  findEventSyncedWithClutchCards(): Promise<SportLeague[]>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**

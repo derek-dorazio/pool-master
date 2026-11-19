@@ -24484,6 +24484,8 @@ export interface components {
             webhooksEnabled: boolean;
             /** @description The active sport leagues whose events this provider's sync creates. */
             syncedSportLeagueCount: number;
+            /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
+            rateLimitedJobsLast24h: number;
         };
         /** @description Every registered provider. */
         ProviderListResponse: {
@@ -24520,6 +24522,8 @@ export interface components {
                 webhooksEnabled: boolean;
                 /** @description The active sport leagues whose events this provider's sync creates. */
                 syncedSportLeagueCount: number;
+                /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
+                rateLimitedJobsLast24h: number;
             }[];
         };
         /** @description One feed's sync against a provider, with its diagnostics. */

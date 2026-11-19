@@ -237,6 +237,25 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sportLeagues.findByIds([])).resolves.toEqual([]);
   });
 
+  it('reads the event-synced sport leagues with the active Clutch Cards under them, leaving out an inactive Clutch Card, one under an unsynced league and a child league that is no Clutch Card (#1881)', async () => {
+    const sport = await golfSport();
+    const prisma = getPrisma();
+    const tag = randomUUID().slice(0, 8);
+    const league = async (name: string, data: Record<string, unknown> = {}) => prisma.sportLeague.create({
+      data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${tag} ${name}`, matchKeyword: `${tag}${name}`, ...data },
+    });
+    const synced = await league('Synced', { eventSyncProviderId: 'balldontlie' });
+    const unsynced = await league('Unsynced');
+    await league('Synced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id });
+    await league('Inactive Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id, isActive: false });
+    await league('Unsynced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: unsynced.id });
+    await league('Plain child', { parentSportLeagueId: synced.id });
+
+    const rows = await new PrismaSportLeagueRepository(getAppPrisma()).findEventSyncedWithClutchCards();
+
+    expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`, `${tag} Synced Clutch Card`]);
+  });
+
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {
     const sport = await golfSport();
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());

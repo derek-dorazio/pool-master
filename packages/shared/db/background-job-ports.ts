@@ -11,6 +11,13 @@ import type {
   JobErrorType,
 } from '../domain';
 
+/** How many jobs hit one error type on one scope (#1881): a sport league's own jobs, or an event's. */
+export type BackgroundJobScopeCount = {
+  sportLeagueId: string | null;
+  sportEventId: string | null;
+  count: number;
+};
+
 /** One claim of a job: the job and the attempt the claim counted. */
 export type BackgroundJobClaim = Pick<BackgroundJob, 'id' | 'attempts'>;
 
@@ -74,4 +81,10 @@ export interface BackgroundJobRepository {
    * (#1861). Nothing pages it.
    */
   findActivity(filter: BackgroundJobActivityFilter): Promise<BackgroundJob[]>;
+  /**
+   * The jobs whose latest try hit `errorType` since `since` (#1881), counted per scope in one
+   * grouped read: those that ended FAILED on it (by completion time), and those waiting to retry
+   * after it (by when that try started). A job that later succeeded no longer counts.
+   */
+  countByScope(filter: { errorType: JobErrorType; since: Date }): Promise<BackgroundJobScopeCount[]>;
 }

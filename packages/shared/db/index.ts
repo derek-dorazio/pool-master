@@ -125,13 +125,13 @@ export type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
+  SportEventLink,
   SportEventProviderSummary,
   SportEventAutoReleaseCandidate,
   SportEventReleaseFacts,
   ProviderNotifiedEvent,
   ProviderNotificationReceipt,
   ProviderNotifiedEventQuery,
-  SportEventLink,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -193,7 +193,7 @@ export type {
   EmailSuppressionRepository,
   SentEmailContent,
 } from './email-ports';
-export type { BackgroundJobClaim, BackgroundJobRepository } from './background-job-ports';
+export type { BackgroundJobClaim, BackgroundJobRepository, BackgroundJobScopeCount } from './background-job-ports';
 export type {
   CupContest,
   LeagueCupContest,

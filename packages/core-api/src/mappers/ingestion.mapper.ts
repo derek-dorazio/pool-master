@@ -37,6 +37,7 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     requestsPerMinute: provider.requestsPerMinute,
     webhooksEnabled: provider.webhooksEnabled,
     syncedSportLeagueCount: provider.syncedSportLeagueCount,
+    rateLimitedJobsLast24h: provider.rateLimitedJobsLast24h,
   };
 }
 

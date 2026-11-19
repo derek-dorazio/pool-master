@@ -305,6 +305,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     ingestionConfigReader: ingestionConfigService,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     webhookProviderIds: [],
+    jobHistory: new PrismaBackgroundJobRepository(prisma),
     jobs: backgroundJobs.queue,
   });
   // A sport league's events sync (#1819), its Sync now and its job, as index.ts wires them.

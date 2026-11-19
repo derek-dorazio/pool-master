@@ -358,6 +358,7 @@ export function buildApp() {
     syncRuns: providerSyncRuns,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     webhookProviderIds: readWebhookProviderIds(process.env),
+    jobHistory: backgroundJobRepository,
     scheduler: ingestionScheduler,
     ingestionConfigReader: ingestionConfigService,
     syncRunLedger: providerSyncRunLedger,

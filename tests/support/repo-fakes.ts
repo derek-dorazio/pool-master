@@ -278,6 +278,7 @@ export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = 
     findAll: many(),
     findBySportAndName: one(),
     findEventSynced: many(),
+    findEventSyncedWithClutchCards: many(),
     create: echoCreate('sport-league'),
     update: echoUpdate(),
     deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 0, contestTemplateCount: 0, eventPageOfferCount: 0, cupCount: 0, roundCount: 0, participantCount: 0 }),
