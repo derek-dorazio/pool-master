@@ -6,7 +6,7 @@ import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
 import { FormField, Input } from "./form-field";
 import { Notice } from "./notice";
-import { FactList } from "./fact-list";
+import { FactList, type Fact } from "./fact-list";
 import { Modal } from "./modal";
 import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
@@ -93,6 +93,107 @@ export function FormModal({
           {errorMessage}
         </Notice>
       ) : null}
+    </Modal>
+  );
+}
+
+export type DetailEditModalProps = BaseModalTemplateProps & {
+  /** `view` shows the facts with Close and Edit; `edit` shows the form with Cancel and Save. */
+  mode: "view" | "edit";
+  /** Every setting as it stands, shown first. */
+  facts: Fact[];
+  /** More to see under the facts in `view`, such as the sport leagues naming a profile. */
+  viewContent?: ReactNode;
+  /** The form's fields, shown in `edit`. */
+  children: ReactNode;
+  /** Edit's own label, such as "Edit"; the button switches to `edit`. */
+  editLabel?: string;
+  editTestId?: string;
+  onEdit: () => void;
+  /** Cancel in `edit`: back to the facts, unsaved. */
+  onCancelEdit: () => void;
+  onSave: () => void;
+  saveLabel: string;
+  saveTestId?: string;
+  canSave?: boolean;
+  isPending?: boolean;
+  pendingLabel?: string;
+  error?: Error | null;
+  errorFallback?: string;
+};
+
+/**
+ * A dialog that shows a thing's settings first and edits them on Edit (rules/ux-rules.md §12
+ * item 14): Close and Edit under the facts, then the form with Cancel, which goes back to the
+ * facts, and Save. A refused save stays in the form with a red bar above the buttons.
+ */
+export function DetailEditModal({
+  canSave = true,
+  children,
+  description,
+  editLabel = "Edit",
+  editTestId,
+  error,
+  errorFallback,
+  facts,
+  isPending = false,
+  mode,
+  onCancel,
+  onCancelEdit,
+  onEdit,
+  onOpenChange,
+  onSave,
+  open,
+  pendingLabel,
+  saveLabel,
+  saveTestId,
+  testId,
+  title,
+  viewContent,
+}: DetailEditModalProps) {
+  return (
+    <Modal
+      description={description}
+      footer={mode === "view" ? (
+        <>
+          <Button onClick={onCancel} type="button" variant="secondary">
+            Close
+          </Button>
+          <Button data-testid={editTestId ?? (testId ? `${testId}-edit` : undefined)} onClick={onEdit} type="button" variant="primary">
+            {editLabel}
+          </Button>
+        </>
+      ) : (
+        <DialogActions
+          actionLabel={saveLabel}
+          actionTestId={saveTestId ?? (testId ? `${testId}-save` : undefined)}
+          cancelLabel="Cancel"
+          isActionDisabled={!canSave}
+          isPending={isPending}
+          onAction={onSave}
+          onCancel={onCancelEdit}
+          pendingLabel={pendingLabel}
+        />
+      )}
+      isCloseDisabled={isPending}
+      onClose={onCancel}
+      onOpenChange={onOpenChange}
+      open={open}
+      size="md"
+      testId={testId}
+      title={title}
+    >
+      {mode === "view" ? (
+        <>
+          <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
+          {viewContent ? <div className="mt-4">{viewContent}</div> : null}
+        </>
+      ) : (
+        <>
+          {children}
+          {error ? <ServerErrorBar className="mt-4" error={error} fallback={errorFallback} title="Save failed" /> : null}
+        </>
+      )}
     </Modal>
   );
 }

@@ -335,8 +335,11 @@ administration area (root admin included), reusing the same shared components.
    Commissioner tools (`ToolsArea`) is a slim navy band naming the area, the
    league and the way back, then its tools as one row of `PageTabs` on every
    width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
-   root admin area, uses the same frame, with a second row of one tab per sport
-   under Sports. Each page in an area opens with one `PageHeader`
+   root admin area, uses the same frame: its menu is Sports · Activity ·
+   Notifications · Providers · Customers · Plans, and Sports, its landing page,
+   adds a second row of Sport leagues, Events, Contest templates and one tab per
+   sport (#1848; the second row goes once the league page carries its own tabs).
+   Each page in an area opens with one `PageHeader`
    (a `FormPage` brings its own); an entity's landing page shows the entity's
    icon in it. A page never adds a second header or "Back to" link of its own;
    the trail leads back up.
@@ -620,6 +623,13 @@ administration area (root admin included), reusing the same shared components.
     baseline, `scripts/card-corner-baseline.json`, lists the pages still
     waiting for their cleanup (the picks pages #1579 rebuilds among them) and
     only ever shrinks.
+
+14. **Root admin speaks the domain model.** Manage names things by the model's
+    words (Sport league, Event, Field, Participant, Round, Match, Contest
+    template), never a sport's member words such as Tournament or Golfer, so one
+    page reads the same for every sport. A settings dialog in Manage opens in view
+    mode, its settings as facts with Close and Edit, and Edit swaps in the form
+    with Cancel and Save (`DetailEditModal`).
 
 ## 13. Event Pages
 

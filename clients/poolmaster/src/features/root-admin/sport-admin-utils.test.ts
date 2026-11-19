@@ -99,11 +99,8 @@ describe('sport-admin-utils: describeFailedReleaseChecks', () => {
 
   it('lists unscheduled rounds, unlinked golfers and a league with no setups as what only the automatic release waits for, not as blockers', () => {
     expect(failing({ key: 'ROUNDS_SCHEDULED', passed: false, value: 0 })).toEqual({ manual: [], automaticOnly: ['Schedule its rounds.'] });
-    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 1, needsLinking: 0 } })).toEqual(['Link the 1 active golfer the provider does not know yet.']);
-    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 4, needsLinking: 1 } }))
-      .toEqual(['Link the 4 active golfers the provider does not know yet.', 'Link the 1 name from the provider\'s field waiting in Needs linking.']);
-    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 0, needsLinking: 2 } }))
-      .toEqual(['Link the 2 names from the provider\'s field waiting in Needs linking.']);
+    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: 1 })).toEqual(['Link the 1 active golfer the provider does not know yet.']);
+    expect(waiting({ key: 'FIELD_LINKED', passed: false, value: 4 })).toEqual(['Link the 4 active golfers the provider does not know yet.']);
     expect(waiting({ key: 'CONTEST_SETUPS_ON', passed: false, value: 0 })).toEqual(['Turn on a contest setup for its sport league.']);
   });
 

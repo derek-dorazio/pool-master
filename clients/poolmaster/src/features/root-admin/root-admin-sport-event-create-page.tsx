@@ -9,7 +9,7 @@ import {
 import { SportEventManualCreateForm } from './sport-event-manual-create-form';
 import { SportEventProviderBrowse } from './sport-event-provider-browse';
 import type { SportEventEdition } from './sport-event-edition';
-import { buildSportLeagueListPath } from './manage-navigation';
+import { buildSportLeagueCreatePath } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -69,10 +69,10 @@ export function RootAdminSportEventCreatePage() {
           <div className="mt-3">
             <LinkButton
               data-testid="root-admin-sport-event-create-tours-link"
-              to={buildSportLeagueListPath(sport)}
+              to={buildSportLeagueCreatePath(sport)}
               variant="secondary"
             >
-              Go to {upperFirst(sportLeagueNoun.many)}
+              New {sportLeagueNoun.one}
             </LinkButton>
           </div>
         </Notice>

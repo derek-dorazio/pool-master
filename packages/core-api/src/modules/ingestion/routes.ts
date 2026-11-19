@@ -3,8 +3,6 @@
  * and their history, competitors a provider could not match, and the provider catalog
  * browse. Mounted at /api/v1/ingestion.
  *
- * Feed participants the sync could not link on its own wait here as "needs linking" (#1824).
- *
  * Every operation is root-admin (#205): `admin` is the permission, `ingestion` is what these
  * operations administer. Binding an unmatched competitor to a participant is an operation on
  * the participant's provider mappings, so it lives beside their read in the participants
@@ -30,17 +28,12 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import { toActivityJobDto } from '../../mappers';
 import type { LeagueEventsSync } from '../events/league-events-sync';
-import { PrismaAmbiguousFeedParticipantRepository, PrismaParticipantProviderMappingRepository } from '../../adapters';
-import { FeedParticipantLinkService } from './feed-participant-links';
-import type { IngestionPersistence } from './persistence/ingestion-persistence';
 
 export interface IngestionModuleOptions {
   ingestionService: IngestionService;
   providerRegistry: ProviderRegistry;
   /** A sport league's events sync (#1819), for its Sync now. */
   leagueEventsSync: Pick<LeagueEventsSync, 'syncNow'>;
-  /** Writes a resolved feed participant's mapping and field rows (#1824): the sync's own writer, so its caches and rebuilds follow. */
-  ingestionPersistence: Pick<IngestionPersistence, 'resolveAmbiguousFeedParticipant'>;
 }
 
 const SPORT_PARAM = { type: 'string', enum: Object.values(Sport) };
@@ -53,16 +46,9 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
   const errors = (...statuses: number[]) =>
     Object.fromEntries([401, 403, ...statuses].map((status) => [status, envelope]));
 
-  const prisma = getAppPrisma(fastify);
   const handler = createIngestionHandlers(
     opts.ingestionService,
-    new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
-    new FeedParticipantLinkService({
-      ambiguous: new PrismaAmbiguousFeedParticipantRepository(prisma),
-      mappings: new PrismaParticipantProviderMappingRepository(prisma),
-      persistence: opts.ingestionPersistence,
-      logger: fastify.log.child({ module: 'ingestion.feed-participant-links' }),
-    }),
+    new EventScoreSourceService(getAppPrisma(fastify), opts.providerRegistry, fastify.log),
   );
 
   fastify.get('/providers', {
@@ -158,38 +144,6 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       response: { 200: schemaRef('UnmappedProviderParticipantListResponse'), ...errors() },
     },
     handler: handler.listUnmappedParticipants,
-  });
-
-  fastify.get('/ambiguous-participants', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'List feed participants that need linking',
-      description: 'Every feed participant the sync could not link on its own because its name matches two or more of the site\'s participants, still open, oldest first; never paged. '
-        + '`sportLeagueId` keeps one sport league\'s. Each names its candidates and the events whose fields sent it; it is on none of those fields until resolved with resolveAmbiguousFeedParticipant.',
-      operationId: 'listAmbiguousFeedParticipants',
-      querystring: schemaRef('AmbiguousFeedParticipantListQuery'),
-      response: { 200: schemaRef('AmbiguousFeedParticipantListResponse'), ...errors() },
-    },
-    handler: handler.listAmbiguousFeedParticipants,
-  });
-
-  fastify.post('/ambiguous-participants/:id/resolve', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'Resolve a feed participant that needs linking',
-      description: 'Links the feed participant to one of its candidates (LINK, with MANUAL confidence) or creates it as a new participant from the feed\'s latest copy (CREATE), affiliated with the sport leagues its tour names as a sync would. '
-        + 'Either maps its feed id, so the next sync links it on its own, and writes its field row in every event that sent it at once. Answers the row, resolved. '
-        + '404 FEED_PARTICIPANT_LINK_NOT_FOUND; 409 FEED_PARTICIPANT_LINK_RESOLVED when it was resolved already, FEED_PARTICIPANT_ALREADY_MAPPED when its feed id was bound some other way since; 422 FEED_PARTICIPANT_NOT_A_CANDIDATE when the pick is not a candidate, or the provider maps it since.',
-      operationId: 'resolveAmbiguousFeedParticipant',
-      params: {
-        type: 'object',
-        required: ['id'],
-        properties: { id: { type: 'string', format: 'uuid' } },
-      },
-      body: schemaRef('ResolveAmbiguousFeedParticipantRequest'),
-      response: { 200: schemaRef('AmbiguousFeedParticipantDto'), ...errors(404, 409, 422) },
-    },
-    handler: handler.resolveAmbiguousFeedParticipant,
   });
 
   fastify.get('/providers/:providerId/catalog-events', {

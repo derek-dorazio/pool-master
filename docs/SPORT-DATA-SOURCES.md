@@ -1,8 +1,19 @@
 # Sport data sources
 
-Where to get each sport's schedule and fields when loading real data with the
-`load-sport-data` skill. The skill says how to gather, cross-check and load; this page says
-where to look. Every fact loaded needs a primary and a second, independent source.
+Where to get last season's schedules, fields, results and box scores when writing a test data
+file ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Writing a test data file*). Real events
+and fields on a site come only from the provider's sync (#1850), so these sources feed test data
+only. Every fact in a test file but its made-up odds needs a primary and a second, independent
+source; a fact the two disagree on is left out, never guessed.
+
+## Feed ids
+
+A test player carries the provider's feed id wherever the provider serves it today, so the
+sync and the test data share one participant. BALLDONTLIE's free tier serves NFL and NCAAF
+teams, PGA players, and MLB and WNBA teams through their games; take each id from the
+provider's own response, in the form its sync stores it
+([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md) *Participants*), never from memory. A
+cloud session cannot reach the provider: fetch from a machine with the key.
 
 ## The one feed for most sports: ESPN
 

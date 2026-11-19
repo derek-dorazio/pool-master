@@ -4,7 +4,6 @@
  * module's field refresh (plans/124 §4.4a), so there is one transform, not two.
  */
 import type {
-  AmbiguousFeedParticipantDto,
   ProviderEventDto,
   ProviderManualSyncSubmissionResponse,
   ProviderSummaryDto,
@@ -14,7 +13,7 @@ import type {
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
-import type { AmbiguousFeedParticipant, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
@@ -104,22 +103,6 @@ export function toUnmappedProviderParticipantDto(participant: UnmappedParticipan
     externalId: participant.externalId,
     externalName: participant.externalName,
     sport: participant.sport,
-  };
-}
-
-export function toAmbiguousFeedParticipantDto(row: AmbiguousFeedParticipant): AmbiguousFeedParticipantDto {
-  return {
-    id: row.id,
-    sportLeagueId: row.sportLeagueId,
-    providerId: row.providerId,
-    externalId: row.externalId,
-    feedName: row.feedName,
-    candidates: row.candidates.map((candidate) => ({ participantId: candidate.participantId, name: candidate.name })),
-    events: row.events.map((event) => ({ sportEventId: event.sportEventId, name: event.name, startDate: event.startDate.toISOString() })),
-    resolvedAt: row.resolvedAt?.toISOString() ?? null,
-    resolvedParticipantId: row.resolvedParticipantId,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
   };
 }
 

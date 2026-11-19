@@ -83,7 +83,6 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     }),
     lifecycle,
     contests: { recheckReminders: reminderRechecks },
-    needsLinking: store.needsLinkingRepo(),
     leaderboards,
     logger,
     now: () => NOW,
@@ -233,6 +232,18 @@ describe('SportEventService.importProviderEventYear', () => {
     ]);
   });
 
+  it('creates the provider\'s event beside a "Test- " event the test data loaded with its name and dates, and leaves the test event as it was (#1850)', async () => {
+    const { service, sportLeague, sportEvents } = setup();
+    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, name: 'Test- Alpha Open', startDate: slate[0].startDate });
+    const before = await sportEvents.findById(testEvent.id);
+
+    const result = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: [slate[0]] });
+
+    expect(result.created.map(({ event }) => ({ name: event.name, externalId: event.externalId }))).toEqual([{ name: 'Alpha Open', externalId: 'pga-2026-a' }]);
+    expect(result.skipped).toEqual([]);
+    expect(await sportEvents.findById(testEvent.id)).toEqual(before);
+  });
+
   it('creates nothing on a second run, reporting every event as already linked', async () => {
     const { service, sportLeague } = setup();
     await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: slate });
@@ -322,6 +333,17 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'A Links', endDate: listed.endDate }));
+  });
+
+  it('never changes a "Test- " event, which no provider event is linked to, though the provider sends an event of its name (#1850)', async () => {
+    const { service, sportLeague, sportEvents } = setup();
+    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, name: 'Test- Alpha Open', startDate: listed.startDate });
+    const before = await sportEvents.findById(testEvent.id);
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Test- Alpha Open', startDate: new Date(listed.startDate.getTime() + DAY) }] });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(testEvent.id)).toEqual(before);
   });
 
   it('logs an event whose update fails and still keeps the league\'s other events current', async () => {

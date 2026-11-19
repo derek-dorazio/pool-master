@@ -3163,6 +3163,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/participants/provider-mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a provider's identities for a sport's participants
+         * @description Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to, so it never makes a second one beside the sync's (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         */
+        get: operations["listSportProviderMappings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/participants/{id}": {
         parameters: {
             query?: never;
@@ -3577,46 +3597,6 @@ export interface paths {
         get: operations["listUnmappedProviderParticipants"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/ingestion/ambiguous-participants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List feed participants that need linking
-         * @description Every feed participant the sync could not link on its own because its name matches two or more of the site's participants, still open, oldest first; never paged. `sportLeagueId` keeps one sport league's. Each names its candidates and the events whose fields sent it; it is on none of those fields until resolved with resolveAmbiguousFeedParticipant.
-         */
-        get: operations["listAmbiguousFeedParticipants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/ingestion/ambiguous-participants/{id}/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Resolve a feed participant that needs linking
-         * @description Links the feed participant to one of its candidates (LINK, with MANUAL confidence) or creates it as a new participant from the feed's latest copy (CREATE), affiliated with the sport leagues its tour names as a sync would. Either maps its feed id, so the next sync links it on its own, and writes its field row in every event that sent it at once. Answers the row, resolved. 404 FEED_PARTICIPANT_LINK_NOT_FOUND; 409 FEED_PARTICIPANT_LINK_RESOLVED when it was resolved already, FEED_PARTICIPANT_ALREADY_MAPPED when its feed id was bound some other way since; 422 FEED_PARTICIPANT_NOT_A_CANDIDATE when the pick is not a candidate, or the provider maps it since.
-         */
-        post: operations["resolveAmbiguousFeedParticipant"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9295,6 +9275,13 @@ export interface components {
             /** @description The provider's identifier for the competitor — from the unmapped-competitor list. */
             externalId: string;
         };
+        /** @description Whose provider identities to list: one provider's, in one sport. */
+        SportProviderMappingListQuery: {
+            /** @description The provider whose identities to list. */
+            providerId: string;
+            /** @description Only the identities of this sport's participants. */
+            sportId: string;
+        };
         /** @description A single provider identity of a participant. */
         ParticipantProviderMappingResponse: {
             /** @description A provider's identifier for a participant — how synced data finds them. */
@@ -10704,13 +10691,8 @@ export interface components {
             key: "FIELD_LINKED";
             /** @description Whether the check passed. */
             passed: boolean;
-            /** @description FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes. */
-            value: {
-                /** @description How many active field participants have no mapping from the event's provider, so its scores would not reach them. */
-                unlinkedParticipants: number;
-                /** @description How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet. */
-                needsLinking: number;
-            };
+            /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
+            value: number;
         } | {
             /** @enum {string} */
             key: "TIERS_ASSIGNED";
@@ -10907,13 +10889,8 @@ export interface components {
                 key: "FIELD_LINKED";
                 /** @description Whether the check passed. */
                 passed: boolean;
-                /** @description FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes. */
-                value: {
-                    /** @description How many active field participants have no mapping from the event's provider, so its scores would not reach them. */
-                    unlinkedParticipants: number;
-                    /** @description How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet. */
-                    needsLinking: number;
-                };
+                /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
+                value: number;
             } | {
                 /** @enum {string} */
                 key: "TIERS_ASSIGNED";
@@ -11155,13 +11132,8 @@ export interface components {
                     key: "FIELD_LINKED";
                     /** @description Whether the check passed. */
                     passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes. */
-                    value: {
-                        /** @description How many active field participants have no mapping from the event's provider, so its scores would not reach them. */
-                        unlinkedParticipants: number;
-                        /** @description How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet. */
-                        needsLinking: number;
-                    };
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
+                    value: number;
                 } | {
                     /** @enum {string} */
                     key: "TIERS_ASSIGNED";
@@ -11398,13 +11370,8 @@ export interface components {
                     key: "FIELD_LINKED";
                     /** @description Whether the check passed. */
                     passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes. */
-                    value: {
-                        /** @description How many active field participants have no mapping from the event's provider, so its scores would not reach them. */
-                        unlinkedParticipants: number;
-                        /** @description How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet. */
-                        needsLinking: number;
-                    };
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
+                    value: number;
                 } | {
                     /** @enum {string} */
                     key: "TIERS_ASSIGNED";
@@ -11702,13 +11669,8 @@ export interface components {
                     key: "FIELD_LINKED";
                     /** @description Whether the check passed. */
                     passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: what is not linked to the event's provider yet; both 0 passes. */
-                    value: {
-                        /** @description How many active field participants have no mapping from the event's provider, so its scores would not reach them. */
-                        unlinkedParticipants: number;
-                        /** @description How many names the provider sent for the event's field wait in Needs linking, matched to no participant yet. */
-                        needsLinking: number;
-                    };
+                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
+                    value: number;
                 } | {
                     /** @enum {string} */
                     key: "TIERS_ASSIGNED";
@@ -24371,159 +24333,6 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             }[];
         };
-        /** @description A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: "needs linking" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here. */
-        AmbiguousFeedParticipantDto: {
-            /**
-             * Format: uuid
-             * @description UUID string.
-             */
-            id: string;
-            /**
-             * Format: uuid
-             * @description The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it.
-             */
-            sportLeagueId: string;
-            /** @description The provider whose feed sent it. */
-            providerId: string;
-            /** @description The provider's id for it. Resolving maps this id, so the next sync links it on its own. */
-            externalId: string;
-            /** @description Its name as the feed spells it, at the latest sync that found it ambiguous. */
-            feedName: string;
-            /** @description The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out. */
-            candidates: {
-                /**
-                 * Format: uuid
-                 * @description UUID string.
-                 */
-                participantId: string;
-                name: string;
-            }[];
-            /** @description The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release's "every participant linked" check (#1823) holds each of them while it is open. */
-            events: {
-                /**
-                 * Format: uuid
-                 * @description UUID string.
-                 */
-                sportEventId: string;
-                name: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startDate: string;
-            }[];
-            /**
-             * Format: date-time
-             * @description When it was linked or created. Null while it needs linking.
-             */
-            resolvedAt: string | null;
-            /**
-             * Format: uuid
-             * @description The participant it was linked to or created as. Null while open, or once that participant is deleted.
-             */
-            resolvedParticipantId: string | null;
-            /**
-             * Format: date-time
-             * @description When a sync first found it ambiguous.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string;
-        };
-        /** @description Filters for the needs-linking list. */
-        AmbiguousFeedParticipantListQuery: {
-            /**
-             * Format: uuid
-             * @description Only the ones of this sport league. Without it, every sport league's.
-             */
-            sportLeagueId?: string;
-        };
-        /** @description The feed participants that still need linking, oldest first. Never paged. */
-        AmbiguousFeedParticipantListResponse: {
-            participants: {
-                /**
-                 * Format: uuid
-                 * @description UUID string.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport league of the event the feed first sent it in: where the league's Roster and Needs attention list it.
-                 */
-                sportLeagueId: string;
-                /** @description The provider whose feed sent it. */
-                providerId: string;
-                /** @description The provider's id for it. Resolving maps this id, so the next sync links it on its own. */
-                externalId: string;
-                /** @description Its name as the feed spells it, at the latest sync that found it ambiguous. */
-                feedName: string;
-                /** @description The site's participants it could be, as of the latest sync: same sport and name (within the sport league its feed names, with accents, case, punctuation and a missing Jr. ignored), none mapped from this provider. One deleted since is left out. */
-                candidates: {
-                    /**
-                     * Format: uuid
-                     * @description UUID string.
-                     */
-                    participantId: string;
-                    name: string;
-                }[];
-                /** @description The events whose fields sent it, soonest first. It is on none of their fields until it is resolved; the automatic release's "every participant linked" check (#1823) holds each of them while it is open. */
-                events: {
-                    /**
-                     * Format: uuid
-                     * @description UUID string.
-                     */
-                    sportEventId: string;
-                    name: string;
-                    /**
-                     * Format: date-time
-                     * @description ISO 8601 datetime string.
-                     */
-                    startDate: string;
-                }[];
-                /**
-                 * Format: date-time
-                 * @description When it was linked or created. Null while it needs linking.
-                 */
-                resolvedAt: string | null;
-                /**
-                 * Format: uuid
-                 * @description The participant it was linked to or created as. Null while open, or once that participant is deleted.
-                 */
-                resolvedParticipantId: string | null;
-                /**
-                 * Format: date-time
-                 * @description When a sync first found it ambiguous.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description How a root admin resolves a feed participant that needs linking. */
-        ResolveAmbiguousFeedParticipantRequest: {
-            /**
-             * @description Link it to one of its candidates.
-             * @enum {string}
-             */
-            resolution: "LINK";
-            /**
-             * Format: uuid
-             * @description The candidate it is: one of `candidates`, or 422 FEED_PARTICIPANT_NOT_A_CANDIDATE.
-             */
-            participantId: string;
-        } | {
-            /**
-             * @description None of the candidates is it.
-             * @enum {string}
-             */
-            resolution: "CREATE";
-        };
         /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
         ProviderEventDto: {
             /** @description The provider's identifier for the event. */
@@ -35590,6 +35399,40 @@ export interface operations {
             };
         };
     };
+    listSportProviderMappings: {
+        parameters: {
+            query: {
+                /** @description The provider whose identities to list. */
+                providerId: string;
+                /** @description Only the identities of this sport's participants. */
+                sportId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A participant's provider identities. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParticipantProviderMappingListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     getParticipant: {
         parameters: {
             query?: never;
@@ -36818,118 +36661,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    listAmbiguousFeedParticipants: {
-        parameters: {
-            query?: {
-                /** @description Only the ones of this sport league. Without it, every sport league's. */
-                sportLeagueId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The feed participants that still need linking, oldest first. Never paged. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AmbiguousFeedParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    resolveAmbiguousFeedParticipant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ResolveAmbiguousFeedParticipantRequest"];
-            };
-        };
-        responses: {
-            /** @description A participant a provider's feed sent that the sync could not link on its own, because its name matches two or more of the site's participants: "needs linking" on screen. A feed participant with one match is linked by the sync, and one with none is created; neither ever appears here. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AmbiguousFeedParticipantDto"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };

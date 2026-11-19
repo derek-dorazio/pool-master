@@ -1,5 +1,5 @@
 /**
- * What a sport data load did, or in a dry run would do: one row per sport league, player,
+ * What a test data load did, or in a dry run would do: one row per sport league, player,
  * event, event field, bracket and box scores (and, with test participants, per test player, league,
  * membership, contest and entry), and the markdown the workflow summary shows. No I/O.
  */
@@ -86,9 +86,9 @@ function cell(text: string): string {
  */
 export function formatLoadReport(file: SportDataFile, mode: LoadMode, rows: readonly LoadRow[]): string {
   const lines = [
-    `### Load sport data (${mode === LoadMode.APPLY ? 'apply' : 'dry run, nothing written'})`,
+    `### Load test data (${mode === LoadMode.APPLY ? 'apply' : 'dry run, nothing written'})`,
     '',
-    `${file.scope.sport} ${file.scope.season}: ${file.scope.sportLeagues.join(', ')}. Contents: ${file.scope.contents.join(', ')}.${isTestSlate(file) ? ' Test slate.' : file.testData ? ' Test data.' : ''}`,
+    `${file.scope.sport} ${file.scope.season}: ${file.scope.sportLeagues.join(', ')}. Contents: ${file.scope.contents.join(', ')}.${isTestSlate(file) ? ' Test slate.' : ' Test seed.'}`,
     `Gathered ${file.provenance.gatheredAt} by ${file.provenance.gatheredBy} from ${file.provenance.sources.map((source) => `[${source.name}](${source.url})`).join(', ')}.`,
     '',
     `| | ${ACTION_ORDER.join(' | ')} |`,

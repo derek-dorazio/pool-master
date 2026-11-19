@@ -1,18 +1,21 @@
 /**
- * Loads a sport data file (sport-data-file.ts) into a running PoolMaster as a root admin.
+ * Loads a test data file (sport-data-file.ts) into a running PoolMaster as a root admin.
  *
  * Usage:
  *   POOLMASTER_SEED_BASE_URL=http://localhost:3000 \
  *   POOLMASTER_SEED_ADMIN_IDENTIFIER=poolmaster-admin \
  *   POOLMASTER_SEED_ADMIN_PASSWORD=... \
- *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--allow-test-data] [--report report.md]
+ *   npm run seed:golf -- [--file golf-2026.json] [--mode dry-run|apply] [--report report.md]
  *                        [--event "<event name>"] [--replace-field] [--all-test-data] [--with-participants]
- *                        [--events-per-league 2] [--release]
+ *                        [--events-per-league 2]
+ *
+ * Every file is test data (#1850), so every run first reads the site's environment from /version
+ * and refuses anything that is not a local or QA test target. Real events and fields come from
+ * the provider sync, never from a file.
  *
  * --file is a path inside this folder (default golf-2026.json). --mode defaults to dry-run,
  * which reads the site and reports what applying would change without writing anything.
- * --allow-test-data lets a file with `testData: true` load; pass it only for a local or QA
- * site. --report also writes the run's markdown report to that path.
+ * --report also writes the run's markdown report to that path.
  *
  * --event names the event a test slate (test-slates/) fills; only a slate takes it, and a
  * slate needs it. --replace-field removes field rows the slate does not list instead of
@@ -21,9 +24,8 @@
  * --all-test-data loads every test data file in this folder (not the test slates) in one run,
  * in place of --file; a file that fails is reported and the rest still load. --with-participants
  * also loads each test data file's test players, leagues, contests and entries
- * (test-participants.ts). Both are for QA only: the run reads the site's environment from
- * /version first and refuses anything that is not a test target. Every run is re-entrant, so
- * running again after a failure fills in what is missing.
+ * (test-participants.ts). Every run is re-entrant, so running again after a failure fills in
+ * what is missing.
  *
  * A test seed (a test data file that is not a slate) loads only a few events of each sport
  * league, named "Test- ...", with dates rolled from the run: --events-per-league of them
@@ -36,13 +38,8 @@
  * the games played since, moves an event that has started to In Progress, and moves one with every
  * result in (a match event) or past its end (any other) to Completed, which settles its contests.
  *
- * --release, for a real file, releases each draft event whose field the file carries and that
- * has not started, with tiers by the field's ranking and default prices where missing, so an
- * apply leaves it open for contests. Without it a real file's events stay drafts. A test seed
- * releases as before either way.
- *
  * The base URL is the site root that serves /api/v1 (the API itself locally, the site on QA).
- * QA runs this through the "Load sport data" workflow, never on deploy.
+ * QA runs this through the "Load test data" workflow, never on deploy.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -129,14 +126,12 @@ async function main(): Promise<void> {
     options: {
       file: { type: 'string' },
       mode: { type: 'string', default: 'dry-run' },
-      'allow-test-data': { type: 'boolean', default: false },
       report: { type: 'string' },
       event: { type: 'string' },
       'replace-field': { type: 'boolean', default: false },
       'all-test-data': { type: 'boolean', default: false },
       'with-participants': { type: 'boolean', default: false },
       'events-per-league': { type: 'string', default: '2' },
-      release: { type: 'boolean', default: false },
     },
   });
   const mode = values.mode === 'apply' ? LoadMode.APPLY : values.mode === 'dry-run' ? LoadMode.DRY_RUN : null;
@@ -148,23 +143,18 @@ async function main(): Promise<void> {
   if (allTestData && (values.file !== undefined || values.event !== undefined || values['replace-field'])) {
     throw new Error('--all-test-data loads every test data file; it takes no --file, --event or --replace-field.');
   }
-  if ((allTestData || withParticipants) && !values['allow-test-data']) {
-    throw new Error('--all-test-data and --with-participants load test data; pass --allow-test-data too.');
-  }
-  if (allTestData || withParticipants) {
-    refuseUnlessTestTarget(await siteEnvironment(baseUrl), allTestData ? 'Loading every test data file' : 'Loading test participants');
-  }
+  refuseUnlessTestTarget(await siteEnvironment(baseUrl), 'Loading test data');
 
   const dataDir = dirname(fileURLToPath(import.meta.url));
   const names = allTestData ? allDataFiles(dataDir) : [values.file ?? 'golf-2026.json'];
-  /** The file to load, or null for a real data file that a load-every-test-file run passes over. */
+  /** The file to load, or null for a test slate, which a load-every-test-file run passes over. */
   const readFile = (name: string): SportDataFile | null => {
     const path = resolve(dataDir, name);
     const inside = relative(dataDir, path);
     if (inside.startsWith('..') || isAbsolute(inside)) throw new Error(`--file ${name} is outside ${dataDir}.`);
-    const file = parseSportDataFile(JSON.parse(readFileSync(path, 'utf8')) as unknown, { allowTestData: values['allow-test-data'] });
-    if (allTestData && (!file.testData || isTestSlate(file))) return null;
-    if (withParticipants && (!file.testData || isTestSlate(file))) throw new Error(`--with-participants goes with a test data file, and ${name} is not one.`);
+    const file = parseSportDataFile(JSON.parse(readFileSync(path, 'utf8')) as unknown);
+    if (allTestData && isTestSlate(file)) return null;
+    if (withParticipants && isTestSlate(file)) throw new Error(`--with-participants goes with a test seed, and ${name} is a test slate.`);
     return file;
   };
 
@@ -189,7 +179,7 @@ async function main(): Promise<void> {
       const log = (line: string): void => console.log(line);
       const participants = { getClient, signIn: signInPlayer, mode, log };
       let rows: LoadRow[];
-      if (file.testData && !isTestSlate(file)) {
+      if (!isTestSlate(file)) {
         // A test seed: a few "Test-" events per sport league, each loaded with its own rolled dates.
         const now = new Date();
         // First the events earlier runs loaded: the games played since, and In Progress or Completed (#1720).
@@ -214,7 +204,6 @@ async function main(): Promise<void> {
           log,
           ...(values.event ? { event: values.event } : {}),
           replaceField: values['replace-field'],
-          release: values.release,
         });
         if (withParticipants) rows.push(...await loadTestParticipants(file, participants));
       }
@@ -227,7 +216,7 @@ async function main(): Promise<void> {
       const reason = errorMessage(error);
       console.error(`${name} failed: ${reason}`);
       failed.push(name);
-      reports.push(`## ${name}\n\n### Load sport data failed\n\n\`\`\`\n${reason}\n\`\`\`\n`);
+      reports.push(`## ${name}\n\n### Load test data failed\n\n\`\`\`\n${reason}\n\`\`\`\n`);
     }
   }
   if (values.report) writeFileSync(values.report, reports.join('\n'));

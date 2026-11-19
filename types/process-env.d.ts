@@ -76,7 +76,7 @@ declare global {
       // the site's origin, for event page link previews (clients/poolmaster/scripts/write-event-page-shells.mjs)
       POOLMASTER_WEBAPP_URL?: string;
 
-      // sport data loader CLI (packages/core-api/scripts/seed-golf/cli.ts, the "Load sport data" workflow)
+      // test data loader CLI (packages/core-api/scripts/seed-golf/cli.ts, the "Load test data" workflow)
       POOLMASTER_SEED_BASE_URL?: string;
       POOLMASTER_SEED_ADMIN_IDENTIFIER?: string;
       POOLMASTER_SEED_ADMIN_PASSWORD?: string;
