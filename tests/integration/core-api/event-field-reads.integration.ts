@@ -121,7 +121,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
 }
 
 describe('An event\'s field', () => {
-  it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
+  it('is read in one call on the field table, each row with its participant, whether it is in the event league, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
 
     const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id));
@@ -130,7 +130,6 @@ describe('An event\'s field', () => {
     // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
     expect(statementCounts(statements)).toEqual([
       ['SELECT event_series', 1],
-      ['SELECT participant_league_affiliations', 1],
       ['SELECT participants', 1],
       ['SELECT sport_event_matches', 2],
       ['SELECT sport_event_participant_golf_rounds', 1],

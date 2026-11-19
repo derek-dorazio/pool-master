@@ -20,10 +20,9 @@ import {
 import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
-import { participantLeagueId } from '../../support/participant-league';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -39,7 +38,7 @@ beforeEach(() => cleanupTestData());
 
 async function createField(suffix: string) {
   const prisma = getPrisma();
-  const sport = await prisma.sport.upsert({
+  await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
     create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
@@ -60,7 +59,7 @@ async function createField(suffix: string) {
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth'].map(async (name, index) => {
     const participant = await prisma.participant.create({
-      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
+      data: { sportLeagueId: await fixtureTourId(prisma), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
     });
     const sep = await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id },

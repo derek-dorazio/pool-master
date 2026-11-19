@@ -326,8 +326,9 @@ describe('ParticipantRepository — a sport league\'s roster (#1853)', () => {
   async function setup() {
     const sport = await golfSport();
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
-    const pga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
-    const lpga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: 'LPGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const suffix = randomUUID().slice(0, 8);
+    const pga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: `Roster Tour ${suffix}`, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const lpga = await leagues.create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: `Roster Women's Tour ${suffix}`, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const [ben, al, cy] = [
       await createLeagueParticipant(pga.id, 'Ben'),
       await createLeagueParticipant(pga.id, 'Al'),
