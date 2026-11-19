@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { FormField, Input } from "./form-field";
-import { FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
+import { DetailEditModal, FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
 import { Text } from "./text";
 
 const meta = {
@@ -68,20 +68,31 @@ export const ReadOnlyDetail: StoryObj = {
   ),
 };
 
-/** "See it, then Edit": the view with Edit beside Close, which turns the dialog into its form. */
-export const ReadOnlyDetailWithEdit: StoryObj = {
-  render: () => (
-    <ReadOnlyDetailModal
-      detailContent={<Text>PGA Tour · LPGA Tour</Text>}
-      details={[
-        { id: "cap", label: "Salary cap", value: "$50,000" },
-        { id: "unit", label: "Unit", value: "$100" },
+function DetailEditDemo() {
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [days, setDays] = useState("3");
+  return (
+    <DetailEditModal
+      facts={[
+        { id: "status", label: "Status", value: "On" },
+        { id: "auto-release", label: "Auto release", value: `${days} days before start` },
       ]}
-      onCancel={() => undefined}
-      onEdit={() => undefined}
+      mode={mode}
+      onCancel={() => setMode("view")}
+      onCancelEdit={() => setMode("view")}
+      onEdit={() => setMode("edit")}
       onOpenChange={() => undefined}
+      onSave={() => setMode("view")}
       open
-      title="Standard"
-    />
-  ),
-};
+      saveLabel="Save"
+      title={mode === "view" ? "MLB settings" : "MLB settings · Edit"}
+    >
+      <FormField label="Auto release (days before start)">
+        <Input onChange={(event) => setDays(event.target.value)} value={days} />
+      </FormField>
+    </DetailEditModal>
+  );
+}
+
+/** Settings open as facts with Close and Edit; Edit swaps in the form with Cancel and Save. */
+export const DetailEdit: StoryObj = { render: () => <DetailEditDemo /> };

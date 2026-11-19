@@ -1,0 +1,97 @@
+import { assertNever, type Sport } from '@poolmaster/shared/domain';
+import {
+  Button,
+  Chip,
+  formatDateTimeDisplay,
+  DetailsPeek,
+  SectionRow,
+  SectionRows,
+  Text,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
+import type { SportLeagueOverviewDto } from '@/lib/api';
+import { buildSportEventPath } from './manage-navigation';
+import { RELEASE_CHECK_LABELS, SPORT_LEAGUE_ISSUE_LABELS, SYNC_KIND_LABELS } from './sport-league-overview-text';
+
+import type { SportLeagueIssue } from './sport-league-overview-text';
+
+/**
+ * One sport league's Issues cell: a short chip per issue type with its count, in the fixed order
+ * the read gives (Sync, Release). Hovering a chip lists the items behind the count, each leading
+ * to its fix: a failed sync opens its run, a held release opens its event.
+ */
+export function SportLeagueIssueChips({
+  onOpenSyncRun,
+  overview,
+}: {
+  onOpenSyncRun: (syncRunId: string) => void;
+  overview: Pick<SportLeagueOverviewDto, 'id' | 'issues' | 'name' | 'sport'>;
+}) {
+  if (overview.issues.length === 0) {
+    return <Text tone="muted">—</Text>;
+  }
+  return (
+    <span className="inline-flex flex-wrap gap-1">
+      {overview.issues.map((issue) => (
+        <DetailsPeek
+          icon={(
+            <Chip data-testid={`root-admin-sports-issue-${overview.id}-${issue.type}`} tone="danger">
+              {`${SPORT_LEAGUE_ISSUE_LABELS[issue.type]} ${String(issue.count)}`}
+            </Chip>
+          )}
+          key={issue.type}
+          label={`${overview.name}: ${SPORT_LEAGUE_ISSUE_LABELS[issue.type]} issues`}
+          testId={`root-admin-sports-issue-${overview.id}-${issue.type}-popover`}
+          trigger="cell"
+        >
+          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} />
+        </DetailsPeek>
+      ))}
+    </span>
+  );
+}
+
+function IssueItems({ issue, onOpenSyncRun, sport }: { issue: SportLeagueIssue; onOpenSyncRun: (syncRunId: string) => void; sport: Sport }) {
+  const displayPreferences = useDisplayPreferences();
+  const when = (occurredAt: string) => formatDateTimeDisplay(occurredAt, displayPreferences);
+  switch (issue.type) {
+    case 'SYNC':
+      return (
+        <SectionRows>
+          {issue.items.map((item) => (
+            <SectionRow
+              actions={(
+                <Button
+                  data-testid={`root-admin-sports-issue-run-${item.target.id}`}
+                  onClick={() => onOpenSyncRun(item.target.id)}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Open run
+                </Button>
+              )}
+              facts={`${when(item.occurredAt)} · ${item.label}`}
+              key={item.target.id}
+              name={`${SYNC_KIND_LABELS[item.syncKind]} failed`}
+            />
+          ))}
+        </SectionRows>
+      );
+    case 'RELEASE':
+      return (
+        <SectionRows>
+          {issue.items.map((item) => (
+            <SectionRow
+              facts={`${when(item.occurredAt)} · ${item.failedChecks.map((key) => RELEASE_CHECK_LABELS[key]).join(', ')} failed`}
+              key={item.target.id}
+              name={item.label}
+              testId={`root-admin-sports-issue-event-${item.target.id}`}
+              to={buildSportEventPath(sport, item.target.id)}
+            />
+          ))}
+        </SectionRows>
+      );
+    default:
+      return assertNever(issue);
+  }
+}

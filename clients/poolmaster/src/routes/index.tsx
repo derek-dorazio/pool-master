@@ -48,7 +48,6 @@ import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin
 import { RootAdminParticipantEditPage } from '@/features/root-admin/root-admin-participant-edit-page';
 import { RootAdminParticipantHomePage } from '@/features/root-admin/root-admin-participant-home-page';
 import { RootAdminParticipantListPage } from '@/features/root-admin/root-admin-participant-list-page';
-import { RootAdminSportLeagueListPage } from '@/features/root-admin/root-admin-sport-league-list-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { RootAdminSportEventEditPage } from '@/features/root-admin/root-admin-sport-event-edit-page';
 import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
@@ -59,10 +58,10 @@ import { RootAdminSportEventListPage } from '@/features/root-admin/root-admin-sp
 import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
-import { ManageSportLandingRedirect } from '@/features/root-admin/manage-sport-landing-redirect';
+import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { SPORTS_LANDING_PATH } from '@/features/root-admin/manage-navigation';
+import { SPORTS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
@@ -396,17 +395,18 @@ export const router = createBrowserRouter([
                     element: <RootAdminEventsPage />,
                   },
                   {
-                    // Every sport's pages, one copy each (plans/racing-sports.md Q9.6).
+                    // Every sport league in one grid, Manage's landing page (#1848).
                     path: 'sports',
-                    element: <Navigate replace to={SPORTS_LANDING_PATH} />,
+                    element: <RootAdminSportsPage />,
                   },
                   { path: 'sports/profiles', element: <RootAdminProfilesPage /> },
                   {
                     path: 'sports/:sport',
                     element: <ManageSportRoute />,
                     children: [
-                      { index: true, element: <ManageSportLandingRedirect /> },
-                      { path: 'leagues', element: <RootAdminSportLeagueListPage /> },
+                      // A sport's own entry and its old league list now open the Sports page (#1848).
+                      { index: true, element: <Navigate replace to={SPORTS_PATH} /> },
+                      { path: 'leagues', element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'leagues/new', element: <RootAdminSportLeagueCreatePage /> },
                       { path: 'leagues/:leagueId', element: <RootAdminSportLeagueHomePage /> },
                       { path: 'leagues/:leagueId/edit', element: <RootAdminSportLeagueEditPage /> },

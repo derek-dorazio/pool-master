@@ -53,7 +53,7 @@ export function RootAdminUnmappedParticipantsPage() {
           />
         )}
         testId="root-admin-unmapped-participants-header"
-        title="Unmapped Competitors"
+        title="Unmapped participants"
         titleAside={(
           <HelpTip label="About unmapped competitors" testId="root-admin-unmapped-participants-help">
             Competitors a provider reports that no participant is mapped to. Their synced scores

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
 import {
+  DetailEditModal,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
@@ -146,28 +147,6 @@ describe("pool-master-3ew: shared modal templates", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
-  it("offers Edit beside Close when the read-only modal can turn into its form, and each button does its own thing", () => {
-    const handleCancel = vi.fn();
-    const handleEdit = vi.fn();
-
-    render(
-      <ReadOnlyDetailModal
-        detailContent={<p>Used by two sport leagues</p>}
-        editTestId="detail-edit"
-        onCancel={handleCancel}
-        onEdit={handleEdit}
-        onOpenChange={vi.fn()}
-        open
-        title="Standard"
-      />,
-    );
-
-    fireEvent.click(screen.getByTestId("detail-edit"));
-    expect(handleEdit).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    expect(handleCancel).toHaveBeenCalledTimes(1);
-  });
-
   it("shows a whole page unboxed in an xl read-only modal that fills a phone's screen, and boxes a payload otherwise", () => {
     const { rerender } = render(
       <ReadOnlyDetailModal
@@ -238,5 +217,81 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByTestId("status-detail-value")).toHaveTextContent(
       "Completed",
     );
+  });
+
+  describe("DetailEditModal", () => {
+    const facts = [{ id: "status", label: "Status", value: "On", testId: "status-fact" }];
+
+    function showDetailEdit(mode: "view" | "edit", overrides: { canSave?: boolean; error?: Error } = {}) {
+      const handlers = { onCancel: vi.fn(), onCancelEdit: vi.fn(), onEdit: vi.fn(), onSave: vi.fn() };
+      render(
+        <DetailEditModal
+          canSave={overrides.canSave}
+          error={overrides.error}
+          errorFallback="We could not save these settings."
+          facts={facts}
+          mode={mode}
+          onOpenChange={vi.fn()}
+          open
+          saveLabel="Save"
+          testId="settings"
+          title="MLB settings"
+          {...handlers}
+        >
+          <input aria-label="Days" data-testid="days-input" />
+        </DetailEditModal>,
+      );
+      return handlers;
+    }
+
+    it("opens in view mode showing the facts with Close and Edit, and no form", () => {
+      const handlers = showDetailEdit("view");
+
+      expect(screen.getByTestId("status-fact")).toHaveTextContent("On");
+      expect(screen.queryByTestId("days-input")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("settings-edit"));
+      expect(handlers.onEdit).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+      expect(handlers.onCancel).toHaveBeenCalled();
+    });
+
+    it("in edit mode shows the form with Cancel and Save instead of the facts", () => {
+      const handlers = showDetailEdit("edit");
+
+      expect(screen.getByTestId("days-input")).toBeInTheDocument();
+      expect(screen.queryByTestId("status-fact")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("settings-save"));
+      expect(handlers.onSave).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(handlers.onCancelEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows its extra view content under the facts in view mode only", () => {
+      const { rerender } = render(
+        <DetailEditModal facts={facts} mode="view" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Standard" viewContent={<p>Used by PGA Tour</p>}>
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+      expect(screen.getByText("Used by PGA Tour")).toBeInTheDocument();
+
+      rerender(
+        <DetailEditModal facts={facts} mode="edit" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Standard" viewContent={<p>Used by PGA Tour</p>}>
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+      expect(screen.queryByText("Used by PGA Tour")).not.toBeInTheDocument();
+    });
+
+    it("disables Save while the form cannot be saved", () => {
+      showDetailEdit("edit", { canSave: false });
+
+      expect(screen.getByTestId("settings-save")).toBeDisabled();
+    });
+
+    it("shows a failed save above the actions in edit mode", () => {
+      showDetailEdit("edit", { error: new Error("boom") });
+
+      expect(screen.getByText("Save failed")).toBeInTheDocument();
+    });
   });
 });
