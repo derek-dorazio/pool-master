@@ -977,7 +977,7 @@ describe('The Matches section of a match event\'s Rounds and matches tab', () =>
     await userEvent.click(await screen.findByTestId('root-admin-event-match-dialog-settle-again-confirm'));
     await waitFor(() => expect(rebuildEventLeaderboardsMock).toHaveBeenCalledWith({ path: { eventId: 'evt-1' } }));
 
-    await userEvent.click(within(await screen.findByTestId('root-admin-event-match-dialog')).getByRole('button', { name: 'Close', exact: true }));
+    await userEvent.click(within(await screen.findByTestId('root-admin-event-match-dialog')).getByRole('button', { name: 'Close' }));
     await userEvent.click(within(screen.getByTestId('root-admin-event-match-2')).getByRole('button', { name: /Open details/ }));
     expect(within(await screen.findByTestId('root-admin-event-match-dialog')).queryByTestId('root-admin-event-match-dialog-settle-again')).not.toBeInTheDocument();
   });
