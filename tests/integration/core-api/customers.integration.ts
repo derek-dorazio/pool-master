@@ -99,8 +99,13 @@ describe('GET /api/v1/customers/leagues', () => {
 });
 
 describe('GET /api/v1/customers/users', () => {
-  it('lists every user with role, status, active leagues by name, joined date and last sign-in', async () => {
+  it('lists every user with role, status, active leagues sorted by name, joined date and last sign-in', async () => {
     const { league, member, former } = await seedLeague('Users Grid', new Date(Date.now() + DAY));
+    // A second league for the member, whose name sorts first.
+    const second = await getPrisma().league.create({
+      data: { cupName: 'Aardvark Cup', leagueCode: `AA${randomUUID().slice(0, 6).toUpperCase()}`, name: 'Aardvark League' },
+    });
+    await getPrisma().leagueMembership.create({ data: { leagueId: second.id, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE' } });
     await getPrisma().user.update({ where: { id: former.user.id }, data: { isActive: false } });
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
@@ -115,7 +120,10 @@ describe('GET /api/v1/customers/users', () => {
       firstName: 'Cy',
       isRootAdmin: false,
       isActive: true,
-      leagues: [{ id: league.id, leagueCode: league.leagueCode, name: league.name }],
+      leagues: [
+        { id: second.id, leagueCode: second.leagueCode, name: 'Aardvark League' },
+        { id: league.id, leagueCode: league.leagueCode, name: league.name },
+      ],
       lastSignInAt: null,
     });
     // An inactive membership is not one of the user's leagues; an inactive account is still listed.

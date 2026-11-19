@@ -250,6 +250,8 @@ describe('Adding a co-owner to a team (#1355)', () => {
       ['SELECT squads', 2],
       ['SELECT users', 5],
       ['UPDATE squad_owner_invitations', 1],
+      // The new account's first sign-in (#1882).
+      ['UPDATE users', 1],
     ]);
   });
 });
