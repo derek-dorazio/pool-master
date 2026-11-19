@@ -445,11 +445,14 @@ export function buildApp() {
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });
-  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync });
-  app.register(activityModule, {
-    prefix: '/api/v1/activity',
-    activity: new ActivityService({ jobs: backgroundJobRepository, syncRuns: providerSyncRuns }),
+  const activity = new ActivityService({
+    jobs: backgroundJobRepository,
+    syncRuns: providerSyncRuns,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
   });
+  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync, activity });
+  app.register(activityModule, { prefix: '/api/v1/activity', activity });
   app.register(customersModule, {
     prefix: '/api/v1/customers',
     customers: new CustomerService({ reader: new PrismaCustomerReader(prisma), logger: app.log }),

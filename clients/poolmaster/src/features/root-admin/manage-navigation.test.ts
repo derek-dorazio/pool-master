@@ -2,8 +2,8 @@ import { SUPPORTED_SPORTS, Sport, sportPathSegment } from '@poolmaster/shared/do
 import { describe, expect, it } from 'vitest';
 import {
   MANAGE_LANDING_PATH,
-  buildManageSubTabs,
   buildManageTabs,
+  buildManageUserPath,
   buildSportEventPath,
   getManageBreadcrumbLabel,
   parseSportPathSegment,
@@ -59,41 +59,26 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['pricing'], 0)).toBe('Pricing');
   });
 
-  it('lights Providers, not Activity, on Run event sync, and Activity on the rest of the sync pages', () => {
+  it('lights Providers on Run event sync and Unmapped participants, and Activity on the Activity page', () => {
     const lit = (pathname: string) => buildManageTabs(pathname).filter((tab) => tab.isActive).map((tab) => tab.label);
 
-    expect(lit('/manage/sync/run-event-sync')).toEqual(['Providers']);
-    expect(lit('/manage/sync/unmapped-participants/map')).toEqual(['Providers']);
-    expect(lit('/manage/sync')).toEqual(['Activity']);
+    expect(lit('/manage/providers/run-event-sync')).toEqual(['Providers']);
+    expect(lit('/manage/providers/unmapped-participants/map')).toEqual(['Providers']);
+    expect(lit('/manage/activity')).toEqual(['Activity']);
     expect(lit('/manage/notifications')).toEqual(['Notifications']);
-    expect(lit('/manage/users/user-1')).toEqual(['Customers']);
+    expect(lit('/manage/customers/users')).toEqual(['Customers']);
     expect(lit('/manage/events')).toEqual(['Sports']);
     expect(lit('/manage/content-configuration/how-to-play')).toEqual(['Sports']);
     expect(lit('/manage/nowhere')).toEqual([]);
-  });
-
-  it('has no second row under Sports, whose leagues each carry their own tabs on the League page', () => {
-    expect(buildManageSubTabs('/manage/sports')).toBeNull();
-    expect(buildManageSubTabs('/manage/sports/horse-racing/events/evt-1')).toBeNull();
-    expect(buildManageSubTabs('/manage/sports/golf/leagues/league-1/events')).toBeNull();
   });
 
   it('names the profiles page\'s trail Profiles', () => {
     expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
   });
 
-  it('under Customers, shows Leagues and Users', () => {
-    expect(buildManageSubTabs('/manage/users/user-1')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Leagues', false],
-      ['Users', true],
-    ]);
-  });
-
-  it('has no second row under Activity, Notifications, Providers, Plans or Pricing', () => {
-    expect(buildManageSubTabs('/manage/sync')).toBeNull();
-    expect(buildManageSubTabs('/manage/notifications')).toBeNull();
-    expect(buildManageSubTabs('/manage/plans')).toBeNull();
-    expect(buildManageSubTabs('/manage/pricing')).toBeNull();
+  it('opens Customers on its Leagues tab, and names one user by a link to their dialog on the Users tab', () => {
+    expect(buildManageTabs('/manage/plans').find((tab) => tab.label === 'Customers')?.to).toBe('/manage/customers/leagues');
+    expect(buildManageUserPath('user-1')).toBe('/manage/customers/users?user=user-1');
   });
 
   it('names a cycling trail in cycling words: Cycling, Races, Riders', () => {
@@ -137,7 +122,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
   });
 
   it('names the renamed tools in the trail by their menu words: Activity, Notifications, Contest templates', () => {
-    expect(getManageBreadcrumbLabel(['sync'], 0)).toBe('Activity');
+    expect(getManageBreadcrumbLabel(['activity'], 0)).toBe('Activity');
     expect(getManageBreadcrumbLabel(['notifications'], 0)).toBe('Notifications');
     expect(getManageBreadcrumbLabel(['content-configuration'], 0)).toBe('Contest templates');
   });

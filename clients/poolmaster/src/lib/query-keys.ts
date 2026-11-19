@@ -293,10 +293,8 @@ export const QueryKeys = {
         search,
         dateWindow ?? null,
       ] as const,
-    // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
+    // Customers › Leagues (#1883): every league, which any league's plan or gift change refreshes.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
-    manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // The platform's tier and pricing profiles (#1844), which sport leagues name.
     tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
@@ -305,6 +303,10 @@ export const QueryKeys = {
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
     // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
+    // Every Activity read (#1887) sits under this prefix, so a queued job refreshes each grid.
+    activity: ['poolmaster', 'root-admin', 'activity'] as const,
+    activityWindow: (scope: QueryKeyId, from: string, to: string | null) =>
+      ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>
@@ -317,6 +319,7 @@ export const QueryKeys = {
     // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
     unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
+    // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },
 } as const;

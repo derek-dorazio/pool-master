@@ -369,16 +369,20 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);
   await app.register(authGuard);
+  const activity = new ActivityService({
+    jobs: new PrismaBackgroundJobRepository(prisma),
+    syncRuns: new PrismaProviderSyncRunRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+  });
   await app.register(ingestionModule, {
     prefix: '/api/v1/ingestion',
     ingestionService,
     providerRegistry: registry,
     leagueEventsSync,
+    activity,
   });
-  await app.register(activityModule, {
-    prefix: '/api/v1/activity',
-    activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: new PrismaProviderSyncRunRepository(prisma) }),
-  });
+  await app.register(activityModule, { prefix: '/api/v1/activity', activity });
   await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   const settings = new AppSettingsService({ repository: new PrismaPlatformRuntimeConfigRepository(prisma), groups: SETTINGS_GROUPS, env: process.env });
   await settings.load();
@@ -2123,7 +2127,10 @@ describe('Contract verification (root admin)', () => {
       });
       expect(syncRes.statusCode).toBe(202);
       const queued = ActivityJobResponseSchema.parse(syncRes.json()).job;
-      expect(queued).toMatchObject({ type: 'SYNC_LEAGUE_EVENTS', kind: 'SYNC', sportLeagueId: synced.id, sportEventId: null });
+      expect(queued).toMatchObject({
+        type: 'SYNC_LEAGUE_EVENTS', kind: 'SYNC', sportLeagueId: synced.id, sportEventId: null,
+        sportLeague: { id: synced.id, name: synced.name }, sportEvent: null,
+      });
 
       const readActivity = async () => {
         const res = await app.inject({ method: 'GET', url: `/api/v1/activity?sportLeagueId=${synced.id}`, headers: rootAdmin.headers });
@@ -2143,6 +2150,7 @@ describe('Contract verification (root admin)', () => {
       expect(queued).toMatchObject({ trigger: 'ADMIN', startedBy: { id: rootAdmin.user.id, displayName: rootAdmin.user.displayName }, startedAt: null, durationSeconds: null });
       expect(job).toMatchObject({
         trigger: 'ADMIN', startedBy: { id: rootAdmin.user.id, displayName: rootAdmin.user.displayName }, changedCount: 2, errorType: null,
+        sportLeague: { id: synced.id, name: synced.name },
         startedAt: expect.any(String), durationSeconds: expect.any(Number),
       });
 

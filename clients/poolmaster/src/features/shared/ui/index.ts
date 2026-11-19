@@ -24,9 +24,11 @@ export { cn } from "./class-names";
 export { ConfirmDialog, type ConfirmationInput, type ConfirmDialogProps } from "./confirm-dialog";
 export { DataGrid, type DataGridDetailRow, type DataGridViews } from "./data-grid";
 export {
+  isSpanToNow,
   optionsFromLabels,
   type DataGridColumnOptions,
   type DataGridColumnType,
+  type DataGridFilter,
   type DataGridOption,
   type DateRangeValue,
 } from "./data-grid-filters";
@@ -119,9 +121,11 @@ export { dismissAllToasts, dismissToast, showToast, type ToastMessage } from "./
 export { useMutationActionWorkflow, type MutationActionWorkflowResult } from "./mutation-action-workflow";
 export {
   DetailEditModal,
+  DialogSection,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
+  type DetailAction,
 } from "./modal-templates";
 export { PublicInviteJoinPage } from "./page-templates";
 export { Tile } from "./tile";

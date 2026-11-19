@@ -143,3 +143,30 @@ export const ColumnInfoAndRowIcons: StoryObj = {
     </div>
   ),
 };
+
+type QueuedJob = { id: string; what: string; queuedAt: string };
+
+const HOUR_MS = 60 * 60_000;
+const QUEUED_JOBS: QueuedJob[] = [
+  { id: "1", what: "Live scores", queuedAt: new Date(Date.now() - HOUR_MS).toISOString() },
+  { id: "2", what: "Fields", queuedAt: new Date(Date.now() - 6 * HOUR_MS).toISOString() },
+  { id: "3", what: "Event list", queuedAt: new Date(Date.now() - 3 * 24 * HOUR_MS).toISOString() },
+];
+
+const QUEUED_JOB_COLUMNS: ColumnDef<QueuedJob>[] = [
+  {
+    accessorKey: "queuedAt",
+    header: "Started",
+    meta: { type: { kind: "datetime", direction: "past", initial: { kind: "relative", toward: "past", amount: 1, unit: "d" } } },
+  },
+  { accessorKey: "what", header: "What", meta: { type: { kind: "text" } } },
+];
+
+/**
+ * A date column can open on a span, as Activity's Started opens on the past day: the job queued
+ * three days ago shows once the filter is cleared. A Past span reaches up to now, so a row that
+ * arrives later still shows.
+ */
+export const DateColumnOpensOnSpan: StoryObj = {
+  render: () => <DataGrid columns={QUEUED_JOB_COLUMNS} data={QUEUED_JOBS} emptyMessage="No jobs match." getRowId={(job) => job.id} />,
+};

@@ -370,6 +370,20 @@ describe('SportEventParticipantRepository — the field', () => {
     expect(await field.countDistinctParticipants([])).toBe(0);
   });
 
+  it('reads events\' links by id, just the id, name, sport league and provider, in a fixed two statements (events, then their series), leaving out an id with no event', async () => {
+    const { events } = repos();
+    const [week1, week2] = [await createEvent('Week 1'), await createEvent('Week 2')];
+
+    const { result: links, statements } = await recordStatements(() => events.findLinks([week1.id, week2.id, randomUUID()]));
+
+    expect([...links].sort((left, right) => left.name.localeCompare(right.name))).toEqual([
+      { id: week1.id, name: 'Week 1', sportLeagueId: week1.sportLeagueId, providerId: 'integration-test' },
+      { id: week2.id, name: 'Week 2', sportLeagueId: week2.sportLeagueId, providerId: 'integration-test' },
+    ]);
+    expect(statements).toHaveLength(2);
+    expect(await events.findLinks([])).toEqual([]);
+  });
+
   it('reads field rows by id, leaving out an id with no row, and several events\' fields at once, each by seed, leaving out events not asked for', async () => {
     const { field } = repos();
     const [week1, week2, other] = [await createEvent('Week 1'), await createEvent('Week 2'), await createEvent('Other')];
