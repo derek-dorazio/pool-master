@@ -13,6 +13,7 @@ import { SyncHealthChip } from './sync-health-chip';
 import { SportLeaguePage } from './sport-league-page';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
+import { failedJobCount, useActivity } from './use-activity';
 import { useManagedSport } from './use-managed-sport';
 import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
@@ -20,7 +21,7 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 /**
  * /manage/sports/:sport/leagues/:leagueId, a sport league's own page (#1866): the breadcrumb back
  * to Sports, the header with the league's chips, provider and Clutch Cards, its ⚙, then the tab row
- * over the open tab.
+ * over the open tab. The Activity tab counts the league's failed jobs once they are read.
  */
 export function LeaguePageLayout() {
   return (
@@ -37,6 +38,12 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const providersQuery = useProvidersQuery();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
+  const basePath = buildSportLeaguePath(sport, sportLeague.id);
+  const openSegment = pathname.slice(basePath.length + 1).split('/')[0];
+  // Held here, not in the Activity tab, so the jobs read stay with the page and its tab keeps its
+  // count; it re-reads only while the tab is open.
+  const activity = useActivity({ sportLeagueId: sportLeague.id }, { poll: openSegment === 'activity' });
+  const failedCount = activity.query.data === undefined ? 0 : failedJobCount(activity.query.data);
 
   const overviews = overviewsQuery.data ?? [];
   // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
@@ -44,22 +51,23 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   // poolmaster-allow-list-lookup: the same few dozen sport leagues, for this league's Clutch Cards
   const clutchCards = overviews.filter((candidate) => candidate.parentSportLeagueId === sportLeague.id);
   const isSynced = isSyncedLeague(sportLeague, overview);
-  const basePath = buildSportLeaguePath(sport, sportLeague.id);
   const tabs = leaguePageTabs(isSynced);
-  const openSegment = pathname.slice(basePath.length + 1).split('/')[0];
   // A synced league has no Tools tab, so its old link lands on Events.
   if (openSegment === 'tools' && overview !== undefined && isSynced) {
     return <Navigate replace to={`${basePath}/events`} />;
   }
 
   const items: PageLinkTab[] = tabs.map((tab) => ({
+    ...(tab.segment === 'activity' && failedCount > 0
+      ? { count: failedCount, countHint: 'Jobs that failed in the Activity grid\'s Started window, the past day unless you widen it' }
+      : {}),
     isActive: openSegment === tab.segment,
     label: tab.label,
     testId: `root-admin-league-tab-${tab.segment}`,
     to: `${basePath}/${tab.segment}`,
   }));
   const providerNames = new Map((providersQuery.data ?? []).map((provider) => [provider.providerId, provider.providerName]));
-  const context: LeaguePageContext = { sportLeague, overview, isSynced };
+  const context: LeaguePageContext = { sportLeague, overview, isSynced, activity };
 
   return (
     <div className="space-y-6">

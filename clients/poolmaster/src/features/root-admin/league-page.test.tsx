@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
+  ActivityJobDto,
   ContestConfigTemplateDto,
   SportLeagueEventOverviewDto,
   SportLeagueOverviewDto,
@@ -11,6 +12,7 @@ import type {
   SportLeagueSyncDto,
 } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { LeagueActivityTab } from './league-activity-tab';
 import { LeagueContestTemplatesTab } from './league-contest-templates-tab';
 import { LeagueEventsTab } from './league-events-tab';
 import { LeaguePageLayout } from './league-page-layout';
@@ -20,6 +22,7 @@ import { sportLeagueFixture } from './sport-test-fixtures';
 // The root admin's League page (#1866): the header, the tab set, and each tab's grid and dialog.
 
 const {
+  listActivityMock,
   listContestConfigTemplatesMock,
   listProvidersMock,
   listSportLeagueEventOverviewsMock,
@@ -35,6 +38,7 @@ const {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockReturnValue(logger);
   return {
+    listActivityMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listProvidersMock: vi.fn(),
     listSportLeagueEventOverviewsMock: vi.fn(),
@@ -50,6 +54,7 @@ const {
 });
 
 bindApiMocks({
+  listActivity: listActivityMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listProviders: listProvidersMock,
   listSportLeagueEventOverviews: listSportLeagueEventOverviewsMock,
@@ -157,6 +162,34 @@ function template(overrides: Partial<ContestConfigTemplateDto> = {}): ContestCon
   };
 }
 
+function job(overrides: Partial<ActivityJobDto>): ActivityJobDto {
+  const at = new Date(Date.now() - 60_000).toISOString();
+  return {
+    id: '00000000-0000-4000-8000-00000000a001',
+    type: 'SYNC_LEAGUE_EVENTS',
+    kind: 'SYNC',
+    status: 'SUCCEEDED',
+    sportLeagueId: 'nba',
+    sportEventId: null,
+    sportLeague: { id: 'nba', name: 'NBA' },
+    sportEvent: null,
+    attempts: 1,
+    runAt: at,
+    createdAt: at,
+    completedAt: at,
+    lastError: null,
+    trigger: 'SCHEDULE',
+    startedBy: null,
+    startedAt: at,
+    durationSeconds: 8,
+    changedCount: 3,
+    errorType: null,
+    result: null,
+    syncRunIds: [],
+    ...overrides,
+  };
+}
+
 function LocationProbe() {
   return <div data-testid="location">{useLocation().pathname}</div>;
 }
@@ -175,6 +208,7 @@ function renderLeaguePage(path: string) {
             <Route element={<Navigate replace to="events" />} index />
             <Route element={<LeagueEventsTab />} path="events" />
             <Route element={<LeagueParticipantsTab />} path="participants" />
+            <Route element={<LeagueActivityTab />} path="activity" />
             <Route element={<LeagueContestTemplatesTab />} path="contest-templates" />
             <Route element={<LocationProbe />} path="tools" />
           </Route>
@@ -209,7 +243,7 @@ describe('League page', () => {
     expect(within(facts).getByText('OK')).toBeInTheDocument();
     expect(within(facts).getByText('BALLDONTLIE')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-league-clutch-card-finals')).toHaveAttribute('href', '/manage/sports/basketball/leagues/finals');
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Contest templates']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates']);
     // The league's bare address opens its Events tab.
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
   });
@@ -219,7 +253,7 @@ describe('League page', () => {
     renderLeaguePage('/manage/sports/basketball/leagues/summer/events');
 
     await screen.findByTestId('root-admin-league-sync-EVENTS');
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Contest templates', 'Tools']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Tools']);
     expect(screen.queryByTestId('root-admin-league-sync-now')).not.toBeInTheDocument();
   });
 
@@ -339,5 +373,25 @@ describe('League page', () => {
       path: { templateId: template().id },
       body: { isDefault: true },
     })));
+  });
+
+  it('shows the league\'s jobs on the Activity tab, without the Sport league column, and counts the failed ones on its tab', async () => {
+    listActivityMock.mockResolvedValue({
+      data: {
+        jobs: [
+          job({}),
+          job({ id: '00000000-0000-4000-8000-00000000a002', status: 'FAILED', errorType: 'RATE_LIMITED', lastError: '429', completedAt: null }),
+          job({ id: '00000000-0000-4000-8000-00000000a003', status: 'FAILED', errorType: 'RATE_LIMITED', lastError: '429', completedAt: null }),
+        ],
+      },
+    });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/activity');
+
+    expect(await screen.findByTestId('activity-job-00000000-0000-4000-8000-00000000a001', {}, { timeout: 5_000 })).toBeInTheDocument();
+    const [options] = listActivityMock.mock.calls[0] as [{ query: Record<string, string> }];
+    expect(options.query['sportLeagueId']).toBe('nba');
+    expect(columnHeaders('activity-grid-table')).not.toContain('Sport league');
+    await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-activity')).toHaveTextContent('Activity 2'));
+    expect(within(screen.getByTestId('root-admin-league-tab-activity')).getByText('2')).toHaveAttribute('title', expect.stringContaining('Started window'));
   });
 });

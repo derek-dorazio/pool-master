@@ -40,7 +40,7 @@ export function activityWindow(filters: ColumnFiltersState, now: number = Date.n
  * widening the filter reads further back, and read again every 30 seconds. The page holding the
  * grid reads the same jobs for its header's counts. No paging: the window bounds the read.
  */
-export function useActivity(scope: ActivityScope) {
+export function useActivity(scope: ActivityScope, { poll = true }: { poll?: boolean } = {}) {
   // Unset until the grid's first render reports its filters, which may come from the link.
   const [readWindow, setReadWindow] = useState<ActivityWindow | null>(null);
   const onFiltersChange = useCallback((filters: ColumnFiltersState) => {
@@ -66,7 +66,8 @@ export function useActivity(scope: ActivityScope) {
       return response.data.jobs;
     },
     placeholderData: keepPreviousData,
-    refetchInterval: REFRESH_MS,
+    // A page holding the read for a tab that is not open stops re-reading until it is again.
+    refetchInterval: poll ? REFRESH_MS : false,
     retry: false,
   });
 
@@ -75,9 +76,14 @@ export function useActivity(scope: ActivityScope) {
 
 export type ActivityState = ReturnType<typeof useActivity>;
 
+/** How many of the jobs read failed. */
+export function failedJobCount(jobs: readonly Pick<ActivityJobDto, 'status'>[]): number {
+  return jobs.filter((job) => job.status === BackgroundJobStatus.FAILED).length;
+}
+
 /** The header's count line, such as "412 jobs · 2 failed · 1 running", over the jobs read. */
 export function activityCountLine(jobs: readonly ActivityJobDto[]): string {
-  const failed = jobs.filter((job) => job.status === BackgroundJobStatus.FAILED).length;
+  const failed = failedJobCount(jobs);
   const running = jobs.filter((job) => job.status === BackgroundJobStatus.RUNNING).length;
   return [plural(jobs.length, 'job'), failed > 0 ? `${String(failed)} failed` : null, running > 0 ? `${String(running)} running` : null]
     .filter(Boolean)
