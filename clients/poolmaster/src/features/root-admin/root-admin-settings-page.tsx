@@ -18,15 +18,12 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { BillingSettingsForm } from '@/features/billing/billing-settings-form';
-import { EmailSettingsForm } from './root-admin-email-settings-form';
-import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
 import { PLANS_PATH, PROVIDERS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeBilling,
   summarizePlans,
-  summarizeEmail,
   summarizeIngestionSchedule,
   type SettingsSummaryItem,
 } from './root-admin-settings-utils';
@@ -34,8 +31,8 @@ import {
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * the Providers page, and Plans on its own Manage page; Email and Payments are edited in
- * their sections. Pricing profiles are their own rows, not a settings group (#1844).
+ * the Providers page, Plans on its own Manage page, and Email on Notifications (#1872); Payments
+ * are edited in their section. Pricing profiles are their own rows, not a settings group (#1844).
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
@@ -59,7 +56,7 @@ export function RootAdminSettingsPage() {
         size="tile"
         testId="root-admin-settings"
       >
-        {(groups) => groups.map((group) => (
+        {(groups) => groups.filter(isShownHere).map((group) => (
           <SettingsGroupSection group={group} key={group.key} />
         ))}
       </QueryState>
@@ -67,7 +64,14 @@ export function RootAdminSettingsPage() {
   );
 }
 
-function SettingsGroupSection({ group }: { group: SettingsGroup }) {
+/** A group this page shows: the email settings are Notifications' ⚙ Email settings (#1872). */
+type ShownGroup = Exclude<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
+
+function isShownHere(group: SettingsGroup): group is ShownGroup {
+  return group.key !== 'EMAIL_CONFIG';
+}
+
+function SettingsGroupSection({ group }: { group: ShownGroup }) {
   const [showHistory, setShowHistory] = useState(false);
   const { locale } = useDisplayPreferences();
   const { summary, actions } = groupContent(group, locale);
@@ -90,12 +94,6 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
           ))}
         </SectionRows>
           <div className="space-y-5 px-4 py-4">
-            {group.key === 'EMAIL_CONFIG' ? (
-              <>
-                <EmailSettingsForm group={group} />
-                <EmailTestForm />
-              </>
-            ) : null}
             {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
             <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
               {group.updatedAt ? (
@@ -122,7 +120,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   );
 }
 
-function groupContent(group: SettingsGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
+function groupContent(group: ShownGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
   switch (group.key) {
     case 'INGESTION_SCHEDULE_CONFIG':
       return {
@@ -133,9 +131,6 @@ function groupContent(group: SettingsGroup, locale: string): { summary: Settings
           </LinkButton>
         ),
       };
-    case 'EMAIL_CONFIG':
-      // Edited in place: the section carries the form.
-      return { summary: summarizeEmail(group.value), actions: null };
     case 'PLAN_CONFIG':
       return {
         summary: summarizePlans(group.value, locale),
