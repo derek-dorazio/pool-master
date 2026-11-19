@@ -12,6 +12,7 @@ import type {
   ParticipantProviderMappingRepository,
   ProviderSyncRunRepository,
   SportEventRepository,
+  SportLeagueRepository,
 } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
@@ -58,6 +59,12 @@ export interface ProviderSummary {
   primaryForSports: Sport[];
   activeEventCount: number;
   supportsLiveSimulation: boolean;
+  /** The request rate its adapter holds to, a minute; null when the adapter does not pace itself. */
+  requestsPerMinute: number | null;
+  /** Whether its webhooks are on: its signing secret is set. */
+  webhooksEnabled: boolean;
+  /** The active sport leagues whose events its sync creates. */
+  syncedSportLeagueCount: number;
 }
 
 export interface ProviderManualSyncSubmissionResult {
@@ -153,6 +160,10 @@ export interface IngestionServiceDependencies {
   sportEvents: SportEventRepository;
   participantMappings: ParticipantProviderMappingRepository;
   syncRuns: ProviderSyncRunRepository;
+  /** The synced sport leagues, counted per provider on the provider list. */
+  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
+  /** The providers whose webhooks are on (`readWebhookProviderIds`). */
+  webhookProviderIds: readonly string[];
   scheduler?: IngestionScheduler;
   ingestionConfigReader?: IngestionScheduleConfigReader;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -167,6 +178,8 @@ export class IngestionService {
   private readonly sportEvents: SportEventRepository;
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
+  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
+  private readonly webhookProviderIds: ReadonlySet<string>;
   private readonly scheduler?: IngestionScheduler;
   private readonly ingestionConfigReader?: IngestionScheduleConfigReader;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -179,6 +192,8 @@ export class IngestionService {
     this.sportEvents = deps.sportEvents;
     this.participantMappings = deps.participantMappings;
     this.syncRuns = deps.syncRuns;
+    this.sportLeagues = deps.sportLeagues;
+    this.webhookProviderIds = new Set(deps.webhookProviderIds);
     this.scheduler = deps.scheduler;
     this.ingestionConfigReader = deps.ingestionConfigReader;
     this.jobs = deps.jobs;
@@ -292,9 +307,16 @@ export class IngestionService {
    */
   async listProviders(): Promise<ProviderSummary[]> {
     const providers = this.registry.getAllProviders();
-    const eventSummaries = await this.sportEvents.summarizeByProviders(
-      providers.map((provider) => provider.providerId),
-    );
+    const [eventSummaries, syncedLeagues] = await Promise.all([
+      this.sportEvents.summarizeByProviders(providers.map((provider) => provider.providerId)),
+      this.sportLeagues.findEventSynced(),
+    ]);
+    const syncedLeagueCounts = new Map<string, number>();
+    for (const league of syncedLeagues) {
+      if (league.eventSyncProviderId) {
+        syncedLeagueCounts.set(league.eventSyncProviderId, (syncedLeagueCounts.get(league.eventSyncProviderId) ?? 0) + 1);
+      }
+    }
     const summaries = await Promise.all(providers.map(async (provider): Promise<ProviderSummary> => {
       const health = await provider.healthCheck();
       const events = eventSummaries.get(provider.providerId);
@@ -310,6 +332,9 @@ export class IngestionService {
         primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === provider.providerId),
         activeEventCount: events?.activeEventCount ?? 0,
         supportsLiveSimulation: supportsLiveSimulation(provider),
+        requestsPerMinute: provider.requestsPerMinute ?? null,
+        webhooksEnabled: this.webhookProviderIds.has(provider.providerId),
+        syncedSportLeagueCount: syncedLeagueCounts.get(provider.providerId) ?? 0,
       };
     }));
     return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));

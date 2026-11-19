@@ -34,6 +34,9 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     primaryForSports: provider.primaryForSports,
     activeEventCount: provider.activeEventCount,
     supportsLiveSimulation: provider.supportsLiveSimulation,
+    requestsPerMinute: provider.requestsPerMinute,
+    webhooksEnabled: provider.webhooksEnabled,
+    syncedSportLeagueCount: provider.syncedSportLeagueCount,
   };
 }
 

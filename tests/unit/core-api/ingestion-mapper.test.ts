@@ -127,7 +127,14 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     sportsCovered: [Sport.GOLF],
     activeEventCount: 2,
     supportsLiveSimulation: false,
+    requestsPerMinute: 600,
+    webhooksEnabled: true,
+    syncedSportLeagueCount: 16,
   } as unknown as Parameters<typeof toProviderSummaryDto>[0];
+
+  it('sends a provider\'s request rate, webhook switch and synced sport league count as they are', () => {
+    expect(toProviderSummaryDto(provider)).toMatchObject({ requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 16 });
+  });
 
   it('sends a provider\'s last event time as ISO, and a provider that has sent none as null', () => {
     expect(toProviderSummaryDto(provider).lastEventAt).toBe(AT.toISOString());

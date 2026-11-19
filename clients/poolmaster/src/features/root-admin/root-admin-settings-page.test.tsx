@@ -23,7 +23,7 @@ const INGESTION_DEFAULTS = {
   healthCheck: { enabled: true, intervalMinutes: 5 },
   eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
   eventLiveScores: { enabled: true, intervalSeconds: 300 },
-  perSportOverrides: {},
+  eventList: { enabled: true, intervalMinutes: 360 },
 };
 
 const ADMIN = { id: '6f7c1c55-58a4-4bd4-8a2a-0b8e3f1f4a01', name: 'Ada Admin' };
