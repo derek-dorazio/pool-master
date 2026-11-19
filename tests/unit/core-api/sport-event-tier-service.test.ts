@@ -74,7 +74,49 @@ describe('SportEventTierService — tiers', () => {
     expect(groups.map((group) => group.participants.length)).toEqual([2, 2, 2, 2, 2, 2]);
   });
 
-  it('refuses a replacement that would strand placed participants unless they are sent somewhere', async () => {
+  it('places the field in the new tiers at once when no tier was placed by hand, moving those in a removed tier without asking', async () => {
+    const { store, event, service } = setup();
+    await store.addTiers(event.id, TWO_TIERS);
+    addFieldByOdds(store, event.id, 6);
+    await service.autoAssignTiers({ sportEventId: event.id });
+
+    const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [
+      { tierKey: 'tier-1', label: 'Favourites', tierNumber: 1 },
+      { tierKey: 'tier-3', label: 'Middle', tierNumber: 2 },
+      { tierKey: 'tier-4', label: 'Long shots', tierNumber: 3 },
+    ] });
+
+    expect(groups.map((group) => [group.label, group.participants.map((placement) => placement.participantId)])).toEqual([
+      ['Favourites', ['p-01', 'p-02']],
+      ['Middle', ['p-03', 'p-04']],
+      ['Long shots', ['p-05', 'p-06']],
+    ]);
+    expect(store.valuationRows.every((valuation) => valuation.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
+  });
+
+  it('keeps every place once a tier was placed by hand, renaming tiers without re-placing anyone', async () => {
+    const { store, event, service } = setup();
+    await store.addTiers(event.id, TWO_TIERS);
+    addFieldByOdds(store, event.id, 2);
+    const [tier1, tier2] = store.tierRows;
+    const [first, second] = store.field;
+    await store.valuationRepo().assignTiers([
+      { sportEventParticipantId: first.id, sportEventTierId: tier2.id, tierOrderIndex: 0, source: 'MANUAL' },
+      { sportEventParticipantId: second.id, sportEventTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+    ]);
+
+    const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [
+      { tierKey: 'tier-1', label: 'Top', tierNumber: 1 },
+      { tierKey: 'tier-2', label: 'Rest', tierNumber: 2 },
+    ] });
+
+    expect(groups.map((group) => [group.label, group.participants.map((placement) => placement.participantId)])).toEqual([
+      ['Top', ['p-02']],
+      ['Rest', ['p-01']],
+    ]);
+  });
+
+  it('refuses, once a tier was placed by hand, a replacement that would strand placed participants unless they are sent somewhere', async () => {
     const { store, event, service } = setup();
     await store.addTiers(event.id, TWO_TIERS);
     const entry = store.addToField(event.id, 'p-1');

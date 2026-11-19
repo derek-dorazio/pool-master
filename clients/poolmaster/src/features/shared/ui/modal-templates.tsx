@@ -10,7 +10,7 @@ import { Notice } from "./notice";
 import { FactList, type Fact } from "./fact-list";
 import { Modal } from "./modal";
 import { SectionRow, SectionRows } from "./section-card";
-import { ServerErrorBar } from "./server-error";
+import { ServerErrorBar, type ServerErrorDisplayProps } from "./server-error";
 import { StatusBadge } from "./status-badge";
 
 type BaseModalTemplateProps = {
@@ -27,6 +27,8 @@ export type FormModalProps = BaseModalTemplateProps & {
   cancelLabel?: string;
   children: ReactNode;
   error?: Error | null;
+  /** What a refused save says for a code whose own message would mislead here. */
+  errorCodeMessages?: ServerErrorDisplayProps["codeMessages"];
   errorFallback?: string;
   errorMessage?: ReactNode;
   errorTitle?: string;
@@ -44,6 +46,7 @@ export function FormModal({
   children,
   description,
   error,
+  errorCodeMessages,
   errorFallback,
   errorMessage,
   errorTitle,
@@ -86,6 +89,7 @@ export function FormModal({
       {error ? (
         <ServerErrorBar
           className="mt-4"
+          codeMessages={errorCodeMessages}
           error={error}
           fallback={errorFallback}
           title={errorTitle ?? "Save failed"}

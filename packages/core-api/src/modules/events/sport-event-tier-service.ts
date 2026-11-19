@@ -240,20 +240,26 @@ export class SportEventTierService {
    */
   async autoAssignTiers(input: { sportEventId: string; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const event = await this.requireEditableEvent(input.sportEventId);
-    const tiers = await this.deps.tiers.findBySportEvent(input.sportEventId);
+    await this.placeFieldInTiers(event, input.tierSize);
+    return this.getEffectiveTiersForSportEvent(input.sportEventId);
+  }
+
+  /** `autoAssignTiers`' placement, for an event already checked editable. */
+  private async placeFieldInTiers(event: SportEvent, tierSize?: number): Promise<void> {
+    const tiers = await this.deps.tiers.findBySportEvent(event.id);
     if (tiers.length === 0) {
-      this.deps.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign tiers — the event has no tiers yet');
-      return [];
+      this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no tiers yet');
+      return;
     }
     const [{ ordered, source }, profile] = await Promise.all([
-      this.orderedActiveField(input.sportEventId),
+      this.orderedActiveField(event.id),
       this.requireTierProfile(event),
     ]);
-    const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, input.tierSize);
-    await this.deps.valuations.assignEventTiers({ sportEventId: input.sportEventId, tierConfig, assignments: placements });
+    const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, tierSize);
+    await this.deps.valuations.assignEventTiers({ sportEventId: event.id, tierConfig, assignments: placements });
     this.deps.logger?.info(
       {
-        sportEventId: input.sportEventId,
+        sportEventId: event.id,
         source,
         profileName: tierConfig.profileName,
         tierSize: spread === 'EVEN' ? null : tierConfig.tierSize,
@@ -263,19 +269,22 @@ export class SportEventTierService {
       },
       'Auto-assigned tiers',
     );
-    return this.getEffectiveTiersForSportEvent(input.sportEventId);
   }
 
   /**
-   * Replaces the tier definitions. A change that would strand valuations on a removed tier
-   * is refused (409) unless `reassignOrphansTo` names a tier in the new list.
+   * Replaces the event's tier definitions, its optional override of the tiers it copied from its
+   * sport league's tier profile. While no tier was placed by hand, the field is then placed in
+   * the new tiers at once, as Auto-assign tiers would, so anyone in a removed tier simply moves.
+   * Once any tier was placed by hand (MANUAL, which freezes automatic tiering for the event), the
+   * places are kept, and a change that would strand participants on a removed tier is refused
+   * (409) unless `reassignOrphansTo` names a tier in the new list.
    */
   async replaceTiers(input: {
     sportEventId: string;
     tiers: readonly SportEventTierDefinition[];
     reassignOrphansTo?: string;
   }): Promise<SportEventTierGroup[]> {
-    await this.requireEditableEvent(input.sportEventId);
+    const event = await this.requireEditableEvent(input.sportEventId);
     const newKeys = new Set(input.tiers.map((tier) => tier.tierKey));
     if (input.reassignOrphansTo && !newKeys.has(input.reassignOrphansTo)) {
       throw new SportEventError(
@@ -284,13 +293,15 @@ export class SportEventTierService {
         422,
       );
     }
-    const [existing, counts] = await Promise.all([
+    const [existing, counts, valuations] = await Promise.all([
       this.deps.tiers.findBySportEvent(input.sportEventId),
       this.deps.tiers.countValuations(input.sportEventId),
+      this.deps.valuations.findBySportEvent(input.sportEventId),
     ]);
+    const placedByHand = valuations.some((valuation) => valuation.tierAssignedSource === ValuationSource.MANUAL);
     const removed = existing.filter((tier) => !newKeys.has(tier.tierKey));
     const orphaned = removed.reduce((sum, tier) => sum + (counts.get(tier.id) ?? 0), 0);
-    if (orphaned > 0 && !input.reassignOrphansTo) {
+    if (placedByHand && orphaned > 0 && !input.reassignOrphansTo) {
       throw new SportEventError(
         `Removing tier(s) ${removed.map((tier) => tier.tierKey).join(', ')} would orphan ${orphaned} assignment(s). Supply reassignOrphansTo to reassign them first.`,
         'TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS',
@@ -298,12 +309,15 @@ export class SportEventTierService {
       );
     }
 
-    await this.deps.tiers.replace(input.sportEventId, input.tiers, input.reassignOrphansTo);
-
+    await this.deps.tiers.replace(input.sportEventId, input.tiers, placedByHand ? input.reassignOrphansTo : undefined);
     this.deps.logger?.info(
-      { sportEventId: input.sportEventId, tierCount: input.tiers.length, removedTierCount: removed.length, reassignedCount: orphaned },
+      { sportEventId: input.sportEventId, tierCount: input.tiers.length, removedTierCount: removed.length, placedByHand, reassignedCount: placedByHand ? orphaned : 0 },
       'Replaced tier definitions',
     );
+    // A second write: should it fail, the new tiers stand with the field partly untiered, which the
+    // next Auto-assign tiers or field sync places again.
+    if (!placedByHand) await this.placeFieldInTiers(event);
+
     return this.getEffectiveTiersForSportEvent(input.sportEventId);
   }
 
