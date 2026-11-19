@@ -3535,6 +3535,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/customers/leagues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every league for the Customers grid
+         * @description Every league on the platform, active or not, by name: never paged and never searched on the server, since the grid filters on the client. Each row carries its plan, owner (its longest-serving active commissioner), active member and open-or-live contest counts, and when its Premium preview ends. Read from four queries, however many leagues. Change the plan with updateLeaguePlan and the preview with extendLeaguePlanRenewal. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.
+         */
+        get: operations["listCustomerLeagues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every user for the Customers grid
+         * @description Every user on the platform, active or not, by last then first name: never paged and never searched on the server, since the grid filters on the client. Each row carries its role, status, the leagues it is an active member of, when it joined and when it last signed in. Read from two queries, however many users. Change the name with updateUserProfile and the role with setUserRootAdmin. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.
+         */
+        get: operations["listCustomerUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/client-logs/": {
         parameters: {
             query?: never;
@@ -23856,6 +23896,158 @@ export interface components {
                 syncRunIds: string[];
             };
         };
+        /** @description The league's longest-serving active commissioner: the one who created it, unless they stepped down. */
+        CustomerLeagueOwnerDto: {
+            /** Format: uuid */
+            userId: string;
+            firstName: string;
+            lastName: string;
+        };
+        /** @description One league on the root admin's Customers › Leagues grid. */
+        CustomerLeagueDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description The league's code, its web address. */
+            leagueCode: string;
+            name: string;
+            /** @description False for a league a root admin inactivated: read-only outside its lifecycle actions. */
+            isActive: boolean;
+            /**
+             * @description The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+             * @enum {string}
+             */
+            plan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+            /** @description Null when the league has no active commissioner. */
+            owner: {
+                /** Format: uuid */
+                userId: string;
+                firstName: string;
+                lastName: string;
+            } | null;
+            /** @description Active members. */
+            memberCount: number;
+            /** @description Open and live contests. Contests still being set up are not counted. */
+            activeContestCount: number;
+            /**
+             * Format: date-time
+             * @description When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+             */
+            previewEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+        };
+        /** @description Every league on the platform, for the Customers › Leagues grid. */
+        CustomerLeagueListResponse: {
+            /** @description Every league, active or not, by name. Never paged. */
+            leagues: {
+                /** Format: uuid */
+                id: string;
+                /** @description The league's code, its web address. */
+                leagueCode: string;
+                name: string;
+                /** @description False for a league a root admin inactivated: read-only outside its lifecycle actions. */
+                isActive: boolean;
+                /**
+                 * @description The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+                 * @enum {string}
+                 */
+                plan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /** @description Null when the league has no active commissioner. */
+                owner: {
+                    /** Format: uuid */
+                    userId: string;
+                    firstName: string;
+                    lastName: string;
+                } | null;
+                /** @description Active members. */
+                memberCount: number;
+                /** @description Open and live contests. Contests still being set up are not counted. */
+                activeContestCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+                 */
+                previewEndsAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+            }[];
+        };
+        /** @description A league the user is an active member of. */
+        CustomerUserLeagueDto: {
+            /** Format: uuid */
+            id: string;
+            leagueCode: string;
+            name: string;
+        };
+        /** @description One user on the root admin's Customers › Users grid. */
+        CustomerUserDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            username: string;
+            firstName: string;
+            lastName: string;
+            /** @description Root admin (true) or member (false). Change it with setUserRootAdmin. */
+            isRootAdmin: boolean;
+            /** @description False for a deactivated account: it is signed out and blocked until reactivated. */
+            isActive: boolean;
+            /** @description The leagues the user is an active member of, by name. Its length is the user's league count. */
+            leagues: {
+                /** Format: uuid */
+                id: string;
+                leagueCode: string;
+                name: string;
+            }[];
+            /**
+             * Format: date-time
+             * @description When the account was created.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+             */
+            lastSignInAt: string | null;
+        };
+        /** @description Every user on the platform, for the Customers › Users grid. */
+        CustomerUserListResponse: {
+            /** @description Every user, active or not, by last then first name. Never paged. */
+            users: {
+                /** Format: uuid */
+                id: string;
+                email: string;
+                username: string;
+                firstName: string;
+                lastName: string;
+                /** @description Root admin (true) or member (false). Change it with setUserRootAdmin. */
+                isRootAdmin: boolean;
+                /** @description False for a deactivated account: it is signed out and blocked until reactivated. */
+                isActive: boolean;
+                /** @description The leagues the user is an active member of, by name. Its length is the user's league count. */
+                leagues: {
+                    /** Format: uuid */
+                    id: string;
+                    leagueCode: string;
+                    name: string;
+                }[];
+                /**
+                 * Format: date-time
+                 * @description When the account was created.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded (November 2026).
+                 */
+                lastSignInAt: string | null;
+            }[];
+        };
         /** @description A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise. */
         TierProfileWriteRequest: {
             /** @description How many tiers a new event starts with. */
@@ -35637,6 +35829,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCustomerLeagues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every league on the platform, for the Customers › Leagues grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerLeagueListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCustomerUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every user on the platform, for the Customers › Users grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerUserListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

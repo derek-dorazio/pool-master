@@ -15,6 +15,7 @@ export * from './contest-management.mapper';
 export * from './version.mapper';
 export * from './ingestion.mapper';
 export * from './activity.mapper';
+export * from './customers.mapper';
 export * from './selections.mapper';
 export * from './game-picks.mapper';
 export * from './platform-settings.mapper';

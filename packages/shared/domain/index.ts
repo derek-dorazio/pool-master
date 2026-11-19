@@ -28,6 +28,7 @@ export * from './event-pages';
 export * from './time-zones';
 export * from './brand';
 export * from './release-checks';
+export * from './customers';
 export * from './sport-league-overview';
 export { assertNever, type AssertTrue } from './assert-never';
 export {

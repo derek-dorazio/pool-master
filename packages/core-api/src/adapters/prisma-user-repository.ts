@@ -152,6 +152,14 @@ export class PrismaUserRepository implements UserRepository {
    * through the enum `Record` would return `undefined`, which Prisma reads as "no change" —
    * so clearing a preference would have silently done nothing.
    */
+  async recordSignIn(id: string, at: Date): Promise<void> {
+    // `updateMany`, so a user deleted meanwhile is no error: there is nobody left to stamp.
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.user.updateMany({
+      where: { id },
+      data: { lastSignInAt: at },
+    }));
+  }
+
   async update(id: string, updates: UserUpdate): Promise<User> {
     const row = await forgettingReads(ReadMemoKey.user, () => this.prisma.user.update({
       where: { id },

@@ -160,6 +160,12 @@ export type {
   TierProfileWrite,
 } from './sport-catalog-ports';
 export type {
+  CustomerLeagueCommissioner,
+  CustomerLeagueFacts,
+  CustomerLeagueRecord,
+  CustomerReader,
+} from './customer-ports';
+export type {
   ContestEntrySquareClaim,
   ContestEntrySquareClaimResult,
   ContestEntrySquareClearResult,
