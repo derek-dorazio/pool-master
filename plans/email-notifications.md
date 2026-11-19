@@ -49,7 +49,7 @@ writing the first slice's tickets.
 | `CONTEST_ENTRY_COMPLETED` | An entry's lineup is submitted for an event in the selection room | The person who submitted (not co-owners) | Lineup by tier and the tiebreaker. Roster contests only: pick'em and survivor submits send nothing, and the tiebreaker is always formatted as golf to-par (since #867: every owner, every entry type, see D3) |
 | `CONTEST_STARTED_SUMMARY` | An `OPEN` contest becomes `ACTIVE` at its cutoff | Active commissioners plus owners of squads with a submitted entry, each once | Event, start time, entry count and **every** entry (no cap), contest link. No "good luck", no leaderboard link, and members with no entry are not told |
 
-Each template can be switched off on the root admin Settings page (`EMAIL_CONFIG`). QA sends
+Each template can be switched off on the root admin Notifications page (`EMAIL_CONFIG`). QA sends
 nothing until real delivery is wired. Co-owner invitations (`SquadOwnerInvitation`) send B4 or B5
 since slice 6.
 
@@ -228,7 +228,7 @@ notice was:
    readers will get one overnight; the other two reminders cover them.
 
 The offsets (48, 24, 3) go in `EMAIL_CONFIG` as one list, so a root admin can change them on
-the Settings page without a deploy. That is the "configurable someday" for almost no cost.
+the Notifications page without a deploy. That is the "configurable someday" for almost no cost.
 Profiles by sport or event type wait until a format turns up that these rules can't handle.
 The likely case is daily events with cutoffs less than 48 hours apart, which no contest has
 today.

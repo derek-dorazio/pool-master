@@ -336,7 +336,7 @@ administration area (root admin included), reusing the same shared components.
    league and the way back, then its tools as one row of `PageTabs` on every
    width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
    root admin area, uses the same frame: its menu is Sports · Activity ·
-   Notifications · Providers · Customers · Plans, and Sports, its landing page,
+   Notifications · Providers · Customers · Plans · Pricing, and Sports, its landing page,
    adds a second row of Sport leagues, Events, Contest templates and one tab per
    sport (#1848; the second row goes once the league page carries its own tabs).
    Each page in an area opens with one `PageHeader`

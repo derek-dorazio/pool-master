@@ -293,13 +293,10 @@ export const QueryKeys = {
     // The platform's tier and pricing profiles (#1844), which sport leagues name.
     tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
     pricingProfiles: ['poolmaster', 'root-admin', 'pricing-profiles'] as const,
-    // Every settings group (#450). History sits under the same prefix, so invalidating
-    // `settings` after any save refreshes each group's recent changes too.
+    // The prefix every settings group's reads sit under (#450), so any save refreshes them all.
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
     // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
-    settingsHistory: (key: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>

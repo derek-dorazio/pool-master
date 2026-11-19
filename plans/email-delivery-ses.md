@@ -284,7 +284,7 @@ Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console r
    production access): mail type *Transactional*, the site URL, a short description of who gets
    email and how bounces, complaints and unsubscribes are handled (this plan). AWS usually answers
    within a day. Until then, verify a few tester addresses in SES so QA can be tried.
-9. **Turn it on**: `EMAIL_CONFIG.enabled = true` on QA's /manage/settings, send an invite to a Gmail
+9. **Turn it on**: `EMAIL_CONFIG.enabled = true` on QA's /manage/notifications (⚙ Email settings), send an invite to a Gmail
    address, check "Show original" for DKIM, SPF and DMARC all PASS.
 
 > **Q6.1 Sending address per environment. Decided (Derek 2026-10-21): yes.** Today QA would send as `noreply@ultimateofficepoolmanager.com`,
