@@ -235,6 +235,11 @@ export const QueryKeys = {
       // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const,
+      // The League page's Participants grid (#1866), under `participants` like the roster.
+      leagueParticipantOverviews: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,
+      // The League page's Syncs card (#1866), under `leagues` so a league's change refreshes it.
+      leagueSyncs: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'syncs', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId, eventYear: number) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
@@ -244,6 +249,9 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, eventYear] as const,
       leagueEventYears: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'years'] as const,
+      // The League page's Events grid (#1866), every year, under `events` like each year's list.
+      leagueEventOverviews: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'overview'] as const,
       event: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
       rounds: (eventId: QueryKeyId) =>

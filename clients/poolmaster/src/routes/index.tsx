@@ -38,23 +38,20 @@ import { LeagueHomePage } from '@/features/leagues/league-home-page';
 import { CanonicalLeagueCode } from '@/features/leagues/canonical-league-code';
 import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
-import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
-import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
-import { RootAdminEventsPage } from '@/features/root-admin/root-admin-events-page';
-import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
-import { RootAdminSportLeagueEditPage } from '@/features/root-admin/root-admin-sport-league-edit-page';
-import { RootAdminSportLeagueHomePage } from '@/features/root-admin/root-admin-sport-league-home-page';
+import { LeagueContestTemplatesTab } from '@/features/root-admin/league-contest-templates-tab';
+import { LeagueEventsTab } from '@/features/root-admin/league-events-tab';
+import { LeaguePageLayout } from '@/features/root-admin/league-page-layout';
+import { LeagueParticipantsTab } from '@/features/root-admin/league-participants-tab';
+import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
 import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
-import { RootAdminParticipantEditPage } from '@/features/root-admin/root-admin-participant-edit-page';
-import { RootAdminParticipantHomePage } from '@/features/root-admin/root-admin-participant-home-page';
-import { RootAdminParticipantListPage } from '@/features/root-admin/root-admin-participant-list-page';
+import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
+import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { RootAdminSportEventEditPage } from '@/features/root-admin/root-admin-sport-event-edit-page';
 import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
 import { RootAdminSportEventFieldPage } from '@/features/root-admin/root-admin-sport-event-field-page';
 import { RootAdminSportEventHomePage } from '@/features/root-admin/root-admin-sport-event-home-page';
 import { RootAdminSportEventTiersPage } from '@/features/root-admin/root-admin-sport-event-tiers-page';
-import { RootAdminSportEventListPage } from '@/features/root-admin/root-admin-sport-event-list-page';
 import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
@@ -382,16 +379,18 @@ export const router = createBrowserRouter([
                     element: <ManageLandingRedirect />,
                   },
                   {
+                    // The old contest template list; each league's templates are on its League page (#1866).
                     path: 'content-configuration',
-                    element: <RootAdminContentConfigurationListPage />,
+                    element: <Navigate replace to={SPORTS_PATH} />,
                   },
                   {
                     path: 'content-configuration/:templateKey',
                     element: <RootAdminContentConfigurationDetailPage />,
                   },
                   {
+                    // The old event list; each league's events are on its League page (#1866).
                     path: 'events',
-                    element: <RootAdminEventsPage />,
+                    element: <Navigate replace to={SPORTS_PATH} />,
                   },
                   {
                     // Every sport league in one grid, Manage's landing page (#1848).
@@ -407,9 +406,22 @@ export const router = createBrowserRouter([
                       { index: true, element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'leagues', element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'leagues/new', element: <RootAdminSportLeagueCreatePage /> },
-                      { path: 'leagues/:leagueId', element: <RootAdminSportLeagueHomePage /> },
-                      { path: 'leagues/:leagueId/edit', element: <RootAdminSportLeagueEditPage /> },
-                      { path: 'events', element: <RootAdminSportEventListPage /> },
+                      {
+                        // A sport league's own page and its tabs (#1866).
+                        path: 'leagues/:leagueId',
+                        element: <LeaguePageLayout />,
+                        children: [
+                          { index: true, element: <Navigate replace to="events" /> },
+                          { path: 'events', element: <LeagueEventsTab /> },
+                          { path: 'participants', element: <LeagueParticipantsTab /> },
+                          { path: 'contest-templates', element: <LeagueContestTemplatesTab /> },
+                          { path: 'tools', element: <LeagueToolsTab /> },
+                          // Its old edit page: the settings are the ⚙ dialog on the page now.
+                          { path: 'edit', element: <Navigate replace to=".." relative="path" /> },
+                        ],
+                      },
+                      // The sport-wide event and participant lists gave way to each league's page (#1866).
+                      { path: 'events', element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'events/new', element: <RootAdminSportEventCreatePage /> },
                       {
                         path: 'events/:eventId',
@@ -423,10 +435,8 @@ export const router = createBrowserRouter([
                           { path: 'results', element: <RootAdminSportEventResultsPage /> },
                         ],
                       },
-                      { path: 'participants', element: <RootAdminParticipantListPage /> },
                       { path: 'participants/new', element: <RootAdminParticipantCreatePage /> },
-                      { path: 'participants/:participantId', element: <RootAdminParticipantHomePage /> },
-                      { path: 'participants/:participantId/edit', element: <RootAdminParticipantEditPage /> },
+                      { path: 'participants/*', element: <Navigate replace to={SPORTS_PATH} /> },
                     ],
                   },
                   {

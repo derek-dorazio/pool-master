@@ -2,8 +2,9 @@ import { expect, type Page } from '@playwright/test';
 import { submitAndRead } from './browser-writes';
 
 /**
- * Adds participants to one sport league through Manage's Add page (#1853: a participant belongs to
- * one league, and Add opens on the league it names), one save each, returning their ids in order.
+ * Adds participants to one sport league through Manage's Add page, reached from the League page's
+ * Tools tab (#1853, #1866: a participant belongs to one league, and Add opens on the league it
+ * names), one save each, returning their ids in order.
  */
 export async function addLeagueParticipants(page: Page, sportPath: string, sportLeagueId: string, names: readonly string[]): Promise<string[]> {
   const ids: string[] = [];
@@ -22,8 +23,10 @@ export async function addLeagueParticipants(page: Page, sportPath: string, sport
   return ids;
 }
 
-/** Opens the sport's participant list on one league, the list showing that league's alone. */
-export async function openLeagueParticipantList(page: Page, sportPath: string, sportLeagueId: string): Promise<void> {
-  await page.goto(`/manage/sports/${sportPath}/participants`);
-  await page.getByTestId('root-admin-participant-list-league').selectOption(sportLeagueId);
+/** Opens the League page's Participants tab (#1866) and finds each participant on it. */
+export async function expectLeagueParticipants(page: Page, sportPath: string, sportLeagueId: string, ids: readonly string[]): Promise<void> {
+  await page.goto(`/manage/sports/${sportPath}/leagues/${sportLeagueId}/participants`);
+  for (const id of ids) {
+    await expect(page.getByTestId(`root-admin-league-participant-${id}`)).toBeVisible();
+  }
 }

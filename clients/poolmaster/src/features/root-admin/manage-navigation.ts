@@ -37,14 +37,6 @@ export function buildSportEventPath(sport: Sport, eventId: string) {
   return `${buildSportEventListPath(sport)}/${eventId}`;
 }
 
-export function buildSportParticipantListPath(sport: Sport) {
-  return `${buildSportPath(sport)}/participants`;
-}
-
-export function buildSportParticipantPath(sport: Sport, participantId: string) {
-  return `${buildSportParticipantListPath(sport)}/${participantId}`;
-}
-
 /** A sport league's page; the sport's leagues are listed together on the Sports page (#1848). */
 export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
   return `${buildSportPath(sport)}/leagues/${sportLeagueId}`;
@@ -58,10 +50,6 @@ export function buildSportLeagueCreatePath(sport: Sport) {
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
 export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 
-/** The old event list and contest template pages, reached from Sports' second row until the League page's tabs replace them. */
-export const EVENTS_PATH = '/manage/events';
-export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
-
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
@@ -72,7 +60,7 @@ export const PROVIDERS_PATH = '/manage/providers';
  * until they move.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
-  { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
+  { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, '/manage/events', '/manage/content-configuration'] },
   { key: 'activity', title: 'Activity', to: '/manage/sync', paths: ['/manage/sync'] },
   { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
   {
@@ -128,36 +116,8 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
   }));
 }
 
-/**
- * Manage's second row (#1848), null where a tool has none. Under Sports: Sport leagues (the Sports
- * page and each league's pages), the old Events and Contest templates pages until the League
- * page's tabs replace them, then one tab per supported sport for its events and participants.
- * Under Customers: Leagues and Users.
- */
+/** Manage's second row, null where a tool has none: under Customers, Leagues and Users. */
 export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
-  if (MANAGE_SECTION_DEFINITIONS[0].paths.some((path) => isAtOrUnder(pathname, path))) {
-    const sport = parseSportPathSegment(pathname.split('/')[3]);
-    const onLeaguePage = sport !== null && isAtOrUnder(pathname, `${buildSportPath(sport)}/leagues`);
-    return {
-      label: 'Sports',
-      items: [
-        { isActive: pathname === SPORTS_PATH || onLeaguePage, label: 'Sport leagues', testId: 'root-admin-manage-menu-sport-leagues', to: SPORTS_PATH },
-        { isActive: isAtOrUnder(pathname, EVENTS_PATH), label: 'Events', testId: 'root-admin-manage-menu-events', to: EVENTS_PATH },
-        {
-          isActive: isAtOrUnder(pathname, CONTEST_TEMPLATES_PATH),
-          label: 'Contest templates',
-          testId: 'root-admin-manage-menu-contest-templates',
-          to: CONTEST_TEMPLATES_PATH,
-        },
-        ...SUPPORTED_SPORTS.map((candidate) => ({
-          isActive: candidate === sport && !onLeaguePage,
-          label: getSportDefinition(candidate).name,
-          testId: `root-admin-manage-menu-${sportPathSegment(candidate)}`,
-          to: buildSportEventListPath(candidate),
-        })),
-      ],
-    };
-  }
   if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
     return {
       label: 'Customers',
