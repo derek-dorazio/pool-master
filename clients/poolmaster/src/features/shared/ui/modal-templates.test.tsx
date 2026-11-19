@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
@@ -313,6 +313,38 @@ describe("pool-master-3ew: shared modal templates", () => {
         </DetailEditModal>,
       );
       expect(screen.queryByText("Used by PGA Tour")).not.toBeInTheDocument();
+    });
+
+    it("splits view mode into a Details section of facts and an Actions section, one row per action with its line and button, and drops both in edit mode", () => {
+      const onReset = vi.fn();
+      const actions = [{
+        id: "reset",
+        name: "Reset password",
+        description: "Makes a temporary password to give them.",
+        control: <button onClick={onReset} type="button">Reset</button>,
+        testId: "action-reset",
+      }];
+      const { rerender } = render(
+        <DetailEditModal actions={actions} facts={facts} mode="view" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" testId="user" title="Ana Ruiz" viewContent={<p>Office Hoops</p>}>
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+
+      expect(within(screen.getByTestId("user-details")).getByTestId("status-fact")).toHaveTextContent("On");
+      expect(within(screen.getByTestId("user-details")).getByText("Office Hoops")).toBeInTheDocument();
+      const action = within(screen.getByTestId("user-actions")).getByTestId("action-reset");
+      expect(action).toHaveTextContent("Reset password");
+      expect(action).toHaveTextContent("Makes a temporary password to give them.");
+      fireEvent.click(within(action).getByRole("button", { name: "Reset" }));
+      expect(onReset).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <DetailEditModal actions={actions} facts={facts} mode="edit" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" testId="user" title="Ana Ruiz">
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+      expect(screen.queryByTestId("user-actions")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toBeInTheDocument();
     });
 
     it("disables Save while the form cannot be saved", () => {

@@ -20,7 +20,7 @@ import {
   buildLeagueTeamPastContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { buildSportPath } from '@/features/root-admin/manage-navigation';
+import { buildManageUserPath, buildSportPath } from '@/features/root-admin/manage-navigation';
 
 export function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
@@ -125,4 +125,10 @@ export function LegacyGolfManageRedirect() {
 export function LegacyEditLeagueRedirect() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   return <Navigate replace to={buildLeagueAdminEditPath(leagueCode)} />;
+}
+
+/** A user's old Manage page now opens their dialog on Customers › Users (#1883). */
+export function LegacyManageUserRedirect() {
+  const { userId = '' } = useParams<{ userId: string }>();
+  return <Navigate replace to={buildManageUserPath(userId)} />;
 }

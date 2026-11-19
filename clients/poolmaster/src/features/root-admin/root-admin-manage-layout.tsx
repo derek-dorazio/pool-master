@@ -28,8 +28,9 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   }
 
   const relevantSegments = segments.slice(manageIndex + 1);
-  // Under `sports/<sport>/`, the sport tab already names the sport.
-  const firstShown = relevantSegments[0] === "sports" ? 2 : 0;
+  // Under `sports/<sport>/` the sport tab already names the sport, and under `customers/<tab>/`
+  // the page's own tabs name the view.
+  const firstShown = relevantSegments[0] === "sports" || relevantSegments[0] === "customers" ? 2 : 0;
   return relevantSegments
     .map((segment, index) => ({
       segment,

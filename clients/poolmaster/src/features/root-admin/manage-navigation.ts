@@ -71,6 +71,14 @@ export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
+/** Customers (#1883): every league and every user on the platform, a tab each. */
+export const CUSTOMERS_PATH = '/manage/customers';
+export const CUSTOMER_LEAGUES_PATH = `${CUSTOMERS_PATH}/leagues`;
+export const CUSTOMER_USERS_PATH = `${CUSTOMERS_PATH}/users`;
+
+/** The search parameter that opens one user's dialog on the Users tab. */
+export const CUSTOMER_USER_PARAM = 'user';
+
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
  * Plans. Activity has no page of its own yet, so it opens today's sync runs. Notifications (#1872)
@@ -87,18 +95,16 @@ const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     to: PROVIDERS_PATH,
     paths: [PROVIDERS_PATH, '/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
   },
-  { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
+  { key: 'customers', title: 'Customers', to: CUSTOMER_LEAGUES_PATH, paths: [CUSTOMERS_PATH] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
 ];
 
 /** Where `/manage` itself lands: Sports, every sport league in one grid. */
 export const MANAGE_LANDING_PATH = SPORTS_PATH;
 
-/** How long a server-searched Manage list waits after the last key before it asks (#1180). */
-export const SEARCH_DEBOUNCE_MS = 300;
-
+/** One user, opened in their dialog on Customers › Users (#1883). */
 export function buildManageUserPath(userId: string) {
-  return `/manage/users/${userId}`;
+  return `${CUSTOMER_USERS_PATH}?${new URLSearchParams({ [CUSTOMER_USER_PARAM]: userId }).toString()}`;
 }
 
 export const PLANS_PATH = '/manage/plans';
@@ -138,7 +144,7 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
  * Manage's second row (#1848), null where a tool has none. Under Sports: Sport leagues (the Sports
  * page and each league's pages), the old Events and Contest templates pages until the League
  * page's tabs replace them, then one tab per supported sport for its events and participants.
- * Under Notifications: Emails and the old Settings page. Under Customers: Leagues and Users.
+ * Under Notifications: Emails and the old Settings page.
  */
 export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
   if (MANAGE_SECTION_DEFINITIONS[0].paths.some((path) => isAtOrUnder(pathname, path))) {
@@ -170,15 +176,6 @@ export function buildManageSubTabs(pathname: string): { label: string; items: Pa
       items: [
         { isActive: isAtOrUnder(pathname, NOTIFICATIONS_PATH), label: 'Emails', testId: 'root-admin-manage-menu-emails', to: NOTIFICATIONS_PATH },
         { isActive: isAtOrUnder(pathname, SETTINGS_PATH), label: 'Settings', testId: 'root-admin-manage-menu-settings', to: SETTINGS_PATH },
-      ],
-    };
-  }
-  if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
-    return {
-      label: 'Customers',
-      items: [
-        { isActive: isAtOrUnder(pathname, '/manage/leagues'), label: 'Leagues', testId: 'root-admin-manage-menu-leagues', to: '/manage/leagues' },
-        { isActive: isAtOrUnder(pathname, '/manage/users'), label: 'Users', testId: 'root-admin-manage-menu-users', to: '/manage/users' },
       ],
     };
   }

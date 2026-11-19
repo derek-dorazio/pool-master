@@ -188,8 +188,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('root-admin-manage-menu-sports')).toBeVisible();
       await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
-      await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
-      await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
+      await expectListPageLoaded(page, '/manage/customers/leagues', 'root-admin-customer-leagues-page', 'root-admin-customer-leagues-table');
+      await expectListPageLoaded(page, '/manage/customers/users', 'root-admin-customer-users-page', 'root-admin-customer-users-table');
       await expectListPageLoaded(page, '/manage/plans', 'root-admin-plans-page', 'root-admin-plans-caps');
       await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-sport-event-list-page', 'root-admin-sport-event-list-table');
       await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-participant-list-page', 'root-admin-participant-list-table');
@@ -872,15 +872,15 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   await test.step('the new league and both new users are visible to the root admin', async () => {
-    // Both lists are search-first (#1180): every league or user is too many to read.
-    await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
-    await page.getByTestId('root-admin-manage-leagues-search').fill(run.leagueName);
-    await expect(page.getByTestId(`root-admin-manage-leagues-link-${state.leagueId}`)).toBeVisible();
-    await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
-    // Both new users' usernames carry the run id.
-    await page.getByTestId('root-admin-manage-users-search').fill(run.runId);
-    await expect(page.getByTestId(`root-admin-manage-user-row-${state.commissionerId}`)).toBeVisible();
-    await expect(page.getByTestId(`root-admin-manage-user-row-${state.memberId}`)).toBeVisible();
+    // Both Customers grids load every row and filter in the browser (#1883).
+    await expectListPageLoaded(page, '/manage/customers/leagues', 'root-admin-customer-leagues-page', 'root-admin-customer-leagues-table');
+    await filterGridText(page, 'root-admin-customer-leagues-filter-name', run.leagueName);
+    await expect(page.getByTestId(`root-admin-customer-league-${state.leagueId}`)).toBeVisible();
+    await expectListPageLoaded(page, '/manage/customers/users', 'root-admin-customer-users-page', 'root-admin-customer-users-table');
+    // Both new users' last names carry the run id.
+    await filterGridText(page, 'root-admin-customer-users-filter-name', run.runId);
+    await expect(page.getByTestId(`root-admin-customer-user-${state.commissionerId}`)).toBeVisible();
+    await expect(page.getByTestId(`root-admin-customer-user-${state.memberId}`)).toBeVisible();
   });
 
   await test.step('root admin logs out', async () => {
@@ -1521,6 +1521,13 @@ async function expectLeaderboardPageShowsRound(tab: Page, entryId: string, pickI
   for (const pickId of pickIds) {
     await expect(tab.getByTestId(`contest-leaderboard-pick-round-${entryId}-${pickId}-${round}`)).not.toHaveText('—');
   }
+}
+
+/** Opens a DataGrid column's filter by its funnel's test id, types the term and applies it. */
+async function filterGridText(page: Page, filterTestId: string, term: string) {
+  await page.getByTestId(filterTestId).click();
+  await page.getByTestId(`${filterTestId}-term`).fill(term);
+  await page.getByTestId(`${filterTestId}-apply`).click();
 }
 
 async function expectListPageLoaded(page: Page, path: string, landmark: string, table: string) {

@@ -285,10 +285,8 @@ export const QueryKeys = {
         search,
         dateWindow ?? null,
       ] as const,
-    // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
+    // Customers › Leagues (#1883): every league, which any league's plan or gift change refreshes.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
-    manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // The platform's tier and pricing profiles (#1844), which sport leagues name.
     tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
@@ -312,6 +310,7 @@ export const QueryKeys = {
     // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
     unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
+    // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },
 } as const;

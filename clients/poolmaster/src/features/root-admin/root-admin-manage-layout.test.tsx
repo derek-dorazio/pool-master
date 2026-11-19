@@ -9,8 +9,8 @@ function LocationProbe() {
 }
 
 function EntityHomeProbe() {
-  useManageBreadcrumbOverride('user-2', 'Target User');
-  return <h1>Target User</h1>;
+  useManageBreadcrumbOverride('evt-1', 'Target Event');
+  return <h1>Target Event</h1>;
 }
 
 function renderManage(path: string) {
@@ -20,14 +20,14 @@ function renderManage(path: string) {
         <Route element={<RootAdminManageLayout />} path="/manage">
           <Route element={<ManageLandingRedirect />} index />
           <Route element={<ManageLandingRedirect />} path="legacy" />
-          <Route element={<LocationProbe />} path="leagues" />
+          <Route element={<LocationProbe />} path="customers/leagues" />
           <Route element={<LocationProbe />} path="sports" />
           <Route element={<div>Plans body</div>} path="plans" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
           <Route element={<div>Providers body</div>} path="providers" />
-          <Route element={<EntityHomeProbe />} path="users/:userId" />
           <Route element={<div>Golf events body</div>} path="sports/golf/events" />
           <Route element={<div>Event field body</div>} path="sports/golf/events/:eventId/field" />
+          <Route element={<EntityHomeProbe />} path="sports/golf/events/:eventId" />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -78,8 +78,8 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getByTestId('root-admin-manage-menu-tennis')).not.toHaveAttribute('aria-current');
   });
 
-  it('leaves the title to the page and shows no trail on a page at its tab\'s level', () => {
-    renderManage('/manage/leagues');
+  it('leaves the title to the page and shows no trail on a page at its tab\'s level, as on a Customers tab', () => {
+    renderManage('/manage/customers/leagues');
 
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Manage breadcrumbs')).not.toBeInTheDocument();
@@ -126,11 +126,11 @@ describe('RootAdminManageLayout', () => {
   });
 
   it('names an entity in the trail by the name its page gives', () => {
-    renderManage('/manage/users/user-2');
+    renderManage('/manage/sports/golf/events/evt-1');
 
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
-    expect(within(breadcrumbNav).getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/manage/users');
-    expect(within(breadcrumbNav).getByText('Target User')).toHaveAttribute('aria-current', 'page');
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Tournaments' })).toHaveAttribute('href', '/manage/sports/golf/events');
+    expect(within(breadcrumbNav).getByText('Target Event')).toHaveAttribute('aria-current', 'page');
   });
 });

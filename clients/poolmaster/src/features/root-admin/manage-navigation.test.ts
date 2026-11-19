@@ -4,6 +4,7 @@ import {
   MANAGE_LANDING_PATH,
   buildManageSubTabs,
   buildManageTabs,
+  buildManageUserPath,
   buildSportEventPath,
   getManageBreadcrumbLabel,
   parseSportPathSegment,
@@ -61,7 +62,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/sync')).toEqual(['Activity']);
     expect(lit('/manage/notifications')).toEqual(['Notifications']);
     expect(lit('/manage/settings')).toEqual(['Notifications']);
-    expect(lit('/manage/users/user-1')).toEqual(['Customers']);
+    expect(lit('/manage/customers/users')).toEqual(['Customers']);
     expect(lit('/manage/events')).toEqual(['Sports']);
     expect(lit('/manage/content-configuration/how-to-play')).toEqual(['Sports']);
     expect(lit('/manage/nowhere')).toEqual([]);
@@ -103,11 +104,9 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
   });
 
-  it('under Customers, shows Leagues and Users', () => {
-    expect(buildManageSubTabs('/manage/users/user-1')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Leagues', false],
-      ['Users', true],
-    ]);
+  it('opens Customers on its Leagues tab, and names one user by a link to their dialog on the Users tab', () => {
+    expect(buildManageTabs('/manage/plans').find((tab) => tab.label === 'Customers')?.to).toBe('/manage/customers/leagues');
+    expect(buildManageUserPath('user-1')).toBe('/manage/customers/users?user=user-1');
   });
 
   it('under Notifications, shows Emails and the old Settings page, marking the one open', () => {
@@ -121,7 +120,8 @@ describe('Manage menu and breadcrumbs per sport', () => {
     ]);
   });
 
-  it('has no second row under Activity, Providers or Plans', () => {
+  it('has no second row under Activity, Providers, Customers or Plans', () => {
+    expect(buildManageSubTabs('/manage/customers/users')).toBeNull();
     expect(buildManageSubTabs('/manage/sync')).toBeNull();
     expect(buildManageSubTabs('/manage/plans')).toBeNull();
   });
