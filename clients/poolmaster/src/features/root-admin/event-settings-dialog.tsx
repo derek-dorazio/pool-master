@@ -132,7 +132,7 @@ export function EventSettingsDialog({
     {
       id: 'tiers',
       label: 'Tiers',
-      value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : tiersQuery.data.map((tier) => tier.label).join(' · '),
+      value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : [...tiersQuery.data].sort((a, b) => a.tierNumber - b.tierNumber).map((tier) => tier.label).join(' · '),
       testId: `${testId}-tiers`,
     },
     { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: `${testId}-pricing-profile` },

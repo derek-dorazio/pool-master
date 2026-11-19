@@ -128,4 +128,15 @@ describe('the event tiers dialog', () => {
     expect(await screen.findByText(/Tiers are locked/)).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it('says the tiers may have saved and to Save again when the save fails unexpectedly, as when placing the field fails', async () => {
+    const { onClose } = renderDialog();
+    replaceEventTiersMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } } });
+
+    await userEvent.type(screen.getByTestId(`${TEST_ID}-label-0`), ' A');
+    await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));
+
+    expect(await screen.findByText('The tiers may have saved, but placing the field in them failed. Save again to finish.')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

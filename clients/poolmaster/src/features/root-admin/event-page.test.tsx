@@ -221,7 +221,8 @@ function renderEventPage(path: string, {
   listActivityMock.mockResolvedValue({ data: { jobs: [] } });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ tierNumber: 1, label: 'Favourites' }), tierFixture({ tierNumber: 2, label: 'Field' })] } });
+  // Out of tier order, as a read may answer: the ⚙ lists them by tier number.
+  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ tierNumber: 2, label: 'Field' }), tierFixture({ tierNumber: 1, label: 'Favourites' })] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -588,7 +589,7 @@ describe('Event page ⚙ dialog', () => {
     );
   });
 
-  it('lists the event\'s tiers and opens the Tiers dialog from ⚙ while they are editable, but offers no edit once released', async () => {
+  it('lists the event\'s tiers in tier order and opens the Tiers dialog from ⚙ while they are editable, but offers no edit once released', async () => {
     const { unmount } = renderEventPage('/manage/sports/golf/events/tour-1/field');
     const released = await openSettings();
     expect(await within(released).findByTestId('root-admin-event-settings-dialog-tiers')).toHaveTextContent('Favourites · Field');
