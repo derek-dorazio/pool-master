@@ -815,35 +815,39 @@ export class ContestService {
    * named (#1435), after a write changed what they are computed from. A contest no viewer has read
    * has none, and is computed on its first read. A board that can no longer be shown is dropped,
    * so the next read answers why. Each board's failure is logged and leaves the others to finish.
+   * Answers how many boards it wrote or dropped (#1861).
    */
-  async rebuildLeaderboardSnapshots(changes: LeaderboardChanges): Promise<void> {
+  async rebuildLeaderboardSnapshots(changes: LeaderboardChanges): Promise<number> {
     const keys = await this.deps.leaderboardSnapshots.findKeysByContestsOrEvents(changes.contestIds, changes.sportEventIds);
-    if (keys.length === 0) return;
+    if (keys.length === 0) return 0;
     const contests = new Map((await this.deps.contests.findByIds([...new Set(keys.map((key) => key.contestId))]))
       .map((contest) => [contest.id, contest]));
     // Built side by side on reads batched across them (#1315), as a cup's projection is.
     const batched = new ContestService({ ...batchedLeaderboardDeps(this.deps), logger: this.logger, now: this.now });
-    await Promise.all(keys.map(async (key) => {
+    const changed = await Promise.all(keys.map(async (key): Promise<number> => {
       const contest = contests.get(key.contestId);
       // A squares contest has no leaderboard (its grid is its board), so none is ever stored.
       const kind = contest ? leaderboardKindOf(contest) : null;
-      if (!contest || !kind) return;
+      if (!contest || !kind) return 0;
       try {
         await batched.rebuildLeaderboardSnapshot(contest, kind, key.shownEvent);
+        return 1;
       } catch (error) {
         if (error instanceof ContestOperationError) {
           this.logger.info({ contestId: key.contestId, shownEvent: key.shownEvent, code: error.code }, 'leaderboard snapshot dropped: the board can no longer be shown');
           // poolmaster-allow-query-in-loop: only a board that can no longer be shown, rare; each its own row
           await this.deps.leaderboardSnapshots.delete(key);
-          return;
+          return 1;
         }
         this.logger.error({
           contestId: key.contestId,
           shownEvent: key.shownEvent,
           error: errorMessage(error),
         }, 'leaderboard snapshot rebuild failed; the stored board stands until its next rebuild');
+        return 0;
       }
     }));
+    return changed.reduce((sum, count) => sum + count, 0);
   }
 
   /**

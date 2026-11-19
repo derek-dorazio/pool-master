@@ -103,6 +103,11 @@ function overviews(): SportLeagueOverviewDto[] {
             failedChecks: ['TIERS_ASSIGNED', 'PRICES_ASSIGNED'],
           }],
         },
+        {
+          type: 'OVERDUE',
+          count: 1,
+          items: [{ label: 'NBA Cup 2026', occurredAt: '2020-01-01T00:00:00.000Z', target: { type: 'SPORT_EVENT', id: 'evt-late' } }],
+        },
       ],
     }),
     overview({ id: 'ncaa', sport: 'BASKETBALL', name: "NCAA Men's Basketball", eventCount: 2 }),
@@ -204,6 +209,19 @@ describe('RootAdminSportsPage', () => {
     expect(item).toHaveTextContent('NBA Cup 2027');
     expect(item).toHaveTextContent('Every participant in a tier, Prices made failed');
     expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-cup');
+  });
+
+  it('lists an overdue event behind its chip with when it should have ended and how late it is, linking to its event', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-sports-issue-nba-OVERDUE')).toHaveTextContent('Overdue 1');
+    await userEvent.click(screen.getByTestId('root-admin-sports-issue-nba-OVERDUE-popover'));
+
+    const item = await screen.findByTestId('root-admin-sports-issue-event-evt-late');
+    expect(item).toHaveTextContent('NBA Cup 2026');
+    expect(item).toHaveTextContent(/Should have ended .* · \d+ days late/);
+    expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-late');
   });
 
   it('opens a failed sync\'s run from behind its chip, staying on the page', async () => {

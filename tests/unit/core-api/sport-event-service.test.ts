@@ -28,7 +28,7 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
@@ -56,7 +56,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     sportEvents,
     undefined,
     // The job queue an event change's jobs are requested from and woken through.
-    sportEventChanged ? new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() }) : undefined,
+    sportEventChanged ? new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart }) : undefined,
     undefined,
     undefined,
     sportEventChanged,

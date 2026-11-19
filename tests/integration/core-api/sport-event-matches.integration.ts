@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import type { SportEventMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
@@ -242,7 +242,7 @@ describe('PrismaSportEventMatchRepository', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 10, awayScore: 8 }, [
-      { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [randomUUID()], sport: Sport.BASKETBALL, eventId: event.id } },
+      { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [randomUUID()], sport: Sport.BASKETBALL, eventId: event.id }, start: { trigger: JobTrigger.SYSTEM } },
     ]);
 
     expect((await repos().matches.findById(first.id))?.periodScores).toEqual([{ periodNumber: 1, homeScore: 10, awayScore: 8 }]);

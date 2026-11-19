@@ -432,6 +432,7 @@ export class InMemorySportEvents {
         if (check === null) this.autoReleaseChecks.delete(sportEventId);
         else this.autoReleaseChecks.set(sportEventId, check);
       },
+      findAutoReleaseCheck: async (sportEventId) => this.autoReleaseChecks.get(sportEventId) ?? null,
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')

@@ -5,9 +5,10 @@
 import type {
   BackgroundJob,
   BackgroundJobActivityFilter,
+  BackgroundJobOutcome,
   BackgroundJobRequest,
-  BackgroundJobResult,
   BackgroundJobStatus,
+  JobErrorType,
 } from '../domain';
 
 /** One claim of a job: the job and the attempt the claim counted. */
@@ -30,7 +31,7 @@ export interface BackgroundJobRepository {
   /**
    * Claims up to `limit` due jobs, earliest due first: queued ones whose run time has come, and
    * running ones whose lease ended (their task stopped mid-run). Each becomes RUNNING with one
-   * more attempt, leased until `leaseUntil`, and loses its dedupe key for good (a retry has none). Rows another task holds
+   * more attempt, started at `now` (#1861), leased until `leaseUntil`, and loses its dedupe key for good (a retry has none). Rows another task holds
    * are passed over, so two tasks never claim one job.
    */
   claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]>;
@@ -39,17 +40,25 @@ export interface BackgroundJobRepository {
    * RUNNING on that attempt, and resolves to whether it did. A try that outran its lease was
    * claimed again elsewhere, so its late mark writes nothing over the newer attempt's.
    */
-  /** SUCCEEDED at `completedAt`, with what its handler reported it did, if anything (#1819). */
-  markSucceeded(claim: BackgroundJobClaim, completedAt: Date, result?: BackgroundJobResult): Promise<boolean>;
+  /**
+   * SUCCEEDED at `completedAt`, with what its handler reported it did (#1819, #1861): the rows it
+   * changed, a hold, and its result. An earlier try's error type goes unless the outcome is a hold.
+   */
+  markSucceeded(claim: BackgroundJobClaim, completedAt: Date, outcome: BackgroundJobOutcome): Promise<boolean>;
   /**
    * Holds a long try's claim until `leaseUntil` (#1819), so no other task claims the job while
    * it is still working; false when the claim is no longer this try's.
    */
   renewLease(claim: BackgroundJobClaim, leaseUntil: Date): Promise<boolean>;
-  /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed. */
-  markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean>;
-  /** FAILED for good at `completedAt`. */
-  markFailed(claim: BackgroundJobClaim, failed: { error: string; completedAt: Date }): Promise<boolean>;
+  /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed and its type (#1861). */
+  markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string; errorType: JobErrorType }): Promise<boolean>;
+  /**
+   * Deletes the job its try ran, leaving no row (#1865): for a try that did nothing worth showing
+   * in Activity, such as a release check that held an event for the same reason as before.
+   */
+  deleteClaimed(claim: BackgroundJobClaim): Promise<boolean>;
+  /** FAILED for good at `completedAt`, with its error and its type (#1861). */
+  markFailed(claim: BackgroundJobClaim, failed: { error: string; errorType: JobErrorType; completedAt: Date }): Promise<boolean>;
   /**
    * Deletes up to `limit` jobs in `status` (SUCCEEDED or FAILED) completed before `cutoff`;
    * returns how many. One batch per call.
@@ -61,7 +70,8 @@ export interface BackgroundJobRepository {
   ): Promise<number>;
   /**
    * Activity (#1819): the jobs created inside the filter's window that match it, newest first,
-   * in a fixed number of reads however many there are. Nothing pages it.
+   * in a fixed number of reads however many there are, each with the person who started it
+   * (#1861). Nothing pages it.
    */
   findActivity(filter: BackgroundJobActivityFilter): Promise<BackgroundJob[]>;
 }

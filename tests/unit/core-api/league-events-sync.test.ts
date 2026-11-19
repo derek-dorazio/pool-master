@@ -5,7 +5,7 @@ import {
   BackgroundJobType,
   ProviderSyncKind,
   ProviderSyncRunStatus,
-  ProviderSyncTrigger,
+  JobTrigger,
   Sport,
   type SportLeague,
 } from '@poolmaster/shared/domain';
@@ -15,7 +15,7 @@ import { CLUTCH_CARD_SYNC_DELAY_MS, LeagueEventsSync } from '../../../packages/c
 import type { ProviderEventDetailsChange, ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
 import { buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryBackgroundJobs, jobHandlers } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
 
 // A sport league's events sync (#1819): what its job does with the provider's events, the run it
@@ -46,7 +46,7 @@ function build(options: {
 }) {
   const jobs = inMemoryBackgroundJobs(() => NOW);
   const syncRuns = inMemorySyncRuns(jobs);
-  const queue = new BackgroundJobQueue({ jobs });
+  const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const scoreSource = {
     listTourEventsForYear: options.listTourEventsForYear
       ?? jest.fn<ReturnType<ListTourEvents>, Parameters<ListTourEvents>>(async (_providerId, sportLeagueId, eventYear) => [providerEvent(`${sportLeagueId}-${eventYear}`)]),
@@ -101,9 +101,9 @@ describe('LeagueEventsSync', () => {
 
       await expect(sync.queueScheduled()).resolves.toBe(2);
 
-      expect(jobs.rows.map((job) => [job.type, job.sportLeagueId, job.sportEventId, job.payload])).toEqual([
-        [BackgroundJobType.SYNC_LEAGUE_EVENTS, pga.id, undefined, { sportLeagueId: pga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }],
-        [BackgroundJobType.SYNC_LEAGUE_EVENTS, lpga.id, undefined, { sportLeagueId: lpga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }],
+      expect(jobs.rows.map((job) => [job.type, job.sportLeagueId, job.sportEventId, job.payload, job.trigger])).toEqual([
+        [BackgroundJobType.SYNC_LEAGUE_EVENTS, pga.id, undefined, { sportLeagueId: pga.id, eventYears: [2026, 2027] }, JobTrigger.SCHEDULE],
+        [BackgroundJobType.SYNC_LEAGUE_EVENTS, lpga.id, undefined, { sportLeagueId: lpga.id, eventYears: [2026, 2027] }, JobTrigger.SCHEDULE],
       ]);
     });
 
@@ -139,8 +139,8 @@ describe('LeagueEventsSync', () => {
       const job = await sync.syncNow({ sportLeagueId: pga.id, eventYear: 2027, requestedByUserId: adminId });
 
       expect(job).toMatchObject({ type: BackgroundJobType.SYNC_LEAGUE_EVENTS, sportLeagueId: pga.id });
-      expect(jobs.rows.map((row) => row.payload)).toEqual([
-        { sportLeagueId: pga.id, eventYears: [2027], trigger: ProviderSyncTrigger.ADMIN, requestedByUserId: adminId },
+      expect(jobs.rows.map((row) => [row.payload, row.trigger, row.startedByUserId])).toEqual([
+        [{ sportLeagueId: pga.id, eventYears: [2027] }, JobTrigger.ADMIN, adminId],
       ]);
     });
 
@@ -174,7 +174,8 @@ describe('LeagueEventsSync', () => {
       const job = await sync.syncNow({ sportLeagueId: pga.id, eventYear: 2025, requestedByUserId: randomUUID() });
 
       expect(job.id).not.toBe(waiting.id);
-      expect(job.payload).toMatchObject({ eventYears: [2025], trigger: ProviderSyncTrigger.ADMIN });
+      expect(job.payload).toMatchObject({ eventYears: [2025] });
+      expect(jobs.rows.map((row) => row.trigger)).toEqual([JobTrigger.SCHEDULE, JobTrigger.ADMIN]);
       expect(jobs.rows).toHaveLength(2);
     });
 
@@ -229,7 +230,7 @@ describe('LeagueEventsSync', () => {
         sport: Sport.GOLF,
         eventId: null,
         kind: ProviderSyncKind.EVENTS,
-        trigger: ProviderSyncTrigger.SCHEDULE,
+        trigger: JobTrigger.SCHEDULE,
         sportLeagueId: pga.id,
         sportEventId: null,
         backgroundJobId: job.id,
@@ -244,6 +245,7 @@ describe('LeagueEventsSync', () => {
       ]);
       expect(job).toMatchObject({
         status: BackgroundJobStatus.SUCCEEDED,
+        changedCount: 3,
         result: { syncRunId: run.id, eventYears: [2026, 2027], created: 2, updated: 1, skipped: 2, alreadyStarted: 0 },
       });
     });
@@ -259,9 +261,9 @@ describe('LeagueEventsSync', () => {
       }));
       const { sync, syncRuns } = build({ leagues: [pga], importProviderEventYear });
 
-      const result = await sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld });
+      const result = await sync.run({ sportLeagueId: pga.id, eventYears: [2026] }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
-      expect(result).toMatchObject({ skipped: 2, alreadyStarted: 1 });
+      expect(result).toMatchObject({ changedCount: 0, result: { skipped: 2, alreadyStarted: 1 } });
       expect(syncRuns.rows[0]?.payload).toMatchObject({ stats: { skipped: 2, alreadyStarted: 1 } });
     });
 
@@ -313,12 +315,12 @@ describe('LeagueEventsSync', () => {
       const { sync, syncRuns } = build({ leagues: [pga] });
       const jobId = randomUUID();
       const stale = await syncRuns.create({
-        providerId: 'balldontlie', sport: Sport.GOLF, eventId: null, kind: ProviderSyncKind.EVENTS, trigger: ProviderSyncTrigger.SCHEDULE,
+        providerId: 'balldontlie', sport: Sport.GOLF, eventId: null, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
         sportLeagueId: pga.id, sportEventId: null, backgroundJobId: jobId, status: ProviderSyncRunStatus.IN_PROGRESS,
         startedAt: NOW, completedAt: null, payload: {},
       });
 
-      await sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId, attempt: 2, renewLease: stillHeld });
+      await sync.run({ sportLeagueId: pga.id, eventYears: [2026] }, { jobId, attempt: 2, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       expect(syncRuns.rows.map((run) => [run.id === stale.id, run.status])).toEqual([[true, ProviderSyncRunStatus.FAILED], [false, ProviderSyncRunStatus.COMPLETED]]);
       expect(syncRuns.rows[0]?.payload).toMatchObject({ detail: expect.stringContaining('Interrupted') });
@@ -328,7 +330,7 @@ describe('LeagueEventsSync', () => {
       const pga = syncedLeague();
       const { sync, syncRuns, sportEvents } = build({ leagues: [pga] });
 
-      await expect(sync.run({ sportLeagueId: pga.id, eventYears: [2026], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease: () => Promise.resolve(false) }))
+      await expect(sync.run({ sportLeagueId: pga.id, eventYears: [2026] }, { jobId: randomUUID(), attempt: 1, renewLease: () => Promise.resolve(false), trigger: JobTrigger.SCHEDULE }))
         .rejects.toThrow('Another try took over');
       expect(sportEvents.importProviderEventYear).not.toHaveBeenCalled();
       expect(syncRuns.rows).toHaveLength(0);
@@ -339,7 +341,7 @@ describe('LeagueEventsSync', () => {
       const { sync } = build({ leagues: [pga] });
       const renewLease = jest.fn(stillHeld);
 
-      await sync.run({ sportLeagueId: pga.id, eventYears: [2026, 2027], trigger: ProviderSyncTrigger.SCHEDULE }, { jobId: randomUUID(), attempt: 1, renewLease });
+      await sync.run({ sportLeagueId: pga.id, eventYears: [2026, 2027] }, { jobId: randomUUID(), attempt: 1, renewLease, trigger: JobTrigger.SCHEDULE });
 
       expect(renewLease).toHaveBeenCalledTimes(2);
     });
@@ -348,9 +350,9 @@ describe('LeagueEventsSync', () => {
       const unsynced = syncedLeague({ eventSyncProviderId: null });
       const { sync, syncRuns } = build({ leagues: [unsynced] });
 
-      await expect(sync.run({ sportLeagueId: randomUUID(), eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld }))
+      await expect(sync.run({ sportLeagueId: randomUUID(), eventYears: [2026] }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.ADMIN }))
         .rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
-      await expect(sync.run({ sportLeagueId: unsynced.id, eventYears: [2026], trigger: ProviderSyncTrigger.ADMIN }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld }))
+      await expect(sync.run({ sportLeagueId: unsynced.id, eventYears: [2026] }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.ADMIN }))
         .rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
       expect(syncRuns.rows).toHaveLength(0);
     });

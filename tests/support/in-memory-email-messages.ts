@@ -11,9 +11,12 @@ import type {
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,
+  EmailSendSummary,
   EmailSuppressionRepository,
+  SentEmailContent,
 } from '@poolmaster/shared/db';
 import {
+  ADMIN_COPY_KEY_MARKER,
   DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
   type EmailSuppression,
@@ -21,6 +24,14 @@ import {
   type EmailTemplateKey,
   type OptionalEmailCategory,
 } from '@poolmaster/shared/domain';
+
+/** Accepted by the transport, whatever SES said after. */
+const SENT_STATUSES: readonly EmailMessageStatus[] = [
+  EmailMessageStatus.SENT,
+  EmailMessageStatus.DELIVERED,
+  EmailMessageStatus.BOUNCED,
+  EmailMessageStatus.COMPLAINED,
+];
 
 const CLEARED_CONTENT = { subject: undefined, textBody: undefined, htmlBody: undefined, listUnsubscribeUrl: undefined };
 
@@ -148,6 +159,29 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
     findLeagueIdsByNotice({ templateKey, noticeAbouts }) {
       return Promise.resolve(new Map(noticeAbouts.map((noticeAbout) => [noticeAbout, new Set(rows.flatMap((row) =>
         row.templateKey === templateKey && row.noticeAbout === noticeAbout && row.leagueId ? [row.leagueId] : []))])));
+    },
+    summarizeSentSince(since: Date): Promise<EmailSendSummary[]> {
+      const summaries = new Map<EmailTemplateKey, EmailSendSummary>();
+      for (const row of rows) {
+        if (!row.sentAt || row.sentAt < since || !SENT_STATUSES.includes(row.status) || row.idempotencyKey.includes(ADMIN_COPY_KEY_MARKER)) continue;
+        const summary = summaries.get(row.templateKey) ?? { templateKey: row.templateKey, sentCount: 0, lastSentAt: row.sentAt };
+        summary.sentCount += 1;
+        if (row.sentAt > summary.lastSentAt) summary.lastSentAt = row.sentAt;
+        if (row.htmlBody !== undefined && (!summary.previewSentAt || row.sentAt > summary.previewSentAt)) summary.previewSentAt = row.sentAt;
+        summaries.set(row.templateKey, summary);
+      }
+      return Promise.resolve([...summaries.values()]);
+    },
+    findLatestSentWithContent(templateKey: EmailTemplateKey, since: Date): Promise<SentEmailContent | undefined> {
+      let latest: SentEmailContent | undefined;
+      for (const row of rows) {
+        const { sentAt, subject, textBody, htmlBody } = row;
+        if (row.templateKey !== templateKey || !SENT_STATUSES.includes(row.status) || row.idempotencyKey.includes(ADMIN_COPY_KEY_MARKER)) continue;
+        if (!sentAt || sentAt < since || subject === undefined || textBody === undefined || htmlBody === undefined) continue;
+        if (latest && latest.sentAt >= sentAt) continue;
+        latest = { id: row.id, templateKey, recipientEmail: row.recipientEmail, fromName: row.fromName, fromAddress: row.fromAddress, subject, textBody, htmlBody, sentAt };
+      }
+      return Promise.resolve(latest);
     },
     findLatestStateByInvitations(invitationIds: string[], templateKey: EmailTemplateKey) {
       const latest = new Map<string, EmailMessageState>();

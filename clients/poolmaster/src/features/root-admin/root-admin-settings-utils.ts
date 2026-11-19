@@ -32,30 +32,6 @@ export function summarizeIngestionSchedule(config: IngestionScheduleConfig): Set
   ];
 }
 
-export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['templates'], string]> = [
-  ['LEAGUE_MEMBER_INVITE', 'League invitation'],
-  ['LEAGUE_JOIN_SUCCESS', 'League welcome'],
-  ['SQUAD_OWNER_INVITE', 'Co-owner invitation'],
-  ['SQUAD_OWNER_ADDED', 'Added as a co-owner'],
-  ['LEAGUE_MEMBER_JOINED', 'New member joined (commissioners)'],
-  ['CONTEST_EXPANDED', 'Contest expanded (commissioners)'],
-  ['LEAGUE_PLAN_PREVIEW_ENDING', 'Premium preview period ending (commissioners)'],
-  ['CONTEST_ENTRY_COMPLETED', 'Entry confirmation'],
-  ['CONTEST_STARTED_SUMMARY', 'Contest started'],
-  ['CONTEST_ENTRY_REMINDER', 'Entry reminders'],
-  ['CONTEST_OPENED', 'New contest open'],
-  ['CONTEST_STANDINGS', 'Live standings'],
-  ['CONTEST_RESULTS', 'Final results'],
-  ['CONTEST_EVENT_CHANGED', 'Event postponed or cancelled'],
-  ['CONTEST_REOPENED', 'Picks open again after a postponement'],
-  ['EVENT_COMING_UP', 'Event coming up (commissioners)'],
-  ['EVENT_READY_FOR_CONTESTS', 'Event ready for contests (commissioners)'],
-  ['EVENT_WEEKLY_DIGEST', 'Weekly event digest (commissioners)'],
-  ['CONTEST_NOT_OPEN', 'Contest not open yet (commissioners)'],
-  ['EVENT_STILL_DRAFT', 'Event still in draft (root admins)'],
-  ['YEAR_IN_REVIEW', 'Year in review'],
-];
-
 /** The entry reminder offsets as a reader sees them, e.g. "48, 24, 3 hours before picks close". */
 function formatReminderHours(hours: readonly number[]): string {
   return `${hours.join(', ')} hours before picks close`;
@@ -66,11 +42,10 @@ function formatHour(hour: number): string {
   return `${String(hour % 12 === 0 ? 12 : hour % 12)}:00 ${hour < 12 ? 'AM' : 'PM'}`;
 }
 
+/** The email settings as the ⚙ Email settings dialog lists them (#1872); each email's own switch is its row's Status. */
 export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
-  const off = EMAIL_TEMPLATE_LABELS.filter(([key]) => !config.templates[key]).map(([, label]) => label);
   return [
-    { id: 'enabled', label: 'System email', value: config.enabled ? 'On' : 'Off' },
-    { id: 'templates', label: 'Emails switched off', value: off.length > 0 ? off.join(', ') : 'None' },
+    { id: 'enabled', label: 'Email on/off', value: config.enabled ? 'On' : 'Off' },
     {
       id: 'allowedRecipients',
       label: 'Only send to',
@@ -79,7 +54,7 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
     { id: 'sendRatePerSecond', label: 'Emails a second', value: String(config.sendRatePerSecond) },
     { id: 'entryReminderHours', label: 'Entry reminders', value: formatReminderHours(config.entryReminderHours) },
     { id: 'standingsBufferMinutes', label: 'Standings email delay', value: `${String(config.standingsBufferMinutes)} minutes` },
-    { id: 'weeklyDigestHour', label: 'Weekly event digest', value: `Mondays at ${formatHour(config.weeklyDigestHour)} Eastern` },
+    { id: 'weeklyDigestHour', label: 'Weekly digest hour', value: `Mondays at ${formatHour(config.weeklyDigestHour)} Eastern` },
   ];
 }
 

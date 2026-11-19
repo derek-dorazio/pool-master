@@ -12,8 +12,10 @@ import type {
   EventTierConfig,
   PricingProfile,
   MatchSide,
+  OverdueEventFacts,
   ParticipantInactiveReason,
   Participant,
+  ParticipantType,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
@@ -150,6 +152,8 @@ export interface SportEventStatusTransition {
   to: SportEvent['status'];
   /** Written with the status, for an event that completes without an end date of its own. */
   endDate?: Date;
+  /** Written with a release, DRAFT to SCHEDULED (#1865): when the event was released. */
+  releasedAt?: Date;
   /**
    * Written in the same transaction as the status, and only when the status moves, such as the
    * job that settles the event's contests (#1448): a move that rolls back queues nothing.
@@ -283,6 +287,8 @@ export interface SportEventRepository {
    * clears it with null (a root admin's release by hand).
    */
   recordAutoReleaseCheck(sportEventId: string, check: AutoReleaseCheck | null): Promise<void>;
+  /** The event's latest automatic release check (#1847), or null before its first. */
+  findAutoReleaseCheck(sportEventId: string): Promise<AutoReleaseCheck | null>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Clutch Card events that name each event as their parent (#1820), for each id asked about (0 where none). */
@@ -593,11 +599,100 @@ export interface SportLeagueOverviewFacts {
   /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
   nextEventStarts: Map<string, Date>;
   clutchCardEvents: SportLeagueClutchCardEvent[];
+  /** Every event that may be overdue (#1865): neither completed nor cancelled, started long enough ago. */
+  overdueCandidates: SportLeagueOverdueCandidate[];
 }
+
+/** An event whose results may be overdue, in its sport league (#1865). */
+export type SportLeagueOverdueCandidate = OverdueEventFacts & { sportLeagueId: string };
 
 export interface SportLeagueOverviewReader {
   /** Every sport league's facts, as of `now`. */
   readFacts(now: Date): Promise<SportLeagueOverviewFacts>;
+}
+
+// --- League page (#1865) ---------------------------------------------------------
+
+/** The sport league a League page read is about, with what decides its syncs and releases. */
+export interface SportLeaguePageLeague {
+  id: string;
+  sport: Sport;
+  isActive: boolean;
+  parentSportLeagueId: string | null;
+  scoringFamily: ScoringFamily | null;
+  eventSyncProviderId: string | null;
+  autoReleaseDaysBeforeStart: number | null;
+  /** A Clutch Card's parent league, whose event list sync creates its events; null for any other league. */
+  parent: { isActive: boolean; eventSyncProviderId: string | null } | null;
+}
+
+/** A sync run as the League page reads it. */
+export interface SportLeaguePageRun {
+  id: string;
+  kind: ProviderSyncKind;
+  status: ProviderSyncRunStatus;
+  createdAt: Date;
+  startedAt: Date | null;
+  summary: string | null;
+  changedCount: number | null;
+}
+
+/** What the Syncs card is computed from. */
+export interface SportLeagueSyncFacts {
+  league: SportLeaguePageLeague;
+  /** The league's latest run of each kind, and for a Clutch Card its parent's latest EVENTS run in place of its own. */
+  latestRuns: SportLeaguePageRun[];
+}
+
+/** One event of the league as its Events grid reads it. */
+export interface SportLeaguePageEvent {
+  id: string;
+  name: string;
+  eventYear: number;
+  startDate: Date;
+  endDate: Date | null;
+  status: SportEventStatus;
+  providerId: string;
+  syncScope: SportEventSyncScope;
+  releasedAt: Date | null;
+  lastReleaseCheck: AutoReleaseCheck | null;
+}
+
+/** What the Events grid is computed from, in a fixed number of grouped reads. */
+export interface SportLeagueEventFacts {
+  league: SportLeaguePageLeague;
+  events: SportLeaguePageEvent[];
+  /** Field rows per event; absent while none. */
+  fieldSizes: Map<string, number>;
+  /** Each event's latest run of each kind. */
+  latestRunsByEvent: Map<string, SportLeaguePageRun[]>;
+  /** The league's events that may be overdue. */
+  overdueCandidates: OverdueEventFacts[];
+}
+
+/** One participant of the league with its provider mapping in the league, if any. */
+export interface SportLeaguePageParticipant {
+  participant: {
+    id: string;
+    name: string;
+    participantType: ParticipantType;
+    shortName: string | null;
+    nationality: string | null;
+    teamAffiliation: string | null;
+    role: string | null;
+    ranking: number | null;
+    createdAt: Date;
+  };
+  mapping: { externalId: string; lastSeenAt: Date | null } | null;
+}
+
+export interface SportLeaguePageReader {
+  /** Null when the league does not exist. */
+  readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null>;
+  /** Null when the league does not exist. */
+  readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null>;
+  /** Null when the league does not exist. */
+  readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null>;
 }
 
 /** A profile write: its name and values. */

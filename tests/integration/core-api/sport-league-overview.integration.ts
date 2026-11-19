@@ -6,7 +6,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { AutoReleaseCheckOutcome, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, JobTrigger, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository, PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueOverviewReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-overview-reader';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -126,7 +126,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
 });
 
 describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
-  it('stores a held check, overwrites it with a release, and clears it', async () => {
+  it('stores a held check and reads it back, overwrites it with a release, and clears it', async () => {
     const tour = await sportLeague('Release Tour');
     const draft = await event(tour.id, { eventYear: 2027, startDate: days(3), status: 'DRAFT' });
     const repository = new PrismaSportEventRepository(getAppPrisma());
@@ -135,8 +135,12 @@ describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
       select: { autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true },
     });
 
+    await expect(repository.findAutoReleaseCheck(draft.id)).resolves.toBeNull();
     await repository.recordAutoReleaseCheck(draft.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] });
     await expect(stored()).resolves.toEqual({ autoReleaseCheckedAt: NOW, autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED', 'CONTEST_SETUPS_ON'] });
+    await expect(repository.findAutoReleaseCheck(draft.id)).resolves.toEqual({
+      checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON],
+    });
 
     await repository.recordAutoReleaseCheck(draft.id, { checkedAt: days(1), outcome: AutoReleaseCheckOutcome.RELEASED, failedChecks: [] });
     await expect(stored()).resolves.toEqual({ autoReleaseCheckedAt: days(1), autoReleaseOutcome: 'RELEASED', autoReleaseFailedChecks: [] });
@@ -169,7 +173,7 @@ describe('ProviderSyncRunLedger with the event repository', () => {
       scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: linked.externalId, feeds: ['EVENTLIVESCORES'] },
     });
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, runType: 'SCHEDULED_EVENT_SYNC' });
+    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ kind: ProviderSyncKind.SCORES, sportEventId: linked.id, sportLeagueId: tour.id });
   });

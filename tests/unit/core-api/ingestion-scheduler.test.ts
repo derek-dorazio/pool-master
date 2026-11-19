@@ -28,7 +28,7 @@ import type {
   SportDataProvider,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import { Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -1502,16 +1502,18 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
     return { scheduler, provider, syncRunLedger };
   }
 
-  it('syncs the notified event\'s live scores from its provider and records the run as a WEBHOOK sync by the webhook receiver', async () => {
+  it('syncs the notified event\'s live scores from its provider and records the run with its job\'s WEBHOOK trigger, by the webhook receiver', async () => {
     const { scheduler, provider, syncRunLedger } = schedulerFor(createEnabledScheduleConfig());
 
-    const job = await scheduler.runNotifiedEventSync(notified);
+    const job = await scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK });
 
     expect(job?.status).toBe('COMPLETED');
     expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
     expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
       providerId: 'mock-provider',
       runType: 'WEBHOOK_EVENT_SYNC',
+      trigger: JobTrigger.WEBHOOK,
+      backgroundJobId: 'job-1',
       normalizedRequest: expect.objectContaining({
         source: 'WEBHOOK',
         actor: { type: 'SYSTEM', name: 'webhook' },
@@ -1523,7 +1525,7 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
   it('syncs nothing for a sport not scheduled for ingestion, as the scheduled sweep would not', async () => {
     const { scheduler, provider, syncRunLedger } = schedulerFor({ ...createEnabledScheduleConfig(), scheduledSports: ['AMERICAN_FOOTBALL'] });
 
-    expect(await scheduler.runNotifiedEventSync(notified)).toBeNull();
+    expect(await scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK })).toBeNull();
     expect(provider.getLiveScores).not.toHaveBeenCalled();
     expect(syncRunLedger.createSubmissions).not.toHaveBeenCalled();
   });
@@ -1534,7 +1536,7 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
       eventLiveScores: { enabled: false, intervalSeconds: 30 },
     });
 
-    expect(await scheduler.runNotifiedEventSync(notified)).toBeNull();
+    expect(await scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK })).toBeNull();
     expect(provider.getLiveScores).not.toHaveBeenCalled();
   });
 });

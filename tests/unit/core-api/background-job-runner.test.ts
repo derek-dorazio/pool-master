@@ -1,17 +1,18 @@
-import { BackgroundJobStatus, BackgroundJobType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, Sport } from '@poolmaster/shared/domain';
 import {
   BACKGROUND_JOB_LEASE_MS,
   BackgroundJobQueue,
   BackgroundJobRunner,
+  DISCARD_BACKGROUND_JOB,
   PermanentBackgroundJobError,
   readBackgroundJobPollMs,
+  type BackgroundJobAnswer,
   type BackgroundJobContext,
   type BackgroundJobHandlers,
-  type BackgroundJobOutcome,
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryBackgroundJobs, jobHandlers, type InMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, jobHandlers, TEST_JOB_START, type InMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 const START = new Date('2026-11-07T12:00:00.000Z').getTime();
 const MINUTE = 60_000;
@@ -36,13 +37,13 @@ function clock() {
 }
 
 function setup(options: {
-  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
+  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobAnswer>;
   concurrency?: number;
 } = {}) {
   const time = clock();
   const jobs = inMemoryBackgroundJobs(time.now);
   const logger = fakeLogger();
-  const handler = jest.fn(options.handler ?? (() => Promise.resolve()));
+  const handler = jest.fn(options.handler ?? (() => Promise.resolve({ changedCount: 0 })));
   const handlers: BackgroundJobHandlers = jobHandlers({ MANUAL_EVENT_SYNC: handler });
   const runner = new BackgroundJobRunner({
     jobs,
@@ -52,7 +53,7 @@ function setup(options: {
     now: time.now,
     sleep: () => Promise.resolve(),
   });
-  const queue = new BackgroundJobQueue({ jobs });
+  const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   return { time, jobs, logger, handler, runner, queue };
 }
 
@@ -83,6 +84,7 @@ describe('background job runner (#1440)', () => {
         time.advance(4 * MINUTE);
         renewed = await context.renewLease();
         leaseAfterRenewal = jobs.rows[0].leaseUntil;
+        return { changedCount: 0 };
       },
     });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
@@ -104,6 +106,7 @@ describe('background job runner (#1440)', () => {
         time.advance(MINUTE);
         renewed = await context.renewLease();
         leaseAfter = jobs.rows[0].leaseUntil;
+        return { changedCount: 0 };
       },
     });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
@@ -114,13 +117,14 @@ describe('background job runner (#1440)', () => {
     expect(leaseAfter).toEqual(leaseBefore);
   });
 
-  it('keeps what a handler reports it did on the SUCCEEDED job, for Activity to show (#1819)', async () => {
-    const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ created: 2, updated: 1 }) });
+  it('keeps what a handler reports it did on the SUCCEEDED job, its changed rows and its result, for Activity to show (#1819, #1861)', async () => {
+    const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ changedCount: 3, result: { created: 2, updated: 1 } }) });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
 
     await runner.drain();
 
-    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, result: { created: 2, updated: 1 } });
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, changedCount: 3, result: { created: 2, updated: 1 } });
+    expect(only(jobs).errorType).toBeUndefined();
   });
 
   it('keeps no result on a job whose handler reports nothing', async () => {
@@ -130,6 +134,73 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(only(jobs).result).toBeUndefined();
+  });
+
+  it('deletes the job whose handler answers there is nothing to keep, leaving no row for Activity (#1865)', async () => {
+    const { jobs, runner, queue, logger } = setup({ handler: () => Promise.resolve(DISCARD_BACKGROUND_JOB) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(jobs.rows).toEqual([]);
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.discarded' }), expect.any(String));
+  });
+
+  it('deletes nothing for a discarding try that outran its lease and was claimed again, so the newer attempt\'s row stands', async () => {
+    const { jobs, runner, queue, time, logger } = setup({
+      handler: async (_payload, context) => {
+        if (context.attempt !== 1) return { changedCount: 0 };
+        time.advance(BACKGROUND_JOB_LEASE_MS);
+        const [reclaimed] = await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
+        await jobs.markSucceeded(reclaimed, time.now(), { changedCount: 0 });
+        return DISCARD_BACKGROUND_JOB;
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2 });
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
+  });
+
+  it('records the kind of a failure its error carries, a provider\'s 429 as RATE_LIMITED (#1861)', async () => {
+    const rateLimited = Object.assign(new Error('BALLDONTLIE answered 429'), { jobErrorType: JobErrorType.RATE_LIMITED });
+    const { jobs, runner, queue } = setup({ handler: () => Promise.reject(rateLimited) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.QUEUED, errorType: JobErrorType.RATE_LIMITED });
+    expect(only(jobs).changedCount).toBeUndefined();
+  });
+
+  it('records a hold a handler reports, a release check that failed, as CHECK_FAILED on the SUCCEEDED job (#1861)', async () => {
+    const { jobs, runner, queue } = setup({ handler: () => Promise.resolve({ changedCount: 0, heldBack: JobErrorType.CHECK_FAILED }) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, changedCount: 0, errorType: JobErrorType.CHECK_FAILED });
+  });
+
+  it('hands the handler its job\'s trigger, and records SYSTEM on every job the handler queues in turn (#1861)', async () => {
+    let queueFollowUp: (() => Promise<unknown>) | undefined;
+    const { jobs, runner, queue, handler } = setup({
+      handler: async () => {
+        const next = queueFollowUp;
+        queueFollowUp = undefined;
+        await next?.();
+        return { changedCount: 0 };
+      },
+    });
+    queueFollowUp = () => queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(2));
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(1), start: { trigger: JobTrigger.WEBHOOK } });
+
+    await runner.drain();
+
+    expect(handler.mock.calls.map(([, context]) => context.trigger)).toEqual([JobTrigger.WEBHOOK, JobTrigger.SYSTEM]);
+    expect(jobs.rows.map((row) => row.trigger)).toEqual([JobTrigger.WEBHOOK, JobTrigger.SYSTEM]);
   });
 
   it('marks a job whose handler throws a permanent failure FAILED on that try, without retrying it, and logs an error (#1819)', async () => {
@@ -171,6 +242,7 @@ describe('background job runner (#1440)', () => {
         status: BackgroundJobStatus.QUEUED,
         runAt: new Date(failedAt + delay),
         lastError: 'provider timed out',
+        errorType: JobErrorType.OTHER,
       });
       // Not due again until the delay has passed.
       time.advance(delay - 1);
@@ -184,7 +256,7 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(handler).toHaveBeenCalledTimes(4);
-    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 4, lastError: 'provider timed out', completedAt: time.now() });
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 4, lastError: 'provider timed out', errorType: JobErrorType.OTHER, completedAt: time.now() });
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.failed' }), expect.any(String));
     expect(logger.error.mock.calls[0][0]).toMatchObject({ data: { type: 'MANUAL_EVENT_SYNC', attempt: 4 } });
     // FAILED is final: later passes never run it again.
@@ -195,19 +267,20 @@ describe('background job runner (#1440)', () => {
 
   it('marks a job whose stored payload fails its schema FAILED at once, without running the handler or retrying it', async () => {
     const { jobs, handler, runner, logger } = setup();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [], sport: 'CROQUET' } });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [], sport: 'CROQUET' }, start: TEST_JOB_START });
 
     await runner.drain();
 
     expect(handler).not.toHaveBeenCalled();
     expect(only(jobs).status).toBe(BackgroundJobStatus.FAILED);
     expect(only(jobs).lastError).toMatch(/^Invalid payload: /);
+    expect(only(jobs).errorType).toBe(JobErrorType.BAD_DATA);
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.invalidPayload' }), expect.any(String));
   });
 
   it('runs again a job left RUNNING by a stopped task once its lease ends, and not before', async () => {
     const { jobs, handler, runner, time } = setup();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload() });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(), start: TEST_JOB_START });
     // Another task claimed it and stopped mid-run.
     await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(START + BACKGROUND_JOB_LEASE_MS) });
 
@@ -224,11 +297,11 @@ describe('background job runner (#1440)', () => {
   it('records nothing from a try that outran its lease and was claimed again, so the newer attempt\'s outcome stands', async () => {
     const { jobs, runner, queue, time, logger } = setup({
       handler: async (_payload, context) => {
-        if (context.attempt !== 1) return;
+        if (context.attempt !== 1) return { changedCount: 0 };
         // The first try runs past its lease; another task claims the job and finishes it meanwhile.
         time.advance(BACKGROUND_JOB_LEASE_MS);
         const [reclaimed] = await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
-        await jobs.markSucceeded(reclaimed, time.now());
+        await jobs.markSucceeded(reclaimed, time.now(), { changedCount: 0 });
         throw new Error('first try failed late');
       },
     });
@@ -243,7 +316,7 @@ describe('background job runner (#1440)', () => {
 
   it('gives up with an error log on a job whose leases lapsed on every try, without running it a fifth time', async () => {
     const { jobs, handler, runner, time, logger } = setup();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload() });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(), start: TEST_JOB_START });
     for (let lapsed = 0; lapsed < 4; lapsed++) {
       await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
       time.advance(BACKGROUND_JOB_LEASE_MS);
@@ -252,7 +325,7 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(handler).not.toHaveBeenCalled();
-    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 5, lastError: 'Gave up: every lease on this job lapsed' });
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 5, lastError: 'Gave up: every lease on this job lapsed', errorType: JobErrorType.TIMEOUT });
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.abandoned' }), expect.any(String));
   });
 
@@ -266,6 +339,7 @@ describe('background job runner (#1440)', () => {
         mostAtOnce = Math.max(mostAtOnce, running);
         await Promise.resolve();
         running--;
+        return { changedCount: 0 };
       },
     });
     for (let index = 1; index <= 5; index++) {
@@ -290,6 +364,7 @@ describe('background job runner (#1440)', () => {
           await new Promise<void>((resolve) => { releaseSlow = resolve; });
         }
         finished.push(payload.eventId);
+        return { changedCount: 0 };
       },
     });
     for (let index = 1; index <= 4; index++) {
@@ -319,6 +394,7 @@ describe('background job runner (#1440)', () => {
           await new Promise<void>((resolve) => { releaseSlow = resolve; });
         }
         finished.push(payload.eventId);
+        return { changedCount: 0 };
       },
     });
     queue.wakes(runner);
@@ -345,11 +421,12 @@ describe('background job runner (#1440)', () => {
         const next = queueAnother;
         queueAnother = undefined;
         await next?.();
+        return { changedCount: 0 };
       },
     });
     queue.wakes(runner);
     queueAnother = async () => { await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(2)); };
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(1) });
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload(1), start: TEST_JOB_START });
 
     await runner.drain();
 
@@ -361,7 +438,10 @@ describe('background job runner (#1440)', () => {
     let release: (() => void) | undefined;
     const { jobs, handler, runner, queue } = setup({
       concurrency: 1,
-      handler: () => new Promise<void>((resolve) => { release = resolve; }),
+      handler: async () => {
+        await new Promise<void>((resolve) => { release = resolve; });
+        return { changedCount: 0 };
+      },
     });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(1));
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(2));

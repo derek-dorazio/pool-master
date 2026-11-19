@@ -8,7 +8,7 @@
  */
 
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import type { BackgroundJob, BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
+import type { BackgroundJob, BackgroundJobRequest, BackgroundJobType, JobStart } from '@poolmaster/shared/domain';
 import { BACKGROUND_JOB_PAYLOADS, BACKGROUND_JOB_SCOPES, type BackgroundJobPayload } from './background-job-payloads';
 
 /**
@@ -36,6 +36,12 @@ export interface BackgroundJobOptions {
   runAt?: Date;
   /** One job waiting for its first try per subject: a key such a job holds queues nothing. */
   dedupeKey?: string;
+  /**
+   * What started it (#1861). Omitted, it is what the entry point in progress says: the queue's
+   * `currentStart`, which in the app reads the request, sweep or job's handler under way
+   * (`currentJobStart`) and throws when there is none.
+   */
+  start?: JobStart;
 }
 
 export class InvalidBackgroundJobPayloadError extends Error {
@@ -48,7 +54,11 @@ export class InvalidBackgroundJobPayloadError extends Error {
 export class BackgroundJobQueue {
   private runner?: { wake(): void };
 
-  constructor(private readonly options: { jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll' | 'enqueueReturning'> }) {}
+  constructor(private readonly options: {
+    jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll' | 'enqueueReturning'>;
+    /** What started the work in progress, for a job queued without its own `start` (#1861). */
+    currentStart: () => JobStart;
+  }) {}
 
   /**
    * The runner a queued job wakes, so a job on an idle system starts at once on the task that
@@ -68,7 +78,14 @@ export class BackgroundJobQueue {
     if (!parsed.success) throw new InvalidBackgroundJobPayloadError(type, parsed.error.message);
     // The registries are exhaustive over the type, so the scope for `type` reads this payload.
     const scopeOf = BACKGROUND_JOB_SCOPES[type] as (payload: unknown) => ReturnType<(typeof BACKGROUND_JOB_SCOPES)[T]>;
-    return { type, payload: parsed.data, runAt: options.runAt, dedupeKey: options.dedupeKey, ...scopeOf(parsed.data) };
+    return {
+      type,
+      payload: parsed.data,
+      runAt: options.runAt,
+      dedupeKey: options.dedupeKey,
+      start: options.start ?? this.options.currentStart(),
+      ...scopeOf(parsed.data),
+    };
   }
 
   /** Queues one job on its own and wakes the runner; resolves to whether it was written. */

@@ -2,15 +2,21 @@
  * Prisma adapter for BackgroundJobRepository: the background job table (#1439).
  */
 
-import type { BackgroundJob as BackgroundJobRow, Prisma, PrismaClient } from '@prisma/client';
+import type { BackgroundJob as BackgroundJobRow, Prisma, PrismaClient, User } from '@prisma/client';
 import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
 import {
   BackgroundJobStatus,
   type BackgroundJob,
   type BackgroundJobActivityFilter,
+  type BackgroundJobOutcome,
   type BackgroundJobRequest,
   type BackgroundJobResult,
+  type JobErrorType,
 } from '@poolmaster/shared/domain';
+
+/** The starter's columns a job is read with: what screens name a person by. */
+const STARTED_BY_SELECT = { id: true, firstName: true, lastName: true, username: true, email: true } as const;
+type StartedByRow = Pick<User, keyof typeof STARTED_BY_SELECT>;
 
 /** The stored error is cut to this many characters: a stack or a provider body can be long. */
 export const BACKGROUND_JOB_ERROR_MAX_LENGTH = 2000;
@@ -32,13 +38,17 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     // second insert writes this request's own job.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       // poolmaster-allow-query-in-loop: at most two tries, the second only when a claim freed the key
-      const written = await this.prisma.backgroundJob.createManyAndReturn({ data: [toCreateData(request)], skipDuplicates: true });
-      if (written.length > 0) return toBackgroundJob(written[0]);
+      const written = await this.prisma.backgroundJob.createManyAndReturn({
+        data: [toCreateData(request)],
+        skipDuplicates: true,
+        include: { startedBy: { select: STARTED_BY_SELECT } },
+      });
+      if (written.length > 0) return toBackgroundJob(written[0], written[0].startedBy);
       const waiting = request.dedupeKey === undefined
         ? null
         // poolmaster-allow-query-in-loop: at most two tries, as above
-        : await this.prisma.backgroundJob.findUnique({ where: { dedupeKey: request.dedupeKey } });
-      if (waiting) return toBackgroundJob(waiting);
+        : await this.prisma.backgroundJob.findUnique({ where: { dedupeKey: request.dedupeKey }, include: { startedBy: { select: STARTED_BY_SELECT } } });
+      if (waiting) return toBackgroundJob(waiting, waiting.startedBy);
     }
     throw new Error(`A ${request.type} job was neither written nor found waiting`);
   }
@@ -66,8 +76,10 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
         createdAt: { gte: filter.createdFrom, lte: filter.createdTo },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      // The person who started each ADMIN or COMMISSIONER job (#1861), in one more read for them all: never one per row.
+      include: { startedBy: { select: STARTED_BY_SELECT } },
     });
-    return rows.map(toBackgroundJob);
+    return rows.map((row) => toBackgroundJob(row, row.startedBy));
   }
 
   async claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]> {
@@ -89,22 +101,25 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
         data: {
           status: BackgroundJobStatus.RUNNING,
           attempts: { increment: 1 },
+          startedAt: now,
           leaseUntil,
           dedupeKey: null,
         },
       });
       return rows
         .sort((a, b) => a.runAt.getTime() - b.runAt.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
-        .map(toBackgroundJob);
+        .map((row) => toBackgroundJob(row));
     });
   }
 
-  async markSucceeded(claim: BackgroundJobClaim, completedAt: Date, result?: BackgroundJobResult): Promise<boolean> {
+  async markSucceeded(claim: BackgroundJobClaim, completedAt: Date, outcome: BackgroundJobOutcome): Promise<boolean> {
     return this.markClaimed(claim, {
       status: BackgroundJobStatus.SUCCEEDED,
       completedAt,
       leaseUntil: null,
-      ...(result !== undefined && { result: result as Prisma.InputJsonObject }),
+      changedCount: outcome.changedCount,
+      errorType: outcome.heldBack ?? null,
+      ...(outcome.result !== undefined && { result: outcome.result as Prisma.InputJsonObject }),
     });
   }
 
@@ -112,21 +127,30 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     return this.markClaimed(claim, { leaseUntil });
   }
 
-  async markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean> {
+  async markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string; errorType: JobErrorType }): Promise<boolean> {
     return this.markClaimed(claim, {
       status: BackgroundJobStatus.QUEUED,
       runAt: retry.runAt,
       leaseUntil: null,
       lastError: truncateError(retry.error),
+      errorType: retry.errorType,
     });
   }
 
-  async markFailed(claim: BackgroundJobClaim, failed: { error: string; completedAt: Date }): Promise<boolean> {
+  async deleteClaimed(claim: BackgroundJobClaim): Promise<boolean> {
+    const { count } = await this.prisma.backgroundJob.deleteMany({
+      where: { id: claim.id, status: BackgroundJobStatus.RUNNING, attempts: claim.attempts },
+    });
+    return count === 1;
+  }
+
+  async markFailed(claim: BackgroundJobClaim, failed: { error: string; errorType: JobErrorType; completedAt: Date }): Promise<boolean> {
     return this.markClaimed(claim, {
       status: BackgroundJobStatus.FAILED,
       completedAt: failed.completedAt,
       leaseUntil: null,
       lastError: truncateError(failed.error),
+      errorType: failed.errorType,
     });
   }
 
@@ -190,6 +214,8 @@ function toCreateData(request: BackgroundJobRequest): Prisma.BackgroundJobCreate
     dedupeKey: request.dedupeKey ?? null,
     sportLeagueId: request.sportLeagueId ?? null,
     sportEventId: request.sportEventId ?? null,
+    trigger: request.start.trigger,
+    startedByUserId: 'startedByUserId' in request.start ? request.start.startedByUserId : null,
   };
 }
 
@@ -197,7 +223,11 @@ function truncateError(error: string): string {
   return error.length <= BACKGROUND_JOB_ERROR_MAX_LENGTH ? error : `${error.slice(0, BACKGROUND_JOB_ERROR_MAX_LENGTH - 1)}…`;
 }
 
-function toBackgroundJob(row: BackgroundJobRow): BackgroundJob {
+/**
+ * The job a row holds. Its starter is read only where it is shown (Activity); elsewhere the job
+ * names none.
+ */
+function toBackgroundJob(row: BackgroundJobRow, startedBy?: StartedByRow | null): BackgroundJob {
   return {
     id: row.id,
     type: row.type,
@@ -210,6 +240,11 @@ function toBackgroundJob(row: BackgroundJobRow): BackgroundJob {
     sportLeagueId: row.sportLeagueId ?? undefined,
     sportEventId: row.sportEventId ?? undefined,
     result: (row.result ?? undefined) as BackgroundJobResult | undefined,
+    trigger: row.trigger,
+    startedBy: startedBy ?? undefined,
+    startedAt: row.startedAt ?? undefined,
+    changedCount: row.changedCount ?? undefined,
+    errorType: row.errorType ?? undefined,
     createdAt: row.createdAt,
     completedAt: row.completedAt ?? undefined,
   };

@@ -33,7 +33,7 @@ import type {
   MappingConfidence,
   ProviderSyncKind,
   ProviderSyncRunStatus,
-  ProviderSyncTrigger,
+  JobTrigger,
   ParticipantStatus,
   ParticipantType,
   SelectionType,
@@ -491,7 +491,7 @@ export interface ProviderSyncRun {
   eventId: string | null;
   /** What the run syncs and what started it (#1819). */
   kind: ProviderSyncKind;
-  trigger: ProviderSyncTrigger;
+  trigger: JobTrigger;
   /** The sport league of an EVENTS run, or of a FIELD or SCORES run's event, where known. */
   sportLeagueId: string | null;
   /** The event of a FIELD or SCORES run, in PoolMaster's own ids, where known. */

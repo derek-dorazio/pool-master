@@ -17,7 +17,7 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { ContestStatus, CupPointsScale, LeagueIconKey, LeagueMembershipStatus, LeagueRole, PlanFeature } from '@poolmaster/shared/domain';
+import { ACTIVE_LEAGUE_CONTEST_STATUSES, CupPointsScale, LeagueIconKey, LeagueMembershipStatus, LeagueRole, PlanFeature } from '@poolmaster/shared/domain';
 import { PlanFeatureNotIncludedError } from '../plans/plan-feature-error';
 import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
@@ -87,14 +87,6 @@ export type LeagueListQuery =
   | { scope: 'mine'; userId: string; filters?: LeagueSearchFilters }
   | { scope: 'all'; userId: string; filters: LeagueSearch };
 
-/**
- * Statuses that make a contest count as active for a league's `activeContestCount`. DRAFT is
- * not one (#117): a draft is the commissioner's private setup, not a contest the league has.
- */
-const ACTIVE_LEAGUE_CONTEST_STATUSES = [
-  ContestStatus.OPEN,
-  ContestStatus.ACTIVE,
-] as const;
 
 /**
  * Everything LeagueService reads and writes (#211). It replaced a six-parameter positional

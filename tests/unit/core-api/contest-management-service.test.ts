@@ -15,6 +15,7 @@ import {
   SportEventStatus,
   TournamentFormat,
   LeaguePlan,
+  JobErrorType,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -66,7 +67,7 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
@@ -2277,7 +2278,7 @@ describe('ContestManagementService — a contest of several events', () => {
       { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
       { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
     ]);
-    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(() => CONTEST_MANAGEMENT_TEST_NOW) });
+    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(() => CONTEST_MANAGEMENT_TEST_NOW), currentStart: testCurrentJobStart });
 
     it('answers one job per joinable pool for the release to write, and changes no contest', async () => {
       const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
@@ -2294,6 +2295,7 @@ describe('ContestManagementService — a contest of several events', () => {
         payload: { contestId, sportEventId: PGA },
         sportEventId: PGA,
         runAt: undefined,
+        start: TEST_JOB_START,
         dedupeKey: `ADD_RELEASED_EDITION_TO_CONTEST:${contestId}:${PGA}`,
       })));
       expect(contestRepo.findById).not.toHaveBeenCalled();
@@ -2307,10 +2309,10 @@ describe('ContestManagementService — a contest of several events', () => {
       await expect(service.releasedEditionJobs(PGA_EDITION, jobs)).resolves.toEqual([]);
     });
 
-    it('a pool\'s job adds the released major to a live majors pool of its year, after the majors it already has', async () => {
+    it('a pool\'s job adds the released major to a live majors pool of its year, after the majors it already has, and reports the one contest it changed', async () => {
       const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
 
-      await service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA });
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toEqual({ changedCount: 1 });
 
       expect(contestRepo.findById).toHaveBeenCalledTimes(1);
       expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA], { replacing: [MASTERS] });
@@ -2332,18 +2334,19 @@ describe('ContestManagementService — a contest of several events', () => {
       expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     });
 
-    it('a pool\'s job succeeds without adding anything when the pool is gone', async () => {
+    it('a pool\'s job succeeds without adding anything, and reports no change, when the pool is gone', async () => {
       const { service, contestRepo } = build({ reader: startedMasters });
 
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toBeUndefined();
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toMatchObject({ changedCount: 0 });
 
       expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     });
 
-    it('a pool\'s job skips, and logs, a pool whose rules refuse the major (a random draw keeps one event) without failing, so it is not retried', async () => {
+    it('a pool\'s job skips, and logs, a pool whose rules refuse the major (a random draw keeps one event) without failing, so it is not retried, and reports it held back as CHECK_FAILED', async () => {
       const { service, contestRepo, logger } = build({ reader: startedMasters, contest: { selectionType: SelectionType.RANDOM_DRAW } });
 
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toBeUndefined();
+      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA }))
+        .resolves.toEqual({ changedCount: 0, heldBack: JobErrorType.CHECK_FAILED });
 
       expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(

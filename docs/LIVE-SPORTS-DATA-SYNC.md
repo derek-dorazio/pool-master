@@ -160,7 +160,9 @@ born `DRAFT`; each releases itself once every ready check passes, within its lea
 `docs/BACKGROUND-JOBS.md`), or by an admin's press before then. Each automatic check that holds
 or releases the event is stored on it (#1847: `auto_release_checked_at`, `auto_release_outcome`,
 `auto_release_failed_checks`), overwriting the one before, and an admin's release clears it; the
-Sports page counts the drafts a check held as `RELEASE` issues. A provider event whose start has already
+Sports page counts the drafts a check held as `RELEASE` issues. Activity shows a hold only when
+its failed checks change (#1865). Every release, by hand or automatic, records when it happened
+(`sport_events.released_at`, #1865); events released before then have none. A provider event whose start has already
 passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
 as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
 league's sport, and the league has a match keyword. One league's failed read fails only its own
@@ -394,7 +396,8 @@ checks the source and actor agree.
 | Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
 
 Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`) and its **trigger**
-(`SCHEDULE`, `WEBHOOK` or `ADMIN`), and a run a background job ran names that job, so Activity
+(`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER` or `SYSTEM`, the job's own when a job ran it,
+#1861), and a run a background job ran names that job, so Activity
 (`GET /api/v1/activity`) shows each job with its runs (#1819). What scope a run records depends
 on how it started:
 
@@ -414,6 +417,30 @@ reads each sport league's latest run of each kind by that league, through the
 `(sport_league_id, kind, created_at DESC)` index: a failed one is its league's sync health
 `ERROR` and a `SYNC` issue. A Clutch Card league takes its parent's `EVENTS` run, since its
 parent's event list sync creates its events.
+
+The root admin's League page (#1865) reads one sport league in three parts, each a fixed number
+of grouped statements and never paged:
+
+- `GET /api/v1/sport-leagues/{id}/syncs`: one row per kind (`EVENTS`, `FIELD`, `SCORES`) with its
+  health by the same rule, its latest run (a Clutch Card's `EVENTS` run being its parent's), the
+  rows that run created or updated, and when the one ingestion schedule runs it next. A webhook
+  provider's live scores say `WEBHOOK` and have no next run.
+- `GET /api/v1/sport-leagues/{id}/events/overview`: each event's release (`AUTO` or `MANUAL`, with
+  the actual release time or an automatic draft's planned window opening), its latest release
+  check, field size, issues and latest sync, through the `(sport_event_id, kind, created_at DESC)`
+  index.
+- `GET /api/v1/sport-leagues/{id}/participants/overview`: each participant with its feed id, when a
+  sync last saw it in the feed (`participant_provider_mappings.last_seen_at`, set on every mapping
+  a field sync matches, in one update per sync), and whether the feed or an admin added it.
+
+An event is `OVERDUE`, on both pages, when it is neither completed nor cancelled more than 4
+hours after it should have ended: its last round's scheduled end, else its last round or match
+start plus the sport's typical play, else its own end date or start plus typical play. A Clutch
+Card event is judged by the parent rounds it covers. The rule is one function,
+`overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
+
+The per-league schedule override the League page spec once showed is left out: every sport
+league syncs on the one ingestion schedule (#1871).
 
 The scheduled sweep and field loop still run on their own timers, outside the job table; moving
 them onto jobs, with their scope, is the next step.

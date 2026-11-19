@@ -27,6 +27,7 @@ import { healthPlugin } from '../../packages/core-api/src/plugins/health';
 import { authGuard } from '../../packages/core-api/src/plugins/auth-guard';
 import { etagPlugin } from '../../packages/core-api/src/plugins/etag-support';
 import { requestReadMemo } from '../../packages/core-api/src/plugins/request-read-memo';
+import { requestJobStart } from '../../packages/core-api/src/plugins/request-job-start';
 import { FASTIFY_AJV_OPTIONS } from '../../packages/core-api/src/plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from '../../packages/core-api/src/plugins/serializer-cache';
 import { globalErrorHandler } from '../../packages/core-api/src/core/error-handler';
@@ -71,6 +72,7 @@ import {
   readApplicationBaseUrl,
   emailUnsubscribeModule,
   emailTestModule,
+  systemEmailModule,
   type EmailSender,
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
@@ -79,7 +81,7 @@ import { providerWebhooksModule } from '../../packages/core-api/src/modules/inge
 import { ProviderNotificationService } from '../../packages/core-api/src/modules/ingestion/provider-notifications';
 import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks';
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
-import { jobHandlers } from '../support/in-memory-background-jobs';
+import { jobHandlers, testCurrentJobStart } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
@@ -108,6 +110,9 @@ import { EventScoreSourceService } from '../../packages/core-api/src/modules/eve
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
 import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
+import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
+import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
+import { PrismaCustomerReader } from '../../packages/core-api/src/adapters/prisma-customer-reader';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -184,7 +189,7 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
   runWith(handlers: Partial<BackgroundJobHandlers>): BackgroundJobRunner;
 } {
   const repository = new PrismaBackgroundJobRepository(prisma);
-  const queue = new BackgroundJobQueue({ jobs: repository });
+  const queue = new BackgroundJobQueue({ jobs: repository, currentStart: testCurrentJobStart });
   return {
     queue,
     runWith(handlers) {
@@ -231,6 +236,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
 
   // Core plugins. Each request shares its point reads, as the API's do (#1355).
   testApp.register(requestReadMemo);
+  testApp.register(requestJobStart);
   testApp.register(healthPlugin);
   testApp.register(etagPlugin);
   testApp.register(authGuard);
@@ -320,7 +326,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
-    REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
+    REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
     ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
   });
   backgroundJobRunner = runner;
@@ -360,7 +366,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry, schedule: ingestionConfigService, webhookProviderIds: [] });
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
@@ -371,6 +377,10 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(activityModule, {
     prefix: '/api/v1/activity',
     activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),
+  });
+  testApp.register(customersModule, {
+    prefix: '/api/v1/customers',
+    customers: new CustomerService({ reader: new PrismaCustomerReader(prisma) }),
   });
   testApp.register(emailEventsModule, {
     prefix: '/api/v1/email',
@@ -383,6 +393,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     },
   });
   testApp.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: outbox.preferences });
+  testApp.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails: outbox.systemEmails });
   // BALLDONTLIE webhooks (#1498), signed with the test secret; the syncs they queue are due a
   // minute out, so a drain leaves them waiting, as a burst's coalescing needs.
   testApp.register(providerWebhooksModule, {

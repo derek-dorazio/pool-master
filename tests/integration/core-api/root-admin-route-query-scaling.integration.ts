@@ -19,10 +19,16 @@ import {
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ActivityListResponseSchema,
+  CustomerLeagueListResponseSchema,
+  CustomerUserListResponseSchema,
   SettingsChangeListSchema,
   SettingsGroupListSchema,
   SettingsGroupSchema,
+  SportLeagueEventOverviewListResponseSchema,
   SportLeagueOverviewListResponseSchema,
+  SportLeagueParticipantOverviewListResponseSchema,
+  SportLeagueSyncListResponseSchema,
+  SystemEmailListResponseSchema,
   UnmappedProviderParticipantListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -188,7 +194,8 @@ async function seedSyncRuns(runs: number) {
 
 /**
  * A root admin, and a sport league with `jobs` background jobs on its Activity: half on the
- * league itself, each with the sync run it ran, and half on one of its events.
+ * league itself, each started by an admin of its own (#1861) and with the sync run it ran, and
+ * half on one of its events.
  */
 async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
@@ -206,8 +213,8 @@ async function seedLeagueActivity(jobs: number) {
     const onLeague = index % 2 === 0;
     const job = await prisma.backgroundJob.create({
       data: onLeague
-        ? { type: 'SYNC_LEAGUE_EVENTS', payload: { sportLeagueId: sportLeague.id, eventYears: [2026], trigger: 'SCHEDULE' }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
-        : { type: 'SETTLE_SPORT_EVENT_CONTESTS', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
+        ? { type: 'SYNC_LEAGUE_EVENTS', trigger: 'ADMIN', startedByUserId: (await createTestUser()).user.id, payload: { sportLeagueId: sportLeague.id, eventYears: [2026] }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
+        : { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: 'SYSTEM', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
     });
     if (onLeague) {
       await prisma.providerSyncRun.create({
@@ -305,6 +312,14 @@ async function seedSportLeagueOverviews(leagues: number) {
     });
     const upcoming = await event('upcoming', 2026);
     await prisma.sportEventRound.create({ data: { sportEventId: upcoming.id, roundNumber: 1, scheduledDate: upcoming.startDate } });
+    // Its results are overdue: in play, with its one round's scheduled end a day gone (#1865).
+    const overdue = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id, eventYear: 2025, name: `${name} overdue`, sport: Sport.GOLF, status: 'IN_PROGRESS',
+        providerId: provider.providerId, externalId: `${suffix}-${String(index)}-overdue`, startDate: new Date(Date.now() - 3 * DAY),
+      },
+    });
+    await prisma.sportEventRound.create({ data: { sportEventId: overdue.id, roundNumber: 1, scheduledDate: overdue.startDate, scheduledEndAt: new Date(Date.now() - DAY) } });
     await event('held', 2027, {
       status: 'DRAFT', autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'],
     });
@@ -326,6 +341,86 @@ async function seedSportLeagueOverviews(leagues: number) {
     });
   }
   return { suffix, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/**
+ * `leagues` leagues, each with a commissioner, a member and an open contest, and a root admin:
+ * every row of the Customers › Leagues grid has an owner and counts to read.
+ */
+async function seedCustomerLeagues(leagues: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  for (let index = 0; index < leagues; index += 1) {
+    const commissioner = await createTestUser({ displayName: `Owner ${suffix}${String(index)}` });
+    const member = await createTestUser({ displayName: `Member ${suffix}${String(index)}` });
+    const league = await prisma.league.create({
+      data: { cupName: 'Customers Cup', leagueCode: `CU${suffix.toUpperCase()}${String(index)}`, name: `Customers League ${suffix} ${String(index)}` },
+    });
+    await prisma.leagueMembership.createMany({
+      data: [
+        { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER', status: 'ACTIVE' },
+        { leagueId: league.id, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE' },
+      ],
+    });
+  }
+  return createTestUser({ isRootAdmin: true });
+}
+
+/** `users` users, each in a league of their own, and a root admin: every Users row has leagues to read. */
+async function seedCustomerUsers(users: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  for (let index = 0; index < users; index += 1) {
+    const user = await createTestUser({ displayName: `Customer ${suffix}${String(index)}` });
+    const league = await prisma.league.create({
+      data: { cupName: 'Customers Cup', leagueCode: `CV${suffix.toUpperCase()}${String(index)}`, name: `Customer League ${suffix} ${String(index)}` },
+    });
+    await prisma.leagueMembership.create({ data: { leagueId: league.id, userId: user.user.id, role: 'COMMISSIONER', status: 'ACTIVE' } });
+  }
+  return createTestUser({ isRootAdmin: true });
+}
+
+/** A synced sport league of its own with `events` events, each with a field, a round, a field run and, every other one, overdue results (#1865). */
+async function seedLeagueEventOverviews(events: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Tour ${suffix}`, eventSyncProviderId: provider.providerId } });
+  for (let index = 0; index < events; index += 1) {
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Open ${suffix} ${String(index)}` } });
+    const overdue = index % 2 === 0;
+    const startDate = new Date(Date.now() + (overdue ? -3 : 3) * DAY);
+    const event = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id, eventYear: 2026, name: `League Page Open ${suffix} ${String(index)}`, sport: Sport.GOLF, status: overdue ? 'IN_PROGRESS' : 'DRAFT',
+        providerId: provider.providerId, externalId: `${suffix}-${String(index)}`, syncScope: 'SCORES_ONLY', startDate,
+        ...(!overdue && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
+      },
+    });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: startDate } });
+    await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, scheduledDate: startDate } });
+    const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
+    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
+    await prisma.providerSyncRun.create({
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, sportEventId: event.id, status: ProviderSyncRunStatus.FAILED, payloadJson: {} },
+    });
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/** A sport league of its own with `participants` golfers, every other one mapped to a feed id. */
+async function seedLeagueParticipantOverviews(participants: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Roster ${suffix}` } });
+  for (let index = 0; index < participants; index += 1) {
+    const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Roster Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', ranking: index + 1 } });
+    if (index % 2 === 0) {
+      await prisma.participantProviderMapping.create({ data: { participantId: golfer.id, sportLeagueId: sportLeague.id, providerId: provider.providerId, externalId: `golfer-${suffix}-${String(index)}`, lastSeenAt: new Date() } });
+    }
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
 describe('root admin reads cost the same statements for 2 rows as for 20', () => {
@@ -365,7 +460,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET the sport league overview: the same statements for 2 leagues, each with its Clutch Card, runs and held draft, as for 20 (#1847)', async () => {
+  it('GET the sport league overview: the same statements for 2 leagues, each with its Clutch Card, runs, held draft and overdue event, as for 20 (#1847, #1865)', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/overview',
       seed: seedSportLeagueOverviews,
@@ -374,7 +469,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         const rows = okBody(response, SportLeagueOverviewListResponseSchema).sportLeagues.filter((row) => row.name.startsWith('Overview Tour'));
         // Every seeded league shows what was seeded for it, so a read that skipped one would show here.
         for (const row of rows.filter((overview) => overview.kind === 'REAL')) {
-          expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([['SYNC', 1], ['RELEASE', 1]]);
+          expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([['SYNC', 1], ['RELEASE', 1], ['OVERDUE', 1]]);
         }
         for (const row of rows.filter((overview) => overview.kind === 'CLUTCH_CARD')) {
           expect(row).toMatchObject({ syncHealth: 'ERROR', eventCount: 1 });
@@ -382,6 +477,83 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         }
         return rows.length;
       },
+    });
+  });
+
+  it('GET every league for Customers: the same statements for 2 leagues, each with an owner and a member, as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/customers/leagues',
+      seed: seedCustomerLeagues,
+      call: (rootAdmin) => get('/api/v1/customers/leagues', rootAdmin),
+      rowsShown: (response) => {
+        const { leagues } = okBody(response, CustomerLeagueListResponseSchema);
+        for (const league of leagues) {
+          expect(league.memberCount).toBe(2);
+          expect(league.owner).not.toBeNull();
+        }
+        return leagues.length;
+      },
+    });
+  });
+
+  it('GET every user for Customers: the same statements for 2 users, each in a league, as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/customers/users',
+      seed: seedCustomerUsers,
+      call: (rootAdmin) => get('/api/v1/customers/users', rootAdmin),
+      rowsShown: (response) => okBody(response, CustomerUserListResponseSchema).users.filter((user) => user.leagues.length === 1).length,
+    });
+  });
+
+  it('GET a sport league\'s events with their release, field, issues and last sync: the same statements for 2 events as for 20 (#1865)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/events/overview',
+      seed: seedLeagueEventOverviews,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/events/overview`, rootAdmin),
+      rowsShown: (response) => {
+        const { events } = okBody(response, SportLeagueEventOverviewListResponseSchema);
+        // Every event shows what was seeded for it, so a read that skipped one would show here.
+        for (const event of events) {
+          expect(event.fieldSize).toBe(1);
+          expect(event.lastSyncedAt).not.toBeNull();
+          expect(event.issues.map((issue) => issue.type)).toEqual(event.status === 'DRAFT' ? ['SYNC', 'RELEASE'] : ['SYNC', 'OVERDUE']);
+        }
+        return events.length;
+      },
+    });
+  });
+
+  it('GET a sport league\'s participants with their feed ids: the same statements for 2 participants as for 20 (#1865)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/participants/overview',
+      seed: seedLeagueParticipantOverviews,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/participants/overview`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportLeagueParticipantOverviewListResponseSchema).participants.length,
+    });
+  });
+
+  it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and the latest run of each kind in four statements, however many runs (#1865)', async () => {
+    const prisma = getPrisma();
+    const sport = await golf();
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}`, eventSyncProviderId: provider.providerId } });
+    await prisma.providerSyncRun.createMany({
+      data: Array.from({ length: 20 }, (_, index) => ({
+        kind: (['EVENTS', 'FIELD', 'SCORES'] as const)[index % 3], trigger: 'SCHEDULE' as const, providerId: provider.providerId, sport: Sport.GOLF,
+        sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, createdAt: new Date(Date.now() - index * 60_000), payloadJson: {},
+      })),
+    });
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+
+    await expectFixedQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/syncs',
+      fixedBy: 'the sync kinds',
+      call: () => get(`/api/v1/sport-leagues/${sportLeague.id}/syncs`, rootAdmin),
+      rowsShown: (response) => {
+        const { syncs } = okBody(response, SportLeagueSyncListResponseSchema);
+        expect(syncs.map((sync) => [sync.kind, sync.health])).toEqual([['EVENTS', 'OK'], ['FIELD', 'OK'], ['SCORES', 'OK']]);
+        return syncs.length;
+      },
+      statements: 4,
     });
   });
 
@@ -394,7 +566,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs', async () => {
+  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs and the admin who started it', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/activity/',
       seed: seedLeagueActivity,
@@ -490,6 +662,17 @@ describe('fixed-length root admin lists cost the same statements every time', ()
       call: () => get('/api/v1/platform/ingestion-schedule', rootAdmin),
       rowsShown: (response) => okBody(response, IngestionScheduleConfigSchema).scheduledSports.length,
       statements: 0,
+    });
+  });
+
+  it('GET the system emails: one row per email key, with the 30-day sends counted and dated in two grouped queries (#1870)', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/platform/emails/',
+      fixedBy: 'the system email template keys',
+      call: () => get('/api/v1/platform/emails/', rootAdmin),
+      rowsShown: (response) => okBody(response, SystemEmailListResponseSchema).emails.length,
+      statements: 2,
     });
   });
 

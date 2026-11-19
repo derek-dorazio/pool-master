@@ -2930,6 +2930,66 @@ export interface paths {
         patch: operations["updateSportLeague"];
         trace?: never;
     };
+    "/api/v1/sport-leagues/{sportLeagueId}/syncs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport league's syncs with their health, latest run and next run
+         * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. A Clutch Card reports its parent league's event list sync, which creates its events. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.
+         */
+        get: operations["listSportLeagueSyncs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sport-leagues/{sportLeagueId}/events/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every event of a sport league with its release, field, issues and last sync
+         * @description The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.
+         */
+        get: operations["listSportLeagueEventOverviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every participant of a sport league with its feed id and who added it
+         * @description The League page's Participants grid (#1865): every participant of the sport league, never paged, by name, with its provider's feed id, when a sync last saw it in the feed, and whether the feed or a root admin added it. Read in a fixed number of queries. Root admin only.
+         */
+        get: operations["listSportLeagueParticipantOverviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sport-leagues/{sportLeagueId}/participants": {
         parameters: {
             query?: never;
@@ -3398,6 +3458,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/emails/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the system emails
+         * @description Every system email, one per template key, with its plan feature, its On/Off status, how many were sent in the last 30 days, and when the last send and the newest send a preview can show went. Root admin only. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        get: operations["listSystemEmails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/emails/{templateKey}/latest-send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a system email's latest send
+         * @description The newest send of the email whose subject and HTML the outbox still keeps, exactly as it went, with its recipient masked. Root admin only. 404 SYSTEM_EMAIL_NOT_SENT when no send of the email in the last 30 days still keeps its content: never sent, content cleared 7 days after sending, or an email that carries a secret (a password reset) and keeps none. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        get: operations["getSystemEmailLatestSend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/emails/{templateKey}/latest-send/send-to-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send me a system email's latest send
+         * @description Queues a copy of the latest send (same sender, subject and HTML) to the calling root admin's own address through the outbox, a new email each press. It obeys "Send system email", the email's own switch, "Only send to" and the suppression list, and answers QUEUED or SKIPPED with the reason. Root admin only. 404 SYSTEM_EMAIL_NOT_SENT when no send of the email in the last 30 days still keeps its content: never sent, content cleared 7 days after sending, or an email that carries a secret (a password reset) and keeps none. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        post: operations["sendSystemEmailLatestSendToMe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ingestion/providers": {
         parameters: {
             query?: never;
@@ -3550,6 +3670,46 @@ export interface paths {
          * @description Every background job queued inside a window (syncs, emails, settlements, releases and the rest), filtered by kind, status, sport league and event, newest first. Nothing pages the result; the filters narrow it. `to` defaults to now; `from` to 24 hours before it, or to 30 days before it (every job kept) when a sportLeagueId or sportEventId narrows the read. A `from` after `to` answers 400 ACTIVITY_WINDOW_INVALID; more than 60 reads a minute from one address answer 429 ACTIVITY_RATE_LIMITED. A league's activity is its own jobs and the jobs on any of its events. Each sync job names the sync runs it ran; read one with getProviderSyncRun.
          */
         get: operations["listActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/leagues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every league for the Customers grid
+         * @description Every league on the platform, active or not, by name: never paged and never searched on the server, since the grid filters on the client. Each row carries its plan, owner (its longest-serving active commissioner), active member and open-or-live contest counts, and when its Premium preview ends. Read from four queries, however many leagues. Change the plan with updateLeaguePlan and the preview with extendLeaguePlanRenewal. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.
+         */
+        get: operations["listCustomerLeagues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List every user for the Customers grid
+         * @description Every user on the platform, active or not, by last then first name: never paged and never searched on the server, since the grid filters on the client. Each row carries its role, status, the leagues it is an active member of, when it joined and when it last signed in. Read from two queries, however many users. Change the name with updateUserProfile and the role with setUserRootAdmin. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.
+         */
+        get: operations["listCustomerUsers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4477,34 +4637,72 @@ export interface components {
             /** @description What expanding a contest to this band costs, in US cents. */
             priceCents: number;
         };
-        /** @description Payments: whether they are on, and what expanding a contest costs on each plan. */
+        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+        PlanPrice: {
+            /** @description A year of the plan, in US cents. */
+            yearlyCents: number;
+            /** @description A month of the plan, in US cents. */
+            monthlyCents: number;
+        };
+        /** @description Payments: whether they are on, what each plan costs, and what expanding a contest costs on each plan. */
         BillingConfig: {
             /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
             paymentsEnabled: boolean;
+            /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+            planPrices: {
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                FREE: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PRO: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PREMIUM: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PLATINUM: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+            };
             /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
             expansionPrices: {
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 FREE: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PRO: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PREMIUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PLATINUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
@@ -4683,28 +4881,28 @@ export interface components {
             paymentsEnabled: boolean;
             /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
             expansionPrices: {
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 FREE: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PRO: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PREMIUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PLATINUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
@@ -10022,7 +10220,7 @@ export interface components {
              * @enum {string}
              */
             syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-            /** @description Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention. */
+            /** @description Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
             issues: ({
                 /** @enum {string} */
                 type: "SYNC";
@@ -10034,7 +10232,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, or the event was last checked.
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -10067,7 +10265,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, or the event was last checked.
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -10085,6 +10283,34 @@ export interface components {
                     };
                     /** @description The ready checks that held it, in check order. */
                     failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "OVERDUE";
+                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                count: number;
+                /** @description Most overdue first. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
                 }[];
             })[];
             /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
@@ -10136,7 +10362,7 @@ export interface components {
                  * @enum {string}
                  */
                 syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-                /** @description Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention. */
+                /** @description Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
                 issues: ({
                     /** @enum {string} */
                     type: "SYNC";
@@ -10148,7 +10374,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, or the event was last checked.
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -10181,7 +10407,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, or the event was last checked.
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -10199,6 +10425,34 @@ export interface components {
                         };
                         /** @description The ready checks that held it, in check order. */
                         failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "OVERDUE";
+                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    count: number;
+                    /** @description Most overdue first. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
                     }[];
                 })[];
                 /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
@@ -10221,6 +10475,465 @@ export interface components {
                 nextEventStartsAt: string | null;
                 /** @description Its events, past and upcoming, cancelled ones included. */
                 eventCount: number;
+            }[];
+        };
+        /** @description One of a sport league's syncs, as the League page's Syncs card shows it. */
+        SportLeagueSyncDto: {
+            /**
+             * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+             * @enum {string}
+             */
+            kind: "EVENTS" | "FIELD" | "SCORES";
+            /**
+             * @description By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+             * @enum {string}
+             */
+            health: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+            /**
+             * @description SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+             * @enum {string}
+             */
+            mode: "SCHEDULE" | "WEBHOOK";
+            /** @description Its latest run; null before any. */
+            lastRun: {
+                /**
+                 * Format: uuid
+                 * @description The run, on the run log.
+                 */
+                id: string;
+                /** @enum {string} */
+                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /**
+                 * Format: date-time
+                 * @description When it was queued.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it started; null while it waits.
+                 */
+                startedAt: string | null;
+                /** @description Its outcome summary as the sync history shows it, as data; null when it has none. */
+                summary: string | null;
+                /** @description Rows it created or updated; null unless it completed and counted them. */
+                changedCount: number | null;
+            } | null;
+            /**
+             * Format: date-time
+             * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+             */
+            nextRunAt: string | null;
+        };
+        /** @description A sport league's syncs. */
+        SportLeagueSyncListResponse: {
+            /** @description One per sync kind, always all three: EVENTS, FIELD, SCORES. */
+            syncs: {
+                /**
+                 * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+                 * @enum {string}
+                 */
+                health: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+                /**
+                 * @description SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+                 * @enum {string}
+                 */
+                mode: "SCHEDULE" | "WEBHOOK";
+                /** @description Its latest run; null before any. */
+                lastRun: {
+                    /**
+                     * Format: uuid
+                     * @description The run, on the run log.
+                     */
+                    id: string;
+                    /** @enum {string} */
+                    status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                    /**
+                     * Format: date-time
+                     * @description When it was queued.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When it started; null while it waits.
+                     */
+                    startedAt: string | null;
+                    /** @description Its outcome summary as the sync history shows it, as data; null when it has none. */
+                    summary: string | null;
+                    /** @description Rows it created or updated; null unless it completed and counted them. */
+                    changedCount: number | null;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+                 */
+                nextRunAt: string | null;
+            }[];
+        };
+        /** @description One event on the League page's Events grid. */
+        SportLeagueEventOverviewDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            eventYear: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            endDate: string | null;
+            /** @enum {string} */
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /**
+             * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+             * @enum {string}
+             */
+            releaseMode: "AUTO" | "MANUAL";
+            /**
+             * Format: date-time
+             * @description With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when its league's window opens, its start less the window (PLANNED). Null for a MANUAL draft and for an event released before release times were kept.
+             */
+            releaseAt: string | null;
+            /**
+             * @description What releaseAt is; null with it.
+             * @enum {string|null}
+             */
+            releaseAtKind: "PLANNED" | "ACTUAL" | null;
+            /** @description Its latest automatic release check; null before the first, and after a release by hand. */
+            lastReleaseCheck: {
+                /**
+                 * Format: date-time
+                 * @description When the automatic release last judged it.
+                 */
+                checkedAt: string;
+                /** @enum {string} */
+                outcome: "RELEASED" | "HELD";
+                /** @description The ready checks that held it, in check order; empty when released. */
+                failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+            } | null;
+            /** @description How many participants its field holds; null until a field loads. */
+            fieldSize: number | null;
+            /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
+            issues: ({
+                /** @enum {string} */
+                type: "SYNC";
+                /** @description How many of its syncs' latest runs failed. */
+                count: number;
+                /** @description Event list, then field, then scores. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /**
+                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @enum {string}
+                     */
+                    syncKind: "EVENTS" | "FIELD" | "SCORES";
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "RELEASE";
+                /** @description How many draft events the latest automatic release check held. */
+                count: number;
+                /** @description By event name. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /** @description The ready checks that held it, in check order. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "OVERDUE";
+                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                count: number;
+                /** @description Most overdue first. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                }[];
+            })[];
+            /**
+             * Format: date-time
+             * @description When a sync last ran on it; null before any.
+             */
+            lastSyncedAt: string | null;
+        };
+        /** @description A sport league's events. */
+        SportLeagueEventOverviewListResponse: {
+            /** @description Every event of the sport league, every year, never paged: by start, earliest first. */
+            events: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                eventYear: number;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                endDate: string | null;
+                /** @enum {string} */
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /**
+                 * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+                 * @enum {string}
+                 */
+                releaseMode: "AUTO" | "MANUAL";
+                /**
+                 * Format: date-time
+                 * @description With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when its league's window opens, its start less the window (PLANNED). Null for a MANUAL draft and for an event released before release times were kept.
+                 */
+                releaseAt: string | null;
+                /**
+                 * @description What releaseAt is; null with it.
+                 * @enum {string|null}
+                 */
+                releaseAtKind: "PLANNED" | "ACTUAL" | null;
+                /** @description Its latest automatic release check; null before the first, and after a release by hand. */
+                lastReleaseCheck: {
+                    /**
+                     * Format: date-time
+                     * @description When the automatic release last judged it.
+                     */
+                    checkedAt: string;
+                    /** @enum {string} */
+                    outcome: "RELEASED" | "HELD";
+                    /** @description The ready checks that held it, in check order; empty when released. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                } | null;
+                /** @description How many participants its field holds; null until a field loads. */
+                fieldSize: number | null;
+                /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
+                issues: ({
+                    /** @enum {string} */
+                    type: "SYNC";
+                    /** @description How many of its syncs' latest runs failed. */
+                    count: number;
+                    /** @description Event list, then field, then scores. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /**
+                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @enum {string}
+                         */
+                        syncKind: "EVENTS" | "FIELD" | "SCORES";
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "RELEASE";
+                    /** @description How many draft events the latest automatic release check held. */
+                    count: number;
+                    /** @description By event name. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /** @description The ready checks that held it, in check order. */
+                        failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "OVERDUE";
+                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    count: number;
+                    /** @description Most overdue first. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                    }[];
+                })[];
+                /**
+                 * Format: date-time
+                 * @description When a sync last ran on it; null before any.
+                 */
+                lastSyncedAt: string | null;
+            }[];
+        };
+        /** @description One participant on the League page's Participants grid. */
+        SportLeagueParticipantOverviewDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            participantType: "INDIVIDUAL" | "TEAM";
+            shortName: string | null;
+            nationality: string | null;
+            teamAffiliation: string | null;
+            /** @description Playing role, such as a position; not a rank. */
+            role: string | null;
+            /** @description Its rank in the sport league, 1 best; null when unranked. */
+            ranking: number | null;
+            /** @description Its provider's id for it in the sport league; null when it has no provider mapping. */
+            feedId: string | null;
+            /**
+             * Format: date-time
+             * @description When a sync last saw it in its provider's feed; null when none has.
+             */
+            lastInFeedAt: string | null;
+            /**
+             * @description FEED when it has a provider mapping, so a sync found it; ADMIN otherwise.
+             * @enum {string}
+             */
+            addedBy: "FEED" | "ADMIN";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+        };
+        /** @description A sport league's participants. */
+        SportLeagueParticipantOverviewListResponse: {
+            /** @description Every participant of the sport league, never paged: by name. */
+            participants: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                /** @enum {string} */
+                participantType: "INDIVIDUAL" | "TEAM";
+                shortName: string | null;
+                nationality: string | null;
+                teamAffiliation: string | null;
+                /** @description Playing role, such as a position; not a rank. */
+                role: string | null;
+                /** @description Its rank in the sport league, 1 best; null when unranked. */
+                ranking: number | null;
+                /** @description Its provider's id for it in the sport league; null when it has no provider mapping. */
+                feedId: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a sync last saw it in its provider's feed; null when none has.
+                 */
+                lastInFeedAt: string | null;
+                /**
+                 * @description FEED when it has a provider mapping, so a sync found it; ADMIN otherwise.
+                 * @enum {string}
+                 */
+                addedBy: "FEED" | "ADMIN";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
             }[];
         };
         /** @description Re-ranks participants of the sport league. */
@@ -15166,6 +15879,111 @@ export interface components {
             /** @description The provider's error from the last failed try, or null. */
             error: string | null;
         };
+        /** @description One system email on the Notifications page. */
+        SystemEmailDto: {
+            /**
+             * @description The system email, by its template key.
+             * @enum {string}
+             */
+            templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            /**
+             * @description The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+             * @enum {string|null}
+             */
+            planFeature: "EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK" | null;
+            /**
+             * @description The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+             * @enum {string|null}
+             */
+            planStartsAt: "FREE" | "PRO" | "PREMIUM" | "PLATINUM" | null;
+            /**
+             * @description ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+             * @enum {string}
+             */
+            status: "ON" | "OFF" | "ALWAYS_ON";
+            /** @description How many of this email the transport accepted in the last 30 days, whatever SES reported after. */
+            sentLast30Days: number;
+            /**
+             * Format: date-time
+             * @description When the last one was sent in the last 30 days, or null.
+             */
+            lastSentAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+             */
+            previewSentAt: string | null;
+        };
+        /** @description Every system email with its recent sends. */
+        SystemEmailListResponse: {
+            /** @description Every system email, one per template key. */
+            emails: {
+                /**
+                 * @description The system email, by its template key.
+                 * @enum {string}
+                 */
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+                /**
+                 * @description The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+                 * @enum {string|null}
+                 */
+                planFeature: "EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK" | null;
+                /**
+                 * @description The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+                 * @enum {string|null}
+                 */
+                planStartsAt: "FREE" | "PRO" | "PREMIUM" | "PLATINUM" | null;
+                /**
+                 * @description ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+                 * @enum {string}
+                 */
+                status: "ON" | "OFF" | "ALWAYS_ON";
+                /** @description How many of this email the transport accepted in the last 30 days, whatever SES reported after. */
+                sentLast30Days: number;
+                /**
+                 * Format: date-time
+                 * @description When the last one was sent in the last 30 days, or null.
+                 */
+                lastSentAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+                 */
+                previewSentAt: string | null;
+            }[];
+        };
+        /** @description The latest send of one system email that still keeps its content: a real email, never sample data. */
+        SystemEmailLatestSendResponse: {
+            /**
+             * @description The system email, by its template key.
+             * @enum {string}
+             */
+            templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            /** @description The subject it was sent with. */
+            subject: string;
+            /** @description The HTML it was sent with, exactly. Show it in a sandboxed frame: it is a whole email document. */
+            htmlBody: string;
+            /**
+             * Format: date-time
+             * @description When the transport accepted it.
+             */
+            sentAt: string;
+            /** @description Whom it went to, masked: the first character of the address, then the domain ("d•••@example.com"). */
+            recipient: string;
+        };
+        /** @description What happened to a copy of a system email sent to the root admin. */
+        SystemEmailResendResponse: {
+            /**
+             * @description Where the copy stands: QUEUED for the sender, or SKIPPED when the settings or the address stopped it (see skipReason).
+             * @enum {string}
+             */
+            status: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED";
+            /**
+             * @description Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, TEMPLATE_DISABLED when this email is off, NOT_ALLOWED_IN_ENVIRONMENT when your address is not in "Only send to" or is a reserved domain, SUPPRESSED when your address bounced or complained before.
+             * @enum {string|null}
+             */
+            skipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | "NOT_IN_PLAN" | null;
+        };
         /**
          * @description The stored key of a settings group.
          * @enum {string}
@@ -15804,30 +16622,61 @@ export interface components {
             value: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -15840,30 +16689,61 @@ export interface components {
             defaults: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -16498,30 +17378,61 @@ export interface components {
                 value: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -16534,30 +17445,61 @@ export interface components {
                 defaults: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -16840,30 +17782,61 @@ export interface components {
             value: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -17473,30 +18446,61 @@ export interface components {
             previousValue: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -17509,30 +18513,61 @@ export interface components {
             newValue: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -18139,30 +19174,61 @@ export interface components {
                 previousValue: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -18175,30 +19241,61 @@ export interface components {
                 newValue: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -23101,10 +24198,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23234,10 +24331,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23496,10 +24593,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23641,10 +24738,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23921,6 +25018,32 @@ export interface components {
             completedAt: string | null;
             /** @description The error of its last failed try. */
             lastError: string | null;
+            /**
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+            /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+            startedBy: {
+                /** Format: uuid */
+                id: string;
+                /** @description Their name, for display. */
+                displayName: string;
+            } | null;
+            /**
+             * Format: date-time
+             * @description When its latest try started; null until it is first claimed.
+             */
+            startedAt: string | null;
+            /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+            durationSeconds: number | null;
+            /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+            changedCount: number | null;
+            /**
+             * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+             * @enum {string|null}
+             */
+            errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
             /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
             result: {
                 [key: string]: unknown;
@@ -24007,6 +25130,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;
@@ -24065,6 +25214,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;
@@ -24072,6 +25247,158 @@ export interface components {
                 /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
                 syncRunIds: string[];
             };
+        };
+        /** @description The league's longest-serving active commissioner: the one who created it, unless they stepped down. */
+        CustomerLeagueOwnerDto: {
+            /** Format: uuid */
+            userId: string;
+            firstName: string;
+            lastName: string;
+        };
+        /** @description One league on the root admin's Customers › Leagues grid. */
+        CustomerLeagueDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description The league's code, its web address. */
+            leagueCode: string;
+            name: string;
+            /** @description False for a league a root admin inactivated: read-only outside its lifecycle actions. */
+            isActive: boolean;
+            /**
+             * @description The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+             * @enum {string}
+             */
+            plan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+            /** @description Null when the league has no active commissioner. */
+            owner: {
+                /** Format: uuid */
+                userId: string;
+                firstName: string;
+                lastName: string;
+            } | null;
+            /** @description Active members. */
+            memberCount: number;
+            /** @description Open and live contests. Contests still being set up are not counted. */
+            activeContestCount: number;
+            /**
+             * Format: date-time
+             * @description When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+             */
+            previewEndsAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string;
+        };
+        /** @description Every league on the platform, for the Customers › Leagues grid. */
+        CustomerLeagueListResponse: {
+            /** @description Every league, active or not, by name. Never paged. */
+            leagues: {
+                /** Format: uuid */
+                id: string;
+                /** @description The league's code, its web address. */
+                leagueCode: string;
+                name: string;
+                /** @description False for a league a root admin inactivated: read-only outside its lifecycle actions. */
+                isActive: boolean;
+                /**
+                 * @description The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+                 * @enum {string}
+                 */
+                plan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /** @description Null when the league has no active commissioner. */
+                owner: {
+                    /** Format: uuid */
+                    userId: string;
+                    firstName: string;
+                    lastName: string;
+                } | null;
+                /** @description Active members. */
+                memberCount: number;
+                /** @description Open and live contests. Contests still being set up are not counted. */
+                activeContestCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+                 */
+                previewEndsAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string;
+            }[];
+        };
+        /** @description A league the user is an active member of. */
+        CustomerUserLeagueDto: {
+            /** Format: uuid */
+            id: string;
+            leagueCode: string;
+            name: string;
+        };
+        /** @description One user on the root admin's Customers › Users grid. */
+        CustomerUserDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            username: string;
+            firstName: string;
+            lastName: string;
+            /** @description Root admin (true) or member (false). Change it with setUserRootAdmin. */
+            isRootAdmin: boolean;
+            /** @description False for a deactivated account: it is signed out and blocked until reactivated. */
+            isActive: boolean;
+            /** @description The leagues the user is an active member of, by name. Its length is the user's league count. */
+            leagues: {
+                /** Format: uuid */
+                id: string;
+                leagueCode: string;
+                name: string;
+            }[];
+            /**
+             * Format: date-time
+             * @description When the account was created.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
+             */
+            lastSignInAt: string | null;
+        };
+        /** @description Every user on the platform, for the Customers › Users grid. */
+        CustomerUserListResponse: {
+            /** @description Every user, active or not, by last then first name. Never paged. */
+            users: {
+                /** Format: uuid */
+                id: string;
+                email: string;
+                username: string;
+                firstName: string;
+                lastName: string;
+                /** @description Root admin (true) or member (false). Change it with setUserRootAdmin. */
+                isRootAdmin: boolean;
+                /** @description False for a deactivated account: it is signed out and blocked until reactivated. */
+                isActive: boolean;
+                /** @description The leagues the user is an active member of, by name. Its length is the user's league count. */
+                leagues: {
+                    /** Format: uuid */
+                    id: string;
+                    leagueCode: string;
+                    name: string;
+                }[];
+                /**
+                 * Format: date-time
+                 * @description When the account was created.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
+                 */
+                lastSignInAt: string | null;
+            }[];
         };
         /** @description A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise. */
         TierProfileWriteRequest: {
@@ -33846,6 +35173,153 @@ export interface operations {
             };
         };
     };
+    listSportLeagueSyncs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sport league's syncs. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueSyncListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportLeagueEventOverviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sport league's events. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueEventOverviewListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportLeagueParticipantOverviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sport league's participants. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueParticipantOverviewListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     listSportLeagueParticipants: {
         parameters: {
             query?: never;
@@ -35507,6 +36981,187 @@ export interface operations {
             };
         };
     };
+    listSystemEmails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every system email with its recent sends. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSystemEmailLatestSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The latest send of one system email that still keeps its content: a real email, never sample data. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailLatestSendResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendSystemEmailLatestSendToMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What happened to a copy of a system email sent to the root admin. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailResendResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     listProviders: {
         parameters: {
             query?: never;
@@ -35912,6 +37567,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCustomerLeagues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every league on the platform, for the Customers › Leagues grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerLeagueListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCustomerUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every user on the platform, for the Customers › Users grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerUserListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

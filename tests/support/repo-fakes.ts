@@ -128,6 +128,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
     create: echoCreate('user'),
     update: echoUpdate(),
+    recordSignIn: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -314,6 +315,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findReleaseFacts: jest.fn().mockResolvedValue({ scheduledRoundCount: 4, contestSetupCount: 1 }),
     findAutoReleaseCandidates: many(),
     recordAutoReleaseCheck: nothing(),
+    findAutoReleaseCheck: jest.fn().mockResolvedValue(null),
     ...overrides,
   };
 }

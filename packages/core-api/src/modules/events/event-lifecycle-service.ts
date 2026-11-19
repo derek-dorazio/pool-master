@@ -21,7 +21,7 @@ import type {
   SportEventMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { BackgroundJobOutcome, BackgroundJobRequest, Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   SelectionType,
@@ -43,13 +43,16 @@ export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date; sportEvent?: SportEvent },
-  ): Promise<unknown>;
-  /** Settles the squares contests on one game once it has a result or is cancelled (#711). */
+  ): Promise<{ contestsSettled: number }>;
+  /**
+   * Settles the squares contests on one game once it has a result or is cancelled (#711); answers
+   * how many it completed.
+   */
   settleFinishedGame(
     sportEventId: string,
     sportEventMatchId: string,
     input?: { completedAt?: Date },
-  ): Promise<unknown>;
+  ): Promise<number>;
 }
 
 /** The job a decided game's write carries (#711). */
@@ -205,6 +208,7 @@ export class EventLifecycleService {
       from: fromStatus,
       to: input.toStatus,
       ...(endDate && { endDate }),
+      ...(isRelease && { releasedAt: now }),
       ...(jobs.length > 0 && { jobs }),
     });
     if (!updated) {
@@ -281,13 +285,14 @@ export class EventLifecycleService {
    * when the job runs. A contest already COMPLETED is not settled again, so a retry after a
    * failure part way settles only the rest.
    */
-  async settleFinishedGameContests(payload: SettleGameContestsJobPayload): Promise<void> {
+  async settleFinishedGameContests(payload: SettleGameContestsJobPayload): Promise<BackgroundJobOutcome> {
     if (!this.contestSettlement) {
       throw new Error('Contest settlement is required to settle a finished game\'s contests');
     }
-    await this.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
+    const completed = await this.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
       completedAt: new Date(payload.completedAt),
     });
+    return { changedCount: completed };
   }
 
   /**
@@ -298,9 +303,10 @@ export class EventLifecycleService {
    *
    * Settlement is idempotent, so a retry after a failure part way finishes the rest: a contest
    * already COMPLETED is not settled again, one whose standings for this event are frozen keeps
-   * them, and C7's idempotency key sends it to each member once.
+   * them, and C7's idempotency key sends it to each member once. Reports the contests it settled
+   * (#1861).
    */
-  async settleFinishedEventContests(payload: SettleSportEventContestsJobPayload): Promise<void> {
+  async settleFinishedEventContests(payload: SettleSportEventContestsJobPayload): Promise<BackgroundJobOutcome> {
     if (!this.contestSettlement) {
       throw new Error('Contest settlement is required to settle a finished event\'s contests');
     }
@@ -310,17 +316,18 @@ export class EventLifecycleService {
         { action: 'events.settleContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
         'Skipped settling an event\'s contests because the event is gone or no longer finished',
       );
-      return;
+      return { changedCount: 0 };
     }
     // Nothing has settled yet, so a failure to queue C7 fails the job and its retry tells them:
     // swallowed here, the contests would complete and nothing would ever tell them.
     if (sportEvent.status === SportEventStatus.CANCELLED) {
       await this.sportEventChanged?.sportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
     }
-    await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
+    const summary = await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
       completedAt: new Date(payload.completedAt),
       sportEvent,
     });
+    return { changedCount: summary.contestsSettled };
   }
 
   /**

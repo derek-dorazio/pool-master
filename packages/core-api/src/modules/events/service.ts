@@ -623,17 +623,21 @@ export class SportEventService {
       this.deps.logger?.info({ action: 'events.autoRelease.skipped', data: { sportEventId, reason: skipReason } }, 'Skipped an automatic event release');
       return { outcome: ReleaseAttemptOutcome.SKIPPED, reason: skipReason };
     }
-    const checks = await this.releaseChecksFor(await this.requireAdminSummary(sportEventId));
+    const [checks, before] = await Promise.all([
+      this.requireAdminSummary(sportEventId).then((summary) => this.releaseChecksFor(summary)),
+      this.deps.sportEvents.findAutoReleaseCheck(sportEventId),
+    ]);
     const failed = failedReleaseChecks(checks);
     const checkedAt = this.now();
     if (failed.length > 0) {
       const failedChecks = failed.map((check) => check.key);
       await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, { checkedAt, outcome: AutoReleaseCheckOutcome.HELD, failedChecks });
+      const sameHoldAsBefore = before?.outcome === AutoReleaseCheckOutcome.HELD && sameCheckKeys(before.failedChecks, failedChecks);
       this.deps.logger?.info(
-        { action: 'events.autoRelease.held', data: { sportEventId, failedChecks } },
+        { action: 'events.autoRelease.held', data: { sportEventId, failedChecks, sameHoldAsBefore } },
         'Held an automatic event release: a ready check failed',
       );
-      return { outcome: ReleaseAttemptOutcome.HELD, checks };
+      return { outcome: ReleaseAttemptOutcome.HELD, checks, sameHoldAsBefore };
     }
     await this.release(sportEventId);
     await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, { checkedAt, outcome: AutoReleaseCheckOutcome.RELEASED, failedChecks: [] });
@@ -948,4 +952,9 @@ function providerDetailUpdates(
  */
 function providerEventStarted(providerEvent: Pick<ProviderEventDetail, 'startDate'>, now: Date): boolean {
   return providerEvent.startDate.getTime() <= now.getTime();
+}
+
+/** Whether two sets of failed check keys are the same, whatever their order. */
+function sameCheckKeys(left: readonly ReleaseCheckKey[], right: readonly ReleaseCheckKey[]): boolean {
+  return left.length === right.length && left.every((key) => right.includes(key));
 }

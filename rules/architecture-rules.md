@@ -237,6 +237,17 @@ provider loops, the email sender), and prod runs more than one task. So that a j
   the change that caused it, so a deploy or a crashed task never loses it; any task's runner
   claims it, and a throw is retried. Its handler is idempotent, because a lapsed lease runs it
   again. A recurring job stays a timer under a job lock: the table is for one-off work.
+- **A member's own action never queues a job of its own** (#1861). Work a member's write or read
+  sets off that spans a contest or an event (rebuilding its boards, its emails) is queued once
+  per contest or event, keyed so a waiting job absorbs the next ask (`dedupeKey`), never one
+  job row per entry or pick: members' actions could mean millions of rows. That is why
+  `JobTrigger` has no member value; such upkeep records SYSTEM.
+- **Every job records what started it** (`JobTrigger`, #1861), from the entry point under way:
+  a root admin route (`requireRootAdmin`) is ADMIN and a commissioner gate COMMISSIONER, each
+  with the person; a `LockedSweep` or the ingestion scheduler SCHEDULE; a job's handler SYSTEM
+  for what it queues; the webhook receiver passes WEBHOOK itself. The queue reads it from
+  `core/job-start.ts` and throws when nothing set it, rather than guess; work started somewhere
+  new opens its own start with `runWithJobStart`.
 - **A table that grows without end gets a retention period and a nightly cleanup step**
   (`core/nightly-cleanup.ts`, #1175). The step lives in the module that owns the table, deletes
   in bounded batches with plain Prisma (`deleteInBatches`), and is added to the one

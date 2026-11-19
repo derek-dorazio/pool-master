@@ -19,3 +19,11 @@ export const DELIVERY_OUTCOME_FROM = {
   [EmailMessageStatus.COMPLAINED]: [EmailMessageStatus.SENT, EmailMessageStatus.DELIVERED],
   [EmailMessageStatus.FAILED]: [EmailMessageStatus.SENT],
 } as const satisfies Record<DeliveryOutcomeStatus, readonly EmailMessageStatus[]>;
+
+/**
+ * What a root admin's copy of a sent email (#1870) puts in its idempotency key, right after the
+ * template key: `<KEY>:admin-copy:<sent id>:<press>:<admin>`. The Notifications page's reads leave
+ * these out, so a copy is never counted as a send, dated as the last one, or previewed.
+ */
+export const ADMIN_COPY_ABOUT = 'admin-copy';
+export const ADMIN_COPY_KEY_MARKER = `:${ADMIN_COPY_ABOUT}:`;

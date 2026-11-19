@@ -621,12 +621,71 @@ export const SportLeagueIssueType = {
   SYNC: 'SYNC',
   /** A draft event whose latest automatic release check held it. */
   RELEASE: 'RELEASE',
+  /**
+   * An event still not completed or cancelled well after its last round or match should have
+   * ended (#1865): its results are missing.
+   */
+  OVERDUE: 'OVERDUE',
 } as const;
 export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
-/** The fixed order the chips show in (#1847). */
+/** The fixed order the chips show in (#1847, #1865). */
 export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
   [SportLeagueIssueType.SYNC]: 0,
   [SportLeagueIssueType.RELEASE]: 1,
+  [SportLeagueIssueType.OVERDUE]: 2,
+});
+
+/** How a sport event is released for contests, on the League page (#1865). */
+export const SportEventReleaseMode = {
+  /** Its sport league releases its synced drafts on their own, a window before the start. */
+  AUTO: 'AUTO',
+  /** A root admin releases it. */
+  MANUAL: 'MANUAL',
+} as const;
+export type SportEventReleaseMode = (typeof SportEventReleaseMode)[keyof typeof SportEventReleaseMode];
+/** The order the values are declared in. */
+export const SportEventReleaseModeOrder = explicitOrder<SportEventReleaseMode>({
+  [SportEventReleaseMode.AUTO]: 0,
+  [SportEventReleaseMode.MANUAL]: 1,
+});
+
+/** What a sport event's release date is, on the League page (#1865). */
+export const SportEventReleaseAtKind = {
+  /** When the automatic release window opens for a draft: its start less the league's window. */
+  PLANNED: 'PLANNED',
+  /** When it was released. */
+  ACTUAL: 'ACTUAL',
+} as const;
+export type SportEventReleaseAtKind = (typeof SportEventReleaseAtKind)[keyof typeof SportEventReleaseAtKind];
+/** Planned comes before actual, as a release does. */
+export const SportEventReleaseAtKindOrder = explicitOrder<SportEventReleaseAtKind>({
+  [SportEventReleaseAtKind.PLANNED]: 0,
+  [SportEventReleaseAtKind.ACTUAL]: 1,
+});
+
+/** Who added a participant to its sport league, on the League page (#1865). */
+export const ParticipantAddedBy = {
+  /** A sync found it in its provider's feed: it has a provider mapping. */
+  FEED: 'FEED',
+  /** A root admin added it: it has no provider mapping. */
+  ADMIN: 'ADMIN',
+} as const;
+export type ParticipantAddedBy = (typeof ParticipantAddedBy)[keyof typeof ParticipantAddedBy];
+/** No natural order: A to Z by the label each screen shows. */
+export const ParticipantAddedByOrder: EnumOrder<ParticipantAddedBy> = alphabeticalOrder();
+
+/** What runs a sport league's sync next, on the League page (#1865). */
+export const SportLeagueSyncMode = {
+  /** The ingestion schedule's interval for the sync. */
+  SCHEDULE: 'SCHEDULE',
+  /** The provider's webhook, with a safety-net poll while an event is in play. */
+  WEBHOOK: 'WEBHOOK',
+} as const;
+export type SportLeagueSyncMode = (typeof SportLeagueSyncMode)[keyof typeof SportLeagueSyncMode];
+/** The order the values are declared in. */
+export const SportLeagueSyncModeOrder = explicitOrder<SportLeagueSyncMode>({
+  [SportLeagueSyncMode.SCHEDULE]: 0,
+  [SportLeagueSyncMode.WEBHOOK]: 1,
 });
 
 /** What an issue item opens (#1847). */
@@ -643,18 +702,80 @@ export const SportLeagueIssueTargetTypeOrder = explicitOrder<SportLeagueIssueTar
   [SportLeagueIssueTargetType.SPORT_EVENT]: 1,
 });
 
-/** What started a provider sync run (#1819). Each kind has all three. */
-export const ProviderSyncTrigger = {
-  /** The sync's own timer. */
+/**
+ * What started a background job or a provider sync run (#1861; sync runs since #1819). One set of
+ * values for both: a sync run records its job's. A person's start is split by the role the route
+ * they acted through requires (Derek 2026-11-18). There is no member trigger: a member's own
+ * action never queues a job of its own (`rules/architecture-rules.md` §4).
+ */
+export const JobTrigger = {
+  /** A timer: a recurring sweep or the sync's own schedule. */
   SCHEDULE: 'SCHEDULE',
   /** The provider's webhook said something changed. */
   WEBHOOK: 'WEBHOOK',
-  /** A root admin pressed Sync now. */
+  /** A root admin route, such as Sync now or Release; the job names the admin. */
   ADMIN: 'ADMIN',
+  /** A league's commissioner tools, such as opening a contest, which queues its email; the job names them. */
+  COMMISSIONER: 'COMMISSIONER',
+  /**
+   * Another job, such as settling once a sync finds final scores, or emails after a release; and
+   * the upkeep a member's request asks for, such as rebuilding a contest's stale board, which is
+   * queued once per contest, never per member action.
+   */
+  SYSTEM: 'SYSTEM',
 } as const;
-export type ProviderSyncTrigger = (typeof ProviderSyncTrigger)[keyof typeof ProviderSyncTrigger];
-/** No natural order: A to Z by the label each screen shows. */
-export const ProviderSyncTriggerOrder: EnumOrder<ProviderSyncTrigger> = alphabeticalOrder();
+export type JobTrigger = (typeof JobTrigger)[keyof typeof JobTrigger];
+/** The order the values are declared in. */
+export const JobTriggerOrder = explicitOrder<JobTrigger>({
+  [JobTrigger.SCHEDULE]: 0,
+  [JobTrigger.WEBHOOK]: 1,
+  [JobTrigger.ADMIN]: 2,
+  [JobTrigger.COMMISSIONER]: 3,
+  [JobTrigger.SYSTEM]: 4,
+});
+
+/**
+ * The triggers that name a person (#1861): the role the route they acted through requires, not
+ * their highest role, so a root admin using a league's commissioner tools is a COMMISSIONER.
+ */
+export const PERSON_JOB_TRIGGERS = [JobTrigger.ADMIN, JobTrigger.COMMISSIONER] as const;
+export type PersonJobTrigger = (typeof PERSON_JOB_TRIGGERS)[number];
+
+/** Whether a trigger names the person who started the job. */
+export function isPersonJobTrigger(trigger: JobTrigger): trigger is PersonJobTrigger {
+  return (PERSON_JOB_TRIGGERS as readonly JobTrigger[]).includes(trigger);
+}
+
+/**
+ * Why a background job did not do its work (#1861), beside its error message. Set with the error
+ * of a failed try (and kept while it waits to be retried, or once FAILED), and on a job that
+ * finished but was held back, such as a release whose ready checks failed. Null on a job that
+ * did its work.
+ */
+export const JobErrorType = {
+  /** The provider answered 429: too many requests for the plan's rate limit. */
+  RATE_LIMITED: 'RATE_LIMITED',
+  /** A request was given up on for taking too long, or never answered. */
+  TIMEOUT: 'TIMEOUT',
+  /** The provider answered with an error, or refused the read. */
+  PROVIDER_ERROR: 'PROVIDER_ERROR',
+  /** What came back, or what the job was given, did not have the shape the job relies on. */
+  BAD_DATA: 'BAD_DATA',
+  /** A check the job runs first did not pass, such as an event's ready checks before release. */
+  CHECK_FAILED: 'CHECK_FAILED',
+  /** Anything else. */
+  OTHER: 'OTHER',
+} as const;
+export type JobErrorType = (typeof JobErrorType)[keyof typeof JobErrorType];
+/** The order the values are declared in. */
+export const JobErrorTypeOrder = explicitOrder<JobErrorType>({
+  [JobErrorType.RATE_LIMITED]: 0,
+  [JobErrorType.TIMEOUT]: 1,
+  [JobErrorType.PROVIDER_ERROR]: 2,
+  [JobErrorType.BAD_DATA]: 3,
+  [JobErrorType.CHECK_FAILED]: 4,
+  [JobErrorType.OTHER]: 5,
+});
 
 /** Where one in-memory ingestion job is; a provider sync run records the job's outcome. */
 export const IngestionJobStatus = {
@@ -827,6 +948,16 @@ export const ContestStatusOrder = explicitOrder<ContestStatus>({
   [ContestStatus.ACTIVE]: 2,
   [ContestStatus.COMPLETED]: 3,
 });
+
+/**
+ * Statuses that make a contest count as active for a league's `activeContestCount`. DRAFT is
+ * not one (#117): a draft is the commissioner's private setup, not a contest the league has.
+ */
+export const ACTIVE_LEAGUE_CONTEST_STATUSES = [
+  ContestStatus.OPEN,
+  ContestStatus.ACTIVE,
+] as const;
+
 /**
  * A named priority order (#1841): how League Home lists a league's current contests. Open
  * first, because that is where a step waits, then Live, then Set up (shown to commissioners
@@ -1492,6 +1623,24 @@ export const EmailMessageStatusOrder = explicitOrder<EmailMessageStatus>({
   [EmailMessageStatus.COMPLAINED]: 5,
   [EmailMessageStatus.FAILED]: 6,
   [EmailMessageStatus.SKIPPED]: 7,
+});
+
+/**
+ * Whether a system email is sent, as the root admin's Notifications page shows it (#1870): ON or
+ * OFF by its own switch in EMAIL_CONFIG, or ALWAYS_ON for an email that has no switch (the account
+ * emails and the test email), which only the overall switch stops.
+ */
+export const EmailTemplateStatus = {
+  ON: 'ON',
+  OFF: 'OFF',
+  ALWAYS_ON: 'ALWAYS_ON',
+} as const;
+export type EmailTemplateStatus = (typeof EmailTemplateStatus)[keyof typeof EmailTemplateStatus];
+/** The order the values are declared in. */
+export const EmailTemplateStatusOrder = explicitOrder<EmailTemplateStatus>({
+  [EmailTemplateStatus.ON]: 0,
+  [EmailTemplateStatus.OFF]: 1,
+  [EmailTemplateStatus.ALWAYS_ON]: 2,
 });
 
 /**

@@ -27,6 +27,7 @@ import {
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import { SportLeagueOverviewService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-overview';
+import { SportLeaguePageService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-page';
 import { createSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 
@@ -243,11 +244,43 @@ describe('sport league handlers', () => {
         eventYearSpans: [],
         nextEventStarts: new Map(),
         clutchCardEvents: [],
+        overdueCandidates: [],
       }),
     },
     now: () => AT,
   });
-  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews);
+  const pageLeague = {
+    id: 'sl1', sport: Sport.GOLF, isActive: true, parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, parent: null,
+  };
+  const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
+  const page = new SportLeaguePageService({
+    reader: {
+      readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [] }),
+      readEventFacts: (sportLeagueId) => known(sportLeagueId, {
+        league: pageLeague,
+        events: [{
+          id: 'e1', name: 'The Open', eventYear: 2026, startDate: AT, endDate: null, status: 'SCHEDULED' as const, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' as const, releasedAt: null, lastReleaseCheck: null,
+        }],
+        fieldSizes: new Map(),
+        latestRunsByEvent: new Map(),
+        overdueCandidates: [],
+      }),
+      readParticipants: (sportLeagueId) => known(sportLeagueId, [{
+        participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, teamAffiliation: null, role: null, ranking: 1, createdAt: AT },
+        mapping: null,
+      }]),
+    },
+    schedule: { getConfig: () => Promise.resolve({
+      scheduledSports: [Sport.GOLF],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventList: { enabled: true, intervalMinutes: 360 },
+      eventParticipants: { enabled: false, intervalMinutes: 360 },
+      eventLiveScores: { enabled: true, intervalSeconds: 300 },
+    }) },
+    webhookProviderIds: [],
+    now: () => AT,
+  });
+  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
   const params = { sportLeagueId: 'sl1' };
 
   it('answers the root admin\'s overview with every sport league mapped to its row', async () => {
@@ -304,5 +337,19 @@ describe('sport league handlers', () => {
 
     expect(preview.body).toEqual({ rows: [{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }] });
     expect(applied.body).toMatchObject({ participants: [{ id: 'p1' }] });
+  });
+
+  it('answers the League page\'s syncs, events and participants of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+    const syncs = await callHandler(handlers.listSyncs, stubRequest({ params }));
+    const events = await callHandler(handlers.listEventOverviews, stubRequest({ params }));
+    const participants = await callHandler(handlers.listParticipantOverviews, stubRequest({ params }));
+    const missing = { params: { sportLeagueId: 'nope' } };
+
+    expect(syncs.body).toMatchObject({ syncs: [{ kind: 'EVENTS', health: 'NOT_RUN_YET' }, { kind: 'FIELD' }, { kind: 'SCORES' }] });
+    expect(events.body).toMatchObject({ events: [{ id: 'e1', releaseMode: 'MANUAL', releaseAt: null, fieldSize: null, issues: [] }] });
+    expect(participants.body).toMatchObject({ participants: [{ id: 'p1', addedBy: 'ADMIN', feedId: null }] });
+    for (const read of [handlers.listSyncs, handlers.listEventOverviews, handlers.listParticipantOverviews]) {
+      expect(await callHandler(read, stubRequest(missing))).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
+    }
   });
 });

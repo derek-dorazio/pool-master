@@ -2,7 +2,7 @@
  * Unit tests for the Activity mapper: one background job, with the sync runs it ran, as the
  * Activity read answers it.
  */
-import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, type BackgroundJob } from '@poolmaster/shared/domain';
+import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, type BackgroundJob } from '@poolmaster/shared/domain';
 import { ActivityJobDtoSchema } from '@poolmaster/shared/dto';
 import { toActivityJobDto } from '../../../packages/core-api/src/mappers/activity.mapper';
 
@@ -21,19 +21,22 @@ function buildJob(overrides: Partial<BackgroundJob> = {}): BackgroundJob {
     status: BackgroundJobStatus.QUEUED,
     runAt: CREATED_AT,
     attempts: 0,
+    trigger: JobTrigger.SCHEDULE,
     createdAt: CREATED_AT,
     ...overrides,
   };
 }
 
 describe('toActivityJobDto', () => {
-  it('maps a finished league job with its kind, scope, result, error and sync runs, and the answer passes the contract schema', () => {
+  it('maps a finished league job with its kind, scope, trigger, changed rows, duration, result, error and sync runs, and the answer passes the contract schema', () => {
     const dto = toActivityJobDto(buildJob({
       status: BackgroundJobStatus.SUCCEEDED,
       attempts: 2,
       sportLeagueId: LEAGUE_ID,
-      completedAt: new Date('2026-11-18T03:05:00.000Z'),
+      startedAt: new Date('2026-11-18T03:04:12.000Z'),
+      completedAt: new Date('2026-11-18T03:05:00.400Z'),
       lastError: 'first try timed out',
+      changedCount: 2,
       result: { created: 2 },
     }), [RUN_1, RUN_2]);
 
@@ -47,25 +50,62 @@ describe('toActivityJobDto', () => {
       attempts: 2,
       runAt: '2026-11-18T03:00:00.000Z',
       createdAt: '2026-11-18T03:00:00.000Z',
-      completedAt: '2026-11-18T03:05:00.000Z',
+      completedAt: '2026-11-18T03:05:00.400Z',
       lastError: 'first try timed out',
+      trigger: JobTrigger.SCHEDULE,
+      startedBy: null,
+      startedAt: '2026-11-18T03:04:12.000Z',
+      durationSeconds: 48,
+      changedCount: 2,
+      errorType: null,
       result: { created: 2 },
       syncRunIds: [RUN_1, RUN_2],
     });
     expect(() => ActivityJobDtoSchema.parse(dto)).not.toThrow();
   });
 
-  it('answers null for what a waiting event job has not got yet: no league, no completion, no error, no result', () => {
-    const dto = toActivityJobDto(buildJob({ type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, sportEventId: EVENT_ID }), []);
+  it('answers null for what a waiting event job has not got yet: no league, no start, no duration, no changed rows, no error, no result', () => {
+    const dto = toActivityJobDto(buildJob({ type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, sportEventId: EVENT_ID, trigger: JobTrigger.SYSTEM }), []);
 
     expect(dto).toMatchObject({
       kind: BackgroundJobKind.RELEASE,
       sportLeagueId: null,
       sportEventId: EVENT_ID,
+      trigger: JobTrigger.SYSTEM,
+      startedBy: null,
+      startedAt: null,
+      durationSeconds: null,
+      changedCount: null,
+      errorType: null,
       completedAt: null,
       lastError: null,
       result: null,
       syncRunIds: [],
     });
+  });
+
+  it('names the admin who started an ADMIN job by their full name, falling back to their username when they have none', () => {
+    const starter = { id: '00000000-0000-4000-8000-0000000000aa', firstName: 'Dana', lastName: 'Lee', username: 'dlee', email: 'dana@example.com' };
+
+    expect(toActivityJobDto(buildJob({ trigger: JobTrigger.ADMIN, startedBy: starter }), []).startedBy)
+      .toEqual({ id: starter.id, displayName: 'Dana Lee' });
+    expect(toActivityJobDto(buildJob({ trigger: JobTrigger.ADMIN, startedBy: { ...starter, firstName: '', lastName: ' ' } }), []).startedBy)
+      .toEqual({ id: starter.id, displayName: 'dlee' });
+  });
+
+  it('answers a still-running try with no duration, and a failed job with its error type', () => {
+    const running = toActivityJobDto(buildJob({ status: BackgroundJobStatus.RUNNING, attempts: 1, startedAt: CREATED_AT }), []);
+    expect(running).toMatchObject({ startedAt: '2026-11-18T03:00:00.000Z', durationSeconds: null });
+
+    const failed = toActivityJobDto(buildJob({
+      status: BackgroundJobStatus.FAILED,
+      attempts: 4,
+      startedAt: CREATED_AT,
+      completedAt: new Date('2026-11-18T03:00:09.000Z'),
+      lastError: 'BALLDONTLIE request /pga/v1/tournaments failed: 429 Too Many Requests',
+      errorType: JobErrorType.RATE_LIMITED,
+    }), []);
+    expect(failed).toMatchObject({ durationSeconds: 9, changedCount: null, errorType: JobErrorType.RATE_LIMITED });
+    expect(() => ActivityJobDtoSchema.parse(failed)).not.toThrow();
   });
 });

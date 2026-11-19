@@ -1,4 +1,4 @@
-import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { JobsForWrite } from '../../packages/core-api/src/modules/background-jobs';
 import type { LeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 
@@ -17,6 +17,7 @@ function rebuildJob(subject: 'EVENT' | 'CONTEST', id: string): BackgroundJobRequ
     type: BackgroundJobType.REBUILD_LEADERBOARDS,
     payload: { subject, id },
     dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:${subject}:${id}`,
+    start: { trigger: JobTrigger.SYSTEM },
   };
 }
 
