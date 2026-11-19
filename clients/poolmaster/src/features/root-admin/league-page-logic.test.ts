@@ -3,7 +3,7 @@ import type { DisplayPreferences } from '@/features/shared/ui';
 import type { SportLeagueParticipantOverviewDto, SportLeagueSyncDto } from '@/lib/api';
 import { contestTemplateUpdateBody, contestTemplateValuesOf } from './league-contest-template-form';
 import { defaultEventYear } from './league-event-columns';
-import { isSyncedLeague, leaguePageTabs } from './league-page-context';
+import { failedJobCount, isSyncedLeague, leaguePageTabs } from './league-page-context';
 import { leagueParticipantColumnIds } from './league-participant-columns';
 import { editableParticipantFields, participantUpdateBody, participantValuesOf } from './league-participant-form';
 import { lastRunText, nextRunText } from './league-syncs-text';
@@ -32,9 +32,17 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
 }
 
 describe('leaguePageTabs', () => {
-  it('shows Events, Participants and Contest templates on a synced league, and adds Tools only on a league no provider syncs', () => {
-    expect(leaguePageTabs(true).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Contest templates']);
-    expect(leaguePageTabs(false).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Contest templates', 'Tools']);
+  it('shows Events, Participants, Activity and Contest templates on a synced league, and adds Tools only on a league no provider syncs', () => {
+    expect(leaguePageTabs(true).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates']);
+    expect(leaguePageTabs(false).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Tools']);
+  });
+});
+
+describe('failedJobCount', () => {
+  it('counts only the failed jobs, and gives no count before the jobs are read', () => {
+    expect(failedJobCount([{ status: 'FAILED' }, { status: 'SUCCEEDED' }, { status: 'FAILED' }, { status: 'RUNNING' }])).toBe(2);
+    expect(failedJobCount([])).toBe(0);
+    expect(failedJobCount(undefined)).toBeUndefined();
   });
 });
 

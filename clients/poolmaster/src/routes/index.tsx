@@ -38,6 +38,7 @@ import { LeagueHomePage } from '@/features/leagues/league-home-page';
 import { CanonicalLeagueCode } from '@/features/leagues/canonical-league-code';
 import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
+import { LeagueActivityTab } from '@/features/root-admin/league-activity-tab';
 import { LeagueContestTemplatesTab } from '@/features/root-admin/league-contest-templates-tab';
 import { LeagueEventsTab } from '@/features/root-admin/league-events-tab';
 import { LeaguePageLayout } from '@/features/root-admin/league-page-layout';
@@ -417,6 +418,7 @@ export const router = createBrowserRouter([
                           { index: true, element: <Navigate replace to="events" /> },
                           { path: 'events', element: <LeagueEventsTab /> },
                           { path: 'participants', element: <LeagueParticipantsTab /> },
+                          { path: 'activity', element: <LeagueActivityTab /> },
                           { path: 'contest-templates', element: <LeagueContestTemplatesTab /> },
                           { path: 'tools', element: <LeagueToolsTab /> },
                           // Its old edit page: the settings are the ⚙ dialog on the page now.

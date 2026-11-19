@@ -1,10 +1,13 @@
 import { useOutletContext } from 'react-router';
-import type { SportLeagueDto, SportLeagueOverviewDto } from '@/lib/api';
+import { BackgroundJobStatus } from '@poolmaster/shared/domain';
+import type { ActivityJobDto, SportLeagueDto, SportLeagueOverviewDto } from '@/lib/api';
+import type { ActivityState } from './use-activity';
 
 /** The League page's tabs, in order (the League page spec); Tools only on a league no provider syncs. */
 export const LEAGUE_PAGE_TABS = [
   { segment: 'events', label: 'Events' },
   { segment: 'participants', label: 'Participants' },
+  { segment: 'activity', label: 'Activity' },
   { segment: 'contest-templates', label: 'Contest templates' },
   { segment: 'tools', label: 'Tools' },
 ] as const;
@@ -17,6 +20,8 @@ export type LeaguePageContext = {
   overview: SportLeagueOverviewDto | undefined;
   /** Whether a provider syncs the league's events: its own, or a Clutch Card's parent's. */
   isSynced: boolean;
+  /** The league's jobs, read once for the Activity tab's grid and the failed count on its tab. */
+  activity: ActivityState;
 };
 
 /** The tabs a league shows: every tab, less Tools when a provider syncs its events. */
@@ -27,6 +32,11 @@ export function leaguePageTabs(isSynced: boolean): readonly (typeof LEAGUE_PAGE_
 /** Whether a provider syncs the league's events, from its overview row once read, else its own setting. */
 export function isSyncedLeague(sportLeague: Pick<SportLeagueDto, 'eventSyncProviderId'>, overview: Pick<SportLeagueOverviewDto, 'providerId'> | undefined): boolean {
   return (overview === undefined ? sportLeague.eventSyncProviderId : overview.providerId) !== null;
+}
+
+/** How many of the jobs read failed, for the Activity tab's count; none until they are read. */
+export function failedJobCount(jobs: readonly Pick<ActivityJobDto, 'status'>[] | undefined): number | undefined {
+  return jobs?.filter((job) => job.status === BackgroundJobStatus.FAILED).length;
 }
 
 /** The League page context, for a tab under `LeaguePageLayout`. */
