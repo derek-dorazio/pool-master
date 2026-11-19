@@ -183,7 +183,7 @@ describe('readOverdueCandidates', () => {
 
     expect(prisma.sportEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
-        status: { notIn: expect.arrayContaining([SportEventStatus.DRAFT, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) },
+        status: { notIn: [SportEventStatus.DRAFT, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] },
       }),
     }));
   });

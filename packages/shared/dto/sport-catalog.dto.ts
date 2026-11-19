@@ -200,7 +200,7 @@ export const SportLeagueReleaseIssueDtoSchema = z.object({
 
 export const SportLeagueOverdueIssueDtoSchema = z.object({
   type: z.literal(SportLeagueIssueType.OVERDUE),
-  count: z.number().int().min(1).describe('How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.'),
+  count: z.number().int().min(1).describe('How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.'),
   items: z.array(z.object(issueItemFields).describe(
     'An event whose results are overdue; occurredAt is when it should have ended: its last round\'s scheduled end, or the last scheduled start plus the sport\'s typical play. Its target is the event.',
   )).describe('Most overdue first.'),
