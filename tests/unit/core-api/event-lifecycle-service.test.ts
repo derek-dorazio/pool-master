@@ -644,7 +644,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
 
     expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' });
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' }, { reopening: new Set() });
     expect(notice.sportEventChanged).not.toHaveBeenCalled();
     expect(store.backgroundJobs).toEqual([eventChangedJob('sport-event-1', 'POSTPONED')]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
@@ -716,7 +716,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const told = await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, notice)
       .sportEventRescheduledJobs(moved, previousStart);
 
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(moved, { kind: 'RESCHEDULED', previousStart });
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(moved, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });
     expect(told.jobs).toEqual([eventChangedJob('sport-event-1', 'RESCHEDULED')]);
     expect(jobs.queued).not.toHaveBeenCalled();
     told.queued();
@@ -1016,6 +1016,41 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
       dedupeKey: `CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-${NEW_START.toISOString()}`,
     }]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves out of the postponement\'s event changed jobs the live contests it reopens, so their members get the one picks are open again email', async () => {
+    const store = new InMemorySportEvents();
+    const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: newStart, status: SportEventStatus.IN_PROGRESS });
+    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
+    const deps = liveContests([LIVE, squares]);
+    const notice = recordingSportEventChangedNotice();
+
+    await new EventLifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice).applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.POSTPONED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1' }), { kind: 'POSTPONED' }, { reopening: new Set(['contest-1']) });
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
+  });
+
+  it('leaves out of a postponed event\'s moved start the live contests the new start reopens, and tells every contest of a scheduled event\'s move', async () => {
+    const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
+    const previousStart = new Date('2026-05-02T20:00:00.000Z');
+    const notice = recordingSportEventChangedNotice();
+    const postponed = new EventLifecycleService(liveContests([LIVE]), postponedEvents(previousStart), fakeLogger(), startedJobs(), undefined, undefined, notice);
+
+    await postponed.sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart }, previousStart);
+
+    expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set(['contest-1']) });
+
+    const scheduled = seededEvents({ startDate: previousStart });
+    await new EventLifecycleService(liveContests([LIVE]), scheduled.sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice)
+      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart }, previousStart);
+
+    expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });
   });
 
   it('writes no job and wakes nothing when the guarded write finds no contest still live', async () => {

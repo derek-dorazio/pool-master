@@ -801,14 +801,14 @@ describe('contest expanded', () => {
   });
 });
 
-describe('picks are open again', () => {
-  it('says the postponed event\'s contest is open again, with the new start under the event, when picks close and a Make your picks button to the contest', () => {
+describe('event postponed, picks open again', () => {
+  it('says in one email that the event was postponed to its new day and its contest is open again, with the new start under the event, when picks close and a Make your picks button to the contest', () => {
     const data = EMAIL_TEMPLATE_FIXTURES.CONTEST_REOPENED;
     const message = renderSystemEmailTemplate('CONTEST_REOPENED', data, UTC);
 
-    expect(message.subject).toBe('Picks are open again: Masters Pick 6');
-    expect(message.text).toContain('Picks open again\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
-    expect(message.text).toContain('The Masters was postponed, so Masters Pick 6 is open again.\nMake or change your picks before the new start.');
+    expect(message.subject).toBe('Postponed: The Masters. Picks are open again');
+    expect(message.text).toContain('Event postponed\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
+    expect(message.text).toContain('The Masters has been postponed to Thu, Apr 15, 2027.\nMasters Pick 6 is open again: make or change your picks before they close.');
     expect(message.text).toContain('Picks close: Apr 15, 2027, 12:00 PM UTC');
     expect(message.text).toContain(`Make your picks: ${data.contestUrl}`);
     expect(message.html).toContain(`href="${data.contestUrl}"`);
@@ -819,8 +819,9 @@ describe('picks are open again', () => {
     const data = EMAIL_TEMPLATE_FIXTURES.CONTEST_REOPENED;
     const message = renderSystemEmailTemplate('CONTEST_REOPENED', { ...data, contestName: 'Pool <b>One</b>', event: { ...data.event, eventName: 'Open <i>' } }, UTC);
 
-    expect(message.html).toContain('Open &lt;i&gt; was postponed, so <strong');
-    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt;</strong> is open again.');
+    expect(message.html).toContain('Open &lt;i&gt; has been postponed to');
+    expect(message.html).toContain('<strong');
+    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt;</strong> is open again');
     expect(message.html).not.toContain('<b>One</b>');
   });
 });
