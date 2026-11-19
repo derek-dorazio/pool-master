@@ -59,6 +59,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/providers/run-event-sync')).toEqual(['Providers']);
     expect(lit('/manage/providers/unmapped-participants/map')).toEqual(['Providers']);
     expect(lit('/manage/activity')).toEqual(['Activity']);
+    expect(lit('/manage/notifications')).toEqual(['Notifications']);
     expect(lit('/manage/settings')).toEqual(['Notifications']);
     expect(lit('/manage/users/user-1')).toEqual(['Customers']);
     expect(lit('/manage/events')).toEqual(['Sports']);
@@ -109,9 +110,19 @@ describe('Manage menu and breadcrumbs per sport', () => {
     ]);
   });
 
-  it('has no second row under Activity, Notifications, Providers or Plans', () => {
+  it('under Notifications, shows Emails and the old Settings page, marking the one open', () => {
+    expect(buildManageSubTabs('/manage/notifications')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
+      ['Emails', true],
+      ['Settings', false],
+    ]);
+    expect(buildManageSubTabs('/manage/settings')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
+      ['Emails', false],
+      ['Settings', true],
+    ]);
+  });
+
+  it('has no second row under Activity, Providers or Plans', () => {
     expect(buildManageSubTabs('/manage/activity')).toBeNull();
-    expect(buildManageSubTabs('/manage/settings')).toBeNull();
     expect(buildManageSubTabs('/manage/plans')).toBeNull();
   });
 
@@ -155,9 +166,10 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['sports', 'horse-racing', 'leagues'], 2)).toBe('Sport leagues');
   });
 
-  it('names the renamed tools in the trail by their menu words: Activity, Notifications, Contest templates', () => {
+  it('names the renamed tools in the trail by their menu words: Activity, Notifications, Settings, Contest templates', () => {
     expect(getManageBreadcrumbLabel(['activity'], 0)).toBe('Activity');
-    expect(getManageBreadcrumbLabel(['settings'], 0)).toBe('Notifications');
+    expect(getManageBreadcrumbLabel(['notifications'], 0)).toBe('Notifications');
+    expect(getManageBreadcrumbLabel(['settings'], 0)).toBe('Settings');
     expect(getManageBreadcrumbLabel(['content-configuration'], 0)).toBe('Contest templates');
   });
 

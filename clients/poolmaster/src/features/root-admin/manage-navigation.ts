@@ -58,6 +58,12 @@ export function buildSportLeagueCreatePath(sport: Sport) {
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
 export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 
+/** Every system email and the email settings (#1872). */
+export const NOTIFICATIONS_PATH = '/manage/notifications';
+
+/** The old settings page, the second tab under Notifications until its groups get pages of their own. */
+export const SETTINGS_PATH = '/manage/settings';
+
 /** The old event list and contest template pages, reached from Sports' second row until the League page's tabs replace them. */
 export const EVENTS_PATH = '/manage/events';
 export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
@@ -70,13 +76,14 @@ export const ACTIVITY_PATH = '/manage/activity';
 
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans. Notifications has no page of its own yet, so it opens today's settings page. Run event
- * sync and Unmapped participants sit under Providers.
+ * Plans. Notifications (#1872) keeps the old Settings page, for its groups that are not email,
+ * as its second tab until their own pages take them. Run event sync and Unmapped participants sit
+ * under Providers.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
   { key: 'activity', title: 'Activity', to: ACTIVITY_PATH, paths: [ACTIVITY_PATH] },
-  { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
+  { key: 'notifications', title: 'Notifications', to: NOTIFICATIONS_PATH, paths: [NOTIFICATIONS_PATH, SETTINGS_PATH] },
   { key: 'providers', title: 'Providers', to: PROVIDERS_PATH, paths: [PROVIDERS_PATH] },
   { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
@@ -133,7 +140,7 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
  * Manage's second row (#1848), null where a tool has none. Under Sports: Sport leagues (the Sports
  * page and each league's pages), the old Events and Contest templates pages until the League
  * page's tabs replace them, then one tab per supported sport for its events and participants.
- * Under Customers: Leagues and Users.
+ * Under Notifications: Emails and the old Settings page. Under Customers: Leagues and Users.
  */
 export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
   if (MANAGE_SECTION_DEFINITIONS[0].paths.some((path) => isAtOrUnder(pathname, path))) {
@@ -159,6 +166,15 @@ export function buildManageSubTabs(pathname: string): { label: string; items: Pa
       ],
     };
   }
+  if (isAtOrUnder(pathname, NOTIFICATIONS_PATH) || isAtOrUnder(pathname, SETTINGS_PATH)) {
+    return {
+      label: 'Notifications',
+      items: [
+        { isActive: isAtOrUnder(pathname, NOTIFICATIONS_PATH), label: 'Emails', testId: 'root-admin-manage-menu-emails', to: NOTIFICATIONS_PATH },
+        { isActive: isAtOrUnder(pathname, SETTINGS_PATH), label: 'Settings', testId: 'root-admin-manage-menu-settings', to: SETTINGS_PATH },
+      ],
+    };
+  }
   if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
     return {
       label: 'Customers',
@@ -176,7 +192,8 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   events: 'Events',
   'content-configuration': 'Contest templates',
   activity: 'Activity',
-  settings: 'Notifications',
+  notifications: 'Notifications',
+  settings: 'Settings',
   leagues: 'Leagues',
   users: 'Users',
   plans: 'Plans',

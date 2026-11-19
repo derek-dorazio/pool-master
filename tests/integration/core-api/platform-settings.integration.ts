@@ -11,6 +11,7 @@ import {
   AppSettingsService,
   SettingsConflictError,
 } from '../../../packages/core-api/src/modules/platform/app-settings-service';
+import { BILLING_SETTINGS } from '../../../packages/core-api/src/modules/billing/billing-settings';
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email/email-settings';
 import {
   INGESTION_SCHEDULE_SETTINGS,
@@ -303,6 +304,52 @@ describe('settings routes (contract verification)', () => {
       ...before.value,
       caps: { ...before.value.caps, ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null, PLATINUM: null } },
     });
+  });
+
+  it('saves one plan\'s yearly and monthly price through the payments settings and serves it back, leaving the other plans at $0', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Plan Price Admin', isRootAdmin: true });
+    const before = (await getApp().inject({
+      method: 'GET', url: '/api/v1/platform/settings/BILLING_CONFIG', headers: rootAdmin.headers,
+    })).json<SettingsGroup>();
+    if (before.key !== 'BILLING_CONFIG') throw new Error('Expected the BILLING_CONFIG group.');
+    const value = { ...before.value, planPrices: { ...before.value.planPrices, PRO: { yearlyCents: 9900, monthlyCents: 999 } } };
+
+    const saved = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/platform/settings/BILLING_CONFIG',
+      headers: rootAdmin.headers,
+      payload: { key: 'BILLING_CONFIG', value, expectedUpdatedAt: null },
+    });
+    const readBack = await getApp().inject({
+      method: 'GET', url: '/api/v1/platform/settings/BILLING_CONFIG', headers: rootAdmin.headers,
+    });
+    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: 'BILLING_CONFIG' } });
+
+    expect(saved.statusCode).toBe(200);
+    expect(SettingsGroupSchema.safeParse(saved.json()).success).toBe(true);
+    expect(readBack.json<SettingsGroup>().value).toEqual(value);
+    expect(stored?.configJson).toEqual(expect.objectContaining({
+      planPrices: {
+        FREE: { yearlyCents: 0, monthlyCents: 0 },
+        PRO: { yearlyCents: 9900, monthlyCents: 999 },
+        PREMIUM: { yearlyCents: 0, monthlyCents: 0 },
+        PLATINUM: { yearlyCents: 0, monthlyCents: 0 },
+      },
+    }));
+  });
+
+  it('a task booting against a payments row stored before plan prices existed serves every plan at $0 and leaves the row as it was', async () => {
+    const oldRow = { paymentsEnabled: false, expansionPrices: { FREE: [], PRO: [], PREMIUM: [], PLATINUM: [{ entriesPerContest: 900, priceCents: 2500 }] } };
+    await getPrisma().platformRuntimeConfig.create({ data: { configKey: BILLING_SETTINGS.key, configJson: oldRow } });
+    const task = coreApiTask();
+
+    await task.load();
+
+    expect(task.getState(BILLING_SETTINGS).source).toBe('stored');
+    expect(task.get(BILLING_SETTINGS).expansionPrices).toEqual(oldRow.expansionPrices);
+    expect(Object.values(task.get(BILLING_SETTINGS).planPrices)).toEqual(Array(4).fill({ yearlyCents: 0, monthlyCents: 0 }));
+    const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: BILLING_SETTINGS.key } });
+    expect(stored?.configJson).toEqual(oldRow);
   });
 
   it('resets a group to its defaults, stored and recorded like any other save', async () => {

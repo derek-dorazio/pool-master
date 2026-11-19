@@ -68,6 +68,7 @@ import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manag
 import { RootAdminProfilesPage } from '@/features/root-admin/root-admin-profiles-page';
 import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
+import { RootAdminNotificationsPage } from '@/features/root-admin/root-admin-notifications-page';
 import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
 import { RootAdminActivityPage } from '@/features/root-admin/root-admin-activity-page';
@@ -459,6 +460,10 @@ export const router = createBrowserRouter([
                     // The sync run history page became Activity, and its tools moved under Providers (#1887).
                     path: 'sync/*',
                     element: <LegacyManageSyncRedirect />,
+                  },
+                  {
+                    path: 'notifications',
+                    element: <RootAdminNotificationsPage />,
                   },
                   {
                     path: 'settings',

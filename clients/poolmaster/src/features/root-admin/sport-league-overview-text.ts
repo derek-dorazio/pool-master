@@ -8,7 +8,16 @@ export type SportLeagueIssue = SportLeagueOverviewDto['issues'][number];
 export const SPORT_LEAGUE_ISSUE_LABELS: Record<SportLeagueIssue['type'], string> = {
   SYNC: 'Sync',
   RELEASE: 'Release',
+  OVERDUE: 'Overdue',
 };
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/** How late an overdue event's results are, from when it should have ended: whole hours, then whole days. */
+export function overdueLateness(expectedEndAt: string, now: Date): string {
+  const hours = Math.floor((now.getTime() - new Date(expectedEndAt).getTime()) / HOUR_MS);
+  return hours < 48 ? `${plural(hours, 'hour')} late` : `${plural(Math.floor(hours / 24), 'day')} late`;
+}
 
 /** Each sync's name in domain words (rules/ux-rules.md §12 item 14). */
 export const SYNC_KIND_LABELS: Record<ProviderSyncKind, string> = {

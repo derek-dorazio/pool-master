@@ -93,7 +93,7 @@ import { createEventLifecycleService, createSportEventServices, eventFieldCache 
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
-import { releaseAttemptJobOutcome } from './modules/events/release-sport-event-job';
+import { releaseSportEventJobHandler } from './modules/events/release-sport-event-job';
 import { syncChangedRows } from './modules/ingestion/core/sync-write-diagnostics';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
@@ -128,6 +128,7 @@ import {
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
 import { emailTestModule } from './modules/email/email-test-routes';
+import { systemEmailModule } from './modules/email/system-email-routes';
 import {
   BackgroundJobQueue,
   BackgroundJobRetention,
@@ -165,7 +166,7 @@ export function buildApp() {
     readConfig: () => appSettings.get(PLAN_SETTINGS),
   });
   // One email outbox for the whole app; EMAIL_CONFIG and the league's plan decide on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention, systemEmails } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     planEntitlements,
@@ -339,12 +340,13 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
+  const notifiedProviderCadence = readNotifiedProviderCadence(process.env);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
     jobLock,
-    notifiedProviderCadence: readNotifiedProviderCadence(process.env),
+    notifiedProviderCadence,
   });
   const ingestionService = new IngestionService({
     registry,
@@ -377,7 +379,7 @@ export function buildApp() {
       REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
-      RELEASE_SPORT_EVENT: async (payload) => releaseAttemptJobOutcome(await sportEventServices.sportEvents.autoReleaseEvent(payload.sportEventId)),
+      RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -423,7 +425,13 @@ export function buildApp() {
     services: sportEventServices,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
-  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry: registry });
+  app.register(sportLeaguesModule, {
+    prefix: '/api/v1/sport-leagues',
+    cdn,
+    providerRegistry: registry,
+    schedule: ingestionConfigService,
+    webhookProviderIds: notifiedProviderCadence?.providerIds ?? [],
+  });
   const profiles = createProfileServices(prisma, app.log);
   app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   app.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
@@ -431,6 +439,7 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
+  app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });
   const activity = new ActivityService({
     jobs: backgroundJobRepository,
     syncRuns: providerSyncRuns,

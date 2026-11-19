@@ -11,7 +11,7 @@ import {
 } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { buildSportEventPath } from './manage-navigation';
-import { RELEASE_CHECK_LABELS, SPORT_LEAGUE_ISSUE_LABELS, SYNC_KIND_LABELS } from './sport-league-overview-text';
+import { overdueLateness, RELEASE_CHECK_LABELS, SPORT_LEAGUE_ISSUE_LABELS, SYNC_KIND_LABELS } from './sport-league-overview-text';
 
 import type { SportLeagueIssue } from './sport-league-overview-text';
 
@@ -83,6 +83,20 @@ function IssueItems({ issue, onOpenSyncRun, sport }: { issue: SportLeagueIssue; 
           {issue.items.map((item) => (
             <SectionRow
               facts={`${when(item.occurredAt)} · ${item.failedChecks.map((key) => RELEASE_CHECK_LABELS[key]).join(', ')} failed`}
+              key={item.target.id}
+              name={item.label}
+              testId={`root-admin-sports-issue-event-${item.target.id}`}
+              to={buildSportEventPath(sport, item.target.id)}
+            />
+          ))}
+        </SectionRows>
+      );
+    case 'OVERDUE':
+      return (
+        <SectionRows>
+          {issue.items.map((item) => (
+            <SectionRow
+              facts={`Should have ended ${when(item.occurredAt)} · ${overdueLateness(item.occurredAt, new Date())}`}
               key={item.target.id}
               name={item.label}
               testId={`root-admin-sports-issue-event-${item.target.id}`}

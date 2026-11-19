@@ -1,5 +1,5 @@
 /**
- * Prisma adapter for the root admin's sport league overview (#1847): every sport league's facts
+ * Prisma adapter for the root admin's sport league overview (#1847, #1865): every sport league's facts
  * in a fixed number of grouped reads, however many leagues, events and runs there are. groupBy
  * cannot group through a relation, so event reads group by series and the series are folded into
  * their sport league here.
@@ -13,13 +13,14 @@ import type {
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
 import { AutoReleaseCheckOutcome, SportEventStatus } from '@poolmaster/shared/domain';
+import { readOverdueCandidates } from './prisma-overdue-event-reads';
 
 export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReader {
   constructor(private readonly prisma: PrismaClient) {}
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, clutchCardRows] = await Promise.all([
+    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, clutchCardRows, overdueCandidates] = await Promise.all([
       this.prisma.sportLeague.findMany({
         select: { id: true, name: true, parentSportLeagueId: true, scoringFamily: true, eventSyncProviderId: true, isActive: true, sport: { select: { sport: true } } },
       }),
@@ -44,6 +45,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         where: { parentEventId: { not: null }, status: notCancelled },
         select: { eventSeriesId: true, eventYear: true, parentEventId: true, parentRoundNumbers: true },
       }),
+      readOverdueCandidates(this.prisma, now),
     ]);
     // Read after the events, so every series an event read named is already there: a series is
     // written before its events.
@@ -66,6 +68,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       eventYearSpans: eventYearSpans(yearGroups, leagueOfSeries),
       nextEventStarts: earliestByLeague(nextGroups, leagueOfSeries),
       clutchCardEvents: clutchCardEvents(clutchCardRows, parentRounds, leagueOfSeries),
+      overdueCandidates: overdueCandidates.map(({ eventSeriesId, ...event }) => ({ ...event, sportLeagueId: leagueOfSeries(eventSeriesId) })),
     };
   }
 
@@ -101,7 +104,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 }
 
 /** The run's `outcome.summary`, the line the sync history shows for it. */
-function outcomeSummary(payload: Prisma.JsonValue): string | null {
+export function outcomeSummary(payload: Prisma.JsonValue): string | null {
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) return null;
   const outcome = payload['outcome'];
   if (typeof outcome !== 'object' || outcome === null || Array.isArray(outcome)) return null;
