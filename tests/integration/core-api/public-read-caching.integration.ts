@@ -117,14 +117,14 @@ describe('admin saves clear the public reads they change (#1181)', () => {
     expect(await listGolfLeagueNames()).toContain(renamed);
   });
 
-  it('an affiliation upload preview, which writes nothing, clears nothing', async () => {
+  it('a ranking upload preview, which writes nothing, clears nothing', async () => {
     const admin = await createTestUser({ displayName: 'Cache Preview Admin', isRootAdmin: true });
     const sportLeagueId = await createSportLeague(admin.headers);
     getCdnInvalidations().reset();
 
     const response = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/sport-leagues/${sportLeagueId}/affiliations/upload/preview`,
+      url: `/api/v1/sport-leagues/${sportLeagueId}/participants/rankings/upload/preview`,
       headers: admin.headers,
       payload: { rows: [{ playerName: `Nobody ${randomUUID()}` }] },
     });

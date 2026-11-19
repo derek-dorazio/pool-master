@@ -8,7 +8,6 @@ import {
   createSportLeague,
   getEventBracket,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   releaseEvent,
   removeEventParticipant,
@@ -16,13 +15,12 @@ import {
   updateEventBracketMatch,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { MatchSide, MatchStatus, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import {
   AddSportEventParticipantsResponseSchema,
   SportEventBracketResponseSchema,
   SportEventMatchResponseSchema,
   SportEventParticipantResponseSchema,
-  SportListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
@@ -96,7 +94,6 @@ describe('SDK Functional: Basketball bracket', () => {
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectMatchesSchema(SportListResponseSchema, (await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
@@ -114,7 +111,7 @@ describe('SDK Functional: Basketball bracket', () => {
 
     const teamIdOf = new Map<string, string>();
     for (const name of [...FIELD.map((team) => team.name), 'Texas']) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${name} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${name} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIdOf.set(name, id);

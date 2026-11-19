@@ -14,7 +14,7 @@ const AT = new Date('2026-04-10T12:00:00.000Z');
 const boom = new Error('database down');
 const participant = {
   id: 'p1',
-  sportId: 'golf',
+  sportLeagueId: 'pga',
   name: 'Scottie Scheffler',
   participantType: 'INDIVIDUAL',
   status: ParticipantStatus.ACTIVE,
@@ -30,7 +30,7 @@ function service(overrides: Record<string, unknown> = {}) {
     search: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
     findById: jest.fn((id: string) => Promise.resolve(id === 'p1' ? participant : null)),
     getProviderMappings: jest.fn((..._args: unknown[]) => Promise.resolve([mapping])),
-    listSportProviderMappings: jest.fn((..._args: unknown[]) => Promise.resolve([mapping])),
+    listSportLeagueProviderMappings: jest.fn((..._args: unknown[]) => Promise.resolve([mapping])),
     delete: jest.fn((..._args: unknown[]) => Promise.resolve()),
     bindProviderMapping: jest.fn((..._args: unknown[]) => Promise.resolve(mapping)),
     create: jest.fn((..._args: unknown[]) => Promise.resolve(participant)),
@@ -54,9 +54,9 @@ describe('participant search', () => {
   it('searches a sport\'s catalog by its trimmed term and status', async () => {
     const fake = service();
 
-    const reply = await callHandler(handlersOver(fake).searchParticipants, stubRequest({ query: { q: '  scottie ', sportId: 'golf', status: ParticipantStatus.ACTIVE } }));
+    const reply = await callHandler(handlersOver(fake).searchParticipants, stubRequest({ query: { q: '  scottie ', sportLeagueId: 'pga', status: ParticipantStatus.ACTIVE } }));
 
-    expect(fake.search).toHaveBeenCalledWith({ query: 'scottie', filters: { sportId: 'golf', status: ParticipantStatus.ACTIVE } });
+    expect(fake.search).toHaveBeenCalledWith({ query: 'scottie', filters: { sportLeagueId: 'pga', status: ParticipantStatus.ACTIVE } });
     expect(reply.body).toMatchObject({ participants: [{ id: 'p1' }] });
   });
 
@@ -65,7 +65,7 @@ describe('participant search', () => {
 
     await callHandler(handlersOver(fake).searchParticipants, stubRequest({ query: { q: 'scottie' } }));
 
-    expect(fake.search).toHaveBeenCalledWith({ query: 'scottie', filters: { sportId: undefined, status: undefined } });
+    expect(fake.search).toHaveBeenCalledWith({ query: 'scottie', filters: { sportLeagueId: undefined, status: undefined } });
   });
 });
 
@@ -80,12 +80,12 @@ describe('participant provider mappings', () => {
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'PARTICIPANT_NOT_FOUND' } } });
   });
 
-  it('lists the feed ids a provider has mapped among one sport\'s participants, for the test data loader to match players by', async () => {
+  it('lists the feed ids a provider has mapped among one sport league\'s participants, for the test data loader to match players by', async () => {
     const fake = service();
 
-    const reply = await callHandler(handlersOver(fake).listSportProviderMappings, stubRequest({ query: { providerId: 'feed', sportId: 'golf' } }));
+    const reply = await callHandler(handlersOver(fake).listSportLeagueProviderMappings, stubRequest({ query: { providerId: 'feed', sportLeagueId: 'pga' } }));
 
-    expect(fake.listSportProviderMappings).toHaveBeenCalledWith('feed', 'golf');
+    expect(fake.listSportLeagueProviderMappings).toHaveBeenCalledWith('feed', 'pga');
     expect(reply.body).toMatchObject({ providerMappings: [{ participantId: 'p1', providerId: 'feed', externalId: 'x1' }] });
   });
 
@@ -136,18 +136,18 @@ describe('participant detail, create, update and delete', () => {
 
   it('creates a participant from the body\'s fields with 201', async () => {
     const fake = service();
-    const body = { sportId: 'golf', name: 'Scottie Scheffler', participantType: 'INDIVIDUAL', firstName: 'Scottie', externalIds: { feed: 'x1' } };
+    const body = { sportLeagueId: 'pga', name: 'Scottie Scheffler', participantType: 'INDIVIDUAL', firstName: 'Scottie', externalIds: { feed: 'x1' } };
 
     const reply = await callHandler(handlersOver(fake).createParticipant, stubRequest({ body, contextLogger: false }));
 
-    expect(fake.create).toHaveBeenCalledWith(expect.objectContaining({ sportId: 'golf', name: 'Scottie Scheffler', firstName: 'Scottie', externalIds: { feed: 'x1' } }));
+    expect(fake.create).toHaveBeenCalledWith(expect.objectContaining({ sportLeagueId: 'pga', name: 'Scottie Scheffler', firstName: 'Scottie', externalIds: { feed: 'x1' } }));
     expect(reply).toMatchObject({ statusCode: 201, body: { participant: { id: 'p1' } } });
   });
 
   it('passes a failure creating a participant on to the global error handler', async () => {
     const handlers = handlersOver(service({ create: () => Promise.reject(boom) }));
 
-    await expect(callHandler(handlers.createParticipant, stubRequest({ body: { sportId: 'golf', name: 'X', participantType: 'INDIVIDUAL' } }))).rejects.toBe(boom);
+    await expect(callHandler(handlers.createParticipant, stubRequest({ body: { sportLeagueId: 'pga', name: 'X', participantType: 'INDIVIDUAL' } }))).rejects.toBe(boom);
   });
 
   it('updates a participant, and answers a missing one with 404 PARTICIPANT_NOT_FOUND', async () => {

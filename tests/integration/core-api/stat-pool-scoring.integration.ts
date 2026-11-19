@@ -85,7 +85,7 @@ async function seedSeries(status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS') {
   const field = [];
   for (const name of PLAYERS) {
     const participant = await prisma.participant.create({
-      data: { sportId: baseball.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' },
+      data: { sportLeagueId: worldSeries.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' },
     });
     field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
   }

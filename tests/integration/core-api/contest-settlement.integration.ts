@@ -15,6 +15,7 @@ import { createContestEmailJobs } from '../../../packages/core-api/src/modules/n
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -518,7 +519,7 @@ async function createSettlementParticipant(input: {
   const prisma = getPrisma();
   const participant = await prisma.participant.create({
     data: {
-      sportId: input.sportId,
+      sportLeagueId: await participantLeagueId(prisma, input.sportId),
       name: input.name,
       participantType: 'INDIVIDUAL',
       status: 'ACTIVE',

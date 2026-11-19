@@ -7235,6 +7235,10 @@ export type ParticipantProviderMappingDto = {
     id: string;
     participantId: string;
     /**
+     * The participant's sport league: a feed id names one participant per sport league.
+     */
+    sportLeagueId: string;
+    /**
      * The provider that knows the participant by externalId.
      */
     providerId: string;
@@ -7256,6 +7260,10 @@ export type ParticipantProviderMappingListResponse = {
     providerMappings: Array<{
         id: string;
         participantId: string;
+        /**
+         * The participant's sport league: a feed id names one participant per sport league.
+         */
+        sportLeagueId: string;
         /**
          * The provider that knows the participant by externalId.
          */
@@ -7287,17 +7295,17 @@ export type BindParticipantProviderMappingRequest = {
 };
 
 /**
- * Whose provider identities to list: one provider's, in one sport.
+ * Whose provider identities to list: one provider's, in one sport league.
  */
-export type SportProviderMappingListQuery = {
+export type SportLeagueProviderMappingListQuery = {
     /**
      * The provider whose identities to list.
      */
     providerId: string;
     /**
-     * Only the identities of this sport's participants.
+     * Only the identities of this sport league's participants.
      */
-    sportId: string;
+    sportLeagueId: string;
 };
 
 /**
@@ -7310,6 +7318,10 @@ export type ParticipantProviderMappingResponse = {
     providerMapping: {
         id: string;
         participantId: string;
+        /**
+         * The participant's sport league: a feed id names one participant per sport league.
+         */
+        sportLeagueId: string;
         /**
          * The provider that knows the participant by externalId.
          */
@@ -7335,9 +7347,13 @@ export type ParticipantDto = {
      */
     id: string;
     /**
-     * Owning sport identifier.
+     * The one sport league the participant competes in; the sport is the league's.
      */
-    sportId: string;
+    sportLeagueId: string;
+    /**
+     * Current rank in the sport league; 1 is best. Null when unranked.
+     */
+    ranking: number | null;
     /**
      * Primary participant display name.
      */
@@ -7436,9 +7452,9 @@ export type ParticipantListQuery = {
      */
     q?: string;
     /**
-     * Only participants of this sport.
+     * Only participants of this sport league.
      */
-    sportId?: string;
+    sportLeagueId?: string;
     /**
      * Only participants in this status. Omitted: every status.
      */
@@ -7458,9 +7474,13 @@ export type ParticipantListResponse = {
          */
         id: string;
         /**
-         * Owning sport identifier.
+         * The one sport league the participant competes in; the sport is the league's.
          */
-        sportId: string;
+        sportLeagueId: string;
+        /**
+         * Current rank in the sport league; 1 is best. Null when unranked.
+         */
+        ranking: number | null;
         /**
          * Primary participant display name.
          */
@@ -7564,9 +7584,13 @@ export type ParticipantResponse = {
          */
         id: string;
         /**
-         * Owning sport identifier.
+         * The one sport league the participant competes in; the sport is the league's.
          */
-        sportId: string;
+        sportLeagueId: string;
+        /**
+         * Current rank in the sport league; 1 is best. Null when unranked.
+         */
+        ranking: number | null;
         /**
          * Primary participant display name.
          */
@@ -7662,9 +7686,13 @@ export type ParticipantResponse = {
  */
 export type CreateParticipantRequest = {
     /**
-     * Sport the participant competes in.
+     * The sport league the participant competes in.
      */
-    sportId: string;
+    sportLeagueId: string;
+    /**
+     * Rank in the sport league; 1 is best. Omitted: unranked.
+     */
+    ranking?: number;
     /**
      * Primary participant display name.
      */
@@ -7745,6 +7773,10 @@ export type UpdateParticipantRequest = {
      * Participant lifecycle or availability status.
      */
     status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+    /**
+     * Rank in the sport league; null unranks.
+     */
+    ranking?: number | null;
     /**
      * Normalized participant injury or availability state.
      */
@@ -7944,9 +7976,9 @@ export type SportLeagueDto = {
      */
     parentRoundNumbers: Array<number>;
     /**
-     * Participants currently affiliated with the sport league.
+     * The sport league's participants.
      */
-    affiliationCount: number;
+    participantCount: number;
     /**
      * Events on record for the sport league, across every series and year.
      */
@@ -8072,9 +8104,9 @@ export type SportLeagueListResponse = {
          */
         parentRoundNumbers: Array<number>;
         /**
-         * Participants currently affiliated with the sport league.
+         * The sport league's participants.
          */
-        affiliationCount: number;
+        participantCount: number;
         /**
          * Events on record for the sport league, across every series and year.
          */
@@ -8187,9 +8219,9 @@ export type SportLeagueResponse = {
          */
         parentRoundNumbers: Array<number>;
         /**
-         * Participants currently affiliated with the sport league.
+         * The sport league's participants.
          */
-        affiliationCount: number;
+        participantCount: number;
         /**
          * Events on record for the sport league, across every series and year.
          */
@@ -8371,7 +8403,7 @@ export type SportLeagueOverviewDto = {
             /**
              * The ready checks that held it, in check order.
              */
-            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'FIELD_LINKED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
         }>;
     }>;
     /**
@@ -8501,7 +8533,7 @@ export type SportLeagueOverviewListResponse = {
                 /**
                  * The ready checks that held it, in check order.
                  */
-                failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'FIELD_LINKED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+                failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
             }>;
         }>;
         /**
@@ -8529,400 +8561,11 @@ export type SportLeagueOverviewListResponse = {
 };
 
 /**
- * A participant's membership of a sport league, and their current rank there.
+ * Re-ranks participants of the sport league.
  */
-export type ParticipantLeagueAffiliationDto = {
+export type SportLeagueParticipantRankingsRequest = {
     /**
-     * Affiliation identifier.
-     */
-    id: string;
-    sportLeagueId: string;
-    participantId: string;
-    /**
-     * The participant's current rank in the sport league; 1 is best. Null when unranked.
-     */
-    ranking: number | null;
-    /**
-     * The canonical participant.
-     */
-    participant: {
-        /**
-         * Participant identifier.
-         */
-        id: string;
-        /**
-         * Owning sport identifier.
-         */
-        sportId: string;
-        /**
-         * Primary participant display name.
-         */
-        name: string;
-        /**
-         * Whether the participant is an individual or team.
-         */
-        participantType: 'INDIVIDUAL' | 'TEAM';
-        /**
-         * Primary provider identifier when one exists.
-         */
-        externalId?: string;
-        /**
-         * First name when the participant is a person.
-         */
-        firstName?: string;
-        /**
-         * Last name when the participant is a person.
-         */
-        lastName?: string;
-        /**
-         * Short-form display name for compact UI surfaces.
-         */
-        shortName?: string;
-        /**
-         * Participant nationality or country code when known.
-         */
-        nationality?: string;
-        /**
-         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-         */
-        role?: string | null;
-        /**
-         * Current team affiliation when the participant is not itself a team.
-         */
-        teamAffiliation?: string | null;
-        /**
-         * Current participant lifecycle or availability status.
-         */
-        status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-        /**
-         * Normalized participant injury or availability state.
-         */
-        injuryStatus: {
-            /**
-             * Current injury or availability status code.
-             */
-            status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-            /**
-             * Optional injury-status detail or summary.
-             */
-            detail?: string;
-            /**
-             * Expected return timestamp when known.
-             */
-            expectedReturn?: string;
-            /**
-             * When the injury-status record was last updated.
-             */
-            updatedAt?: string;
-            /**
-             * Source that provided the injury-status update.
-             */
-            source?: string;
-        };
-        /**
-         * Optional participant image URL.
-         */
-        photoUrl?: string | null;
-        /**
-         * When the participant image metadata was last refreshed.
-         */
-        photoLastUpdated?: string;
-        /**
-         * Map of provider identifiers keyed by provider code.
-         */
-        externalIds: {
-            [key: string]: string;
-        };
-        /**
-         * When the participant record was created.
-         */
-        createdAt: string;
-        /**
-         * When the participant record was last updated.
-         */
-        updatedAt: string;
-    };
-    /**
-     * ISO 8601 datetime string.
-     */
-    createdAt: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    updatedAt: string;
-};
-
-/**
- * A sport league's affiliations.
- */
-export type ParticipantLeagueAffiliationListResponse = {
-    /**
-     * Best rank first, unranked last, then by name.
-     */
-    affiliations: Array<{
-        /**
-         * Affiliation identifier.
-         */
-        id: string;
-        sportLeagueId: string;
-        participantId: string;
-        /**
-         * The participant's current rank in the sport league; 1 is best. Null when unranked.
-         */
-        ranking: number | null;
-        /**
-         * The canonical participant.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-             */
-            role?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * When the injury-status record was last updated.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * When the participant image metadata was last refreshed.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-        /**
-         * ISO 8601 datetime string.
-         */
-        createdAt: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        updatedAt: string;
-    }>;
-};
-
-/**
- * One affiliation.
- */
-export type ParticipantLeagueAffiliationResponse = {
-    /**
-     * A participant's membership of a sport league, and their current rank there.
-     */
-    affiliation: {
-        /**
-         * Affiliation identifier.
-         */
-        id: string;
-        sportLeagueId: string;
-        participantId: string;
-        /**
-         * The participant's current rank in the sport league; 1 is best. Null when unranked.
-         */
-        ranking: number | null;
-        /**
-         * The canonical participant.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
-             */
-            role?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * When the injury-status record was last updated.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * When the participant image metadata was last refreshed.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-        /**
-         * ISO 8601 datetime string.
-         */
-        createdAt: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        updatedAt: string;
-    };
-};
-
-/**
- * Affiliates a participant with the sport league.
- */
-export type CreateParticipantLeagueAffiliationRequest = {
-    participantId: string;
-};
-
-/**
- * Re-ranks existing affiliations.
- */
-export type UpdateParticipantLeagueAffiliationRankingsRequest = {
-    /**
-     * Existing affiliations to re-rank, all or none.
+     * Participants of the sport league to re-rank, all or none.
      */
     rankings: Array<{
         participantId: string;
@@ -8934,9 +8577,9 @@ export type UpdateParticipantLeagueAffiliationRankingsRequest = {
 };
 
 /**
- * An affiliation upload.
+ * A ranking upload for a sport league's participants.
  */
-export type ParticipantLeagueAffiliationUploadRequest = {
+export type SportLeagueRankingUploadRequest = {
     rows: Array<{
         participantId?: string;
         externalId?: string;
@@ -8951,15 +8594,15 @@ export type ParticipantLeagueAffiliationUploadRequest = {
 export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
 
 /**
- * A dry run of an affiliation upload. Nothing is written.
+ * A dry run of a ranking upload. Nothing is written.
  */
-export type ParticipantLeagueAffiliationUploadPreviewResponse = {
+export type SportLeagueRankingUploadPreviewResponse = {
     /**
      * One per uploaded row, in upload order.
      */
     rows: Array<{
         /**
-         * One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName.
+         * One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants.
          */
         row: {
             participantId?: string;
@@ -9041,16 +8684,6 @@ export type ReleaseCheckDto = {
     passed: boolean;
     /**
      * FIELD_LOADED: how many participants are in the field; at least one passes.
-     */
-    value: number;
-} | {
-    key: 'FIELD_LINKED';
-    /**
-     * Whether the check passed.
-     */
-    passed: boolean;
-    /**
-     * FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes.
      */
     value: number;
 } | {
@@ -9285,7 +8918,7 @@ export type SportEventDto = {
      */
     tierCount: number;
     /**
-     * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+     * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
      */
     releaseChecks: Array<{
         key: 'NOT_STARTED';
@@ -9315,16 +8948,6 @@ export type SportEventDto = {
         passed: boolean;
         /**
          * FIELD_LOADED: how many participants are in the field; at least one passes.
-         */
-        value: number;
-    } | {
-        key: 'FIELD_LINKED';
-        /**
-         * Whether the check passed.
-         */
-        passed: boolean;
-        /**
-         * FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes.
          */
         value: number;
     } | {
@@ -9623,7 +9246,7 @@ export type SportEventListResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
@@ -9653,16 +9276,6 @@ export type SportEventListResponse = {
             passed: boolean;
             /**
              * FIELD_LOADED: how many participants are in the field; at least one passes.
-             */
-            value: number;
-        } | {
-            key: 'FIELD_LINKED';
-            /**
-             * Whether the check passed.
-             */
-            passed: boolean;
-            /**
-             * FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes.
              */
             value: number;
         } | {
@@ -9956,7 +9569,7 @@ export type SportEventResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
@@ -9986,16 +9599,6 @@ export type SportEventResponse = {
             passed: boolean;
             /**
              * FIELD_LOADED: how many participants are in the field; at least one passes.
-             */
-            value: number;
-        } | {
-            key: 'FIELD_LINKED';
-            /**
-             * Whether the check passed.
-             */
-            passed: boolean;
-            /**
-             * FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes.
              */
             value: number;
         } | {
@@ -10364,7 +9967,7 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         tierCount: number;
         /**
-         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
+         * A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.
          */
         releaseChecks: Array<{
             key: 'NOT_STARTED';
@@ -10394,16 +9997,6 @@ export type ImportSportEventYearFromProviderResponse = {
             passed: boolean;
             /**
              * FIELD_LOADED: how many participants are in the field; at least one passes.
-             */
-            value: number;
-        } | {
-            key: 'FIELD_LINKED';
-            /**
-             * Whether the check passed.
-             */
-            passed: boolean;
-            /**
-             * FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes.
              */
             value: number;
         } | {
@@ -10949,9 +10542,13 @@ export type SportEventParticipantDto = {
          */
         id: string;
         /**
-         * Owning sport identifier.
+         * The one sport league the participant competes in; the sport is the league's.
          */
-        sportId: string;
+        sportLeagueId: string;
+        /**
+         * Current rank in the sport league; 1 is best. Null when unranked.
+         */
+        ranking: number | null;
         /**
          * Primary participant display name.
          */
@@ -11211,9 +10808,13 @@ export type SportEventParticipantListResponse = {
              */
             id: string;
             /**
-             * Owning sport identifier.
+             * The one sport league the participant competes in; the sport is the league's.
              */
-            sportId: string;
+            sportLeagueId: string;
+            /**
+             * Current rank in the sport league; 1 is best. Null when unranked.
+             */
+            ranking: number | null;
             /**
              * Primary participant display name.
              */
@@ -11538,9 +11139,13 @@ export type SportEventParticipantResponse = {
              */
             id: string;
             /**
-             * Owning sport identifier.
+             * The one sport league the participant competes in; the sport is the league's.
              */
-            sportId: string;
+            sportLeagueId: string;
+            /**
+             * Current rank in the sport league; 1 is best. Null when unranked.
+             */
+            ranking: number | null;
             /**
              * Primary participant display name.
              */
@@ -13076,9 +12681,13 @@ export type ContestLeaderboardResponse = {
              */
             id: string;
             /**
-             * Owning sport identifier.
+             * The one sport league the participant competes in; the sport is the league's.
              */
-            sportId: string;
+            sportLeagueId: string;
+            /**
+             * Current rank in the sport league; 1 is best. Null when unranked.
+             */
+            ranking: number | null;
             /**
              * Primary participant display name.
              */
@@ -34391,43 +34000,43 @@ export type UpdateSportLeagueResponses = {
 
 export type UpdateSportLeagueResponse = UpdateSportLeagueResponses[keyof UpdateSportLeagueResponses];
 
-export type ListParticipantLeagueAffiliationsData = {
+export type ListSportLeagueParticipantsData = {
     body?: never;
     path: {
         sportLeagueId: string;
     };
     query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations';
+    url: '/api/v1/sport-leagues/{sportLeagueId}/participants';
 };
 
-export type ListParticipantLeagueAffiliationsErrors = {
+export type ListSportLeagueParticipantsErrors = {
     /**
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
 };
 
-export type ListParticipantLeagueAffiliationsError = ListParticipantLeagueAffiliationsErrors[keyof ListParticipantLeagueAffiliationsErrors];
+export type ListSportLeagueParticipantsError = ListSportLeagueParticipantsErrors[keyof ListSportLeagueParticipantsErrors];
 
-export type ListParticipantLeagueAffiliationsResponses = {
+export type ListSportLeagueParticipantsResponses = {
     /**
-     * A sport league's affiliations.
+     * Participant-list response.
      */
-    200: ParticipantLeagueAffiliationListResponse;
+    200: ParticipantListResponse;
 };
 
-export type ListParticipantLeagueAffiliationsResponse = ListParticipantLeagueAffiliationsResponses[keyof ListParticipantLeagueAffiliationsResponses];
+export type ListSportLeagueParticipantsResponse = ListSportLeagueParticipantsResponses[keyof ListSportLeagueParticipantsResponses];
 
-export type UpdateParticipantLeagueAffiliationRankingsData = {
-    body: UpdateParticipantLeagueAffiliationRankingsRequest;
+export type UpdateSportLeagueParticipantRankingsData = {
+    body: SportLeagueParticipantRankingsRequest;
     path: {
         sportLeagueId: string;
     };
     query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations';
+    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings';
 };
 
-export type UpdateParticipantLeagueAffiliationRankingsErrors = {
+export type UpdateSportLeagueParticipantRankingsErrors = {
     /**
      * Standard API error envelope.
      */
@@ -34438,63 +34047,27 @@ export type UpdateParticipantLeagueAffiliationRankingsErrors = {
     404: ErrorEnvelope;
 };
 
-export type UpdateParticipantLeagueAffiliationRankingsError = UpdateParticipantLeagueAffiliationRankingsErrors[keyof UpdateParticipantLeagueAffiliationRankingsErrors];
+export type UpdateSportLeagueParticipantRankingsError = UpdateSportLeagueParticipantRankingsErrors[keyof UpdateSportLeagueParticipantRankingsErrors];
 
-export type UpdateParticipantLeagueAffiliationRankingsResponses = {
+export type UpdateSportLeagueParticipantRankingsResponses = {
     /**
-     * A sport league's affiliations.
+     * Participant-list response.
      */
-    200: ParticipantLeagueAffiliationListResponse;
+    200: ParticipantListResponse;
 };
 
-export type UpdateParticipantLeagueAffiliationRankingsResponse = UpdateParticipantLeagueAffiliationRankingsResponses[keyof UpdateParticipantLeagueAffiliationRankingsResponses];
+export type UpdateSportLeagueParticipantRankingsResponse = UpdateSportLeagueParticipantRankingsResponses[keyof UpdateSportLeagueParticipantRankingsResponses];
 
-export type CreateParticipantLeagueAffiliationData = {
-    body: CreateParticipantLeagueAffiliationRequest;
+export type PreviewSportLeagueRankingUploadData = {
+    body: SportLeagueRankingUploadRequest;
     path: {
         sportLeagueId: string;
     };
     query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations';
+    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview';
 };
 
-export type CreateParticipantLeagueAffiliationErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-};
-
-export type CreateParticipantLeagueAffiliationError = CreateParticipantLeagueAffiliationErrors[keyof CreateParticipantLeagueAffiliationErrors];
-
-export type CreateParticipantLeagueAffiliationResponses = {
-    /**
-     * One affiliation.
-     */
-    201: ParticipantLeagueAffiliationResponse;
-};
-
-export type CreateParticipantLeagueAffiliationResponse = CreateParticipantLeagueAffiliationResponses[keyof CreateParticipantLeagueAffiliationResponses];
-
-export type DeleteParticipantLeagueAffiliationData = {
-    body?: never;
-    path: {
-        sportLeagueId: string;
-        participantId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations/{participantId}';
-};
-
-export type DeleteParticipantLeagueAffiliationErrors = {
+export type PreviewSportLeagueRankingUploadErrors = {
     /**
      * Standard API error envelope.
      */
@@ -34505,58 +34078,27 @@ export type DeleteParticipantLeagueAffiliationErrors = {
     404: ErrorEnvelope;
 };
 
-export type DeleteParticipantLeagueAffiliationError = DeleteParticipantLeagueAffiliationErrors[keyof DeleteParticipantLeagueAffiliationErrors];
+export type PreviewSportLeagueRankingUploadError = PreviewSportLeagueRankingUploadErrors[keyof PreviewSportLeagueRankingUploadErrors];
 
-export type DeleteParticipantLeagueAffiliationResponses = {
+export type PreviewSportLeagueRankingUploadResponses = {
     /**
-     * Default Response
+     * A dry run of a ranking upload. Nothing is written.
      */
-    204: void;
+    200: SportLeagueRankingUploadPreviewResponse;
 };
 
-export type DeleteParticipantLeagueAffiliationResponse = DeleteParticipantLeagueAffiliationResponses[keyof DeleteParticipantLeagueAffiliationResponses];
+export type PreviewSportLeagueRankingUploadResponse = PreviewSportLeagueRankingUploadResponses[keyof PreviewSportLeagueRankingUploadResponses];
 
-export type PreviewParticipantLeagueAffiliationUploadData = {
-    body: ParticipantLeagueAffiliationUploadRequest;
+export type ApplySportLeagueRankingUploadData = {
+    body: SportLeagueRankingUploadRequest;
     path: {
         sportLeagueId: string;
     };
     query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload/preview';
+    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload';
 };
 
-export type PreviewParticipantLeagueAffiliationUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type PreviewParticipantLeagueAffiliationUploadError = PreviewParticipantLeagueAffiliationUploadErrors[keyof PreviewParticipantLeagueAffiliationUploadErrors];
-
-export type PreviewParticipantLeagueAffiliationUploadResponses = {
-    /**
-     * A dry run of an affiliation upload. Nothing is written.
-     */
-    200: ParticipantLeagueAffiliationUploadPreviewResponse;
-};
-
-export type PreviewParticipantLeagueAffiliationUploadResponse = PreviewParticipantLeagueAffiliationUploadResponses[keyof PreviewParticipantLeagueAffiliationUploadResponses];
-
-export type ApplyParticipantLeagueAffiliationUploadData = {
-    body: ParticipantLeagueAffiliationUploadRequest;
-    path: {
-        sportLeagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload';
-};
-
-export type ApplyParticipantLeagueAffiliationUploadErrors = {
+export type ApplySportLeagueRankingUploadErrors = {
     /**
      * Standard API error envelope.
      */
@@ -34571,16 +34113,16 @@ export type ApplyParticipantLeagueAffiliationUploadErrors = {
     422: ErrorEnvelope;
 };
 
-export type ApplyParticipantLeagueAffiliationUploadError = ApplyParticipantLeagueAffiliationUploadErrors[keyof ApplyParticipantLeagueAffiliationUploadErrors];
+export type ApplySportLeagueRankingUploadError = ApplySportLeagueRankingUploadErrors[keyof ApplySportLeagueRankingUploadErrors];
 
-export type ApplyParticipantLeagueAffiliationUploadResponses = {
+export type ApplySportLeagueRankingUploadResponses = {
     /**
-     * A sport league's affiliations.
+     * Participant-list response.
      */
-    200: ParticipantLeagueAffiliationListResponse;
+    200: ParticipantListResponse;
 };
 
-export type ApplyParticipantLeagueAffiliationUploadResponse = ApplyParticipantLeagueAffiliationUploadResponses[keyof ApplyParticipantLeagueAffiliationUploadResponses];
+export type ApplySportLeagueRankingUploadResponse = ApplySportLeagueRankingUploadResponses[keyof ApplySportLeagueRankingUploadResponses];
 
 export type ListTierProfilesData = {
     body?: never;
@@ -35072,9 +34614,9 @@ export type ListParticipantsData = {
          */
         q?: string;
         /**
-         * Only participants of this sport.
+         * Only participants of this sport league.
          */
-        sportId?: string;
+        sportLeagueId?: string;
         /**
          * Only participants in this status. Omitted: every status.
          */
@@ -35130,7 +34672,7 @@ export type CreateParticipantResponses = {
 
 export type CreateParticipantResponse = CreateParticipantResponses[keyof CreateParticipantResponses];
 
-export type ListSportProviderMappingsData = {
+export type ListSportLeagueProviderMappingsData = {
     body?: never;
     path?: never;
     query: {
@@ -35139,30 +34681,30 @@ export type ListSportProviderMappingsData = {
          */
         providerId: string;
         /**
-         * Only the identities of this sport's participants.
+         * Only the identities of this sport league's participants.
          */
-        sportId: string;
+        sportLeagueId: string;
     };
     url: '/api/v1/participants/provider-mappings';
 };
 
-export type ListSportProviderMappingsErrors = {
+export type ListSportLeagueProviderMappingsErrors = {
     /**
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
 };
 
-export type ListSportProviderMappingsError = ListSportProviderMappingsErrors[keyof ListSportProviderMappingsErrors];
+export type ListSportLeagueProviderMappingsError = ListSportLeagueProviderMappingsErrors[keyof ListSportLeagueProviderMappingsErrors];
 
-export type ListSportProviderMappingsResponses = {
+export type ListSportLeagueProviderMappingsResponses = {
     /**
      * A participant's provider identities.
      */
     200: ParticipantProviderMappingListResponse;
 };
 
-export type ListSportProviderMappingsResponse = ListSportProviderMappingsResponses[keyof ListSportProviderMappingsResponses];
+export type ListSportLeagueProviderMappingsResponse = ListSportLeagueProviderMappingsResponses[keyof ListSportLeagueProviderMappingsResponses];
 
 export type DeleteParticipantData = {
     body?: never;

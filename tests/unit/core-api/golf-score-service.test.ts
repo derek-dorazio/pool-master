@@ -298,8 +298,8 @@ describe('GolfScoreService — provider sync', () => {
     const anaEntry = store.addToField(event.id, ana.id);
     const benEntry = store.addToField(event.id, ben.id);
     const mappedAt = new Date('2026-06-01T12:00:00.000Z');
-    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ana', participantId: ana.id, confidence: 'EXACT', mappedAt });
-    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ben', participantId: ben.id, confidence: 'EXACT', mappedAt });
+    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ana', participantId: ana.id, sportLeagueId: ana.sportLeagueId, confidence: 'EXACT', mappedAt });
+    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ben', participantId: ben.id, sportLeagueId: ben.sportLeagueId, confidence: 'EXACT', mappedAt });
     const logger = fakeLogger();
     const golfRounds = store.golfRoundRepo();
     const golfStandings = store.golfStandingRepo();

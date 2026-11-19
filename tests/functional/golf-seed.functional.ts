@@ -5,11 +5,10 @@ import {
   listEvents,
   listParticipants,
   listSportLeagues,
-  listSports,
 } from '@poolmaster/shared/generated/hey-api';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -23,6 +22,7 @@ import {
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { leagueProfiles } from '../support/league-profiles';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
@@ -77,9 +77,10 @@ async function cleanup(): Promise<void> {
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-  const participantIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((p) => p.id);
-  await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: participantIds } } });
-  await db.participant.deleteMany({ where: { id: { in: participantIds } } });
+  // The run's players, and every participant of the run's leagues (#1853: each belongs to one).
+  const participantWhere = { OR: [{ externalId: { startsWith: RUN } }, { sportLeagueId: { in: leagueIds } }] };
+  await db.participantProviderMapping.deleteMany({ where: { participant: participantWhere } });
+  await db.participant.deleteMany({ where: participantWhere });
   await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
 }
@@ -200,16 +201,14 @@ describe('Loading a golf test seed through the admin API', () => {
     const league = expectDefined(await leagueNamed(tour));
     const db = getFunctionalPrisma();
     const golferOne = await db.participant.findFirstOrThrow({ where: { externalId: `${prefix}-p1` } });
-    const affiliation = { participantId_sportLeagueId: { participantId: golferOne.id, sportLeagueId: league.id } };
-    await db.participantLeagueAffiliation.update({ where: affiliation, data: { ranking: 99 } });
+    await db.participant.update({ where: { id: golferOne.id }, data: { ranking: 99 } });
 
     const second = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.APPLY });
 
     expect(changes(second)).toEqual([]);
     expect(counts(second)).toEqual({ 'SPORT_LEAGUE SKIP': 1, 'PLAYER SKIP': 12, 'EVENT SKIP': 2, 'FIELD SKIP': 2 });
-    const golfSportId = expectDefined(findSportRow(expectDefined((await listSports({ client: admin.client })).data).sports, Sport.GOLF)).id;
-    expect(expectDefined((await listParticipants({ client: admin.client, query: { sportId: golfSportId, q: prefix } })).data).participants).toHaveLength(12);
-    expect((await db.participantLeagueAffiliation.findUniqueOrThrow({ where: affiliation })).ranking).toBe(99);
+    expect(expectDefined((await listParticipants({ client: admin.client, query: { sportLeagueId: league.id } })).data).participants).toHaveLength(12);
+    expect((await db.participant.findUniqueOrThrow({ where: { id: golferOne.id } })).ranking).toBe(99);
   });
 
   it('finishes a tournament an earlier run left as an empty draft: field, tiers, prices, scores and release', async () => {
@@ -281,7 +280,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
       }],
     }],
   });
-  const mappingOf = (id: string) => getFunctionalPrisma().participantProviderMapping.findUnique({ where: { providerId_externalId: { providerId: provider, externalId: feedId(id) } } });
+  const mappingOf = (id: string) => getFunctionalPrisma().participantProviderMapping.findFirst({ where: { providerId: provider, externalId: feedId(id) } });
 
   afterAll(async () => {
     await getFunctionalPrisma().participantProviderMapping.deleteMany({ where: { providerId: provider, externalId: { startsWith: prefix } } });
@@ -302,20 +301,20 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     expect(changes(second).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([]);
   });
 
-  it('takes the participant a feed id is already mapped to, whatever the file calls the player, and fields it rather than creating a second', async () => {
+  it('takes the league\'s participant a feed id is already mapped to, whatever the file calls the player, and fields it rather than creating a second', async () => {
     const db = getFunctionalPrisma();
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
-    // As the sync leaves a golfer it fielded first: its own spelling and no test data key.
-    const synced = await db.participant.create({ data: { sportId: golfSportId, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL', externalId: `${RUN}-synced` } });
-    await db.participantProviderMapping.create({ data: { participantId: synced.id, providerId: provider, externalId: feedId('golfer-2'), confidence: 'EXACT' } });
-
     const league = `${tour} known`;
+    // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
+    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league, matchKeyword: league } });
+    const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL', externalId: `${RUN}-synced` } });
+    await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: provider, externalId: feedId('golfer-2'), confidence: 'EXACT' } });
+
 
     const rows = await loadSportData(parsed(seed('known', [undefined, { [provider]: feedId('golfer-2') }])), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
 
     expect(changes(rows).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([
       { sportLeague: league, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: `${prefix}-known Golfer 1`, detail: 'ranked 1' },
-      { sportLeague: league, subject: LoadSubject.PLAYER, action: LoadAction.UPDATE, name: `${prefix}-known Golfer 2`, detail: `joins ${league}, ranked 2` },
     ]);
     await expect(db.participant.count({ where: { externalId: `${prefix}-known-p2` } })).resolves.toBe(0);
     const event = expectDefined((await eventsOf(expectDefined(await leagueNamed(league)).id, 2026))[0]);

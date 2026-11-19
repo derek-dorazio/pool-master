@@ -1,17 +1,15 @@
-import { eventRoundLabel, findSportRow, isPlatformSearchTerm, getSportDefinition, ParticipantStatus, PLATFORM_SEARCH_MIN_LENGTH, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getParticipant, listEventYears, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
-import type { ParticipantDto, ParticipantLeagueAffiliationDto, SportEventDto, SportLeagueDto } from '@/lib/api';
+import { eventRoundLabel, ParticipantStatus, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
+import { useQuery } from '@tanstack/react-query';
+import { getParticipant, listEventYears, listEvents, listSportLeagueParticipants, listSportLeagues } from '@/lib/api';
+import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { LOADING_TEXT } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
-import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { QueryKeys } from '@/lib/query-keys';
-import { SEARCH_DEBOUNCE_MS } from './manage-navigation';
 
 /**
  * #236 — the Manage sport screens' reads of the shared sport catalog, in one place: a sport's
  * leagues (golf's tours), one sport league's events across every event year (plans/147 — the
- * event list filtered by sport league), and a sport's participants (golfers, horses). Built for
+ * event list filtered by sport league), and a sport league's participants (golfers, horses). Built for
  * golf first; every sport's pages read through them since #623.
  */
 
@@ -103,153 +101,54 @@ export function useSportLeagueEventYearsQuery(sportLeagueId: string) {
   });
 }
 
-function sportRowQueryOptions(sport: Sport) {
-  return {
-    queryKey: QueryKeys.rootAdmin.manageSport.sport(sport),
-    queryFn: async () => {
-      const response = await listSports();
-      if (!response.data?.sports) {
-        throwApiError(response.error, 'Sport list response is missing data.');
-      }
-      const row = findSportRow(response.data.sports, sport);
-      if (!row) {
-        throw new Error(`${getSportDefinition(sport).name} is not set up.`);
-      }
-      return row;
-    },
-    // The sport row does not change while the app runs.
-    staleTime: Infinity,
-    retry: false,
-  };
-}
-
 /**
- * A sport's participants, filtered by status and a name search. The sport's id comes
- * through the query cache, so it is fetched once. The golf player list this replaces
- * defaulted to ACTIVE; `listParticipants` has no default, so callers say which status
- * they want.
+ * One sport league's participants, best rank first, unranked by name (#1853): a participant
+ * belongs to one league, so this is the league's whole roster, read once and never paged; screens
+ * filter it by status and name in the browser.
  */
-export function useParticipantsQuery(params: {
-  sport: Sport;
-  queryKey: readonly unknown[];
-  status?: ParticipantDto['status'];
-  q?: string;
-  enabled?: boolean;
-  /** Keep the last rows while the next search loads, so a grid holding the search box stays mounted. */
-  keepPrevious?: boolean;
-}) {
-  const queryClient = useQueryClient();
-  return useQuery({
-    queryKey: params.queryKey,
-    queryFn: async (): Promise<ParticipantDto[]> => {
-      const sportRow = await queryClient.query(sportRowQueryOptions(params.sport));
-      const response = await listParticipants({
-        query: {
-          sportId: sportRow.id,
-          ...(params.status ? { status: params.status } : {}),
-          ...(params.q ? { q: params.q } : {}),
-        },
-      });
-      if (!response.data?.participants) {
-        throwApiError(response.error, 'Participant list response is missing data.');
-      }
-      return response.data.participants;
-    },
-    enabled: params.enabled ?? true,
-    ...(params.keepPrevious ? { placeholderData: keepPreviousData } : {}),
-    retry: false,
-  });
-}
-
-/** One sport league's roster: its affiliations, best rank first. */
 export function useLeagueRosterQuery(sportLeagueId: string, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(sportLeagueId),
-    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
-      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId } });
-      if (!response.data?.affiliations) {
+    queryFn: async (): Promise<ParticipantDto[]> => {
+      const response = await listSportLeagueParticipants({ path: { sportLeagueId } });
+      if (!response.data?.participants) {
         throwApiError(response.error, 'The roster response is missing data.');
       }
-      return response.data.affiliations;
+      return response.data.participants;
     },
-    enabled: options.enabled ?? true,
+    enabled: sportLeagueId !== '' && (options.enabled ?? true),
     retry: false,
   });
 }
 
 /** Who may take a place on an event's field after the draw, as `useEventLeagueCandidatesQuery` reads them. */
 export interface EventLeagueCandidates {
-  /** Undefined while loading, and while a search is needed and not yet typed. */
+  /** Undefined while loading. */
   data: ReadonlyArray<{ id: string; name: string }> | undefined;
-  /** The sport league has no roster, so the picker searches the sport: it shows a search box. */
-  needsSearch: boolean;
-  /** A search is needed and the term is still under 3 characters. */
-  awaitingSearch: boolean;
   isError: boolean;
   error: Error | null;
 }
 
-/** The first option of a candidate picker: the prompt to search, loading, or `choose`. */
-export function candidatePrompt(candidates: EventLeagueCandidates, choose: string, participantOne: string): string {
-  if (candidates.awaitingSearch) {
-    return `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participantOne}`;
-  }
+/** The first option of a candidate picker: loading, or `choose`. */
+export function candidatePrompt(candidates: EventLeagueCandidates, choose: string): string {
   return candidates.data ? choose : LOADING_TEXT;
 }
 
 /**
  * Who may take a place on an event's field after the draw, as a withdrawn player's replacement or
- * a play-in place's winner (#830): the active participants on its sport league's roster once the
- * league has one, so a WTA player is never offered for an ATP draw. A league with no roster lets
- * any active participant of the sport in, and the picker searches for them by `search` rather
- * than reading the sport's whole list (#1321). The server refuses the same.
+ * a play-in place's winner (#830, #1853): the active participants of its sport league, so a WTA
+ * player is never offered for an ATP draw. The server refuses the same.
  */
-export function useEventLeagueCandidatesQuery(
-  event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>,
-  search: string,
-): EventLeagueCandidates {
+export function useEventLeagueCandidatesQuery(event: Pick<SportEventDto, 'sportLeagueId'>): EventLeagueCandidates {
   const rosterQuery = useLeagueRosterQuery(event.sportLeagueId);
-  const needsSearch = rosterQuery.data?.length === 0;
-  const term = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
-  const canSearch = isPlatformSearchTerm(term);
-  const sportQuery = useParticipantsQuery({
-    sport: event.sport,
-    status: 'ACTIVE',
-    queryKey: QueryKeys.rootAdmin.manageSport.participantSearch(event.sport, term),
-    q: term,
-    enabled: needsSearch && canSearch,
-    keepPrevious: true,
-  });
-  if (rosterQuery.error) {
-    return { data: undefined, needsSearch: false, awaitingSearch: false, isError: true, error: rosterQuery.error };
-  }
-  if (!rosterQuery.data) {
-    return { data: undefined, needsSearch: false, awaitingSearch: false, isError: false, error: null };
-  }
-  if (!needsSearch) {
-    return {
-      // poolmaster-allow-list-lookup: the league's roster, read whole for the roster grid and cached; the roster read takes no status
-      data: rosterQuery.data
-        .filter((affiliation) => affiliation.participant.status === ParticipantStatus.ACTIVE)
-        .map((affiliation) => ({ id: affiliation.participantId, name: affiliation.participant.name })),
-      needsSearch: false,
-      awaitingSearch: false,
-      isError: false,
-      error: null,
-    };
-  }
   return {
-    data: canSearch ? sportQuery.data : undefined,
-    needsSearch: true,
-    awaitingSearch: !canSearch,
-    isError: sportQuery.isError,
-    error: sportQuery.error,
+    // poolmaster-allow-list-lookup: the league's roster, read whole for the roster grid and cached; the roster read takes no status
+    data: rosterQuery.data
+      ?.filter((participant) => participant.status === ParticipantStatus.ACTIVE)
+      .map((participant) => ({ id: participant.id, name: participant.name })),
+    isError: rosterQuery.isError,
+    error: rosterQuery.error,
   };
-}
-
-/** A sport's row, whose id a new participant of the sport is created with. */
-export function useSportQuery(sport: Sport) {
-  return useQuery(sportRowQueryOptions(sport));
 }
 
 /** One participant, for its page and its edit page. */

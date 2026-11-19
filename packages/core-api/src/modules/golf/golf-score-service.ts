@@ -7,7 +7,7 @@
  * refreshed. The admin correction
  * surface — preview, apply, single-cell update — resolves each uploaded row against the
  * event's field with the shared participant-row resolver, the same precedence a sport
- * league's affiliation upload uses (#236; each had its own copy before).
+ * league's ranking upload uses (#236; each had its own copy before).
  *
  * Nothing is scored after the 18th hole of the event's last scheduled round (#375): a round
  * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update
@@ -167,7 +167,7 @@ export class GolfScoreService {
 
     const externalIds = [...new Set(rounds.map((round) => round.participantExternalId))];
     const participantIdByExternalId = new Map(
-      (await this.deps.mappings.findByProviderExternalIds(providerId, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
+      (await this.deps.mappings.findByProviderExternalIds(providerId, { sportEventId }, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
     );
     const entryIdByParticipantId = new Map(
       (await this.deps.field.findBySportEvent(sportEventId)).map((entry) => [entry.participantId, entry.id]),

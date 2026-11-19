@@ -22,6 +22,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   3: '9662735145ab07cfb15d66492d73ec044bdfcbecad079abdde9623103e75e20b',
   4: '73a8c17ffc456c015c622801f9a74adee70ecbdbc7fb068eaa88e59e4a383b7b',
   5: '147a8f52a89a2cafcc8e6562631d477d8bd4f183a582b0c8f67a2bd49f7e3bff',
+  // #1853: a participant belongs to one sport league (sportLeagueId and ranking, no sportId).
+  6: 'e4195bfd7a7880779571958590df34a806cb9cf92a95c8b3d0d211a2133bf29b',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

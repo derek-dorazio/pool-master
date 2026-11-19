@@ -78,6 +78,9 @@ export async function removeJourneyRun(
   for (const tournamentName of [run.tournamentName, ...(run.moreTournamentNames ?? [])]) {
     await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, run.sport, tournamentName, log));
   }
+  // A participant belongs to its tour (#1853), and a tour is refused while it has any: the players
+  // go before the tour.
+  await attempt(log, `players "${run.playerNamePrefix} *"`, () => removePlayers(api, headers, run.playerNamePrefix, log));
   const tourId = await findTourId(api, headers, run).catch((error: unknown) => {
     log(`could not look up tour "${run.tourName}": ${error instanceof Error ? error.message : String(error)}`);
     return null;
@@ -87,7 +90,6 @@ export async function removeJourneyRun(
   } else {
     log(`tour "${run.tourName}" not found; no tour to remove`);
   }
-  await attempt(log, `players "${run.playerNamePrefix} *"`, () => removePlayers(api, headers, run.playerNamePrefix, log));
   await attempt(log, `user ${run.commissioner.username}`, () => removeUser(api, headers, run.commissioner, log));
   await attempt(log, `user ${run.member.username}`, () => removeUser(api, headers, run.member, log));
 }
@@ -148,12 +150,12 @@ async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: Jou
   return sportLeagues.find((candidate) => candidate.name === run.tourName)?.id ?? null;
 }
 
-/** Refused while it still has an event or a contest setup; its roster and empty series go with it. */
+/** Refused while it still has an event, a contest setup or a participant; its empty series go with it. */
 export async function removeTour(api: APIRequestContext, headers: AuthHeaders, tourId: string, tourName: string, log: Log) {
   await expectOk(api.delete(`/api/v1/sport-leagues/${tourId}`, { headers }), 'delete tour');
   const reread = await api.get(`/api/v1/sport-leagues/${tourId}`, { headers });
   if (reread.status() !== 404) throw new Error(`tour "${tourName}" STILL PRESENT after delete (re-read ${reread.status()})`);
-  log(`tour "${tourName}" removed with its roster and series (re-read 404)`);
+  log(`tour "${tourName}" removed with its series (re-read 404)`);
 }
 
 /**

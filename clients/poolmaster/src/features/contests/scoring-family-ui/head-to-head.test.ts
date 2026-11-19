@@ -26,7 +26,8 @@ function team(overrides: Partial<SportEventParticipantDto> = {}): SportEventPart
     isPlayInPlace: false,
     participant: {
       id: 'participant-1',
-      sportId: 'sport-basketball',
+      sportLeagueId: 'league-basketball',
+      ranking: null,
       name: 'Vermont',
       participantType: 'TEAM',
       status: 'ACTIVE',

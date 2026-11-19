@@ -15,7 +15,6 @@ import {
   listContestConfigTemplates,
   listEventParticipants,
   listSportLeagues,
-  listSports,
   openContest,
   releaseEvent,
   replaceEventTiers,
@@ -23,7 +22,7 @@ import {
   selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -86,7 +85,6 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     const admin = await buildRegisteredUser({ displayName: 'Race Control' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.AUTO_RACING)).id;
 
     // --- The seeded series, a race in it, and its field ----------------------------------------
     const series = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues;
@@ -105,7 +103,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
 
     const driverIds: string[] = [];
     for (const driver of DRIVERS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${driver} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId: nascar.id, participantType: 'INDIVIDUAL', name: `${driver} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       driverIds.push(id);
@@ -231,7 +229,6 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     const admin = await buildRegisteredUser({ displayName: 'Race Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.AUTO_RACING)).id;
     const series = expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues;
     const formula1 = expectDefined(series.find((league) => league.name === 'Formula 1'), 'the seeded Formula 1 series');
 
@@ -246,7 +243,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
 
     const driverIds: string[] = [];
     for (const driver of F1_DRIVERS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${driver} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId: formula1.id, participantType: 'INDIVIDUAL', name: `${driver} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       driverIds.push(id);

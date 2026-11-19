@@ -6,11 +6,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminParticipantCreatePage } from './root-admin-participant-create-page';
 import { RootAdminParticipantListPage } from './root-admin-participant-list-page';
-import { GOLF_SPORT_FIXTURE, participantFixture } from './sport-test-fixtures';
+import { participantFixture, sportLeagueFixture } from './sport-test-fixtures';
 
-// /manage/sports/golf/participants and its Add player page, /manage/sports/golf/participants/new (pool-master-rfy).
+// /manage/sports/golf/participants and its Add player page, /manage/sports/golf/participants/new
+// (pool-master-rfy): one tour's golfers at a time, as a golfer belongs to one tour (#1853).
 
-const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger } = vi.hoisted(
+const { listSportLeaguesMock, listSportLeagueParticipantsMock, createParticipantMock, mockLogger } = vi.hoisted(
   () => {
     const logger = {
       debug: vi.fn(),
@@ -22,8 +23,8 @@ const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger 
     };
     logger.child.mockReturnValue(logger);
     return {
-      listParticipantsMock: vi.fn(),
-      listSportsMock: vi.fn(),
+      listSportLeaguesMock: vi.fn(),
+      listSportLeagueParticipantsMock: vi.fn(),
       createParticipantMock: vi.fn(),
       mockLogger: logger,
     };
@@ -31,8 +32,8 @@ const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger 
 );
 
 bindApiMocks({
-  listParticipants: listParticipantsMock,
-  listSports: listSportsMock,
+  listSportLeagues: listSportLeaguesMock,
+  listSportLeagueParticipants: listSportLeagueParticipantsMock,
   createParticipant: createParticipantMock,
 });
 
@@ -49,17 +50,21 @@ function player(overrides: Parameters<typeof participantFixture>[0] = {}) {
     shortName: 'R. McIlroy',
     nationality: 'NIR',
     externalId: 'rory-1',
+    sportLeagueId: 'pga',
+    ranking: 2,
     ...overrides,
   });
 }
 
+const PGA = sportLeagueFixture({ id: 'pga', name: 'PGA Tour' });
+const LIV = sportLeagueFixture({ id: 'liv', name: 'LIV Golf' });
+
 function renderPage({
   path = '/manage/sports/golf/participants',
-  sportsLoaded = true,
-}: { path?: string; sportsLoaded?: boolean } = {}) {
-  // #236: golfers are the golf sport's participants, scoped by its id.
-  if (sportsLoaded) {
-    listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
+  leaguesLoaded = true,
+}: { path?: string; leaguesLoaded?: boolean } = {}) {
+  if (leaguesLoaded) {
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [PGA, LIV] } });
   }
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -87,33 +92,18 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     fireEvent.change(screen.getByTestId('root-admin-participant-list-search'), { target: { value: term } });
   }
 
-  it('asks for at least 3 characters and reads no golfers until they are typed', async () => {
-    renderPage();
-
-    expect(await screen.findByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
-    searchFor('Ro');
-    await new Promise((resolve) => setTimeout(resolve, 400));
-
-    expect(screen.getByText('Type at least 3 characters to find a golfer.')).toBeInTheDocument();
-    expect(listParticipantsMock).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-rfy sends the typed search to the server and renders the golfers it returns, with status and a row link', async () => {
-    listParticipantsMock.mockResolvedValue({
-      data: {
-        participants: [player()],
-      },
+  it('reads the first tour\'s golfers and lists its active ones with ranking and status, each row linking to the golfer', async () => {
+    listSportLeagueParticipantsMock.mockResolvedValue({
+      data: { participants: [player(), player({ id: 'p-old', name: 'Old Timer', status: 'RETIRED' })] },
     });
     renderPage();
 
-    searchFor('Ro');
-    searchFor('Rory');
-
-    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
-    // #236: the mapping count column is gone; the golfer's page reads the mappings itself.
-    expect(screen.queryByText('Provider mappings')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-participant-row-p-rory')).toHaveTextContent('Active');
-    expect(screen.getByTestId('root-admin-participant-row-p-rory')).not.toHaveTextContent('ACTIVE');
+    const row = await screen.findByTestId('root-admin-participant-row-p-rory');
+    expect(row).toHaveTextContent('Rory McIlroy');
+    expect(row).toHaveTextContent('Active');
+    expect(row).not.toHaveTextContent('ACTIVE');
+    expect(screen.queryByTestId('root-admin-participant-row-p-old')).not.toBeInTheDocument();
+    expect(listSportLeagueParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'pga' } }));
     const statusFilter = screen.getByTestId('root-admin-participant-list-status');
     expect(within(statusFilter).getAllByRole('option').map((option) => option.textContent)).toEqual([
       'Active',
@@ -121,54 +111,61 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
       'Retired',
       'Suspended',
     ]);
-    // Default status filter is ACTIVE; the debounced term is sent once.
-    expect(listParticipantsMock).toHaveBeenCalledTimes(1);
-    expect(listParticipantsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE', q: 'Rory' } }),
-    );
+
+    await userEvent.click(within(row).getByText('Rory McIlroy'));
+    expect(await screen.findByTestId('player-home')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy re-queries the search when the status filter changes, so non-active golfers are reachable', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+  it('shows another status from the same read, without asking the server again', async () => {
+    listSportLeagueParticipantsMock.mockResolvedValue({
+      data: { participants: [player(), player({ id: 'p-old', name: 'Old Timer', status: 'RETIRED' })] },
+    });
     renderPage();
-    searchFor('Rory');
-    await screen.findByText('No active golfers matched the search.');
+    await screen.findByTestId('root-admin-participant-row-p-rory');
 
-    await userEvent.selectOptions(
-      screen.getByTestId('root-admin-participant-list-status'),
-      'RETIRED',
-    );
+    await userEvent.selectOptions(screen.getByTestId('root-admin-participant-list-status'), 'RETIRED');
 
-    await waitFor(() =>
-      expect(listParticipantsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'RETIRED', q: 'Rory' } }),
-      ),
-    );
-    expect(await screen.findByText('No retired golfers matched the search.')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-participant-row-p-old')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-participant-row-p-rory')).not.toBeInTheDocument();
+    expect(listSportLeagueParticipantsMock).toHaveBeenCalledTimes(1);
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-participant-list-status'), 'SUSPENDED');
+    expect(await screen.findByText('No suspended golfers in this tour.')).toBeInTheDocument();
   });
 
-  it('keeps the search box and shows the load error in red with Retry above the grid when the search fails', async () => {
-    listParticipantsMock.mockResolvedValue({
+  it('reads another tour\'s golfers when that tour is chosen', async () => {
+    listSportLeagueParticipantsMock.mockImplementation((options: { path: { sportLeagueId: string } }) => Promise.resolve({
+      data: { participants: options.path.sportLeagueId === 'liv' ? [player({ id: 'p-jon', name: 'Jon Rahm', sportLeagueId: 'liv' })] : [player()] },
+    }));
+    renderPage();
+    await screen.findByTestId('root-admin-participant-row-p-rory');
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-participant-list-league'), 'liv');
+
+    expect(await screen.findByTestId('root-admin-participant-row-p-jon')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-participant-row-p-rory')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-participant-list-new')).toHaveAttribute('href', '/manage/sports/golf/participants/new?sportLeague=liv');
+  });
+
+  it('shows the load error in red with Retry above the grid when the tour\'s golfers cannot be read', async () => {
+    listSportLeagueParticipantsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Player index offline' } },
       response: { status: 500 },
     });
     renderPage();
-    searchFor('Rory');
 
     expect(await screen.findByTestId('root-admin-participant-list-error')).toHaveTextContent('Player index offline');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-participant-list-search')).toHaveValue('Rory');
   });
 
-  it('narrows the returned golfers with the search box and shows all of them', async () => {
-    listParticipantsMock.mockResolvedValue({
+  it('narrows the tour\'s golfers with the search box and shows all of them', async () => {
+    listSportLeagueParticipantsMock.mockResolvedValue({
       data: {
         participants: Array.from({ length: 30 }, (_, index) =>
           player({ id: `p-${index + 1}`, name: `Golfer ${String(index + 1).padStart(2, '0')}` })),
       },
     });
     renderPage();
-    searchFor('Golfer');
 
     expect(await screen.findByText('Golfer 01')).toBeInTheDocument();
     expect(screen.getByText('Golfer 30')).toBeInTheDocument();
@@ -179,9 +176,9 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
   });
 
   it('opens Add player as its own page, and Cancel returns to the list without saving', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
-    await screen.findByText('Type at least 3 characters to find a golfer.');
+    await screen.findByText('No active golfers in this tour.');
 
     await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
     expect(await screen.findByTestId('root-admin-participant-create-page')).toBeInTheDocument();
@@ -196,7 +193,7 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
       error: { error: { code: 'CONFLICT', message: 'A golfer with this external ID already exists.' } },
       response: { status: 409 },
     });
-    renderPage({ path: '/manage/sports/golf/participants/new' });
+    renderPage({ path: '/manage/sports/golf/participants/new?sportLeague=pga' });
 
     await userEvent.type(
       await screen.findByTestId('root-admin-participant-list-new-name'),
@@ -209,15 +206,16 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
     expect(screen.getByTestId('root-admin-participant-create-page')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy adds a player on the Add player page and returns to the list', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+  it('pool-master-rfy adds a player to the tour the list showed and returns to the list', async () => {
+    listSportLeagueParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     createParticipantMock.mockResolvedValue({
       data: { participant: player({ id: 'new', name: 'Ludvig Åberg' }) },
     });
     renderPage();
-    await screen.findByText('Type at least 3 characters to find a golfer.');
+    await screen.findByText('No active golfers in this tour.');
 
     await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
+    await waitFor(() => expect(screen.getByTestId('root-admin-participant-list-new-league')).toHaveValue('pga'));
     await userEvent.type(
       screen.getByTestId('root-admin-participant-list-new-name'),
       'Ludvig Åberg',
@@ -226,82 +224,31 @@ describe('pool-master-rfy RootAdminParticipantListPage', () => {
 
     await waitFor(() =>
       expect(createParticipantMock).toHaveBeenCalledWith(
-        expect.objectContaining({ body: { sportId: 'sport-golf', participantType: 'INDIVIDUAL', name: 'Ludvig Åberg' } }),
+        expect.objectContaining({ body: { sportLeagueId: 'pga', participantType: 'INDIVIDUAL', name: 'Ludvig Åberg' } }),
       ),
     );
     expect(await screen.findByTestId('root-admin-participant-list-page')).toBeInTheDocument();
   });
 
-  it('pool-master-rfy blocks submit until a name is entered', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    renderPage();
-    await screen.findByText('Type at least 3 characters to find a golfer.');
-    await userEvent.click(screen.getByTestId('root-admin-participant-list-new'));
+  it('pool-master-rfy blocks submit until a tour is chosen and a name is entered', async () => {
+    renderPage({ path: '/manage/sports/golf/participants/new' });
+
+    await userEvent.type(await screen.findByTestId('root-admin-participant-list-new-name'), 'Ludvig Åberg');
     expect(screen.getByTestId('root-admin-participant-list-new-save')).toBeDisabled();
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-participant-list-new-league'), 'liv');
+    await waitFor(() => expect(screen.getByTestId('root-admin-participant-list-new-save')).toBeEnabled());
   });
 
-  // #311: on a slow connection the golf sport query can still be in flight when the
-  // admin has typed a name. A click in that window used to be thrown away client-side.
-  it('keeps Add player disabled while the golf sport is loading, and enables it once the sport arrives', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    let resolveSports: (value: unknown) => void = () => {};
-    listSportsMock.mockReturnValue(
-      new Promise((resolve) => {
-        resolveSports = resolve;
-      }),
-    );
-    renderPage({ sportsLoaded: false });
-    // The player list is scoped by the sport too, so it stays loading; the button does not.
-    await userEvent.click(await screen.findByTestId('root-admin-participant-list-new'));
-    await userEvent.type(
-      screen.getByTestId('root-admin-participant-list-new-name'),
-      'Ludvig Åberg',
-    );
-    const save = screen.getByTestId('root-admin-participant-list-new-save');
-    expect(save).toBeDisabled();
-
-    resolveSports({ data: { sports: [GOLF_SPORT_FIXTURE] } });
-    await waitFor(() => expect(save).toBeEnabled());
-    await userEvent.click(save);
-    await waitFor(() =>
-      expect(createParticipantMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: { sportId: 'sport-golf', participantType: 'INDIVIDUAL', name: 'Ludvig Åberg' },
-        }),
-      ),
-    );
-  });
-
-  it('refuses a form submit while the golf sport is loading with a wait-and-retry message, sending no request', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    listSportsMock.mockReturnValue(new Promise(() => {}));
-    renderPage({ sportsLoaded: false });
-    // The player list is scoped by the sport too, so it stays loading; the button does not.
-    await userEvent.click(await screen.findByTestId('root-admin-participant-list-new'));
-    await userEvent.type(
-      screen.getByTestId('root-admin-participant-list-new-name'),
-      'Ludvig Åberg',
-    );
-    // A submit by Enter is not gated by the disabled Save button.
-    fireEvent.submit(screen.getByTestId('root-admin-participant-create-page'));
-
-    expect(
-      await screen.findByText(/golf sport is still loading\. Wait a moment and try again\./),
-    ).toBeInTheDocument();
-    expect(createParticipantMock).not.toHaveBeenCalled();
-  });
-
-  it('explains on the Add player page, with save disabled, when the golf sport fails to load', async () => {
-    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    listSportsMock.mockResolvedValue({
+  it('explains on the Add player page, with save disabled, when the sport\'s tours fail to load', async () => {
+    listSportLeaguesMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Sport catalog offline' } },
       response: { status: 500 },
     });
-    renderPage({ sportsLoaded: false });
+    renderPage({ path: '/manage/sports/golf/participants/new', leaguesLoaded: false });
 
-    await userEvent.click(await screen.findByTestId('root-admin-participant-list-new'));
     await userEvent.type(
-      screen.getByTestId('root-admin-participant-list-new-name'),
+      await screen.findByTestId('root-admin-participant-list-new-name'),
       'Ludvig Åberg',
     );
 

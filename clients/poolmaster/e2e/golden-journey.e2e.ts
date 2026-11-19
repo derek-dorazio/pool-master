@@ -6,6 +6,7 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
+import { addLeagueParticipants, openLeagueParticipantList } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
@@ -215,21 +216,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     journey.tourId = tourId;
 
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
-      await page.goto('/manage/sports/golf/participants');
-      const ids: string[] = [];
-      for (let index = 1; index <= PLAYER_COUNT; index += 1) {
-        await page.getByTestId('root-admin-participant-list-new').click();
-        await page.getByTestId('root-admin-participant-list-new-name').fill(`${run.playerNamePrefix} ${index}`);
-        const created = await submitAndRead<{ participant: { id: string } }>(
-          page,
-          'root-admin-participant-list-new-save',
-          'POST',
-          '/api/v1/participants',
-        );
-        ids.push(created.participant.id);
-      }
-      // The list reads nothing until a search is typed (#1313), so the search, typed after every
-      // save, is a fresh server read that carries all six new golfers.
+      const names = Array.from({ length: PLAYER_COUNT }, (_, index) => `${run.playerNamePrefix} ${index + 1}`);
+      const ids = await addLeagueParticipants(page, 'golf', tourId, names);
+      // The list shows one tour's golfers at a time (#1853): the tour's roster, read after every
+      // save, carries all six new golfers.
+      await openLeagueParticipantList(page, 'golf', tourId);
       const search = page.getByTestId('root-admin-participant-list-search');
       await search.fill(run.playerNamePrefix);
       await expect(search).toHaveValue(run.playerNamePrefix);

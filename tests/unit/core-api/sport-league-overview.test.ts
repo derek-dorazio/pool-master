@@ -108,7 +108,7 @@ describe('sport league issues', () => {
     const row = only(facts({
       latestSyncRuns: [run(ProviderSyncKind.FIELD, ProviderSyncRunStatus.FAILED)],
       heldEvents: [
-        { id: 'e2', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.FIELD_LINKED] },
+        { id: 'e2', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] },
         { id: 'e1', sportLeagueId: 'mlb', name: 'ALCS', checkedAt: at('2027-04-15T11:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] },
         { id: 'e3', sportLeagueId: 'other', name: 'Not this league', checkedAt: at('2027-04-15T11:00:00.000Z'), failedChecks: [ReleaseCheckKey.FIELD_LOADED] },
       ],
@@ -117,7 +117,7 @@ describe('sport league issues', () => {
     expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.SYNC, 1], [SportLeagueIssueType.RELEASE, 2]]);
     expect(row.issues[1]?.items).toEqual([
       { label: 'ALCS', occurredAt: at('2027-04-15T11:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e1' }, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] },
-      { label: 'World Series', occurredAt: at('2027-04-15T09:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e2' }, failedChecks: [ReleaseCheckKey.FIELD_LINKED] },
+      { label: 'World Series', occurredAt: at('2027-04-15T09:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e2' }, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] },
     ]);
   });
 });
@@ -259,7 +259,7 @@ describe('mapSportLeagueOverviewToDto', () => {
   it('sends dates as ISO strings and each issue type with its own item fields, matching the published schema', () => {
     const row = only(facts({
       latestSyncRuns: [run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.FAILED, { summary: 'Failed live scores sync.' })],
-      heldEvents: [{ id: '5f0c8a8e-5a0e-4c1e-9d43-2f6f8e3e4b10', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.FIELD_LINKED] }],
+      heldEvents: [{ id: '5f0c8a8e-5a0e-4c1e-9d43-2f6f8e3e4b10', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }],
       eventYearSpans: [{ sportLeagueId: 'mlb', eventYear: 2027, firstStart: at('2027-03-25T00:00:00.000Z'), lastStart: at('2027-10-20T00:00:00.000Z'), lastEnd: null }],
       nextEventStarts: new Map([['mlb', at('2027-04-16T00:00:00.000Z')]]),
     }));
@@ -275,7 +275,7 @@ describe('mapSportLeagueOverviewToDto', () => {
       nextEventStartsAt: '2027-04-16T00:00:00.000Z',
       issues: [
         { type: 'SYNC', count: 1, items: [{ label: 'Failed live scores sync.', occurredAt: '2027-04-15T10:00:00.000Z', syncKind: 'SCORES' }] },
-        { type: 'RELEASE', count: 1, items: [{ label: 'World Series', failedChecks: ['FIELD_LINKED'] }] },
+        { type: 'RELEASE', count: 1, items: [{ label: 'World Series', failedChecks: ['TIERS_ASSIGNED'] }] },
       ],
     });
     expect(mapSportLeagueOverviewToDto({ ...withIds, season: null, nextEventStartsAt: null })).toMatchObject({ season: null, nextEventStartsAt: null });

@@ -37,7 +37,8 @@ export type ParticipantInjuryStatusDto = z.infer<typeof ParticipantInjuryStatusD
 
 export const ParticipantDtoSchema = z.object({
   id: z.string().describe('Participant identifier.'),
-  sportId: z.string().describe('Owning sport identifier.'),
+  sportLeagueId: z.uuid().describe('The one sport league the participant competes in; the sport is the league\'s.'),
+  ranking: z.number().int().nullable().describe('Current rank in the sport league; 1 is best. Null when unranked.'),
   name: z.string().describe('Primary participant display name.'),
   participantType: z
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
@@ -64,7 +65,7 @@ export type ParticipantDto = z.infer<typeof ParticipantDtoSchema>;
 /** Filters narrow the list; nothing pages it (§16). */
 export const ParticipantListQuerySchema = z.object({
   q: z.string().optional().describe('Case-insensitive text matched against name, first, last and short name, and team.'),
-  sportId: z.string().optional().describe('Only participants of this sport.'),
+  sportLeagueId: z.uuid().optional().describe('Only participants of this sport league.'),
   status: ParticipantStatusDtoSchema.optional().describe('Only participants in this status. Omitted: every status.'),
 }).describe('Filters for the participant catalog.');
 export type ParticipantListQuery = z.infer<typeof ParticipantListQuerySchema>;
@@ -81,7 +82,8 @@ export const ParticipantResponseSchema = z.object({
 // --- Requests ---
 
 export const CreateParticipantRequestSchema = z.object({
-  sportId: z.string().min(1).describe('Sport the participant competes in.'),
+  sportLeagueId: z.uuid().describe('The sport league the participant competes in.'),
+  ranking: z.number().int().optional().describe('Rank in the sport league; 1 is best. Omitted: unranked.'),
   name: z.string().min(1).max(500).describe('Primary participant display name.'),
   participantType: z
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
@@ -106,6 +108,7 @@ export const UpdateParticipantRequestSchema = z.object({
   role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
   teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
   status: ParticipantStatusDtoSchema.optional().describe('Participant lifecycle or availability status.'),
+  ranking: z.number().int().nullable().optional().describe('Rank in the sport league; null unranks.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema.optional(),
   photoUrl: z.string().optional().describe('Participant image URL.'),
   externalId: z.string().optional().describe('Primary provider identifier.'),
@@ -116,6 +119,7 @@ export type UpdateParticipantRequest = z.infer<typeof UpdateParticipantRequestSc
 export const ParticipantProviderMappingDtoSchema = z.object({
   id: z.uuid(),
   participantId: z.uuid(),
+  sportLeagueId: z.uuid().describe('The participant\'s sport league: a feed id names one participant per sport league.'),
   providerId: z.string().describe('The provider that knows the participant by externalId.'),
   externalId: z.string(),
   confidence: z.enum(MappingConfidence).describe('How the identity was matched.'),
@@ -128,11 +132,11 @@ export const ParticipantProviderMappingListResponseSchema = z.object({
 }).describe('A participant\'s provider identities.');
 export type ParticipantProviderMappingListResponse = z.infer<typeof ParticipantProviderMappingListResponseSchema>;
 
-export const SportProviderMappingListQuerySchema = z.object({
+export const SportLeagueProviderMappingListQuerySchema = z.object({
   providerId: z.string().min(1).describe('The provider whose identities to list.'),
-  sportId: z.string().min(1).describe('Only the identities of this sport\'s participants.'),
-}).describe('Whose provider identities to list: one provider\'s, in one sport.');
-export type SportProviderMappingListQuery = z.infer<typeof SportProviderMappingListQuerySchema>;
+  sportLeagueId: z.uuid().describe('Only the identities of this sport league\'s participants.'),
+}).describe('Whose provider identities to list: one provider\'s, in one sport league.');
+export type SportLeagueProviderMappingListQuery = z.infer<typeof SportLeagueProviderMappingListQuerySchema>;
 
 export const BindParticipantProviderMappingRequestSchema = z.object({
   providerId: z.string().min(1).describe('The provider whose identifier this binds.'),
@@ -149,7 +153,7 @@ export type ParticipantProviderMappingResponse = z.infer<typeof ParticipantProvi
 registerSchema('ParticipantProviderMappingDto', ParticipantProviderMappingDtoSchema);
 registerSchema('ParticipantProviderMappingListResponse', ParticipantProviderMappingListResponseSchema);
 registerSchema('BindParticipantProviderMappingRequest', BindParticipantProviderMappingRequestSchema);
-registerSchema('SportProviderMappingListQuery', SportProviderMappingListQuerySchema);
+registerSchema('SportLeagueProviderMappingListQuery', SportLeagueProviderMappingListQuerySchema);
 registerSchema('ParticipantProviderMappingResponse', ParticipantProviderMappingResponseSchema);
 registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);

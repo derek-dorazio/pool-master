@@ -33,7 +33,4 @@ export const CONTRACT_VERIFICATION_GAPS = [
   { schema: 'GolfRoundScorePreviewResponseSchema', endpoints: 'POST /api/v1/events/:eventId/rounds/:roundNumber/golf-scores/preview' },
   { schema: 'SeedSportEventParticipantsResponseSchema', endpoints: 'POST /api/v1/events/:eventId/participants/seed' },
   { schema: 'ParticipantProviderMappingListResponseSchema', endpoints: 'GET /api/v1/participants/:id/provider-mappings' },
-  { schema: 'ParticipantLeagueAffiliationListResponseSchema', endpoints: 'GET, PATCH and the upload apply of /api/v1/sport-leagues/:sportLeagueId/affiliations' },
-  { schema: 'ParticipantLeagueAffiliationResponseSchema', endpoints: 'POST /api/v1/sport-leagues/:sportLeagueId/affiliations' },
-  { schema: 'ParticipantLeagueAffiliationUploadPreviewResponseSchema', endpoints: 'POST /api/v1/sport-leagues/:sportLeagueId/affiliations/upload/preview' },
 ];

@@ -1,13 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { listParticipantLeagueAffiliations } from '@/lib/api';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
-import type { ParticipantLeagueAffiliationDto, SportLeagueDto } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/errors';
+import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueDangerZone, SportLeagueDetailsSection, SportLeagueHeading } from './sport-league-details-section';
 import { SportLeagueRosterGridCard } from './sport-league-roster-grid-card';
 import { SportLeagueRosterUploadCard } from './sport-league-roster-upload-card';
 import { SportLeagueCalendarCard } from './sport-league-calendar-card';
-import { useSportLeagueNoun } from './use-sport-catalog';
+import { useLeagueRosterQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { SportLeaguePage } from './sport-league-page';
 
@@ -29,17 +26,7 @@ export function RootAdminSportLeagueHomePage() {
 function SportLeagueHome({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport } = useManagedSport();
   const sportLeagueNoun = useSportLeagueNoun(sport, sportLeague.id);
-  const rosterQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(sportLeague.id),
-    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
-      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: sportLeague.id } });
-      if (!response.data?.affiliations) {
-        throwApiError(response.error, 'Sport league roster response is missing data.');
-      }
-      return response.data.affiliations;
-    },
-    retry: false,
-  });
+  const rosterQuery = useLeagueRosterQuery(sportLeague.id);
 
   return (
     <div className="space-y-8">

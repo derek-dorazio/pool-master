@@ -19,7 +19,8 @@ import type { ApiErrorCode } from '@poolmaster/shared/dto';
 // --- Input DTOs ---
 
 export interface CreateParticipantInput {
-  sportId: string;
+  sportLeagueId: string;
+  ranking?: number | null;
   name: string;
   participantType: ParticipantType;
   externalId?: string;
@@ -40,6 +41,7 @@ export interface UpdateParticipantInput {
   nationality?: string;
   role?: string;
   teamAffiliation?: string;
+  ranking?: number | null;
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
   photoUrl?: string;
@@ -84,7 +86,7 @@ export class ParticipantService {
       {
         action: 'participants.create.start',
         data: {
-          sportId: input.sportId,
+          sportLeagueId: input.sportLeagueId,
           participantType: input.participantType,
           hasExternalId: input.externalId !== undefined,
         },
@@ -94,7 +96,8 @@ export class ParticipantService {
 
     try {
       const participant = await this.participantRepo.create({
-        sportId: input.sportId,
+        sportLeagueId: input.sportLeagueId,
+        ranking: input.ranking ?? null,
         name: input.name,
         participantType: input.participantType,
         externalId: input.externalId,
@@ -114,7 +117,7 @@ export class ParticipantService {
           action: 'participants.create.success',
           data: {
             participantId: participant.id,
-            sportId: participant.sportId,
+            sportLeagueId: participant.sportLeagueId,
           },
         },
         'Created participant',
@@ -127,7 +130,7 @@ export class ParticipantService {
           action: 'participants.create.failed',
           err: error,
           data: {
-            sportId: input.sportId,
+            sportLeagueId: input.sportLeagueId,
             participantType: input.participantType,
           },
         },
@@ -193,8 +196,7 @@ export class ParticipantService {
   }
 
   /**
-   * Deletes a participant no event field holds (#1400), with its sport league affiliations and
-   * provider identities. 404 PARTICIPANT_NOT_FOUND; 409 PARTICIPANT_IN_USE while any event's field,
+   * Deletes a participant no event field holds (#1400), with its provider identities. 404 PARTICIPANT_NOT_FOUND; 409 PARTICIPANT_IN_USE while any event's field,
    * in any year, has them: the field row is what scores and picks hang from.
    */
   async delete(id: string): Promise<void> {
@@ -219,15 +221,15 @@ export class ParticipantService {
   }
 
   /**
-   * Every identity a provider has for a sport's participants (#1850): how the Load test data run
-   * finds the participant a test player's feed id is already mapped to, so it never makes a
-   * second one beside the sync's.
+   * Every identity a provider has for a sport league's participants (#1853): how the Load test
+   * data run finds the participant a test player's feed id is already mapped to in that league,
+   * so it never makes a second one beside the sync's.
    */
-  async listSportProviderMappings(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]> {
-    const mappings = await this.providerMappingRepo.findByProviderAndSport(providerId, sportId);
+  async listSportLeagueProviderMappings(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]> {
+    const mappings = await this.providerMappingRepo.findByProviderAndSportLeague(providerId, sportLeagueId);
     this.logger?.info(
-      { action: 'participants.service.listSportProviderMappings.success', data: { providerId, sportId, count: mappings.length } },
-      'Listed a provider\'s participant identities in a sport',
+      { action: 'participants.service.listSportLeagueProviderMappings.success', data: { providerId, sportLeagueId, count: mappings.length } },
+      'Listed a provider\'s participant identities in a sport league',
     );
     return mappings;
   }
@@ -235,18 +237,20 @@ export class ParticipantService {
   /**
    * A root admin binding a provider identity to this participant by hand — how a competitor
    * the provider could not match gets their synced data. An identity already bound to another
-   * participant moves here.
+   * of the participant's sport league moves here.
    */
   async bindProviderMapping(
     participantId: string,
     providerId: string,
     externalId: string,
   ): Promise<ParticipantProviderMapping> {
-    if (!(await this.participantRepo.findById(participantId))) {
+    const participant = await this.participantRepo.findById(participantId);
+    if (!participant) {
       throw new ParticipantNotFoundError(participantId);
     }
     const mapping = await this.providerMappingRepo.bind({
       participantId,
+      sportLeagueId: participant.sportLeagueId,
       providerId,
       externalId,
       confidence: MappingConfidence.MANUAL,

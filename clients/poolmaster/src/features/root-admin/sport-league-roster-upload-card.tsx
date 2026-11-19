@@ -1,13 +1,13 @@
 import {
-  applyParticipantLeagueAffiliationUpload,
-  previewParticipantLeagueAffiliationUpload,
+  applySportLeagueRankingUpload,
+  previewSportLeagueRankingUpload,
 } from '@/lib/api';
 import { BulkUploadPanel, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { ParticipantLeagueAffiliationUploadPreviewResponse } from '@/lib/api';
+import type { SportLeagueRankingUploadPreviewResponse } from '@/lib/api';
 import { sportPathSegment } from '@poolmaster/shared/domain';
 import {
   ROSTER_UPLOAD_HEADERS,
@@ -18,7 +18,7 @@ import { useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
 
-type RosterPreviewRow = ParticipantLeagueAffiliationUploadPreviewResponse['rows'][number];
+type RosterPreviewRow = SportLeagueRankingUploadPreviewResponse['rows'][number];
 
 const RESOLUTION_TONE: Record<RosterPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -36,9 +36,10 @@ function describeRow(row: RosterPreviewRow['row']): string {
 }
 
 /**
- * A tour's page: bulk paste / upload / preview / apply for the tour
- * roster's rankings, built on the shared {@link BulkUploadPanel}. The
+ * A tour's page: bulk paste / upload / preview / apply for the rankings of the
+ * tour's participants (#1853), built on the shared {@link BulkUploadPanel}. The
  * week-to-week ranking maintenance path; per-row edits live in the roster grid.
+ * Each row names one of the league's own participants; the upload never adds one.
  */
 export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
   const { sport, definition } = useManagedSport();
@@ -50,7 +51,7 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
 
   const previewMutation = useInvalidatingMutation({
     mutationFn: async (rows: RosterUploadRow[]) => {
-      const response = await previewParticipantLeagueAffiliationUpload({
+      const response = await previewSportLeagueRankingUpload({
         path: { sportLeagueId: leagueId },
         body: { rows },
       });
@@ -70,19 +71,16 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
 
   const applyMutation = useInvalidatingMutation({
     mutationFn: async (rows: RosterUploadRow[]) => {
-      const response = await applyParticipantLeagueAffiliationUpload({
+      const response = await applySportLeagueRankingUpload({
         path: { sportLeagueId: leagueId },
         body: { rows },
       });
-      if (!response.data?.affiliations) {
+      if (!response.data?.participants) {
         throwApiError(response.error, 'Roster apply response is missing data.');
       }
-      return response.data.affiliations;
+      return response.data.participants;
     },
-    invalidates: [
-      QueryKeys.rootAdmin.manageSport.leagueRoster(leagueId),
-      QueryKeys.rootAdmin.manageSport.leagues,
-    ],
+    invalidates: [QueryKeys.rootAdmin.manageSport.leagueRoster(leagueId)],
     onError: (error) => {
       logger.warn(
         { action: 'sportLeague.roster.apply.failed', err: error },

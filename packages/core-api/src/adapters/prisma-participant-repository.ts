@@ -3,7 +3,7 @@
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
-import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
+import type { ParticipantMatchQuery, ParticipantRanking, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -16,7 +16,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
 
   async search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]> {
     const where: Prisma.ParticipantWhereInput = {
-      ...(filters.sportId && { sportId: filters.sportId }),
+      ...(filters.sportLeagueId && { sportLeagueId: filters.sportLeagueId }),
       ...(filters.status && { status: filters.status }),
     };
 
@@ -35,11 +35,11 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return rows.map(mapToParticipant);
   }
 
-  async findMatchingAny(sportId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]> {
+  async findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]> {
     if (queries.length === 0) return [];
     const rows = await this.prisma.participant.findMany({
       where: {
-        sportId,
+        sportLeagueId,
         OR: queries.map((query) => ({
           ...(query.id !== undefined && { id: query.id }),
           ...(query.externalId !== undefined && { externalId: query.externalId }),
@@ -49,6 +49,49 @@ export class PrismaParticipantRepository implements ParticipantRepository {
       orderBy: { name: 'asc' },
     });
     return rows.map(mapToParticipant);
+  }
+
+  async findBySportLeague(sportLeagueId: string): Promise<Participant[]> {
+    const rows = await this.prisma.participant.findMany({
+      where: { sportLeagueId },
+      orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
+    });
+    return rows.map(mapToParticipant);
+  }
+
+  /**
+   * Every ranking in one statement, whatever the list's length (#1252), scoped to the sport league
+   * so a participant of another league is never re-ranked: a ranking for one is an error, as an
+   * update of a missing row is, and leaves every ranking as it was. Raw because Prisma has no
+   * update of many rows to different values, as the standings email positions' record is.
+   */
+  async updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void> {
+    // A participant ranked twice keeps the later ranking, as two updates in a row would leave it.
+    const latest = [...new Map(rankings.map((entry) => [entry.participantId, entry])).values()];
+    if (latest.length === 0) return;
+    const ids = latest.map((entry) => entry.participantId);
+    const ranks = latest.map((entry) => entry.ranking);
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.$executeRaw`
+        UPDATE "participants" AS participant
+        SET "ranking" = ranked.ranking, "updated_at" = now()
+        FROM unnest(${ids}::uuid[], ${ranks}::int[]) AS ranked(id, ranking)
+        WHERE participant.id = ranked.id AND participant.sport_league_id = ${sportLeagueId}::uuid`;
+      if (updated !== latest.length) {
+        throw new Error(`Only ${updated} of the ${latest.length} participants to rank are in sport league ${sportLeagueId}.`);
+      }
+    });
+  }
+
+  async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.participant.groupBy({
+      by: ['sportLeagueId'],
+      where: { sportLeagueId: { in: [...sportLeagueIds] } },
+      _count: { _all: true },
+    });
+    const counts = new Map(sportLeagueIds.map((id) => [id, 0]));
+    for (const group of groups) counts.set(group.sportLeagueId, group._count._all);
+    return counts;
   }
 
   async findByIds(ids: readonly string[]): Promise<Participant[]> {
@@ -74,6 +117,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.role !== undefined && { role: updates.role }),
         ...(updates.teamAffiliation !== undefined && { teamAffiliation: updates.teamAffiliation }),
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.ranking !== undefined && { ranking: updates.ranking }),
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
         ...(updates.injuryStatus !== undefined && { injuryStatus: updates.injuryStatus as object }),
         ...(updates.photoUrl !== undefined && { photoUrl: updates.photoUrl }),
@@ -94,7 +138,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
       if (locked.length === 0) return null;
       const fieldEntries = await tx.sportEventParticipant.count({ where: { participantId: id } });
       if (fieldEntries > 0) return fieldEntries;
-      await tx.participantLeagueAffiliation.deleteMany({ where: { participantId: id } });
       await tx.participantProviderMapping.deleteMany({ where: { participantId: id } });
       await tx.participant.delete({ where: { id } });
       return 0;
@@ -104,7 +147,8 @@ export class PrismaParticipantRepository implements ParticipantRepository {
 
 export function mapToParticipant(row: {
   id: string;
-  sportId: string;
+  sportLeagueId: string;
+  ranking: number | null;
   name: string;
   participantType: ParticipantType;
   externalId: string | null;
@@ -124,7 +168,8 @@ export function mapToParticipant(row: {
 }): Participant {
   return {
     id: row.id,
-    sportId: row.sportId,
+    sportLeagueId: row.sportLeagueId,
+    ranking: row.ranking,
     name: row.name,
     participantType: row.participantType,
     externalId: row.externalId ?? undefined,
@@ -161,7 +206,8 @@ function toInjuryStatus(value: unknown): InjuryStatus {
 
 function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>) {
   return {
-    sportId: participant.sportId,
+    sportLeagueId: participant.sportLeagueId,
+    ranking: participant.ranking,
     name: participant.name,
     participantType: participant.participantType,
     externalId: participant.externalId,

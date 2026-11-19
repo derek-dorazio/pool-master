@@ -17,7 +17,6 @@ import {
   getPickEmLeaderboard,
   getSurvivorLeaderboard,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   openContest,
   recordEventMatchResult,
@@ -35,7 +34,6 @@ import {
   SelectionType,
   Sport,
   SurvivorWeekOutcome,
-  findSportRow,
 } from '@poolmaster/shared/domain';
 import {
   GamePicksResponseSchema,
@@ -188,7 +186,6 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Survivor Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- Two released weeks of the same four games -----------------------------------------------
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
@@ -196,7 +193,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${team} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${team} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);
@@ -340,13 +337,12 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Survivor Cancel Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${team} ${run}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${team} ${run}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);

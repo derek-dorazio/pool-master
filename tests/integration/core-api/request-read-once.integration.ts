@@ -36,6 +36,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -278,7 +279,7 @@ async function tieredGolfEvent(name: string) {
   }
   for (const [index, tier] of tiers.slice(0, 2).entries()) {
     const golfer = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Read Once Golfer ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once Golfer ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     const fieldRow = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true, ranking: index + 1 } });
     await prisma.sportEventParticipantValuation.create({
@@ -372,7 +373,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   });
   const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
     const team = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
     });
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
   }));

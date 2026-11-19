@@ -14,7 +14,6 @@ import {
   getGamePicks,
   getPickEmLeaderboard,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   openContest,
   recordEventMatchResult,
@@ -35,7 +34,6 @@ import {
   PredictedResult,
   SelectionType,
   Sport,
-  findSportRow,
 } from '@poolmaster/shared/domain';
 import {
   GamePicksResponseSchema,
@@ -127,7 +125,6 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Spread Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A released week of four games ------------------------------------------------------------
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
@@ -135,7 +132,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${team} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'TEAM', name: `${team} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       teamIds.push(id);

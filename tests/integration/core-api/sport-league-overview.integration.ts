@@ -60,7 +60,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const next = await event(tour.id, { eventYear: 2027, startDate: days(10), endDate: days(13) });
     await event(tour.id, { eventYear: 2027, startDate: days(5), status: 'CANCELLED' });
     const held = await event(tour.id, { eventYear: 2027, startDate: days(30), status: 'DRAFT' });
-    await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.FIELD_LINKED] });
+    await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
     await prisma.sportEventRound.createMany({
       data: [
         { sportEventId: next.id, roundNumber: 1, scheduledDate: days(10) },
@@ -94,7 +94,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
       expect.objectContaining({ kind: ProviderSyncKind.FIELD, status: ProviderSyncRunStatus.COMPLETED, summary: null }),
       expect.objectContaining({ kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, summary: null }),
     ]);
-    expect(facts.heldEvents).toEqual([{ id: held.id, sportLeagueId: tour.id, name: held.name, checkedAt: NOW, failedChecks: [ReleaseCheckKey.FIELD_LINKED] }]);
+    expect(facts.heldEvents).toEqual([{ id: held.id, sportLeagueId: tour.id, name: held.name, checkedAt: NOW, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }]);
     expect(facts.eventCounts.get(tour.id)).toBe(5);
     expect(facts.eventCounts.get(clutch.id)).toBe(1);
     // The cancelled event is in neither the 2027 span nor the next start.

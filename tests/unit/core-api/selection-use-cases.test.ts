@@ -154,7 +154,8 @@ function buildWorld(options: WorldOptions = {}) {
   }) as SportEventParticipant);
   const participants = golfers.map((golfer): Participant => ({
     id: `p-${golfer}`,
-    sportId: 'sport-1',
+    sportLeagueId: 'league-1',
+    ranking: null,
     name: `Golfer ${golfer.toUpperCase()}`,
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',
