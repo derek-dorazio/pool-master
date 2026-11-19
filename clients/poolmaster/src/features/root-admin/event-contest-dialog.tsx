@@ -8,8 +8,9 @@ import {
 } from '@/features/shared/ui';
 import type { SportEventContestDto } from '@/lib/api';
 import { CONTEST_STATUS_LABELS } from '@/features/contests/contest-status';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { CUSTOMER_LEAGUE_PARAM, CUSTOMER_LEAGUES_PATH } from './manage-navigation';
-import { contestPagePath, NO_TEMPLATE } from './event-contest-columns';
+import { NO_TEMPLATE } from './event-contest-columns';
 
 /**
  * A contest on the Event page's Contests grid (⤢): what it is, then where to go from it. Nothing
@@ -31,7 +32,7 @@ export function EventContestDialog({ contest, onClose }: { contest: SportEventCo
       id: 'open-contest',
       name: 'Open contest',
       description: 'Its page in its league, as members see it.',
-      control: <LinkButton data-testid={`${testId}-open-contest`} size="sm" to={contestPagePath(contest)} variant="secondary">Open contest ›</LinkButton>,
+      control: <LinkButton data-testid={`${testId}-open-contest`} size="sm" to={buildLeagueContestPath(contest.leagueCode, contest.id)} variant="secondary">Open contest ›</LinkButton>,
     },
     {
       id: 'open-league',
@@ -56,15 +57,10 @@ export function EventContestDialog({ contest, onClose }: { contest: SportEventCo
       facts={facts}
       mode="view"
       onCancel={onClose}
-      onCancelEdit={onClose}
       onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={onClose}
       open
-      saveLabel="Save"
       testId={testId}
       title={contest.name}
-    >
-      {null}
-    </DetailEditModal>
+    />
   );
 }

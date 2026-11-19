@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { getSportDefinition } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -26,7 +25,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { upperFirst } from '@/lib/upper-first';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
@@ -53,7 +51,6 @@ export function EventSettingsDialog({
 }) {
   const preferences = useDisplayPreferences();
   const { timeZone } = preferences;
-  const { vocabulary } = getSportDefinition(event.sport);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(event);
   const tierProfilesQuery = useTierProfilesQuery();
   const pricingProfilesQuery = usePricingProfilesQuery();
@@ -71,7 +68,7 @@ export function EventSettingsDialog({
         path: { eventId: event.id },
         body: settingsRequestBody(values, current, { providerSynced: event.providerSynced, sendsRoundsPar: scoresUnplayedRoundsAgainstPar, timeZone }),
       });
-      if (!response.data?.event) throwApiError(response.error, `The ${vocabulary.event.one} update response is missing data.`);
+      if (!response.data?.event) throwApiError(response.error, 'The event update response is missing data.');
       return response.data.event;
     },
     invalidates: eventKeys,
@@ -85,7 +82,7 @@ export function EventSettingsDialog({
   const transitionMutation = useInvalidatingMutation({
     mutationFn: async (toStatus: SportEventDtoStatus) => {
       const response = await transitionEvent({ path: { eventId: event.id }, body: { toStatus } });
-      if (!response.data?.event) throwApiError(response.error, `The ${vocabulary.event.one} transition response is missing data.`);
+      if (!response.data?.event) throwApiError(response.error, 'The event transition response is missing data.');
       return response.data.event;
     },
     invalidates: eventKeys,
@@ -96,7 +93,7 @@ export function EventSettingsDialog({
   const autoMutation = useInvalidatingMutation({
     mutationFn: async (autoLifecycleEnabled: boolean) => {
       const response = await updateEvent({ path: { eventId: event.id }, body: { autoLifecycleEnabled } });
-      if (!response.data?.event) throwApiError(response.error, `The ${vocabulary.event.one} update response is missing data.`);
+      if (!response.data?.event) throwApiError(response.error, 'The event update response is missing data.');
       return response.data.event;
     },
     invalidates: [QueryKeys.rootAdmin.manageSport.event(event.id)],
@@ -118,7 +115,7 @@ export function EventSettingsDialog({
     { id: 'ends', label: 'Ends', value: formatDateTimeDisplay(event.endDate, preferences, 'Not set'), testId: `${testId}-ends` },
     { id: 'venue', label: 'Venue', value: event.venue ?? 'Not set', testId: `${testId}-venue` },
     { id: 'location', label: 'Location', value: event.location ?? 'Not set', testId: `${testId}-location` },
-    { id: 'rounds', label: upperFirst(vocabulary.round.many), value: event.rounds ?? 'Not set', testId: `${testId}-rounds` },
+    { id: 'rounds', label: 'Rounds', value: event.rounds ?? 'Not set', testId: `${testId}-rounds` },
     ...(scoresUnplayedRoundsAgainstPar
       ? [{ id: 'par', label: 'Par per round', value: event.roundsPar ?? 'From scores', testId: `${testId}-par` }]
       : []),
@@ -130,7 +127,7 @@ export function EventSettingsDialog({
       label: 'Tier order from',
       value: tierOrder,
       ...(overview !== undefined && overview.tierOrderBasis !== null && !overview.tierOrderCoversField
-        ? { detail: `Not every ${vocabulary.participant.one} has it; those without go last` }
+        ? { detail: 'Not every participant has it; those without go last' }
         : {}),
       testId: `${testId}-tier-order`,
     },
@@ -156,7 +153,7 @@ export function EventSettingsDialog({
       id: 'auto-lifecycle',
       name: event.autoLifecycleEnabled ? 'Automatic lifecycle on' : 'Automatic lifecycle off',
       description: event.autoLifecycleEnabled
-        ? `The scheduler moves this ${vocabulary.event.one} along its ${vocabulary.round.one} schedule.`
+        ? 'The scheduler moves this event along its round schedule.'
         : 'Every status move is made by hand.',
       control: (
         <Button data-testid="root-admin-sport-event-auto-toggle" onClick={() => setAutoToggleOpen(true)} size="sm" variant="secondary">
@@ -201,7 +198,7 @@ export function EventSettingsDialog({
           <FormField label="Location">
             <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
           </FormField>
-          <FormField error={form.formState.errors.rounds?.message} label={upperFirst(vocabulary.round.many)}>
+          <FormField error={form.formState.errors.rounds?.message} label={'Rounds'}>
             <Input data-testid="root-admin-sport-event-edit-rounds" inputMode="numeric" {...form.register('rounds')} />
           </FormField>
           {scoresUnplayedRoundsAgainstPar ? (
@@ -229,13 +226,13 @@ export function EventSettingsDialog({
         onOpenChange={(open) => !open && setTransitionTarget(null)}
         open={transitionTarget !== null}
         testId="root-admin-sport-event-transition-modal"
-        title={`Change ${vocabulary.event.one} status`}
+        title={'Change event status'}
         tone="danger"
       />
       <ConfirmDialog
         confirmLabel={event.autoLifecycleEnabled ? 'Turn off automatic lifecycle' : 'Turn on automatic lifecycle'}
         confirmTestId="root-admin-sport-event-auto-confirm"
-        description={`The scheduler only moves a ${vocabulary.event.one} along while automatic lifecycle is on.`}
+        description={'The scheduler only moves an event along while automatic lifecycle is on.'}
         error={autoMutation.isError ? extractErrorMessage(autoMutation.error, { fallback: 'The change was rejected.' }) : undefined}
         isPending={autoMutation.isPending}
         onCancel={() => setAutoToggleOpen(false)}

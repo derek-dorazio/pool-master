@@ -1,4 +1,4 @@
-import { blocksManualRelease, getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
+import { blocksManualRelease } from '@poolmaster/shared/domain';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { releaseEvent, type SportEventDto, type SportEventOverviewDto } from '@/lib/api';
@@ -19,13 +19,11 @@ import { RELEASE_CHECK_LABELS } from './sport-league-overview-text';
 
 const logger = getLogger().child({ feature: 'root-admin-event-release' });
 
-function releaseCodeMessages(event: SportNoun): ErrorCodeMessages {
-  return {
-    SPORT_EVENT_NOT_DRAFT: `This ${event.one} has already been released.`,
-    SPORT_EVENT_ALREADY_STARTED: `This ${event.one} has already started, so it can no longer be released.`,
-    SPORT_EVENT_NOT_READY: `This ${event.one} is not ready yet: one of its ready checks no longer passes. Reload it to see which.`,
-  };
-}
+const RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
+  SPORT_EVENT_NOT_DRAFT: 'This event has already been released.',
+  SPORT_EVENT_ALREADY_STARTED: 'This event has already started, so it can no longer be released.',
+  SPORT_EVENT_NOT_READY: 'This event is not ready yet: one of its ready checks no longer passes. Reload it to see which.',
+};
 
 /**
  * The header's Release chip opens this (#1890): how the draft event is released, when automatic
@@ -43,7 +41,6 @@ export function EventReleaseChecksDialog({
 }) {
   const preferences = useDisplayPreferences();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { event: eventNoun } = getSportDefinition(event.sport).vocabulary;
   const checks = event.releaseChecks ?? [];
   const blocked = event.releaseChecks === null || checks.some((check) => !check.passed && blocksManualRelease(check.key));
   const lastTry = event.lastAutoReleaseCheck;
@@ -51,7 +48,7 @@ export function EventReleaseChecksDialog({
   const releaseMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await releaseEvent({ path: { eventId: event.id } });
-      if (!response.data?.event) throwApiError(response.error, `Release ${eventNoun.one} response is missing data.`);
+      if (!response.data?.event) throwApiError(response.error, 'Release event response is missing data.');
       return response.data.event;
     },
     invalidates: [
@@ -112,9 +109,9 @@ export function EventReleaseChecksDialog({
       <ConfirmDialog
         confirmLabel="Release for contests"
         confirmTestId="root-admin-sport-event-release-confirm"
-        description={`Commissioners will be able to create contests on this ${eventNoun.one}. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can't be returned to a draft.`}
+        description={'Commissioners will be able to create contests on this event. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can\'t be returned to a draft.'}
         error={releaseMutation.isError
-          ? extractErrorMessage(releaseMutation.error, { codeMessages: releaseCodeMessages(eventNoun), fallback: 'The release was rejected.' })
+          ? extractErrorMessage(releaseMutation.error, { codeMessages: RELEASE_CODE_MESSAGES, fallback: 'The release was rejected.' })
           : undefined}
         isPending={releaseMutation.isPending}
         onCancel={() => setConfirmOpen(false)}
@@ -123,7 +120,7 @@ export function EventReleaseChecksDialog({
         open={confirmOpen}
         pendingLabel="Releasing..."
         testId="root-admin-sport-event-release-modal"
-        title={`Release this ${eventNoun.one} for contests?`}
+        title={'Release this event for contests?'}
       />
     </>
   );

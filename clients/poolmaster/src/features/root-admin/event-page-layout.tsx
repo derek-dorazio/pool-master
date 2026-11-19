@@ -27,7 +27,6 @@ import { SyncHealthChip } from './sync-health-chip';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
 import { failedJobCount, useActivity } from './use-activity';
 import { useSportEventOverviewQuery } from './use-event-page';
-import { useManagedSport } from './use-managed-sport';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
@@ -39,15 +38,14 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
  */
 export function EventPageLayout() {
   const { eventId = '' } = useParams<{ eventId: string }>();
-  const { definition } = useManagedSport();
   const eventQuery = useSportEventQuery(eventId);
   useManageBreadcrumbOverride(eventId || undefined, eventQuery.data?.name);
 
   return (
     <section data-testid="root-admin-event-page">
       <QueryState
-        error={extractErrorMessage(eventQuery.error, { fallback: `We could not load this ${definition.vocabulary.event.one} right now.` })}
-        loading={`Loading ${definition.vocabulary.event.one}...`}
+        error={extractErrorMessage(eventQuery.error, { fallback: 'We could not load this event right now.' })}
+        loading={'Loading event...'}
         query={eventQuery}
         size="tile"
         testId="root-admin-event-page-state"

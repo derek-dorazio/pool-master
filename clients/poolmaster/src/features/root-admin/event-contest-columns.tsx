@@ -9,11 +9,6 @@ const columnHelper = createColumnHelper<SportEventContestDto>();
 /** A contest set up without a template, in the Contest template column. */
 export const NO_TEMPLATE = 'None';
 
-/** A contest's own page, in its league. */
-export function contestPagePath(contest: Pick<SportEventContestDto, 'id' | 'leagueCode'>): string {
-  return `/league/${encodeURIComponent(contest.leagueCode)}/contests/${contest.id}`;
-}
-
 /**
  * The Event page's Contests grid columns (the Event page spec): every customer contest on the
  * event, read-only, each column typed so it sorts and filters from its header.

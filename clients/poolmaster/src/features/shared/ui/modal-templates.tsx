@@ -119,9 +119,7 @@ export function DialogSection({ children, testId, title }: { children: ReactNode
   );
 }
 
-export type DetailEditModalProps = BaseModalTemplateProps & {
-  /** `view` shows the facts with Close and Edit; `edit` shows the form with Cancel and Save. */
-  mode: "view" | "edit";
+type DetailEditModalCommonProps = BaseModalTemplateProps & {
   /** Every setting as it stands, shown first. */
   facts: Fact[];
   /**
@@ -136,8 +134,6 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
   factsTitle?: string;
   /** More to see under the facts in `view`, such as the sport leagues naming a profile. */
   viewContent?: ReactNode;
-  /** The form's fields, shown in `edit`. */
-  children: ReactNode;
   /** Edit's own label, such as "Edit"; the button switches to `edit`. */
   editLabel?: string;
   editTestId?: string;
@@ -148,54 +144,70 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
    * can do, such as an email's Preview. The form never shows them.
    */
   viewActions?: ReactNode;
-  /** Cancel in `edit`: back to the facts, unsaved. */
-  onCancelEdit: () => void;
-  onSave: () => void;
-  saveLabel: string;
-  saveTestId?: string;
   canSave?: boolean;
   isPending?: boolean;
   pendingLabel?: string;
   error?: Error | null;
   errorFallback?: string;
+  saveTestId?: string;
 };
+
+/** A thing that can be edited here: the form and its Cancel and Save. */
+type DetailEditModalEditableProps = {
+  /** `view` shows the facts with Close and Edit; `edit` shows the form with Cancel and Save. */
+  mode: "view" | "edit";
+  /** The form's fields, shown in `edit`. */
+  children: ReactNode;
+  /** Cancel in `edit`: back to the facts, unsaved. */
+  onCancelEdit: () => void;
+  onSave: () => void;
+  saveLabel: string;
+};
+
+/** A thing nothing here can change, such as a customer's contest: only ever the view, with no Edit. */
+type DetailEditModalViewOnlyProps = {
+  mode: "view";
+  children?: never;
+  onCancelEdit?: never;
+  onEdit?: never;
+  onSave?: never;
+  saveLabel?: never;
+};
+
+export type DetailEditModalProps = DetailEditModalCommonProps & (DetailEditModalEditableProps | DetailEditModalViewOnlyProps);
 
 /**
  * A dialog that shows a thing's settings first and edits them on Edit (rules/ux-rules.md §12
  * item 14): Close and Edit under the facts, then the form with Cancel, which goes back to the
  * facts, and Save. A refused save stays in the form with a red bar above the buttons.
  */
-export function DetailEditModal({
-  actions,
-  canSave = true,
-  children,
-  description,
-  editLabel = "Edit",
-  editTestId,
-  error,
-  errorFallback,
-  facts,
-  factsTitle,
-  isPending = false,
-  mode,
-  onCancel,
-  onCancelEdit,
-  onEdit,
-  onOpenChange,
-  onSave,
-  open,
-  pendingLabel,
-  saveLabel,
-  saveTestId,
-  testId,
-  title,
-  viewActions,
-  viewContent,
-}: DetailEditModalProps) {
+export function DetailEditModal(props: DetailEditModalProps) {
+  const {
+    actions,
+    canSave = true,
+    description,
+    editLabel = "Edit",
+    editTestId,
+    error,
+    errorFallback,
+    facts,
+    factsTitle,
+    isPending = false,
+    onCancel,
+    onEdit,
+    onOpenChange,
+    open,
+    pendingLabel,
+    saveTestId,
+    testId,
+    title,
+    viewActions,
+    viewContent,
+  } = props;
   return (
     <Modal
       description={description}
-      footer={mode === "view" ? (
+      footer={props.mode === "view" ? (
         <>
           <Button onClick={onCancel} type="button" variant="secondary">
             Close
@@ -209,13 +221,13 @@ export function DetailEditModal({
         </>
       ) : (
         <DialogActions
-          actionLabel={saveLabel}
+          actionLabel={props.saveLabel}
           actionTestId={saveTestId ?? (testId ? `${testId}-save` : undefined)}
           cancelLabel="Cancel"
           isActionDisabled={!canSave}
           isPending={isPending}
-          onAction={onSave}
-          onCancel={onCancelEdit}
+          onAction={props.onSave}
+          onCancel={props.onCancelEdit}
           pendingLabel={pendingLabel}
         />
       )}
@@ -227,7 +239,7 @@ export function DetailEditModal({
       testId={testId}
       title={title}
     >
-      {mode === "view" && actions ? (
+      {props.mode === "view" && actions ? (
         <div className="space-y-5">
           <DialogSection testId={testId ? `${testId}-details` : undefined} title={factsTitle ?? "Details"}>
             <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
@@ -248,7 +260,7 @@ export function DetailEditModal({
             </SectionRows>
           </DialogSection>
         </div>
-      ) : mode === "view" ? (
+      ) : props.mode === "view" ? (
         <>
           {factsTitle ? <Eyebrow tone="muted">{factsTitle}</Eyebrow> : null}
           <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
@@ -256,7 +268,7 @@ export function DetailEditModal({
         </>
       ) : (
         <>
-          {children}
+          {props.children}
           {error ? <ServerErrorBar className="mt-4" error={error} fallback={errorFallback} title="Save failed" /> : null}
         </>
       )}

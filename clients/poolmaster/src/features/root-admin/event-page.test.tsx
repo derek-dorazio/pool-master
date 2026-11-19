@@ -508,7 +508,7 @@ describe('Event page Release checks dialog', () => {
     await waitFor(() => expect(releaseEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' } })));
   });
 
-  it('explains a refused release in plain words', async () => {
+  it('explains a refused release in plain domain words, naming an event rather than the sport word', async () => {
     releaseEventMock.mockResolvedValue(refusal('SPORT_EVENT_ALREADY_STARTED', 'Sport event has already started.'));
     renderEventPage('/manage/sports/golf/events/tour-1/field', { event: draft() });
 
@@ -516,7 +516,7 @@ describe('Event page Release checks dialog', () => {
     await userEvent.click(within(dialog).getByTestId('root-admin-sport-event-release'));
     await userEvent.click(await screen.findByTestId('root-admin-sport-event-release-confirm'));
 
-    expect(await screen.findByText('This tournament has already started, so it can no longer be released.')).toBeInTheDocument();
+    expect(await screen.findByText('This event has already started, so it can no longer be released.')).toBeInTheDocument();
   });
 
   it('returns from the release confirmation\'s close button to the checks, without releasing', async () => {
