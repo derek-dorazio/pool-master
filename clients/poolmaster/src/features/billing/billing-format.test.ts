@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeExpansionPrices, describePayments } from './billing-format';
+import { describeExpansionPrices } from './billing-format';
 
 describe('describeExpansionPrices', () => {
   it('lists each band as its entries and price, in the viewer\'s locale', () => {
@@ -10,12 +10,5 @@ describe('describeExpansionPrices', () => {
 
   it('says None for a plan with no expansion bands', () => {
     expect(describeExpansionPrices([], 'en-US')).toBe('None');
-  });
-});
-
-describe('describePayments', () => {
-  it('says payments are on, or that expanding is free while they are off', () => {
-    expect([describePayments({ paymentsEnabled: true }), describePayments({ paymentsEnabled: false })])
-      .toEqual(['On', 'Off: expanding a contest is free']);
   });
 });

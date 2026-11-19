@@ -275,7 +275,7 @@ content):
 ## Switching Email Off
 
 Whether email is sent is the `EMAIL_CONFIG` app setting, which a root admin changes on the
-Email card of `/manage/settings`; every core-api task picks a save up within 30 seconds. It
+⚙ Email settings on the Notifications page (`/manage/notifications`); every core-api task picks a save up within 30 seconds. It
 holds:
 
 - `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa`
@@ -318,7 +318,7 @@ sender address stay in env, because they describe how the deployment is wired.
 
 ## Sending a Test Email
 
-The Email card of `/manage/settings` has **Send a test email to**: a root admin types an address
+The Notifications page (`/manage/notifications`) has **Send a test email to**: a root admin types an address
 and presses Send. `POST /api/v1/platform/email/test` records one `EMAIL_TEST` email (a fixed
 subject and body naming the environment and the admin; category Root admin, no settings switch)
 and sends it like every other: the overall switch, "Only send to" and the suppression list all
@@ -366,7 +366,7 @@ An email's status is changed with the EMAIL_CONFIG settings update, as before.
 
 ## Testing on QA Without Emailing Real People
 
-1. On `/manage/settings`, set "Only send to" to your own address(es), and to
+1. In ⚙ Email settings on `/manage/notifications`, set "Only send to" to your own address(es), and to
    `@simulator.amazonses.com` for the SES mailbox simulator.
 2. Give manual test users plus-addresses of your inbox (`you+alice@gmail.com`,
    `you+bob@gmail.com`); Gmail delivers them all to you, through real SES.

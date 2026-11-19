@@ -991,7 +991,7 @@ contest's band under the same row lock it counts under. Deleting a contest drops
 and keeps its payment lines with no contest named.
 
 **Expanding a contest** (#987). Each plan has its own expansion price list in the `BILLING_CONFIG`
-settings group (Root admin › Settings › Payments; bands and prices must rise down each list). A
+settings group (Root admin › Pricing, a plan's dialog; bands and prices must rise down each list). A
 contest is offered the bands above its current cap, from its creation until it stops taking
 entries, and a step up costs the band's price less the dearest band at or below the contest's
 current expansion. Commissioners see this under Commissioner tools › the contest › Entries
@@ -1274,11 +1274,12 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 
 | Operation | Role | Notes |
 |---|---|---|
-| List, read settings groups | `rootAdmin` | `listSettingsGroups`, `getSettingsGroup` — value in use, defaults, `stored` or `defaults`, who last saved it. The `/manage/settings` page |
+| List, read settings groups | `rootAdmin` | `listSettingsGroups`, `getSettingsGroup` — value in use, defaults, `stored` or `defaults`, who last saved it. Each group is read by the page that edits it: Notifications (`EMAIL_CONFIG`), Providers (`INGESTION_SCHEDULE_CONFIG`), Plans (`PLAN_CONFIG`) and Pricing (`BILLING_CONFIG`); there is no page of every group (#1886) |
 | Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
 | Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history. Each value is typed by its group's schema; a change whose stored values no longer validate is logged and left out |
-| Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
-| Send a test email | `rootAdmin` | `sendTestEmail` (#910) — one fixed email to one address through the outbox and the saved `EMAIL_CONFIG`; waits for the sender's first try and returns `SENT`, `SKIPPED` with the reason, or `QUEUED` with the provider's error. The Email card of `/manage/settings` |
+| Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from ⚙ Email settings on `/manage/notifications`. A skipped email still counts as sent |
+| Send a test email | `rootAdmin` | `sendTestEmail` (#910) — one fixed email to one address through the outbox and the saved `EMAIL_CONFIG`; waits for the sender's first try and returns `SENT`, `SKIPPED` with the reason, or `QUEUED` with the provider's error. The Notifications page (`/manage/notifications`) |
+| Set plan prices and expansion bands, switch payments | `rootAdmin` | `updateSettingsGroup` on `BILLING_CONFIG` from `/manage/pricing` (#1886): a plan's dialog sends the whole record with that plan's `planPrices` and `expansionPrices` changed, ⚙ Payments with `paymentsEnabled` changed. Nothing charges `planPrices` yet |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule` (a patch: only the policies and properties it names change), `resetIngestionSchedule`. One schedule for every sport league: health check, event list, field and live scores. There are no per-sport overrides (#1871) |
 
 ### Providers and ProviderSyncRun — `ingestion`

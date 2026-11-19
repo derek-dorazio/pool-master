@@ -184,7 +184,7 @@ Taken on 2026-10-24: `primetimecommissioner.com` (Derek's), `primetime.app`, `pr
   verified addresses, which is fine for the soft launch.
 - **Bounce and complaint events** take the documented two applies: apply with
   `ses_events_subscribed = false`, deploy, then set it `true` and apply again.
-- **Turn email on in the app**, prod's `/manage/settings` → Email, with "Only send to" empty.
+- **Turn email on in the app**, prod's `/manage/notifications` → ⚙ Email settings, with "Only send to" empty.
   App settings live in prod's own database, so every settings group starts at the code defaults
   and is reviewed once at launch (section 9).
 
@@ -283,7 +283,7 @@ loaded through prod's admin API by the `Load sport data` workflow with a `prod` 
 `with_participants`; dry run stays the default, and apply runs on Derek's yes. Admins can also
 enter events on the Manage screens. QA's database is never copied to prod.
 
-**App settings:** go through every group on `/manage/settings` once (email on, sender name,
+**App settings:** go through every settings group once (Notifications, Providers, Plans and Pricing) (email on, sender name,
 rates, notification defaults), since prod starts from code defaults.
 
 **Launch order:**

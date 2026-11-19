@@ -40,7 +40,7 @@ describe('Manage sport paths (plans/racing-sports.md Q9.6)', () => {
 });
 
 describe('Manage menu and breadcrumbs per sport', () => {
-  it('shows the top menu Sports to Plans, keeping Sports lit on any page under a sport', () => {
+  it('shows the top menu Sports to Pricing, keeping Sports lit on any page under a sport', () => {
     const tabs = buildManageTabs('/manage/sports/horse-racing/events/evt-1');
 
     expect(tabs.map((tab) => [tab.label, tab.isActive])).toEqual([
@@ -50,7 +50,13 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Providers', false],
       ['Customers', false],
       ['Plans', false],
+      ['Pricing', false],
     ]);
+  });
+
+  it('lights Pricing on the Pricing page and names it Pricing in the breadcrumb', () => {
+    expect(buildManageTabs('/manage/pricing').filter((tab) => tab.isActive).map((tab) => tab.label)).toEqual(['Pricing']);
+    expect(getManageBreadcrumbLabel(['pricing'], 0)).toBe('Pricing');
   });
 
   it('lights Providers, not Activity, on Run event sync, and Activity on the rest of the sync pages', () => {
@@ -60,7 +66,6 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/sync/unmapped-participants/map')).toEqual(['Providers']);
     expect(lit('/manage/sync')).toEqual(['Activity']);
     expect(lit('/manage/notifications')).toEqual(['Notifications']);
-    expect(lit('/manage/settings')).toEqual(['Notifications']);
     expect(lit('/manage/users/user-1')).toEqual(['Customers']);
     expect(lit('/manage/events')).toEqual(['Sports']);
     expect(lit('/manage/content-configuration/how-to-play')).toEqual(['Sports']);
@@ -84,20 +89,11 @@ describe('Manage menu and breadcrumbs per sport', () => {
     ]);
   });
 
-  it('under Notifications, shows Emails and the old Settings page, marking the one open', () => {
-    expect(buildManageSubTabs('/manage/notifications')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Emails', true],
-      ['Settings', false],
-    ]);
-    expect(buildManageSubTabs('/manage/settings')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Emails', false],
-      ['Settings', true],
-    ]);
-  });
-
-  it('has no second row under Activity, Providers or Plans', () => {
+  it('has no second row under Activity, Notifications, Providers, Plans or Pricing', () => {
     expect(buildManageSubTabs('/manage/sync')).toBeNull();
+    expect(buildManageSubTabs('/manage/notifications')).toBeNull();
     expect(buildManageSubTabs('/manage/plans')).toBeNull();
+    expect(buildManageSubTabs('/manage/pricing')).toBeNull();
   });
 
   it('names a cycling trail in cycling words: Cycling, Races, Riders', () => {
@@ -140,10 +136,9 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['sports', 'horse-racing', 'leagues'], 2)).toBe('Sport leagues');
   });
 
-  it('names the renamed tools in the trail by their menu words: Activity, Notifications, Settings, Contest templates', () => {
+  it('names the renamed tools in the trail by their menu words: Activity, Notifications, Contest templates', () => {
     expect(getManageBreadcrumbLabel(['sync'], 0)).toBe('Activity');
     expect(getManageBreadcrumbLabel(['notifications'], 0)).toBe('Notifications');
-    expect(getManageBreadcrumbLabel(['settings'], 0)).toBe('Settings');
     expect(getManageBreadcrumbLabel(['content-configuration'], 0)).toBe('Contest templates');
   });
 

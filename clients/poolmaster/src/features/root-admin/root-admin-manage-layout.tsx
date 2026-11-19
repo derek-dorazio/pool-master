@@ -49,7 +49,7 @@ export function ManageLandingRedirect() {
 
 /**
  * The root-admin area on the commissioner tools frame (#1620): the slim band with the way out,
- * Manage's tools as top tabs, a second row under Notifications and Customers, then the page, which opens with
+ * Manage's tools as top tabs, a second row under Customers, then the page, which opens with
  * its own `PageHeader`. A page deeper than its tab also shows the trail back up to it.
  */
 export function RootAdminManageLayout() {
