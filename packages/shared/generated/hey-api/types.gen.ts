@@ -15047,6 +15047,119 @@ export type EmailTestResponse = {
 };
 
 /**
+ * One system email on the Notifications page.
+ */
+export type SystemEmailDto = {
+    /**
+     * The system email, by its template key.
+     */
+    templateKey: 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING' | 'CONTEST_REOPENED';
+    /**
+     * The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+     */
+    planFeature: 'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK' | null;
+    /**
+     * The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+     */
+    planStartsAt: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM' | null;
+    /**
+     * ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+     */
+    status: 'ON' | 'OFF' | 'ALWAYS_ON';
+    /**
+     * How many of this email the transport accepted in the last 30 days, whatever SES reported after.
+     */
+    sentLast30Days: number;
+    /**
+     * When the last one was sent in the last 30 days, or null.
+     */
+    lastSentAt: string | null;
+    /**
+     * When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+     */
+    previewSentAt: string | null;
+};
+
+/**
+ * Every system email with its recent sends.
+ */
+export type SystemEmailListResponse = {
+    /**
+     * Every system email, one per template key.
+     */
+    emails: Array<{
+        /**
+         * The system email, by its template key.
+         */
+        templateKey: 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING' | 'CONTEST_REOPENED';
+        /**
+         * The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+         */
+        planFeature: 'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK' | null;
+        /**
+         * The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+         */
+        planStartsAt: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM' | null;
+        /**
+         * ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+         */
+        status: 'ON' | 'OFF' | 'ALWAYS_ON';
+        /**
+         * How many of this email the transport accepted in the last 30 days, whatever SES reported after.
+         */
+        sentLast30Days: number;
+        /**
+         * When the last one was sent in the last 30 days, or null.
+         */
+        lastSentAt: string | null;
+        /**
+         * When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+         */
+        previewSentAt: string | null;
+    }>;
+};
+
+/**
+ * The latest send of one system email that still keeps its content: a real email, never sample data.
+ */
+export type SystemEmailLatestSendResponse = {
+    /**
+     * The system email, by its template key.
+     */
+    templateKey: 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING' | 'CONTEST_REOPENED';
+    /**
+     * The subject it was sent with.
+     */
+    subject: string;
+    /**
+     * The HTML it was sent with, exactly. Show it in a sandboxed frame: it is a whole email document.
+     */
+    htmlBody: string;
+    /**
+     * When the transport accepted it.
+     */
+    sentAt: string;
+    /**
+     * Whom it went to, masked: the first character of the address, then the domain ("d•••@example.com").
+     */
+    recipient: string;
+};
+
+/**
+ * What happened to a copy of a system email sent to the root admin.
+ */
+export type SystemEmailResendResponse = {
+    /**
+     * Where the copy stands: QUEUED for the sender, or SKIPPED when the settings or the address stopped it (see skipReason).
+     */
+    status: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED';
+    /**
+     * Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, TEMPLATE_DISABLED when this email is off, NOT_ALLOWED_IN_ENVIRONMENT when your address is not in "Only send to" or is a reserved domain, SUPPRESSED when your address bounced or complained before.
+     */
+    skipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
+};
+
+/**
  * The stored key of a settings group.
  */
 export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'PLAN_CONFIG' | 'BILLING_CONFIG';
@@ -26564,9 +26677,9 @@ export type ProviderSyncRunDto = {
      */
     kind: 'EVENTS' | 'FIELD' | 'SCORES';
     /**
-     * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+     * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
      */
-    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
     /**
      * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
      */
@@ -26718,9 +26831,9 @@ export type ProviderSyncRunDetailDto = {
      */
     kind: 'EVENTS' | 'FIELD' | 'SCORES';
     /**
-     * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+     * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
      */
-    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
     /**
      * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
      */
@@ -27045,9 +27158,9 @@ export type ProviderSyncRunListResponse = {
          */
         kind: 'EVENTS' | 'FIELD' | 'SCORES';
         /**
-         * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+         * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
          */
-        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
         /**
          * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
          */
@@ -27211,9 +27324,9 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         kind: 'EVENTS' | 'FIELD' | 'SCORES';
         /**
-         * What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+         * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
          */
-        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN';
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
         /**
          * The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
          */
@@ -27544,6 +27657,36 @@ export type ActivityJobDto = {
      */
     lastError: string | null;
     /**
+     * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+     */
+    trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
+    /**
+     * The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted.
+     */
+    startedBy: {
+        id: string;
+        /**
+         * Their name, for display.
+         */
+        displayName: string;
+    } | null;
+    /**
+     * When its latest try started; null until it is first claimed.
+     */
+    startedAt: string | null;
+    /**
+     * How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED.
+     */
+    durationSeconds: number | null;
+    /**
+     * How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds.
+     */
+    changedCount: number | null;
+    /**
+     * Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+     */
+    errorType: 'RATE_LIMITED' | 'TIMEOUT' | 'PROVIDER_ERROR' | 'BAD_DATA' | 'CHECK_FAILED' | 'OTHER' | null;
+    /**
      * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
      */
     result: {
@@ -27629,6 +27772,36 @@ export type ActivityListResponse = {
          */
         lastError: string | null;
         /**
+         * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+         */
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
+        /**
+         * The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted.
+         */
+        startedBy: {
+            id: string;
+            /**
+             * Their name, for display.
+             */
+            displayName: string;
+        } | null;
+        /**
+         * When its latest try started; null until it is first claimed.
+         */
+        startedAt: string | null;
+        /**
+         * How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED.
+         */
+        durationSeconds: number | null;
+        /**
+         * How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds.
+         */
+        changedCount: number | null;
+        /**
+         * Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+         */
+        errorType: 'RATE_LIMITED' | 'TIMEOUT' | 'PROVIDER_ERROR' | 'BAD_DATA' | 'CHECK_FAILED' | 'OTHER' | null;
+        /**
          * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
          */
         result: {
@@ -27690,6 +27863,36 @@ export type ActivityJobResponse = {
          * The error of its last failed try.
          */
         lastError: string | null;
+        /**
+         * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+         */
+        trigger: 'SCHEDULE' | 'WEBHOOK' | 'ADMIN' | 'COMMISSIONER' | 'SYSTEM';
+        /**
+         * The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted.
+         */
+        startedBy: {
+            id: string;
+            /**
+             * Their name, for display.
+             */
+            displayName: string;
+        } | null;
+        /**
+         * When its latest try started; null until it is first claimed.
+         */
+        startedAt: string | null;
+        /**
+         * How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED.
+         */
+        durationSeconds: number | null;
+        /**
+         * How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds.
+         */
+        changedCount: number | null;
+        /**
+         * Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+         */
+        errorType: 'RATE_LIMITED' | 'TIMEOUT' | 'PROVIDER_ERROR' | 'BAD_DATA' | 'CHECK_FAILED' | 'OTHER' | null;
         /**
          * What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.
          */
@@ -35667,6 +35870,125 @@ export type SendTestEmailResponses = {
 };
 
 export type SendTestEmailResponse = SendTestEmailResponses[keyof SendTestEmailResponses];
+
+export type ListSystemEmailsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/platform/emails/';
+};
+
+export type ListSystemEmailsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListSystemEmailsError = ListSystemEmailsErrors[keyof ListSystemEmailsErrors];
+
+export type ListSystemEmailsResponses = {
+    /**
+     * Every system email with its recent sends.
+     */
+    200: SystemEmailListResponse;
+};
+
+export type ListSystemEmailsResponse = ListSystemEmailsResponses[keyof ListSystemEmailsResponses];
+
+export type GetSystemEmailLatestSendData = {
+    body?: never;
+    path: {
+        templateKey: 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING' | 'CONTEST_REOPENED';
+    };
+    query?: never;
+    url: '/api/v1/platform/emails/{templateKey}/latest-send';
+};
+
+export type GetSystemEmailLatestSendErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type GetSystemEmailLatestSendError = GetSystemEmailLatestSendErrors[keyof GetSystemEmailLatestSendErrors];
+
+export type GetSystemEmailLatestSendResponses = {
+    /**
+     * The latest send of one system email that still keeps its content: a real email, never sample data.
+     */
+    200: SystemEmailLatestSendResponse;
+};
+
+export type GetSystemEmailLatestSendResponse = GetSystemEmailLatestSendResponses[keyof GetSystemEmailLatestSendResponses];
+
+export type SendSystemEmailLatestSendToMeData = {
+    body?: never;
+    path: {
+        templateKey: 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING' | 'CONTEST_REOPENED';
+    };
+    query?: never;
+    url: '/api/v1/platform/emails/{templateKey}/latest-send/send-to-me';
+};
+
+export type SendSystemEmailLatestSendToMeErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type SendSystemEmailLatestSendToMeError = SendSystemEmailLatestSendToMeErrors[keyof SendSystemEmailLatestSendToMeErrors];
+
+export type SendSystemEmailLatestSendToMeResponses = {
+    /**
+     * What happened to a copy of a system email sent to the root admin.
+     */
+    200: SystemEmailResendResponse;
+};
+
+export type SendSystemEmailLatestSendToMeResponse = SendSystemEmailLatestSendToMeResponses[keyof SendSystemEmailLatestSendToMeResponses];
 
 export type ListProvidersData = {
     body?: never;

@@ -6,7 +6,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { AutoReleaseCheckOutcome, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, JobTrigger, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository, PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueOverviewReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-overview-reader';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -169,7 +169,7 @@ describe('ProviderSyncRunLedger with the event repository', () => {
       scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: linked.externalId, feeds: ['EVENTLIVESCORES'] },
     });
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, runType: 'SCHEDULED_EVENT_SYNC' });
+    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ kind: ProviderSyncKind.SCORES, sportEventId: linked.id, sportLeagueId: tour.id });
   });

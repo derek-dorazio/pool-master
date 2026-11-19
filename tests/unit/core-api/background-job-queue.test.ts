@@ -6,7 +6,7 @@ import {
   combineJobsForWrite,
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 type SyncPayload = BackgroundJobPayload<typeof BackgroundJobType.MANUAL_EVENT_SYNC>;
 
@@ -19,7 +19,7 @@ const PAYLOAD: SyncPayload = {
 
 function setup() {
   const jobs = inMemoryBackgroundJobs();
-  const queue = new BackgroundJobQueue({ jobs });
+  const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const runner = { wake: jest.fn() };
   queue.wakes(runner);
   return { jobs, queue, runner };
@@ -68,7 +68,7 @@ describe('background job queue (#1440)', () => {
 
     const request = queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { runAt, dedupeKey: 'sync:event-1' });
 
-    expect(request).toEqual({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: PAYLOAD, runAt, dedupeKey: 'sync:event-1' });
+    expect(request).toEqual({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: PAYLOAD, runAt, dedupeKey: 'sync:event-1', start: TEST_JOB_START });
     expect(jobs.rows).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();
     queue.queued();
@@ -78,8 +78,8 @@ describe('background job queue (#1440)', () => {
 
 describe('jobs a write carries (#1466)', () => {
   it('combines several writes\' jobs in order, and wakes each one\'s runner once the write commits', () => {
-    const first = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'a' }], queued: jest.fn() };
-    const second = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'b' }], queued: jest.fn() };
+    const first = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'a', start: TEST_JOB_START }], queued: jest.fn() };
+    const second = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'b', start: TEST_JOB_START }], queued: jest.fn() };
 
     const combined = combineJobsForWrite(first, NO_JOBS_FOR_WRITE, second);
 
@@ -104,7 +104,7 @@ describe('jobs a write carries (#1466)', () => {
     const onNothing = { sportEventId: undefined, sportLeagueId: undefined };
 
     expect(scopeOf(queue.request(BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS, { sportEventId, completedAt: '2026-11-07T12:00:00.000Z' }))).toEqual(onEvent);
-    expect(scopeOf(queue.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId, eventYears: [2026], trigger: 'SCHEDULE' })))
+    expect(scopeOf(queue.request(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId, eventYears: [2026] })))
       .toEqual({ sportEventId: undefined, sportLeagueId });
     expect(scopeOf(queue.request(BackgroundJobType.REBUILD_LEADERBOARDS, { subject: 'EVENT', id: sportEventId }))).toEqual(onEvent);
     // A contest's rebuild or results email may span several events, so it names none.

@@ -16,8 +16,11 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
+  JobTrigger,
   type ProviderHealthStatus,
   ProviderSyncRunStatus,
+  type BackgroundJobOutcome,
+  type JobStart,
   type Sport,
   SportEventSyncScope,
   type ProviderSyncRun,
@@ -41,6 +44,7 @@ import {
 } from './persistence/provider-sync-run-ledger';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
+import { syncChangedRows } from './core/sync-write-diagnostics';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -414,11 +418,14 @@ export class IngestionService {
       rootAdminUserId,
     }, 'Submitting manual event sync');
     // The runs and the job that runs them commit together; the job runs on whichever task claims it.
+    // Both record the root admin who asked (#1861).
+    const start: JobStart = { trigger: JobTrigger.ADMIN, startedByUserId: rootAdminUserId };
     const syncRuns = await this.syncRunLedger.createSubmissionsWithJob({
       normalizedRequest,
       providerId: provider.providerId,
       submittedAt,
       runType: 'MANUAL_EVENT_SYNC',
+      trigger: start.trigger,
       ...(linkedEvent && linkedEvent),
       job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: runs.map((run) => run.id),
@@ -427,7 +434,7 @@ export class IngestionService {
         eventId: normalizedScope.eventId,
         mockEventState: normalizedScope.mockEventState,
         ...(linkedEvent && { sportEventId: linkedEvent.sportEventId }),
-      }),
+      }, { start }),
     });
     this.jobs.queued();
 
@@ -459,7 +466,7 @@ export class IngestionService {
    * whose failure could not be written (#1445): it is marked FAILED as interrupted, rather than
    * left showing as running for good, and is not run again.
    */
-  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number; jobId: string }): Promise<void> {
+  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number; jobId: string }): Promise<BackgroundJobOutcome> {
     const scheduler = this.scheduler;
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
@@ -469,6 +476,8 @@ export class IngestionService {
     const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
     // Runs whose outcome the ledger could not write: the job fails after the rest have run.
     const unrecorded: string[] = [];
+    // The rows the feeds this try ran wrote (#1861).
+    let changedCount = 0;
     for (const syncRunId of payload.syncRunIds) {
       const syncRun = stored.get(syncRunId);
       if (syncRun?.status === ProviderSyncRunStatus.IN_PROGRESS && context.attempt > 1) {
@@ -490,7 +499,7 @@ export class IngestionService {
       }
 
       try {
-        await this.syncRunLedger.executeFeedRun(syncRun, () =>
+        const record = await this.syncRunLedger.executeFeedRun(syncRun, () =>
           scheduler.runEventSync({
             sport: payload.sport,
             providerId: payload.providerId,
@@ -500,6 +509,7 @@ export class IngestionService {
           }),
           { backgroundJobId: context.jobId },
         );
+        changedCount += syncChangedRows(record.writeDiagnostics);
       } catch (error) {
         if (error instanceof SyncRunOutcomeUnrecordedError) {
           unrecorded.push(syncRun.id);
@@ -519,6 +529,7 @@ export class IngestionService {
       // A retry marks these runs interrupted rather than leaving them IN_PROGRESS for good.
       throw new Error(`Manual event sync left ${String(unrecorded.length)} run(s) without a recorded outcome: ${unrecorded.join(', ')}`);
     }
+    return { changedCount };
   }
 
   /**

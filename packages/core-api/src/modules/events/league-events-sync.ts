@@ -21,14 +21,15 @@ import type { ProviderSyncRunRepository, SportLeagueRepository, SportRepository 
 import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
-  ProviderSyncTrigger,
+  JobTrigger,
   isClutchCardLeague,
   type BackgroundJob,
-  type BackgroundJobResult,
+  type BackgroundJobOutcome,
   type ProviderSyncRun,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
+import { SCHEDULE_START } from '../../core/job-start';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { PermanentBackgroundJobError, type BackgroundJobContext } from '../background-jobs/background-job-runner';
 import { EventScoreSourceError, type EventScoreSourceService } from './event-score-source-service';
@@ -97,9 +98,7 @@ export class LeagueEventsSync {
     return this.options.jobs.enqueueRequestReturning(syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: sportLeague.id,
       eventYears: input.eventYear === undefined ? this.scheduledYears() : [input.eventYear],
-      trigger: ProviderSyncTrigger.ADMIN,
-      requestedByUserId: input.requestedByUserId,
-    }));
+    }, { start: { trigger: JobTrigger.ADMIN, startedByUserId: input.requestedByUserId } }));
   }
 
   /** The schedule's pass: one job per active synced league, in one write; answers how many were queued. */
@@ -113,12 +112,11 @@ export class LeagueEventsSync {
     return this.options.jobs.enqueueAll(leagues.map((league) => syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: league.id,
       eventYears,
-      trigger: ProviderSyncTrigger.SCHEDULE,
-    }, isClutchCardLeague(league) ? { runAt: clutchCardRunAt } : {})));
+    }, { start: SCHEDULE_START, ...(isClutchCardLeague(league) && { runAt: clutchCardRunAt }) })));
   }
 
   /** The SYNC_LEAGUE_EVENTS job. */
-  async run(payload: SyncLeagueEventsJobPayload, context: Pick<BackgroundJobContext, 'jobId' | 'attempt' | 'renewLease'>): Promise<BackgroundJobResult> {
+  async run(payload: SyncLeagueEventsJobPayload, context: Pick<BackgroundJobContext, 'jobId' | 'attempt' | 'renewLease' | 'trigger'>): Promise<BackgroundJobOutcome> {
     if (context.attempt > 1) await this.failInterruptedRuns(context.jobId);
 
     const sportLeague = await this.options.sportLeagues.findById(payload.sportLeagueId);
@@ -137,7 +135,7 @@ export class LeagueEventsSync {
       sport,
       eventId: null,
       kind: ProviderSyncKind.EVENTS,
-      trigger: payload.trigger,
+      trigger: context.trigger,
       sportLeagueId: sportLeague.id,
       sportEventId: null,
       backgroundJobId: context.jobId,
@@ -188,9 +186,12 @@ export class LeagueEventsSync {
     });
     this.options.logger?.info({
       action: 'events.leagueSync.completed',
-      data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, trigger: payload.trigger, ...counts },
+      data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, trigger: context.trigger, ...counts },
     }, 'A sport league\'s events sync finished');
-    return { syncRunId: run.id, eventYears: payload.eventYears, ...counts };
+    return {
+      changedCount: counts.created + counts.updated,
+      result: { syncRunId: run.id, eventYears: payload.eventYears, ...counts },
+    };
   }
 
   private async syncYear(sportLeagueId: string, providerId: string, eventYear: number): Promise<YearSync> {

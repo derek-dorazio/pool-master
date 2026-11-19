@@ -7,12 +7,13 @@
  * needs again and queues the emails exactly as the request once did.
  *
  * A job that throws is retried. Each email's outbox idempotency key is the contest (and for E1
- * the event) and the person, so a retry queues only what the failed try did not.
+ * the event) and the person, so a retry queues only what the failed try did not. Each job reports
+ * the emails it queued as the rows it changed (#1861); one with nothing to send reports none.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestRepository, SportEventRepository } from '@poolmaster/shared/db';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
 import { readFinalStandings, type FinalStandingsReadDeps } from '../contests/final-standings';
 import type { ContestNotices } from './contest-notices';
 import type {
@@ -30,20 +31,23 @@ export interface ContestEmailJobDeps {
   logger?: FastifyBaseLogger;
 }
 
+/** A job that found nothing to send. */
+const NOTHING_SENT: BackgroundJobOutcome = { changedCount: 0 };
+
 export class ContestEmailJobs {
   constructor(private readonly deps: ContestEmailJobDeps) {}
 
   /** E1 for one contest that went live for one event. */
-  async contestStarted(payload: ContestStartedEmailsJobPayload): Promise<void> {
+  async contestStarted(payload: ContestStartedEmailsJobPayload): Promise<BackgroundJobOutcome> {
     const [contest, sportEvent] = await Promise.all([
       this.deps.contests.findById(payload.contestId),
       this.deps.sportEvents.findById(payload.sportEventId),
     ]);
     if (!contest || !sportEvent) {
       this.skipped('email.contestStarted.skipped', payload.contestId, 'Skipped the contest is live email because its contest or event is gone');
-      return;
+      return NOTHING_SENT;
     }
-    await this.deps.notices.contestStarted(contest, sportEvent);
+    return { changedCount: await this.deps.notices.contestStarted(contest, sportEvent) };
   }
 
   /**
@@ -51,13 +55,13 @@ export class ContestEmailJobs {
    * contest no longer completed by the time the job runs is being settled again, and that
    * settlement queues its own job.
    */
-  async contestSettled(payload: ContestSettledEmailsJobPayload): Promise<void> {
+  async contestSettled(payload: ContestSettledEmailsJobPayload): Promise<BackgroundJobOutcome> {
     const contest = await this.deps.contests.findById(payload.contestId);
     if (contest?.status !== ContestStatus.COMPLETED) {
       this.skipped('email.contestSettled.skipped', payload.contestId, 'Skipped the final results email because the contest is gone or no longer completed');
-      return;
+      return NOTHING_SENT;
     }
-    await this.deps.notices.contestSettled(contest, await readFinalStandings(this.deps.finalStandings, contest));
+    return { changedCount: await this.deps.notices.contestSettled(contest, await readFinalStandings(this.deps.finalStandings, contest)) };
   }
 
   /**
@@ -65,16 +69,16 @@ export class ContestEmailJobs {
    * the start the change left it (a later move queues its own job). The contest's status is not
    * checked: a cancellation's job may run after settlement finished a contest that went on.
    */
-  async contestEventChanged(payload: ContestEventChangedEmailsJobPayload): Promise<void> {
+  async contestEventChanged(payload: ContestEventChangedEmailsJobPayload): Promise<BackgroundJobOutcome> {
     const [contest, sportEvent] = await Promise.all([
       this.deps.contests.findById(payload.contestId),
       this.deps.sportEvents.findById(payload.sportEventId),
     ]);
     if (!contest || !sportEvent) {
       this.skipped('email.sportEventChanged.skipped', payload.contestId, 'Skipped the event changed email because its contest or event is gone');
-      return;
+      return NOTHING_SENT;
     }
-    await this.deps.notices.contestEventChanged(contest, { ...sportEvent, startDate: new Date(payload.change.startsAt) }, payload.change);
+    return { changedCount: await this.deps.notices.contestEventChanged(contest, { ...sportEvent, startDate: new Date(payload.change.startsAt) }, payload.change) };
   }
 
   /**
@@ -82,21 +86,21 @@ export class ContestEmailJobs {
    * or open to another start, by the time the job runs has nothing to say: picks closed, or a
    * later reopen queued its own job.
    */
-  async contestReopened(payload: ContestReopenedEmailsJobPayload): Promise<void> {
+  async contestReopened(payload: ContestReopenedEmailsJobPayload): Promise<BackgroundJobOutcome> {
     const [contest, sportEvent] = await Promise.all([
       this.deps.contests.findById(payload.contestId),
       this.deps.sportEvents.findById(payload.sportEventId),
     ]);
     if (!contest || !sportEvent) {
       this.skipped('email.contestReopened.skipped', payload.contestId, 'Skipped the picks are open again email because its contest or event is gone');
-      return;
+      return NOTHING_SENT;
     }
     const startsAt = new Date(payload.startsAt);
     if (contest.status !== ContestStatus.OPEN || contest.startsAt?.getTime() !== startsAt.getTime()) {
       this.skipped('email.contestReopened.skipped', payload.contestId, 'Skipped the picks are open again email because the contest is no longer open to that start');
-      return;
+      return NOTHING_SENT;
     }
-    await this.deps.notices.contestReopened(contest, sportEvent, payload);
+    return { changedCount: await this.deps.notices.contestReopened(contest, sportEvent, payload) };
   }
 
   private skipped(action: string, contestId: string, message: string): void {

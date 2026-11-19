@@ -60,6 +60,35 @@ export interface EmailMessageRecordResult {
   created: boolean;
 }
 
+/**
+ * How one system email has gone out lately (#1870), for the root admin's Notifications page: how
+ * many were sent since a moment, when the last one went, and when the newest one whose content
+ * the outbox still keeps went (the one a preview shows).
+ */
+export interface EmailSendSummary {
+  templateKey: EmailTemplateKey;
+  sentCount: number;
+  lastSentAt: Date;
+  /** Undefined when no send since then still keeps its content: cleared after 7 days, or a secret. */
+  previewSentAt?: Date;
+}
+
+/**
+ * A sent email with its content still kept (#1870): what the Notifications page previews and
+ * sends the root admin a copy of. Every content field is present, unlike a cleared outbox row.
+ */
+export interface SentEmailContent {
+  id: string;
+  templateKey: EmailTemplateKey;
+  recipientEmail: string;
+  fromName: string;
+  fromAddress: string;
+  subject: string;
+  textBody: string;
+  htmlBody: string;
+  sentAt: Date;
+}
+
 export interface EmailMessageRepository {
   /** One email by id, or undefined. */
   findById(id: string): Promise<EmailMessage | undefined>;
@@ -126,6 +155,18 @@ export interface EmailMessageRepository {
    * recorded about has an empty set.
    */
   findLeagueIdsByNotice(query: { templateKey: EmailTemplateKey; noticeAbouts: readonly string[] }): Promise<Map<string, Set<string>>>;
+  /**
+   * Every email key sent at or after `since` (#1870): how many, the last send, and the last send
+   * that still keeps its content, in two grouped reads however many emails there are. A key
+   * nothing was sent of is absent. Sent means the transport accepted it, whatever SES said after.
+   * A root admin's copy (ADMIN_COPY_KEY_MARKER) is not a send.
+   */
+  summarizeSentSince(since: Date): Promise<EmailSendSummary[]>;
+  /**
+   * The newest email of `templateKey` sent at or after `since` that still keeps its subject and
+   * bodies (#1870), or undefined. Never a root admin's copy (ADMIN_COPY_KEY_MARKER).
+   */
+  findLatestSentWithContent(templateKey: EmailTemplateKey, since: Date): Promise<SentEmailContent | undefined>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
   findLatestStateByInvitations(
     invitationIds: string[],

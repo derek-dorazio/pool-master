@@ -19,6 +19,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderNotifiedEvent, SportEventRepository } from '@poolmaster/shared/db';
 import { BackgroundJobType, type Sport } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import { WEBHOOK_START } from '../../core/job-start';
 
 /** Where in play a notification falls: play starting, under way, or ended. */
 export type ProviderNotificationPhase = 'START' | 'PROGRESS' | 'END';
@@ -99,12 +100,12 @@ export class ProviderNotificationService {
     const syncs = events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
       { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
-      { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event) },
+      { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event), start: WEBHOOK_START },
     ));
     const reconciles = notification.phase !== 'END' ? [] : events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
       { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
-      { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event) },
+      { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event), start: WEBHOOK_START },
     ));
     const queued = await this.deps.jobs.enqueueAll([...syncs, ...reconciles]);
     this.deps.logger?.debug({

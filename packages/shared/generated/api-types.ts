@@ -3375,6 +3375,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/emails/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the system emails
+         * @description Every system email, one per template key, with its plan feature, its On/Off status, how many were sent in the last 30 days, and when the last send and the newest send a preview can show went. Root admin only. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        get: operations["listSystemEmails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/emails/{templateKey}/latest-send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a system email's latest send
+         * @description The newest send of the email whose subject and HTML the outbox still keeps, exactly as it went, with its recipient masked. Root admin only. 404 SYSTEM_EMAIL_NOT_SENT when no send of the email in the last 30 days still keeps its content: never sent, content cleared 7 days after sending, or an email that carries a secret (a password reset) and keeps none. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        get: operations["getSystemEmailLatestSend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/emails/{templateKey}/latest-send/send-to-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send me a system email's latest send
+         * @description Queues a copy of the latest send (same sender, subject and HTML) to the calling root admin's own address through the outbox, a new email each press. It obeys "Send system email", the email's own switch, "Only send to" and the suppression list, and answers QUEUED or SKIPPED with the reason. Root admin only. 404 SYSTEM_EMAIL_NOT_SENT when no send of the email in the last 30 days still keeps its content: never sent, content cleared 7 days after sending, or an email that carries a secret (a password reset) and keeps none. More than 60 requests a minute from one address answer 429 SYSTEM_EMAIL_RATE_LIMITED.
+         */
+        post: operations["sendSystemEmailLatestSendToMe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ingestion/providers": {
         parameters: {
             query?: never;
@@ -15007,6 +15067,111 @@ export interface components {
             /** @description The provider's error from the last failed try, or null. */
             error: string | null;
         };
+        /** @description One system email on the Notifications page. */
+        SystemEmailDto: {
+            /**
+             * @description The system email, by its template key.
+             * @enum {string}
+             */
+            templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            /**
+             * @description The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+             * @enum {string|null}
+             */
+            planFeature: "EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK" | null;
+            /**
+             * @description The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+             * @enum {string|null}
+             */
+            planStartsAt: "FREE" | "PRO" | "PREMIUM" | "PLATINUM" | null;
+            /**
+             * @description ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+             * @enum {string}
+             */
+            status: "ON" | "OFF" | "ALWAYS_ON";
+            /** @description How many of this email the transport accepted in the last 30 days, whatever SES reported after. */
+            sentLast30Days: number;
+            /**
+             * Format: date-time
+             * @description When the last one was sent in the last 30 days, or null.
+             */
+            lastSentAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+             */
+            previewSentAt: string | null;
+        };
+        /** @description Every system email with its recent sends. */
+        SystemEmailListResponse: {
+            /** @description Every system email, one per template key. */
+            emails: {
+                /**
+                 * @description The system email, by its template key.
+                 * @enum {string}
+                 */
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+                /**
+                 * @description The plan feature a league needs to get this email, or null for an email every league gets (account, membership and root admin email).
+                 * @enum {string|null}
+                 */
+                planFeature: "EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK" | null;
+                /**
+                 * @description The lowest plan with planFeature under the current plan settings; every plan above it has it too. Null when planFeature is null.
+                 * @enum {string|null}
+                 */
+                planStartsAt: "FREE" | "PRO" | "PREMIUM" | "PLATINUM" | null;
+                /**
+                 * @description ON or OFF by the email's own switch in the EMAIL_CONFIG settings (change it with the settings update), or ALWAYS_ON for an email with no switch (account emails and the test email), which only the overall switch stops.
+                 * @enum {string}
+                 */
+                status: "ON" | "OFF" | "ALWAYS_ON";
+                /** @description How many of this email the transport accepted in the last 30 days, whatever SES reported after. */
+                sentLast30Days: number;
+                /**
+                 * Format: date-time
+                 * @description When the last one was sent in the last 30 days, or null.
+                 */
+                lastSentAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the send a preview shows went: the newest in the last 30 days whose content the outbox still keeps. Null when there is none (never sent, content cleared 7 days after sending, or an email that carries a secret and keeps none); the latest send and resend routes answer 404 SYSTEM_EMAIL_NOT_SENT then.
+                 */
+                previewSentAt: string | null;
+            }[];
+        };
+        /** @description The latest send of one system email that still keeps its content: a real email, never sample data. */
+        SystemEmailLatestSendResponse: {
+            /**
+             * @description The system email, by its template key.
+             * @enum {string}
+             */
+            templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            /** @description The subject it was sent with. */
+            subject: string;
+            /** @description The HTML it was sent with, exactly. Show it in a sandboxed frame: it is a whole email document. */
+            htmlBody: string;
+            /**
+             * Format: date-time
+             * @description When the transport accepted it.
+             */
+            sentAt: string;
+            /** @description Whom it went to, masked: the first character of the address, then the domain ("d•••@example.com"). */
+            recipient: string;
+        };
+        /** @description What happened to a copy of a system email sent to the root admin. */
+        SystemEmailResendResponse: {
+            /**
+             * @description Where the copy stands: QUEUED for the sender, or SKIPPED when the settings or the address stopped it (see skipReason).
+             * @enum {string}
+             */
+            status: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED";
+            /**
+             * @description Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, TEMPLATE_DISABLED when this email is off, NOT_ALLOWED_IN_ENVIRONMENT when your address is not in "Only send to" or is a reserved domain, SUPPRESSED when your address bounced or complained before.
+             * @enum {string|null}
+             */
+            skipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | "NOT_IN_PLAN" | null;
+        };
         /**
          * @description The stored key of a settings group.
          * @enum {string}
@@ -23201,10 +23366,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23334,10 +23499,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23596,10 +23761,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23741,10 +23906,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -24021,6 +24186,32 @@ export interface components {
             completedAt: string | null;
             /** @description The error of its last failed try. */
             lastError: string | null;
+            /**
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+            /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+            startedBy: {
+                /** Format: uuid */
+                id: string;
+                /** @description Their name, for display. */
+                displayName: string;
+            } | null;
+            /**
+             * Format: date-time
+             * @description When its latest try started; null until it is first claimed.
+             */
+            startedAt: string | null;
+            /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+            durationSeconds: number | null;
+            /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+            changedCount: number | null;
+            /**
+             * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+             * @enum {string|null}
+             */
+            errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
             /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
             result: {
                 [key: string]: unknown;
@@ -24107,6 +24298,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;
@@ -24165,6 +24382,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;
@@ -35540,6 +35783,187 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSystemEmails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every system email with its recent sends. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSystemEmailLatestSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The latest send of one system email that still keeps its content: a real email, never sample data. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailLatestSendResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendSystemEmailLatestSendToMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING" | "CONTEST_REOPENED";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What happened to a copy of a system email sent to the root admin. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemEmailResendResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

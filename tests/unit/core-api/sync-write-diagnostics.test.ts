@@ -1,6 +1,7 @@
 import {
   mergeSyncWriteDiagnostics,
   summarizeSyncWriteRows,
+  syncChangedRows,
   syncWriteStats,
   type SyncWriteDisposition,
 } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
@@ -23,5 +24,14 @@ describe('sync write diagnostics', () => {
 
   it('reports no stats for a sync with no diagnostics', () => {
     expect(syncWriteStats(undefined)).toEqual({});
+  });
+
+  it('counts the rows a sync created, updated or deleted as its job\'s changed rows, leaving out unchanged ones, and none without diagnostics (#1861)', () => {
+    const diagnostics = summarizeSyncWriteRows([
+      row('a', 'CREATED'), row('b', 'UPDATED'), row('c', 'DELETED'), row('d', 'UNCHANGED'), row('e', 'UPDATED'),
+    ]);
+
+    expect(syncChangedRows(diagnostics)).toBe(4);
+    expect(syncChangedRows(undefined)).toBe(0);
   });
 });

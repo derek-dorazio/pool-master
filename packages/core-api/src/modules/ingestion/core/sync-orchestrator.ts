@@ -1,6 +1,7 @@
 import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionFeedType, MockEventState, SyncRequestSource } from '@poolmaster/shared/dto';
 import type { ProviderEventSyncOptions } from './provider-interface';
+import { JobErrorType } from '@poolmaster/shared/domain';
 
 /**
  * Internal sync-intent boundary for pool-master-rop.68.2.
@@ -82,6 +83,9 @@ export type SyncRequestValidationCode =
   | 'MOCK_EVENT_STATE_REQUIRES_MANUAL_SOURCE';
 
 export class SyncRequestValidationError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.BAD_DATA;
+
   constructor(
     readonly code: SyncRequestValidationCode,
     message: string,

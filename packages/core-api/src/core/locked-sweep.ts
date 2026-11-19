@@ -3,7 +3,7 @@
  * tick runs the work only on the task holding the sweep's job lock. A tick that comes due while
  * the last one is still running here is skipped, not overlapped. Each run has a read memo of its
  * own (#1200), as a request has. A failure is logged, never thrown, so the timer carries on and
- * the next tick tries again.
+ * the next tick tries again. Jobs a run queues record SCHEDULE (#1861).
  *
  * The event lifecycle sweep and each kind of clock-driven email run on one of these, each behind a
  * lock of its own (`rules/architecture-rules.md` §4, one recurring job per lock).
@@ -12,6 +12,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { errorMessage } from './error-message';
 import type { JobLock } from './job-lock';
+import { runWithJobStart, SCHEDULE_START } from './job-start';
 import { runWithReadMemo } from './request-read-memo';
 import { SCHEDULE_RECHECK_MS } from './schedule-policy-delay';
 
@@ -83,7 +84,7 @@ export class LockedSweep {
     }
     this.running = true;
     try {
-      const ran = await jobLock.runExclusive(lockKey, () => runWithReadMemo(this.work));
+      const ran = await jobLock.runExclusive(lockKey, () => runWithJobStart(SCHEDULE_START, () => runWithReadMemo(this.work)));
       if (!ran) {
         logger?.debug({ action: 'lockedSweep.heldElsewhere', data: { lockKey } }, `Skipped the ${label} because another server task runs it`);
       }
