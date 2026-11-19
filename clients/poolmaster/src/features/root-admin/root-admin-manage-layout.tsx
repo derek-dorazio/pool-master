@@ -15,9 +15,9 @@ import {
 type BreadcrumbOverrides = Record<string, string>;
 
 /**
- * The trail from the open tab down to the page. The tabs already say the tool, and under Sports
- * the second row says the sport, so the trail starts at the tool (or the sport's list) and shows
- * only on a page deeper than that.
+ * The trail from the open tab down to the page, shown only on a page deeper than its tab. Under
+ * `sports/<sport>/` it starts at the sport and skips the sport's old list pages, which now open
+ * Sports; a League page draws its own trail in its header, so it gets none here.
  */
 function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   const segments = pathname.split("/").filter(Boolean);
@@ -28,15 +28,17 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   }
 
   const relevantSegments = segments.slice(manageIndex + 1);
-  // Under `sports/<sport>/`, the sport tab already names the sport.
-  const firstShown = relevantSegments[0] === "sports" ? 2 : 0;
+  const underSport = relevantSegments[0] === "sports" && relevantSegments.length > 2;
+  if (underSport && relevantSegments[2] === "leagues" && relevantSegments.length > 3 && relevantSegments[3] !== "new") {
+    return [];
+  }
   return relevantSegments
     .map((segment, index) => ({
-      segment,
+      index,
       label: overrides[segment] ?? getManageBreadcrumbLabel(relevantSegments, index),
       href: `/manage/${relevantSegments.slice(0, index + 1).join("/")}`,
     }))
-    .slice(firstShown)
+    .filter(({ index }) => !underSport || (index !== 0 && index !== 2))
     .map(({ label, href }) => ({ label, href }));
 }
 
@@ -47,7 +49,7 @@ export function ManageLandingRedirect() {
 
 /**
  * The root-admin area on the commissioner tools frame (#1620): the slim band with the way out,
- * Manage's tools as top tabs, a second row under Sports and Customers, then the page, which opens with
+ * Manage's tools as top tabs, a second row under Customers, then the page, which opens with
  * its own `PageHeader`. A page deeper than its tab also shows the trail back up to it.
  */
 export function RootAdminManageLayout() {

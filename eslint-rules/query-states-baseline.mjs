@@ -18,12 +18,10 @@ export const QUERY_STATES_BASELINE = [
   'clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx',
   'clients/poolmaster/src/features/root-admin/root-admin-sport-event-field-page.tsx',
   'clients/poolmaster/src/features/root-admin/root-admin-sport-event-tiers-page.tsx',
-  'clients/poolmaster/src/features/root-admin/root-admin-sport-league-home-page.tsx',
   'clients/poolmaster/src/features/root-admin/root-admin-user-page.tsx',
   'clients/poolmaster/src/features/root-admin/sport-event-score-source-card.tsx',
   'clients/poolmaster/src/features/root-admin/sport-league-calendar-card.tsx',
   'clients/poolmaster/src/features/root-admin/sport-league-event-calendar.tsx',
-  'clients/poolmaster/src/features/root-admin/sport-league-roster-grid-card.tsx',
   'clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx',
   'clients/poolmaster/src/features/root-admin/withdrawals-card.tsx',
 ];

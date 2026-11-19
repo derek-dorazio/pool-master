@@ -6,7 +6,7 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
-import { addLeagueParticipants, openLeagueParticipantList } from './helpers/league-participants';
+import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
@@ -187,12 +187,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
       await expect(page.getByTestId('root-admin-manage-menu-sports')).toBeVisible();
       await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
-      await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
       await expectListPageLoaded(page, '/manage/plans', 'root-admin-plans-page', 'root-admin-plans-caps');
-      await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-sport-event-list-page', 'root-admin-sport-event-list-table');
-      await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-participant-list-page', 'root-admin-participant-list-table');
     });
 
     const tourId = await test.step('create a golf tour', async () => {
@@ -218,31 +215,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
       const names = Array.from({ length: PLAYER_COUNT }, (_, index) => `${run.playerNamePrefix} ${index + 1}`);
       const ids = await addLeagueParticipants(page, 'golf', tourId, names);
-      // The list shows one tour's golfers at a time (#1853): the tour's roster, read after every
-      // save, carries all six new golfers.
-      await openLeagueParticipantList(page, 'golf', tourId);
-      const search = page.getByTestId('root-admin-participant-list-search');
-      await search.fill(run.playerNamePrefix);
-      await expect(search).toHaveValue(run.playerNamePrefix);
-      try {
-        for (const id of ids) {
-          await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
-        }
-      } catch (error) {
-        // #678 — QA alone has failed here, and its trace is out of reach, so the log says what the
-        // page showed: the search text, the rows, and any error state.
-        // A diagnostic that cannot be read must not replace the assertion failure.
-        const unreadable = (readError: unknown) => `<unreadable: ${String(readError)}>`;
-        const shown = await page
-          .getByTestId('root-admin-participant-list-page')
-          .innerText({ timeout: 1_000 })
-          .catch(unreadable);
-        const searched = await search.inputValue({ timeout: 1_000 }).catch(unreadable);
-        console.log(
-          `[journey ${run.runId}] player list at failure: url=${page.url()} search="${searched}"\n${shown.slice(0, 2000)}`,
-        );
-        throw error;
-      }
+      // The tour's Participants tab (#1866), read after every save, carries all six new golfers.
+      await expectLeagueParticipants(page, 'golf', tourId, ids);
       return ids;
     });
     journey.playerIds = playerIds;

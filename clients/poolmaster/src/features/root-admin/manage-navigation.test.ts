@@ -72,39 +72,13 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/nowhere')).toEqual([]);
   });
 
-  it('under Sports, shows Sport leagues, Events, Contest templates, then each supported sport, marking the sport being managed', () => {
-    const row = buildManageSubTabs('/manage/sports/horse-racing/events/evt-1');
-
-    expect(row?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Sport leagues', false],
-      ['Events', false],
-      ['Contest templates', false],
-      ['Golf', false],
-      ['Horse racing', true],
-      ['Auto racing', false],
-      ['Cycling', false],
-      ['Running', false],
-      ['Basketball', false],
-      ['American football', false],
-      ['Hockey', false],
-      ['Baseball', false],
-      ['Soccer', false],
-      ['Tennis', false],
-    ]);
-    expect(row?.items[4].to).toBe('/manage/sports/horse-racing/events');
+  it('has no second row under Sports, whose leagues each carry their own tabs on the League page', () => {
+    expect(buildManageSubTabs('/manage/sports')).toBeNull();
+    expect(buildManageSubTabs('/manage/sports/horse-racing/events/evt-1')).toBeNull();
+    expect(buildManageSubTabs('/manage/sports/golf/leagues/league-1/events')).toBeNull();
   });
 
-  it('keeps Sport leagues lit on the Sports page and on a sport league\'s own pages, not its sport', () => {
-    const lit = (pathname: string) => buildManageSubTabs(pathname)?.items.filter((tab) => tab.isActive).map((tab) => tab.label);
-
-    expect(lit('/manage/sports')).toEqual(['Sport leagues']);
-    expect(lit('/manage/sports/golf/leagues/league-1/edit')).toEqual(['Sport leagues']);
-    expect(lit('/manage/events')).toEqual(['Events']);
-    expect(lit('/manage/content-configuration')).toEqual(['Contest templates']);
-  });
-
-  it('lights nothing in the second row on the profiles page, whose own tabs mark Profiles, and names its trail Profiles', () => {
-    expect(buildManageSubTabs('/manage/sports/profiles')?.items.filter((tab) => tab.isActive)).toEqual([]);
+  it('names the profiles page\'s trail Profiles', () => {
     expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
   });
 
