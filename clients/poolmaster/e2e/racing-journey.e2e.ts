@@ -6,6 +6,7 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
+import { addLeagueParticipants, openLeagueParticipantList } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
@@ -174,19 +175,9 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   });
 
   const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
-    await page.goto('/manage/sports/horse-racing/participants');
-    const ids: string[] = [];
-    for (let horse = 1; horse <= HORSE_COUNT; horse += 1) {
-      await page.getByTestId('root-admin-participant-list-new').click();
-      await page.getByTestId('root-admin-participant-list-new-name').fill(horseName(run, horse));
-      const created = await submitAndRead<{ participant: { id: string } }>(
-        page,
-        'root-admin-participant-list-new-save',
-        'POST',
-        '/api/v1/participants',
-      );
-      ids.push(created.participant.id);
-    }
+    const names = Array.from({ length: HORSE_COUNT }, (_, index) => horseName(run, index + 1));
+    const ids = await addLeagueParticipants(page, 'horse-racing', circuitId, names);
+    await openLeagueParticipantList(page, 'horse-racing', circuitId);
     await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
     for (const id of ids) {
       await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();

@@ -6,6 +6,7 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
+import { addLeagueParticipants, openLeagueParticipantList } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
@@ -204,19 +205,8 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   });
 
   const teamIds = await test.step(`create the ${TEAMS.length} teams`, async () => {
-    await page.goto('/manage/sports/basketball/participants');
-    const ids: string[] = [];
-    for (const team of TEAMS) {
-      await page.getByTestId('root-admin-participant-list-new').click();
-      await page.getByTestId('root-admin-participant-list-new-name').fill(teamName(run, team.seed));
-      const created = await submitAndRead<{ participant: { id: string } }>(
-        page,
-        'root-admin-participant-list-new-save',
-        'POST',
-        '/api/v1/participants',
-      );
-      ids.push(created.participant.id);
-    }
+    const ids = await addLeagueParticipants(page, 'basketball', leagueId, TEAMS.map((team) => teamName(run, team.seed)));
+    await openLeagueParticipantList(page, 'basketball', leagueId);
     await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
     for (const id of ids) {
       await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();

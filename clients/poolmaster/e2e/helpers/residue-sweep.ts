@@ -111,6 +111,20 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
           }, report.events, event.name);
         }
       });
+      // A tour is refused while it has a participant (#1853), so its players go next.
+      await remove(`players of tour "${tour.name}" (listing)`, async () => {
+        const list = await expectOk(
+          api.get('/api/v1/participants', { headers, params: { sportLeagueId: tour.id } }),
+          `list players of ${tour.name}`,
+        );
+        const { participants } = (await list.json()) as { participants: { id: string; name: string }[] };
+        for (const player of participants) {
+          await remove(`player "${player.name}"`, async () => {
+            await expectOk(api.delete(`/api/v1/participants/${player.id}`, { headers }), `delete player ${player.name}`);
+            log(`player "${player.name}" removed`);
+          }, report.players, player.name);
+        }
+      });
       await remove(`tour "${tour.name}"`, () => removeTour(api, headers, tour.id, tour.name, log), report.tours, tour.name);
     }
   });
