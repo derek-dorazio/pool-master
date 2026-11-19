@@ -444,8 +444,7 @@ export const router = createBrowserRouter([
                               { path: 'tools', element: <EventToolsTab /> },
                               // Its old tiers page: tiers and prices are on the Field tab, corrected per participant.
                               { path: 'tiers', element: <Navigate replace to="../field" relative="path" /> },
-                              // Reached from the Rounds and matches tab until its dialogs replace it.
-                              // Its old schedule page: each round's ⤢ dialog reschedules it.
+                              // Its old schedule page, kept as a redirect for old links: each round's ⤢ dialog reschedules it.
                               { path: 'schedule', element: <Navigate replace to="../rounds" relative="path" /> },
                               // Its old edit page: the details are the ⚙ dialog on the page now.
                               { path: 'edit', element: <Navigate replace to="../field" relative="path" /> },

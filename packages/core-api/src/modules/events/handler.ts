@@ -282,7 +282,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return mapLiveSimulationToResponse(request.params.eventId, status);
     },
 
-    /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
+    /** Settle again (#1890): queues one rebuild of the event's contests' boards from the results stored now; 204. */
     rebuildEventLeaderboards: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const { eventId } = request.params;
       await requireEvent(eventId);
@@ -291,6 +291,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return reply.status(204).send();
     },
 
+    /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);
       if (event.syncScope === SportEventSyncScope.NONE) {
