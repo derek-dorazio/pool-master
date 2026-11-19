@@ -9,7 +9,7 @@ type ManageSectionDefinition = {
   to: string;
   /**
    * Every path the tab stays lit under (#1848). Where two tabs' paths nest, the longest match
-   * wins, so Providers lights for Run event sync while Activity keeps the rest of `/manage/sync`.
+   * wins.
    */
   paths: readonly string[];
 };
@@ -65,22 +65,19 @@ export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
+/** Every background job (#1887), the same Activity grid a league's and an event's tabs show. */
+export const ACTIVITY_PATH = '/manage/activity';
+
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans. Activity and Notifications have no pages of their own yet, so each opens today's page for
- * it: the sync runs and the settings. Providers keeps Run event sync and Unmapped participants lit
- * until they move.
+ * Plans. Notifications has no page of its own yet, so it opens today's settings page. Run event
+ * sync and Unmapped participants sit under Providers.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
-  { key: 'activity', title: 'Activity', to: '/manage/sync', paths: ['/manage/sync'] },
+  { key: 'activity', title: 'Activity', to: ACTIVITY_PATH, paths: [ACTIVITY_PATH] },
   { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
-  {
-    key: 'providers',
-    title: 'Providers',
-    to: PROVIDERS_PATH,
-    paths: [PROVIDERS_PATH, '/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
-  },
+  { key: 'providers', title: 'Providers', to: PROVIDERS_PATH, paths: [PROVIDERS_PATH] },
   { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
 ];
@@ -97,9 +94,13 @@ export function buildManageUserPath(userId: string) {
 
 export const PLANS_PATH = '/manage/plans';
 
-export const SYNC_PATH = '/manage/sync';
+/** Where the old sync run history page and its tools lived, before Activity and Providers (#1887). */
+export const LEGACY_SYNC_PATH = '/manage/sync';
 
-export const UNMAPPED_COMPETITORS_PATH = `${SYNC_PATH}/unmapped-participants`;
+/** A root admin's manual sync of one event's feeds. */
+export const RUN_EVENT_SYNC_PATH = `${PROVIDERS_PATH}/run-event-sync`;
+
+export const UNMAPPED_COMPETITORS_PATH = `${PROVIDERS_PATH}/unmapped-participants`;
 
 /** The page that maps one unmapped competitor; a provider's id can hold any character. */
 export function buildMapCompetitorPath(providerId: string, externalId: string) {
@@ -174,7 +175,7 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   sports: 'Sports',
   events: 'Events',
   'content-configuration': 'Contest templates',
-  sync: 'Activity',
+  activity: 'Activity',
   settings: 'Notifications',
   leagues: 'Leagues',
   users: 'Users',

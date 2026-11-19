@@ -71,10 +71,22 @@ handler is idempotent.
 
 `GET /api/v1/activity` (root admin) lists jobs newest first, narrowed by kind, status, league or
 event, each with the ids of the sync runs it recorded, its trigger and starter (`startedBy`, with
-a display name, read in one batched query), changed count, error type and duration. There is no paging: the read is bounded
+a display name, read in one batched query), changed count, error type and duration, and the names
+of the sport league and event it is about (`sportLeague`, `sportEvent`; a job on an event takes
+its event's league), read in one batched query each (#1887). Sync now's 202 answers its job the
+same way. There is no paging: the read is bounded
 by its window instead, `from` to `to`, which defaults to the last 24 hours, or the whole 30 days
 kept when a league or event narrows it; a `from` after `to` answers 400 `ACTIVITY_WINDOW_INVALID`. One address may read it 60 times a minute (`@fastify/rate-limit` on this route only, per process); more answer 429 `ACTIVITY_RATE_LIMITED`. It costs the same statements for any number of jobs
 (pinned in `root-admin-route-query-scaling.integration.ts`).
+
+The web shows it in one shared grid, `ActivityGrid` (`clients/poolmaster/src/features/root-admin`,
+#1887): the root admin Activity page (`/manage/activity`) unscoped, and a sport league's and an
+event's Activity tabs scoped to theirs. It opens on Started over the past day and asks the server
+for the window its Started filter covers, so widening the filter reads further back; with the
+filter cleared it reads all 30 days. Each code (kind, type, status, trigger, error type) reads as
+words mapped in `activity-labels.ts`, never derived from the enum's name. The old sync run history
+page at `/manage/sync` is gone; its links redirect to Activity, and Run event sync and Unmapped
+participants moved under `/manage/providers`.
 
 ## Queueing
 

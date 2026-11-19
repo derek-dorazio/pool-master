@@ -369,11 +369,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
-  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync });
-  testApp.register(activityModule, {
-    prefix: '/api/v1/activity',
-    activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),
+  const activity = new ActivityService({
+    jobs: new PrismaBackgroundJobRepository(prisma),
+    syncRuns: providerSyncRuns,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
   });
+  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync, activity });
+  testApp.register(activityModule, { prefix: '/api/v1/activity', activity });
   testApp.register(emailEventsModule, {
     prefix: '/api/v1/email',
     deliveryEvents: outbox.deliveryEvents,

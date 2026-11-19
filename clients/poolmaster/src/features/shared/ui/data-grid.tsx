@@ -155,6 +155,12 @@ export type DataGridProps<TData> = {
    * each its own.
    */
   urlKey?: string;
+  /**
+   * Hears the column filters the grid shows, on its first render and after every change, for a
+   * page whose read depends on them, such as Activity asking the server for the window its
+   * Started filter covers. The grid still narrows what it holds.
+   */
+  onFiltersChange?: (filters: ColumnFiltersState) => void;
 } & (
   | {
       /** A search box above the grid matching any text column. Off by default. */
@@ -328,6 +334,7 @@ function DataGridBody<TData>({
   toolbarEnd,
   detailRows,
   landOnRowId = null,
+  onFiltersChange,
   url,
 }: DataGridProps<TData> & { url: GridUrlBinding | null }) {
   // Null until the first render reads the link, or else which enumerated columns start on some
@@ -395,12 +402,19 @@ function DataGridBody<TData>({
     setSorting(fromLink?.sorting ?? start.sorting);
   };
   if (startState === null) {
-    const start = { sorting: [], filters: initialFilters(table) };
+    const start = { sorting: [], filters: initialFilters(table, preferences) };
     setStartState(start);
     restore(url?.value ?? null, start);
   } else if (url && url.value !== shownUrlValue) {
     restore(url.value, startState);
   }
+
+  // The latest listener, so a caller passing a new function each render hears each change once.
+  const onFiltersChangeRef = useRef(onFiltersChange);
+  onFiltersChangeRef.current = onFiltersChange;
+  useEffect(() => {
+    if (columnFilters !== null) onFiltersChangeRef.current?.(columnFilters);
+  }, [columnFilters]);
 
   /** Shows a new sort or set of filters and keeps it in the link; the start state keeps none. */
   function keep(next: GridUrlState) {

@@ -300,6 +300,10 @@ export const QueryKeys = {
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
     settingsHistory: (key: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
+    // Every Activity read (#1887) sits under this prefix, so a queued job refreshes each grid.
+    activity: ['poolmaster', 'root-admin', 'activity'] as const,
+    activityWindow: (scope: QueryKeyId, from: string, to: string | null) =>
+      ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
     // Under the list's prefix, so refreshing the list refreshes an open run's details too.
     providerSyncRun: (syncRunId: QueryKeyId) =>

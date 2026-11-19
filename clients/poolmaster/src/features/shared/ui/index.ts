@@ -24,9 +24,11 @@ export { cn } from "./class-names";
 export { ConfirmDialog, type ConfirmationInput, type ConfirmDialogProps } from "./confirm-dialog";
 export { DataGrid, type DataGridDetailRow, type DataGridViews } from "./data-grid";
 export {
+  isSpanToNow,
   optionsFromLabels,
   type DataGridColumnOptions,
   type DataGridColumnType,
+  type DataGridFilter,
   type DataGridOption,
   type DateRangeValue,
 } from "./data-grid-filters";

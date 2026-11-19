@@ -194,7 +194,7 @@ no scores.
 - The contest leaderboard should change about once a minute as holes are played.
 - The cut is made after round 2: the top 65 and ties go through, the rest show as missed
   cut. A few golfers withdraw mid-round.
-- *Sync* (`/manage/sync?sport=GOLF`) shows each live-score run. A run that brings nothing
+- *Activity* (`/manage/activity`, filter Kind to Sync) shows each live-score run. A run that brings nothing
   in usually means the tournament is not In progress, has no field, or its golfers did not
   come from the mock.
 

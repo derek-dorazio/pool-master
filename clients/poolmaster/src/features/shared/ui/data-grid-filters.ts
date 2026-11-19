@@ -11,6 +11,7 @@ import {
 import { compareByEnumOrder, explicitOrderValues, type EnumOrder } from "@poolmaster/shared/domain";
 import {
   describeSpan,
+  resolveSpan,
   type DateDirection,
   type DateSpan,
 } from "./data-grid-date-spans";
@@ -67,6 +68,8 @@ export type DataGridDates = {
   format?: DateDisplayFormat;
   /** The words a blank cell shows, such as "Never" for an invite that does not expire; omitted, nothing. */
   blank?: string;
+  /** The span the column's filter starts on, such as Activity's Started over the past day; omitted, no filter. */
+  initial?: DateSpan;
 };
 
 /**
@@ -173,10 +176,20 @@ function within(instants: { first: number; last: number } | null, filter: DateFi
   );
 }
 
-function matchesDate(value: unknown, filter: DateFilter): boolean {
+/**
+ * A span reaching back from now ("Past 1 day") ends at now, not at when it was applied, so a row
+ * that arrives later, such as a job just queued on a grid that reads again, still shows; a value
+ * after now, such as an event yet to start, still does not.
+ */
+export function isSpanToNow(span: DateSpan): boolean {
+  return span.kind === "relative" && span.toward === "past";
+}
+
+function matchesDate(value: unknown, dateFilter: DateFilter): boolean {
   if (isBlankValue(value)) {
     return false;
   }
+  const filter = isSpanToNow(dateFilter.span) ? { ...dateFilter, to: Math.max(dateFilter.to ?? 0, Date.now()) } : dateFilter;
   if (typeof value !== "object" || value instanceof Date) {
     return within(instantsOf(value, filter.timeZone), filter);
   }
@@ -408,14 +421,27 @@ function blanksLast<TData>(model: RowModel<TData>, columnId: string): RowModel<T
   return { rows, flatRows, rowsById: model.rowsById };
 }
 
-/** The column filters the grid opens with: each enumerated column that starts on some values. */
-export function initialFilters<TData>(table: Table<TData>): { id: string; value: EnumFilter }[] {
-  return table.getAllLeafColumns().flatMap((column) => {
+/**
+ * The column filters the grid opens with: each enumerated column that starts on some values, and
+ * each date column that starts on a span, resolved against `now`.
+ */
+export function initialFilters<TData>(
+  table: Table<TData>,
+  preferences: DisplayPreferences,
+  now: number = Date.now(),
+): { id: string; value: EnumFilter | DateFilter }[] {
+  return table.getAllLeafColumns().flatMap((column): { id: string; value: EnumFilter | DateFilter }[] => {
     const type = columnTypeOf(column);
-    const initial = type?.kind === "enum" ? type.initial : undefined;
-    return initial && initial.length > 0
-      ? [{ id: column.id, value: { kind: "enum" as const, values: initial, match: "any" as const } }]
-      : [];
+    if (type?.kind === "enum") {
+      return type.initial && type.initial.length > 0
+        ? [{ id: column.id, value: { kind: "enum" as const, values: type.initial, match: "any" as const } }]
+        : [];
+    }
+    if ((type?.kind === "date" || type?.kind === "datetime" || type?.kind === "dateRange") && type.initial) {
+      const span = type.initial;
+      return [{ id: column.id, value: { kind: "date" as const, span, ...resolveSpan(span, now, preferences), timeZone: preferences.timeZone, match: "overlaps" as const } }];
+    }
+    return [];
   });
 }
 

@@ -189,7 +189,7 @@ async function seedSyncRuns(runs: number) {
 /**
  * A root admin, and a sport league with `jobs` background jobs on its Activity: half on the
  * league itself, each started by an admin of its own (#1861) and with the sync run it ran, and
- * half on one of its events.
+ * half each on an event of its own, so every job's league and event names are read (#1887).
  */
 async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
@@ -197,16 +197,16 @@ async function seedLeagueActivity(jobs: number) {
   const suffix = randomUUID().slice(0, 8);
   const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Tour ${suffix}`, matchKeyword: `ACT${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
-  const event = await prisma.sportEvent.create({
-    data: {
-      eventSeriesId: series.id, eventYear: 2026, name: `Activity Open ${suffix}`, sport: Sport.GOLF,
-      providerId: provider.providerId, externalId: `activity-${suffix}`, startDate: new Date(Date.now() + 7 * DAY),
-    },
-  });
   for (let index = 0; index < jobs; index += 1) {
     const onLeague = index % 2 === 0;
+    const event = onLeague ? null : await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id, eventYear: 2026 + index, name: `Activity Open ${suffix} ${String(index)}`, sport: Sport.GOLF,
+        providerId: provider.providerId, externalId: `activity-${suffix}-${String(index)}`, startDate: new Date(Date.now() + 7 * DAY),
+      },
+    });
     const job = await prisma.backgroundJob.create({
-      data: onLeague
+      data: event === null
         ? { type: 'SYNC_LEAGUE_EVENTS', trigger: 'ADMIN', startedByUserId: (await createTestUser()).user.id, payload: { sportLeagueId: sportLeague.id, eventYears: [2026] }, sportLeagueId: sportLeague.id, status: 'SUCCEEDED', completedAt: new Date(), result: { created: index } }
         : { type: 'SETTLE_SPORT_EVENT_CONTESTS', trigger: 'SYSTEM', payload: { sportEventId: event.id, completedAt: new Date().toISOString() }, sportEventId: event.id },
     });
@@ -395,7 +395,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its event, as for 20, each with its sync runs and the admin who started it', async () => {
+  it('GET a sport league\'s Activity: the same statements for 2 jobs, on the league and its events, as for 20, each with its sync runs, the admin who started it and its league and event names', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/activity/',
       seed: seedLeagueActivity,

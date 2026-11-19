@@ -71,7 +71,7 @@ export async function activityModule(fastify: FastifyInstance, opts: ActivityMod
         from: from === undefined ? undefined : new Date(from),
         to: to === undefined ? undefined : new Date(to),
       });
-      return { jobs: jobs.map(({ job, syncRunIds }) => toActivityJobDto(job, syncRunIds)) };
+      return { jobs: jobs.map(toActivityJobDto) };
     },
   });
 }

@@ -54,16 +54,16 @@ const COMPETITOR = {
   sport: 'GOLF',
 };
 
-const MAP_PATH = '/manage/sync/unmapped-participants/map?provider=mock-contest-feed&competitor=golfer-77';
+const MAP_PATH = '/manage/providers/unmapped-participants/map?provider=mock-contest-feed&competitor=golfer-77';
 
-function renderPage(path = '/manage/sync/unmapped-participants') {
+function renderPage(path = '/manage/providers/unmapped-participants') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route element={<RootAdminUnmappedParticipantsPage />} path="/manage/sync/unmapped-participants" />
-          <Route element={<RootAdminMapCompetitorPage />} path="/manage/sync/unmapped-participants/map" />
+          <Route element={<RootAdminUnmappedParticipantsPage />} path="/manage/providers/unmapped-participants" />
+          <Route element={<RootAdminMapCompetitorPage />} path="/manage/providers/unmapped-participants/map" />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

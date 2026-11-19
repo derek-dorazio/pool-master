@@ -26940,6 +26940,20 @@ export type ActivityJobDto = {
      */
     sportEventId: string | null;
     /**
+     * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+     */
+    sportLeague: {
+        id: string;
+        name: string;
+    } | null;
+    /**
+     * The event the job is about, for display; null when it is about none.
+     */
+    sportEvent: {
+        id: string;
+        name: string;
+    } | null;
+    /**
      * Tries so far, counting one in progress.
      */
     attempts: number;
@@ -27055,6 +27069,20 @@ export type ActivityListResponse = {
          */
         sportEventId: string | null;
         /**
+         * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+         */
+        sportLeague: {
+            id: string;
+            name: string;
+        } | null;
+        /**
+         * The event the job is about, for display; null when it is about none.
+         */
+        sportEvent: {
+            id: string;
+            name: string;
+        } | null;
+        /**
          * Tries so far, counting one in progress.
          */
         attempts: number;
@@ -27146,6 +27174,20 @@ export type ActivityJobResponse = {
          * The event the job is about; null when it is about none.
          */
         sportEventId: string | null;
+        /**
+         * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+         */
+        sportLeague: {
+            id: string;
+            name: string;
+        } | null;
+        /**
+         * The event the job is about, for display; null when it is about none.
+         */
+        sportEvent: {
+            id: string;
+            name: string;
+        } | null;
         /**
          * Tries so far, counting one in progress.
          */
