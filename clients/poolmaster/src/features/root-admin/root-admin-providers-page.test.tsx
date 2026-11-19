@@ -152,9 +152,31 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
 
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
-      body: { eventList: { intervalMinutes: 120 } },
+      body: { eventList: { enabled: true, intervalMinutes: 120 } },
     })));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-edit')).toBeInTheDocument();
+  });
+
+  it('switches a sync that is off back on, saving its switch with its interval, while Field has no switch', async () => {
+    seed({ group: scheduleGroup({ ...SCHEDULE, healthCheck: { enabled: false, intervalMinutes: 5 } }) });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-healthCheck'));
+    expect(await screen.findByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('Off');
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
+    const enabled = screen.getByTestId('root-admin-sync-schedule-dialog-enabled');
+    expect(enabled).not.toBeChecked();
+    await userEvent.click(enabled);
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
+    await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
+      body: { healthCheck: { enabled: true, intervalMinutes: 5 } },
+    })));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
+
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-eventParticipants'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
+    expect(screen.queryByTestId('root-admin-sync-schedule-dialog-enabled')).not.toBeInTheDocument();
   });
 
   it('saves the live score interval in seconds and Field\'s interval with its days ahead', async () => {
@@ -169,7 +191,7 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '60');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenLastCalledWith(expect.objectContaining({
-      body: { eventLiveScores: { intervalSeconds: 60 } },
+      body: { eventLiveScores: { enabled: true, intervalSeconds: 60 } },
     })));
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
 

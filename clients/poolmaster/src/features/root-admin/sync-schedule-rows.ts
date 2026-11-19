@@ -17,6 +17,8 @@ const SYNCS: Record<SyncScheduleKey, { label: string; unit: 'minutes' | 'seconds
 export type SyncScheduleRow = {
   key: SyncScheduleKey;
   sync: string;
+  /** Whether it runs on its interval. Field always does, so it has no switch. */
+  enabled: boolean;
   /** How often it runs in seconds, for sorting; null while it is off. */
   everySeconds: number | null;
   every: string;
@@ -73,6 +75,7 @@ export function syncScheduleRows(config: IngestionScheduleConfig): SyncScheduleR
     return {
       key,
       sync: SYNCS[key].label,
+      enabled: on,
       everySeconds: on ? seconds : null,
       every: on ? formatInterval(seconds) : 'Off',
       whichEvents: whichEvents(key, config),
@@ -88,22 +91,24 @@ const wholeNumber = (min: number, message: string) => z.string().trim().refine(
   message,
 );
 
-/** The edit form: the interval in the row's unit, and Field's days ahead. */
+/** The edit form: whether it runs, the interval in the row's unit, and Field's days ahead. */
 export const syncScheduleFormSchema = z.object({
+  enabled: z.boolean(),
   interval: wholeNumber(1, 'Enter a whole number, 1 or more'),
   lookaheadDays: wholeNumber(0, 'Enter a whole number of days, 0 or more'),
 });
 export type SyncScheduleFormValues = z.infer<typeof syncScheduleFormSchema>;
 
 export function syncScheduleFormValues(row: SyncScheduleRow): SyncScheduleFormValues {
-  return { interval: String(row.interval), lookaheadDays: String(row.lookaheadDays ?? 0) };
+  return { enabled: row.enabled, interval: String(row.interval), lookaheadDays: String(row.lookaheadDays ?? 0) };
 }
 
-/** The save for one row: only that sync's interval, and Field's days ahead. */
+/** The save for one row: only that sync's switch and interval, and Field's days ahead (Field has no switch). */
 export function syncSchedulePatch(row: SyncScheduleRow, values: SyncScheduleFormValues): IngestionScheduleConfigPatch {
   const interval = Number(values.interval);
   if (row.key === 'eventParticipants') {
     return { eventParticipants: { intervalMinutes: interval, lookaheadDays: Number(values.lookaheadDays) } };
   }
-  return { [row.key]: row.unit === 'seconds' ? { intervalSeconds: interval } : { intervalMinutes: interval } };
+  const every = row.unit === 'seconds' ? { intervalSeconds: interval } : { intervalMinutes: interval };
+  return { [row.key]: { enabled: values.enabled, ...every } };
 }

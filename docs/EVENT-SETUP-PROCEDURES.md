@@ -31,16 +31,16 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 
 ## Before you start
 
-1. **Live-score sync is on, every 60 seconds.** Open *Settings → Global
-   Ingestion Schedule* (`/manage/settings/ingestion-schedule`). On the **Event live
-   scores** row, tick *Enabled* and set *Seconds* to `60`. The default is 300. This one
-   setting applies to every sport and every linked tournament in the environment: there are no
-   per-sport overrides (#1871). A new interval starts only after the current
-   wait runs out, so the first poll after the change can take up to the old 300 seconds.
-2. **Field sync is off by default for leagues not synced.** The *Event participants* row on
-   the same page is unticked in a new environment (#123), so a field changes only when you load
-   or refresh it (step 4). A synced sport league's events load their fields regardless (#1726). An environment that saved its schedule before that keeps its saved value;
-   untick it there.
+1. **Live-score sync is on, every 60 seconds.** Open *Manage → Providers*
+   (`/manage/providers`). Under *Sync schedules*, open the **Live scores** row, choose *Edit*,
+   tick *Runs on its schedule* and set *Every, seconds* to `60`. The default is 300. This one setting applies to every
+   sport and every linked tournament in the environment: there are no per-sport overrides
+   (#1871). A new interval starts only after the current wait runs out, so the first poll
+   after the change can take up to the old 300 seconds.
+2. **Fields load on the Field row's schedule.** The **Field** row on the same section sets
+   how often fields refresh and how many days ahead. A synced sport league's events load
+   their fields regardless of the saved switch (#1726), and leagues that are not synced are
+   off, so the page offers no off switch for it.
 3. **No mock event to pick in advance.** Each tournament gets its own simulated event when
    you link it (step 2), so its dates do not have to match anything in the mock.
 

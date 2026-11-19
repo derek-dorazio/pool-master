@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { updateIngestionSchedule, type IngestionScheduleConfigPatch, type SettingsActor } from '@/lib/api';
-import { DateDisplay, DetailEditModal, FormField, Input, showToast } from '@/features/shared/ui';
+import { Checkbox, DateDisplay, DetailEditModal, FormField, Input, showToast } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -16,7 +16,8 @@ import {
 
 /**
  * One sync's schedule (#1873): how often it runs, which events it covers and who last changed the
- * schedule, with Close and Edit; Edit changes its interval, and Field's days ahead too, then comes
+ * schedule, with Close and Edit; Edit switches it on or off and changes its interval, and Field's
+ * days ahead too (Field always runs, so it has no switch), then comes
  * back to the view (rules/ux-rules.md §12 item 14).
  */
 export function SyncScheduleDialog({
@@ -93,6 +94,12 @@ export function SyncScheduleDialog({
       title={mode === 'view' ? `${row.sync} sync` : `${row.sync} sync · Edit`}
     >
       <div className="grid gap-4">
+        {isField ? null : (
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <Checkbox data-testid={`${testId}-enabled`} {...form.register('enabled')} />
+            Runs on its schedule
+          </label>
+        )}
         <FormField error={form.formState.errors.interval?.message} label={row.unit === 'seconds' ? 'Every, seconds' : 'Every, minutes'}>
           <Input data-testid={`${testId}-interval`} inputMode="numeric" {...form.register('interval')} />
         </FormField>
