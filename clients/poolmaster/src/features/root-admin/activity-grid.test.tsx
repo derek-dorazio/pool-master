@@ -256,6 +256,42 @@ describe('Activity grid', () => {
 
     expect(await screen.findByTestId('activity-grid-error')).toBeInTheDocument();
   });
+
+  it('reads Activity again and shows its jobs when Try again is pressed after a failed read', async () => {
+    seed();
+    mocks.listActivity.mockResolvedValueOnce({ error: { error: { code: 'INTERNAL', message: 'Down for a moment.' } } });
+    renderWithClient(<RootAdminActivityPage />);
+
+    const error = within(await screen.findByTestId('activity-grid-error'));
+    await userEvent.click(error.getByRole('button'));
+
+    expect(await screen.findByTestId(`activity-job-${ADMIN_SYNC.id}`)).toBeInTheDocument();
+    expect(screen.queryByTestId('activity-grid-error')).not.toBeInTheDocument();
+  });
+
+  it('closes a job\'s dialog when its Close button is pressed', async () => {
+    seed();
+    renderWithClient(<RootAdminActivityPage />);
+
+    await userEvent.click(await screen.findByTestId(`activity-job-${FAILED_SCORES.id}`));
+    const dialog = within(await screen.findByTestId('activity-job-dialog'));
+    await userEvent.click(dialog.getAllByRole('button', { name: 'Close' })[0]);
+
+    await waitFor(() => expect(screen.queryByTestId('activity-job-dialog')).not.toBeInTheDocument());
+  });
+
+  it('closes a sync run opened from a job\'s dialog when its Close button is pressed', async () => {
+    seed();
+    mocks.getProviderSyncRun.mockReturnValue(new Promise(() => {}));
+    renderWithClient(<RootAdminActivityPage />);
+
+    await userEvent.click(await screen.findByTestId(`activity-job-${ADMIN_SYNC.id}`));
+    await userEvent.click(await screen.findByTestId(`activity-job-dialog-sync-run-${RUN_ID}`));
+    const runDialog = await screen.findByTestId('root-admin-sync-run-by-id');
+    await userEvent.click(within(runDialog).getAllByRole('button', { name: 'Close' })[0]);
+
+    await waitFor(() => expect(screen.queryByTestId('root-admin-sync-run-by-id')).not.toBeInTheDocument());
+  });
 });
 
 describe('activityWindow', () => {
