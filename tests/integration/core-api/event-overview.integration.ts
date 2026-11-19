@@ -32,10 +32,10 @@ beforeEach(() => cleanupTestData());
 /**
  * The overview's whole cost, the root admin's session check included: the event; then its league,
  * its latest run of each kind, whether it is overdue (the event, its rounds and their last match
- * starts) and its field; then those latest runs and the field's provider mappings. A new read, or
- * one sent per field row, moves it.
+ * starts), its field and the event page offering its series; then those latest runs and the
+ * field's provider mappings. A new read, or one sent per field row, moves it.
  */
-const OVERVIEW_STATEMENTS = 10;
+const OVERVIEW_STATEMENTS = 11;
 
 /**
  * A draft golf event `golfers` strong in a synced tour of its own that releases a week out, each
@@ -95,6 +95,29 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
 
     expect(overview).toMatchObject({ syncHealth: SportLeagueSyncHealth.OFF, issues: [], releaseMode: SportEventReleaseMode.MANUAL, tierOrderBasis: FieldOrderBasis.NAME });
     expect(overview.fieldFeed.map((row) => [row.feedId, row.lastInFeedAt])).toEqual([[null, null], [null, null]]);
+  });
+
+  it('names the active event page offering the event\'s series, and none once that page is retired', async () => {
+    const prisma = getPrisma();
+    const { event } = await seedEventWithField(1, { status: SportEventStatus.DRAFT });
+    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true, name: true } });
+    const template = await prisma.contestConfigTemplate.findFirstOrThrow({ select: { id: true } });
+    const slug = `event-overview-${randomUUID().slice(0, 8)}`;
+    const page = await prisma.eventPage.create({ data: { sport: event.sport, slug, displayOrder: 9000 } });
+    await prisma.eventPageOffer.create({
+      data: { eventPageId: page.id, sportLeagueId: series.sportLeagueId, eventSeriesName: series.name, templateId: template.id, sortOrder: 1, isPrimary: true },
+    });
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+
+    try {
+      const offered = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
+      await prisma.eventPage.update({ where: { id: page.id }, data: { isActive: false } });
+      const retired = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
+
+      expect([offered.overview.eventPageSlug, retired.overview.eventPageSlug]).toEqual([slug, null]);
+    } finally {
+      await prisma.eventPage.delete({ where: { id: page.id } });
+    }
   });
 
   it('refuses anyone but a root admin with 403, and an unknown event with 404', async () => {

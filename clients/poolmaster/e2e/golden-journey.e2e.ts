@@ -5,6 +5,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { closeFieldParticipant, correctFieldParticipant, openFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
@@ -266,9 +267,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
     });
 
-    journey.fieldEntryIds = await test.step('place one player in each default tier and save', async () => {
-      await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
-      // The board's cards are keyed by field entry, not player, so the act needs that mapping.
+    journey.fieldEntryIds = await test.step('place one player in each default tier, one participant dialog at a time', async () => {
+      await page.goto(`/manage/sports/golf/events/${eventId}/field`);
+      // The grid's rows are keyed by field entry, not player, so the act needs that mapping.
       // It reads it straight from the API rather than by sniffing the page's own response.
       //
       // A `waitForResponse` registered before this navigation could match the FIELD page's
@@ -290,29 +291,16 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const entryIds = playerIds.map((playerId) => {
         const entry = field.participants.find((candidate) => candidate.participantId === playerId);
         if (!entry) {
-          throw new Error(`player ${playerId} is not in the field the tiers page loaded`);
+          throw new Error(`player ${playerId} is not in the field the Field tab loaded`);
         }
         return entry.id;
       });
 
-      const unassigned = page.getByTestId('root-admin-tier-column-__unassigned');
       for (const [index, entryId] of entryIds.entries()) {
-        // A freshly added golfer starts unassigned; the move control is a select of tiers.
-        await expect(unassigned.getByTestId(`root-admin-tier-card-${entryId}`)).toBeVisible();
-        await page.getByTestId(`root-admin-tier-move-${entryId}`).selectOption(`tier-${index + 1}`);
-      }
-      await submitAndRead(
-        page,
-        'root-admin-tier-board-save',
-        'PUT',
-        `/api/v1/events/${eventId}/tiers/assignments`,
-      );
-      for (const [index, entryId] of entryIds.entries()) {
-        await expect(
-          page
-            .getByTestId(`root-admin-tier-column-tier-${index + 1}`)
-            .getByTestId(`root-admin-tier-card-${entryId}`),
-        ).toBeVisible();
+        // A freshly added golfer starts untiered; its dialog's Edit moves it into a tier.
+        await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toBeVisible();
+        await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}` });
+        await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${index + 1}`);
       }
       return entryIds;
     });
@@ -328,18 +316,16 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         'POST',
         `/api/v1/events/${eventId}/prices/auto-assign`,
       );
-      await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
+      await page.getByTestId('root-admin-event-settings').click();
+      await expect(page.getByTestId('root-admin-event-settings-dialog-priced-with')).not.toHaveText(/Not priced yet/);
+      await page.getByTestId('root-admin-event-settings-dialog').getByRole('button', { name: 'Close', exact: true }).click();
+      await expect(page.getByTestId('root-admin-event-settings-dialog')).toBeHidden();
     });
 
-    await test.step('set four golfers\' prices in the Field grid, so a budget roster can go over the cap and a swap brings it under', async () => {
+    await test.step('set four golfers\' prices in their Field dialogs, so a budget roster can go over the cap and a swap brings it under', async () => {
       const fieldEntryIds = journey?.fieldEntryIds ?? [];
-      await page.goto(`/manage/sports/golf/events/${eventId}/field`);
       for (const { index, price } of BUDGET_PRICES) {
-        await page.getByTestId(`root-admin-event-field-price-${fieldEntryIds[index]}`).fill(String(price));
-      }
-      await submitAndRead(page, 'root-admin-event-field-save', 'PATCH', `/api/v1/events/${eventId}/participants`);
-      for (const { index, price } of BUDGET_PRICES) {
-        await expect(page.getByTestId(`root-admin-event-field-price-${fieldEntryIds[index]}`)).toHaveValue(String(price));
+        await correctFieldParticipant(page, eventId, fieldEntryIds[index], { price });
       }
     });
 
@@ -361,9 +347,15 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       expect(released.event.status).toBe('SCHEDULED');
       await expect(page.getByTestId('root-admin-event-release-chip')).toHaveCount(0);
 
-      await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
-      await expect(page.getByTestId('root-admin-tiers-locked')).toBeVisible();
-      await expect(page.getByTestId(`root-admin-tier-move-${firstFieldEntryId}`)).toBeDisabled();
+      // Released, automatic tiers leave the Field section and a golfer's tier is no longer editable.
+      await page.goto(`/manage/sports/golf/events/${eventId}/field`);
+      await expect(page.getByTestId(`root-admin-event-field-row-${firstFieldEntryId}`)).toBeVisible();
+      await expect(page.getByTestId('root-admin-tier-auto-tiers')).toHaveCount(0);
+      await openFieldParticipant(page, firstFieldEntryId);
+      await page.getByTestId('root-admin-event-participant-dialog-edit').click();
+      await expect(page.getByTestId('root-admin-event-participant-dialog-edit-tier')).toHaveCount(0);
+      await page.getByTestId('root-admin-event-participant-dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+      await closeFieldParticipant(page);
     });
 
     await test.step('root admin logs out', async () => {
@@ -1424,15 +1416,13 @@ async function buildReleasedTournament(
     return entry.id;
   });
 
-  await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
+  await page.goto(`/manage/sports/golf/events/${eventId}/field`);
   for (const [index, entryId] of fieldEntryIds.entries()) {
-    await page.getByTestId(`root-admin-tier-move-${entryId}`).selectOption(`tier-${index + 1}`);
+    await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}` });
   }
-  await submitAndRead(page, 'root-admin-tier-board-save', 'PUT', `/api/v1/events/${eventId}/tiers/assignments`);
   await page.getByTestId('root-admin-tier-auto-prices').click();
   await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
   await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${eventId}/prices/auto-assign`);
-  await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
 
   await page.goto(`/manage/sports/golf/events/${eventId}`);
   await page.getByTestId('root-admin-event-release-chip').click();

@@ -5,6 +5,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { correctFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
@@ -245,7 +246,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
-  const fieldEntryIds = await test.step('set each team\'s seed and odds to win in the field grid', async () => {
+  const fieldEntryIds = await test.step('set each team\'s seed and odds to win in its Field dialog', async () => {
     // Read straight from the API, for each team's field-entry id (the golden journey's tiers step
     // has the reason it is not sniffed from the page).
     const fieldResponse = await page.request.get(`/api/v1/events/${eventId}/participants`);
@@ -260,32 +261,21 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await page.getByTestId(`root-admin-event-field-seedNumber-${entryId}`).fill(String(TEAMS[index].seed));
-      await page.getByTestId(`root-admin-event-field-oddsToWin-${entryId}`).fill(String(TEAMS[index].oddsToWin));
-    }
-    await submitAndRead(page, 'root-admin-event-field-save', 'PATCH', `/api/v1/events/${eventId}/participants`);
-    for (const [index, entryId] of entryIds.entries()) {
-      await expect(page.getByTestId(`root-admin-event-field-seedNumber-${entryId}`)).toHaveValue(String(TEAMS[index].seed));
+      await correctFieldParticipant(page, eventId, entryId, { seedNumber: TEAMS[index].seed, oddsToWin: TEAMS[index].oddsToWin });
     }
     return entryIds;
   });
   journey.fieldEntryIds = fieldEntryIds;
 
   await test.step('tier the field, which has odds for every team, two teams a tier, and price it', async () => {
-    await page.goto(`/manage/sports/basketball/events/${eventId}/tiers`);
     await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${eventId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
-      await expect(
-        page
-          .getByTestId(`root-admin-tier-column-tier-${TIER_OF_SEED[index]}`)
-          .getByTestId(`root-admin-tier-card-${entryId}`),
-      ).toBeVisible();
+      await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_SEED[index])}`);
     }
     await page.getByTestId('root-admin-tier-auto-prices').click();
     await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
     await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${eventId}/prices/auto-assign`);
-    await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
   });
 
   await test.step('load the bracket with the 2 seed\'s first-round opponent still open, as a data file would before the play-in is decided', async () => {

@@ -28,7 +28,9 @@ import type {
   SportEventMatchRepository,
   SportEventParticipantRepository,
   SportEventParticipantView,
+  SportEventParticipantValuationRepository,
   SportEventRepository,
+  SportEventTierRepository,
 } from '@poolmaster/shared/db';
 import {
   getSportDefinition,
@@ -74,6 +76,8 @@ export interface AddFieldResult {
 export interface FieldEntryUpdate extends SportEventParticipantPatch {
   sportEventParticipantId: string;
   price?: number | null;
+  /** A manual move into this tier, placed last in it. */
+  tierKey?: string;
 }
 
 /** One uploaded row: who it names, and the values to set. Omitted leaves a value alone; null clears it. */
@@ -170,6 +174,9 @@ export interface SportEventParticipantServiceDeps {
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  /** The event's tiers and valuations, read when a save moves a participant into another tier. */
+  tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
+  valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
   /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
   fieldCache?: EventFieldCache;
   /** The event's leaderboard rebuild, written with each field write (#1466); none without it. */
@@ -316,11 +323,11 @@ export class SportEventParticipantService {
    */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
-    if (updates.some((update) => update.price !== undefined)) {
+    if (updates.some((update) => update.price !== undefined || update.tierKey !== undefined)) {
       try {
         assertTiersAndPricesEditable(event);
       } catch (error) {
-        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a price change on a released sport event');
+        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a tier or price change on a released sport event');
         throw error;
       }
     }
@@ -374,13 +381,53 @@ export class SportEventParticipantService {
     // Only the values that change are written, so a grid saved with most rows untouched writes
     // little: the adapter writes one statement per distinct new value (#1252).
     const entryById = new Map(field.map((entry) => [entry.id, entry]));
+    const tierMoves = await this.tierMoves(sportEventId, updates);
     const rebuild = this.rebuild(sportEventId);
-    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, ...patch }) => {
+    await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, tierKey: _tierKey, ...patch }) => {
       const entry = entryById.get(sportEventParticipantId);
-      return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price };
+      const tier = tierMoves.get(sportEventParticipantId);
+      return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price, ...(tier && { tier }) };
     }), rebuild.jobs);
     rebuild.queued();
     return this.listEventParticipants(sportEventId);
+  }
+
+  /**
+   * Where each tier move in a save lands: last in its new tier, after the highest place already
+   * held there, so a tier with gaps in its order never gets a place twice. Nothing is read when
+   * the save moves no one. 422 UNKNOWN_TIER_KEY for a key the event has no tier for.
+   */
+  private async tierMoves(
+    sportEventId: string,
+    updates: readonly FieldEntryUpdate[],
+  ): Promise<Map<string, { sportEventTierId: string; tierOrderIndex: number }>> {
+    const moves = updates.filter((update): update is FieldEntryUpdate & { tierKey: string } => update.tierKey !== undefined);
+    if (moves.length === 0) return new Map();
+    const [tiers, valuations] = await Promise.all([
+      this.deps.tiers.findBySportEvent(sportEventId),
+      this.deps.valuations.findBySportEvent(sportEventId),
+    ]);
+    const tierIdByKey = new Map(tiers.map((tier) => [tier.tierKey, tier.id]));
+    const unknownKeys = [...new Set(moves.map((move) => move.tierKey))].filter((key) => !tierIdByKey.has(key));
+    if (unknownKeys.length > 0) {
+      this.deps.logger?.warn({ sportEventId, unknownKeys }, 'Refused a move into a tier the event does not have');
+      throw new SportEventError(`Unknown tier key(s): ${unknownKeys.join(', ')}.`, 'UNKNOWN_TIER_KEY', 422);
+    }
+    const moving = new Set(moves.map((move) => move.sportEventParticipantId));
+    const nextPlace = new Map<string, number>();
+    for (const valuation of valuations) {
+      if (valuation.sportEventTierId === null || moving.has(valuation.sportEventParticipantId)) continue;
+      const place = (valuation.tierOrderIndex ?? -1) + 1;
+      nextPlace.set(valuation.sportEventTierId, Math.max(nextPlace.get(valuation.sportEventTierId) ?? 0, place));
+    }
+    const placed = new Map<string, { sportEventTierId: string; tierOrderIndex: number }>();
+    for (const move of moves) {
+      const sportEventTierId = tierIdByKey.get(move.tierKey) as string;
+      const tierOrderIndex = nextPlace.get(sportEventTierId) ?? 0;
+      nextPlace.set(sportEventTierId, tierOrderIndex + 1);
+      placed.set(move.sportEventParticipantId, { sportEventTierId, tierOrderIndex });
+    }
+    return placed;
   }
 
   /**

@@ -89,7 +89,6 @@ export {
   TableHeaderCell,
   TableRow,
 } from "./simple-table";
-export { SortableList } from "./sortable-list";
 export { ServerErrorBar } from "./server-error";
 export { Switch, type SwitchProps } from "./switch";
 export { EmptyState, ErrorState, InlineError, LoadingState, QueryState } from "./state";

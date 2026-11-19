@@ -1,4 +1,3 @@
-import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { autoAssignEventTiers } from '@/lib/api';
 import {
@@ -21,16 +20,13 @@ export function TierAutoAssignActions({
   eventId,
   disabled,
   field,
-  sport,
 }: {
   eventId: string;
   disabled: boolean;
   field: readonly EventFieldEntry[];
-  sport: Sport;
 }) {
-  const { participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
-    feature: 'root-admin-sport-event-tiers-page',
+    feature: 'root-admin-event-field',
   });
   const [confirming, setConfirming] = useState(false);
 
@@ -50,6 +46,7 @@ export function TierAutoAssignActions({
       QueryKeys.rootAdmin.manageSport.tiers(eventId),
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
+      QueryKeys.rootAdmin.manageSport.eventOverview(eventId),
     ],
     onSuccess: () => setConfirming(false),
     onError: (error) => {
@@ -74,7 +71,7 @@ export function TierAutoAssignActions({
       <ConfirmDialog
         confirmLabel="Replace tier assignments"
         confirmTestId="root-admin-tier-auto-tiers-confirm"
-        description={`${describeFieldOrder(field, participant)} Every ${participant.one} is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
+        description={`${describeFieldOrder(field)} Every participant is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
         error={
           autoTiersMutation.isError
             ? extractErrorMessage(autoTiersMutation.error, {

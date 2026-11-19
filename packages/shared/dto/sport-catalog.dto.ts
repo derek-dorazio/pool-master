@@ -200,7 +200,7 @@ export const SportLeagueReleaseIssueDtoSchema = z.object({
 
 export const SportLeagueOverdueIssueDtoSchema = z.object({
   type: z.literal(SportLeagueIssueType.OVERDUE),
-  count: z.number().int().min(1).describe('How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.'),
+  count: z.number().int().min(1).describe('How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.'),
   items: z.array(z.object(issueItemFields).describe(
     'An event whose results are overdue; occurredAt is when it should have ended: its last round\'s scheduled end, or the last scheduled start plus the sport\'s typical play. Its target is the event.',
   )).describe('Most overdue first.'),
@@ -326,6 +326,7 @@ export const SportEventOverviewDtoSchema = z.object({
   tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.'),
   tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
   fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
+  eventPageSlug: z.string().nullable().describe('The slug of the active event page offering the event\'s series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.'),
 }).describe('The root admin\'s Event page header and sync rows.');
 export type SportEventOverviewDto = z.infer<typeof SportEventOverviewDtoSchema>;
 

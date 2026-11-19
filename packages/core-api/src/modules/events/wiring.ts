@@ -227,6 +227,8 @@ export function createSportEventParticipantService(
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
+    tiers: new PrismaSportEventTierRepository(prisma),
+    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     fieldCache: eventFieldCache,
     leaderboards,
     logger,

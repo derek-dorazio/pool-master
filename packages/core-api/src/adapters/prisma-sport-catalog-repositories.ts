@@ -919,9 +919,14 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       group.ids.push(entry.id);
       idsByPatch.set(key, group);
     }
-    const prices = entries.flatMap((entry) => (entry.price === undefined
+    // A row's price and tier move land in the one valuation write, so the save stands or falls whole.
+    const valuations: ValuationChange[] = entries.flatMap((entry) => (entry.price === undefined && entry.tier === undefined
       ? []
-      : [{ sportEventParticipantId: entry.id, price: entry.price, priceAssignedSource: ValuationSource.MANUAL }]));
+      : [{
+        sportEventParticipantId: entry.id,
+        ...(entry.price === undefined ? {} : { price: entry.price, priceAssignedSource: ValuationSource.MANUAL }),
+        ...(entry.tier === undefined ? {} : { ...entry.tier, tierAssignedSource: ValuationSource.MANUAL }),
+      }]));
     await this.prisma.$transaction(async (tx) => {
       const groups = [...idsByPatch.values()];
       // poolmaster-allow-query-in-loop: one updateMany per distinct patch; rows given the same values share one
@@ -930,7 +935,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       if (results.some((result, index) => result.count !== new Set(groups[index].ids).size)) {
         throw new Error('A field row to update does not exist.');
       }
-      await rewriteValuations(tx, prices);
+      await rewriteValuations(tx, valuations);
       await insertBackgroundJobs(tx, jobs);
     });
   }

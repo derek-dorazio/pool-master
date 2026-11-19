@@ -19998,7 +19998,7 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                     },
                     "items": {
                       "type": "array",
@@ -20379,7 +20379,7 @@
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 9007199254740991,
-                            "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                            "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                           },
                           "items": {
                             "type": "array",
@@ -21057,7 +21057,7 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                     },
                     "items": {
                       "type": "array",
@@ -21466,7 +21466,7 @@
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 9007199254740991,
-                            "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                            "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                           },
                           "items": {
                             "type": "array",
@@ -21919,7 +21919,7 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991,
-                      "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                     },
                     "items": {
                       "type": "array",
@@ -22064,6 +22064,13 @@
               "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
             },
             "description": "One per field row, active or withdrawn, never paged."
+          },
+          "eventPageSlug": {
+            "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -22075,7 +22082,8 @@
           "releaseAtKind",
           "tierOrderBasis",
           "tierOrderCoversField",
-          "fieldFeed"
+          "fieldFeed",
+          "eventPageSlug"
         ],
         "additionalProperties": false,
         "description": "The root admin's Event page header and sync rows."
@@ -22404,7 +22412,7 @@
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 9007199254740991,
-                          "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                          "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
                         },
                         "items": {
                           "type": "array",
@@ -22549,6 +22557,13 @@
                   "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
                 },
                 "description": "One per field row, active or withdrawn, never paged."
+              },
+              "eventPageSlug": {
+                "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "required": [
@@ -22560,7 +22575,8 @@
               "releaseAtKind",
               "tierOrderBasis",
               "tierOrderCoversField",
-              "fieldFeed"
+              "fieldFeed",
+              "eventPageSlug"
             ],
             "additionalProperties": false,
             "description": "The root admin's Event page header and sync rows."
@@ -29053,6 +29069,11 @@
                     "number",
                     "null"
                   ]
+                },
+                "tierKey": {
+                  "description": "Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.",
+                  "type": "string",
+                  "minLength": 1
                 },
                 "isPlayInPlace": {
                   "description": "Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.",

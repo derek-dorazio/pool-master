@@ -96,7 +96,8 @@ the mock's 80 golfers and records each one's mock id, which is what the score sy
 on. Then:
 
 - each golfer arrives with the mock's ranking, so tiers can be auto-assigned straight away;
-  you can change rankings, odds, seeds or withdrawals in the field grid, but a later
+  you can correct a golfer's rank, odds or seed with ⤢ › *Edit* on its Field row, or withdraw it
+  with ⤢ › *Withdraw*, but a later
   *Refresh Participant Field* replaces them with the provider's values for every golfer
   it reports (it asks you to confirm first);
 - do not use *Add more participants* or *Seed field from league roster*: the golfers they
@@ -112,29 +113,33 @@ then apply. It only changes golfers already on the field: a golfer it cannot fin
 unresolved, and Apply stays disabled until every row matches one golfer, once. A blank cell
 leaves a value alone; `null` clears it. Load the field first — the upload never adds a
 golfer. A later *Refresh Participant Field* replaces rankings, odds, seeds and withdrawals
-with the provider's again, as it does grid edits (#415).
+with the provider's again, as it does corrections made in a golfer's dialog (#415).
 
 ## 5. Build tiers
 
-*Tiers* (`/manage/sports/golf/events/:id/tiers`), then *Auto-assign tiers*. A golf
-event starts with six tiers. Auto-assign fills them in the field's order (odds, then seed, then
-rank, by the first value every golfer has; the dialog says which), ten golfers at a time,
-and the last tier takes everyone left. The mock's 80 golfers therefore come out as
-10/10/10/10/10/30. If you add or delete tiers first, auto-assign instead spreads the field
-evenly over them from the top, larger tiers first: the same 80 golfers on five tiers come out
-16/16/16/16/16. The layout is the sport league's tier profile (#1844), so another league can
-start its events on its own (the College Football Playoff's "6 tiers of 2": its 12 teams come
-out two to a tier). A
-tier-pick contest's configuration is checked against this tier count.
+On *Field*, press *Auto-assign tiers* in the Field section. A golf event starts with six
+tiers. Auto-assign fills them in the field's order (odds, then seed, then rank, by the first
+value every golfer has; the dialog says which), ten golfers at a time, and the last tier takes
+everyone left. The mock's 80 golfers therefore come out as 10/10/10/10/10/30. The layout is the
+sport league's tier profile (#1844), chosen in the league's ⚙ on its League page, and an event
+takes its tiers from it when it is made: another league can start its events on its own (the
+College Football Playoff's "6 tiers of 2": its 12 teams come out two to a tier). A tier-pick
+contest's configuration is checked against this tier count.
+
+To move one golfer to another tier, open its Field row's ⤢, then *Edit*, choose the tier and
+*Save corrections*. It goes last in that tier, and its **Set by** reads *Manual*: a manual tier
+stops automatic tiering for the event. *Auto-assign prices*, beside *Auto-assign tiers*,
+prices the field the same way, and a golfer's price is corrected in the same dialog. The ⚙
+dialog's *Priced with* says which values priced it.
 
 ## 6. Release it for contests
 
 On the tournament's page, the *Release ⤢* chip beside its name opens the Release checks;
 *Release now*, then confirm. The button stays disabled, with each check marked ✓ or ✗, until the field is loaded, every
 active golfer has a tier, and every tier has an active golfer in it ("Tier 6 has no golfers":
-no entry could pick from an empty tier, so move golfers into it or delete it). Release moves the tournament from Draft to Scheduled, and
-commissioners can now pick it. It also **locks the tiers and prices for good**: the tier
-board and price cells turn read-only. Rankings, odds and withdrawals stay editable, and a
+no entry could pick from an empty tier, so move golfers into it). Release moves the tournament from Draft to Scheduled, and
+commissioners can now pick it. It also **locks the tiers and prices for good**: automatic
+tiers and prices leave the Field section, and a golfer's dialog no longer edits its tier or price. Rankings, odds and withdrawals stay editable, and a
 golfer added after release stays untiered and can't be picked (#431).
 
 ## 7. Create contests and entries
@@ -303,7 +308,7 @@ leg, its home side the first leg's host. A tie level on aggregate goes to its sh
 single match does. The Copa América starts at the quarter-finals; every other competition
 starts on four tiers of four. Where the World Cup's sync is live, the feed loads its knockout
 bracket instead, in FIFA's own order rather than by ranking, once every round of 32 team is
-decided (`LIVE-SPORTS-DATA-SYNC.md` *2d*).
+decided (`LIVE-SPORTS-DATA-SYNC.md` *Games and brackets*).
 
 Soccer's club and college playoffs are four more sport leagues, each naming its own rounds:
 MLS, the NWSL, and the NCAA Division I men's and women's tournaments. MLS starts at its wild

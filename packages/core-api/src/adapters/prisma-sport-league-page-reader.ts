@@ -122,11 +122,11 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null> {
     const event = await this.prisma.sportEvent.findUnique({
       where: { id: sportEventId },
-      select: { ...EVENT_SELECT, eventSeries: { select: { sportLeagueId: true } } },
+      select: { ...EVENT_SELECT, eventSeries: { select: { sportLeagueId: true, name: true } } },
     });
     if (event === null) return null;
     const { eventSeries, ...eventRow } = event;
-    const [league, latestRunGroups, overdueCandidates, field] = await Promise.all([
+    const [league, latestRunGroups, overdueCandidates, field, offer] = await Promise.all([
       this.league(eventSeries.sportLeagueId),
       this.prisma.providerSyncRun.groupBy({ by: ['kind'], where: { sportEventId }, _max: { createdAt: true } }),
       readOverdueCandidates(this.prisma, now, undefined, [sportEventId]),
@@ -134,6 +134,12 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         where: { sportEventId },
         select: { id: true, participantId: true, isActive: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
         orderBy: { id: 'asc' },
+      }),
+      // An offer names its series by sport league and name, as a template's series names do.
+      this.prisma.eventPageOffer.findFirst({
+        where: { sportLeagueId: eventSeries.sportLeagueId, eventSeriesName: eventSeries.name, eventPage: { isActive: true } },
+        select: { eventPage: { select: { slug: true } } },
+        orderBy: [{ eventPage: { displayOrder: 'asc' } }, { id: 'asc' }],
       }),
     ]);
     // Every series names a sport league (a foreign key), so it is there.
@@ -169,6 +175,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         name: row.participant.name,
         mapping: mappingByParticipant.get(row.participantId) ?? null,
       })),
+      eventPageSlug: offer?.eventPage.slug ?? null,
     };
   }
 

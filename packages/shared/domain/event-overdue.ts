@@ -1,6 +1,6 @@
 /**
- * When a sport event's results are overdue (#1865): it is neither completed nor cancelled, and
- * its last round or match should have ended more than OVERDUE_AFTER_MS ago. The Sports page's
+ * When a sport event's results are overdue (#1865): it was released, is neither completed nor
+ * cancelled, and its last round or match should have ended more than OVERDUE_AFTER_MS ago. The Sports page's
  * overview and the League page's events read both judge it here, from the same facts.
  */
 import { Sport, SportEventStatus } from './enums';
@@ -28,8 +28,15 @@ export const SPORT_TYPICAL_PLAY_MS: Readonly<Record<Sport, number>> = {
   [Sport.RUNNING]: 3 * HOUR_MS,
 };
 
-/** Statuses whose results are in, or will never come. */
-const SETTLED_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
+/**
+ * Statuses never overdue: a never-released draft, which no contest can use (#1908), and an event
+ * whose results are in or will never come. A reader skips them too.
+ */
+export const NEVER_OVERDUE_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.DRAFT,
+  SportEventStatus.COMPLETED,
+  SportEventStatus.CANCELLED,
+];
 
 /** One round as scheduled, with the latest scheduled start of its matches. */
 export interface OverdueRoundFacts {
@@ -72,11 +79,11 @@ export function expectedEndOf(event: OverdueEventFacts): Date {
 
 /**
  * When an overdue event should have ended, or null while its results are not overdue: a
- * completed or cancelled event never is, and any other is once its expected end is more than
+ * never-released draft, a completed or a cancelled event never is, and any other is once its expected end is more than
  * OVERDUE_AFTER_MS behind `now`. How late it is runs from the time this returns.
  */
 export function overdueExpectedEnd(event: OverdueEventFacts, now: Date): Date | null {
-  if (SETTLED_STATUSES.includes(event.status)) return null;
+  if (NEVER_OVERDUE_STATUSES.includes(event.status)) return null;
   const expectedEnd = expectedEndOf(event);
   return now.getTime() - expectedEnd.getTime() > OVERDUE_AFTER_MS ? expectedEnd : null;
 }
