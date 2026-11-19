@@ -17,25 +17,30 @@ import {
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
-import { BillingSettingsForm } from '@/features/billing/billing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
 import { PLANS_PATH, PROVIDERS_PATH } from './manage-navigation';
 import {
   changedFields,
-  summarizeBilling,
   summarizePlans,
   summarizeEmail,
   summarizeIngestionSchedule,
   type SettingsSummaryItem,
 } from './root-admin-settings-utils';
 
+/** The groups this page shows: the payments settings moved to the Pricing page (#1886). */
+type SettingsPageGroup = Exclude<SettingsGroup, { key: 'BILLING_CONFIG' }>;
+
+function isSettingsPageGroup(group: SettingsGroup): group is SettingsPageGroup {
+  return group.key !== 'BILLING_CONFIG';
+}
+
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * the Providers page, and Plans on its own Manage page; Email and Payments are edited in
- * their sections. Pricing profiles are their own rows, not a settings group (#1844).
+ * the Providers page, Plans on its own Manage page and the payments settings on the Pricing page
+ * (#1886); Email is edited in its section. Pricing profiles are their own rows, not a settings group (#1844).
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
@@ -59,7 +64,7 @@ export function RootAdminSettingsPage() {
         size="tile"
         testId="root-admin-settings"
       >
-        {(groups) => groups.map((group) => (
+        {(groups) => groups.filter(isSettingsPageGroup).map((group) => (
           <SettingsGroupSection group={group} key={group.key} />
         ))}
       </QueryState>
@@ -67,7 +72,7 @@ export function RootAdminSettingsPage() {
   );
 }
 
-function SettingsGroupSection({ group }: { group: SettingsGroup }) {
+function SettingsGroupSection({ group }: { group: SettingsPageGroup }) {
   const [showHistory, setShowHistory] = useState(false);
   const { locale } = useDisplayPreferences();
   const { summary, actions } = groupContent(group, locale);
@@ -96,7 +101,6 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
                 <EmailTestForm />
               </>
             ) : null}
-            {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
             <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
               {group.updatedAt ? (
                 <>
@@ -122,7 +126,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
   );
 }
 
-function groupContent(group: SettingsGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
+function groupContent(group: SettingsPageGroup, locale: string): { summary: SettingsSummaryItem[]; actions: ReactNode } {
   switch (group.key) {
     case 'INGESTION_SCHEDULE_CONFIG':
       return {
@@ -145,9 +149,6 @@ function groupContent(group: SettingsGroup, locale: string): { summary: Settings
           </LinkButton>
         ),
       };
-    case 'BILLING_CONFIG':
-      // Edited in place: the section carries the form.
-      return { summary: summarizeBilling(group.value, locale), actions: null };
   }
 }
 

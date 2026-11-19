@@ -69,6 +69,7 @@ import { RootAdminProfilesPage } from '@/features/root-admin/root-admin-profiles
 import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings-page';
+import { RootAdminPricingPage } from '@/features/root-admin/root-admin-pricing-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
@@ -478,6 +479,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'providers',
                     element: <RootAdminProvidersPage />,
+                  },
+                  {
+                    path: 'pricing',
+                    element: <RootAdminPricingPage />,
                   },
                 ],
               },

@@ -65,9 +65,12 @@ export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
+/** What each plan costs and what expanding a contest costs on it (#1886). */
+export const PRICING_PATH = '/manage/pricing';
+
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans. Activity and Notifications have no pages of their own yet, so each opens today's page for
+ * Plans · Pricing. Activity and Notifications have no pages of their own yet, so each opens today's page for
  * it: the sync runs and the settings. Providers keeps Run event sync and Unmapped participants lit
  * until they move.
  */
@@ -83,6 +86,7 @@ const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
+  { key: 'pricing', title: 'Pricing', to: PRICING_PATH, paths: [PRICING_PATH] },
 ];
 
 /** Where `/manage` itself lands: Sports, every sport league in one grid. */
