@@ -714,7 +714,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const moved = { id: 'sport-event-1', startDate: STARTED_EVENT_START };
 
     const told = await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, notice)
-      .sportEventRescheduledJobs(moved, previousStart);
+      .sportEventRescheduledJobs({ ...moved, status: SportEventStatus.SCHEDULED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(moved, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });
     expect(told.jobs).toEqual([eventChangedJob('sport-event-1', 'RESCHEDULED')]);
@@ -727,7 +727,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const { sportEvents } = seededEvents();
 
     const told = await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger())
-      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: STARTED_EVENT_START }, new Date('2026-04-25T20:00:00.000Z'));
+      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED }, new Date('2026-04-25T20:00:00.000Z'));
 
     expect(told.jobs).toEqual([]);
     told.queued();
@@ -1036,19 +1036,39 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
   });
 
+  it('still sends the picks are open again email at the next sweep when the postponement\'s reopen write fails after the event was postponed, so a contest left out of the event changed jobs is told', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
+    const sportEvents = store.sportEventRepo();
+    const deps = liveContests([LIVE]);
+    const written: unknown[] = [];
+    const move = guardedMove(written);
+    deps.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async () => { throw new Error('database unavailable'); });
+    const service = new EventLifecycleService(deps, sportEvents, fakeLogger(), startedJobs(), undefined, undefined, recordingSportEventChangedNotice());
+
+    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } }))
+      .rejects.toThrow('database unavailable');
+
+    deps.contests.transitionStatuses = move;
+    await service.followPostponedStart(expectDefined(await sportEvents.findById('sport-event-1')));
+
+    expect((written as Array<{ type: string; payload: { contestId: string } }>).map(({ type, payload }) => [type, payload.contestId]))
+      .toEqual([[BackgroundJobType.CONTEST_REOPENED_EMAILS, 'contest-1']]);
+  });
+
   it('leaves out of a postponed event\'s moved start the live contests the new start reopens, and tells every contest of a scheduled event\'s move', async () => {
     const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
     const previousStart = new Date('2026-05-02T20:00:00.000Z');
     const notice = recordingSportEventChangedNotice();
     const postponed = new EventLifecycleService(liveContests([LIVE]), postponedEvents(previousStart), fakeLogger(), startedJobs(), undefined, undefined, notice);
 
-    await postponed.sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart }, previousStart);
+    await postponed.sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.POSTPONED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set(['contest-1']) });
 
     const scheduled = seededEvents({ startDate: previousStart });
     await new EventLifecycleService(liveContests([LIVE]), scheduled.sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice)
-      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart }, previousStart);
+      .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.SCHEDULED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });
   });

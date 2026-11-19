@@ -367,7 +367,7 @@ describe('ContestNotices', () => {
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_REOPENED')).toBe(true);
       const text = textTo(nora.user.id);
       expect(text).toContain('Masters Tournament has been postponed to Thu, Apr 16, 2026.');
-      expect(text).toContain('Masters Pick 6 is open again: make or change your picks before they close.');
+      expect(text).toContain('Masters Pick 6 is open again, so you can make or change your picks before the new start.');
       expect(text).toContain('Picks close: Apr 16, 2026, 7:40 AM EDT');
       expect(text).toContain(`Make your picks: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });

@@ -536,7 +536,7 @@ export class SportEventService {
     // (#1464), so an edit that fails tells nobody and one that lands always tells them. A draft's
     // commissioners can't see it yet, and a started event's picks are closed.
     const told = shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers
-      ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate }, startedAt)
+      ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate, status }, startedAt)
       : NO_JOBS_FOR_WRITE;
     // The edit can change what the event's contests' boards show, so its rebuild rides with it (#1466).
     const written = combineJobsForWrite(told, this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE);

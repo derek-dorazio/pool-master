@@ -2082,7 +2082,7 @@ function renderContestReopenedEmail(
   const closesLine = formatInstant(data.closesAt, context);
   const newDay = formatDay(data.event.startsAt, context);
   const postponed = `${data.event.eventName} has been postponed to ${newDay}.`;
-  const reopened = `${data.contestName} is open again: make or change your picks before they close.`;
+  const reopened = `${data.contestName} is open again, so you can make or change your picks before the new start.`;
   return buildMessage(context, {
     templateKey: 'CONTEST_REOPENED',
     subject: `Postponed: ${data.event.eventName}. Picks are open again`,
@@ -2094,7 +2094,7 @@ function renderContestReopenedEmail(
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       paragraph(escapeHtml(postponed)),
-      paragraph(`${strong(data.contestName)} is open again: make or change your picks before they close.`),
+      paragraph(`${strong(data.contestName)} is open again, so you can make or change your picks before the new start.`),
       goldBand(closesLabel, closesLine),
       button('Make your picks', data.contestUrl),
     ].join(''),

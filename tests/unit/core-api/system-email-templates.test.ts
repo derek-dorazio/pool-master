@@ -808,7 +808,7 @@ describe('event postponed, picks open again', () => {
 
     expect(message.subject).toBe('Postponed: The Masters. Picks are open again');
     expect(message.text).toContain('Event postponed\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
-    expect(message.text).toContain('The Masters has been postponed to Thu, Apr 15, 2027.\nMasters Pick 6 is open again: make or change your picks before they close.');
+    expect(message.text).toContain('The Masters has been postponed to Thu, Apr 15, 2027.\nMasters Pick 6 is open again, so you can make or change your picks before the new start.');
     expect(message.text).toContain('Picks close: Apr 15, 2027, 12:00 PM UTC');
     expect(message.text).toContain(`Make your picks: ${data.contestUrl}`);
     expect(message.html).toContain(`href="${data.contestUrl}"`);
