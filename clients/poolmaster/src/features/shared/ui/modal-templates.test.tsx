@@ -266,6 +266,22 @@ describe("pool-master-3ew: shared modal templates", () => {
       expect(handlers.onCancelEdit).toHaveBeenCalledTimes(1);
     });
 
+    it("shows its extra view content under the facts in view mode only", () => {
+      const { rerender } = render(
+        <DetailEditModal facts={facts} mode="view" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Standard" viewContent={<p>Used by PGA Tour</p>}>
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+      expect(screen.getByText("Used by PGA Tour")).toBeInTheDocument();
+
+      rerender(
+        <DetailEditModal facts={facts} mode="edit" onCancel={vi.fn()} onCancelEdit={vi.fn()} onEdit={vi.fn()} onOpenChange={vi.fn()} onSave={vi.fn()} open saveLabel="Save" title="Standard" viewContent={<p>Used by PGA Tour</p>}>
+          <input aria-label="Name" />
+        </DetailEditModal>,
+      );
+      expect(screen.queryByText("Used by PGA Tour")).not.toBeInTheDocument();
+    });
+
     it("disables Save while the form cannot be saved", () => {
       showDetailEdit("edit", { canSave: false });
 

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { DataGrid, PageHeader, PageTabs, QueryState } from '@/features/shared/ui';
+import { DataGrid, PageHeader, QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
+import { buildSportLeaguePath } from './manage-navigation';
 import { sportLeagueOverviewColumns } from './sport-league-overview-columns';
 import { sportsCountLine } from './sport-league-overview-text';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
+import { SportsPageTabs } from './sports-page-tabs';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
 import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
@@ -38,13 +39,7 @@ export function RootAdminSportsPage() {
     <section className="space-y-6" data-testid="root-admin-sports-page">
       <PageHeader
         meta={overviews ? <span data-testid="root-admin-sports-counts">{sportsCountLine(overviews)}</span> : undefined}
-        tabs={(
-          <PageTabs
-            aria-label="Sports views"
-            items={[{ isActive: true, label: 'Sport leagues', testId: 'root-admin-sports-tab-leagues', to: SPORTS_PATH }]}
-            variant="link"
-          />
-        )}
+        tabs={<SportsPageTabs active="leagues" />}
         testId="root-admin-sports-header"
         title="Sports"
       />

@@ -102,6 +102,8 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
   mode: "view" | "edit";
   /** Every setting as it stands, shown first. */
   facts: Fact[];
+  /** More to see under the facts in `view`, such as the sport leagues naming a profile. */
+  viewContent?: ReactNode;
   /** The form's fields, shown in `edit`. */
   children: ReactNode;
   /** Edit's own label, such as "Edit"; the button switches to `edit`. */
@@ -147,6 +149,7 @@ export function DetailEditModal({
   saveTestId,
   testId,
   title,
+  viewContent,
 }: DetailEditModalProps) {
   return (
     <Modal
@@ -181,7 +184,10 @@ export function DetailEditModal({
       title={title}
     >
       {mode === "view" ? (
-        <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
+        <>
+          <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
+          {viewContent ? <div className="mt-4">{viewContent}</div> : null}
+        </>
       ) : (
         <>
           {children}

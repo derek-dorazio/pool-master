@@ -30,6 +30,7 @@ function service(overrides: Record<string, unknown> = {}) {
     search: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
     findById: jest.fn((id: string) => Promise.resolve(id === 'p1' ? participant : null)),
     getProviderMappings: jest.fn((..._args: unknown[]) => Promise.resolve([mapping])),
+    listSportProviderMappings: jest.fn((..._args: unknown[]) => Promise.resolve([mapping])),
     delete: jest.fn((..._args: unknown[]) => Promise.resolve()),
     bindProviderMapping: jest.fn((..._args: unknown[]) => Promise.resolve(mapping)),
     create: jest.fn((..._args: unknown[]) => Promise.resolve(participant)),
@@ -77,6 +78,15 @@ describe('participant provider mappings', () => {
 
     expect(found.body).toMatchObject({ providerMappings: [{ providerId: 'feed', externalId: 'x1' }] });
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'PARTICIPANT_NOT_FOUND' } } });
+  });
+
+  it('lists the feed ids a provider has mapped among one sport\'s participants, for the test data loader to match players by', async () => {
+    const fake = service();
+
+    const reply = await callHandler(handlersOver(fake).listSportProviderMappings, stubRequest({ query: { providerId: 'feed', sportId: 'golf' } }));
+
+    expect(fake.listSportProviderMappings).toHaveBeenCalledWith('feed', 'golf');
+    expect(reply.body).toMatchObject({ providerMappings: [{ participantId: 'p1', providerId: 'feed', externalId: 'x1' }] });
   });
 
   it('binds a mapping to a registered provider', async () => {

@@ -151,6 +151,16 @@ describe('RootAdminSportsPage', () => {
     expect(sportCells).toEqual(['Baseball', '', 'Basketball', '']);
   });
 
+  it('heads the page Sports with its two tabs, Sport leagues marked and Profiles beside it', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    renderPage();
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sports' })).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sports-tab-leagues')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-sports-tab-profiles')).toHaveAttribute('href', '/manage/sports/profiles');
+    expect(screen.getByTestId('root-admin-sports-tab-profiles')).not.toHaveAttribute('aria-current');
+  });
+
   it('shows the count line of sports and sport leagues on, and a Clutch Card\'s provider as via its parent', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();

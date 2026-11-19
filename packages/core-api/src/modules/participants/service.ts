@@ -7,7 +7,6 @@ import type {
   ParticipantRepository,
   ParticipantProviderMappingRepository,
   ParticipantSearchFilters,
-  AmbiguousFeedParticipantRepository,
 } from '@poolmaster/shared/db';
 import type {
   Participant,
@@ -64,8 +63,6 @@ export class ParticipantService {
     private readonly participantRepo: ParticipantRepository,
     private readonly providerMappingRepo: ParticipantProviderMappingRepository,
     private readonly logger?: FastifyBaseLogger,
-    /** A feed id bound by hand resolves its "needs linking" row, if any (#1824). */
-    private readonly ambiguousFeedParticipants?: Pick<AmbiguousFeedParticipantRepository, 'resolveFeedId'>,
   ) {}
 
   async findById(id: string): Promise<Participant | null> {
@@ -222,6 +219,20 @@ export class ParticipantService {
   }
 
   /**
+   * Every identity a provider has for a sport's participants (#1850): how the Load test data run
+   * finds the participant a test player's feed id is already mapped to, so it never makes a
+   * second one beside the sync's.
+   */
+  async listSportProviderMappings(providerId: string, sportId: string): Promise<ParticipantProviderMapping[]> {
+    const mappings = await this.providerMappingRepo.findByProviderAndSport(providerId, sportId);
+    this.logger?.info(
+      { action: 'participants.service.listSportProviderMappings.success', data: { providerId, sportId, count: mappings.length } },
+      'Listed a provider\'s participant identities in a sport',
+    );
+    return mappings;
+  }
+
+  /**
    * A root admin binding a provider identity to this participant by hand — how a competitor
    * the provider could not match gets their synced data. An identity already bound to another
    * participant moves here.
@@ -241,7 +252,6 @@ export class ParticipantService {
       confidence: MappingConfidence.MANUAL,
       mappedAt: new Date(),
     });
-    await this.ambiguousFeedParticipants?.resolveFeedId(providerId, externalId, participantId, mapping.mappedAt);
     this.logger?.info(
       { action: 'participants.service.bindProviderMapping.success', data: { participantId, providerId, externalId } },
       'Bound provider identity to participant',

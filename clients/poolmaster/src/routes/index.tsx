@@ -65,6 +65,7 @@ import { SPORTS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
+import { RootAdminProfilesPage } from '@/features/root-admin/root-admin-profiles-page';
 import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
@@ -398,6 +399,7 @@ export const router = createBrowserRouter([
                     path: 'sports',
                     element: <RootAdminSportsPage />,
                   },
+                  { path: 'sports/profiles', element: <RootAdminProfilesPage /> },
                   {
                     path: 'sports/:sport',
                     element: <ManageSportRoute />,

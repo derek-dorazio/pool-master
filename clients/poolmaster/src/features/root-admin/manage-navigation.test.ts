@@ -97,6 +97,11 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/content-configuration')).toEqual(['Contest templates']);
   });
 
+  it('lights nothing in the second row on the profiles page, whose own tabs mark Profiles, and names its trail Profiles', () => {
+    expect(buildManageSubTabs('/manage/sports/profiles')?.items.filter((tab) => tab.isActive)).toEqual([]);
+    expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
+  });
+
   it('under Customers, shows Leagues and Users', () => {
     expect(buildManageSubTabs('/manage/users/user-1')?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
       ['Leagues', false],

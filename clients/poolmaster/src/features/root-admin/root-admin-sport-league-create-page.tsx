@@ -8,10 +8,10 @@ import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
 import { SPORTS_PATH } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
+import { SPORT_LEAGUE_WRITE_INVALIDATES } from './use-update-sport-league';
 import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
@@ -63,7 +63,7 @@ export function RootAdminSportLeagueCreatePage() {
       }
       return response.data.sportLeague;
     },
-    invalidates: [QueryKeys.rootAdmin.manageSport.leagues],
+    invalidates: SPORT_LEAGUE_WRITE_INVALIDATES,
     onSuccess: () => navigate(listPath),
     onError: (error) => {
       logger.warn(

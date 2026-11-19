@@ -55,6 +55,9 @@ export function buildSportLeagueCreatePath(sport: Sport) {
   return `${buildSportPath(sport)}/leagues/new`;
 }
 
+/** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
+export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
+
 /** The old event list and contest template pages, reached from Sports' second row until the League page's tabs replace them. */
 export const EVENTS_PATH = '/manage/events';
 export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
@@ -185,6 +188,7 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   new: 'New',
   edit: 'Edit details',
   schedule: 'Schedule',
+  profiles: 'Profiles',
 };
 
 /** A sport's two lists, labelled in the sport's own words: "Tournaments", "Golfers". */

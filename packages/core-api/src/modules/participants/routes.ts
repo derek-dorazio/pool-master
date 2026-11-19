@@ -12,7 +12,6 @@ import '@poolmaster/shared/dto/participants.dto';
 import {
   PrismaParticipantRepository,
   PrismaParticipantProviderMappingRepository,
-  PrismaAmbiguousFeedParticipantRepository,
 } from '../../adapters';
 import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
@@ -36,7 +35,6 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
     participantRepo,
     providerMappingRepo,
     fastify.log.child({ module: 'participants.service' }),
-    new PrismaAmbiguousFeedParticipantRepository(prisma),
   );
 
   const handler = createParticipantHandlers(participantService, opts.providerRegistry);
@@ -67,6 +65,22 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       },
     },
     handler: handler.searchParticipants,
+  });
+
+  fastify.get('/provider-mappings', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: ['Participants'],
+      summary: 'List a provider\'s identities for a sport\'s participants',
+      description: 'Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player\'s feed id already belongs to, so it never makes a second one beside the sync\'s (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
+      operationId: 'listSportProviderMappings',
+      querystring: schemaRef('SportProviderMappingListQuery'),
+      response: {
+        200: schemaRef('ParticipantProviderMappingListResponse'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    handler: handler.listSportProviderMappings,
   });
 
   // --- CRUD ---

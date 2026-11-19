@@ -639,14 +639,8 @@ describe('IngestionPersistence', () => {
  * writes participants and stops there.
  */
 describe('IngestionPersistence: provider participants with no mapping yet', () => {
-  type Candidate = {
-    id: string;
-    sportId: string;
-    name: string;
-    providerMappings: Array<{ providerId: string }>;
-    /** The sport leagues it is affiliated with, by match keyword; none when left out. */
-    leagueAffiliations?: Array<{ sportLeague: { matchKeyword: string | null } }>;
-  };
+  /** The site's participant of a name, which no feed id maps: a sync never links it by its name (#1850). */
+  type SiteParticipant = { id: string; sportId: string; name: string };
 
   function golfer(externalId: string, name: string, providerId = 'balldontlie'): ProviderParticipant {
     return { externalId, providerId, sport: Sport.GOLF, name, active: true, metadata: {} };
@@ -657,11 +651,6 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     return { externalId, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, active: true, metadata: { tour } };
   }
 
-  /** The site's team of a name, affiliated with the leagues whose keywords are given. */
-  function siteTeam(id: string, name: string, keywords: Array<string | null>): Candidate {
-    return { id, sportId: 'sport-basketball', name, providerMappings: [], leagueAffiliations: keywords.map((matchKeyword) => ({ sportLeague: { matchKeyword } })) };
-  }
-
   /** The site's keyed sport leagues, one stored with a stray space and in lower case. */
   const LEAGUES = [
     { id: 'league-nba-finals', sportId: 'sport-basketball', matchKeyword: 'NBA Finals' },
@@ -669,38 +658,19 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     { id: 'league-pga', sportId: 'sport-golf', matchKeyword: 'PGA TOUR' },
   ];
 
-  /** A needs-linking row the site holds already for a feed id (#1824). */
-  type Held = { id: string; providerId: string; externalId: string; resolvedAt: Date | null };
-
-  /** The linked event a field is synced into, in sport league `league-pga`: where an ambiguous name is held. */
-  const LINKED_EVENT = { ...linkedRow(), eventSeries: { sportLeagueId: 'league-pga', sportLeague: { participantType: null, scoringFamily: null } } };
-
-  function unmappedPrisma(candidates: Candidate[], options: { linkedEvent?: boolean; held?: Held[] } = {}) {
+  function unmappedPrisma(siteParticipants: SiteParticipant[] = []) {
     const double = {
       // The keyed leagues of the asked-for sports, as the database answers.
       sportLeague: {
         findMany: jest.fn(({ where }: { where: { sportId: { in: string[] }; matchKeyword?: unknown }; select?: unknown }) => Promise.resolve(LEAGUES
           .filter((league) => where.sportId.in.includes(league.sportId)))),
       },
-      sportEvent: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn().mockResolvedValue(options.linkedEvent ? LINKED_EVENT : null) },
-      // The linked event's field: empty, and the rows a write makes.
-      sportEventParticipant: {
-        findMany: jest.fn().mockResolvedValue([]),
-        createManyAndReturn: jest.fn(({ data }: { data: Array<{ participantId: string }> }) => Promise.resolve(data.map((row) => ({ id: `row-${row.participantId}`, participantId: row.participantId })))),
-        update: jest.fn(),
-      },
-      backgroundJob: { createMany: jest.fn().mockResolvedValue({ count: 0 }) },
-      ambiguousFeedParticipant: {
-        findMany: jest.fn().mockResolvedValue(options.held ?? []),
-        createManyAndReturn: jest.fn(({ data }: { data: Array<{ providerId: string; externalId: string }> }) => Promise.resolve(
-          data.map((row) => ({ id: `held-${row.externalId}`, providerId: row.providerId, externalId: row.externalId })),
-        )),
-        update: jest.fn().mockResolvedValue({}),
-      },
-      ambiguousFeedParticipantSighting: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }), createMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      sportEvent: { findMany: jest.fn().mockResolvedValue([]), findUnique: jest.fn().mockResolvedValue(null) },
+      sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
       sport: { upsert: jest.fn(({ where }: { where: { sport: Sport } }) => Promise.resolve({ id: `sport-${where.sport.toLowerCase()}`, participantType: 'INDIVIDUAL' })) },
       participant: {
-        findMany: jest.fn().mockResolvedValue(candidates.map((candidate) => ({ leagueAffiliations: [], ...candidate }))),
+        // What the site holds; a sync that matched by name would read it.
+        findMany: jest.fn().mockResolvedValue(siteParticipants),
         createManyAndReturn: jest.fn(({ data }: { data: Array<{ sportId: string; externalId: string }> }) => Promise.resolve(
           data.map((row) => ({ id: `created-${row.externalId}`, sportId: row.sportId, externalId: row.externalId })),
         )),
@@ -722,203 +692,50 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     return { mappings, logger };
   }
 
-  /** The needs-linking rows a sync created, as it wrote them. */
-  const heldRows = (prisma: ReturnType<typeof unmappedPrisma>) =>
-    prisma.ambiguousFeedParticipant.createManyAndReturn.mock.calls.flatMap(([{ data }]) => data as unknown as Array<Record<string, unknown>>);
-
   const createdNames = (prisma: ReturnType<typeof unmappedPrisma>) =>
     prisma.participant.createManyAndReturn.mock.calls.flatMap(([{ data }]) => data.map((row) => (row as unknown as { name: string }).name));
 
-  it('links a golfer to the site\'s only one of that name and sport, with HIGH confidence, and creates no second one', async () => {
-    const prisma = unmappedPrisma([{ id: 'site-scheffler', sportId: 'sport-golf', name: 'Scottie Scheffler', providerMappings: [] }]);
+  it('creates a golfer whose feed id no participant is mapped to, with an EXACT mapping, though the site has an unmapped golfer of the same name', async () => {
+    const prisma = unmappedPrisma([{ id: 'site-scheffler', sportId: 'sport-golf', name: 'Scottie Scheffler' }]);
 
     const { mappings, logger } = await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
 
-    expect(mappings).toEqual([{ participantId: 'site-scheffler', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.HIGH }]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ linked: 1, created: 0 }), 'Persisted participants from ingestion');
+    expect(createdNames(prisma)).toEqual(['Scottie Scheffler']);
+    expect(mappings).toEqual([{ participantId: 'created-bdl-1', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.EXACT }]);
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ created: 1 }), 'Persisted participants from ingestion');
   });
 
-  it('reads the candidates by sport and name, with only the mappings from the feed\'s own providers and the keywords of their leagues', async () => {
-    const prisma = unmappedPrisma([]);
+  it('reads no participant by name for an unknown feed id: the mapping read is the only participant read', async () => {
+    const prisma = unmappedPrisma([{ id: 'site-scheffler', sportId: 'sport-golf', name: 'Scottie Scheffler' }]);
 
-    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler'), golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')]);
+    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler'), collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM')]);
 
-    expect(prisma.participant.findMany).toHaveBeenCalledTimes(1);
-    expect(prisma.participant.findMany).toHaveBeenCalledWith({
-      where: { OR: [{ sportId: 'sport-golf', name: { in: ['Scottie Scheffler', 'Rory McIlroy'] } }] },
-      select: {
-        id: true,
-        sportId: true,
-        name: true,
-        providerMappings: { where: { providerId: { in: ['balldontlie', 'mock-contest-feed'] } }, select: { providerId: true } },
-        leagueAffiliations: { select: { sportLeague: { select: { matchKeyword: true } } } },
-      },
-    });
+    expect(prisma.participant.findMany).not.toHaveBeenCalled();
+    expect(prisma.participantProviderMapping.findMany).toHaveBeenCalledTimes(1);
   });
 
-  it('links a school\'s men\'s and women\'s teams, which share a name, each to the site\'s team in its own league', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM']), siteTeam('site-duke-women', 'Duke Blue Devils', ['NCAAW'])]);
-
-    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(mappings).toEqual([
-      { participantId: 'site-duke-men', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
-      { participantId: 'site-duke-women', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH },
-    ]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-  });
-
-  it('links a school\'s men\'s and women\'s teams both to the site\'s one row for the school, affiliated with both leagues, and creates none', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke', 'Duke Blue Devils', ['NCAAM', 'NCAAW'])]);
-
-    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(mappings).toEqual([
-      { participantId: 'site-duke', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
-      { participantId: 'site-duke', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH },
-    ]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-  });
-
-  it('matches a league\'s keyword whatever its case and spacing, as an event\'s tour is matched', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke-women', 'Duke Blue Devils', [null, ' ncaaw '])]);
-
-    const { mappings } = await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(mappings).toEqual([{ participantId: 'site-duke-women', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.HIGH }]);
-  });
-
-  it('creates a team whose name the site has only in the other league, rather than linking it across leagues', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM']), siteTeam('site-unaffiliated', 'Duke Blue Devils', [])]);
-
-    const { mappings } = await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(createdNames(prisma)).toEqual(['Duke Blue Devils']);
-    expect(mappings).toEqual([{ participantId: 'created-ncaaw-team-150', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.EXACT }]);
-  });
-
-  it('counts a name the feed sends in two leagues once per league, so neither blocks the other\'s link', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM'])]);
-
-    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(mappings).toEqual([
-      { participantId: 'created-ncaaw-team-150', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.EXACT },
-      { participantId: 'site-duke-men', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.HIGH },
-    ]);
-  });
-
-  it('holds both of two teams the feed sends in one league under a name the site has one of there as needing linking, and links or creates neither (#1824)', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke-men', 'Duke Blue Devils', ['NCAAM'])], { linkedEvent: true });
+  it('creates each of two teams the feed sends under one name in one league, one per feed id, and holds neither aside', async () => {
+    const prisma = unmappedPrisma([{ id: 'site-duke', sportId: 'sport-basketball', name: 'Duke Blue Devils' }]);
 
     const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaab-team-999', 'Duke Blue Devils', 'NCAAM')]);
 
-    expect(mappings).toEqual([]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-    expect(heldRows(prisma)).toEqual([
-      expect.objectContaining({ externalId: 'ncaab-team-150', candidateParticipantIds: ['site-duke-men'] }),
-      expect.objectContaining({ externalId: 'ncaab-team-999', candidateParticipantIds: ['site-duke-men'] }),
-    ]);
+    expect(createdNames(prisma)).toEqual(['Duke Blue Devils', 'Duke Blue Devils']);
+    expect(mappings.map((mapping) => mapping.participantId)).toEqual(['created-ncaab-team-150', 'created-ncaab-team-999']);
   });
 
-  /** An NBA player as a provider sends him for a Clutch Card round, naming its sport league. */
-  function finalsPlayer(externalId: string, name: string): ProviderParticipant {
-    return { externalId, providerId: 'balldontlie', sport: Sport.BASKETBALL, name, active: true, metadata: { tour: 'NBA Finals' } };
-  }
+  it('creates a school\'s men\'s and women\'s teams, which share a name, as two participants, each by its own feed id', async () => {
+    const prisma = unmappedPrisma();
 
-  it('links a player to the site\'s star of his league whose name differs only by accents, case and punctuation, with HIGH confidence (#1664)', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-doncic', 'Luka Dončić', ['NBA Finals']), siteTeam('site-pj', 'P.J. Washington', ['NBA Finals'])]);
-
-    const { mappings } = await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic'), finalsPlayer('nba-player-7', 'pj washington')]);
+    const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
 
     expect(mappings).toEqual([
-      { participantId: 'site-doncic', providerId: 'balldontlie', externalId: 'nba-player-132', confidence: MappingConfidence.HIGH },
-      { participantId: 'site-pj', providerId: 'balldontlie', externalId: 'nba-player-7', confidence: MappingConfidence.HIGH },
+      { participantId: 'created-ncaab-team-150', providerId: 'balldontlie', externalId: 'ncaab-team-150', confidence: MappingConfidence.EXACT },
+      { participantId: 'created-ncaaw-team-150', providerId: 'balldontlie', externalId: 'ncaaw-team-150', confidence: MappingConfidence.EXACT },
     ]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
   });
 
-  it('links a player to the site\'s star of his league whose name differs by a trailing suffix (#1664)', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-jjj', 'Jaren Jackson Jr.', ['NBA Finals'])]);
-
-    const { mappings } = await sync(prisma, [finalsPlayer('nba-player-3', 'Jaren Jackson')]);
-
-    expect(mappings).toEqual([{ participantId: 'site-jjj', providerId: 'balldontlie', externalId: 'nba-player-3', confidence: MappingConfidence.HIGH }]);
-  });
-
-  it('creates a Jr. rather than linking him to the league\'s Sr. of the same name, though a suffix one side lacks still links', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-sr', 'Larry Nance Sr.', ['NBA Finals']), siteTeam('site-jjj', 'Jaren Jackson Jr.', ['NBA Finals'])]);
-
-    const { mappings } = await sync(prisma, [finalsPlayer('nba-player-1', 'Larry Nance Jr.'), finalsPlayer('nba-player-3', 'Jaren Jackson')]);
-
-    expect(createdNames(prisma)).toEqual(['Larry Nance Jr.']);
-    expect(mappings).toContainEqual({ participantId: 'site-jjj', providerId: 'balldontlie', externalId: 'nba-player-3', confidence: MappingConfidence.HIGH });
-  });
-
-  it('holds a player whose folded name two of the league\'s stars share, neither spelled as the feed spells it, as needing linking with both as candidates, rather than guessing (#1664, #1824)', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-a', 'Luka Dončić', ['NBA Finals']), siteTeam('site-b', 'LUKA DONČIĆ', ['NBA Finals'])], { linkedEvent: true });
-
-    const { mappings } = await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic')]);
-
-    expect(mappings).toEqual([]);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-    expect(heldRows(prisma)).toEqual([expect.objectContaining({ externalId: 'nba-player-132', candidateParticipantIds: ['site-a', 'site-b'] })]);
-  });
-
-  it('links the star spelled exactly as the feed spells him, where another of the league\'s stars folds to the same name', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-accented', 'Luka Dončić', ['NBA Finals']), siteTeam('site-plain', 'Luka Doncic', ['NBA Finals'])]);
-
-    const { mappings } = await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic')]);
-
-    expect(mappings).toEqual([{ participantId: 'site-plain', providerId: 'balldontlie', externalId: 'nba-player-132', confidence: MappingConfidence.HIGH }]);
-  });
-
-  it('holds both of two players the feed sends in one league whose names fold the same as needing linking, where the site has one of that name (#1824)', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-doncic', 'Luka Dončić', ['NBA Finals'])], { linkedEvent: true });
-
-    await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic'), finalsPlayer('nba-player-999', 'Luka Dončić')]);
-
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-    expect(heldRows(prisma).map((row) => row['externalId'])).toEqual(['nba-player-132', 'nba-player-999']);
-  });
-
-  it('creates a player whose folded name the site has only in another league, rather than linking it across leagues', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-doncic', 'Luka Dončić', ['NBA Conference Finals'])]);
-
-    await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic')]);
-
-    expect(createdNames(prisma)).toEqual(['Luka Doncic']);
-  });
-
-  it('links a participant that names no sport league only by its exact name, since the site\'s every spelling of it in the sport is not read', async () => {
-    const prisma = unmappedPrisma([{ id: 'site-aberg', sportId: 'sport-golf', name: 'Ludvig Åberg', providerMappings: [] }]);
-
-    await sync(prisma, [golfer('bdl-9', 'Ludvig Aberg')]);
-
-    expect(createdNames(prisma)).toEqual(['Ludvig Aberg']);
-  });
-
-  it('reads, with the exact names, every participant of the sport affiliated with a league the feed names, the league named by its keyword whatever the stored keyword\'s case and spacing', async () => {
-    const prisma = unmappedPrisma([]);
-
-    await sync(prisma, [finalsPlayer('nba-player-132', 'Luka Doncic'), collegeTeam('ncaab-team-150', 'Duke Blue Devils', ' NCAAM ')]);
-
-    expect(prisma.sportLeague.findMany).toHaveBeenCalledWith({
-      where: { sportId: { in: ['sport-basketball'] }, matchKeyword: { not: null } },
-      select: { id: true, sportId: true, matchKeyword: true },
-    });
-    expect(prisma.participant.findMany).toHaveBeenCalledTimes(1);
-    expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { OR: [
-        { sportId: 'sport-basketball', name: { in: ['Luka Doncic', 'Duke Blue Devils'] } },
-        { sportId: 'sport-basketball', leagueAffiliations: { some: { sportLeagueId: { in: ['league-nba-finals', 'league-ncaam'] } } } },
-      ] },
-    }));
-  });
-
-  it('affiliates each participant, linked or created, with every league its tour names, and none for a tour no league carries, skipping ones already there', async () => {
-    const prisma = unmappedPrisma([siteTeam('site-duke', 'Duke Blue Devils', [' ncaam '])]);
+  it('affiliates each created participant with every league its tour names, the keyword matched whatever its case and spacing, and none for a tour no league carries', async () => {
+    const prisma = unmappedPrisma();
 
     await sync(prisma, [
       collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'),
@@ -926,18 +743,22 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW'),
     ]);
 
+    expect(prisma.sportLeague.findMany).toHaveBeenCalledWith({
+      where: { sportId: { in: ['sport-basketball'] }, matchKeyword: { not: null } },
+      select: { id: true, sportId: true, matchKeyword: true },
+    });
     expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledTimes(1);
     expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledWith({
       data: [
-        { participantId: 'site-duke', sportLeagueId: 'league-ncaam' },
+        { participantId: 'created-ncaab-team-150', sportLeagueId: 'league-ncaam' },
         { participantId: 'created-ncaab-team-151', sportLeagueId: 'league-ncaam' },
       ],
       skipDuplicates: true,
     });
   });
 
-  it('affiliates a team the feed already links with the league its tour names, outside any creation, so a sync puts right one created unaffiliated', async () => {
-    const prisma = unmappedPrisma([]);
+  it('affiliates a team the feed already maps with the league its tour names, outside any creation, so a sync puts right one created unaffiliated', async () => {
+    const prisma = unmappedPrisma();
     const team = collegeTeam('ncaab-team-151', 'Gonzaga Bulldogs', 'NCAAM');
     prisma.participantProviderMapping.findMany.mockResolvedValue([{
       providerId: team.providerId,
@@ -952,151 +773,27 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     expect(prisma.participantLeagueAffiliation.createMany).toHaveBeenCalledWith({ data: [{ participantId: 'site-gonzaga', sportLeagueId: 'league-ncaam' }], skipDuplicates: true });
   });
 
-  it('writes no affiliation for a feed that names no league', async () => {
-    const prisma = unmappedPrisma([]);
-
-    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
-
-    expect(prisma.participantLeagueAffiliation.createMany).not.toHaveBeenCalled();
-  });
-
-  it('reads no league for a feed that names none, and reads its candidates by exact name alone', async () => {
-    const prisma = unmappedPrisma([]);
+  it('reads no league and writes no affiliation for a feed that names none', async () => {
+    const prisma = unmappedPrisma();
 
     await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
 
     expect(prisma.sportLeague.findMany).not.toHaveBeenCalled();
-    expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { OR: [{ sportId: 'sport-golf', name: { in: ['Scottie Scheffler'] } }] } }));
+    expect(prisma.participantLeagueAffiliation.createMany).not.toHaveBeenCalled();
   });
 
-  it('reads by exact name alone when no league has the keyword the feed names', async () => {
-    const prisma = unmappedPrisma([]);
-
-    await sync(prisma, [collegeTeam('ncaaw-team-150', 'Duke Blue Devils', 'NCAAW')]);
-
-    expect(prisma.participant.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { OR: [{ sportId: 'sport-basketball', name: { in: ['Duke Blue Devils'] } }] } }));
-  });
-
-  it.each([
-    ['a name the site\'s golfer has from this provider already, under another id', [
-      { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [{ providerId: 'balldontlie' }] },
-    ], [golfer('bdl-1', 'Tom Kim')]],
-    ['a name the site has no golfer by', [], [golfer('bdl-1', 'Tom Kim')]],
-    ['a name the feed sends for two golfers, where the site has none', [], [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Tom Kim')]],
-  ])('creates the golfer, with an EXACT mapping, for %s', async (_label, candidates, participants) => {
-    const prisma = unmappedPrisma(candidates);
+  it('creates every golfer of a feed whose ids no participant is mapped to, one per feed id, though two share a name', async () => {
+    const prisma = unmappedPrisma();
+    const participants = [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Tom Kim'), golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')];
 
     const { mappings } = await sync(prisma, participants);
 
-    expect(createdNames(prisma)).toEqual(participants.map((participant) => participant.name));
+    expect(createdNames(prisma)).toEqual(['Tom Kim', 'Tom Kim', 'Rory McIlroy']);
     expect(mappings).toEqual(participants.map((participant) => ({
       participantId: `created-${participant.externalId}`,
-      providerId: 'balldontlie',
+      providerId: participant.providerId,
       externalId: participant.externalId,
       confidence: MappingConfidence.EXACT,
     })));
-  });
-
-  describe('a name two or more of the site\'s participants could be (#1824)', () => {
-    const tomKims = (): Candidate[] => [
-      { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
-      { id: 'site-b', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
-    ];
-
-    it('holds the golfer as needing linking in the event\'s sport league, with both candidates and a sighting carrying the field\'s copy, and links, creates and fields nothing', async () => {
-      const prisma = unmappedPrisma(tomKims(), { linkedEvent: true });
-      const tomKim = { ...golfer('bdl-1', 'Tom Kim'), ranking: 9 };
-
-      const { mappings } = await sync(prisma, [tomKim]);
-
-      expect(mappings).toEqual([]);
-      expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-      expect(prisma.sportEventParticipant.createManyAndReturn).not.toHaveBeenCalled();
-      expect(heldRows(prisma)).toEqual([{ sportLeagueId: 'league-pga', providerId: 'balldontlie', externalId: 'bdl-1', feedName: 'Tom Kim', candidateParticipantIds: ['site-a', 'site-b'] }]);
-      expect(prisma.ambiguousFeedParticipantSighting.deleteMany).toHaveBeenCalledWith({ where: { sportEventId: 'sport-event-1', ambiguousFeedParticipantId: { in: ['held-bdl-1'] } } });
-      expect(prisma.ambiguousFeedParticipantSighting.createMany).toHaveBeenCalledWith({
-        data: [{ ambiguousFeedParticipantId: 'held-bdl-1', sportEventId: 'sport-event-1', feedParticipant: tomKim }],
-      });
-    });
-
-    it('reads the held rows of the feed ids it could not map in one read by provider, alongside the candidates', async () => {
-      const prisma = unmappedPrisma(tomKims(), { linkedEvent: true });
-
-      await sync(prisma, [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Rory McIlroy')]);
-
-      expect(prisma.ambiguousFeedParticipant.findMany).toHaveBeenCalledTimes(1);
-      expect(prisma.ambiguousFeedParticipant.findMany).toHaveBeenCalledWith({
-        where: { OR: [{ providerId: 'balldontlie', externalId: { in: ['bdl-1', 'bdl-2'] } }] },
-        select: { id: true, providerId: true, externalId: true, resolvedAt: true },
-      });
-    });
-
-    it('updates the row a sync already holds for the feed id, reopened, and replaces its sighting in the event, rather than holding it twice', async () => {
-      const held = { id: 'held-earlier', providerId: 'balldontlie', externalId: 'bdl-1', resolvedAt: new Date('2026-11-01T00:00:00.000Z') };
-      const prisma = unmappedPrisma(tomKims(), { linkedEvent: true, held: [held] });
-
-      await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(prisma.ambiguousFeedParticipant.createManyAndReturn).not.toHaveBeenCalled();
-      expect(prisma.ambiguousFeedParticipant.update).toHaveBeenCalledWith({
-        where: { id: 'held-earlier' },
-        data: { feedName: 'Tom Kim', candidateParticipantIds: ['site-a', 'site-b'], resolvedAt: null, resolvedParticipantId: null },
-      });
-      expect(prisma.ambiguousFeedParticipantSighting.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({ ambiguousFeedParticipantId: 'held-earlier', sportEventId: 'sport-event-1' })] });
-    });
-
-    it('holds nothing for a field no event is linked to, and only leaves the golfer unlinked', async () => {
-      const prisma = unmappedPrisma(tomKims());
-
-      const { mappings } = await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(mappings).toEqual([]);
-      expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
-      expect(prisma.ambiguousFeedParticipant.createManyAndReturn).not.toHaveBeenCalled();
-      expect(prisma.ambiguousFeedParticipantSighting.createMany).not.toHaveBeenCalled();
-    });
-
-    it('links a held golfer once one candidate is left, and resolves its row as linked to that candidate in the same write', async () => {
-      const held = { id: 'held-earlier', providerId: 'balldontlie', externalId: 'bdl-1', resolvedAt: null };
-      const prisma = unmappedPrisma([tomKims()[0]], { linkedEvent: true, held: [held] });
-
-      const { mappings } = await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(mappings).toEqual([{ participantId: 'site-a', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.HIGH }]);
-      expect(prisma.ambiguousFeedParticipant.update).toHaveBeenCalledWith({ where: { id: 'held-earlier' }, data: { resolvedAt: expect.any(Date), resolvedParticipantId: 'site-a' } });
-      expect(prisma.ambiguousFeedParticipant.createManyAndReturn).not.toHaveBeenCalled();
-    });
-
-    it('leaves a held row resolved already as it is when the sync links the golfer it was linked to', async () => {
-      const held = { id: 'held-earlier', providerId: 'balldontlie', externalId: 'bdl-1', resolvedAt: new Date('2026-11-01T00:00:00.000Z') };
-      const prisma = unmappedPrisma([tomKims()[0]], { linkedEvent: true, held: [held] });
-
-      await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(prisma.ambiguousFeedParticipant.update).not.toHaveBeenCalled();
-    });
-
-    it('links the golfer to the one site golfer of the name the provider does not map yet, since the other is some other feed id\'s', async () => {
-      const prisma = unmappedPrisma([
-        { id: 'site-a', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [{ providerId: 'balldontlie' }] },
-        { id: 'site-b', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [] },
-      ], { linkedEvent: true });
-
-      const { mappings } = await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(mappings).toEqual([{ participantId: 'site-b', providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.HIGH }]);
-      expect(prisma.ambiguousFeedParticipant.createManyAndReturn).not.toHaveBeenCalled();
-    });
-
-    it('holds a golfer whose name two site golfers the provider does not map yet share, where a third of the name is mapped already', async () => {
-      const prisma = unmappedPrisma([
-        ...tomKims(),
-        { id: 'site-c', sportId: 'sport-golf', name: 'Tom Kim', providerMappings: [{ providerId: 'balldontlie' }] },
-      ], { linkedEvent: true });
-
-      await sync(prisma, [golfer('bdl-1', 'Tom Kim')]);
-
-      expect(heldRows(prisma)).toEqual([expect.objectContaining({ candidateParticipantIds: ['site-a', 'site-b'] })]);
-    });
   });
 });

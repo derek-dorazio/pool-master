@@ -9,7 +9,7 @@ const READY = {
   now: NOW,
   scheduledRoundCount: 4,
   loadedParticipantCount: 120,
-  fieldLinks: null,
+  unlinkedParticipantCount: null,
   untieredParticipantCount: 0,
   emptyTierLabels: [],
   isPriced: true,
@@ -27,11 +27,11 @@ describe('evaluateReleaseChecks (#1823)', () => {
   });
 
   it('fails each check on its own value: a passed start, an unpriced field, an unlinked golfer and an incomplete bracket', () => {
-    const checks = evaluateReleaseChecks({ ...READY, startDate: NOW, isPriced: false, fieldLinks: { unlinkedParticipants: 2, needsLinking: 0 }, bracketBlockers: ['its bracket is not loaded'] });
+    const checks = evaluateReleaseChecks({ ...READY, startDate: NOW, isPriced: false, unlinkedParticipantCount: 2, bracketBlockers: ['its bracket is not loaded'] });
 
     expect(checks.filter((check) => !check.passed)).toEqual([
       { key: 'NOT_STARTED', passed: false, value: NOW },
-      { key: 'FIELD_LINKED', passed: false, value: { unlinkedParticipants: 2, needsLinking: 0 } },
+      { key: 'FIELD_LINKED', passed: false, value: 2 },
       { key: 'PRICES_ASSIGNED', passed: false, value: null },
       { key: 'BRACKET_COMPLETE', passed: false, value: ['its bracket is not loaded'] },
     ]);
@@ -45,11 +45,8 @@ describe('describeFailedReleaseCheck (#1823)', () => {
     expect(words({ key: ReleaseCheckKey.NOT_STARTED, passed: false, value: NOW })).toEqual(['its start time has passed']);
     expect(words({ key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: false, value: 0 })).toEqual(['its rounds are not scheduled']);
     expect(words({ key: ReleaseCheckKey.FIELD_LOADED, passed: false, value: 0 })).toEqual(['its field is not loaded']);
-    expect(words({ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: { unlinkedParticipants: 1, needsLinking: 0 } })).toEqual(['1 active golfer not linked to the event\'s provider']);
-    expect(words({ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: { unlinkedParticipants: 2, needsLinking: 1 } }))
-      .toEqual(['2 active golfers not linked to the event\'s provider', '1 name from the provider\'s field waiting in Needs linking']);
-    expect(words({ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: { unlinkedParticipants: 0, needsLinking: 3 } }))
-      .toEqual(['3 names from the provider\'s field waiting in Needs linking']);
+    expect(words({ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: 1 })).toEqual(['1 active golfer not linked to the event\'s provider']);
+    expect(words({ key: ReleaseCheckKey.FIELD_LINKED, passed: false, value: 2 })).toEqual(['2 active golfers not linked to the event\'s provider']);
     expect(words({ key: ReleaseCheckKey.TIERS_ASSIGNED, passed: false, value: 3 })).toEqual(['3 active participant(s) have no tier']);
     expect(words({ key: ReleaseCheckKey.TIERS_FILLED, passed: false, value: ['Tier 5', 'Tier 6'] })).toEqual(['Tier 5 has no golfers', 'Tier 6 has no golfers']);
     expect(words({ key: ReleaseCheckKey.PRICES_ASSIGNED, passed: false, value: null })).toEqual(['its prices have not been assigned']);

@@ -1,25 +1,32 @@
-# Loading sport data and test seeds
+# Loading test data
 
-How sport leagues, players, events, fields and brackets get onto a site from a data file
-instead of being typed in on the Manage screens, and what each test seed loads for trying
-contests by hand. Setting an event up and running it by hand, from release to results, is
+How test data gets onto a QA or local site: test sport leagues, players, "Test-" events and
+fields, brackets and results, for trying contests by hand. Real events, fields and results never
+come from a file: every enabled sport league is synced from its provider
+([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md)), and a league with no sync stays off
+(#1850). Setting an event up and running it by hand, from release to results, is
 [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) (and, for races,
-[`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md)). Where each sport's real data comes
-from is [`SPORT-DATA-SOURCES.md`](SPORT-DATA-SOURCES.md).
+[`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md)). Where a test data file's last-season
+facts come from is [`SPORT-DATA-SOURCES.md`](SPORT-DATA-SOURCES.md).
 
-## Loading sport data
+## Loading test data
 
-Sport leagues, players, events and fields can be loaded from a data file instead of typed
-in. The `load-sport-data` skill gathers a real schedule or field from public sources,
-cross-checks it and writes the file; the 2026 test seed below is one too. Either way it goes
-in through the same admin API as the Manage screens, and no migration, deploy or reset loads it.
+Every file in `packages/core-api/scripts/seed-golf/` is test data: last season as played, with
+made-up odds, loaded a few re-dated "Test-" events at a time. It goes in through the same admin
+API as the Manage screens, and no migration, deploy or reset loads it. Every run reads the
+site's environment from `/version` first and refuses anything but QA or a local or test site.
 
-- **QA:** *Actions → Load sport data → Run workflow*, choosing the branch that has the file,
+- **QA:** *Actions → Load test data → Run workflow*, choosing the branch that has the file,
   the `file` (a path inside `packages/core-api/scripts/seed-golf/`, default
-  `golf-2026.json`) and the `mode`. It signs in as the E2E root admin.
+  `golf-2026.json`) or `all_test_data`, and the `mode`. It signs in as the E2E root admin.
 - **Locally:** with the API running, `POOLMASTER_SEED_BASE_URL=http://localhost:3000
   POOLMASTER_SEED_ADMIN_IDENTIFIER=<root admin> POOLMASTER_SEED_ADMIN_PASSWORD=<password>
-  npm run seed:golf -- --file golf-2026.json --mode apply --allow-test-data`.
+  npm run seed:golf -- --file golf-2026.json --mode apply`.
+
+**Rebuilding QA.** Reset the database, turn on each synced league's sync and let it run, then
+run *Load test data*. The sync puts the real events and fields on first, creating each feed
+participant it does not know; the load then finds those participants by their feed ids rather
+than creating a second (*Feed ids* below). Reset QA only on the owner's word.
 
 **Dry run first.** `dry-run` (the default) reads the site and lists, per sport league,
 player, event, field and bracket, what applying would add, update, skip, or leave as a conflict. It
@@ -30,37 +37,40 @@ writes nothing. The workflow's summary shows the list with the file's scope and 
 
 - A missing sport league, player, event or field entry is added. A player new to the
   league joins at the file's ranking; one already on it keeps the ranking it has.
-- An event's name, dates, venue, location, rounds or par that differ are updated. An event
-  is found by name, or, when a sponsor renamed it, by a start within three days.
-- A field entry's ranking and seed (the file's order) are set. A player the file drops is
-  marked withdrawn, never removed.
-- An event that has started, finished, or was cancelled or postponed is never changed; a
+- A draft test event's field, odds, tiers, prices and stored scores are filled in; a run that
+  stopped part-way is finished by the next.
+- An event that has started, finished, or was cancelled or postponed is never changed, beyond
+  the results of games played since (*Results go in as the games are played* below); a
   difference there is listed as a conflict for an admin to look at.
-- A file only changes what its envelope's `contents` names: one without `SCHEDULE` never
-  edits an event, so a file with next week's fields cannot rewrite the schedule.
+- A file only changes what its envelope's `contents` names.
 
-An event whose `field` is empty has no field in this file yet, so its stored field is left
-alone. A withdrawn player the file lists again is reinstated.
+Running the same file again lists everything as a skip.
+
+**Feed ids.** A test player may carry `feedIds`, the provider's id for that team or player keyed
+by provider (`"feedIds": { "balldontlie": "nfl-team-18" }`), in the form the provider's sync
+stores them ([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md) *Participants*). The run
+reads each named provider's feed ids for the sport once
+(`GET /api/v1/participants/provider-mappings`) and takes the participant a player's feed id is
+mapped to before any match by key or name, so the sync's participant is the test player too,
+whatever the file calls them. A feed id no participant holds yet is bound to the player's
+participant (`PUT /api/v1/participants/{id}/provider-mappings`), so a later sync fields that row
+instead of creating a duplicate; the report lists each as "feed id … bound". A file that gives
+one feed id to two players is refused. Feed ids go on participants only, never on a "Test-"
+event: a real game id would let the live score poll write real results onto it. They are added
+as each provider serves them, league by league; a player with none is matched by key, then
+name, as before.
 
 **Brackets.** A file of a sport played as a bracket, with `BRACKET` in its `contents`, may
 give each event its `matches`: each match's number, round, its two sides as player keys from
 the event's field (`null` where an earlier match's winner fills the side), whether it is on a
-neutral site, its `scheduledAt` once announced, and `advancesTo` (the match and side its winner
+neutral site, its `scheduledAt`, and `advancesTo` (the match and side its winner
 moves on to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
 conference) where it has one. A league that reseeds gives `bracketAdvancement`
 `RESEED_BY_SEED`, and its first-round games `advancesTo: null`; the run sets the rule on the
-sport league, new or existing. The server refuses a changed rule while any event of the league
-has its bracket loaded, so applying lists that change as a conflict and goes on; a dry run,
-which writes nothing, lists it as an update. A field entry may give its bracket `seed` (1-16 in each
+sport league, new or existing. A field entry may give its bracket `seed` (1-16 in each
 March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
 First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
 write.
-
-- **Before release**, a bracket that differs anywhere is loaded whole again, after the field.
-  A match time the file leaves out keeps the one on the site.
-- **After release** the field, seeds, play-in places and pairings are locked, so only a
-  match's time and site are changed. A field that differs is listed as a conflict. A play-in
-  place an admin has filled with its winner is found by its bracket place and left alone.
 
 **Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
 sport league of players scored by the composite family (the League Championship Series, World
@@ -77,65 +87,77 @@ Threat; `GOALS`, `ASSISTS`, `SHOTS_ON_GOAL` for hockey's Power Play; `GOALS`, `A
 soccer's Hat Trick; touchdowns, receptions and
 yards for football's Redzone). A stat left out counts 0. The run refuses a game beyond the
 event's games, a player off the field, a stat the composite does not count, and a `STATS` file
-for a league that is not a stat pool on the site. Box scores are results, so unlike the rest of a
-real file they are written whenever they differ, before or after release: each player's line
-for a game replaces the stored one, and a stored line for a player the game leaves out is cleared. An
-admin corrects one player's line on the event's Results page.
+for a league that is not a stat pool on the site. Each player's line for a game replaces the
+stored one, and a stored line for a player the game leaves out is cleared.
 
-Each new Clutch Card event names its season event (#1820): the event of its league's season
-league (the MLB for the World Series) that has the rounds it covers and is under way at its
-start. A real file's event finds it by its dates, so the season league's event must be on the
-site first; the site refuses the event without one. A test seed moves each event's dates on its
-own, so it names the parent itself: the latest test season event of the season league ("Test- MLB
-Postseason"). With none on the site yet, the run lists the Clutch Card event as a conflict and
-leaves it out. Loading every test file loads the box score files last, after the season leagues'.
+Each test Clutch Card event names its parent itself (#1820): the latest test season event of its
+season league ("Test- MLB Postseason" for the World Series). With none on the site yet, the run
+lists the Clutch Card event as a conflict and leaves it out. Loading every test file loads the
+box score files last, after the season leagues'.
 
-**Released as it loads.** With *release* on (the workflow's default; `--release` locally), an
-apply releases each draft event whose field the file carries and that has not started, so a
-"Load" leaves it open for contests with no trip to the Manage screens. With it off, every
-event stays a draft for an admin to release. When no active player has a tier yet, the event's tiers are assigned by the field's
-ranking; when none has a price, it gets the default prices. A field an admin has partly tiered
-or priced by hand is never re-assigned: the event stays a draft and the report says so, for the
-admin to finish on the Manage screen. An event the site still refuses to release (an
-incomplete bracket, say) stays a draft, and the report lists it as a conflict with the site's
-reason; the next run tries again. Any other failure (a lost sign-in) stops the run.
-An event with no field in the file yet (a schedule only) stays a draft. A real file never
-writes odds or scores ([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) has the admin
-steps).
+**Released as it loads.** Each league's first new test event is released; the ones after it
+are set up whole and left drafts (*A few "Test-" events at a time* below). When no active
+player has a tier yet, the event's tiers are assigned by the field's ranking; when none has a
+price, it gets the default prices. An event the site still refuses to release stays a draft,
+and the report lists it as a conflict with the site's reason; the next run tries again. Any
+other failure (a lost sign-in) stops the run. Every test event is created with automatic
+lifecycle off: the run moves it to In Progress and Completed itself.
 
-Running the same file again lists everything as a skip.
-
-**Any sport.** A real file may be any sport in the registry: rounds are the sport's count
+**Any sport.** A file may be any sport in the registry: rounds are the sport's count
 (1 for a race), and par is golf's alone (`null` for every other sport). An event may give
-`startsAt`, its exact start with a UTC offset (a race's post time), which is the entry cutoff;
-without it an event starts at noon UTC on its start date. Giving `startsAt` later to an event
-stored at that noon placeholder fills in its real time as a correction: the update sends
-`tellMembers: false`, so a released event's leagues get no "event moved" email, and the run
-reports it as "time filled in, leagues not told" (#1042). Any other start change is a move
-they are told about. Every loaded event ends at noon UTC
-the day after its end date, so automatic lifecycle never completes it, and settles its
-contests, while a US afternoon or evening finish on that date is still being played. An
-event of a sport whose finishing order an admin enters (every racing sport) is created with
-automatic lifecycle off, and one already on the site has it turned off, so it never
-completes, and settles, before its result is in. A test seed carries the results its sport
-is scored on: golf's made-up stroke rounds, a bracket's match results (entered as each game is
-played; *Results go in as the games are played* below), a race's real
-finishing order (each runner's `raceResult`, entered just before release as the official
-result; *Seeded 2026 races* below), or a stat pool's real box scores (*Seeded championship
-stat pools* below). Any sport may also have a test slate.
+`startsAt`, its exact start with a UTC offset (a race's post time); without it an event starts
+at noon UTC on its start date. Every loaded event ends at noon UTC the day after its end date.
+A test seed carries the results its sport is scored on: golf's made-up stroke rounds, a
+bracket's match results (entered as each game is played; *Results go in as the games are
+played* below), a race's real finishing order (each runner's `raceResult`, entered just before
+release as the official result; *Seeded 2026 races* below), or a stat pool's real box scores
+(*Seeded championship stat pools* below). Any sport may also have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
-`PLAYERS`, `FIELDS`, `BRACKET`, `STATS`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
-whole file before writing if anything strays outside the scope: an event outside the
-season, a league the scope does not name, made-up odds or scores in a real file, or test
-data on a target that does not take it. The filename is for people and is never read.
-The shape is in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
+`PLAYERS`, `FIELDS`, `BRACKET`, `STATS`, `RESULTS`), `testData: true` and its `provenance`. A
+test seed's `contents` hold at least `SCHEDULE`, `PLAYERS`, `FIELDS` and `RESULTS`; a test slate's
+just `PLAYERS` and `FIELDS`. A run refuses the whole file before writing if anything strays
+outside the scope: an event outside the season, a league the scope does not name, or a file
+that does not say `testData: true`. The filename is for people and is never read. The shape is
+in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
+
+### Writing a test data file
+
+Every sport league has a test data file of its last season as played (`rules/architecture-rules.md`
+§6 *Manual-testing seed data goes through the admin API*); a new sport league gets its file in
+the PR that adds it, and the seeded-template integration test fails until it has one. Its events,
+fields and results are real, gathered as [`SPORT-DATA-SOURCES.md`](SPORT-DATA-SOURCES.md) says
+(the "Fetch sport sources" workflow saves the pages a cloud session cannot reach, in
+`sport-sources/` on the branch, which never reaches main); its odds are made up. What each kind
+of sport carries:
+
+- **A tournament** (golf): each field entry's made-up `oddsToWin` and `rounds` of strokes.
+- **A bracket** (`american-football-2026-nfl-playoffs-test.json`): `contents` add `BRACKET`, each
+  field entry made-up `oddsToWin` and each match its real `result`. A reseeded round's results
+  name the side the server's reseed puts each team on (the 1 seed at home). A play-in place's
+  entry names its winner in `playInWinner`, set after release, before any result. A bye is a
+  team named straight into a later round's match. A match of a sport with periods may carry
+  `periodScores`, the score at the end of each period but the last. A match level after extra
+  time in a sport that settles it by shoot-out carries `homeShootoutScore` and
+  `awayShootoutScore`. A match that stopped early says how in its result's `ending`
+  (`RETIREMENT`, `WALKOVER`, `DEFAULT`), and a walkover's scores are null.
+- **Weeks** (`american-football-2025-nfl-weeks-test.json`): each week its own event, every game
+  a match that links nowhere. A drawn game's `result` has a null `winner`; a game postponed out
+  of its week stays in it with `cancelled: true` and no result. A season spanning two years
+  splits into one file per year its weeks start in.
+- **A race**: each field entry's made-up `oddsToWin` and real `raceResult`, in grid or post
+  order; a dead heat repeats a place and skips the next.
+- **A stat pool**: `contents` add `STATS`, each field entry a `ranking` to tier by, and each
+  game's box score.
+
+Give each player the provider's feed id wherever the provider serves it today (*Feed ids*
+above); never guess one. Validate the file with the unit tests in `tests/unit/core-api/` before
+pushing.
 
 ### Loading every test file, with test players
 
-Two options on *Load sport data* are for QA only. The run reads the site's environment from
-`/version` first and refuses either anywhere but QA (or a local site).
+Two options on *Load test data* load more than one file's events.
 
 - **`all_test_data`** loads every test data file in the folder in one run, in place of `file`
   (the test slates are left out, since each fills one named event). A file that fails is
@@ -154,16 +176,15 @@ Two options on *Load sport data* are for QA only. The run reads the site's envir
 
 ### A few "Test-" events at a time
 
-A test seed holds a whole season or playoff as played, but a run through *Load sport data*
+A test seed holds a whole season or playoff as played, but a run through *Load test data*
 (one file, or `all_test_data`) loads only a few of its events, so test events stay a handful
 beside the real ones and always lie just ahead (#1524). The rule is
 `selectTestSeedEvents` in `seed-golf-data.ts`:
 
 - **Named "Test- ..."**: every event a test seed creates is named `Test- <event name>`
-  ("Test- Super Bowl LX"), so it reads as test data in every picker. A real file may not name
-  an event that way, and the loader never matches a real file's event with a `Test-` event, by
-  name or by the rename window, nor a test event with a real one: loading the real Premier
-  League weeks never renames a test matchweek.
+  ("Test- Super Bowl LX"), so it reads as test data in every picker. The loader never matches a
+  test event with a synced one, and the sync never touches a `Test-` event, which carries no
+  provider link (#1850).
 - **Two per sport league**: each league gets its next 2 events not yet on the site, in file
   order (`events_per_league` on the workflow, `--events-per-league` locally). Once every event
   of the file is on the site, the league starts over with numbered copies ("Test- Super Bowl LX
@@ -217,7 +238,7 @@ for trying contests only.
 Its envelope says `testData` with `contents` `PLAYERS` and `FIELDS` and no events; any sport
 in the registry can have one.
 
-Run *Load sport data* with the slate as `file` (`test-slates/pga-tour.json`) and the event's
+Run *Load test data* with the slate as `file` (`test-slates/pga-tour.json`) and the event's
 name in `event`. The sport league and the event must already exist; a slate never creates
 either, and only touches an event that has not started. Its players join the league if they
 are new and fill the field in the file's order, at their rankings. Without `replace_field` it
