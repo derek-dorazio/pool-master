@@ -1,5 +1,6 @@
 /**
- * SyncedEventCreationScheduler — every six hours, the schedule trigger of each synced sport
+ * SyncedEventCreationScheduler — on the ingestion schedule's Event list policy (every six hours by
+ * default, #1871), the schedule trigger of each synced sport
  * league's events sync (ADR 0011, #1725; one sync framework, #1819). The sweep only queues: one
  * SYNC_LEAGUE_EVENTS job per active synced league (`LeagueEventsSync.queueScheduled`), and the
  * job runner does the provider calls in the background, recording each as an EVENTS sync run.
@@ -14,18 +15,20 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
+import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
+import { schedulePolicyDelayMs } from '../../core/schedule-policy-delay';
 import type { LeagueEventsSync } from './league-events-sync';
 
-/** Often enough that a rescheduled game or round moves the same day; each pass queues one job per league. */
-const SWEEP_INTERVAL_MS = 6 * 60 * 60 * 1000;
 /** The first sweep comes a little after a task starts, so a deploy picks up new events the same day. */
 const FIRST_SWEEP_AFTER_MS = 10 * 60 * 1000;
 const SWEEP_LOCK_KEY = 'synced-event-creation';
 
 export interface SyncedEventCreationSchedulerOptions {
   leagueEventsSync: Pick<LeagueEventsSync, 'queueScheduled'>;
+  /** The ingestion schedule, whose Event list policy says how often the sweep runs and whether it is on. */
+  schedule: { getConfig(): Promise<IngestionScheduleConfig> };
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
   logger?: FastifyBaseLogger;
@@ -38,7 +41,7 @@ export class SyncedEventCreationScheduler {
     this.lockedSweep = new LockedSweep({
       lockKey: SWEEP_LOCK_KEY,
       jobLock: options.jobLock,
-      intervalMs: SWEEP_INTERVAL_MS,
+      intervalMs: async () => schedulePolicyDelayMs((await options.schedule.getConfig()).eventList),
       firstRunAfterMs: FIRST_SWEEP_AFTER_MS,
       label: 'synced event creation sweep',
       logger: options.logger,
@@ -60,6 +63,11 @@ export class SyncedEventCreationScheduler {
   }
 
   private async sweep(): Promise<void> {
+    const { eventList } = await this.options.schedule.getConfig();
+    if (!eventList.enabled) {
+      this.options.logger?.debug({ action: 'events.leagueSync.scheduleOff' }, 'Skipped the events sync sweep because the Event list schedule is off');
+      return;
+    }
     const queuedCount = await this.options.leagueEventsSync.queueScheduled();
     this.options.logger?.info({ action: 'events.leagueSync.scheduled', data: { queuedCount } }, 'Queued each synced sport league\'s events sync');
   }

@@ -36,7 +36,7 @@ const SCHEDULE = {
   healthCheck: { enabled: true, intervalMinutes: 5 },
   eventParticipants: { enabled: true, intervalMinutes: 60, lookaheadDays: 14 },
   eventLiveScores: { enabled: false, intervalSeconds: 60 },
-  perSportOverrides: {},
+  eventList: { enabled: true, intervalMinutes: 360 },
 };
 
 describe('useProvidersQuery', () => {

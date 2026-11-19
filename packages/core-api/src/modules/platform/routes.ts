@@ -7,8 +7,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { Sport } from '@poolmaster/shared/domain';
-import type { IngestionScheduleConfigOverride } from '@poolmaster/shared/dto/config.dto';
+import type { IngestionScheduleConfigPatch } from '@poolmaster/shared/dto/config.dto';
 import type { SettingsGroupUpdateRequest } from '@poolmaster/shared/dto/settings.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
@@ -38,12 +37,6 @@ export interface PlatformModuleOptions {
   /** Clears a group's public reads at the CDN once it is saved or reset (#1181). */
   cdn: CdnInvalidator;
 }
-
-const SPORT_PARAMS = {
-  type: 'object',
-  required: ['sport'],
-  properties: { sport: { type: 'string', enum: Object.values(Sport) } },
-};
 
 export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
@@ -203,76 +196,15 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
-      body: schemaRef('IngestionScheduleConfigOverride'),
+      body: schemaRef('IngestionScheduleConfigPatch'),
     },
     handler: async (
       request: FastifyRequest<{
-        Body: IngestionScheduleConfigOverride;
+        Body: IngestionScheduleConfigPatch;
       }>,
     ) => {
       const rootAdminUserId = requireAuthUser(request).userId;
       return ingestionConfig.updateConfig(request.body, rootAdminUserId);
-    },
-  });
-
-  fastify.put('/ingestion-schedule/:sport', {
-    schema: {
-      tags: ['Platform'],
-      summary: 'Set per-sport ingestion schedule override',
-      description:
-        'Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.',
-      operationId: 'setSportIngestionOverride',
-      params: SPORT_PARAMS,
-      response: {
-        200: schemaRef('IngestionScheduleConfig'),
-        400: schemaRef('ErrorEnvelope'),
-        401: schemaRef('ErrorEnvelope'),
-        403: schemaRef('ErrorEnvelope'),
-      },
-      body: schemaRef('IngestionScheduleConfigOverride'),
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Params: { sport: Sport };
-        Body: IngestionScheduleConfigOverride;
-      }>,
-    ) => {
-      const rootAdminUserId = requireAuthUser(request).userId;
-      const { sport } = request.params;
-      return ingestionConfig.setPerSportOverride(
-        sport,
-        request.body,
-        rootAdminUserId,
-      );
-    },
-  });
-
-  fastify.post('/ingestion-schedule/:sport/reset', {
-    schema: {
-      tags: ['Platform'],
-      summary: 'Clear per-sport ingestion schedule override',
-      description:
-        'Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.',
-      operationId: 'resetSportIngestionOverride',
-      params: SPORT_PARAMS,
-      response: {
-        200: schemaRef('IngestionScheduleConfig'),
-        400: schemaRef('ErrorEnvelope'),
-        401: schemaRef('ErrorEnvelope'),
-        403: schemaRef('ErrorEnvelope'),
-      },
-    },
-    handler: async (
-      request: FastifyRequest<{
-        Params: { sport: Sport };
-      }>,
-    ) => {
-      const rootAdminUserId = requireAuthUser(request).userId;
-      const { sport } = request.params;
-      return ingestionConfig.clearPerSportOverride(
-        sport,
-        rootAdminUserId,
-      );
     },
   });
 

@@ -30,6 +30,7 @@ import {
   PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportLeagueRepository,
 } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
@@ -45,7 +46,7 @@ const syncVerificationConfig: IngestionScheduleConfig = {
   // window), so a week keeps the scheduled pass to the one event this suite asserts on.
   eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 7 },
   eventLiveScores: { enabled: false, intervalSeconds: 30 },
-  perSportOverrides: {},
+  eventList: { enabled: true, intervalMinutes: 360 },
 };
 
 function emptyLiveScorePersistenceResult() {
@@ -743,7 +744,6 @@ describe('mock contest feed provider event-first verification', () => {
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const configReader = {
       getConfig: async () => syncVerificationConfig,
-      getPerSportConfig: async () => syncVerificationConfig,
     };
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
@@ -765,6 +765,8 @@ describe('mock contest feed provider event-first verification', () => {
       participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
+      sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
+      webhookProviderIds: [],
       ingestionConfigReader: configReader,
       syncRunLedger,
       jobs: backgroundJobs.queue,
@@ -917,6 +919,8 @@ describe('mock contest feed provider event-first verification', () => {
       participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
+      sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
+      webhookProviderIds: [],
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
