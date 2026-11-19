@@ -20,6 +20,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -78,7 +79,7 @@ async function seedLeagueWithContestHistory() {
   });
   const participant = await prisma.participant.create({
     data: {
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Golfer ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
       externalIds: {},

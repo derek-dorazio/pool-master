@@ -18,6 +18,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { participantLeagueId } from '../support/participant-league';
 
 // The random draw (#601) end to end over HTTP: members enter, nobody can pick, the
 // commissioner's draw deals every entry its golfers, and the deal is then final and public.
@@ -87,7 +88,7 @@ async function seedRandomDrawFixture() {
   for (let index = 0; index < 3; index += 1) {
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Draw Golfer ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
         externalIds: {},

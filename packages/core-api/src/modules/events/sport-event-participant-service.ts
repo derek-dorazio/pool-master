@@ -10,7 +10,7 @@
  * is one repository call, and what viewers poll, `listCachedEventParticipants`, is shared
  * by every contest on the event for up to 30 seconds.
  *
- * Seeding from a sport league copies its active affiliations onto the field once; it
+ * Seeding from a sport league copies its active participants onto the field once; it
  * does not constrain the field afterwards. `addParticipants` is the deliberate path for
  * anyone else (a LIV golfer at a PGA event): there was never a constraint to bypass.
  *
@@ -23,7 +23,6 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
   SportEventParticipantPatch,
   SportEventMatchRepository,
@@ -170,7 +169,6 @@ export interface SportEventParticipantServiceDeps {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
-  affiliations: ParticipantLeagueAffiliationRepository;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
   fieldCache?: EventFieldCache;
@@ -251,19 +249,19 @@ export class SportEventParticipantService {
   }
 
   /**
-   * Copies the event's sport league's active affiliations onto the field, deriving seed
-   * numbers and odds for the ones added. Idempotent: participants already on the field
-   * are skipped and keep what they have.
+   * Copies the event's sport league's active participants onto the field, with their league
+   * ranking, deriving seed numbers and odds for the ones added. Idempotent: participants already
+   * on the field are skipped and keep what they have.
    */
   async seedFromSportLeague(sportEventId: string): Promise<SeedFieldResult> {
     const event = await this.requireEvent(sportEventId);
     const { sportLeagueId } = event;
-    const affiliations = (await this.deps.affiliations.findBySportLeague(sportLeagueId))
-      .filter((affiliation) => affiliation.participant.status === ParticipantStatus.ACTIVE);
+    const roster = (await this.deps.participants.findBySportLeague(sportLeagueId))
+      .filter((participant) => participant.status === ParticipantStatus.ACTIVE);
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
-    const toAdd = affiliations.filter((affiliation) => !onField.has(affiliation.participantId));
+    const toAdd = roster.filter((participant) => !onField.has(participant.id));
     const seeded = deriveSeedNumbersAndOdds(
-      toAdd.map((affiliation) => ({ participantId: affiliation.participantId, ranking: affiliation.ranking })),
+      toAdd.map((participant) => ({ participantId: participant.id, ranking: participant.ranking })),
       this.deps.random,
     );
     if (seeded.length > 0) {
@@ -278,13 +276,13 @@ export class SportEventParticipantService {
     }
 
     this.deps.logger?.info(
-      { sportEventId, sportLeagueId, added: seeded.length, skipped: affiliations.length - seeded.length },
+      { sportEventId, sportLeagueId, added: seeded.length, skipped: roster.length - seeded.length },
       'Seeded field from sport league',
     );
     return {
       added: seeded.length,
-      skipped: affiliations.length - seeded.length,
-      total: affiliations.length,
+      skipped: roster.length - seeded.length,
+      total: roster.length,
       seedNumbersDerived: seeded.length,
       oddsDerived: seeded.length,
     };

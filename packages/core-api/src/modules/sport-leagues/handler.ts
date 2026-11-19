@@ -1,23 +1,21 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
-  CreateParticipantLeagueAffiliationRequest,
   CreateSportLeagueRequest,
-  ParticipantLeagueAffiliationListResponse,
-  ParticipantLeagueAffiliationResponse,
-  ParticipantLeagueAffiliationUploadPreviewResponse,
-  ParticipantLeagueAffiliationUploadRequest,
   SportLeagueListQuery,
   SportLeagueListResponse,
+  SportLeagueParticipantRankingsRequest,
+  SportLeagueRankingUploadPreviewResponse,
+  SportLeagueRankingUploadRequest,
   SportLeagueOverviewListResponse,
   SportLeagueResponse,
-  UpdateParticipantLeagueAffiliationRankingsRequest,
   UpdateSportLeagueRequest,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
+import type { ParticipantListResponse } from '@poolmaster/shared/dto/participants.dto';
 import { sendError } from '../../core/error-handler';
 import type { ReadCache } from '../../core/read-cache';
 import {
-  mapAffiliationToDto,
-  mapAffiliationUploadPreviewRowToDto,
+  mapParticipantToDto,
+  mapRankingUploadPreviewRowToDto,
   mapSportLeagueOverviewToDto,
   mapSportLeagueToDto,
 } from '../../mappers';
@@ -73,46 +71,30 @@ export function createSportLeagueHandlers(
       return reply.status(204).send();
     },
 
-    listAffiliations: async (request: FastifyRequest<SportLeagueParams>): Promise<ParticipantLeagueAffiliationListResponse> => {
-      const affiliations = await sportLeagues.listAffiliations(request.params.sportLeagueId);
-      return { affiliations: affiliations.map(mapAffiliationToDto) };
+    listParticipants: async (request: FastifyRequest<SportLeagueParams>): Promise<ParticipantListResponse> => {
+      const participants = await sportLeagues.listParticipants(request.params.sportLeagueId);
+      return { participants: participants.map(mapParticipantToDto) };
     },
 
-    createAffiliation: async (
-      request: FastifyRequest<SportLeagueParams & { Body: CreateParticipantLeagueAffiliationRequest }>,
-      reply: FastifyReply,
-    ) => {
-      const affiliation = await sportLeagues.addAffiliation(request.params.sportLeagueId, request.body.participantId);
-      return reply.status(201).send({ affiliation: mapAffiliationToDto(affiliation) } satisfies ParticipantLeagueAffiliationResponse);
+    updateParticipantRankings: async (
+      request: FastifyRequest<SportLeagueParams & { Body: SportLeagueParticipantRankingsRequest }>,
+    ): Promise<ParticipantListResponse> => {
+      const participants = await sportLeagues.updateRankings(request.params.sportLeagueId, request.body.rankings);
+      return { participants: participants.map(mapParticipantToDto) };
     },
 
-    deleteAffiliation: async (
-      request: FastifyRequest<{ Params: { sportLeagueId: string; participantId: string } }>,
-      reply: FastifyReply,
-    ) => {
-      await sportLeagues.removeAffiliation(request.params.sportLeagueId, request.params.participantId);
-      return reply.status(204).send();
+    previewRankingUpload: async (
+      request: FastifyRequest<SportLeagueParams & { Body: SportLeagueRankingUploadRequest }>,
+    ): Promise<SportLeagueRankingUploadPreviewResponse> => {
+      const rows = await sportLeagues.previewRankingUpload(request.params.sportLeagueId, request.body.rows);
+      return { rows: rows.map(mapRankingUploadPreviewRowToDto) };
     },
 
-    updateAffiliationRankings: async (
-      request: FastifyRequest<SportLeagueParams & { Body: UpdateParticipantLeagueAffiliationRankingsRequest }>,
-    ): Promise<ParticipantLeagueAffiliationListResponse> => {
-      const affiliations = await sportLeagues.updateRankings(request.params.sportLeagueId, request.body.rankings);
-      return { affiliations: affiliations.map(mapAffiliationToDto) };
-    },
-
-    previewAffiliationUpload: async (
-      request: FastifyRequest<SportLeagueParams & { Body: ParticipantLeagueAffiliationUploadRequest }>,
-    ): Promise<ParticipantLeagueAffiliationUploadPreviewResponse> => {
-      const rows = await sportLeagues.previewAffiliationUpload(request.params.sportLeagueId, request.body.rows);
-      return { rows: rows.map(mapAffiliationUploadPreviewRowToDto) };
-    },
-
-    applyAffiliationUpload: async (
-      request: FastifyRequest<SportLeagueParams & { Body: ParticipantLeagueAffiliationUploadRequest }>,
-    ): Promise<ParticipantLeagueAffiliationListResponse> => {
-      const affiliations = await sportLeagues.applyAffiliationUpload(request.params.sportLeagueId, request.body.rows);
-      return { affiliations: affiliations.map(mapAffiliationToDto) };
+    applyRankingUpload: async (
+      request: FastifyRequest<SportLeagueParams & { Body: SportLeagueRankingUploadRequest }>,
+    ): Promise<ParticipantListResponse> => {
+      const participants = await sportLeagues.applyRankingUpload(request.params.sportLeagueId, request.body.rows);
+      return { participants: participants.map(mapParticipantToDto) };
     },
   };
 }

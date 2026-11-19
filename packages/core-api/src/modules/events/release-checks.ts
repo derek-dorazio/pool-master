@@ -14,8 +14,6 @@ export interface ReleaseCheckInputs {
   now: Date;
   scheduledRoundCount: number;
   loadedParticipantCount: number;
-  /** Active field participants the event's provider maps no feed id to; null for an event no provider syncs, which has no provider links to check. */
-  unlinkedParticipantCount: number | null;
   untieredParticipantCount: number;
   emptyTierLabels: readonly string[];
   isPriced: boolean;
@@ -31,9 +29,6 @@ export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[
     { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: inputs.scheduledRoundCount > 0, value: inputs.scheduledRoundCount },
     { key: ReleaseCheckKey.FIELD_LOADED, passed: inputs.loadedParticipantCount > 0, value: inputs.loadedParticipantCount },
   ];
-  if (inputs.unlinkedParticipantCount !== null) {
-    checks.push({ key: ReleaseCheckKey.FIELD_LINKED, passed: inputs.unlinkedParticipantCount === 0, value: inputs.unlinkedParticipantCount });
-  }
   checks.push(
     { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: inputs.untieredParticipantCount === 0, value: inputs.untieredParticipantCount },
     { key: ReleaseCheckKey.TIERS_FILLED, passed: inputs.emptyTierLabels.length === 0, value: [...inputs.emptyTierLabels] },
@@ -64,8 +59,6 @@ export function describeFailedReleaseCheck(check: ReleaseCheck, participant: Spo
       return ['its rounds are not scheduled'];
     case ReleaseCheckKey.FIELD_LOADED:
       return ['its field is not loaded'];
-    case ReleaseCheckKey.FIELD_LINKED:
-      return [`${check.value} active ${check.value === 1 ? participant.one : participant.many} not linked to the event's provider`];
     case ReleaseCheckKey.TIERS_ASSIGNED:
       return [`${check.value} active participant(s) have no tier`];
     case ReleaseCheckKey.TIERS_FILLED:

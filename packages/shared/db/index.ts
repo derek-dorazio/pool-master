@@ -58,6 +58,7 @@ export type {
   MembershipRepositories,
   MembershipTransaction,
   ParticipantProviderMappingRepository,
+  ProviderMappingScope,
   ParticipantRepository,
   ParticipantSearchFilters,
   SquadDetails,
@@ -110,7 +111,6 @@ export type {
 } from './match-ports';
 export type {
   EventSeriesRepository,
-  ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,
   ParticipantRanking,
   ParticipantRoundView,

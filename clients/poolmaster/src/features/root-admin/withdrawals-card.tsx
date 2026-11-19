@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, InlineError, Input, SectionCard, Select } from '@/features/shared/ui';
+import { Button, InlineError, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -36,11 +36,10 @@ export function WithdrawalsCard({
 }) {
   const [withdrawnId, setWithdrawnId] = useState(NONE);
   const [replacementId, setReplacementId] = useState(NONE);
-  const [search, setSearch] = useState('');
   const participant = vocabulary.participant;
   const noun = matchNoun(vocabulary);
   const replaceable = replaceableEntries(bracket, new Map(field.map((entry) => [entry.id, entry])));
-  const candidatesQuery = useEventLeagueCandidatesQuery(event, search);
+  const candidatesQuery = useEventLeagueCandidatesQuery(event);
   const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (candidatesQuery.data ?? []).filter((candidate) => !inEvent.has(candidate.id));
@@ -85,17 +84,6 @@ export function WithdrawalsCard({
             ))}
           </Select>
         </label>
-        {candidatesQuery.needsSearch ? (
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            {`Find a ${participant.one}`}
-            <Input
-              data-testid="root-admin-withdrawal-replacement-search"
-              onChange={(change) => { setSearch(change.target.value); setReplacementId(NONE); }}
-              type="search"
-              value={search}
-            />
-          </label>
-        ) : null}
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           Replaced by
           <Select
@@ -104,7 +92,7 @@ export function WithdrawalsCard({
             onChange={(change) => setReplacementId(change.target.value)}
             value={replacementId}
           >
-            <option value={NONE}>{candidatePrompt(candidatesQuery, `Choose a ${participant.one}`, participant.one)}</option>
+            <option value={NONE}>{candidatePrompt(candidatesQuery, `Choose a ${participant.one}`)}</option>
             {candidates.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
             ))}

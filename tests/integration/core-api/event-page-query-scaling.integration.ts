@@ -15,6 +15,7 @@ import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaste
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
+import { participantLeagueId } from '../../support/participant-league';
 
 // No mocks.
 
@@ -91,7 +92,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber, scheduledDate: startDate } });
     const team = async (side: string) => {
       const participant = await prisma.participant.create({
-        data: { sportId: football.id, name: `${side} ${suffix} ${String(sortOrder)}`, participantType: 'TEAM' },
+        data: { sportLeagueId: await participantLeagueId(prisma, football.id), name: `${side} ${suffix} ${String(sortOrder)}`, participantType: 'TEAM' },
       });
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
     };

@@ -2313,7 +2313,7 @@ export interface paths {
         put?: never;
         /**
          * Seed a sport event's field from its sport league
-         * @description Adds the sport league's active affiliations with derived seeds and odds; ones already on the field are skipped. Root admin only.
+         * @description Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.
          */
         post: operations["seedEventParticipants"];
         delete?: never;
@@ -2847,7 +2847,7 @@ export interface paths {
         };
         /**
          * List sport leagues
-         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.
+         * @description Every sport league, or one sport's, each with its participant and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.
          */
         get: operations["listSportLeagues"];
         put?: never;
@@ -2895,7 +2895,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport league
-         * @description Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
+         * @description Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
          */
         delete: operations["deleteSportLeague"];
         options?: never;
@@ -2907,7 +2907,7 @@ export interface paths {
         patch: operations["updateSportLeague"];
         trace?: never;
     };
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants": {
         parameters: {
             query?: never;
             header?: never;
@@ -2915,27 +2915,19 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List a sport league's affiliations
-         * @description Who competes in the sport league and their current rank, each with the canonical participant.
+         * List a sport league's participants
+         * @description Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.
          */
-        get: operations["listParticipantLeagueAffiliations"];
+        get: operations["listSportLeagueParticipants"];
         put?: never;
-        /**
-         * Affiliate a participant with a sport league
-         * @description Root admin only. 409 when the participant is already affiliated.
-         */
-        post: operations["createParticipantLeagueAffiliation"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /**
-         * Re-rank a sport league's affiliations
-         * @description Root admin only. All or none.
-         */
-        patch: operations["updateParticipantLeagueAffiliationRankings"];
+        patch?: never;
         trace?: never;
     };
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/{participantId}": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings": {
         parameters: {
             query?: never;
             header?: never;
@@ -2945,17 +2937,17 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Remove a participant's affiliation
-         * @description Root admin only.
-         */
-        delete: operations["deleteParticipantLeagueAffiliation"];
+        delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Re-rank a sport league's participants
+         * @description Root admin only. All or none; every participant named must be the sport league's.
+         */
+        patch: operations["updateSportLeagueParticipantRankings"];
         trace?: never;
     };
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload/preview": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview": {
         parameters: {
             query?: never;
             header?: never;
@@ -2965,17 +2957,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Preview an affiliation upload
-         * @description Resolves each row to a participant of the sport league's sport and writes nothing. Root admin only.
+         * Preview a ranking upload
+         * @description Resolves each row to a participant of the sport league and writes nothing. Root admin only.
          */
-        post: operations["previewParticipantLeagueAffiliationUpload"];
+        post: operations["previewSportLeagueRankingUpload"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload": {
         parameters: {
             query?: never;
             header?: never;
@@ -2985,10 +2977,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Apply an affiliation upload
-         * @description Affiliates and ranks every row, all or none; 422 when any row does not resolve. Root admin only.
+         * Apply a ranking upload
+         * @description Ranks every row's participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.
          */
-        post: operations["applyParticipantLeagueAffiliationUpload"];
+        post: operations["applySportLeagueRankingUpload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3148,7 +3140,7 @@ export interface paths {
         };
         /**
          * List participants
-         * @description The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
+         * @description The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).
          */
         get: operations["listParticipants"];
         put?: never;
@@ -3171,10 +3163,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List a provider's identities for a sport's participants
-         * @description Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to, so it never makes a second one beside the sync's (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         * List a provider's identities for a sport league's participants
+         * @description Every identity one provider has for the participants of one sport league, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to in that league, so it never makes a second one beside the sync's (#1853). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
          */
-        get: operations["listSportProviderMappings"];
+        get: operations["listSportLeagueProviderMappings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3199,7 +3191,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a participant
-         * @description Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
+         * @description Deletes a participant no event field holds, with their provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).
          */
         delete: operations["deleteParticipant"];
         options?: never;
@@ -9175,6 +9167,11 @@ export interface components {
             id: string;
             /** Format: uuid */
             participantId: string;
+            /**
+             * Format: uuid
+             * @description The participant's sport league: a feed id names one participant per sport league.
+             */
+            sportLeagueId: string;
             /** @description The provider that knows the participant by externalId. */
             providerId: string;
             externalId: string;
@@ -9196,6 +9193,11 @@ export interface components {
                 id: string;
                 /** Format: uuid */
                 participantId: string;
+                /**
+                 * Format: uuid
+                 * @description The participant's sport league: a feed id names one participant per sport league.
+                 */
+                sportLeagueId: string;
                 /** @description The provider that knows the participant by externalId. */
                 providerId: string;
                 externalId: string;
@@ -9218,12 +9220,15 @@ export interface components {
             /** @description The provider's identifier for the competitor — from the unmapped-competitor list. */
             externalId: string;
         };
-        /** @description Whose provider identities to list: one provider's, in one sport. */
-        SportProviderMappingListQuery: {
+        /** @description Whose provider identities to list: one provider's, in one sport league. */
+        SportLeagueProviderMappingListQuery: {
             /** @description The provider whose identities to list. */
             providerId: string;
-            /** @description Only the identities of this sport's participants. */
-            sportId: string;
+            /**
+             * Format: uuid
+             * @description Only the identities of this sport league's participants.
+             */
+            sportLeagueId: string;
         };
         /** @description A single provider identity of a participant. */
         ParticipantProviderMappingResponse: {
@@ -9233,6 +9238,11 @@ export interface components {
                 id: string;
                 /** Format: uuid */
                 participantId: string;
+                /**
+                 * Format: uuid
+                 * @description The participant's sport league: a feed id names one participant per sport league.
+                 */
+                sportLeagueId: string;
                 /** @description The provider that knows the participant by externalId. */
                 providerId: string;
                 externalId: string;
@@ -9252,8 +9262,13 @@ export interface components {
         ParticipantDto: {
             /** @description Participant identifier. */
             id: string;
-            /** @description Owning sport identifier. */
-            sportId: string;
+            /**
+             * Format: uuid
+             * @description The one sport league the participant competes in; the sport is the league's.
+             */
+            sportLeagueId: string;
+            /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+            ranking: number | null;
             /** @description Primary participant display name. */
             name: string;
             /**
@@ -9328,8 +9343,11 @@ export interface components {
         ParticipantListQuery: {
             /** @description Case-insensitive text matched against name, first, last and short name, and team. */
             q?: string;
-            /** @description Only participants of this sport. */
-            sportId?: string;
+            /**
+             * Format: uuid
+             * @description Only participants of this sport league.
+             */
+            sportLeagueId?: string;
             /**
              * @description Only participants in this status. Omitted: every status.
              * @enum {string}
@@ -9342,8 +9360,13 @@ export interface components {
             participants: {
                 /** @description Participant identifier. */
                 id: string;
-                /** @description Owning sport identifier. */
-                sportId: string;
+                /**
+                 * Format: uuid
+                 * @description The one sport league the participant competes in; the sport is the league's.
+                 */
+                sportLeagueId: string;
+                /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                ranking: number | null;
                 /** @description Primary participant display name. */
                 name: string;
                 /**
@@ -9421,8 +9444,13 @@ export interface components {
             participant: {
                 /** @description Participant identifier. */
                 id: string;
-                /** @description Owning sport identifier. */
-                sportId: string;
+                /**
+                 * Format: uuid
+                 * @description The one sport league the participant competes in; the sport is the league's.
+                 */
+                sportLeagueId: string;
+                /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                ranking: number | null;
                 /** @description Primary participant display name. */
                 name: string;
                 /**
@@ -9496,8 +9524,13 @@ export interface components {
         };
         /** @description A new participant for the shared catalog. */
         CreateParticipantRequest: {
-            /** @description Sport the participant competes in. */
-            sportId: string;
+            /**
+             * Format: uuid
+             * @description The sport league the participant competes in.
+             */
+            sportLeagueId: string;
+            /** @description Rank in the sport league; 1 is best. Omitted: unranked. */
+            ranking?: number;
             /** @description Primary participant display name. */
             name: string;
             /**
@@ -9545,6 +9578,8 @@ export interface components {
              * @enum {string}
              */
             status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+            /** @description Rank in the sport league; null unranks. */
+            ranking?: number | null;
             /** @description Normalized participant injury or availability state. */
             injuryStatus?: {
                 /**
@@ -9724,8 +9759,8 @@ export interface components {
             parentSportLeagueId: string | null;
             /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
             parentRoundNumbers: number[];
-            /** @description Participants currently affiliated with the sport league. */
-            affiliationCount: number;
+            /** @description The sport league's participants. */
+            participantCount: number;
             /** @description Events on record for the sport league, across every series and year. */
             sportEventCount: number;
             /**
@@ -9830,8 +9865,8 @@ export interface components {
                 parentSportLeagueId: string | null;
                 /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
                 parentRoundNumbers: number[];
-                /** @description Participants currently affiliated with the sport league. */
-                affiliationCount: number;
+                /** @description The sport league's participants. */
+                participantCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
                 sportEventCount: number;
                 /**
@@ -9927,8 +9962,8 @@ export interface components {
                 parentSportLeagueId: string | null;
                 /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
                 parentRoundNumbers: number[];
-                /** @description Participants currently affiliated with the sport league. */
-                affiliationCount: number;
+                /** @description The sport league's participants. */
+                participantCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
                 sportEventCount: number;
                 /**
@@ -10086,7 +10121,7 @@ export interface components {
                         id: string;
                     };
                     /** @description The ready checks that held it, in check order. */
-                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "FIELD_LINKED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
                 }[];
             })[];
             /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
@@ -10200,7 +10235,7 @@ export interface components {
                             id: string;
                         };
                         /** @description The ready checks that held it, in check order. */
-                        failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "FIELD_LINKED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                        failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
                     }[];
                 })[];
                 /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
@@ -10225,320 +10260,9 @@ export interface components {
                 eventCount: number;
             }[];
         };
-        /** @description A participant's membership of a sport league, and their current rank there. */
-        ParticipantLeagueAffiliationDto: {
-            /**
-             * Format: uuid
-             * @description Affiliation identifier.
-             */
-            id: string;
-            /** Format: uuid */
-            sportLeagueId: string;
-            /** Format: uuid */
-            participantId: string;
-            /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-            ranking: number | null;
-            /** @description The canonical participant. */
-            participant: {
-                /** @description Participant identifier. */
-                id: string;
-                /** @description Owning sport identifier. */
-                sportId: string;
-                /** @description Primary participant display name. */
-                name: string;
-                /**
-                 * @description Whether the participant is an individual or team.
-                 * @enum {string}
-                 */
-                participantType: "INDIVIDUAL" | "TEAM";
-                /** @description Primary provider identifier when one exists. */
-                externalId?: string;
-                /** @description First name when the participant is a person. */
-                firstName?: string;
-                /** @description Last name when the participant is a person. */
-                lastName?: string;
-                /** @description Short-form display name for compact UI surfaces. */
-                shortName?: string;
-                /** @description Participant nationality or country code when known. */
-                nationality?: string;
-                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                role?: string | null;
-                /** @description Current team affiliation when the participant is not itself a team. */
-                teamAffiliation?: string | null;
-                /**
-                 * @description Current participant lifecycle or availability status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                /** @description Normalized participant injury or availability state. */
-                injuryStatus: {
-                    /**
-                     * @description Current injury or availability status code.
-                     * @enum {string}
-                     */
-                    status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                    /** @description Optional injury-status detail or summary. */
-                    detail?: string;
-                    /**
-                     * Format: date-time
-                     * @description Expected return timestamp when known.
-                     */
-                    expectedReturn?: string;
-                    /**
-                     * Format: date-time
-                     * @description When the injury-status record was last updated.
-                     */
-                    updatedAt?: string;
-                    /** @description Source that provided the injury-status update. */
-                    source?: string;
-                };
-                /** @description Optional participant image URL. */
-                photoUrl?: string | null;
-                /**
-                 * Format: date-time
-                 * @description When the participant image metadata was last refreshed.
-                 */
-                photoLastUpdated?: string;
-                /** @description Map of provider identifiers keyed by provider code. */
-                externalIds: {
-                    [key: string]: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description When the participant record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the participant record was last updated.
-                 */
-                updatedAt: string;
-            };
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string;
-        };
-        /** @description A sport league's affiliations. */
-        ParticipantLeagueAffiliationListResponse: {
-            /** @description Best rank first, unranked last, then by name. */
-            affiliations: {
-                /**
-                 * Format: uuid
-                 * @description Affiliation identifier.
-                 */
-                id: string;
-                /** Format: uuid */
-                sportLeagueId: string;
-                /** Format: uuid */
-                participantId: string;
-                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-                ranking: number | null;
-                /** @description The canonical participant. */
-                participant: {
-                    /** @description Participant identifier. */
-                    id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
-                    /** @description Primary participant display name. */
-                    name: string;
-                    /**
-                     * @description Whether the participant is an individual or team.
-                     * @enum {string}
-                     */
-                    participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
-                    /** @description First name when the participant is a person. */
-                    firstName?: string;
-                    /** @description Last name when the participant is a person. */
-                    lastName?: string;
-                    /** @description Short-form display name for compact UI surfaces. */
-                    shortName?: string;
-                    /** @description Participant nationality or country code when known. */
-                    nationality?: string;
-                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                    role?: string | null;
-                    /** @description Current team affiliation when the participant is not itself a team. */
-                    teamAffiliation?: string | null;
-                    /**
-                     * @description Current participant lifecycle or availability status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    /** @description Normalized participant injury or availability state. */
-                    injuryStatus: {
-                        /**
-                         * @description Current injury or availability status code.
-                         * @enum {string}
-                         */
-                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                        /** @description Optional injury-status detail or summary. */
-                        detail?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        expectedReturn?: string;
-                        /**
-                         * Format: date-time
-                         * @description When the injury-status record was last updated.
-                         */
-                        updatedAt?: string;
-                        /** @description Source that provided the injury-status update. */
-                        source?: string;
-                    };
-                    /** @description Optional participant image URL. */
-                    photoUrl?: string | null;
-                    /**
-                     * Format: date-time
-                     * @description When the participant image metadata was last refreshed.
-                     */
-                    photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was last updated.
-                     */
-                    updatedAt: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description One affiliation. */
-        ParticipantLeagueAffiliationResponse: {
-            /** @description A participant's membership of a sport league, and their current rank there. */
-            affiliation: {
-                /**
-                 * Format: uuid
-                 * @description Affiliation identifier.
-                 */
-                id: string;
-                /** Format: uuid */
-                sportLeagueId: string;
-                /** Format: uuid */
-                participantId: string;
-                /** @description The participant's current rank in the sport league; 1 is best. Null when unranked. */
-                ranking: number | null;
-                /** @description The canonical participant. */
-                participant: {
-                    /** @description Participant identifier. */
-                    id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
-                    /** @description Primary participant display name. */
-                    name: string;
-                    /**
-                     * @description Whether the participant is an individual or team.
-                     * @enum {string}
-                     */
-                    participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
-                    /** @description First name when the participant is a person. */
-                    firstName?: string;
-                    /** @description Last name when the participant is a person. */
-                    lastName?: string;
-                    /** @description Short-form display name for compact UI surfaces. */
-                    shortName?: string;
-                    /** @description Participant nationality or country code when known. */
-                    nationality?: string;
-                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
-                    role?: string | null;
-                    /** @description Current team affiliation when the participant is not itself a team. */
-                    teamAffiliation?: string | null;
-                    /**
-                     * @description Current participant lifecycle or availability status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                    /** @description Normalized participant injury or availability state. */
-                    injuryStatus: {
-                        /**
-                         * @description Current injury or availability status code.
-                         * @enum {string}
-                         */
-                        status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                        /** @description Optional injury-status detail or summary. */
-                        detail?: string;
-                        /**
-                         * Format: date-time
-                         * @description Expected return timestamp when known.
-                         */
-                        expectedReturn?: string;
-                        /**
-                         * Format: date-time
-                         * @description When the injury-status record was last updated.
-                         */
-                        updatedAt?: string;
-                        /** @description Source that provided the injury-status update. */
-                        source?: string;
-                    };
-                    /** @description Optional participant image URL. */
-                    photoUrl?: string | null;
-                    /**
-                     * Format: date-time
-                     * @description When the participant image metadata was last refreshed.
-                     */
-                    photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the participant record was last updated.
-                     */
-                    updatedAt: string;
-                };
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description Affiliates a participant with the sport league. */
-        CreateParticipantLeagueAffiliationRequest: {
-            /** Format: uuid */
-            participantId: string;
-        };
-        /** @description Re-ranks existing affiliations. */
-        UpdateParticipantLeagueAffiliationRankingsRequest: {
-            /** @description Existing affiliations to re-rank, all or none. */
+        /** @description Re-ranks participants of the sport league. */
+        SportLeagueParticipantRankingsRequest: {
+            /** @description Participants of the sport league to re-rank, all or none. */
             rankings: {
                 /** Format: uuid */
                 participantId: string;
@@ -10546,8 +10270,8 @@ export interface components {
                 ranking: number | null;
             }[];
         };
-        /** @description An affiliation upload. */
-        ParticipantLeagueAffiliationUploadRequest: {
+        /** @description A ranking upload for a sport league's participants. */
+        SportLeagueRankingUploadRequest: {
             rows: {
                 /** Format: uuid */
                 participantId?: string;
@@ -10561,11 +10285,11 @@ export interface components {
          * @enum {string}
          */
         UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-        /** @description A dry run of an affiliation upload. Nothing is written. */
-        ParticipantLeagueAffiliationUploadPreviewResponse: {
+        /** @description A dry run of a ranking upload. Nothing is written. */
+        SportLeagueRankingUploadPreviewResponse: {
             /** @description One per uploaded row, in upload order. */
             rows: {
-                /** @description One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName. */
+                /** @description One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants. */
                 row: {
                     /** Format: uuid */
                     participantId?: string;
@@ -10628,13 +10352,6 @@ export interface components {
             /** @description Whether the check passed. */
             passed: boolean;
             /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
-            value: number;
-        } | {
-            /** @enum {string} */
-            key: "FIELD_LINKED";
-            /** @description Whether the check passed. */
-            passed: boolean;
-            /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
             value: number;
         } | {
             /** @enum {string} */
@@ -10802,7 +10519,7 @@ export interface components {
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
             tierCount: number;
-            /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
+            /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
             releaseChecks: ({
                 /** @enum {string} */
                 key: "NOT_STARTED";
@@ -10826,13 +10543,6 @@ export interface components {
                 /** @description Whether the check passed. */
                 passed: boolean;
                 /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
-                value: number;
-            } | {
-                /** @enum {string} */
-                key: "FIELD_LINKED";
-                /** @description Whether the check passed. */
-                passed: boolean;
-                /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
                 value: number;
             } | {
                 /** @enum {string} */
@@ -11045,7 +10755,7 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
                 releaseChecks: ({
                     /** @enum {string} */
                     key: "NOT_STARTED";
@@ -11069,13 +10779,6 @@ export interface components {
                     /** @description Whether the check passed. */
                     passed: boolean;
                     /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
-                    value: number;
-                } | {
-                    /** @enum {string} */
-                    key: "FIELD_LINKED";
-                    /** @description Whether the check passed. */
-                    passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
                     value: number;
                 } | {
                     /** @enum {string} */
@@ -11283,7 +10986,7 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
                 releaseChecks: ({
                     /** @enum {string} */
                     key: "NOT_STARTED";
@@ -11307,13 +11010,6 @@ export interface components {
                     /** @description Whether the check passed. */
                     passed: boolean;
                     /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
-                    value: number;
-                } | {
-                    /** @enum {string} */
-                    key: "FIELD_LINKED";
-                    /** @description Whether the check passed. */
-                    passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
                     value: number;
                 } | {
                     /** @enum {string} */
@@ -11582,7 +11278,7 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
+                /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
                 releaseChecks: ({
                     /** @enum {string} */
                     key: "NOT_STARTED";
@@ -11606,13 +11302,6 @@ export interface components {
                     /** @description Whether the check passed. */
                     passed: boolean;
                     /** @description FIELD_LOADED: how many participants are in the field; at least one passes. */
-                    value: number;
-                } | {
-                    /** @enum {string} */
-                    key: "FIELD_LINKED";
-                    /** @description Whether the check passed. */
-                    passed: boolean;
-                    /** @description FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes. */
                     value: number;
                 } | {
                     /** @enum {string} */
@@ -12009,8 +11698,13 @@ export interface components {
             participant: {
                 /** @description Participant identifier. */
                 id: string;
-                /** @description Owning sport identifier. */
-                sportId: string;
+                /**
+                 * Format: uuid
+                 * @description The one sport league the participant competes in; the sport is the league's.
+                 */
+                sportLeagueId: string;
+                /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                ranking: number | null;
                 /** @description Primary participant display name. */
                 name: string;
                 /**
@@ -12219,8 +11913,13 @@ export interface components {
                 participant: {
                     /** @description Participant identifier. */
                     id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
+                    /**
+                     * Format: uuid
+                     * @description The one sport league the participant competes in; the sport is the league's.
+                     */
+                    sportLeagueId: string;
+                    /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                    ranking: number | null;
                     /** @description Primary participant display name. */
                     name: string;
                     /**
@@ -12470,8 +12169,13 @@ export interface components {
                 participant: {
                     /** @description Participant identifier. */
                     id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
+                    /**
+                     * Format: uuid
+                     * @description The one sport league the participant competes in; the sport is the league's.
+                     */
+                    sportLeagueId: string;
+                    /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                    ranking: number | null;
                     /** @description Primary participant display name. */
                     name: string;
                     /**
@@ -13597,8 +13301,13 @@ export interface components {
                 participant: {
                     /** @description Participant identifier. */
                     id: string;
-                    /** @description Owning sport identifier. */
-                    sportId: string;
+                    /**
+                     * Format: uuid
+                     * @description The one sport league the participant competes in; the sport is the league's.
+                     */
+                    sportLeagueId: string;
+                    /** @description Current rank in the sport league; 1 is best. Null when unranked. */
+                    ranking: number | null;
                     /** @description Primary participant display name. */
                     name: string;
                     /**
@@ -34027,7 +33736,7 @@ export interface operations {
             };
         };
     };
-    listParticipantLeagueAffiliations: {
+    listSportLeagueParticipants: {
         parameters: {
             query?: never;
             header?: never;
@@ -34038,13 +33747,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A sport league's affiliations. */
+            /** @description Participant-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ParticipantLeagueAffiliationListResponse"];
+                    "application/json": components["schemas"]["ParticipantListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -34058,7 +33767,7 @@ export interface operations {
             };
         };
     };
-    createParticipantLeagueAffiliation: {
+    updateSportLeagueParticipantRankings: {
         parameters: {
             query?: never;
             header?: never;
@@ -34069,70 +33778,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateParticipantLeagueAffiliationRequest"];
+                "application/json": components["schemas"]["SportLeagueParticipantRankingsRequest"];
             };
         };
         responses: {
-            /** @description One affiliation. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ParticipantLeagueAffiliationResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    updateParticipantLeagueAffiliationRankings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateParticipantLeagueAffiliationRankingsRequest"];
-            };
-        };
-        responses: {
-            /** @description A sport league's affiliations. */
+            /** @description Participant-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ParticipantLeagueAffiliationListResponse"];
+                    "application/json": components["schemas"]["ParticipantListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -34155,46 +33811,7 @@ export interface operations {
             };
         };
     };
-    deleteParticipantLeagueAffiliation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    previewParticipantLeagueAffiliationUpload: {
+    previewSportLeagueRankingUpload: {
         parameters: {
             query?: never;
             header?: never;
@@ -34205,17 +33822,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ParticipantLeagueAffiliationUploadRequest"];
+                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
             };
         };
         responses: {
-            /** @description A dry run of an affiliation upload. Nothing is written. */
+            /** @description A dry run of a ranking upload. Nothing is written. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ParticipantLeagueAffiliationUploadPreviewResponse"];
+                    "application/json": components["schemas"]["SportLeagueRankingUploadPreviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -34238,7 +33855,7 @@ export interface operations {
             };
         };
     };
-    applyParticipantLeagueAffiliationUpload: {
+    applySportLeagueRankingUpload: {
         parameters: {
             query?: never;
             header?: never;
@@ -34249,17 +33866,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ParticipantLeagueAffiliationUploadRequest"];
+                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
             };
         };
         responses: {
-            /** @description A sport league's affiliations. */
+            /** @description Participant-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ParticipantLeagueAffiliationListResponse"];
+                    "application/json": components["schemas"]["ParticipantListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -35029,8 +34646,8 @@ export interface operations {
             query?: {
                 /** @description Case-insensitive text matched against name, first, last and short name, and team. */
                 q?: string;
-                /** @description Only participants of this sport. */
-                sportId?: string;
+                /** @description Only participants of this sport league. */
+                sportLeagueId?: string;
                 /** @description Only participants in this status. Omitted: every status. */
                 status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
             };
@@ -35102,13 +34719,13 @@ export interface operations {
             };
         };
     };
-    listSportProviderMappings: {
+    listSportLeagueProviderMappings: {
         parameters: {
             query: {
                 /** @description The provider whose identities to list. */
                 providerId: string;
-                /** @description Only the identities of this sport's participants. */
-                sportId: string;
+                /** @description Only the identities of this sport league's participants. */
+                sportLeagueId: string;
             };
             header?: never;
             path?: never;

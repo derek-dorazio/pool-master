@@ -55,7 +55,8 @@ export class InMemoryGamePicks {
     this.sequence += 1;
     const participant = options.participantId !== undefined ? expectDefined(this.participants.get(options.participantId)) : {
       id: `participant-${this.sequence}`,
-      sportId: 'sport-nfl',
+      sportLeagueId: 'sport-league-nfl',
+      ranking: null,
       name,
       participantType: 'TEAM',
       status: ParticipantStatus.ACTIVE,

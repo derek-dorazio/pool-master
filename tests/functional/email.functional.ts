@@ -30,6 +30,7 @@ import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { seededSportLeagueId } from '../support/contest-setups';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { participantLeagueId } from '../support/participant-league';
 
 // #442 — every system email the app sends, proven end to end: the functional server sends
 // through a local SMTP sink that records each message, and these tests read it back. Each one
@@ -87,7 +88,7 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
   const golf = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
   const participant = await prisma.participant.create({
     data: {
-      sportId: golf.id,
+      sportLeagueId: await participantLeagueId(prisma, golf.id),
       name: `Email Golfer ${randomUUID().slice(0, 8)}`,
       participantType: ParticipantType.INDIVIDUAL,
       externalIds: {},

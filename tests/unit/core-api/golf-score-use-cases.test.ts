@@ -24,7 +24,7 @@ async function setup() {
   const caraEntry = store.addToField(event.id, cara.id);
   const mappedAt = new Date('2026-06-01T12:00:00.000Z');
   for (const [externalId, participantId] of [['ext-ana', ana.id], ['ext-ben', ben.id], ['ext-cara', cara.id]]) {
-    await store.mappingRepo().bind({ providerId: 'feed', externalId, participantId, confidence: 'EXACT', mappedAt });
+    await store.mappingRepo().bind({ providerId: 'feed', externalId, participantId, sportLeagueId: store.leagueOf(participantId), confidence: 'EXACT', mappedAt });
   }
   const logger = fakeLogger();
   const service = new GolfScoreService({
@@ -100,7 +100,7 @@ describe('golf provider sync — what is skipped', () => {
   it('skips and logs an update for a mapped golfer who is not on this event\'s field', async () => {
     const { store, service, event, sport, logger } = await setup();
     const outsider = store.addParticipant(sport.id, 'Dan Outsider');
-    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-dan', participantId: outsider.id, confidence: 'EXACT', mappedAt: new Date() });
+    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-dan', participantId: outsider.id, sportLeagueId: outsider.sportLeagueId, confidence: 'EXACT', mappedAt: new Date() });
 
     const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-dan', 1, -3)], 'feed', 4);
 

@@ -49,13 +49,15 @@ Running the same file again lists everything as a skip.
 **Feed ids.** A test player may carry `feedIds`, the provider's id for that team or player keyed
 by provider (`"feedIds": { "balldontlie": "nfl-team-18" }`), in the form the provider's sync
 stores them ([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md) *Participants*). The run
-reads each named provider's feed ids for the sport once
-(`GET /api/v1/participants/provider-mappings`) and takes the participant a player's feed id is
+reads each named provider's feed ids for the player's sport league once
+(`GET /api/v1/participants/provider-mappings?sportLeagueId=…`) and takes the participant a player's feed id is
 mapped to before any match by key or name, so the sync's participant is the test player too,
 whatever the file calls them. A feed id no participant holds yet is bound to the player's
 participant (`PUT /api/v1/participants/{id}/provider-mappings`), so a later sync fields that row
 instead of creating a duplicate; the report lists each as "feed id … bound". A file that gives
-one feed id to two players is refused. Feed ids go on participants only, never on a "Test-"
+one feed id to two players of one league is refused. A feed id names one participant per sport
+league (#1853): a Clutch Card league's players carry their season league's feed ids, and each is
+its own row, created in that league. Feed ids go on participants only, never on a "Test-"
 event: a real game id would let the live score poll write real results onto it. They are added
 as each provider serves them, league by league; a player with none is matched by key, then
 name, as before.

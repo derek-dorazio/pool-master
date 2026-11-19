@@ -223,7 +223,10 @@ export interface SportConfig extends DomainEntity {
 
 /** Normalized participant record imported from one or more data providers. */
 export interface Participant extends DomainEntity {
-  sportId: string;
+  /** The one sport league the participant competes in (#1853); the sport is the league's. */
+  sportLeagueId: string;
+  /** Current rank in the sport league; 1 is best. Null when unranked. */
+  ranking: number | null;
   name: string;
   participantType: ParticipantType;
   externalId?: string;
@@ -255,6 +258,8 @@ export interface InjuryStatus {
 /** Mapping between a provider participant and an internal participant. */
 export interface ParticipantProviderMapping extends DomainEntity {
   participantId: string;
+  /** The participant's sport league: a feed id names one participant per sport league (#1853). */
+  sportLeagueId: string;
   providerId: string;
   externalId: string;
   confidence: MappingConfidence;

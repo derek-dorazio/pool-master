@@ -218,9 +218,9 @@ describe('history handlers', () => {
 describe('sport league handlers', () => {
   const AT = new Date('2026-01-01T00:00:00.000Z');
   const sportLeague = { id: 'sl1', roundNames: [], parentRoundNumbers: [], createdAt: AT, updatedAt: AT };
-  const affiliation = {
-    id: 'a1', sportLeagueId: 'sl1', participantId: 'p1', ranking: 1, createdAt: AT, updatedAt: AT,
-    participant: { id: 'p1', injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT },
+  const participant = {
+    id: 'p1', sportLeagueId: 'sl1', ranking: 1, name: 'One', participantType: 'INDIVIDUAL', status: 'ACTIVE', externalIds: {},
+    injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT,
   };
   const service = {
     listSportLeagues: jest.fn((..._args: unknown[]) => Promise.resolve([sportLeague])),
@@ -228,12 +228,10 @@ describe('sport league handlers', () => {
     createSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     updateSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     deleteSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve()),
-    listAffiliations: jest.fn((..._args: unknown[]) => Promise.resolve([affiliation])),
-    addAffiliation: jest.fn((..._args: unknown[]) => Promise.resolve(affiliation)),
-    removeAffiliation: jest.fn((..._args: unknown[]) => Promise.resolve()),
-    updateRankings: jest.fn((..._args: unknown[]) => Promise.resolve([affiliation])),
-    previewAffiliationUpload: jest.fn((..._args: unknown[]) => Promise.resolve([{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }])),
-    applyAffiliationUpload: jest.fn((..._args: unknown[]) => Promise.resolve([affiliation])),
+    listParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
+    updateRankings: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
+    previewRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }])),
+    applyRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
   };
   const overviews = new SportLeagueOverviewService({
     reader: {
@@ -291,24 +289,20 @@ describe('sport league handlers', () => {
     expect(deleted.statusCode).toBe(204);
   });
 
-  it('lists, adds, removes and re-ranks a sport league\'s affiliations', async () => {
-    const listed = await callHandler(handlers.listAffiliations, stubRequest({ params }));
-    const added = await callHandler(handlers.createAffiliation, stubRequest({ params, body: { participantId: 'p1' } }));
-    const removed = await callHandler(handlers.deleteAffiliation, stubRequest({ params: { sportLeagueId: 'sl1', participantId: 'p1' } }));
-    const ranked = await callHandler(handlers.updateAffiliationRankings, stubRequest({ params, body: { rankings: [{ participantId: 'p1', ranking: 1 }] } }));
+  it('lists and re-ranks a sport league\'s own participants', async () => {
+    const listed = await callHandler(handlers.listParticipants, stubRequest({ params }));
+    const ranked = await callHandler(handlers.updateParticipantRankings, stubRequest({ params, body: { rankings: [{ participantId: 'p1', ranking: 1 }] } }));
 
-    expect(listed.body).toMatchObject({ affiliations: [{ id: 'a1' }] });
-    expect(added).toMatchObject({ statusCode: 201, body: { affiliation: { id: 'a1' } } });
-    expect(service.removeAffiliation).toHaveBeenCalledWith('sl1', 'p1');
-    expect(removed.statusCode).toBe(204);
-    expect(ranked.body).toMatchObject({ affiliations: [{ ranking: 1 }] });
+    expect(listed.body).toMatchObject({ participants: [{ id: 'p1', sportLeagueId: 'sl1' }] });
+    expect(service.updateRankings).toHaveBeenCalledWith('sl1', [{ participantId: 'p1', ranking: 1 }]);
+    expect(ranked.body).toMatchObject({ participants: [{ ranking: 1 }] });
   });
 
-  it('previews and applies an affiliation upload', async () => {
-    const preview = await callHandler(handlers.previewAffiliationUpload, stubRequest({ params, body: { rows: [] } }));
-    const applied = await callHandler(handlers.applyAffiliationUpload, stubRequest({ params, body: { rows: [] } }));
+  it('previews and applies a ranking upload', async () => {
+    const preview = await callHandler(handlers.previewRankingUpload, stubRequest({ params, body: { rows: [] } }));
+    const applied = await callHandler(handlers.applyRankingUpload, stubRequest({ params, body: { rows: [] } }));
 
     expect(preview.body).toEqual({ rows: [{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }] });
-    expect(applied.body).toMatchObject({ affiliations: [{ id: 'a1' }] });
+    expect(applied.body).toMatchObject({ participants: [{ id: 'p1' }] });
   });
 });

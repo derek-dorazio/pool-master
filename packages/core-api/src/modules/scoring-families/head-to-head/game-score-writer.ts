@@ -91,7 +91,7 @@ export async function writeGameScores(
   const linkedMatchesOfScored = loaded.filter((match) => match.externalGameId !== null && scoredGameIds.has(match.externalGameId));
   // One read of the sides and one of the team mappings for the whole batch.
   const sidesOf = await participantsOfSides(deps, [...linkedMatchesOfScored, ...openMatches, ...seriesMatches]);
-  const teamsOf = await participantsOfTeams(deps, [...scoredOfLinked, ...(openMatches.length === 0 && seriesMatches.length === 0 ? [] : unlinkedGames)]);
+  const teamsOf = await participantsOfTeams(deps, sportEventId, [...scoredOfLinked, ...(openMatches.length === 0 && seriesMatches.length === 0 ? [] : unlinkedGames)]);
 
   const links = gamesToLink(unlinkedGames, openMatches, sidesOf, teamsOf);
   await deps.matches.linkGames(links.map(({ game, match }) => ({ id: match.id, externalGameId: game.externalGameId })));
@@ -344,11 +344,11 @@ async function participantsOfSides(deps: GameScoreWriterDeps, matches: readonly 
   return new Map(rows.map((row) => [row.id, row.participantId]));
 }
 
-/** The participant each provider team is mapped to, by the provider's team id. */
-async function participantsOfTeams(deps: GameScoreWriterDeps, games: readonly GameScoreUpdate[]): Promise<Map<string, string>> {
+/** The participant each provider team is mapped to in the event's sport league, by the provider's team id. */
+async function participantsOfTeams(deps: GameScoreWriterDeps, sportEventId: string, games: readonly GameScoreUpdate[]): Promise<Map<string, string>> {
   const ids = [...new Set(games.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]))];
   if (ids.length === 0) return new Map();
-  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, ids);
+  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, { sportEventId }, ids);
   return new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));
 }
 

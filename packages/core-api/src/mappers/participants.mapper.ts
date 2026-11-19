@@ -12,7 +12,8 @@ function toIso(value?: Date | null): string | undefined {
 export function mapParticipantToDto(participant: Participant) {
   return {
     id: participant.id,
-    sportId: participant.sportId,
+    sportLeagueId: participant.sportLeagueId,
+    ranking: participant.ranking,
     name: participant.name,
     participantType: participant.participantType,
     externalId: participant.externalId,
@@ -42,6 +43,7 @@ export function mapParticipantProviderMappingToDto(mapping: ParticipantProviderM
   return {
     id: mapping.id,
     participantId: mapping.participantId,
+    sportLeagueId: mapping.sportLeagueId,
     providerId: mapping.providerId,
     externalId: mapping.externalId,
     confidence: mapping.confidence,

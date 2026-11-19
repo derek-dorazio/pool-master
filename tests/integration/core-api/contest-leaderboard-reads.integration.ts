@@ -21,6 +21,7 @@ import { integrationPlanEntitlements } from '../plan-entitlements';
 import { recordStatements, statementParams, statementsOn, statementTarget, StatementVerb, type RecordedStatement } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -67,7 +68,7 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
   const field = [];
   for (let golfer = 1; golfer <= PICKS_PER_EVENT; golfer++) {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Golfer ${golfer} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Golfer ${golfer} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     const row = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
     const scoreToPar = scoresToPar?.[golfer - 1];

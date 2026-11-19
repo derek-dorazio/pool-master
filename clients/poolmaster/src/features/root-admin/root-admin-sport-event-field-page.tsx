@@ -114,6 +114,7 @@ export function RootAdminSportEventFieldPage() {
               existingParticipantIds={existingParticipantIds}
               onClose={() => setAddOpen(false)}
               sport={tournament.sport}
+              sportLeagueId={tournament.sportLeagueId}
             />
           ) : null}
         </div>

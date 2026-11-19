@@ -17742,6 +17742,11 @@
             "type": "string",
             "format": "uuid"
           },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The participant's sport league: a feed id names one participant per sport league."
+          },
           "providerId": {
             "type": "string",
             "description": "The provider that knows the participant by externalId."
@@ -17767,6 +17772,7 @@
         "required": [
           "id",
           "participantId",
+          "sportLeagueId",
           "providerId",
           "externalId",
           "confidence",
@@ -17790,6 +17796,11 @@
                 "participantId": {
                   "type": "string",
                   "format": "uuid"
+                },
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The participant's sport league: a feed id names one participant per sport league."
                 },
                 "providerId": {
                   "type": "string",
@@ -17816,6 +17827,7 @@
               "required": [
                 "id",
                 "participantId",
+                "sportLeagueId",
                 "providerId",
                 "externalId",
                 "confidence",
@@ -17853,7 +17865,7 @@
         "additionalProperties": false,
         "description": "Binds a provider identity to this participant. An identity already bound to another participant moves here."
       },
-      "SportProviderMappingListQuery": {
+      "SportLeagueProviderMappingListQuery": {
         "type": "object",
         "properties": {
           "providerId": {
@@ -17861,18 +17873,18 @@
             "minLength": 1,
             "description": "The provider whose identities to list."
           },
-          "sportId": {
+          "sportLeagueId": {
             "type": "string",
-            "minLength": 1,
-            "description": "Only the identities of this sport's participants."
+            "format": "uuid",
+            "description": "Only the identities of this sport league's participants."
           }
         },
         "required": [
           "providerId",
-          "sportId"
+          "sportLeagueId"
         ],
         "additionalProperties": false,
-        "description": "Whose provider identities to list: one provider's, in one sport."
+        "description": "Whose provider identities to list: one provider's, in one sport league."
       },
       "ParticipantProviderMappingResponse": {
         "type": "object",
@@ -17887,6 +17899,11 @@
               "participantId": {
                 "type": "string",
                 "format": "uuid"
+              },
+              "sportLeagueId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The participant's sport league: a feed id names one participant per sport league."
               },
               "providerId": {
                 "type": "string",
@@ -17913,6 +17930,7 @@
             "required": [
               "id",
               "participantId",
+              "sportLeagueId",
               "providerId",
               "externalId",
               "confidence",
@@ -17935,9 +17953,19 @@
             "type": "string",
             "description": "Participant identifier."
           },
-          "sportId": {
+          "sportLeagueId": {
             "type": "string",
-            "description": "Owning sport identifier."
+            "format": "uuid",
+            "description": "The one sport league the participant competes in; the sport is the league's."
+          },
+          "ranking": {
+            "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "name": {
             "type": "string",
@@ -18068,7 +18096,8 @@
         },
         "required": [
           "id",
-          "sportId",
+          "sportLeagueId",
+          "ranking",
           "name",
           "participantType",
           "status",
@@ -18087,9 +18116,10 @@
             "description": "Case-insensitive text matched against name, first, last and short name, and team.",
             "type": "string"
           },
-          "sportId": {
-            "description": "Only participants of this sport.",
-            "type": "string"
+          "sportLeagueId": {
+            "description": "Only participants of this sport league.",
+            "type": "string",
+            "format": "uuid"
           },
           "status": {
             "description": "Only participants in this status. Omitted: every status.",
@@ -18117,9 +18147,19 @@
                   "type": "string",
                   "description": "Participant identifier."
                 },
-                "sportId": {
+                "sportLeagueId": {
                   "type": "string",
-                  "description": "Owning sport identifier."
+                  "format": "uuid",
+                  "description": "The one sport league the participant competes in; the sport is the league's."
+                },
+                "ranking": {
+                  "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
                 },
                 "name": {
                   "type": "string",
@@ -18250,7 +18290,8 @@
               },
               "required": [
                 "id",
-                "sportId",
+                "sportLeagueId",
+                "ranking",
                 "name",
                 "participantType",
                 "status",
@@ -18281,9 +18322,19 @@
                 "type": "string",
                 "description": "Participant identifier."
               },
-              "sportId": {
+              "sportLeagueId": {
                 "type": "string",
-                "description": "Owning sport identifier."
+                "format": "uuid",
+                "description": "The one sport league the participant competes in; the sport is the league's."
+              },
+              "ranking": {
+                "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "name": {
                 "type": "string",
@@ -18414,7 +18465,8 @@
             },
             "required": [
               "id",
-              "sportId",
+              "sportLeagueId",
+              "ranking",
               "name",
               "participantType",
               "status",
@@ -18436,10 +18488,16 @@
       "CreateParticipantRequest": {
         "type": "object",
         "properties": {
-          "sportId": {
+          "sportLeagueId": {
             "type": "string",
-            "minLength": 1,
-            "description": "Sport the participant competes in."
+            "format": "uuid",
+            "description": "The sport league the participant competes in."
+          },
+          "ranking": {
+            "description": "Rank in the sport league; 1 is best. Omitted: unranked.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "name": {
             "type": "string",
@@ -18498,7 +18556,7 @@
           }
         },
         "required": [
-          "sportId",
+          "sportLeagueId",
           "name",
           "participantType"
         ],
@@ -18553,6 +18611,15 @@
               "RETIRED",
               "SUSPENDED"
             ]
+          },
+          "ranking": {
+            "description": "Rank in the sport league; null unranks.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "injuryStatus": {
             "type": "object",
@@ -18943,11 +19010,11 @@
             },
             "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
           },
-          "affiliationCount": {
+          "participantCount": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Participants currently affiliated with the sport league."
+            "description": "The sport league's participants."
           },
           "sportEventCount": {
             "type": "integer",
@@ -18989,7 +19056,7 @@
           "displayOrder",
           "parentSportLeagueId",
           "parentRoundNumbers",
-          "affiliationCount",
+          "participantCount",
           "sportEventCount",
           "createdAt",
           "updatedAt"
@@ -19217,11 +19284,11 @@
                   },
                   "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
                 },
-                "affiliationCount": {
+                "participantCount": {
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "Participants currently affiliated with the sport league."
+                  "description": "The sport league's participants."
                 },
                 "sportEventCount": {
                   "type": "integer",
@@ -19263,7 +19330,7 @@
                 "displayOrder",
                 "parentSportLeagueId",
                 "parentRoundNumbers",
-                "affiliationCount",
+                "participantCount",
                 "sportEventCount",
                 "createdAt",
                 "updatedAt"
@@ -19470,11 +19537,11 @@
                 },
                 "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
               },
-              "affiliationCount": {
+              "participantCount": {
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "Participants currently affiliated with the sport league."
+                "description": "The sport league's participants."
               },
               "sportEventCount": {
                 "type": "integer",
@@ -19516,7 +19583,7 @@
               "displayOrder",
               "parentSportLeagueId",
               "parentRoundNumbers",
-              "affiliationCount",
+              "participantCount",
               "sportEventCount",
               "createdAt",
               "updatedAt"
@@ -19863,7 +19930,6 @@
                                 "NOT_STARTED",
                                 "ROUNDS_SCHEDULED",
                                 "FIELD_LOADED",
-                                "FIELD_LINKED",
                                 "TIERS_ASSIGNED",
                                 "TIERS_FILLED",
                                 "PRICES_ASSIGNED",
@@ -20172,7 +20238,6 @@
                                       "NOT_STARTED",
                                       "ROUNDS_SCHEDULED",
                                       "FIELD_LOADED",
-                                      "FIELD_LINKED",
                                       "TIERS_ASSIGNED",
                                       "TIERS_FILLED",
                                       "PRICES_ASSIGNED",
@@ -20272,645 +20337,7 @@
         "additionalProperties": false,
         "description": "The root admin's Sports page."
       },
-      "ParticipantLeagueAffiliationDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Affiliation identifier."
-          },
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "participantId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ranking": {
-            "description": "The participant's current rank in the sport league; 1 is best. Null when unranked.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "participant": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "Participant identifier."
-              },
-              "sportId": {
-                "type": "string",
-                "description": "Owning sport identifier."
-              },
-              "name": {
-                "type": "string",
-                "description": "Primary participant display name."
-              },
-              "participantType": {
-                "type": "string",
-                "enum": [
-                  "INDIVIDUAL",
-                  "TEAM"
-                ],
-                "description": "Whether the participant is an individual or team."
-              },
-              "externalId": {
-                "description": "Primary provider identifier when one exists.",
-                "type": "string"
-              },
-              "firstName": {
-                "description": "First name when the participant is a person.",
-                "type": "string"
-              },
-              "lastName": {
-                "description": "Last name when the participant is a person.",
-                "type": "string"
-              },
-              "shortName": {
-                "description": "Short-form display name for compact UI surfaces.",
-                "type": "string"
-              },
-              "nationality": {
-                "description": "Participant nationality or country code when known.",
-                "type": "string"
-              },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "ACTIVE",
-                  "INACTIVE",
-                  "RETIRED",
-                  "SUSPENDED"
-                ],
-                "description": "Current participant lifecycle or availability status."
-              },
-              "injuryStatus": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "HEALTHY",
-                      "QUESTIONABLE",
-                      "DOUBTFUL",
-                      "OUT",
-                      "WITHDRAWN",
-                      "SUSPENDED",
-                      "SCRATCHED"
-                    ],
-                    "description": "Current injury or availability status code."
-                  },
-                  "detail": {
-                    "description": "Optional injury-status detail or summary.",
-                    "type": "string"
-                  },
-                  "expectedReturn": {
-                    "description": "Expected return timestamp when known.",
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "updatedAt": {
-                    "description": "When the injury-status record was last updated.",
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "source": {
-                    "description": "Source that provided the injury-status update.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "status"
-                ],
-                "additionalProperties": false,
-                "description": "Normalized participant injury or availability state."
-              },
-              "photoUrl": {
-                "description": "Optional participant image URL.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "photoLastUpdated": {
-                "description": "When the participant image metadata was last refreshed.",
-                "type": "string",
-                "format": "date-time"
-              },
-              "externalIds": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Map of provider identifiers keyed by provider code."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the participant record was created."
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the participant record was last updated."
-              }
-            },
-            "required": [
-              "id",
-              "sportId",
-              "name",
-              "participantType",
-              "status",
-              "injuryStatus",
-              "externalIds",
-              "createdAt",
-              "updatedAt"
-            ],
-            "additionalProperties": false,
-            "description": "The canonical participant."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          }
-        },
-        "required": [
-          "id",
-          "sportLeagueId",
-          "participantId",
-          "ranking",
-          "participant",
-          "createdAt",
-          "updatedAt"
-        ],
-        "additionalProperties": false,
-        "description": "A participant's membership of a sport league, and their current rank there."
-      },
-      "ParticipantLeagueAffiliationListResponse": {
-        "type": "object",
-        "properties": {
-          "affiliations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Affiliation identifier."
-                },
-                "sportLeagueId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "participantId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "ranking": {
-                  "description": "The participant's current rank in the sport league; 1 is best. Null when unranked.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "participant": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Participant identifier."
-                    },
-                    "sportId": {
-                      "type": "string",
-                      "description": "Owning sport identifier."
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Primary participant display name."
-                    },
-                    "participantType": {
-                      "type": "string",
-                      "enum": [
-                        "INDIVIDUAL",
-                        "TEAM"
-                      ],
-                      "description": "Whether the participant is an individual or team."
-                    },
-                    "externalId": {
-                      "description": "Primary provider identifier when one exists.",
-                      "type": "string"
-                    },
-                    "firstName": {
-                      "description": "First name when the participant is a person.",
-                      "type": "string"
-                    },
-                    "lastName": {
-                      "description": "Last name when the participant is a person.",
-                      "type": "string"
-                    },
-                    "shortName": {
-                      "description": "Short-form display name for compact UI surfaces.",
-                      "type": "string"
-                    },
-                    "nationality": {
-                      "description": "Participant nationality or country code when known.",
-                      "type": "string"
-                    },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ACTIVE",
-                        "INACTIVE",
-                        "RETIRED",
-                        "SUSPENDED"
-                      ],
-                      "description": "Current participant lifecycle or availability status."
-                    },
-                    "injuryStatus": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "HEALTHY",
-                            "QUESTIONABLE",
-                            "DOUBTFUL",
-                            "OUT",
-                            "WITHDRAWN",
-                            "SUSPENDED",
-                            "SCRATCHED"
-                          ],
-                          "description": "Current injury or availability status code."
-                        },
-                        "detail": {
-                          "description": "Optional injury-status detail or summary.",
-                          "type": "string"
-                        },
-                        "expectedReturn": {
-                          "description": "Expected return timestamp when known.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "description": "When the injury-status record was last updated.",
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "source": {
-                          "description": "Source that provided the injury-status update.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "status"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Normalized participant injury or availability state."
-                    },
-                    "photoUrl": {
-                      "description": "Optional participant image URL.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "photoLastUpdated": {
-                      "description": "When the participant image metadata was last refreshed.",
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "externalIds": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "description": "Map of provider identifiers keyed by provider code."
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "When the participant record was created."
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "When the participant record was last updated."
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "sportId",
-                    "name",
-                    "participantType",
-                    "status",
-                    "injuryStatus",
-                    "externalIds",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "description": "The canonical participant."
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "updatedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                }
-              },
-              "required": [
-                "id",
-                "sportLeagueId",
-                "participantId",
-                "ranking",
-                "participant",
-                "createdAt",
-                "updatedAt"
-              ],
-              "additionalProperties": false,
-              "description": "A participant's membership of a sport league, and their current rank there."
-            },
-            "description": "Best rank first, unranked last, then by name."
-          }
-        },
-        "required": [
-          "affiliations"
-        ],
-        "additionalProperties": false,
-        "description": "A sport league's affiliations."
-      },
-      "ParticipantLeagueAffiliationResponse": {
-        "type": "object",
-        "properties": {
-          "affiliation": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "description": "Affiliation identifier."
-              },
-              "sportLeagueId": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "participantId": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "ranking": {
-                "description": "The participant's current rank in the sport league; 1 is best. Null when unranked.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "participant": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "Participant identifier."
-                  },
-                  "sportId": {
-                    "type": "string",
-                    "description": "Owning sport identifier."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "Primary participant display name."
-                  },
-                  "participantType": {
-                    "type": "string",
-                    "enum": [
-                      "INDIVIDUAL",
-                      "TEAM"
-                    ],
-                    "description": "Whether the participant is an individual or team."
-                  },
-                  "externalId": {
-                    "description": "Primary provider identifier when one exists.",
-                    "type": "string"
-                  },
-                  "firstName": {
-                    "description": "First name when the participant is a person.",
-                    "type": "string"
-                  },
-                  "lastName": {
-                    "description": "Last name when the participant is a person.",
-                    "type": "string"
-                  },
-                  "shortName": {
-                    "description": "Short-form display name for compact UI surfaces.",
-                    "type": "string"
-                  },
-                  "nationality": {
-                    "description": "Participant nationality or country code when known.",
-                    "type": "string"
-                  },
-                  "role": {
-                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "teamAffiliation": {
-                    "description": "Current team affiliation when the participant is not itself a team.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "ACTIVE",
-                      "INACTIVE",
-                      "RETIRED",
-                      "SUSPENDED"
-                    ],
-                    "description": "Current participant lifecycle or availability status."
-                  },
-                  "injuryStatus": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "HEALTHY",
-                          "QUESTIONABLE",
-                          "DOUBTFUL",
-                          "OUT",
-                          "WITHDRAWN",
-                          "SUSPENDED",
-                          "SCRATCHED"
-                        ],
-                        "description": "Current injury or availability status code."
-                      },
-                      "detail": {
-                        "description": "Optional injury-status detail or summary.",
-                        "type": "string"
-                      },
-                      "expectedReturn": {
-                        "description": "Expected return timestamp when known.",
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "updatedAt": {
-                        "description": "When the injury-status record was last updated.",
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "source": {
-                        "description": "Source that provided the injury-status update.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "status"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Normalized participant injury or availability state."
-                  },
-                  "photoUrl": {
-                    "description": "Optional participant image URL.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "photoLastUpdated": {
-                    "description": "When the participant image metadata was last refreshed.",
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "externalIds": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Map of provider identifiers keyed by provider code."
-                  },
-                  "createdAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the participant record was created."
-                  },
-                  "updatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the participant record was last updated."
-                  }
-                },
-                "required": [
-                  "id",
-                  "sportId",
-                  "name",
-                  "participantType",
-                  "status",
-                  "injuryStatus",
-                  "externalIds",
-                  "createdAt",
-                  "updatedAt"
-                ],
-                "additionalProperties": false,
-                "description": "The canonical participant."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              }
-            },
-            "required": [
-              "id",
-              "sportLeagueId",
-              "participantId",
-              "ranking",
-              "participant",
-              "createdAt",
-              "updatedAt"
-            ],
-            "additionalProperties": false,
-            "description": "A participant's membership of a sport league, and their current rank there."
-          }
-        },
-        "required": [
-          "affiliation"
-        ],
-        "additionalProperties": false,
-        "description": "One affiliation."
-      },
-      "CreateParticipantLeagueAffiliationRequest": {
-        "type": "object",
-        "properties": {
-          "participantId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "participantId"
-        ],
-        "additionalProperties": false,
-        "description": "Affiliates a participant with the sport league."
-      },
-      "UpdateParticipantLeagueAffiliationRankingsRequest": {
+      "SportLeagueParticipantRankingsRequest": {
         "type": "object",
         "properties": {
           "rankings": {
@@ -20940,16 +20367,16 @@
               ],
               "additionalProperties": false
             },
-            "description": "Existing affiliations to re-rank, all or none."
+            "description": "Participants of the sport league to re-rank, all or none."
           }
         },
         "required": [
           "rankings"
         ],
         "additionalProperties": false,
-        "description": "Re-ranks existing affiliations."
+        "description": "Re-ranks participants of the sport league."
       },
-      "ParticipantLeagueAffiliationUploadRequest": {
+      "SportLeagueRankingUploadRequest": {
         "type": "object",
         "properties": {
           "rows": {
@@ -20976,7 +20403,7 @@
                 }
               },
               "additionalProperties": false,
-              "description": "One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName."
+              "description": "One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants."
             }
           }
         },
@@ -20984,7 +20411,7 @@
           "rows"
         ],
         "additionalProperties": false,
-        "description": "An affiliation upload."
+        "description": "A ranking upload for a sport league's participants."
       },
       "UploadRowResolutionDto": {
         "type": "string",
@@ -20995,7 +20422,7 @@
         ],
         "description": "How an uploaded row resolved to a participant: one match, none, or several."
       },
-      "ParticipantLeagueAffiliationUploadPreviewResponse": {
+      "SportLeagueRankingUploadPreviewResponse": {
         "type": "object",
         "properties": {
           "rows": {
@@ -21023,7 +20450,7 @@
                     }
                   },
                   "additionalProperties": false,
-                  "description": "One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName."
+                  "description": "One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants."
                 },
                 "resolution": {
                   "type": "string",
@@ -21066,7 +20493,7 @@
           "rows"
         ],
         "additionalProperties": false,
-        "description": "A dry run of an affiliation upload. Nothing is written."
+        "description": "A dry run of a ranking upload. Nothing is written."
       },
       "EventStatusDto": {
         "type": "string",
@@ -21208,33 +20635,6 @@
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
                 "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-              }
-            },
-            "required": [
-              "key",
-              "passed",
-              "value"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "enum": [
-                  "FIELD_LINKED"
-                ]
-              },
-              "passed": {
-                "type": "boolean",
-                "description": "Whether the check passed."
-              },
-              "value": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
-                "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes."
               }
             },
             "required": [
@@ -21730,7 +21130,7 @@
             "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
           },
           "releaseChecks": {
-            "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
+            "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
             "type": [
               "array",
               "null"
@@ -21809,33 +21209,6 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991,
                       "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-                    }
-                  },
-                  "required": [
-                    "key",
-                    "passed",
-                    "value"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "key": {
-                      "type": "string",
-                      "enum": [
-                        "FIELD_LINKED"
-                      ]
-                    },
-                    "passed": {
-                      "type": "boolean",
-                      "description": "Whether the check passed."
-                    },
-                    "value": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991,
-                      "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes."
                     }
                   },
                   "required": [
@@ -22498,7 +21871,7 @@
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "releaseChecks": {
-                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                   "type": [
                     "array",
                     "null"
@@ -22577,33 +21950,6 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
                             "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "FIELD_LINKED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes."
                           }
                         },
                         "required": [
@@ -23253,7 +22599,7 @@
                 "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
               },
               "releaseChecks": {
-                "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
+                "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                 "type": [
                   "array",
                   "null"
@@ -23332,33 +22678,6 @@
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991,
                           "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-                        }
-                      },
-                      "required": [
-                        "key",
-                        "passed",
-                        "value"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "enum": [
-                            "FIELD_LINKED"
-                          ]
-                        },
-                        "passed": {
-                          "type": "boolean",
-                          "description": "Whether the check passed."
-                        },
-                        "value": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes."
                         }
                       },
                       "required": [
@@ -24136,7 +23455,7 @@
                   "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
                 },
                 "releaseChecks": {
-                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED, FIELD_LINKED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
+                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
                   "type": [
                     "array",
                     "null"
@@ -24215,33 +23534,6 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
                             "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "FIELD_LINKED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "FIELD_LINKED, only on a provider-synced event: how many active field participants the event's provider maps no feed id to, so its scores would not reach them; 0 passes."
                           }
                         },
                         "required": [
@@ -25543,9 +24835,19 @@
                 "type": "string",
                 "description": "Participant identifier."
               },
-              "sportId": {
+              "sportLeagueId": {
                 "type": "string",
-                "description": "Owning sport identifier."
+                "format": "uuid",
+                "description": "The one sport league the participant competes in; the sport is the league's."
+              },
+              "ranking": {
+                "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
               },
               "name": {
                 "type": "string",
@@ -25676,7 +24978,8 @@
             },
             "required": [
               "id",
-              "sportId",
+              "sportLeagueId",
+              "ranking",
               "name",
               "participantType",
               "status",
@@ -26156,9 +25459,19 @@
                       "type": "string",
                       "description": "Participant identifier."
                     },
-                    "sportId": {
+                    "sportLeagueId": {
                       "type": "string",
-                      "description": "Owning sport identifier."
+                      "format": "uuid",
+                      "description": "The one sport league the participant competes in; the sport is the league's."
+                    },
+                    "ranking": {
+                      "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     },
                     "name": {
                       "type": "string",
@@ -26289,7 +25602,8 @@
                   },
                   "required": [
                     "id",
-                    "sportId",
+                    "sportLeagueId",
+                    "ranking",
                     "name",
                     "participantType",
                     "status",
@@ -26939,9 +26253,19 @@
                     "type": "string",
                     "description": "Participant identifier."
                   },
-                  "sportId": {
+                  "sportLeagueId": {
                     "type": "string",
-                    "description": "Owning sport identifier."
+                    "format": "uuid",
+                    "description": "The one sport league the participant competes in; the sport is the league's."
+                  },
+                  "ranking": {
+                    "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
                   },
                   "name": {
                     "type": "string",
@@ -27072,7 +26396,8 @@
                 },
                 "required": [
                   "id",
-                  "sportId",
+                  "sportLeagueId",
+                  "ranking",
                   "name",
                   "participantType",
                   "status",
@@ -30905,9 +30230,19 @@
                       "type": "string",
                       "description": "Participant identifier."
                     },
-                    "sportId": {
+                    "sportLeagueId": {
                       "type": "string",
-                      "description": "Owning sport identifier."
+                      "format": "uuid",
+                      "description": "The one sport league the participant competes in; the sport is the league's."
+                    },
+                    "ranking": {
+                      "description": "Current rank in the sport league; 1 is best. Null when unranked.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     },
                     "name": {
                       "type": "string",
@@ -31038,7 +30373,8 @@
                   },
                   "required": [
                     "id",
-                    "sportId",
+                    "sportLeagueId",
+                    "ranking",
                     "name",
                     "participantType",
                     "status",
@@ -79126,7 +78462,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Adds the sport league's active affiliations with derived seeds and odds; ones already on the field are skipped. Root admin only.",
+        "description": "Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -81891,7 +81227,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.",
+        "description": "Every sport league, or one sport's, each with its participant and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.",
         "parameters": [
           {
             "schema": {
@@ -82189,7 +81525,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Deletes a sport league nothing uses any more, with its affiliations and its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
+        "description": "Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -82238,14 +81574,14 @@
         }
       }
     },
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants": {
       "get": {
-        "operationId": "listParticipantLeagueAffiliations",
-        "summary": "List a sport league's affiliations",
+        "operationId": "listSportLeagueParticipants",
+        "summary": "List a sport league's participants",
         "tags": [
           "Sport leagues"
         ],
-        "description": "Who competes in the sport league and their current rank, each with the canonical participant.",
+        "description": "Who competes in the sport league (#1853), best rank first, unranked last, then by name. Never paged.",
         "parameters": [
           {
             "schema": {
@@ -82259,11 +81595,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A sport league's affiliations.",
+            "description": "Participant-list response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParticipantLeagueAffiliationListResponse"
+                  "$ref": "#/components/schemas/ParticipantListResponse"
                 }
               }
             }
@@ -82279,91 +81615,22 @@
             }
           }
         }
-      },
-      "post": {
-        "operationId": "createParticipantLeagueAffiliation",
-        "summary": "Affiliate a participant with a sport league",
-        "tags": [
-          "Sport leagues"
-        ],
-        "description": "Root admin only. 409 when the participant is already affiliated.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateParticipantLeagueAffiliationRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "sportLeagueId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "One affiliation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ParticipantLeagueAffiliationResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings": {
       "patch": {
-        "operationId": "updateParticipantLeagueAffiliationRankings",
-        "summary": "Re-rank a sport league's affiliations",
+        "operationId": "updateSportLeagueParticipantRankings",
+        "summary": "Re-rank a sport league's participants",
         "tags": [
           "Sport leagues"
         ],
-        "description": "Root admin only. All or none.",
+        "description": "Root admin only. All or none; every participant named must be the sport league's.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateParticipantLeagueAffiliationRankingsRequest"
+                "$ref": "#/components/schemas/SportLeagueParticipantRankingsRequest"
               }
             }
           }
@@ -82381,11 +81648,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A sport league's affiliations.",
+            "description": "Participant-list response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParticipantLeagueAffiliationListResponse"
+                  "$ref": "#/components/schemas/ParticipantListResponse"
                 }
               }
             }
@@ -82413,75 +81680,20 @@
         }
       }
     },
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/{participantId}": {
-      "delete": {
-        "operationId": "deleteParticipantLeagueAffiliation",
-        "summary": "Remove a participant's affiliation",
-        "tags": [
-          "Sport leagues"
-        ],
-        "description": "Root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "sportLeagueId",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "participantId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Default Response"
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload/preview": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview": {
       "post": {
-        "operationId": "previewParticipantLeagueAffiliationUpload",
-        "summary": "Preview an affiliation upload",
+        "operationId": "previewSportLeagueRankingUpload",
+        "summary": "Preview a ranking upload",
         "tags": [
           "Sport leagues"
         ],
-        "description": "Resolves each row to a participant of the sport league's sport and writes nothing. Root admin only.",
+        "description": "Resolves each row to a participant of the sport league and writes nothing. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ParticipantLeagueAffiliationUploadRequest"
+                "$ref": "#/components/schemas/SportLeagueRankingUploadRequest"
               }
             }
           }
@@ -82499,11 +81711,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A dry run of an affiliation upload. Nothing is written.",
+            "description": "A dry run of a ranking upload. Nothing is written.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParticipantLeagueAffiliationUploadPreviewResponse"
+                  "$ref": "#/components/schemas/SportLeagueRankingUploadPreviewResponse"
                 }
               }
             }
@@ -82531,20 +81743,20 @@
         }
       }
     },
-    "/api/v1/sport-leagues/{sportLeagueId}/affiliations/upload": {
+    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload": {
       "post": {
-        "operationId": "applyParticipantLeagueAffiliationUpload",
-        "summary": "Apply an affiliation upload",
+        "operationId": "applySportLeagueRankingUpload",
+        "summary": "Apply a ranking upload",
         "tags": [
           "Sport leagues"
         ],
-        "description": "Affiliates and ranks every row, all or none; 422 when any row does not resolve. Root admin only.",
+        "description": "Ranks every row's participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ParticipantLeagueAffiliationUploadRequest"
+                "$ref": "#/components/schemas/SportLeagueRankingUploadRequest"
               }
             }
           }
@@ -82562,11 +81774,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A sport league's affiliations.",
+            "description": "Participant-list response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParticipantLeagueAffiliationListResponse"
+                  "$ref": "#/components/schemas/ParticipantListResponse"
                 }
               }
             }
@@ -83532,7 +82744,7 @@
         "tags": [
           "Participants"
         ],
-        "description": "The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).",
+        "description": "The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league's catalog: 400 SEARCH_TERM_REQUIRED otherwise. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event's field by the event, never the catalog (#1348).",
         "parameters": [
           {
             "schema": {
@@ -83545,12 +82757,13 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "in": "query",
-            "name": "sportId",
+            "name": "sportLeagueId",
             "required": false,
-            "description": "Only participants of this sport."
+            "description": "Only participants of this sport league."
           },
           {
             "schema": {
@@ -83644,12 +82857,12 @@
     },
     "/api/v1/participants/provider-mappings": {
       "get": {
-        "operationId": "listSportProviderMappings",
-        "summary": "List a provider's identities for a sport's participants",
+        "operationId": "listSportLeagueProviderMappings",
+        "summary": "List a provider's identities for a sport league's participants",
         "tags": [
           "Participants"
         ],
-        "description": "Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to, so it never makes a second one beside the sync's (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
+        "description": "Every identity one provider has for the participants of one sport league, by external id, never paged: how the Load test data run finds the participant a test player's feed id already belongs to in that league, so it never makes a second one beside the sync's (#1853). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
         "parameters": [
           {
             "schema": {
@@ -83664,12 +82877,12 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "format": "uuid"
             },
             "in": "query",
-            "name": "sportId",
+            "name": "sportLeagueId",
             "required": true,
-            "description": "Only the identities of this sport's participants."
+            "description": "Only the identities of this sport league's participants."
           }
         ],
         "responses": {
@@ -83803,7 +83016,7 @@
         "tags": [
           "Participants"
         ],
-        "description": "Deletes a participant no event field holds, with their sport league affiliations and provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
+        "description": "Deletes a participant no event field holds, with their provider identities. 409 PARTICIPANT_IN_USE while any event's field, in any year, has them: remove them from the field, or delete the event, first. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
         "parameters": [
           {
             "schema": {

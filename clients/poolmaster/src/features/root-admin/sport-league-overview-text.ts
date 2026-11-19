@@ -22,7 +22,6 @@ export const RELEASE_CHECK_LABELS: Record<ReleaseCheckKey, string> = {
   NOT_STARTED: 'Not started',
   ROUNDS_SCHEDULED: 'Rounds scheduled',
   FIELD_LOADED: 'Field loaded',
-  FIELD_LINKED: 'Every field participant linked',
   TIERS_ASSIGNED: 'Every participant in a tier',
   TIERS_FILLED: 'No empty tier',
   PRICES_ASSIGNED: 'Prices made',

@@ -10,6 +10,7 @@ import {
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The field upload against real Postgres: it adjusts rankings, odds, seeds and withdrawals
 // of golfers already on an event's field, all or none, through the grid save's write path.
@@ -41,7 +42,7 @@ async function createField(suffix: string) {
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth', 'Tommy Fleetwood'].map(async (name, index) => {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
     });
     const sep = await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id, ranking: 10 + index, oddsToWin: 20 + index, seedNumber: index + 1 },
@@ -49,7 +50,7 @@ async function createField(suffix: string) {
     return { participant, sep };
   }));
   const offField = await prisma.participant.create({
-    data: { sportId: sport.id, name: 'Off Field', participantType: 'INDIVIDUAL', externalId: `${suffix}-off-field` },
+    data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: 'Off Field', participantType: 'INDIVIDUAL', externalId: `${suffix}-off-field` },
   });
   return { event, rory: golfers[0], jordan: golfers[1], tommy: golfers[2], offField };
 }

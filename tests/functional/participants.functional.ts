@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createParticipant, updateParticipant } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { leagueProfiles } from '../support/league-profiles';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -12,24 +13,25 @@ import {
 // this slice any authenticated user could create or rename a shared catalog participant.
 
 const createdParticipantIds: string[] = [];
-let createdSportId: string | null = null;
+const createdSportLeagueIds: string[] = [];
 
-async function golfSportId(): Promise<string> {
+/** A golf tour of the run's own, which each participant here belongs to (#1853). */
+async function golfTourId(): Promise<string> {
   const database = getFunctionalPrisma();
-  const existing = await database.sport.findUnique({ where: { sport: 'GOLF' } });
-  if (existing) return existing.id;
-  const created = await database.sport.create({ data: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' } });
-  createdSportId = created.id;
-  return created.id;
+  const sport = await database.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const tour = await database.sportLeague.create({ data: { ...(await leagueProfiles(database)), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  createdSportLeagueIds.push(tour.id);
+  return tour.id;
 }
 
 afterEach(async () => {
   const database = getFunctionalPrisma();
   await database.participant.deleteMany({ where: { id: { in: createdParticipantIds.splice(0) } } });
-  if (createdSportId) {
-    await database.sport.deleteMany({ where: { id: createdSportId, participants: { none: {} } } });
-    createdSportId = null;
-  }
+  await database.sportLeague.deleteMany({ where: { id: { in: createdSportLeagueIds.splice(0) } } });
   await cleanupFunctionalData();
 });
 
@@ -39,16 +41,16 @@ afterAll(async () => {
 
 describe('SDK Functional: Participants', () => {
   it('refuses participant create and update to a user without the root-admin claim', async () => {
-    const sportId = await golfSportId();
+    const sportLeagueId = await golfTourId();
     const existing = await getFunctionalPrisma().participant.create({
-      data: { sportId, name: `FAPI Existing ${randomUUID()}`, participantType: 'INDIVIDUAL' },
+      data: { sportLeagueId, name: `FAPI Existing ${randomUUID()}`, participantType: 'INDIVIDUAL' },
     });
     createdParticipantIds.push(existing.id);
     const user = await buildRegisteredUser({ displayName: 'Participant Write Denial User' });
 
     const created = await createParticipant({
       client: user.client,
-      body: { sportId, name: 'Should Not Exist', participantType: 'INDIVIDUAL' },
+      body: { sportLeagueId, name: 'Should Not Exist', participantType: 'INDIVIDUAL' },
     });
     expectFunctionalError(created, { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' });
 
@@ -65,19 +67,19 @@ describe('SDK Functional: Participants', () => {
   });
 
   it('lets a root admin create and then update a participant', async () => {
-    const sportId = await golfSportId();
+    const sportLeagueId = await golfTourId();
     const admin = await buildRegisteredUser({ displayName: 'Participant Write Root Admin' });
     await promoteToRootAdmin(admin);
     const name = `FAPI Created ${randomUUID()}`;
 
     const created = await createParticipant({
       client: admin.client,
-      body: { sportId, name, participantType: 'INDIVIDUAL' },
+      body: { sportLeagueId, name, participantType: 'INDIVIDUAL' },
     });
     expect(created.response?.status).toBe(201);
     const participantId = created.data?.participant.id as string;
     createdParticipantIds.push(participantId);
-    expect(created.data?.participant).toMatchObject({ name, sportId });
+    expect(created.data?.participant).toMatchObject({ name, sportLeagueId, ranking: null });
 
     const updated = await updateParticipant({
       client: admin.client,
@@ -89,13 +91,13 @@ describe('SDK Functional: Participants', () => {
   });
 
   it('saves a participant update\'s external id and injury status, returning the injury dates as sent', async () => {
-    const sportId = await golfSportId();
+    const sportLeagueId = await golfTourId();
     const admin = await buildRegisteredUser({ displayName: 'Participant Update Root Admin' });
     await promoteToRootAdmin(admin);
 
     const created = await createParticipant({
       client: admin.client,
-      body: { sportId, name: `FAPI Injury ${randomUUID()}`, participantType: 'INDIVIDUAL' },
+      body: { sportLeagueId, name: `FAPI Injury ${randomUUID()}`, participantType: 'INDIVIDUAL' },
     });
     const participantId = created.data?.participant.id as string;
     createdParticipantIds.push(participantId);

@@ -3,7 +3,6 @@ import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
-  fakeParticipantLeagueAffiliationRepo,
   fakeParticipantRepo,
   fakeSportEventRepo,
   fakeSportLeagueRepo,
@@ -65,7 +64,6 @@ function buildService(overrides: {
   sports?: Parameters<typeof fakeSportRepo>[0];
   sportLeagues?: Parameters<typeof fakeSportLeagueRepo>[0];
   sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
-  affiliations?: Parameters<typeof fakeParticipantLeagueAffiliationRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   providers?: SportDataProviderLookup;
   tierProfiles?: { findById: jest.Mock };
@@ -80,7 +78,6 @@ function buildService(overrides: {
       ...overrides.sportLeagues,
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
-    affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
     participants: fakeParticipantRepo(overrides.participants),
     providers: overrides.providers ?? registeredProviders({}),
     tierProfiles: overrides.tierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
@@ -90,16 +87,16 @@ function buildService(overrides: {
 }
 
 describe('SportLeagueService — sport leagues', () => {
-  it('lists the sport\'s sport leagues with their sport and their affiliation and event counts, zero where there are none', async () => {
+  it('lists the sport\'s sport leagues with their sport and their participant and event counts, zero where there are none', async () => {
     const { service } = buildService({
       sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
-      affiliations: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
+      participants: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
       sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
 
     const result = await service.listSportLeagues({ sport: Sport.GOLF, isActive: true });
 
-    expect(result.map((row) => [row.name, row.sport, row.affiliationCount, row.sportEventCount])).toEqual([
+    expect(result.map((row) => [row.name, row.sport, row.participantCount, row.sportEventCount])).toEqual([
       ['PGA Tour', Sport.GOLF, 144, 3],
       ['Champions Tour', Sport.GOLF, 0, 0],
     ]);
@@ -321,30 +318,40 @@ describe('SportLeagueService — set as current (plans/147 decision 6)', () => {
   });
 });
 
-describe('SportLeagueService — affiliations', () => {
-  it('affiliates a participant, and rejects affiliating them twice with 409', async () => {
-    const { service } = buildService();
-    await expect(service.addAffiliation('sl-pga', 'p-rory')).resolves.toMatchObject({ participantId: 'p-rory' });
+describe('SportLeagueService — the sport league\'s participants', () => {
+  it('lists the sport league\'s own participants, and 404s an unknown sport league', async () => {
+    const roster = [participant('p-rory', 'Rory McIlroy')];
+    const findBySportLeague = jest.fn().mockResolvedValue(roster);
+    const { service } = buildService({ participants: { findBySportLeague } });
 
-    const { service: again } = buildService({
-      affiliations: { find: jest.fn().mockResolvedValue({ participantId: 'p-rory' }) },
-    });
-    await expect(again.addAffiliation('sl-pga', 'p-rory'))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS', statusCode: 409 });
+    await expect(service.listParticipants('sl-pga')).resolves.toEqual(roster);
+    expect(findBySportLeague).toHaveBeenCalledWith('sl-pga');
+
+    const { service: missing } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
+    await expect(missing.listParticipants('missing')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('sets rankings on the sport league\'s participants and answers with the re-read roster', async () => {
+    const { service, deps } = buildService();
+
+    await service.updateRankings('sl-pga', [{ participantId: 'p-rory', ranking: 2 }]);
+
+    expect(deps.participants.updateRankings).toHaveBeenCalledWith('sl-pga', [{ participantId: 'p-rory', ranking: 2 }]);
+    expect(deps.participants.findBySportLeague).toHaveBeenCalledWith('sl-pga');
   });
 });
 
-describe('SportLeagueService — affiliation upload', () => {
-  it('resolves by participantId, then externalId, then exact case-insensitive name, within the sport league\'s sport', async () => {
+describe('SportLeagueService — ranking upload', () => {
+  it('resolves by participantId, then externalId, then exact case-insensitive name, within the sport league', async () => {
     const candidates = [
       participant('p-1', 'Scottie Scheffler'),
       { ...participant('p-2', 'Rory McIlroy'), externalId: 'owgr-2' },
       participant('p-3', 'Jon Rahm'),
     ];
-    const findMatchingAny = jest.fn().mockImplementation(async (sportId: string) => (sportId === 'sport-golf' ? candidates : []));
+    const findMatchingAny = jest.fn().mockImplementation(async (sportLeagueId: string) => (sportLeagueId === 'sl-pga' ? candidates : []));
     const { service } = buildService({ participants: { findMatchingAny } });
 
-    const preview = await service.previewAffiliationUpload('sl-pga', [
+    const preview = await service.previewRankingUpload('sl-pga', [
       { participantId: 'p-1', externalId: 'ignored', ranking: 1 },
       { externalId: 'owgr-2', ranking: 2 },
       { playerName: 'jon rahm', ranking: 3 },
@@ -361,7 +368,7 @@ describe('SportLeagueService — affiliation upload', () => {
     const findMatchingAny = jest.fn().mockResolvedValue([]);
     const { service } = buildService({ participants: { findMatchingAny } });
 
-    await service.previewAffiliationUpload('sl-pga', [
+    await service.previewRankingUpload('sl-pga', [
       { participantId: 'p-1', externalId: 'ignored' },
       { externalId: 'owgr-2' },
       { playerName: 'jon rahm' },
@@ -369,14 +376,14 @@ describe('SportLeagueService — affiliation upload', () => {
     ]);
 
     expect(findMatchingAny).toHaveBeenCalledTimes(1);
-    expect(findMatchingAny).toHaveBeenCalledWith('sport-golf', [{ id: 'p-1' }, { externalId: 'owgr-2' }, { name: 'jon rahm' }]);
+    expect(findMatchingAny).toHaveBeenCalledWith('sl-pga', [{ id: 'p-1' }, { externalId: 'owgr-2' }, { name: 'jon rahm' }]);
   });
 
   it('marks a row AMBIGUOUS when several participants match, and UNRESOLVED when none do or no identifier is given', async () => {
     const findMatchingAny = jest.fn().mockResolvedValue([participant('p-a', 'Smith'), participant('p-b', 'Smith')]);
     const { service } = buildService({ participants: { findMatchingAny } });
 
-    const preview = await service.previewAffiliationUpload('sl-pga', [
+    const preview = await service.previewRankingUpload('sl-pga', [
       { playerName: 'Smith' },
       { playerName: 'Nobody' },
       { ranking: 5 },
@@ -389,16 +396,16 @@ describe('SportLeagueService — affiliation upload', () => {
   it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
     const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.previewAffiliationUpload('missing', [{ participantId: 'p-1' }]))
+    await expect(service.previewRankingUpload('missing', [{ participantId: 'p-1' }]))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
   });
 
   it('refuses to apply an upload with any unresolved row with 422, handing nothing to the repository', async () => {
     const { service, deps } = buildService();
 
-    await expect(service.applyAffiliationUpload('sl-pga', [{ participantId: 'missing' }]))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
-    expect(deps.affiliations.upsertRankings).not.toHaveBeenCalled();
+    await expect(service.applyRankingUpload('sl-pga', [{ participantId: 'missing' }]))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
+    expect(deps.participants.updateRankings).not.toHaveBeenCalled();
   });
 
   it('applies a fully resolved upload as one set of rankings, unranked rows as null', async () => {
@@ -408,9 +415,9 @@ describe('SportLeagueService — affiliation upload', () => {
       },
     });
 
-    await service.applyAffiliationUpload('sl-pga', [{ participantId: 'p-1', ranking: 4 }, { participantId: 'p-2' }]);
+    await service.applyRankingUpload('sl-pga', [{ participantId: 'p-1', ranking: 4 }, { participantId: 'p-2' }]);
 
-    expect(deps.affiliations.upsertRankings).toHaveBeenCalledWith('sl-pga', [
+    expect(deps.participants.updateRankings).toHaveBeenCalledWith('sl-pga', [
       { participantId: 'p-1', ranking: 4 },
       { participantId: 'p-2', ranking: null },
     ]);
@@ -428,13 +435,13 @@ describe('SportLeagueService — deleting a sport league (#1400)', () => {
 
   it('refuses with 409 SPORT_LEAGUE_IN_USE naming every use the locked count found', async () => {
     const { service } = buildService({
-      sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 3, contestTemplateCount: 1, eventPageOfferCount: 2, cupCount: 1, roundCount: 2 }) },
+      sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 3, contestTemplateCount: 1, eventPageOfferCount: 2, cupCount: 1, roundCount: 2, participantCount: 144 }) },
     });
 
     await expect(service.deleteSportLeague('sl-pga')).rejects.toMatchObject({
       code: 'SPORT_LEAGUE_IN_USE',
       statusCode: 409,
-      message: 'PGA Tour still has 3 events, 1 contest setup, 2 event page offers, 1 league cup, 2 playoff rounds, so it cannot be deleted.',
+      message: 'PGA Tour still has 3 events, 1 contest setup, 2 event page offers, 1 league cup, 2 playoff rounds, 144 participants, so it cannot be deleted.',
     });
   });
 
