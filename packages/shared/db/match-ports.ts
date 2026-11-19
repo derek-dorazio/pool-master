@@ -41,6 +41,8 @@ export interface MatchResultWrite {
   ending: MatchEnding;
   /** Who set the result (#1531); null when the match is cleared. */
   resultSource: MatchResultSource | null;
+  /** When a COMPLETED result was written (#1889); null for any other status. */
+  completedAt: Date | null;
 }
 
 /**

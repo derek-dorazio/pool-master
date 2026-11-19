@@ -86,6 +86,11 @@ describe('mapSportEventMatchToDto', () => {
   it('sends an unscheduled game\'s date as null', () => {
     expect(mapSportEventMatchToDto(match({ scheduledDate: null })).scheduledDate).toBeNull();
   });
+
+  it('sends a completed game\'s result time as ISO, and a game without a result\'s as null (#1889)', () => {
+    expect(mapSportEventMatchToDto(match({ status: 'COMPLETED', completedAt: AT })).completedAt).toBe(ISO);
+    expect(mapSportEventMatchToDto(match({ completedAt: null })).completedAt).toBeNull();
+  });
 });
 
 describe('toSquaresBoardResponse', () => {

@@ -81,6 +81,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     homeSpread: null,
     externalGameId: null,
     resultSource: null,
+    completedAt: null,
     periodScores: [],
     createdAt: new Date('2027-03-18T16:00:00.000Z'),
     updatedAt: new Date('2027-03-18T16:00:00.000Z'),

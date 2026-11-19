@@ -2260,7 +2260,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List a sport event's rounds */
+        /**
+         * List a sport event's rounds
+         * @description Every round by number, each with where it stands (status, result count, completion time) read off the results recorded in it, in a fixed number of reads.
+         */
         get: operations["listEventRounds"];
         put?: never;
         post?: never;
@@ -2272,6 +2275,26 @@ export interface paths {
          * @description Moves existing rounds, all or none; 404 ROUND_NOT_FOUND for a round the event lacks. Root admin only.
          */
         patch: operations["updateEventRounds"];
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/contests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the contests on a sport event
+         * @description Every customer contest run on the event, across every league, newest first and never paged, with its league, contest template, status and entry count. The root admin's Event page reads it; one read however many contests. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
+         */
+        get: operations["listEventContests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/events/{eventId}/participants": {
@@ -11042,6 +11065,21 @@ export interface components {
             /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
             value: number;
         };
+        /** @description The last automatic release try of an event: when, its result, and the checks that held it. */
+        SportEventAutoReleaseCheckDto: {
+            /**
+             * Format: date-time
+             * @description When the hourly release sweep last judged the event.
+             */
+            checkedAt: string;
+            /**
+             * @description RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+             * @enum {string}
+             */
+            outcome: "RELEASED" | "HELD";
+            /** @description The ready checks that held it, in check order; empty when RELEASED. */
+            failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+        };
         /** @description A real-world event a contest can be run on — a golf tournament, a race, a match. */
         SportEventDto: {
             /**
@@ -11233,6 +11271,21 @@ export interface components {
                 /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
                 value: number;
             })[] | null;
+            /** @description The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.) */
+            lastAutoReleaseCheck: {
+                /**
+                 * Format: date-time
+                 * @description When the hourly release sweep last judged the event.
+                 */
+                checkedAt: string;
+                /**
+                 * @description RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+                 * @enum {string}
+                 */
+                outcome: "RELEASED" | "HELD";
+                /** @description The ready checks that held it, in check order; empty when RELEASED. */
+                failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+            } | null;
             /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
             adminCounts: {
                 /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -11469,6 +11522,21 @@ export interface components {
                     /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
                     value: number;
                 })[] | null;
+                /** @description The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.) */
+                lastAutoReleaseCheck: {
+                    /**
+                     * Format: date-time
+                     * @description When the hourly release sweep last judged the event.
+                     */
+                    checkedAt: string;
+                    /**
+                     * @description RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+                     * @enum {string}
+                     */
+                    outcome: "RELEASED" | "HELD";
+                    /** @description The ready checks that held it, in check order; empty when RELEASED. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                } | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -11700,6 +11768,21 @@ export interface components {
                     /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
                     value: number;
                 })[] | null;
+                /** @description The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.) */
+                lastAutoReleaseCheck: {
+                    /**
+                     * Format: date-time
+                     * @description When the hourly release sweep last judged the event.
+                     */
+                    checkedAt: string;
+                    /**
+                     * @description RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+                     * @enum {string}
+                     */
+                    outcome: "RELEASED" | "HELD";
+                    /** @description The ready checks that held it, in check order; empty when RELEASED. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                } | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -11992,6 +12075,21 @@ export interface components {
                     /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
                     value: number;
                 })[] | null;
+                /** @description The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.) */
+                lastAutoReleaseCheck: {
+                    /**
+                     * Format: date-time
+                     * @description When the hourly release sweep last judged the event.
+                     */
+                    checkedAt: string;
+                    /**
+                     * @description RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+                     * @enum {string}
+                     */
+                    outcome: "RELEASED" | "HELD";
+                    /** @description The ready checks that held it, in check order; empty when RELEASED. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                } | null;
                 /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
                 adminCounts: {
                     /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
@@ -12094,7 +12192,7 @@ export interface components {
             /** @description The round being played now; null before the start and after the finish. */
             currentRound: number | null;
         };
-        /** @description A scheduled round of an event — its own date, independent of any result in it. */
+        /** @description A scheduled round of an event: its own date, and where its results stand. */
         SportEventRoundDto: {
             /** Format: uuid */
             id: string;
@@ -12109,6 +12207,18 @@ export interface components {
             scheduledDate: string;
             /** Format: date-time */
             scheduledEndAt: string | null;
+            /**
+             * @description Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored.
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+            /** @description Matches with a result, or participant rounds finished. */
+            resultCount: number;
+            /**
+             * Format: date-time
+             * @description When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.
+             */
+            completedAt: string | null;
         };
         /** @description An event's rounds. */
         SportEventRoundListResponse: {
@@ -12127,6 +12237,18 @@ export interface components {
                 scheduledDate: string;
                 /** Format: date-time */
                 scheduledEndAt: string | null;
+                /**
+                 * @description Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+                /** @description Matches with a result, or participant rounds finished. */
+                resultCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.
+                 */
+                completedAt: string | null;
             }[];
         };
         /** @description How a rain delay or an irregular schedule is recorded. */
@@ -12144,6 +12266,81 @@ export interface components {
                  * @description Omitted keeps it; null clears it.
                  */
                 scheduledEndAt?: string | null;
+            }[];
+        };
+        /** @description A customer contest run on the event, as the root admin's Event page lists it. */
+        SportEventContestDto: {
+            /**
+             * Format: uuid
+             * @description Contest identifier.
+             */
+            id: string;
+            /** @description The contest's name, as its league named it. */
+            name: string;
+            /**
+             * @description The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.
+             * @enum {string}
+             */
+            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+            /**
+             * Format: uuid
+             * @description The customer league that runs the contest.
+             */
+            leagueId: string;
+            /** @description That league's name. */
+            leagueName: string;
+            /**
+             * Format: uuid
+             * @description The contest template the contest was set up from; null for one set up without a template.
+             */
+            contestTemplateId: string | null;
+            /** @description That template's name; null with contestTemplateId. */
+            contestTemplateName: string | null;
+            /** @description Entries in the contest, across every team. */
+            entryCount: number;
+            /**
+             * Format: date-time
+             * @description When the contest was created.
+             */
+            createdAt: string;
+        };
+        /** @description The customer contests on one event. */
+        SportEventContestListResponse: {
+            /** @description Every contest on the event, across every league, newest first. Never paged. */
+            contests: {
+                /**
+                 * Format: uuid
+                 * @description Contest identifier.
+                 */
+                id: string;
+                /** @description The contest's name, as its league named it. */
+                name: string;
+                /**
+                 * @description The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                /**
+                 * Format: uuid
+                 * @description The customer league that runs the contest.
+                 */
+                leagueId: string;
+                /** @description That league's name. */
+                leagueName: string;
+                /**
+                 * Format: uuid
+                 * @description The contest template the contest was set up from; null for one set up without a template.
+                 */
+                contestTemplateId: string | null;
+                /** @description That template's name; null with contestTemplateId. */
+                contestTemplateName: string | null;
+                /** @description Entries in the contest, across every team. */
+                entryCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest was created.
+                 */
+                createdAt: string;
             }[];
         };
         /** @description A pick tier an event's field is divided into. Who is in it is on each field row's valuation. */
@@ -19394,6 +19591,11 @@ export interface components {
              */
             resultSource: "ADMIN" | "PROVIDER" | null;
             /**
+             * Format: date-time
+             * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+             */
+            completedAt: string | null;
+            /**
              * Format: uuid
              * @description The match the winner moves on to; null for the final.
              */
@@ -19474,6 +19676,11 @@ export interface components {
                  * @enum {string|null}
                  */
                 resultSource: "ADMIN" | "PROVIDER" | null;
+                /**
+                 * Format: date-time
+                 * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+                 */
+                completedAt: string | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -19556,6 +19763,11 @@ export interface components {
                  * @enum {string|null}
                  */
                 resultSource: "ADMIN" | "PROVIDER" | null;
+                /**
+                 * Format: date-time
+                 * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+                 */
+                completedAt: string | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -19860,6 +20072,11 @@ export interface components {
                  * @enum {string|null}
                  */
                 resultSource: "ADMIN" | "PROVIDER" | null;
+                /**
+                 * Format: date-time
+                 * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+                 */
+                completedAt: string | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -32451,6 +32668,64 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventContests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The customer contests on one event. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventContestListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

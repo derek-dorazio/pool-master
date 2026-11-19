@@ -160,6 +160,7 @@ export type {
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,
   SportLeagueOverviewReader,
+  SportEventContestReader,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportLeagueUses,

@@ -477,6 +477,8 @@ export class InMemorySportEvents {
         }
         return row;
       },
+      // The in-memory store keeps no match or participant-round rows: every round reads as scheduled.
+      findResultFacts: async () => new Map(),
     };
   }
 
@@ -831,6 +833,7 @@ export class InMemorySportEvents {
             homeSpread: null,
             externalGameId: null,
             resultSource: null,
+            completedAt: null,
             periodScores: [],
             status: MatchStatus.SCHEDULED,
             winnerSide: null,

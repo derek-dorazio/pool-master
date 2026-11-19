@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  AutoReleaseCheckOutcome,
+  ContestStatus,
   EventPricingConfigSchema,
   EventTierConfigSchema,
   ParticipantInactiveReason,
@@ -9,6 +11,7 @@ import {
   ParticipantStandingStatus,
   RaceResultStatus,
   ReleaseCheckKey,
+  RoundStatus,
   ScoringFamily,
   Sport,
   SportEventStatus,
@@ -74,6 +77,14 @@ export const ReleaseCheckDtoSchema = z.discriminatedUnion('key', [
 ]).describe('One ready check of a draft event\'s release, keyed by which check it is.');
 export type ReleaseCheckDto = z.infer<typeof ReleaseCheckDtoSchema>;
 
+/** A sport event's latest automatic release check (#1847), as stored: not judged again on read. */
+export const SportEventAutoReleaseCheckDtoSchema = z.object({
+  checkedAt: DateTimeSchema.describe('When the hourly release sweep last judged the event.'),
+  outcome: z.enum(AutoReleaseCheckOutcome).describe('RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.'),
+  failedChecks: z.array(z.enum(ReleaseCheckKey)).describe('The ready checks that held it, in check order; empty when RELEASED.'),
+}).describe('The last automatic release try of an event: when, its result, and the checks that held it.');
+export type SportEventAutoReleaseCheckDto = z.infer<typeof SportEventAutoReleaseCheckDtoSchema>;
+
 /** The season event a Clutch Card event is rounds of (#1820). */
 export const SportEventParentDtoSchema = z.object({
   id: z.uuid().describe('The parent event\'s identifier.'),
@@ -120,6 +131,7 @@ export const SportEventDtoSchema = z.object({
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
   releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
+  lastAutoReleaseCheck: SportEventAutoReleaseCheckDtoSchema.nullable().describe(`The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. ${ADMIN_ONLY}`),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
@@ -275,7 +287,10 @@ export const SportEventRoundDtoSchema = z.object({
   // A fresh schema rather than DateTimeSchema.nullable(): reusing the instance makes the
   // JSON-schema output an allOf $ref without a type, which the route builder rejects.
   scheduledEndAt: z.iso.datetime().nullable(),
-}).describe('A scheduled round of an event — its own date, independent of any result in it.');
+  status: z.enum(RoundStatus).describe('Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants\' rounds (COMPLETED once some are recorded and none is still under way). Not stored.'),
+  resultCount: z.number().int().describe('Matches with a result, or participant rounds finished.'),
+  completedAt: z.iso.datetime().nullable().describe('When the round\'s last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.'),
+}).describe('A scheduled round of an event: its own date, and where its results stand.');
 export type SportEventRoundDto = z.infer<typeof SportEventRoundDtoSchema>;
 
 export const SportEventRoundListResponseSchema = z.object({
@@ -291,6 +306,26 @@ export const UpdateSportEventRoundsRequestSchema = z.object({
   })).min(1).describe('Existing rounds to reschedule, all or none. Never creates a round.'),
 }).describe('How a rain delay or an irregular schedule is recorded.');
 export type UpdateSportEventRoundsRequest = z.infer<typeof UpdateSportEventRoundsRequestSchema>;
+
+// --- The contests on an event (#1889) -------------------------------------------
+
+export const SportEventContestDtoSchema = z.object({
+  id: z.uuid().describe('Contest identifier.'),
+  name: z.string().describe('The contest\'s name, as its league named it.'),
+  status: z.enum(ContestStatus).describe('The contest\'s lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.'),
+  leagueId: z.uuid().describe('The customer league that runs the contest.'),
+  leagueName: z.string().describe('That league\'s name.'),
+  contestTemplateId: z.uuid().nullable().describe('The contest template the contest was set up from; null for one set up without a template.'),
+  contestTemplateName: z.string().nullable().describe('That template\'s name; null with contestTemplateId.'),
+  entryCount: z.number().int().describe('Entries in the contest, across every team.'),
+  createdAt: DateTimeSchema.describe('When the contest was created.'),
+}).describe('A customer contest run on the event, as the root admin\'s Event page lists it.');
+export type SportEventContestDto = z.infer<typeof SportEventContestDtoSchema>;
+
+export const SportEventContestListResponseSchema = z.object({
+  contests: z.array(SportEventContestDtoSchema).describe('Every contest on the event, across every league, newest first. Never paged.'),
+}).describe('The customer contests on one event.');
+export type SportEventContestListResponse = z.infer<typeof SportEventContestListResponseSchema>;
 
 // --- SportEventTier --------------------------------------------------------------
 
@@ -541,6 +576,7 @@ registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
 registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
 registerSchema('SportEventAdminCountsDto', SportEventAdminCountsDtoSchema);
 registerSchema('ReleaseCheckDto', ReleaseCheckDtoSchema);
+registerSchema('SportEventAutoReleaseCheckDto', SportEventAutoReleaseCheckDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);
@@ -561,6 +597,8 @@ registerSchema('SportEventLiveSimulationResponse', SportEventLiveSimulationRespo
 registerSchema('SportEventRoundDto', SportEventRoundDtoSchema);
 registerSchema('SportEventRoundListResponse', SportEventRoundListResponseSchema);
 registerSchema('UpdateSportEventRoundsRequest', UpdateSportEventRoundsRequestSchema);
+registerSchema('SportEventContestDto', SportEventContestDtoSchema);
+registerSchema('SportEventContestListResponse', SportEventContestListResponseSchema);
 registerSchema('SportEventTierDto', SportEventTierDtoSchema);
 registerSchema('SportEventTierListResponse', SportEventTierListResponseSchema);
 registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSchema);

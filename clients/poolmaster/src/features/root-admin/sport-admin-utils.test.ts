@@ -25,7 +25,7 @@ function round(
   scheduledDate: string,
   scheduledEndAt = '',
 ): SportEventRoundDto {
-  return { id: `round-${roundNumber}`, sportEventId: 'event-1', roundNumber, scheduledDate, scheduledEndAt };
+  return { id: `round-${roundNumber}`, sportEventId: 'event-1', roundNumber, scheduledDate, scheduledEndAt, status: 'SCHEDULED', resultCount: 0, completedAt: null };
 }
 
 describe('pool-master-3dg sport-admin-utils: sync scope', () => {

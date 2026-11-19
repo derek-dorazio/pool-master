@@ -38,6 +38,7 @@ export const SportEventMatchDtoSchema = z.object({
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
   ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
   resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider\'s later final never overwrites an admin\'s result.'),
+  completedAt: z.iso.datetime().nullable().describe('When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.'),
   advancesToMatchId: z.uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),

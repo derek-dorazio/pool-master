@@ -63,6 +63,7 @@ function nflPlayoff(): SportEventMatch[] {
     homeSpread: null,
     externalGameId: null,
     resultSource: null,
+    completedAt: null,
     periodScores: [],
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
     updatedAt: new Date('2027-01-01T00:00:00.000Z'),

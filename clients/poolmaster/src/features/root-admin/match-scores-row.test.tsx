@@ -65,6 +65,7 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
     awayShootoutScore: null,
     ending: MatchEnding.PLAYED,
     resultSource: null,
+    completedAt: null,
     advancesToMatchId: 'm-2',
     advancesToSide: 'HOME',
     regionLabel: null,

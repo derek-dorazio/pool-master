@@ -132,6 +132,33 @@ describe('MatchResultService.recordResult', () => {
     expect([fromProvider, corrected, await sourceOf()]).toEqual([MatchResultSource.PROVIDER, MatchResultSource.ADMIN, null]);
   });
 
+  it('records when the result came in, moves it with a correction, and clears it with the result (#1889)', async () => {
+    const { store, event } = await setup();
+    const completedAtOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => match.matchNumber === 1)?.completedAt;
+    const corrected = new Date(AS_OF.getTime() + 60_000);
+    let now = AS_OF;
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => now });
+
+    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    const recorded = await completedAtOf();
+    now = corrected;
+    await service.recordResult(event.id, 1, { ...awayWins, awayScore: 81 }, MatchResultSource.ADMIN);
+    const afterCorrection = await completedAtOf();
+    await service.clearResult(event.id, 1);
+
+    expect([recorded, afterCorrection, await completedAtOf()]).toEqual([AS_OF, corrected, null]);
+  });
+
+  it('gives a cancelled or postponed game no completion time (#1889)', async () => {
+    const { service, event } = await week();
+
+    const cancelled = await service.cancelMatch(event.id, 1);
+    const postponed = await service.postponeMatch(event.id, 2);
+
+    expect(cancelled.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.CANCELLED, completedAt: null });
+    expect(postponed.find((match) => match.matchNumber === 2)).toMatchObject({ status: MatchStatus.POSTPONED, completedAt: null });
+  });
+
   it('answers with the bracket as it wrote it, reading the bracket once and not again after the write (#1355)', async () => {
     const { store, event, vermont } = await setup();
     const matches = store.matchRepo();
@@ -889,7 +916,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, periodScores: [],
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, externalGameId: null, resultSource: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
