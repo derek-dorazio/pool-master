@@ -11,6 +11,8 @@ export * from './contest-rules-text';
 export * from './sport-event-lifecycle';
 export * from './match-status';
 export * from './field-ordering';
+export * from './round-progress';
+export * from './sport-event-contests';
 export * from './email-delivery';
 export * from './background-jobs';
 export * from './email-images';

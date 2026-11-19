@@ -695,6 +695,26 @@ export const ParticipantRoundStatusOrder = explicitOrder<ParticipantRoundStatus>
 });
 
 /**
+ * Where one round of an event stands (#1889), read off the results recorded in it: its matches',
+ * or its participants' rounds where it has no matches. Not stored.
+ */
+export const RoundStatus = {
+  /** Nothing in it has started: no match under way or finished, no participant round recorded. */
+  SCHEDULED: 'SCHEDULED',
+  /** Some of it is under way or finished, not all of it. */
+  IN_PROGRESS: 'IN_PROGRESS',
+  /** Every match finished or cancelled, or every recorded participant round finished. */
+  COMPLETED: 'COMPLETED',
+} as const;
+export type RoundStatus = (typeof RoundStatus)[keyof typeof RoundStatus];
+/** The lifecycle order. */
+export const RoundStatusOrder = explicitOrder<RoundStatus>({
+  [RoundStatus.SCHEDULED]: 0,
+  [RoundStatus.IN_PROGRESS]: 1,
+  [RoundStatus.COMPLETED]: 2,
+});
+
+/**
  * Who set a match's result (#1496, #1531): an admin, or the provider its game is linked to. A
  * provider's later final never overwrites an admin's result; the sync logs the disagreement.
  */

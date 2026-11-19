@@ -20786,6 +20786,48 @@
           }
         ]
       },
+      "SportEventAutoReleaseCheckDto": {
+        "type": "object",
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the hourly release sweep last judged the event."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "RELEASED",
+              "HELD"
+            ],
+            "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+          },
+          "failedChecks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NOT_STARTED",
+                "ROUNDS_SCHEDULED",
+                "FIELD_LOADED",
+                "TIERS_ASSIGNED",
+                "TIERS_FILLED",
+                "PRICES_ASSIGNED",
+                "BRACKET_COMPLETE",
+                "CONTEST_SETUPS_ON"
+              ]
+            },
+            "description": "The ready checks that held it, in check order; empty when RELEASED."
+          }
+        },
+        "required": [
+          "checkedAt",
+          "outcome",
+          "failedChecks"
+        ],
+        "additionalProperties": false,
+        "description": "The last automatic release try of an event: when, its result, and the checks that held it."
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -21361,6 +21403,51 @@
               ]
             }
           },
+          "lastAutoReleaseCheck": {
+            "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "checkedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the hourly release sweep last judged the event."
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "RELEASED",
+                  "HELD"
+                ],
+                "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+              },
+              "failedChecks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_STARTED",
+                    "ROUNDS_SCHEDULED",
+                    "FIELD_LOADED",
+                    "TIERS_ASSIGNED",
+                    "TIERS_FILLED",
+                    "PRICES_ASSIGNED",
+                    "BRACKET_COMPLETE",
+                    "CONTEST_SETUPS_ON"
+                  ]
+                },
+                "description": "The ready checks that held it, in check order; empty when RELEASED."
+              }
+            },
+            "required": [
+              "checkedAt",
+              "outcome",
+              "failedChecks"
+            ],
+            "additionalProperties": false
+          },
           "adminCounts": {
             "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
             "type": [
@@ -21460,6 +21547,7 @@
           "autoLifecycleEnabled",
           "tierCount",
           "releaseChecks",
+          "lastAutoReleaseCheck",
           "adminCounts",
           "allowedTransitions",
           "createdAt",
@@ -22102,6 +22190,51 @@
                     ]
                   }
                 },
+                "lastAutoReleaseCheck": {
+                  "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the hourly release sweep last judged the event."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASED",
+                        "HELD"
+                      ],
+                      "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                    },
+                    "failedChecks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "NOT_STARTED",
+                          "ROUNDS_SCHEDULED",
+                          "FIELD_LOADED",
+                          "TIERS_ASSIGNED",
+                          "TIERS_FILLED",
+                          "PRICES_ASSIGNED",
+                          "BRACKET_COMPLETE",
+                          "CONTEST_SETUPS_ON"
+                        ]
+                      },
+                      "description": "The ready checks that held it, in check order; empty when RELEASED."
+                    }
+                  },
+                  "required": [
+                    "checkedAt",
+                    "outcome",
+                    "failedChecks"
+                  ],
+                  "additionalProperties": false
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -22201,6 +22334,7 @@
                 "autoLifecycleEnabled",
                 "tierCount",
                 "releaseChecks",
+                "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -22830,6 +22964,51 @@
                   ]
                 }
               },
+              "lastAutoReleaseCheck": {
+                "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "checkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the hourly release sweep last judged the event."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "RELEASED",
+                      "HELD"
+                    ],
+                    "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                  },
+                  "failedChecks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "ROUNDS_SCHEDULED",
+                        "FIELD_LOADED",
+                        "TIERS_ASSIGNED",
+                        "TIERS_FILLED",
+                        "PRICES_ASSIGNED",
+                        "BRACKET_COMPLETE",
+                        "CONTEST_SETUPS_ON"
+                      ]
+                    },
+                    "description": "The ready checks that held it, in check order; empty when RELEASED."
+                  }
+                },
+                "required": [
+                  "checkedAt",
+                  "outcome",
+                  "failedChecks"
+                ],
+                "additionalProperties": false
+              },
               "adminCounts": {
                 "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                 "type": [
@@ -22929,6 +23108,7 @@
               "autoLifecycleEnabled",
               "tierCount",
               "releaseChecks",
+              "lastAutoReleaseCheck",
               "adminCounts",
               "allowedTransitions",
               "createdAt",
@@ -23686,6 +23866,51 @@
                     ]
                   }
                 },
+                "lastAutoReleaseCheck": {
+                  "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the hourly release sweep last judged the event."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASED",
+                        "HELD"
+                      ],
+                      "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                    },
+                    "failedChecks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "NOT_STARTED",
+                          "ROUNDS_SCHEDULED",
+                          "FIELD_LOADED",
+                          "TIERS_ASSIGNED",
+                          "TIERS_FILLED",
+                          "PRICES_ASSIGNED",
+                          "BRACKET_COMPLETE",
+                          "CONTEST_SETUPS_ON"
+                        ]
+                      },
+                      "description": "The ready checks that held it, in check order; empty when RELEASED."
+                    }
+                  },
+                  "required": [
+                    "checkedAt",
+                    "outcome",
+                    "failedChecks"
+                  ],
+                  "additionalProperties": false
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -23785,6 +24010,7 @@
                 "autoLifecycleEnabled",
                 "tierCount",
                 "releaseChecks",
+                "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -24029,6 +24255,29 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored."
+          },
+          "resultCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Matches with a result, or participant rounds finished."
+          },
+          "completedAt": {
+            "description": "When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         },
         "required": [
@@ -24036,10 +24285,13 @@
           "sportEventId",
           "roundNumber",
           "scheduledDate",
-          "scheduledEndAt"
+          "scheduledEndAt",
+          "status",
+          "resultCount",
+          "completedAt"
         ],
         "additionalProperties": false,
-        "description": "A scheduled round of an event — its own date, independent of any result in it."
+        "description": "A scheduled round of an event: its own date, and where its results stand."
       },
       "SportEventRoundListResponse": {
         "type": "object",
@@ -24074,6 +24326,29 @@
                     "null"
                   ],
                   "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED"
+                  ],
+                  "description": "Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored."
+                },
+                "resultCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Matches with a result, or participant rounds finished."
+                },
+                "completedAt": {
+                  "description": "When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
                 }
               },
               "required": [
@@ -24081,10 +24356,13 @@
                 "sportEventId",
                 "roundNumber",
                 "scheduledDate",
-                "scheduledEndAt"
+                "scheduledEndAt",
+                "status",
+                "resultCount",
+                "completedAt"
               ],
               "additionalProperties": false,
-              "description": "A scheduled round of an event — its own date, independent of any result in it."
+              "description": "A scheduled round of an event: its own date, and where its results stand."
             },
             "description": "By round number."
           }
@@ -24137,6 +24415,164 @@
         ],
         "additionalProperties": false,
         "description": "How a rain delay or an irregular schedule is recorded."
+      },
+      "SportEventContestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contest identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "The contest's name, as its league named it."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "OPEN",
+              "ACTIVE",
+              "COMPLETED"
+            ],
+            "description": "The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final."
+          },
+          "leagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The customer league that runs the contest."
+          },
+          "leagueName": {
+            "type": "string",
+            "description": "That league's name."
+          },
+          "contestTemplateId": {
+            "description": "The contest template the contest was set up from; null for one set up without a template.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "contestTemplateName": {
+            "description": "That template's name; null with contestTemplateId.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Entries in the contest, across every team."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the contest was created."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "leagueId",
+          "leagueName",
+          "contestTemplateId",
+          "contestTemplateName",
+          "entryCount",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "description": "A customer contest run on the event, as the root admin's Event page lists it."
+      },
+      "SportEventContestListResponse": {
+        "type": "object",
+        "properties": {
+          "contests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Contest identifier."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The contest's name, as its league named it."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "DRAFT",
+                    "OPEN",
+                    "ACTIVE",
+                    "COMPLETED"
+                  ],
+                  "description": "The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final."
+                },
+                "leagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The customer league that runs the contest."
+                },
+                "leagueName": {
+                  "type": "string",
+                  "description": "That league's name."
+                },
+                "contestTemplateId": {
+                  "description": "The contest template the contest was set up from; null for one set up without a template.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "contestTemplateName": {
+                  "description": "That template's name; null with contestTemplateId.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "entryCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Entries in the contest, across every team."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest was created."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "status",
+                "leagueId",
+                "leagueName",
+                "contestTemplateId",
+                "contestTemplateName",
+                "entryCount",
+                "createdAt"
+              ],
+              "additionalProperties": false,
+              "description": "A customer contest run on the event, as the root admin's Event page lists it."
+            },
+            "description": "Every contest on the event, across every league, newest first. Never paged."
+          }
+        },
+        "required": [
+          "contests"
+        ],
+        "additionalProperties": false,
+        "description": "The customer contests on one event."
       },
       "SportEventTierDto": {
         "type": "object",
@@ -45389,6 +45825,14 @@
               null
             ]
           },
+          "completedAt": {
+            "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
           "advancesToMatchId": {
             "description": "The match the winner moves on to; null for the final.",
             "type": [
@@ -45475,6 +45919,7 @@
           "awayShootoutScore",
           "ending",
           "resultSource",
+          "completedAt",
           "advancesToMatchId",
           "advancesToSide",
           "regionLabel",
@@ -45621,6 +46066,14 @@
                     null
                   ]
                 },
+                "completedAt": {
+                  "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
                 "advancesToMatchId": {
                   "description": "The match the winner moves on to; null for the final.",
                   "type": [
@@ -45707,6 +46160,7 @@
                 "awayShootoutScore",
                 "ending",
                 "resultSource",
+                "completedAt",
                 "advancesToMatchId",
                 "advancesToSide",
                 "regionLabel",
@@ -45860,6 +46314,14 @@
                   null
                 ]
               },
+              "completedAt": {
+                "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
               "advancesToMatchId": {
                 "description": "The match the winner moves on to; null for the final.",
                 "type": [
@@ -45946,6 +46408,7 @@
               "awayShootoutScore",
               "ending",
               "resultSource",
+              "completedAt",
               "advancesToMatchId",
               "advancesToSide",
               "regionLabel",
@@ -46690,6 +47153,14 @@
                   null
                 ]
               },
+              "completedAt": {
+                "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
               "advancesToMatchId": {
                 "description": "The match the winner moves on to; null for the final.",
                 "type": [
@@ -46776,6 +47247,7 @@
               "awayShootoutScore",
               "ending",
               "resultSource",
+              "completedAt",
               "advancesToMatchId",
               "advancesToSide",
               "regionLabel",
@@ -77773,6 +78245,7 @@
         "tags": [
           "Events"
         ],
+        "description": "Every round by number, each with where it stands (status, result count, completion time) read off the results recorded in it, in a fixed number of reads.",
         "parameters": [
           {
             "schema": {
@@ -77877,6 +78350,79 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/contests": {
+      "get": {
+        "operationId": "listEventContests",
+        "summary": "List the contests on a sport event",
+        "tags": [
+          "Events"
+        ],
+        "description": "Every customer contest run on the event, across every league, newest first and never paged, with its league, contest template, status and entry count. The root admin's Event page reads it; one read however many contests. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The customer contests on one event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventContestListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

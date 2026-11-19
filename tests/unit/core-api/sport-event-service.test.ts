@@ -6,6 +6,7 @@ import type { SportEventChangedNotice } from '../../../packages/core-api/src/mod
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
 import { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
+import { SportEventContestService } from '../../../packages/core-api/src/modules/events/sport-event-contest-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
@@ -873,6 +874,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
       services: {
         sportEvents: service,
         rounds: stubInstance(SportEventRoundService, {}),
+        contests: stubInstance(SportEventContestService, {}),
         bracket: stubInstance(SportEventBracketService, {}),
         tiers: stubInstance(SportEventTierService, {}),
         field: stubInstance(SportEventParticipantService, {}),
@@ -942,6 +944,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
       services: {
         sportEvents: context.service,
         rounds: stubInstance(SportEventRoundService, {}),
+        contests: stubInstance(SportEventContestService, {}),
         bracket: stubInstance(SportEventBracketService, { listBracket }),
         tiers: stubInstance(SportEventTierService, {}),
         field: stubInstance(SportEventParticipantService, {}),

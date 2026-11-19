@@ -17,10 +17,12 @@ import type {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
+  RoundResultFacts,
   ScoringFamily,
   Sport,
   SportConfig,
   SportEvent,
+  SportEventContest,
   SportEventMatch,
   SportEventParent,
   SportEventParticipant,
@@ -337,6 +339,11 @@ export interface SportEventRoundRepository {
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
   /** The event's round of this number, created (scheduled now) when a score arrives for a round it lacks. */
   findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound>;
+  /**
+   * The results recorded in each of the event's rounds, by round id, grouped by status (#1889): two
+   * grouped reads however many rounds and results. A round with nothing recorded is absent.
+   */
+  findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>>;
 }
 
 /** undefined leaves a field alone; null clears it. */
@@ -625,3 +632,9 @@ export interface ProfileRepository<TProfile, TWrite> {
 
 export type TierProfileRepository = ProfileRepository<TierProfile, TierProfileWrite>;
 export type PricingProfileRepository = ProfileRepository<PricingProfile, PricingProfileWrite>;
+
+/** The customer contests on one sport event (#1889), for the root admin's Event page. */
+export interface SportEventContestReader {
+  /** Every contest on the event, across every league, newest first; one read however many contests and entries. */
+  findContests(sportEventId: string): Promise<SportEventContest[]>;
+}

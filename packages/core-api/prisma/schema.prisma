@@ -2200,6 +2200,9 @@ model SportEventMatch {
   /// Who set the result (#1531): an admin, or the linked game's provider; null with no result. A
   /// provider's final never overwrites an admin's result.
   resultSource                PrismaMatchResultSource? @map("result_source")
+  /// When the result was last recorded (#1889): set each time the match is written COMPLETED, a
+  /// correction included; cleared by any other status the result service writes.
+  completedAt                 DateTime?                @map("completed_at") @db.Timestamptz
   createdAt                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
