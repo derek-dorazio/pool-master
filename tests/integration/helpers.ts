@@ -110,6 +110,9 @@ import { EventScoreSourceService } from '../../packages/core-api/src/modules/eve
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
 import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
+import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
+import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
+import { PrismaCustomerReader } from '../../packages/core-api/src/adapters/prisma-customer-reader';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -375,6 +378,10 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(activityModule, {
     prefix: '/api/v1/activity',
     activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),
+  });
+  testApp.register(customersModule, {
+    prefix: '/api/v1/customers',
+    customers: new CustomerService({ reader: new PrismaCustomerReader(prisma) }),
   });
   testApp.register(emailEventsModule, {
     prefix: '/api/v1/email',

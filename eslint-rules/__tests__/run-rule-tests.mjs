@@ -119,6 +119,8 @@ ruleTester.run('no-ad-hoc-more-info', noAdHocMoreInfo, {
     'const b = <Notice title="Invite failed">Two bounced.</Notice>;',
     // Other attributes on DOM elements are fine.
     'const c = <span aria-label="Event winner" />;',
+    // A frame's title is its accessible name, not a tooltip.
+    'const d = <iframe sandbox="" srcDoc={html} title="Final results as sent" />;',
   ],
   invalid: [
     { code: "import { InfoPopover } from '@/features/shared/ui';", errors: [{ messageId: 'infoPopover' }] },

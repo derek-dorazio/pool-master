@@ -100,6 +100,9 @@ import { SyncedEventCreationScheduler } from './modules/events/synced-event-crea
 import { LeagueEventsSync } from './modules/events/league-events-sync';
 import { activityModule } from './modules/activity/routes';
 import { ActivityService } from './modules/activity/activity-service';
+import { customersModule } from './modules/customers/routes';
+import { CustomerService } from './modules/customers/customer-service';
+import { PrismaCustomerReader } from './adapters/prisma-customer-reader';
 import { SyncedFieldValuationService, fieldValuationReport } from './modules/events/synced-field-valuation';
 import {
   createContestEmailJobs,
@@ -445,6 +448,10 @@ export function buildApp() {
   app.register(activityModule, {
     prefix: '/api/v1/activity',
     activity: new ActivityService({ jobs: backgroundJobRepository, syncRuns: providerSyncRuns }),
+  });
+  app.register(customersModule, {
+    prefix: '/api/v1/customers',
+    customers: new CustomerService({ reader: new PrismaCustomerReader(prisma), logger: app.log }),
   });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
   app.register(providerWebhooksModule, {

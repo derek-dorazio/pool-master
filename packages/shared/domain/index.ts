@@ -29,6 +29,7 @@ export * from './time-zones';
 export * from './brand';
 export * from './event-overdue';
 export * from './release-checks';
+export * from './customers';
 export * from './sport-league-overview';
 export * from './sport-league-page';
 export { assertNever, type AssertTrue } from './assert-never';

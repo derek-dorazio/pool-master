@@ -43,4 +43,16 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
     reason: "The root admin's Sports page (#1847) counts every sport league's events and dates each of its seasons, so it groups every event: one row per series, "
       + 'year and status, a few thousand events in all. Only that page reads it, and an index cannot narrow a read of every row.',
   },
+  {
+    table: 'leagues',
+    sqlIncludes: 'FROM "public"."leagues" WHERE 1=1 ORDER BY "public"."leagues"."name" ASC, "public"."leagues"."league_code" ASC',
+    reason: "The root admin's Customers › Leagues grid (#1882) loads every league and filters on the client: no paging or server search in root admin "
+      + '(Derek, 2026-11-18). Only that page reads it, and an index cannot narrow a read of every row.',
+  },
+  {
+    table: 'users',
+    sqlIncludes: 'FROM "public"."users" WHERE 1=1 ORDER BY "public"."users"."last_name" ASC, "public"."users"."first_name" ASC',
+    reason: "The root admin's Customers › Users grid (#1882) loads every user and filters on the client: no paging or server search in root admin "
+      + '(Derek, 2026-11-18). Only that page reads it, and an index cannot narrow a read of every row.',
+  },
 ];

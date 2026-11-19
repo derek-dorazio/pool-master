@@ -673,6 +673,8 @@ model User {
   locale       String?           @default("en-US") @db.VarChar(10)
   timeFormat   UserTimeFormat?   @default(TWELVE_HOUR) @map("time_format")
   colorScheme  UserColorScheme?  @map("color_scheme")
+  /// When the user last started a session (#1882): signing in, signing up, or a session issued for them. Null until the first one after the column was added.
+  lastSignInAt DateTime?         @map("last_sign_in_at") @db.Timestamptz
   createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
