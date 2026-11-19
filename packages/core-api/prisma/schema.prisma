@@ -1045,6 +1045,8 @@ model EmailMessage {
   @@index([entryId])
   @@index([leagueId])
   @@index([recipientUserId])
+  /// The Notifications page's sent counts and latest send per email (#1870).
+  @@index([templateKey, sentAt])
   @@map("email_messages")
 }
 
@@ -1353,6 +1355,9 @@ model ParticipantProviderMapping {
   externalId    String                             @map("external_id") @db.VarChar(255)
   confidence    PrismaParticipantMappingConfidence @default(EXACT)
   mappedAt      DateTime                           @default(now()) @map("mapped_at") @db.Timestamptz
+  /// When a sync last saw the participant in its provider's feed (#1865): touched for a whole
+  /// field at once by each field sync that lists it. Null until a sync sees it.
+  lastSeenAt    DateTime?                          @map("last_seen_at") @db.Timestamptz
   createdAt     DateTime                           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime                           @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2090,6 +2095,10 @@ model SportEvent {
   autoReleaseCheckedAt       DateTime?                      @map("auto_release_checked_at") @db.Timestamptz
   autoReleaseOutcome         PrismaAutoReleaseCheckOutcome? @map("auto_release_outcome")
   autoReleaseFailedChecks    PrismaReleaseCheckKey[]        @default([]) @map("auto_release_failed_checks")
+  // When the event was released for contests (#1865), by a root admin or by the automatic
+  // release: written with the DRAFT to SCHEDULED move. Null for a draft, and for an event
+  // released before the column existed.
+  releasedAt                 DateTime?                      @map("released_at") @db.Timestamptz
   createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2453,6 +2462,7 @@ model ProviderSyncRun {
   @@index([backgroundJobId])
   /// The Sports page's latest finished run of each sync kind per sport league (#1847).
   @@index([sportLeagueId, kind, createdAt(sort: Desc)])
+  @@index([sportEventId, kind, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
 }
 

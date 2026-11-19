@@ -11,16 +11,23 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  AutoReleaseCheckOutcome,
   BracketAdvancement,
   MatchPeriodLayout,
+  ParticipantAddedBy,
   ParticipantType,
   ProviderSyncKind,
+  ProviderSyncRunStatus,
   Sport,
+  SportEventReleaseAtKind,
+  SportEventReleaseMode,
+  SportEventStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueKind,
   SportLeagueNoun,
   SportLeagueSyncHealth,
+  SportLeagueSyncMode,
   TournamentFormat,
 } from '../domain/enums';
 import { ScoringFamily } from '../domain/sports/scoring-family';
@@ -168,7 +175,7 @@ const SportLeagueIssueTargetDtoSchema = z.object({
 
 const issueItemFields = {
   label: z.string().describe('The item\'s name as data, never a sentence: a failed run\'s outcome summary as the sync history shows it (its sync kind when it has none), or an event\'s name.'),
-  occurredAt: DateTimeSchema.describe('When the run was written, or the event was last checked.'),
+  occurredAt: DateTimeSchema.describe('When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).'),
   target: SportLeagueIssueTargetDtoSchema,
 };
 
@@ -190,9 +197,18 @@ export const SportLeagueReleaseIssueDtoSchema = z.object({
   }).describe('A draft event its latest automatic release check held; its target is the event.')).describe('By event name.'),
 }).describe('Draft events held by a failed ready check.');
 
+export const SportLeagueOverdueIssueDtoSchema = z.object({
+  type: z.literal(SportLeagueIssueType.OVERDUE),
+  count: z.number().int().min(1).describe('How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.'),
+  items: z.array(z.object(issueItemFields).describe(
+    'An event whose results are overdue; occurredAt is when it should have ended: its last round\'s scheduled end, or the last scheduled start plus the sport\'s typical play. Its target is the event.',
+  )).describe('Most overdue first.'),
+}).describe('Events whose results are still missing well after they should have ended.');
+
 export const SportLeagueIssueDtoSchema = z.discriminatedUnion('type', [
   SportLeagueSyncIssueDtoSchema,
   SportLeagueReleaseIssueDtoSchema,
+  SportLeagueOverdueIssueDtoSchema,
 ]).describe('One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.');
 export type SportLeagueIssueDto = z.infer<typeof SportLeagueIssueDtoSchema>;
 
@@ -205,7 +221,7 @@ export const SportLeagueOverviewDtoSchema = z.object({
   providerId: z.string().nullable().describe('The provider that syncs its events; a Clutch Card\'s parent league\'s, since its parent\'s event list sync creates its events. Null when none does.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
   syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
-  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order SYNC, RELEASE. Empty when nothing needs attention.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),
   season: z.object({
     start: DateTimeSchema.describe('The start of its first event.'),
     end: DateTimeSchema.describe('The end of its last event, or its start when it has no end.'),
@@ -220,6 +236,76 @@ export const SportLeagueOverviewListResponseSchema = z.object({
 }).describe('The root admin\'s Sports page.');
 export type SportLeagueOverviewListResponse = z.infer<typeof SportLeagueOverviewListResponseSchema>;
 
+// --- League page: one sport league's syncs, events and participants (#1865) ------
+
+export const SportLeagueSyncDtoSchema = z.object({
+  kind: z.enum(ProviderSyncKind).describe('The event list (EVENTS, a Clutch Card\'s parent\'s, which creates its events), the fields (FIELD) or live scores and results (SCORES).'),
+  health: z.enum(SportLeagueSyncHealth).describe('By the Sports page\'s rule, from this sync\'s latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.'),
+  mode: z.enum(SportLeagueSyncMode).describe('SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider\'s webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).'),
+  lastRun: z.object({
+    id: z.uuid().describe('The run, on the run log.'),
+    status: z.enum(ProviderSyncRunStatus),
+    createdAt: DateTimeSchema.describe('When it was queued.'),
+    startedAt: DateTimeSchema.nullable().describe('When it started; null while it waits.'),
+    summary: z.string().nullable().describe('Its outcome summary as the sync history shows it, as data; null when it has none.'),
+    changedCount: z.number().int().min(0).nullable().describe('Rows it created or updated; null unless it completed and counted them.'),
+  }).nullable().describe('Its latest run; null before any.'),
+  nextRunAt: DateTimeSchema.nullable().describe('When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.'),
+}).describe('One of a sport league\'s syncs, as the League page\'s Syncs card shows it.');
+export type SportLeagueSyncDto = z.infer<typeof SportLeagueSyncDtoSchema>;
+
+export const SportLeagueSyncListResponseSchema = z.object({
+  syncs: z.array(SportLeagueSyncDtoSchema).describe('One per sync kind, always all three: EVENTS, FIELD, SCORES.'),
+}).describe('A sport league\'s syncs.');
+export type SportLeagueSyncListResponse = z.infer<typeof SportLeagueSyncListResponseSchema>;
+
+export const SportLeagueEventOverviewDtoSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  eventYear: z.number().int(),
+  startDate: DateTimeSchema,
+  endDate: DateTimeSchema.nullable(),
+  status: z.enum(SportEventStatus),
+  releaseMode: z.enum(SportEventReleaseMode).describe('AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.'),
+  releaseAt: DateTimeSchema.nullable().describe('With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when its league\'s window opens, its start less the window (PLANNED). Null for a MANUAL draft and for an event released before release times were kept.'),
+  releaseAtKind: z.enum(SportEventReleaseAtKind).nullable().describe('What releaseAt is; null with it.'),
+  lastReleaseCheck: z.object({
+    checkedAt: DateTimeSchema.describe('When the automatic release last judged it.'),
+    outcome: z.enum(AutoReleaseCheckOutcome),
+    failedChecks: z.array(z.enum(ReleaseCheckKey)).describe('The ready checks that held it, in check order; empty when released.'),
+  }).nullable().describe('Its latest automatic release check; null before the first, and after a release by hand.'),
+  fieldSize: z.number().int().min(1).nullable().describe('How many participants its field holds; null until a field loads.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none.'),
+  lastSyncedAt: DateTimeSchema.nullable().describe('When a sync last ran on it; null before any.'),
+}).describe('One event on the League page\'s Events grid.');
+export type SportLeagueEventOverviewDto = z.infer<typeof SportLeagueEventOverviewDtoSchema>;
+
+export const SportLeagueEventOverviewListResponseSchema = z.object({
+  events: z.array(SportLeagueEventOverviewDtoSchema).describe('Every event of the sport league, every year, never paged: by start, earliest first.'),
+}).describe('A sport league\'s events.');
+export type SportLeagueEventOverviewListResponse = z.infer<typeof SportLeagueEventOverviewListResponseSchema>;
+
+export const SportLeagueParticipantOverviewDtoSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  participantType: z.enum(ParticipantType),
+  shortName: z.string().nullable(),
+  nationality: z.string().nullable(),
+  teamAffiliation: z.string().nullable(),
+  role: z.string().nullable().describe('Playing role, such as a position; not a rank.'),
+  ranking: z.number().int().nullable().describe('Its rank in the sport league, 1 best; null when unranked.'),
+  feedId: z.string().nullable().describe('Its provider\'s id for it in the sport league; null when it has no provider mapping.'),
+  lastInFeedAt: DateTimeSchema.nullable().describe('When a sync last saw it in its provider\'s feed; null when none has.'),
+  addedBy: z.enum(ParticipantAddedBy).describe('FEED when it has a provider mapping, so a sync found it; ADMIN otherwise.'),
+  createdAt: DateTimeSchema,
+}).describe('One participant on the League page\'s Participants grid.');
+export type SportLeagueParticipantOverviewDto = z.infer<typeof SportLeagueParticipantOverviewDtoSchema>;
+
+export const SportLeagueParticipantOverviewListResponseSchema = z.object({
+  participants: z.array(SportLeagueParticipantOverviewDtoSchema).describe('Every participant of the sport league, never paged: by name.'),
+}).describe('A sport league\'s participants.');
+export type SportLeagueParticipantOverviewListResponse = z.infer<typeof SportLeagueParticipantOverviewListResponseSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('SportDto', SportDtoSchema);
 registerSchema('SportListResponse', SportListResponseSchema);
@@ -231,6 +317,12 @@ registerSchema('CreateSportLeagueRequest', CreateSportLeagueRequestSchema);
 registerSchema('UpdateSportLeagueRequest', UpdateSportLeagueRequestSchema);
 registerSchema('SportLeagueOverviewDto', SportLeagueOverviewDtoSchema);
 registerSchema('SportLeagueOverviewListResponse', SportLeagueOverviewListResponseSchema);
+registerSchema('SportLeagueSyncDto', SportLeagueSyncDtoSchema);
+registerSchema('SportLeagueSyncListResponse', SportLeagueSyncListResponseSchema);
+registerSchema('SportLeagueEventOverviewDto', SportLeagueEventOverviewDtoSchema);
+registerSchema('SportLeagueEventOverviewListResponse', SportLeagueEventOverviewListResponseSchema);
+registerSchema('SportLeagueParticipantOverviewDto', SportLeagueParticipantOverviewDtoSchema);
+registerSchema('SportLeagueParticipantOverviewListResponse', SportLeagueParticipantOverviewListResponseSchema);
 registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
 registerSchema('SportLeagueRankingUploadRequest', SportLeagueRankingUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);

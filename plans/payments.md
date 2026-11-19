@@ -312,9 +312,11 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
   task's `secrets` block like `jwt_secret` (`plans/production-environment.md` §6). Values come
   from `TF_VAR_...` at apply time, never committed. Hosted checkout needs no key in the
   browser.
-- **Settings, per environment** (a new `BILLING_CONFIG` group on the root admin Settings
-  page): `paymentsEnabled` (off until you say), the expansion bands with their Stripe Price
-  ids, and in phase 2 the plan Price ids. Price ids differ between test and live, so they
+- **Settings, per environment** (the `BILLING_CONFIG` group, edited on the root admin Pricing
+  page): `paymentsEnabled` (off until you say), each plan's yearly and monthly subscription
+  price in cents (`planPrices`, #1885: every plan $0 until Derek sets real prices, and nothing
+  charges them yet), the expansion bands with their Stripe Price ids, and in phase 2 the plan
+  Price ids. Price ids differ between test and live, so they
   belong to the environment, not the code. While payments are off, no expansion is offered
   and nothing changes.
 - **The webhook endpoint** is registered in each Stripe mode against that environment's URL
@@ -469,7 +471,8 @@ Designed and reviewed on PR #967; kept here so phase 2 starts from it. Questions
 ## 15. What a league subscribes to
 
 - **One annual subscription per league** (Derek 2026-10-24: no monthly at first). The plan's
-  fee is in the matrix (§3); one Stripe Product per paid plan with an annual Price, Price ids
+  fee is set on the root admin Pricing page (`BILLING_CONFIG.planPrices`, yearly and monthly,
+  #1885; the monthly price waits for a monthly subscription); one Stripe Product per paid plan with an annual Price, Price ids
   in `BILLING_CONFIG`.
 - **Paying moves the renewal date.** A paid year sets `planRenewsAt` to the end of the paid
   period, so the same daily job that ends a gift ends an unpaid plan, and a gifted league

@@ -171,6 +171,20 @@ describe('EventLifecycleService release guard (#431)', () => {
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
+  it('records when a draft was released with its release, and no release time on any other move', async () => {
+    const { sportEvents } = seededEvents({ status: SportEventStatus.DRAFT });
+    const transitionStatus = jest.spyOn(sportEvents, 'transitionStatus');
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());
+    const before = Date.now();
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true });
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
+
+    const [release, start] = transitionStatus.mock.calls.map(([, transition]) => transition);
+    expect(release.releasedAt?.getTime()).toBeGreaterThanOrEqual(before);
+    expect(start.releasedAt).toBeUndefined();
+  });
+
   /** A template's contests the release of `sport-event-1` joins: one job per contest named. */
   function releasedEditionContests(contestIds: readonly string[]) {
     return {

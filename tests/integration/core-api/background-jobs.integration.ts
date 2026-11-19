@@ -6,7 +6,8 @@
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
-import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, ReleaseAttemptOutcome, ReleaseCheckKey, Sport, type ReleaseAttemptResult, type ReleaseCheck } from '@poolmaster/shared/domain';
+import { releaseSportEventJob, releaseSportEventJobHandler } from '../../../packages/core-api/src/modules/events/release-sport-event-job';
 import {
   getAppPrisma,
   getPrisma,
@@ -219,6 +220,51 @@ describe('background job table (#1440)', () => {
     const kept = await getPrisma().backgroundJob.findMany({ select: { payload: true } });
     expect(kept.map((row) => (row.payload as { eventId: string }).eventId).sort())
       .toEqual(['failedLastWeek', 'queuedOld', 'succeededRecently']);
+  });
+
+  it('keeps one Activity row for each change in an event\'s release hold: three sweeps holding it for the same checks leave one row, a changed hold a second, the release a third (#1865)', async () => {
+    const tiersMissing: ReleaseCheck = { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: false, value: 3 };
+    const setupsOff: ReleaseCheck = { key: ReleaseCheckKey.CONTEST_SETUPS_ON, passed: false, value: 0 };
+    const held = (sameHoldAsBefore: boolean, failing: ReleaseCheck): ReleaseAttemptResult => ({ outcome: ReleaseAttemptOutcome.HELD, checks: [failing], sameHoldAsBefore });
+    const attempts: ReleaseAttemptResult[] = [
+      held(false, tiersMissing),
+      held(true, tiersMissing),
+      held(true, tiersMissing),
+      held(false, setupsOff),
+      { outcome: ReleaseAttemptOutcome.RELEASED, checks: [] },
+    ];
+    const heldEventId = randomUUID();
+    const jobs = repository();
+    const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
+    const runner = new BackgroundJobRunner({
+      jobs,
+      handlers: jobHandlers({ RELEASE_SPORT_EVENT: releaseSportEventJobHandler({ autoReleaseEvent: async () => expectDefined(attempts.shift()) }) }),
+    });
+
+    for (let sweep = 0; sweep < 5; sweep += 1) {
+      await queue.enqueueAll([releaseSportEventJob(queue, heldEventId)]);
+      await runner.drain();
+    }
+
+    const rows = await getPrisma().backgroundJob.findMany({ orderBy: { createdAt: 'asc' }, select: { status: true, result: true } });
+    expect(rows.map((row) => [row.status, (row.result as { outcome: string }).outcome])).toEqual([
+      [BackgroundJobStatus.SUCCEEDED, ReleaseAttemptOutcome.HELD],
+      [BackgroundJobStatus.SUCCEEDED, ReleaseAttemptOutcome.HELD],
+      [BackgroundJobStatus.SUCCEEDED, ReleaseAttemptOutcome.RELEASED],
+    ]);
+  });
+
+  it('deletes a discarded job only under its current claim, leaving it in place for a claim lost to a later attempt', async () => {
+    const jobs = repository();
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('lost-discard'), start: TEST_JOB_START });
+    const now = soonAfterQueued();
+    const [stale] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
+    const [current] = await jobs.claimDue({ now: new Date(now.getTime() + 5 * MINUTE), limit: 1, leaseUntil: new Date(now.getTime() + 10 * MINUTE) });
+
+    await expect(jobs.deleteClaimed(expectDefined(stale))).resolves.toBe(false);
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(1);
+    await expect(jobs.deleteClaimed(expectDefined(current))).resolves.toBe(true);
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(0);
   });
 });
 

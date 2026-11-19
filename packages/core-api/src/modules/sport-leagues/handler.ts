@@ -6,8 +6,11 @@ import type {
   SportLeagueParticipantRankingsRequest,
   SportLeagueRankingUploadPreviewResponse,
   SportLeagueRankingUploadRequest,
+  SportLeagueEventOverviewListResponse,
   SportLeagueOverviewListResponse,
+  SportLeagueParticipantOverviewListResponse,
   SportLeagueResponse,
+  SportLeagueSyncListResponse,
   UpdateSportLeagueRequest,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import type { ParticipantListResponse } from '@poolmaster/shared/dto/participants.dto';
@@ -16,9 +19,13 @@ import type { ReadCache } from '../../core/read-cache';
 import {
   mapParticipantToDto,
   mapRankingUploadPreviewRowToDto,
+  mapSportLeagueEventOverviewToDto,
   mapSportLeagueOverviewToDto,
+  mapSportLeagueParticipantOverviewToDto,
+  mapSportLeagueSyncToDto,
   mapSportLeagueToDto,
 } from '../../mappers';
+import type { SportLeaguePageService } from '../sport-catalog/sport-league-page';
 import type { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import type { SportLeagueService } from '../sport-catalog/sport-league-service';
 
@@ -32,8 +39,28 @@ export function createSportLeagueHandlers(
   sportLeagues: SportLeagueService,
   lists: ReadCache<SportLeagueListResponse>,
   overviews: SportLeagueOverviewService,
+  page: SportLeaguePageService,
 ) {
+  const notFound = (reply: FastifyReply, sportLeagueId: string) => sendError(reply, 404, 'SPORT_LEAGUE_NOT_FOUND', `Sport league ${sportLeagueId} was not found.`);
   return {
+    listSyncs: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      const syncs = await page.listSyncs(request.params.sportLeagueId);
+      if (syncs === null) return notFound(reply, request.params.sportLeagueId);
+      return { syncs: syncs.map(mapSportLeagueSyncToDto) } satisfies SportLeagueSyncListResponse;
+    },
+
+    listEventOverviews: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      const events = await page.listEvents(request.params.sportLeagueId);
+      if (events === null) return notFound(reply, request.params.sportLeagueId);
+      return { events: events.map(mapSportLeagueEventOverviewToDto) } satisfies SportLeagueEventOverviewListResponse;
+    },
+
+    listParticipantOverviews: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      const participants = await page.listParticipants(request.params.sportLeagueId);
+      if (participants === null) return notFound(reply, request.params.sportLeagueId);
+      return { participants: participants.map(mapSportLeagueParticipantOverviewToDto) } satisfies SportLeagueParticipantOverviewListResponse;
+    },
+
     listSportLeagueOverviews: async (): Promise<SportLeagueOverviewListResponse> => {
       const rows = await overviews.listOverviews();
       return { sportLeagues: rows.map(mapSportLeagueOverviewToDto) };

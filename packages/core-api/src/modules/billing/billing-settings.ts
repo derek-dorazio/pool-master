@@ -1,7 +1,7 @@
 /**
- * BILLING_CONFIG (#987): whether payments are on, and each plan's expansion price list
- * (plans/payments.md §3, §9). Root admins change it on the Settings page; the contest expansion
- * service reads it on every call.
+ * BILLING_CONFIG (#987): whether payments are on, each plan's subscription price (#1885) and
+ * each plan's expansion price list (plans/payments.md §3, §9). Root admins change it on the
+ * Pricing page; the contest expansion service reads it on every call.
  */
 
 import { BillingConfigSchema, type BillingConfig } from '@poolmaster/shared/dto';
@@ -39,12 +39,19 @@ const dollars = (entriesPerContest: number, price: number) => ({ entriesPerConte
 export const BILLING_SETTINGS = defineSettingsGroup<BillingConfig>({
   key: 'BILLING_CONFIG',
   title: 'Payments',
-  description: 'Whether payments are on, and what expanding a contest costs on each plan.',
+  description: 'Whether payments are on, what each plan costs, and what expanding a contest costs on each plan.',
   // The public Plans page reads this group (`listLeaguePlans`).
   publicReads: [PublicReadPath.PLANS],
   schema: BillingSettingsSchema,
   defaults: () => ({
     paymentsEnabled: false,
+    // Every plan free until Derek sets real prices (#1885); nothing charges them yet.
+    planPrices: {
+      FREE: { yearlyCents: 0, monthlyCents: 0 },
+      PRO: { yearlyCents: 0, monthlyCents: 0 },
+      PREMIUM: { yearlyCents: 0, monthlyCents: 0 },
+      PLATINUM: { yearlyCents: 0, monthlyCents: 0 },
+    },
     expansionPrices: {
       FREE: [dollars(50, 10), dollars(100, 20), dollars(200, 30), dollars(500, 40)],
       PRO: [dollars(100, 15), dollars(200, 20), dollars(500, 30)],
