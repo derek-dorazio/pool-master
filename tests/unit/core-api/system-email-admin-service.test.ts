@@ -20,6 +20,7 @@ import {
 
 const NOW = new Date('2026-11-18T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MEMBER_TOKEN = 'bWVtYmVyLTE.c2lnbmF0dXJl';
 const daysAgo = (days: number) => new Date(NOW.getTime() - days * DAY_MS);
 
 const ADMIN: User = {
@@ -205,6 +206,41 @@ describe('system email admin service: send me this email', () => {
 
     await expect(adminService({ outbox }).sendLatestTo('CONTEST_RESULTS', ADMIN.id)).rejects.toBeInstanceOf(SystemEmailNotSentError);
     expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('leaves the member\'s unsubscribe token and invite code out of the preview and the copy, in the HTML and the text', async () => {
+    const outbox = inMemoryEmailMessages(() => NOW);
+    const id = await seedSent(outbox, 'CONTEST_RESULTS', daysAgo(1), { id: 'latest' });
+    Object.assign(outbox.rows.find((row) => row.id === id) ?? {}, {
+      htmlBody: `<a href="https://qa.example.com/invite/CODE-1">Join</a><a href="https://qa.example.com/email/unsubscribe?token=${MEMBER_TOKEN}">Stop these emails</a>`,
+      textBody: `Join: https://qa.example.com/invite/CODE-1\nStop these emails: https://qa.example.com/email/unsubscribe?token=${MEMBER_TOKEN}`,
+    });
+    const service = adminService({ outbox });
+
+    const preview = await service.latestSend('CONTEST_RESULTS');
+    await service.sendLatestTo('CONTEST_RESULTS', ADMIN.id);
+
+    const copy = outbox.rows.find((row) => row.recipientEmail === ADMIN.email);
+    for (const body of [preview.htmlBody, preview.textBody, copy?.htmlBody, copy?.textBody]) {
+      expect(body).toBeDefined();
+      expect(body).not.toContain(MEMBER_TOKEN);
+      expect(body).not.toContain('CODE-1');
+    }
+    expect(preview.htmlBody).toContain('href="#"');
+  });
+
+  it('never counts a copy as a send: the count, the last send and the preview stay on the member\'s email', async () => {
+    const outbox = inMemoryEmailMessages(() => NOW);
+    const sent = await seedSent(outbox, 'CONTEST_RESULTS', daysAgo(1), { id: 'latest' });
+    const service = adminService({ outbox });
+    const before = (await service.list()).find((email) => email.templateKey === 'CONTEST_RESULTS');
+
+    const copy = await service.sendLatestTo('CONTEST_RESULTS', ADMIN.id);
+    await outbox.markSent(copy.id, { sentAt: NOW, clearContent: false });
+
+    expect((await service.list()).find((email) => email.templateKey === 'CONTEST_RESULTS')).toEqual(before);
+    expect(before).toMatchObject({ sentCount: 1, lastSentAt: daysAgo(1), previewSentAt: daysAgo(1) });
+    expect((await service.latestSend('CONTEST_RESULTS')).id).toBe(sent);
   });
 
   it('throws SystemEmailRequesterNotFoundError (404 USER_NOT_FOUND) when the admin\'s account is gone', async () => {

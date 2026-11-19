@@ -3,9 +3,9 @@
  * lately, a preview of its latest send, and a copy of that send to the admin's own inbox.
  *
  * A preview is always a real email from the outbox, never sample data: an email nothing was sent
- * of, or whose sends no longer keep their content, has none (404 SYSTEM_EMAIL_NOT_SENT).
+ * of, or whose sends no longer keep their content, has none (404 SYSTEM_EMAIL_NOT_SENT). A root
+ * admin's copy is never a send here: not counted, not the last send, not previewed.
  */
-import { randomUUID } from 'crypto';
 import type { ApiErrorCode, EmailConfig } from '@poolmaster/shared/dto';
 import type { EmailMessageRepository, SentEmailContent, UserRepository } from '@poolmaster/shared/db';
 import {
@@ -17,6 +17,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { emailRecipientOf, type EmailService } from './email-service';
+import { withoutMemberLinks } from './member-link-redaction';
 import { EMAIL_TEMPLATES, hasSettingsSwitch, type SystemEmailTemplateKey } from './system-email-templates';
 
 /** How far back the sent counts and the latest send look: as long as the outbox keeps a row. */
@@ -96,11 +97,14 @@ export class SystemEmailAdminService {
     });
   }
 
-  /** The newest send of the email that still keeps its content. */
+  /**
+   * The newest send of the email that still keeps its content, never a root admin's copy, with
+   * the links that act for its recipient made dead (`withoutMemberLinks`).
+   */
   async latestSend(templateKey: SystemEmailTemplateKey): Promise<SentEmailContent> {
     const latest = await this.options.messages.findLatestSentWithContent(templateKey, this.windowStart());
     if (!latest) throw new SystemEmailNotSentError(templateKey);
-    return latest;
+    return withoutMemberLinks(latest);
   }
 
   /**
@@ -113,8 +117,7 @@ export class SystemEmailAdminService {
       this.options.users.findById(adminUserId),
     ]);
     if (!admin) throw new SystemEmailRequesterNotFoundError(adminUserId);
-    // A fresh key each press: the outbox records an email once per template, about and recipient.
-    return this.options.email.sendCopy(latest, emailRecipientOf(admin), `admin-copy:${latest.id}:${randomUUID()}`);
+    return this.options.email.sendCopy(latest, emailRecipientOf(admin));
   }
 
   private windowStart(): Date {

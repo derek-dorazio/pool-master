@@ -153,6 +153,7 @@ describe('email service: what it queues', () => {
     await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { about: 'invite-1:code-b' }));
 
     expect(outbox.rows).toHaveLength(2);
+    expect(outbox.rows[0].idempotencyKey).not.toBe(outbox.rows[1].idempotencyKey);
   });
 
   it('sends a league whose code is a role address, made before codes were reserved, from noreply@ in the league\'s name', async () => {
@@ -700,11 +701,11 @@ describe('email service: a copy of a sent email (#1870)', () => {
   };
   const ADMIN_RECIPIENT = { email: 'admin@gmail.com', userId: 'admin-1' };
 
-  it('queues the same sender, subject and bodies to the admin, with no league, contest or unsubscribe header, and wakes the sender', async () => {
+  it('queues the same sender, subject and bodies to the admin under a copy\'s key, with no league, contest or unsubscribe header, and wakes the sender', async () => {
     const outbox = inMemoryEmailMessages();
     const onQueued = jest.fn();
 
-    const message = await service({ outbox, onQueued }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+    const message = await service({ outbox, onQueued }).sendCopy(SOURCE, ADMIN_RECIPIENT);
 
     expect(message.status).toBe('QUEUED');
     expect(outbox.rows).toHaveLength(1);
@@ -717,9 +718,9 @@ describe('email service: a copy of a sent email (#1870)', () => {
       subject: SOURCE.subject,
       textBody: SOURCE.textBody,
       htmlBody: SOURCE.htmlBody,
-      idempotencyKey: 'CONTEST_RESULTS:admin-copy:sent-1:press-1:admin-1',
       nextAttemptAt: NOW,
     });
+    expect(outbox.rows[0].idempotencyKey).toMatch(/^CONTEST_RESULTS:admin-copy:sent-1:[0-9a-f-]{36}:admin-1$/);
     expect(outbox.rows[0]).not.toHaveProperty('leagueId', expect.anything());
     expect(outbox.rows[0].listUnsubscribeUrl).toBeUndefined();
     expect(onQueued).toHaveBeenCalledTimes(1);
@@ -729,8 +730,8 @@ describe('email service: a copy of a sent email (#1870)', () => {
     const outbox = inMemoryEmailMessages();
     const email = service({ outbox });
 
-    await email.sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
-    await email.sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-2');
+    await email.sendCopy(SOURCE, ADMIN_RECIPIENT);
+    await email.sendCopy(SOURCE, ADMIN_RECIPIENT);
 
     expect(outbox.rows).toHaveLength(2);
   });
@@ -744,7 +745,7 @@ describe('email service: a copy of a sent email (#1870)', () => {
     const onQueued = jest.fn();
 
     const message = await service({ outbox, onQueued, readConfig: () => emailConfig(overrides) })
-      .sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+      .sendCopy(SOURCE, ADMIN_RECIPIENT);
 
     expect(message).toMatchObject({ status: 'SKIPPED', skipReason: reason });
     expect(outbox.rows[0].htmlBody).toBeUndefined();
@@ -755,7 +756,7 @@ describe('email service: a copy of a sent email (#1870)', () => {
     const suppressions = inMemoryEmailSuppressions();
     await suppressions.suppress({ email: 'Admin@Gmail.com', suppressionReason: 'BOUNCE' });
 
-    const message = await service({ suppressions }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+    const message = await service({ suppressions }).sendCopy(SOURCE, ADMIN_RECIPIENT);
 
     expect(message).toMatchObject({ status: 'SKIPPED', skipReason: 'SUPPRESSED' });
   });
@@ -764,7 +765,7 @@ describe('email service: a copy of a sent email (#1870)', () => {
     const optOuts = inMemoryEmailOptOuts();
     await optOuts.setOptedOut('admin-1', 'RESULTS', true);
 
-    const message = await service({ optOuts }).sendCopy(SOURCE, ADMIN_RECIPIENT, 'admin-copy:sent-1:press-1');
+    const message = await service({ optOuts }).sendCopy(SOURCE, ADMIN_RECIPIENT);
 
     expect(message.status).toBe('QUEUED');
   });

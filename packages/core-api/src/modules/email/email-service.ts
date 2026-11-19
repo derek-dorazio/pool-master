@@ -7,6 +7,7 @@
  * render or call a transport themselves.
  */
 
+import { randomUUID } from 'crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type {
@@ -19,6 +20,7 @@ import type {
   SentEmailContent,
 } from '@poolmaster/shared/db';
 import {
+  ADMIN_COPY_ABOUT,
   DEFAULT_DISPLAY_LOCALE,
   DEFAULT_DISPLAY_TIME_ZONE,
   EmailMessageStatus,
@@ -204,11 +206,14 @@ export class EmailService {
    * unsubscribe header, and nothing it is about, so no sweep counts it as telling a league or a
    * contest. It obeys what every email of its template obeys before it is queued (the overall
    * switch, its own switch, "Only send to", the suppression list) but not the league plan or the
-   * original recipient's opt-outs, which are about the person it first went to. `about` makes
-   * each press its own email.
+   * original recipient's opt-outs, which are about the person it first went to. Each press is
+   * its own email, keyed as a copy (ADMIN_COPY_KEY_MARKER) so the Notifications page never counts
+   * it as a send. `source` must already be without the first recipient's links (`withoutMemberLinks`).
    */
-  async sendCopy(source: SentEmailContent, to: EmailRecipient, about: string): Promise<EmailMessage> {
+  async sendCopy(source: SentEmailContent, to: EmailRecipient): Promise<EmailMessage> {
     const config = this.options.readConfig();
+    // A fresh key each press: the outbox records an email once per template, about and recipient.
+    const about = `${ADMIN_COPY_ABOUT}:${source.id}:${randomUUID()}`;
     const address = to.email.trim();
     const refs = { templateKey: source.templateKey };
     const recipient = {

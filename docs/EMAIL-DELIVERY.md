@@ -341,17 +341,26 @@ The root admin's Notifications page (#1870) reads `/api/v1/platform/emails`:
   transport accepted in the last 30 days (`SENT`, `DELIVERED`, `BOUNCED` or `COMPLAINED`, by
   `sent_at`), the last send, and `previewSentAt`, the newest send whose content is still kept.
   Two grouped reads over the `(template_key, sent_at)` index, whatever the outbox holds.
-- `GET /:templateKey/latest-send` answers that send's subject and HTML exactly as they went, with
-  the recipient masked. A preview is always a real email: there is no sample data. Content is
+- `GET /:templateKey/latest-send` answers that send's subject and HTML as they went, with the
+  recipient masked. A preview is always a real email: there is no sample data. Content is
   cleared 7 days after sending, and an email with `keepsContent: false` (a password reset) keeps
-  none, so such an email answers 404 `SYSTEM_EMAIL_NOT_SENT` like one never sent.
+  none, so such an email answers 404 `SYSTEM_EMAIL_NOT_SENT` like one never sent. Masking the
+  recipient field is not privacy protection: the body still greets the member by name and names
+  their team, which a root admin may see.
 - `POST /:templateKey/latest-send/send-to-me` records a copy of that send to the calling admin
   (`EmailService.sendCopy`): the same template key, sender, subject and bodies, a fresh
   idempotency key per press, no league or contest ref and no `List-Unsubscribe` header. It obeys
   the overall switch, the email's own switch, "Only send to" and the suppression list, but not the
-  league plan or opt-outs, which belong to the first recipient. The copy is a real send of that
-  email, so it counts in the 30-day number and becomes the latest send. The footer's "Stop these
-  emails" link in a member email still carries the first recipient's token: don't press it.
+  league plan or opt-outs, which belong to the first recipient.
+
+Both the preview and the copy are without the links that act for the first recipient
+(`withoutMemberLinks`): the footer's "Stop these emails" link (the member's unsubscribe token is
+its whole authority) and a league or co-owner invitation's link (its invite code) become `#` in
+the HTML and "(link removed in this copy)" in the text. Every other link is kept.
+
+A copy is keyed `<KEY>:admin-copy:…` (`ADMIN_COPY_KEY_MARKER`), and both reads leave such rows
+out: a copy never counts as a send, never becomes the last send, and is never previewed, so
+pressing Send me this email doesn't make an email look as if it went out today.
 
 An email's status is changed with the EMAIL_CONFIG settings update, as before.
 

@@ -16,6 +16,7 @@ import type {
   SentEmailContent,
 } from '@poolmaster/shared/db';
 import {
+  ADMIN_COPY_KEY_MARKER,
   DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
   type EmailSuppression,
@@ -162,7 +163,7 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
     summarizeSentSince(since: Date): Promise<EmailSendSummary[]> {
       const summaries = new Map<EmailTemplateKey, EmailSendSummary>();
       for (const row of rows) {
-        if (!row.sentAt || row.sentAt < since || !SENT_STATUSES.includes(row.status)) continue;
+        if (!row.sentAt || row.sentAt < since || !SENT_STATUSES.includes(row.status) || row.idempotencyKey.includes(ADMIN_COPY_KEY_MARKER)) continue;
         const summary = summaries.get(row.templateKey) ?? { templateKey: row.templateKey, sentCount: 0, lastSentAt: row.sentAt };
         summary.sentCount += 1;
         if (row.sentAt > summary.lastSentAt) summary.lastSentAt = row.sentAt;
@@ -175,7 +176,7 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       let latest: SentEmailContent | undefined;
       for (const row of rows) {
         const { sentAt, subject, textBody, htmlBody } = row;
-        if (row.templateKey !== templateKey || !SENT_STATUSES.includes(row.status)) continue;
+        if (row.templateKey !== templateKey || !SENT_STATUSES.includes(row.status) || row.idempotencyKey.includes(ADMIN_COPY_KEY_MARKER)) continue;
         if (!sentAt || sentAt < since || subject === undefined || textBody === undefined || htmlBody === undefined) continue;
         if (latest && latest.sentAt >= sentAt) continue;
         latest = { id: row.id, templateKey, recipientEmail: row.recipientEmail, fromName: row.fromName, fromAddress: row.fromAddress, subject, textBody, htmlBody, sentAt };

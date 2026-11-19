@@ -13,6 +13,7 @@ import type {
   SentEmailContent,
 } from '@poolmaster/shared/db';
 import {
+  ADMIN_COPY_KEY_MARKER,
   DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
   EmailTemplateKey,
@@ -38,6 +39,9 @@ const SENT_STATUSES = [
 const ALL_TEMPLATE_KEYS = Object.values(EmailTemplateKey);
 
 /** A sent row whose content is still kept: subject and both bodies. */
+/** Not a root admin's copy of a send (#1870): copies are not sends. */
+const NOT_ADMIN_COPY = { idempotencyKey: { not: { contains: ADMIN_COPY_KEY_MARKER } } } as const;
+
 const KEEPS_CONTENT = { subject: { not: null }, textBody: { not: null }, htmlBody: { not: null } } as const;
 
 export class PrismaEmailMessageRepository implements EmailMessageRepository {
@@ -202,7 +206,7 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
   }
 
   async summarizeSentSince(since: Date): Promise<EmailSendSummary[]> {
-    const sent = { templateKey: { in: ALL_TEMPLATE_KEYS }, sentAt: { gte: since }, status: { in: SENT_STATUSES } };
+    const sent = { templateKey: { in: ALL_TEMPLATE_KEYS }, sentAt: { gte: since }, status: { in: SENT_STATUSES }, ...NOT_ADMIN_COPY };
     const [counts, previews] = await Promise.all([
       this.prisma.emailMessage.groupBy({
         by: ['templateKey'],
@@ -227,7 +231,7 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
 
   async findLatestSentWithContent(templateKey: EmailTemplateKey, since: Date): Promise<SentEmailContent | undefined> {
     const row = await this.prisma.emailMessage.findFirst({
-      where: { templateKey, sentAt: { gte: since }, status: { in: SENT_STATUSES }, ...KEEPS_CONTENT },
+      where: { templateKey, sentAt: { gte: since }, status: { in: SENT_STATUSES }, ...NOT_ADMIN_COPY, ...KEEPS_CONTENT },
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
       select: {
         id: true,

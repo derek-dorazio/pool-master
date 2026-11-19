@@ -159,11 +159,12 @@ export interface EmailMessageRepository {
    * Every email key sent at or after `since` (#1870): how many, the last send, and the last send
    * that still keeps its content, in two grouped reads however many emails there are. A key
    * nothing was sent of is absent. Sent means the transport accepted it, whatever SES said after.
+   * A root admin's copy (ADMIN_COPY_KEY_MARKER) is not a send.
    */
   summarizeSentSince(since: Date): Promise<EmailSendSummary[]>;
   /**
    * The newest email of `templateKey` sent at or after `since` that still keeps its subject and
-   * bodies (#1870), or undefined.
+   * bodies (#1870), or undefined. Never a root admin's copy (ADMIN_COPY_KEY_MARKER).
    */
   findLatestSentWithContent(templateKey: EmailTemplateKey, since: Date): Promise<SentEmailContent | undefined>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */

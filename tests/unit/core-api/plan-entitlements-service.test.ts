@@ -1,5 +1,5 @@
 import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
-import type { PlanConfig } from '@poolmaster/shared/dto';
+import { PlanConfigSchema, type PlanConfig } from '@poolmaster/shared/dto';
 import { PlanEntitlementsService, contestEntriesCap } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { buildLeague } from '../../factories';
@@ -83,6 +83,13 @@ describe('PlanEntitlementsService', () => {
     expect(service.featureStartsAt(PlanFeature.EMAIL_CONTEST_STANDINGS)).toBe(LeaguePlan.PRO);
     setConfig({ ...defaults, features: { ...defaults.features, EMAIL_CONTEST_STANDINGS: LeaguePlan.PREMIUM } });
     expect(service.featureStartsAt(PlanFeature.EMAIL_CONTEST_STANDINGS)).toBe(LeaguePlan.PREMIUM);
+  });
+
+  it('can rely on every feature having a starting plan: a PLAN_CONFIG missing one is refused before it is stored', () => {
+    const defaults = PLAN_SETTINGS.defaults({});
+    const trimmed = Object.fromEntries(Object.entries(defaults.features).filter(([feature]) => feature !== PlanFeature.EMAIL_CONTEST_STANDINGS));
+
+    expect(PlanConfigSchema.safeParse({ ...defaults, features: trimmed }).success).toBe(false);
   });
 
   it('answers for a league from the plan the league is on now', async () => {

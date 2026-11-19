@@ -208,6 +208,40 @@ describe('POST send me a system email\'s latest send', () => {
     expect(getSentMail().filter((mail) => mail.to.includes(rootAdmin.user.email)).map((mail) => mail.subject)).toContain(`Subject ${label}`);
   });
 
+  it('leaves the member\'s unsubscribe token out of the preview and the copy, and the copy changes neither the count, the last send nor the preview', async () => {
+    const token = `member-token-${randomUUID()}`;
+    const unsubscribe = `https://qa.example.com/email/unsubscribe?token=${token}`;
+    const sentAt = ahead(40);
+    const id = await seedSent('CONTEST_STARTED_SUMMARY', sentAt);
+    await getPrisma().emailMessage.update({
+      where: { id },
+      data: {
+        htmlBody: `<html><body><a href="${unsubscribe}">Stop these emails</a></body></html>`,
+        textBody: `Stop these emails: ${unsubscribe}`,
+      },
+    });
+    const before = emailOf(await listEmails(), 'CONTEST_STARTED_SUMMARY');
+
+    const preview = await latestSend('CONTEST_STARTED_SUMMARY');
+    const copied = await sendToMe('CONTEST_STARTED_SUMMARY');
+
+    expect(preview.statusCode).toBe(200);
+    expect(preview.body).not.toContain(token);
+    expect(expectMatchesSchema(SystemEmailLatestSendResponseSchema, preview.json()).htmlBody).toContain('href="#"');
+    expect(copied.statusCode).toBe(200);
+    const copy = await getPrisma().emailMessage.findFirstOrThrow({
+      where: { recipientUserId: rootAdmin.user.id, templateKey: 'CONTEST_STARTED_SUMMARY' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(`${copy.htmlBody ?? ''}${copy.textBody ?? ''}`).not.toContain(token);
+    // Sent, and dated after the member's send: still not a send of the email.
+    await deliverQueuedIntegrationEmail();
+    await getPrisma().emailMessage.update({ where: { id: copy.id }, data: { sentAt: ahead(50) } });
+    expect(emailOf(await listEmails(), 'CONTEST_STARTED_SUMMARY')).toEqual(before);
+    expect(before.lastSentAt).toBe(sentAt.toISOString());
+    expect((await latestSend('CONTEST_STARTED_SUMMARY')).json()).toMatchObject({ sentAt: sentAt.toISOString() });
+  });
+
   it('answers 404 SYSTEM_EMAIL_NOT_SENT and queues nothing for an email never sent', async () => {
     await getPrisma().emailMessage.deleteMany({ where: { templateKey: 'CONTEST_EXPANDED' } });
     const before = await getPrisma().emailMessage.count({ where: { recipientUserId: rootAdmin.user.id } });
