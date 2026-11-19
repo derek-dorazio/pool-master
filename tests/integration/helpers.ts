@@ -72,6 +72,7 @@ import {
   readApplicationBaseUrl,
   emailUnsubscribeModule,
   emailTestModule,
+  systemEmailModule,
   type EmailSender,
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
@@ -365,7 +366,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry, schedule: ingestionConfigService, webhookProviderIds: [] });
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
@@ -392,6 +393,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     },
   });
   testApp.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: outbox.preferences });
+  testApp.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails: outbox.systemEmails });
   // BALLDONTLIE webhooks (#1498), signed with the test secret; the syncs they queue are due a
   // minute out, so a drain leaves them waiting, as a burst's coalescing needs.
   testApp.register(providerWebhooksModule, {

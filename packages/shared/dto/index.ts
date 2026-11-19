@@ -17,6 +17,7 @@ export * from './email-events.dto';
 export * from './provider-webhooks.dto';
 export * from './email-preferences.dto';
 export * from './email-test.dto';
+export * from './system-emails.dto';
 export * from './settings.dto';
 export * from './events.dto';
 export * from './sport-catalog.dto';

@@ -147,6 +147,14 @@ export type {
   SportLeagueEventYearSpan,
   SportLeagueFilters,
   SportLeagueHeldEvent,
+  SportLeagueOverdueCandidate,
+  SportLeagueEventFacts,
+  SportLeaguePageEvent,
+  SportLeaguePageLeague,
+  SportLeaguePageParticipant,
+  SportLeaguePageReader,
+  SportLeaguePageRun,
+  SportLeagueSyncFacts,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,
@@ -180,7 +188,9 @@ export type {
   EmailMessageRepository,
   EmailMessageState,
   EmailOptOutRepository,
+  EmailSendSummary,
   EmailSuppressionRepository,
+  SentEmailContent,
 } from './email-ports';
 export type { BackgroundJobClaim, BackgroundJobRepository } from './background-job-ports';
 export type {

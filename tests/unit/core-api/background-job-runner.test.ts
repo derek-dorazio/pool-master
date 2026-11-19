@@ -1,10 +1,12 @@
-import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, Sport, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, Sport } from '@poolmaster/shared/domain';
 import {
   BACKGROUND_JOB_LEASE_MS,
   BackgroundJobQueue,
   BackgroundJobRunner,
+  DISCARD_BACKGROUND_JOB,
   PermanentBackgroundJobError,
   readBackgroundJobPollMs,
+  type BackgroundJobAnswer,
   type BackgroundJobContext,
   type BackgroundJobHandlers,
   type BackgroundJobPayload,
@@ -35,7 +37,7 @@ function clock() {
 }
 
 function setup(options: {
-  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
+  handler?: (payload: SyncPayload, context: BackgroundJobContext) => Promise<BackgroundJobAnswer>;
   concurrency?: number;
 } = {}) {
   const time = clock();
@@ -132,6 +134,34 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(only(jobs).result).toBeUndefined();
+  });
+
+  it('deletes the job whose handler answers there is nothing to keep, leaving no row for Activity (#1865)', async () => {
+    const { jobs, runner, queue, logger } = setup({ handler: () => Promise.resolve(DISCARD_BACKGROUND_JOB) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(jobs.rows).toEqual([]);
+    expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.discarded' }), expect.any(String));
+  });
+
+  it('deletes nothing for a discarding try that outran its lease and was claimed again, so the newer attempt\'s row stands', async () => {
+    const { jobs, runner, queue, time, logger } = setup({
+      handler: async (_payload, context) => {
+        if (context.attempt !== 1) return { changedCount: 0 };
+        time.advance(BACKGROUND_JOB_LEASE_MS);
+        const [reclaimed] = await jobs.claimDue({ now: time.now(), limit: 1, leaseUntil: new Date(time.now().getTime() + BACKGROUND_JOB_LEASE_MS) });
+        await jobs.markSucceeded(reclaimed, time.now(), { changedCount: 0 });
+        return DISCARD_BACKGROUND_JOB;
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2 });
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
   });
 
   it('records the kind of a failure its error carries, a provider\'s 429 as RATE_LIMITED (#1861)', async () => {
