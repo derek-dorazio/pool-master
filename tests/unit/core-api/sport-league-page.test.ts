@@ -193,7 +193,7 @@ describe('buildSportLeagueEvents', () => {
         run(ProviderSyncKind.SCORES, { status: ProviderSyncRunStatus.FAILED, createdAt: at('2027-04-15T11:30:00.000Z') }),
         run(ProviderSyncKind.FIELD),
       ]]]),
-      overdueCandidates: [{ id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.DRAFT, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] }],
+      overdueCandidates: [{ id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] }],
     }), NOW);
 
     expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([
@@ -262,7 +262,7 @@ describe('buildSportEventOverview', () => {
 
   it('counts only this event\'s overdue candidate as its OVERDUE issue', () => {
     const expectedEnd = new Date(NOW.getTime() - OVERDUE_AFTER_MS - MINUTE);
-    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.DRAFT, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] };
+    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] };
     const overview = buildSportEventOverview(eventPageFacts({ overdueCandidates: [candidate, { ...candidate, id: 'e2' }] }), context);
 
     expect(overview.issues).toEqual([{

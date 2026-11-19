@@ -1,6 +1,7 @@
 /**
- * When a sport event's results are overdue (#1865): neither completed nor cancelled more than 4
- * hours after its last round or match should have ended.
+ * When a sport event's results are overdue (#1865): released, and neither completed nor cancelled
+ * more than 4 hours after its last round or match should have ended. A never-released draft never
+ * is (#1908).
  */
 import { expect } from '@jest/globals';
 import {
@@ -69,6 +70,12 @@ describe('overdueExpectedEnd', () => {
     expect(overdueExpectedEnd(event({ endDate: end, status: SportEventStatus.COMPLETED }), later)).toBeNull();
     expect(overdueExpectedEnd(event({ endDate: end, status: SportEventStatus.CANCELLED }), later)).toBeNull();
     expect(overdueExpectedEnd(event({ endDate: end, status: SportEventStatus.SCHEDULED }), later)).toEqual(end);
+  });
+
+  it('never marks a never-released draft overdue, however long ago it should have ended', () => {
+    const muchLater = new Date(end.getTime() + 100 * OVERDUE_AFTER_MS);
+
+    expect(overdueExpectedEnd(event({ endDate: end, status: SportEventStatus.DRAFT }), muchLater)).toBeNull();
   });
 
   it('reads only events that started more than 4 hours before now', () => {

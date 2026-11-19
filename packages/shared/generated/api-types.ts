@@ -10237,7 +10237,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 type: "OVERDUE";
-                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                 count: number;
                 /** @description Most overdue first. */
                 items: {
@@ -10379,7 +10379,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     type: "OVERDUE";
-                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                     count: number;
                     /** @description Most overdue first. */
                     items: {
@@ -10638,7 +10638,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 type: "OVERDUE";
-                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                 count: number;
                 /** @description Most overdue first. */
                 items: {
@@ -10786,7 +10786,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     type: "OVERDUE";
-                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                     count: number;
                     /** @description Most overdue first. */
                     items: {
@@ -10955,7 +10955,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 type: "OVERDUE";
-                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                 count: number;
                 /** @description Most overdue first. */
                 items: {
@@ -11144,7 +11144,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     type: "OVERDUE";
-                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
                     count: number;
                     /** @description Most overdue first. */
                     items: {

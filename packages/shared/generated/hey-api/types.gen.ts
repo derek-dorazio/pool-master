@@ -8415,7 +8415,7 @@ export type SportLeagueOverviewDto = {
     } | {
         type: 'OVERDUE';
         /**
-         * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
          */
         count: number;
         /**
@@ -8577,7 +8577,7 @@ export type SportLeagueOverviewListResponse = {
         } | {
             type: 'OVERDUE';
             /**
-             * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
              */
             count: number;
             /**
@@ -8856,7 +8856,7 @@ export type SportLeagueEventOverviewDto = {
     } | {
         type: 'OVERDUE';
         /**
-         * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
          */
         count: number;
         /**
@@ -9020,7 +9020,7 @@ export type SportLeagueEventOverviewListResponse = {
         } | {
             type: 'OVERDUE';
             /**
-             * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
              */
             count: number;
             /**
@@ -9208,7 +9208,7 @@ export type SportEventOverviewDto = {
     } | {
         type: 'OVERDUE';
         /**
-         * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
          */
         count: number;
         /**
@@ -9418,7 +9418,7 @@ export type SportEventOverviewResponse = {
         } | {
             type: 'OVERDUE';
             /**
-             * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
              */
             count: number;
             /**
