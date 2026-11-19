@@ -890,7 +890,21 @@ export type ExpansionPrice = {
 };
 
 /**
- * Payments: whether they are on, and what expanding a contest costs on each plan.
+ * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+ */
+export type PlanPrice = {
+    /**
+     * A year of the plan, in US cents.
+     */
+    yearlyCents: number;
+    /**
+     * A month of the plan, in US cents.
+     */
+    monthlyCents: number;
+};
+
+/**
+ * Payments: whether they are on, what each plan costs, and what expanding a contest costs on each plan.
  */
 export type BillingConfig = {
     /**
@@ -898,11 +912,68 @@ export type BillingConfig = {
      */
     paymentsEnabled: boolean;
     /**
+     * Each plan's yearly and monthly subscription price, set on the Pricing page.
+     */
+    planPrices: {
+        /**
+         * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+         */
+        FREE: {
+            /**
+             * A year of the plan, in US cents.
+             */
+            yearlyCents: number;
+            /**
+             * A month of the plan, in US cents.
+             */
+            monthlyCents: number;
+        };
+        /**
+         * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+         */
+        PRO: {
+            /**
+             * A year of the plan, in US cents.
+             */
+            yearlyCents: number;
+            /**
+             * A month of the plan, in US cents.
+             */
+            monthlyCents: number;
+        };
+        /**
+         * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+         */
+        PREMIUM: {
+            /**
+             * A year of the plan, in US cents.
+             */
+            yearlyCents: number;
+            /**
+             * A month of the plan, in US cents.
+             */
+            monthlyCents: number;
+        };
+        /**
+         * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+         */
+        PLATINUM: {
+            /**
+             * A year of the plan, in US cents.
+             */
+            yearlyCents: number;
+            /**
+             * A month of the plan, in US cents.
+             */
+            monthlyCents: number;
+        };
+    };
+    /**
      * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
      */
     expansionPrices: {
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         FREE: Array<{
             /**
@@ -915,7 +986,7 @@ export type BillingConfig = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PRO: Array<{
             /**
@@ -928,7 +999,7 @@ export type BillingConfig = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PREMIUM: Array<{
             /**
@@ -941,7 +1012,7 @@ export type BillingConfig = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PLATINUM: Array<{
             /**
@@ -1237,7 +1308,7 @@ export type LeaguePlanListResponse = {
      */
     expansionPrices: {
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         FREE: Array<{
             /**
@@ -1250,7 +1321,7 @@ export type LeaguePlanListResponse = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PRO: Array<{
             /**
@@ -1263,7 +1334,7 @@ export type LeaguePlanListResponse = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PREMIUM: Array<{
             /**
@@ -1276,7 +1347,7 @@ export type LeaguePlanListResponse = {
             priceCents: number;
         }>;
         /**
-         * The plan's bands, smallest first; each band and each price above the one before.
+         * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
          */
         PLATINUM: Array<{
             /**
@@ -16506,11 +16577,68 @@ export type SettingsGroup = {
          */
         paymentsEnabled: boolean;
         /**
+         * Each plan's yearly and monthly subscription price, set on the Pricing page.
+         */
+        planPrices: {
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            FREE: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PRO: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PREMIUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PLATINUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+        };
+        /**
          * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
          */
         expansionPrices: {
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             FREE: Array<{
                 /**
@@ -16523,7 +16651,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PRO: Array<{
                 /**
@@ -16536,7 +16664,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PREMIUM: Array<{
                 /**
@@ -16549,7 +16677,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PLATINUM: Array<{
                 /**
@@ -16572,11 +16700,68 @@ export type SettingsGroup = {
          */
         paymentsEnabled: boolean;
         /**
+         * Each plan's yearly and monthly subscription price, set on the Pricing page.
+         */
+        planPrices: {
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            FREE: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PRO: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PREMIUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PLATINUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+        };
+        /**
          * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
          */
         expansionPrices: {
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             FREE: Array<{
                 /**
@@ -16589,7 +16774,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PRO: Array<{
                 /**
@@ -16602,7 +16787,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PREMIUM: Array<{
                 /**
@@ -16615,7 +16800,7 @@ export type SettingsGroup = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PLATINUM: Array<{
                 /**
@@ -17467,11 +17652,68 @@ export type SettingsGroupList = {
              */
             paymentsEnabled: boolean;
             /**
+             * Each plan's yearly and monthly subscription price, set on the Pricing page.
+             */
+            planPrices: {
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                FREE: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PRO: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PREMIUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PLATINUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+            };
+            /**
              * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
              */
             expansionPrices: {
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 FREE: Array<{
                     /**
@@ -17484,7 +17726,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PRO: Array<{
                     /**
@@ -17497,7 +17739,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PREMIUM: Array<{
                     /**
@@ -17510,7 +17752,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PLATINUM: Array<{
                     /**
@@ -17533,11 +17775,68 @@ export type SettingsGroupList = {
              */
             paymentsEnabled: boolean;
             /**
+             * Each plan's yearly and monthly subscription price, set on the Pricing page.
+             */
+            planPrices: {
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                FREE: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PRO: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PREMIUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PLATINUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+            };
+            /**
              * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
              */
             expansionPrices: {
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 FREE: Array<{
                     /**
@@ -17550,7 +17849,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PRO: Array<{
                     /**
@@ -17563,7 +17862,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PREMIUM: Array<{
                     /**
@@ -17576,7 +17875,7 @@ export type SettingsGroupList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PLATINUM: Array<{
                     /**
@@ -17973,11 +18272,68 @@ export type SettingsGroupUpdateRequest = {
          */
         paymentsEnabled: boolean;
         /**
+         * Each plan's yearly and monthly subscription price, set on the Pricing page.
+         */
+        planPrices: {
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            FREE: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PRO: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PREMIUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PLATINUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+        };
+        /**
          * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
          */
         expansionPrices: {
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             FREE: Array<{
                 /**
@@ -17990,7 +18346,7 @@ export type SettingsGroupUpdateRequest = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PRO: Array<{
                 /**
@@ -18003,7 +18359,7 @@ export type SettingsGroupUpdateRequest = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PREMIUM: Array<{
                 /**
@@ -18016,7 +18372,7 @@ export type SettingsGroupUpdateRequest = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PLATINUM: Array<{
                 /**
@@ -18824,11 +19180,68 @@ export type SettingsChange = {
          */
         paymentsEnabled: boolean;
         /**
+         * Each plan's yearly and monthly subscription price, set on the Pricing page.
+         */
+        planPrices: {
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            FREE: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PRO: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PREMIUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PLATINUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+        };
+        /**
          * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
          */
         expansionPrices: {
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             FREE: Array<{
                 /**
@@ -18841,7 +19254,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PRO: Array<{
                 /**
@@ -18854,7 +19267,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PREMIUM: Array<{
                 /**
@@ -18867,7 +19280,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PLATINUM: Array<{
                 /**
@@ -18890,11 +19303,68 @@ export type SettingsChange = {
          */
         paymentsEnabled: boolean;
         /**
+         * Each plan's yearly and monthly subscription price, set on the Pricing page.
+         */
+        planPrices: {
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            FREE: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PRO: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PREMIUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+            /**
+             * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+             */
+            PLATINUM: {
+                /**
+                 * A year of the plan, in US cents.
+                 */
+                yearlyCents: number;
+                /**
+                 * A month of the plan, in US cents.
+                 */
+                monthlyCents: number;
+            };
+        };
+        /**
          * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
          */
         expansionPrices: {
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             FREE: Array<{
                 /**
@@ -18907,7 +19377,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PRO: Array<{
                 /**
@@ -18920,7 +19390,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PREMIUM: Array<{
                 /**
@@ -18933,7 +19403,7 @@ export type SettingsChange = {
                 priceCents: number;
             }>;
             /**
-             * The plan's bands, smallest first; each band and each price above the one before.
+             * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
              */
             PLATINUM: Array<{
                 /**
@@ -19741,11 +20211,68 @@ export type SettingsChangeList = {
              */
             paymentsEnabled: boolean;
             /**
+             * Each plan's yearly and monthly subscription price, set on the Pricing page.
+             */
+            planPrices: {
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                FREE: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PRO: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PREMIUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PLATINUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+            };
+            /**
              * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
              */
             expansionPrices: {
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 FREE: Array<{
                     /**
@@ -19758,7 +20285,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PRO: Array<{
                     /**
@@ -19771,7 +20298,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PREMIUM: Array<{
                     /**
@@ -19784,7 +20311,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PLATINUM: Array<{
                     /**
@@ -19807,11 +20334,68 @@ export type SettingsChangeList = {
              */
             paymentsEnabled: boolean;
             /**
+             * Each plan's yearly and monthly subscription price, set on the Pricing page.
+             */
+            planPrices: {
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                FREE: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PRO: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PREMIUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+                /**
+                 * What a plan costs a year and a month, in US cents. Nothing charges it while payments are off.
+                 */
+                PLATINUM: {
+                    /**
+                     * A year of the plan, in US cents.
+                     */
+                    yearlyCents: number;
+                    /**
+                     * A month of the plan, in US cents.
+                     */
+                    monthlyCents: number;
+                };
+            };
+            /**
              * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
              */
             expansionPrices: {
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 FREE: Array<{
                     /**
@@ -19824,7 +20408,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PRO: Array<{
                     /**
@@ -19837,7 +20421,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PREMIUM: Array<{
                     /**
@@ -19850,7 +20434,7 @@ export type SettingsChangeList = {
                     priceCents: number;
                 }>;
                 /**
-                 * The plan's bands, smallest first; each band and each price above the one before.
+                 * The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered.
                  */
                 PLATINUM: Array<{
                     /**

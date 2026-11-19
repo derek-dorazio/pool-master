@@ -36,9 +36,9 @@ function toForm(config: BillingConfig): BillingForm {
   return { FREE: plan('FREE'), PRO: plan('PRO'), PREMIUM: plan('PREMIUM'), PLATINUM: plan('PLATINUM') };
 }
 
-function toConfig(form: BillingForm, paymentsEnabled: boolean): BillingConfig {
+function toConfig(form: BillingForm, kept: Pick<BillingConfig, 'paymentsEnabled' | 'planPrices'>): BillingConfig {
   const plan = (key: LeaguePlan) => form[key].map((band) => ({ entriesPerContest: band.entriesPerContest, priceCents: Math.round(band.dollars * 100) }));
-  return { paymentsEnabled, expansionPrices: { FREE: plan('FREE'), PRO: plan('PRO'), PREMIUM: plan('PREMIUM'), PLATINUM: plan('PLATINUM') } };
+  return { ...kept, expansionPrices: { FREE: plan('FREE'), PRO: plan('PRO'), PREMIUM: plan('PREMIUM'), PLATINUM: plan('PLATINUM') } };
 }
 
 /** One plan's bands: entries and price per row, smallest first. */
@@ -110,7 +110,8 @@ export function BillingSettingsForm({ group }: { group: BillingSettingsGroup }) 
     resolver: zodResolver(BillingFormSchema),
     subject: 'Payments settings',
     toForm,
-    toValue: (values: BillingForm) => toConfig(values, paymentsEnabled),
+    // Plan prices are not on this form; the stored ones are sent back unchanged.
+    toValue: (values: BillingForm) => toConfig(values, { paymentsEnabled, planPrices: group.value.planPrices }),
   });
 
   return (
