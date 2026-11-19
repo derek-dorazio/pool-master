@@ -44,6 +44,7 @@ export function RootAdminIngestionSchedulePage() {
       const response = await updateIngestionSchedule({
         body: {
           healthCheck: nextDraft.healthCheck,
+          eventList: nextDraft.eventList,
           eventParticipants: nextDraft.eventParticipants,
           eventLiveScores: nextDraft.eventLiveScores,
         },

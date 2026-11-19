@@ -357,7 +357,7 @@ describe('platform config services on the settings registry', () => {
     return { repository, settings };
   }
 
-  it('ingestion config defaults the scheduled field sync to off, keeps live scores on, and has no schedule or results feed', async () => {
+  it('ingestion config defaults the scheduled field sync to off, keeps live scores on, syncs event lists every six hours, and has no per-sport overrides', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
@@ -365,11 +365,12 @@ describe('platform config services on the settings registry', () => {
 
     expect(config.eventParticipants.enabled).toBe(false);
     expect(config.eventLiveScores.enabled).toBe(true);
+    expect(config.eventList).toEqual({ enabled: true, intervalMinutes: 360 });
     expect(Object.keys(config).sort()).toEqual([
+      'eventList',
       'eventLiveScores',
       'eventParticipants',
       'healthCheck',
-      'perSportOverrides',
       'scheduledSports',
     ]);
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
@@ -377,7 +378,7 @@ describe('platform config services on the settings registry', () => {
     }));
   });
 
-  it('updates ingestion config, resolves per-sport overrides, and resets defaults', async () => {
+  it('a partial update changes only the policies and properties it names, and a reset restores the defaults', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
@@ -385,32 +386,19 @@ describe('platform config services on the settings registry', () => {
       service.updateConfig({
         scheduledSports: ['GOLF'],
         eventLiveScores: { intervalSeconds: 45 },
+        eventList: { intervalMinutes: 120 },
       }, 'admin-1'),
     ).resolves.toEqual(expect.objectContaining({
       scheduledSports: ['GOLF'],
-      eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+      eventList: { enabled: true, intervalMinutes: 120 },
+      eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
     }));
-    await expect(
-      service.setPerSportOverride('GOLF', { eventParticipants: { intervalMinutes: 720 } }, 'admin-1'),
-    ).resolves.toEqual(expect.objectContaining({
-      perSportOverrides: expect.objectContaining({
-        GOLF: expect.objectContaining({
-          eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
-        }),
-      }),
-    }));
-    await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
-      expect.objectContaining({
-        eventParticipants: expect.objectContaining({ intervalMinutes: 720 }),
-      }),
-    );
-    await expect(service.clearPerSportOverride('GOLF', 'admin-1')).resolves.toEqual(
-      expect.objectContaining({ perSportOverrides: {} }),
-    );
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
         // The default schedule allows every supported sport; one with no provider runs no feed.
         scheduledSports: [...SUPPORTED_SPORTS],
+        eventList: { enabled: true, intervalMinutes: 360 },
         eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
       }),
     );
@@ -423,16 +411,16 @@ describe('platform config services on the settings registry', () => {
     const ingestionOnA = new IngestionConfigService(taskA.settings, fakeLogger());
     const ingestionOnB = new IngestionConfigService(taskB.settings, fakeLogger());
 
-    await ingestionOnA.setPerSportOverride('GOLF', { eventLiveScores: { intervalSeconds: 20 } }, 'admin-1');
+    await ingestionOnA.updateConfig({ eventList: { intervalMinutes: 90 } }, 'admin-1');
     await ingestionOnB.updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, 'admin-2');
 
     expect(repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
       eventLiveScores: { enabled: true, intervalSeconds: 45 },
-      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
+      eventList: { enabled: true, intervalMinutes: 90 },
     }));
   });
 
-  it('a stored ingestion config loads with its live settings intact and is not rewritten on boot', async () => {
+  it('a config stored before the one-schedule change loads with its settings intact, drops its per-sport overrides, takes the default event list policy, and is not rewritten on boot', async () => {
     const repository = inMemoryRuntimeConfigs();
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
@@ -444,9 +432,32 @@ describe('platform config services on the settings registry', () => {
     const { settings } = await loaded(repository);
     const service = new IngestionConfigService(settings, fakeLogger());
 
-    await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
-      expect.objectContaining({ eventLiveScores: { enabled: true, intervalSeconds: 20 } }),
-    );
+    await expect(service.getConfig()).resolves.toEqual({
+      scheduledSports: ['GOLF'],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventList: { enabled: true, intervalMinutes: 360 },
+      eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+    });
     expect(repository.history).toHaveLength(0);
+  });
+
+  it('the next save of a config stored with per-sport overrides stores it without them', async () => {
+    const repository = inMemoryRuntimeConfigs();
+    repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
+      scheduledSports: ['GOLF'],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
+      eventLiveScores: { enabled: true, intervalSeconds: 45 },
+      perSportOverrides: { GOLF: { eventLiveScores: { intervalSeconds: 20 } } },
+    });
+    const { settings } = await loaded(repository);
+    const service = new IngestionConfigService(settings, fakeLogger());
+
+    await service.updateConfig({ healthCheck: { intervalMinutes: 10 } }, 'admin-1');
+
+    const stored = repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson;
+    expect(stored).not.toHaveProperty('perSportOverrides');
+    expect(stored).toEqual(expect.objectContaining({ healthCheck: { enabled: true, intervalMinutes: 10 } }));
   });
 });

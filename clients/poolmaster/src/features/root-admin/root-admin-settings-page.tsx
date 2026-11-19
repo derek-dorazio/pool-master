@@ -128,14 +128,9 @@ function groupContent(group: SettingsGroup, locale: string): { summary: Settings
       return {
         summary: summarizeIngestionSchedule(group.value),
         actions: (
-          <>
-            <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to={`${SETTINGS_PATH}/ingestion-schedule`}>
-              Edit ingestion schedule
-            </LinkButton>
-            <LinkButton to={`${SETTINGS_PATH}/sport-overrides`} variant="secondary">
-              Sport overrides
-            </LinkButton>
-          </>
+          <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to={`${SETTINGS_PATH}/ingestion-schedule`}>
+            Edit ingestion schedule
+          </LinkButton>
         ),
       };
     case 'EMAIL_CONFIG':

@@ -164,6 +164,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   readonly providerId = BALLDONTLIE_PROVIDER_ID;
   readonly providerName = 'BALLDONTLIE';
   readonly sportsCovered: Sport[];
+  readonly requestsPerMinute: number;
   private readonly payloads = new ProviderPayloadRecorder('balldontlie.request');
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
@@ -182,6 +183,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
 
   constructor(options: BalldontlieAdapterOptions) {
     this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
+    this.requestsPerMinute = options.requestsPerMinute;
     this.logger = options.logger;
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
