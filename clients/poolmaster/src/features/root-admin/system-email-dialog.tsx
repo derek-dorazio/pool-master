@@ -131,9 +131,9 @@ export function SystemEmailDialog({ email, group, onClose }: { email: SystemEmai
             &quot;Send system email&quot; is off in Email settings, so no email is sent whatever its status.
           </Notice>
         )}
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2">
           <Checkbox data-testid={`${TEST_ID}-status-on`} {...settings.form.register('on')} />
-          On: send this email
+          <Text>On: send this email</Text>
         </label>
         <SettingsSaveError
           conflicted={settings.conflicted}

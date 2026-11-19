@@ -1,4 +1,4 @@
-import { Notice, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
+import { Notice, Checkbox, FormField, Input, Text, Textarea } from '@/features/shared/ui';
 import { SettingsSaveError } from './settings-save-error';
 import type { EmailSettingsForm } from './use-email-settings-form';
 
@@ -14,9 +14,9 @@ export function EmailSettingsFields({ settings }: { settings: EmailSettingsForm 
           No system email is sent: invitations, welcomes, entry confirmations and contest notices are all skipped. Invites by email still succeed.
         </Notice>
       )}
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2">
         <Checkbox data-testid="root-admin-email-settings-enabled" {...form.register('enabled')} />
-        Send system email
+        <Text>Send system email</Text>
       </label>
       <FormField
         error={form.formState.errors.allowedRecipients?.message}
