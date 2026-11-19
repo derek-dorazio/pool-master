@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlanConfig, SettingsGroup } from '@/lib/api';
@@ -20,6 +21,10 @@ bindApiMocks({
 });
 
 const ADMIN = { id: '6f7c1c55-58a4-4bd4-8a2a-0b8e3f1f4a01', name: 'Ada Admin' };
+const CAP_DIALOG = 'root-admin-plan-cap-dialog';
+const FEATURE_DIALOG = 'root-admin-plan-feature-dialog';
+const FALLING = 'Can\'t be lower than the plan before it: a limit never falls as the plan rises.';
+const NOT_A_LIMIT = 'Enter a whole number from 1 to 100,000, or choose Unlimited.';
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -36,13 +41,20 @@ function savedGroup(value: PlanConfig): SettingsGroup {
   return { ...planGroupFixture(), source: 'stored', updatedAt: '2026-10-24T08:00:00.000Z', updatedBy: ADMIN, value };
 }
 
-function savedValue(): PlanConfig {
-  const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: PlanConfig } }];
-  return request.body.value;
+function savedRequest(call = 0) {
+  const [request] = updateSettingsGroupMock.mock.calls[call] as [{ path: { key: string }; body: { value: PlanConfig; expectedUpdatedAt: string | null } }];
+  return request;
 }
 
-function setLimit(testId: string, limit: string) {
-  fireEvent.change(screen.getByTestId(testId), { target: { value: limit } });
+async function openCapForEdit(cap: string) {
+  await userEvent.click(await screen.findByTestId(`root-admin-plans-cap-${cap}`));
+  await userEvent.click(await screen.findByTestId(`${CAP_DIALOG}-edit`));
+}
+
+async function typeLimit(plan: string, limit: string) {
+  const input = screen.getByTestId(`${CAP_DIALOG}-${plan}-limit`);
+  await userEvent.clear(input);
+  if (limit !== '') await userEvent.type(input, limit);
 }
 
 describe('RootAdminPlansPage', () => {
@@ -56,35 +68,58 @@ describe('RootAdminPlansPage', () => {
   it('reads only the plans settings group, never the list of every settings group', async () => {
     renderPage();
 
-    await screen.findByTestId('root-admin-plans-form');
+    await screen.findByTestId('root-admin-plans-caps-table');
     expect(getSettingsGroupMock).toHaveBeenCalledTimes(1);
     const [request] = getSettingsGroupMock.mock.calls[0] as [{ path: { key: string } }];
     expect(request.path.key).toBe('PLAN_CONFIG');
     expect(listSettingsGroupsMock).not.toHaveBeenCalled();
   });
 
-  it('shows each cap\'s limit on every plan, Platinum\'s editable like the rest', async () => {
+  it('says once under the header how many plans there are and who last changed them', async () => {
+    getSettingsGroupMock.mockResolvedValue({ data: savedGroup(planGroupFixture().value) });
+    renderPage();
+
+    const line = await screen.findByTestId('root-admin-plans-last-change');
+    expect(line).toHaveTextContent('4 plans · Last changed by Ada Admin on');
+  });
+
+  it('says the plans were never changed while they are on the starting values', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-plans-last-change')).toHaveTextContent('4 plans · Never changed: on the starting values');
+  });
+
+  it('shows a Caps grid and a Features grid in standard sections', async () => {
+    renderPage();
+
+    expect(await screen.findByRole('region', { name: 'Caps' })).toHaveAttribute('data-testid', 'root-admin-plans-caps');
+    expect(screen.getByRole('region', { name: 'Features' })).toHaveAttribute('data-testid', 'root-admin-plans-features');
+  });
+
+  it('lists each cap with its limit on every plan, Unlimited as text', async () => {
+    getSettingsGroupMock.mockResolvedValue({ data: savedGroup({
+      ...planGroupFixture().value,
+      caps: { ...planGroupFixture().value.caps, SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: null } },
+    }) });
     renderPage();
 
     const entries = within(await screen.findByTestId('root-admin-plans-cap-ENTRIES_PER_CONTEST'));
-    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit')).toHaveValue('20');
-    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PRO-limit')).toHaveValue('50');
-    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PREMIUM-limit')).toHaveValue('100');
-    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PLATINUM-limit')).toHaveValue('500');
-    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-FREE-limit')).toHaveValue('5');
-    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-limit')).toHaveValue('50');
-    expect(screen.getByTestId('root-admin-plans-last-change')).toHaveTextContent('Never changed: using the starting values.');
+    expect(entries.getByText('Entries per contest')).toBeInTheDocument();
+    for (const limit of ['20', '50', '100', '500']) expect(entries.getByText(limit)).toBeInTheDocument();
+    const leagues = within(screen.getByTestId('root-admin-plans-cap-SPORTS_LEAGUES_PER_YEAR'));
+    expect(leagues.getByText('Unlimited')).toBeInTheDocument();
   });
 
-  it('shows each feature group as its own titled card listing what every plan includes', async () => {
+  it('lists each feature with its group and the plan it starts at', async () => {
     renderPage();
 
-    await screen.findByTestId('root-admin-plans-form');
-    for (const title of ['Emails', 'Championships', 'History']) {
-      expect(screen.getByRole('region', { name: title })).toBeVisible();
-    }
-    expect(screen.getByRole('region', { name: 'Emails' })).toHaveAttribute('data-testid', 'root-admin-plans-features-EMAILS');
-    expect(within(screen.getByRole('region', { name: 'History' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+    const results = within(await screen.findByTestId('root-admin-plans-feature-EMAIL_CONTEST_RESULTS'));
+    expect(results.getByText('Contest results email')).toBeInTheDocument();
+    expect(results.getByText('Emails')).toBeInTheDocument();
+    expect(results.getByText('Free')).toBeInTheDocument();
+    const recordBook = within(screen.getByTestId('root-admin-plans-feature-RECORD_BOOK'));
+    expect(recordBook.getByText('History')).toBeInTheDocument();
+    expect(recordBook.getByText('Premium')).toBeInTheDocument();
   });
 
   it('shows an error, not an endless loading state, when the plans group cannot be read', async () => {
@@ -95,85 +130,103 @@ describe('RootAdminPlansPage', () => {
     expect(screen.queryByText('Loading plans...')).not.toBeInTheDocument();
   });
 
-  it('lists every feature under Emails, Championships or History with the plan it starts at, and the always-included rows read-only', async () => {
-    renderPage();
-
-    const emails = within(await screen.findByTestId('root-admin-plans-features-EMAILS'));
-    expect(emails.getByText('Account, security and membership emails')).toBeInTheDocument();
-    expect(emails.getByTestId('root-admin-plans-feature-EMAIL_CONTEST_RESULTS')).toHaveValue('FREE');
-    expect(emails.getByTestId('root-admin-plans-feature-EMAIL_CONTEST_STANDINGS')).toHaveValue('PRO');
-    const championships = within(screen.getByTestId('root-admin-plans-features-CHAMPIONSHIPS'));
-    expect(championships.getByRole('combobox', { name: 'Sports league cups starts at' })).toHaveValue('PRO');
-    const history = within(screen.getByTestId('root-admin-plans-features-HISTORY'));
-    expect(history.getByText('Contest results and places, and the Contests page History view')).toBeInTheDocument();
-    expect(history.getByRole('combobox', { name: 'Record book starts at' })).toHaveValue('PREMIUM');
-    // Each always-included row says so and offers nothing to change.
-    expect(history.getAllByRole('combobox')).toHaveLength(3);
-    expect(history.getByText('Always')).toBeInTheDocument();
-  });
-
-  it('saves a changed cap, an unlimited cap and a changed feature as one PLAN_CONFIG value against the version it loaded', async () => {
+  it('opens a cap in view with each plan\'s limit and Close and Edit, then Save sends the whole record with only that cap changed', async () => {
     updateSettingsGroupMock.mockImplementation(({ body }: { body: { value: PlanConfig } }) => Promise.resolve({ data: savedGroup(body.value) }));
     renderPage();
 
-    await screen.findByTestId('root-admin-plans-form');
-    setLimit('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit', '25');
-    fireEvent.click(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-unlimited'));
-    fireEvent.change(screen.getByTestId('root-admin-plans-feature-RECORD_BOOK'), { target: { value: 'PLATINUM' } });
-    fireEvent.click(screen.getByTestId('root-admin-plans-save'));
+    await userEvent.click(await screen.findByTestId('root-admin-plans-cap-SPORTS_LEAGUES_PER_YEAR'));
+    expect(await screen.findByTestId(`${CAP_DIALOG}-FREE`)).toHaveTextContent('5');
+    expect(screen.getByTestId(`${CAP_DIALOG}-PLATINUM`)).toHaveTextContent('50');
+    expect(screen.queryByTestId(`${CAP_DIALOG}-FREE-limit`)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-edit`));
+    await typeLimit('FREE', '6');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-PLATINUM-unlimited`));
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
 
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
-    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ path: { key: string }; body: { key: string; expectedUpdatedAt: string | null } }];
+    const request = savedRequest();
     expect(request.path.key).toBe('PLAN_CONFIG');
     expect(request.body.expectedUpdatedAt).toBeNull();
-    expect(savedValue()).toEqual({
-      caps: {
-        ENTRIES_PER_CONTEST: { FREE: 25, PRO: 50, PREMIUM: 100, PLATINUM: 500 },
-        SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: null },
-      },
+    expect(request.body.value).toEqual({
+      caps: { ...planGroupFixture().value.caps, SPORTS_LEAGUES_PER_YEAR: { FREE: 6, PRO: 15, PREMIUM: 30, PLATINUM: null } },
+      features: planGroupFixture().value.features,
+    });
+    expect(await screen.findByTestId(`${CAP_DIALOG}-edit`)).toBeInTheDocument();
+  });
+
+  it('refuses a cap below the plan beneath it, saying so on that plan inside the dialog', async () => {
+    renderPage();
+
+    await openCapForEdit('ENTRIES_PER_CONTEST');
+    await typeLimit('PRO', '10');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
+
+    const dialog = within(screen.getByTestId(CAP_DIALOG));
+    expect(await dialog.findByText(FALLING)).toBeInTheDocument();
+    expect(dialog.getByTestId(`${CAP_DIALOG}-PRO-limit`)).toHaveAttribute('aria-invalid', 'true');
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a number on a plan above one that is unlimited', async () => {
+    renderPage();
+
+    await openCapForEdit('SPORTS_LEAGUES_PER_YEAR');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-PRO-unlimited`));
+    expect(screen.getByTestId(`${CAP_DIALOG}-PRO-limit`)).toHaveValue('Unlimited');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
+
+    const dialog = within(screen.getByTestId(CAP_DIALOG));
+    expect(await dialog.findByText(FALLING)).toBeInTheDocument();
+    expect(dialog.getByTestId(`${CAP_DIALOG}-PREMIUM-limit`)).toHaveAttribute('aria-invalid', 'true');
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a limit that is blank, not a whole number, or zero', async () => {
+    renderPage();
+
+    await openCapForEdit('ENTRIES_PER_CONTEST');
+    await typeLimit('FREE', '');
+    await typeLimit('PRO', '2.5');
+    await typeLimit('PREMIUM', '0');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
+
+    expect(await within(screen.getByTestId(CAP_DIALOG)).findAllByText(NOT_A_LIMIT)).toHaveLength(3);
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('Cancel in a cap\'s form goes back to its view unsaved', async () => {
+    renderPage();
+
+    await openCapForEdit('ENTRIES_PER_CONTEST');
+    await typeLimit('FREE', '25');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(await screen.findByTestId(`${CAP_DIALOG}-FREE`)).toHaveTextContent('20');
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('opens a feature in view with its group and starting plan, then Save sends the whole record with only that feature changed', async () => {
+    updateSettingsGroupMock.mockImplementation(({ body }: { body: { value: PlanConfig } }) => {
+      getSettingsGroupMock.mockResolvedValue({ data: savedGroup(body.value) });
+      return Promise.resolve({ data: savedGroup(body.value) });
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-plans-feature-RECORD_BOOK'));
+    expect(await screen.findByTestId(`${FEATURE_DIALOG}-group`)).toHaveTextContent('History');
+    expect(screen.getByTestId(`${FEATURE_DIALOG}-starts-at`)).toHaveTextContent('Premium');
+
+    await userEvent.click(screen.getByTestId(`${FEATURE_DIALOG}-edit`));
+    await userEvent.selectOptions(screen.getByTestId(`${FEATURE_DIALOG}-starts-at-select`), 'PLATINUM');
+    await userEvent.click(screen.getByTestId(`${FEATURE_DIALOG}-save`));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    expect(savedRequest().body.value).toEqual({
+      caps: planGroupFixture().value.caps,
       features: { ...planGroupFixture().value.features, RECORD_BOOK: 'PLATINUM' },
     });
-    expect(await screen.findByTestId('root-admin-plans-last-change')).toHaveTextContent('Last changed by Ada Admin');
-    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-unlimited')).toBeChecked();
-  });
-
-  it('refuses to save a cap below the plan beneath it, saying so on that plan\'s cell', async () => {
-    renderPage();
-
-    await screen.findByTestId('root-admin-plans-form');
-    setLimit('root-admin-plans-ENTRIES_PER_CONTEST-PRO-limit', '10');
-    fireEvent.click(screen.getByTestId('root-admin-plans-save'));
-
-    const cell = within(screen.getByTestId('root-admin-plans-cap-ENTRIES_PER_CONTEST'));
-    expect(await cell.findByText('Can\'t be lower than the plan before it: a limit never falls as the plan rises.')).toBeInTheDocument();
-    expect(cell.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PRO-limit')).toHaveAttribute('aria-invalid', 'true');
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('refuses to save a number on a plan above one that is unlimited', async () => {
-    renderPage();
-
-    fireEvent.click(await screen.findByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PRO-unlimited'));
-    fireEvent.click(screen.getByTestId('root-admin-plans-save'));
-
-    const cell = within(screen.getByTestId('root-admin-plans-cap-SPORTS_LEAGUES_PER_YEAR'));
-    expect(await cell.findByText('Can\'t be lower than the plan before it: a limit never falls as the plan rises.')).toBeInTheDocument();
-    expect(cell.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PREMIUM-limit')).toHaveAttribute('aria-invalid', 'true');
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
-  });
-
-  it('refuses to save a cap that is blank, not a whole number, or zero', async () => {
-    renderPage();
-
-    await screen.findByTestId('root-admin-plans-form');
-    setLimit('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit', '');
-    setLimit('root-admin-plans-ENTRIES_PER_CONTEST-PRO-limit', '2.5');
-    setLimit('root-admin-plans-ENTRIES_PER_CONTEST-PREMIUM-limit', '0');
-    fireEvent.click(screen.getByTestId('root-admin-plans-save'));
-
-    const cell = within(screen.getByTestId('root-admin-plans-cap-ENTRIES_PER_CONTEST'));
-    expect(await cell.findAllByText('Enter a whole number from 1 to 100,000, or choose Unlimited.')).toHaveLength(3);
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+    expect(await screen.findByTestId(`${FEATURE_DIALOG}-starts-at`)).toHaveTextContent('Platinum');
   });
 
   it('offers to load the newer plans when someone else saved first, then saves against that version', async () => {
@@ -187,19 +240,22 @@ describe('RootAdminPlansPage', () => {
     updateSettingsGroupMock.mockResolvedValueOnce({ data: theirs });
     renderPage();
 
-    fireEvent.click(await screen.findByTestId('root-admin-plans-save'));
+    await openCapForEdit('ENTRIES_PER_CONTEST');
+    await typeLimit('PRO', '60');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
 
-    const error = await screen.findByTestId('root-admin-plans-error');
+    const error = await screen.findByTestId(`${CAP_DIALOG}-error`);
     expect(error).toHaveTextContent('changed by someone else');
     getSettingsGroupMock.mockResolvedValue({ data: theirs });
-    fireEvent.click(within(error).getByRole('button', { name: 'Load the latest plans' }));
+    await userEvent.click(within(error).getByRole('button', { name: 'Load the latest plans' }));
 
-    await waitFor(() => expect(screen.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit')).toHaveValue('30'));
-    expect(screen.queryByTestId('root-admin-plans-error')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('root-admin-plans-save'));
+    await waitFor(() => expect(screen.getByTestId(`${CAP_DIALOG}-FREE-limit`)).toHaveValue('30'));
+    expect(screen.queryByTestId(`${CAP_DIALOG}-error`)).not.toBeInTheDocument();
+    await typeLimit('PRO', '60');
+    await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
 
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(2));
-    const [retry] = updateSettingsGroupMock.mock.calls[1] as [{ body: { expectedUpdatedAt: string | null } }];
-    expect(retry.body.expectedUpdatedAt).toBe('2026-10-24T08:00:00.000Z');
+    expect(savedRequest(1).body.expectedUpdatedAt).toBe('2026-10-24T08:00:00.000Z');
+    expect(savedRequest(1).body.value.caps.ENTRIES_PER_CONTEST).toEqual({ FREE: 30, PRO: 60, PREMIUM: 100, PLATINUM: 500 });
   });
 });

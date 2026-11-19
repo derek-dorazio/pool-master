@@ -1,80 +1,37 @@
-import { useState } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo, useState } from 'react';
+import { LEAGUE_PLANS, type PlanCap, type PlanFeature } from '@poolmaster/shared/domain';
 import {
-  LEAGUE_PLANS,
-  LeaguePlan,
-  PLAN_FEATURE_GROUP,
-  PlanCap,
-  PlanFeature,
-  PlanFeatureGroup,
-} from '@poolmaster/shared/domain';
-import type { SettingsGroup } from '@/lib/api';
-import {
-  Button,
-  Checkbox,
+  DataGrid,
   DateDisplay,
   HelpTip,
-  InlineError,
-  Input,
   PageHeader,
   QueryState,
   SectionCard,
-  SectionRow,
-  SectionRows,
-  Select,
-  SimpleTable,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
-import {
-  LEAGUE_PLAN_LABEL,
-  PLAN_CAP_LABEL,
-  PLAN_FEATURE_GROUP_LABEL,
-  PLAN_FEATURE_LABEL,
-  UNLIMITED_LABEL,
-} from '@/features/plans/plan-labels';
+import { plural } from '@/lib/plural';
 import { extractErrorMessage } from '@/lib/errors';
-import { SettingsSaveError } from './settings-save-error';
-import { useSettingsGroupForm } from './use-settings-group-form';
+import { PlanCapDialog } from './plan-cap-dialog';
+import { planCapColumns, planFeatureColumns } from './plan-columns';
+import { PlanFeatureDialog } from './plan-feature-dialog';
+import type { PlanSettingsGroup } from './plan-row-dialog';
+import { planCapRows, planFeatureRows } from './plan-rows';
 import { useSettingsGroupQuery } from './use-settings-groups';
-import {
-  PlanSettingsDraftSchema,
-  toPlanConfig,
-  toPlanSettingsDraft,
-  type PlanSettingsDraft,
-} from './plan-settings-draft';
-
-type PlanSettingsGroup = Extract<SettingsGroup, { key: 'PLAN_CONFIG' }>;
-
-/** What every league has whatever its plan, listed in its group so the admin sees it is not missing. */
-const ALWAYS_INCLUDED: Readonly<Record<PlanFeatureGroup, readonly string[]>> = {
-  [PlanFeatureGroup.EMAILS]: ['Account, security and membership emails'],
-  [PlanFeatureGroup.CHAMPIONSHIPS]: [],
-  [PlanFeatureGroup.HISTORY]: ['Contest results and places, and the Contests page History view'],
-};
-
-/** A feature dropdown's choices: the plan it starts at, and the plans above it that have it too. */
-const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
-  [LeaguePlan.FREE]: 'Every plan',
-  [LeaguePlan.PRO]: 'Pro and up',
-  [LeaguePlan.PREMIUM]: 'Premium and up',
-  [LeaguePlan.PLATINUM]: 'Platinum only',
-};
 
 /**
- * /manage/plans (#946): what each league plan allows, saved as the PLAN_CONFIG settings group, so
- * a save lands in the settings history and reaches every server within the settings refresh.
+ * /manage/plans (#1884): what each league plan allows, as two grids edited a row at a time. Plans
+ * are one PLAN_CONFIG settings record, so each row's Save sends the whole record with only that
+ * row changed, lands in the settings history, and reaches every server within the settings
+ * refresh. Plan names and order stay in code.
  */
 export function RootAdminPlansPage() {
   const settingsQuery = useSettingsGroupQuery('PLAN_CONFIG');
+  const group = settingsQuery.data;
 
   return (
     <section className="space-y-6" data-testid="root-admin-plans-page">
       <PageHeader
+        meta={group ? <LastChangeLine group={group} /> : undefined}
         testId="root-admin-plans-header"
         title="Plans"
         titleAside={(
@@ -93,158 +50,84 @@ export function RootAdminPlansPage() {
         size="tile"
         testId="root-admin-plans"
       >
-        {(group) => <PlanSettingsForm group={group} />}
+        {(loaded) => (
+          <>
+            <CapsSection group={loaded} />
+            <FeaturesSection group={loaded} />
+          </>
+        )}
       </QueryState>
     </section>
   );
 }
 
-/**
- * The caps grid and the feature list, saved together. The draft is taken from the group once,
- * like the Settings page forms, and a 409 offers to load the newer value.
- */
-function PlanSettingsForm({ group }: { group: PlanSettingsGroup }) {
-  const [lastChange, setLastChange] = useState({ at: group.updatedAt, by: group.updatedBy });
-  const { conflicted, form, loadLatest, saveMutation, submit } = useSettingsGroupForm({
-    group,
-    onTaken: (taken) => setLastChange({ at: taken.updatedAt, by: taken.updatedBy }),
-    resolver: zodResolver(PlanSettingsDraftSchema),
-    subject: 'Plans settings',
-    toForm: toPlanSettingsDraft,
-    toValue: toPlanConfig,
-  });
-
+/** "4 plans · Last changed by Ada on Oct 24, 2026": once for the record, since every row saves it. */
+function LastChangeLine({ group }: { group: PlanSettingsGroup }) {
   return (
-    <form
-      className="space-y-8"
-      data-testid="root-admin-plans-form"
-      noValidate
-      onSubmit={(event) => void submit(event)}
-    >
-      <CapsGrid form={form} />
-      <FeatureList form={form} />
-      <SettingsSaveError
-        conflicted={conflicted}
-        error={saveMutation.error}
-        fallback="We could not save the plans."
-        loadLabel="Load the latest plans"
-        onLoadLatest={loadLatest}
-        testId="root-admin-plans-error"
-      />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button data-testid="root-admin-plans-save" disabled={saveMutation.isPending} type="submit">
-          {saveMutation.isPending ? 'Saving...' : 'Save plans'}
-        </Button>
-        <p className="text-sm text-muted-foreground" data-testid="root-admin-plans-last-change">
-          {lastChange.at ? (
-            <>
-              Last changed by {lastChange.by?.name ?? 'an unknown admin'} on <DateDisplay value={lastChange.at} />.
-              Recent changes are listed on Settings.
-            </>
-          ) : 'Never changed: using the starting values.'}
-        </p>
-      </div>
-    </form>
+    <span data-testid="root-admin-plans-last-change">
+      {plural(LEAGUE_PLANS.length, 'plan')}
+      {' · '}
+      {group.updatedAt
+        ? <>Last changed by {group.updatedBy?.name ?? 'an unknown admin'} on <DateDisplay timeStyle={null} value={group.updatedAt} /></>
+        : 'Never changed: on the starting values'}
+    </span>
   );
 }
 
-function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
-  const { errors } = form.formState;
-  const caps = form.watch('caps');
+function CapsSection({ group }: { group: PlanSettingsGroup }) {
+  const { locale } = useDisplayPreferences();
+  const [openCap, setOpenCap] = useState<PlanCap | null>(null);
+  const rows = useMemo(() => planCapRows(group.value), [group.value]);
+  const columns = useMemo(() => planCapColumns(locale), [locale]);
+  const openRow = rows.find((row) => row.cap === openCap);
 
   return (
     <SectionCard
       help="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
+      padded
       testId="root-admin-plans-caps"
       title="Caps"
     >
-      <div className="overflow-x-auto">
-        <SimpleTable className="min-w-full">
-          <TableHead>
-            <tr>
-              <TableHeaderCell>Cap</TableHeaderCell>
-              {LEAGUE_PLANS.map((plan) => (
-                <TableHeaderCell key={plan}>{LEAGUE_PLAN_LABEL[plan]}</TableHeaderCell>
-              ))}
-            </tr>
-          </TableHead>
-          <TableBody>
-            {Object.values(PlanCap).map((cap) => (
-              <TableRow data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
-                <TableHeaderCell className="py-3 align-top text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</TableHeaderCell>
-                {LEAGUE_PLANS.map((plan) => {
-                  const cellName = `${PLAN_CAP_LABEL[cap]} on ${LEAGUE_PLAN_LABEL[plan]}`;
-                  const error = errors.caps?.[cap]?.[plan]?.limit?.message;
-                  const errorId = `root-admin-plans-${cap}-${plan}-error`;
-                  return (
-                    <TableCell className="min-w-40 py-3 align-top" key={plan}>
-                      <div className="space-y-2">
-                        {caps[cap][plan].unlimited ? (
-                          <p className="py-2 text-foreground">{UNLIMITED_LABEL}</p>
-                        ) : (
-                          <Input
-                            aria-describedby={error ? errorId : undefined}
-                            aria-invalid={Boolean(error) || undefined}
-                            aria-label={cellName}
-                            data-testid={`root-admin-plans-${cap}-${plan}-limit`}
-                            inputMode="numeric"
-                            {...form.register(`caps.${cap}.${plan}.limit`)}
-                          />
-                        )}
-                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Checkbox
-                            aria-label={`${cellName}: Unlimited`}
-                            data-testid={`root-admin-plans-${cap}-${plan}-unlimited`}
-                            {...form.register(`caps.${cap}.${plan}.unlimited`)}
-                          />
-                          Unlimited
-                        </label>
-                        {error ? <InlineError id={errorId}>{error}</InlineError> : null}
-                      </div>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </SimpleTable>
-      </div>
+      <DataGrid
+        columns={columns}
+        data={rows}
+        emptyMessage="No caps."
+        filterTestIdPrefix="root-admin-plans-caps-filter"
+        getRowId={(row) => row.cap}
+        openRowDialog={(row) => setOpenCap(row.cap)}
+        rowTestId={(row) => `root-admin-plans-cap-${row.cap}`}
+        tableTestId="root-admin-plans-caps-table"
+        urlKey="caps"
+      />
+      {openRow ? <PlanCapDialog group={group} key={openRow.cap} onClose={() => setOpenCap(null)} row={openRow} /> : null}
     </SectionCard>
   );
 }
 
-function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
+function FeaturesSection({ group }: { group: PlanSettingsGroup }) {
+  const [openFeature, setOpenFeature] = useState<PlanFeature | null>(null);
+  const rows = useMemo(() => planFeatureRows(group.value), [group.value]);
+  const openRow = rows.find((row) => row.feature === openFeature);
+
   return (
-    <SectionCard bare help="The first plan that has each feature; every plan above it has it too." title="Features">
-      {Object.values(PlanFeatureGroup).map((featureGroup) => (
-        <SectionCard headingLevel={3} key={featureGroup} testId={`root-admin-plans-features-${featureGroup}`} title={PLAN_FEATURE_GROUP_LABEL[featureGroup]}>
-          <SectionRows>
-            {ALWAYS_INCLUDED[featureGroup].map((label) => (
-              <SectionRow key={label} name={label} value="Always" />
-            ))}
-            {Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === featureGroup).map((feature) => (
-              <SectionRow
-                aside={(
-                  <Select
-                    aria-label={`${PLAN_FEATURE_LABEL[feature]} starts at`}
-                    className="w-40"
-                    data-testid={`root-admin-plans-feature-${feature}`}
-                    {...form.register(`features.${feature}`)}
-                  >
-                    {LEAGUE_PLANS.map((plan) => (
-                      <option key={plan} value={plan}>
-                        {FEATURE_STARTS_AT_LABEL[plan]}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-                key={feature}
-                name={PLAN_FEATURE_LABEL[feature]}
-              />
-            ))}
-          </SectionRows>
-        </SectionCard>
-      ))}
+    <SectionCard
+      help="The first plan that has each feature; every plan above it has it too. Account, security and membership emails, and contest results and history, come with every plan, so they are not listed."
+      padded
+      testId="root-admin-plans-features"
+      title="Features"
+    >
+      <DataGrid
+        columns={planFeatureColumns}
+        data={rows}
+        emptyMessage="No features."
+        filterTestIdPrefix="root-admin-plans-features-filter"
+        getRowId={(row) => row.feature}
+        openRowDialog={(row) => setOpenFeature(row.feature)}
+        rowTestId={(row) => `root-admin-plans-feature-${row.feature}`}
+        tableTestId="root-admin-plans-features-table"
+        urlKey="features"
+      />
+      {openRow ? <PlanFeatureDialog group={group} key={openRow.feature} onClose={() => setOpenFeature(null)} row={openRow} /> : null}
     </SectionCard>
   );
 }
