@@ -426,6 +426,8 @@ export function buildApp() {
     cdn,
     leaderboards,
     services: sportEventServices,
+    schedule: ingestionConfigService,
+    webhookProviderIds: notifiedProviderCadence?.providerIds ?? [],
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, {

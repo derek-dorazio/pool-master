@@ -22,6 +22,7 @@ import '@poolmaster/shared/dto/events.dto';
 import '@poolmaster/shared/dto/golf-scores.dto';
 import '@poolmaster/shared/dto/race-results.dto';
 import '@poolmaster/shared/dto/bracket.dto';
+import '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
@@ -30,6 +31,8 @@ import type { IngestionService } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
+import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
+import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
@@ -50,6 +53,9 @@ export interface EventsModuleOptions {
    * write through the same instances; omitted, the module builds its own.
    */
   services?: SportEventServices;
+  /** The Event page's sync rows (#1889): the one ingestion schedule, and which providers' webhooks drive their live scores. */
+  schedule: SportLeaguePageServiceDeps['schedule'];
+  webhookProviderIds: readonly string[];
 }
 
 const TAGS = ['Events'];
@@ -100,6 +106,11 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
+    eventOverviews: new SportLeaguePageService({
+      reader: new PrismaSportLeaguePageReader(prisma),
+      schedule: opts.schedule,
+      webhookProviderIds: opts.webhookProviderIds,
+    }),
   });
   const write = { onRequest: requireRootAdmin };
 
@@ -388,6 +399,23 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     },
     config: ADMIN_READ_LIMIT,
     handler: handler.listEventContests,
+  });
+
+  fastify.get('/:eventId/overview', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'Get an event\'s syncs, health, issues, release and tier order',
+      description: 'The root admin\'s Event page header and sync rows (#1889), by the League page\'s rules applied to one event: its field and scores syncs from its own latest runs, '
+        + 'its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, '
+        + 'and each field row\'s feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. '
+        + `404 EVENT_NOT_FOUND for an unknown event. More than ${EVENT_ADMIN_READS_PER_MINUTE} reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.`,
+      operationId: 'getEventOverview',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventOverviewResponse'), ...errors(401, 403, 404, 429) },
+    },
+    config: ADMIN_READ_LIMIT,
+    handler: handler.getEventOverview,
   });
 
   // --- The field (SportEventParticipant) -----------------------------------------------

@@ -149,6 +149,8 @@ export type {
   SportLeagueHeldEvent,
   SportLeagueOverdueCandidate,
   SportLeagueEventFacts,
+  SportEventPageFacts,
+  SportEventPageFieldRow,
   SportLeaguePageEvent,
   SportLeaguePageLeague,
   SportLeaguePageParticipant,

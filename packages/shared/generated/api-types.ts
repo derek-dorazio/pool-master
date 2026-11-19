@@ -2297,6 +2297,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's syncs, health, issues, release and tier order
+         * @description The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
+         */
+        get: operations["getEventOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/participants": {
         parameters: {
             query?: never;
@@ -10868,6 +10888,394 @@ export interface components {
                  */
                 lastSyncedAt: string | null;
             }[];
+        };
+        /** @description One field row's place in its provider's feed: the Field grid's Last in feed column. */
+        SportEventFieldFeedRowDto: {
+            /**
+             * Format: uuid
+             * @description The field row.
+             */
+            sportEventParticipantId: string;
+            /** @description Its participant's provider id in the event's sport league; null when it has no provider mapping. */
+            feedId: string | null;
+            /**
+             * Format: date-time
+             * @description When a sync last saw its participant in the provider's feed; null when none has.
+             */
+            lastInFeedAt: string | null;
+        };
+        /** @description The root admin's Event page header and sync rows. */
+        SportEventOverviewDto: {
+            /**
+             * @description By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.
+             * @enum {string}
+             */
+            syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+            /** @description Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs. */
+            syncs: {
+                /**
+                 * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+                 * @enum {string}
+                 */
+                health: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+                /**
+                 * @description SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+                 * @enum {string}
+                 */
+                mode: "SCHEDULE" | "WEBHOOK";
+                /** @description Its latest run; null before any. */
+                lastRun: {
+                    /**
+                     * Format: uuid
+                     * @description The run, on the run log.
+                     */
+                    id: string;
+                    /** @enum {string} */
+                    status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                    /**
+                     * Format: date-time
+                     * @description When it was queued.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When it started; null while it waits.
+                     */
+                    startedAt: string | null;
+                    /** @description Its outcome summary as the sync history shows it, as data; null when it has none. */
+                    summary: string | null;
+                    /** @description Rows it created or updated; null unless it completed and counted them. */
+                    changedCount: number | null;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+                 */
+                nextRunAt: string | null;
+            }[];
+            /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
+            issues: ({
+                /** @enum {string} */
+                type: "SYNC";
+                /** @description How many of its syncs' latest runs failed. */
+                count: number;
+                /** @description Event list, then field, then scores. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /**
+                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @enum {string}
+                     */
+                    syncKind: "EVENTS" | "FIELD" | "SCORES";
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "RELEASE";
+                /** @description How many draft events the latest automatic release check held. */
+                count: number;
+                /** @description By event name. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                    /** @description The ready checks that held it, in check order. */
+                    failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                }[];
+            } | {
+                /** @enum {string} */
+                type: "OVERDUE";
+                /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                count: number;
+                /** @description Most overdue first. */
+                items: {
+                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                    label: string;
+                    /**
+                     * Format: date-time
+                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     */
+                    occurredAt: string;
+                    /** @description What an issue item links to. */
+                    target: {
+                        /**
+                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                         * @enum {string}
+                         */
+                        type: "SYNC_RUN" | "SPORT_EVENT";
+                        /**
+                         * Format: uuid
+                         * @description The sync run's or event's id.
+                         */
+                        id: string;
+                    };
+                }[];
+            })[];
+            /**
+             * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+             * @enum {string}
+             */
+            releaseMode: "AUTO" | "MANUAL";
+            /**
+             * Format: date-time
+             * @description With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.
+             */
+            releaseAt: string | null;
+            /**
+             * @description What releaseAt is; null with it.
+             * @enum {string|null}
+             */
+            releaseAtKind: "PLANNED" | "ACTUAL" | null;
+            /**
+             * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+             * @enum {string|null}
+             */
+            tierOrderBasis: "ODDS" | "SEED" | "RANKING" | "NAME" | null;
+            /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
+            tierOrderCoversField: boolean;
+            /** @description One per field row, active or withdrawn, never paged. */
+            fieldFeed: {
+                /**
+                 * Format: uuid
+                 * @description The field row.
+                 */
+                sportEventParticipantId: string;
+                /** @description Its participant's provider id in the event's sport league; null when it has no provider mapping. */
+                feedId: string | null;
+                /**
+                 * Format: date-time
+                 * @description When a sync last saw its participant in the provider's feed; null when none has.
+                 */
+                lastInFeedAt: string | null;
+            }[];
+        };
+        /** @description One event's overview. */
+        SportEventOverviewResponse: {
+            /** @description The root admin's Event page header and sync rows. */
+            overview: {
+                /**
+                 * @description By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.
+                 * @enum {string}
+                 */
+                syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+                /** @description Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs. */
+                syncs: {
+                    /**
+                     * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                     * @enum {string}
+                     */
+                    kind: "EVENTS" | "FIELD" | "SCORES";
+                    /**
+                     * @description By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+                     * @enum {string}
+                     */
+                    health: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
+                    /**
+                     * @description SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+                     * @enum {string}
+                     */
+                    mode: "SCHEDULE" | "WEBHOOK";
+                    /** @description Its latest run; null before any. */
+                    lastRun: {
+                        /**
+                         * Format: uuid
+                         * @description The run, on the run log.
+                         */
+                        id: string;
+                        /** @enum {string} */
+                        status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                        /**
+                         * Format: date-time
+                         * @description When it was queued.
+                         */
+                        createdAt: string;
+                        /**
+                         * Format: date-time
+                         * @description When it started; null while it waits.
+                         */
+                        startedAt: string | null;
+                        /** @description Its outcome summary as the sync history shows it, as data; null when it has none. */
+                        summary: string | null;
+                        /** @description Rows it created or updated; null unless it completed and counted them. */
+                        changedCount: number | null;
+                    } | null;
+                    /**
+                     * Format: date-time
+                     * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+                     */
+                    nextRunAt: string | null;
+                }[];
+                /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
+                issues: ({
+                    /** @enum {string} */
+                    type: "SYNC";
+                    /** @description How many of its syncs' latest runs failed. */
+                    count: number;
+                    /** @description Event list, then field, then scores. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /**
+                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @enum {string}
+                         */
+                        syncKind: "EVENTS" | "FIELD" | "SCORES";
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "RELEASE";
+                    /** @description How many draft events the latest automatic release check held. */
+                    count: number;
+                    /** @description By event name. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                        /** @description The ready checks that held it, in check order. */
+                        failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
+                    }[];
+                } | {
+                    /** @enum {string} */
+                    type: "OVERDUE";
+                    /** @description How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. */
+                    count: number;
+                    /** @description Most overdue first. */
+                    items: {
+                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
+                        label: string;
+                        /**
+                         * Format: date-time
+                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         */
+                        occurredAt: string;
+                        /** @description What an issue item links to. */
+                        target: {
+                            /**
+                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                             * @enum {string}
+                             */
+                            type: "SYNC_RUN" | "SPORT_EVENT";
+                            /**
+                             * Format: uuid
+                             * @description The sync run's or event's id.
+                             */
+                            id: string;
+                        };
+                    }[];
+                })[];
+                /**
+                 * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+                 * @enum {string}
+                 */
+                releaseMode: "AUTO" | "MANUAL";
+                /**
+                 * Format: date-time
+                 * @description With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.
+                 */
+                releaseAt: string | null;
+                /**
+                 * @description What releaseAt is; null with it.
+                 * @enum {string|null}
+                 */
+                releaseAtKind: "PLANNED" | "ACTUAL" | null;
+                /**
+                 * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+                 * @enum {string|null}
+                 */
+                tierOrderBasis: "ODDS" | "SEED" | "RANKING" | "NAME" | null;
+                /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
+                tierOrderCoversField: boolean;
+                /** @description One per field row, active or withdrawn, never paged. */
+                fieldFeed: {
+                    /**
+                     * Format: uuid
+                     * @description The field row.
+                     */
+                    sportEventParticipantId: string;
+                    /** @description Its participant's provider id in the event's sport league; null when it has no provider mapping. */
+                    feedId: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When a sync last saw its participant in the provider's feed; null when none has.
+                     */
+                    lastInFeedAt: string | null;
+                }[];
+            };
         };
         /** @description One participant on the League page's Participants grid. */
         SportLeagueParticipantOverviewDto: {
@@ -32659,6 +33067,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventContestListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getEventOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One event's overview. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventOverviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */

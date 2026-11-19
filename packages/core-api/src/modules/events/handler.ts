@@ -80,6 +80,9 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import type { EventScoreSourceService } from './event-score-source-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
+import type { SportLeaguePageService } from '../sport-catalog/sport-league-page';
+import type { SportEventOverviewResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
+import { mapSportEventOverviewToDto } from '../../mappers/sport-catalog.mapper';
 
 type EventParams = { Params: { eventId: string } };
 type RoundParams = { Params: { eventId: string; roundNumber: number } };
@@ -110,6 +113,8 @@ export interface EventHandlerDeps {
   eventLifecycle: EventLifecycleService;
   scoreSource: EventScoreSourceService;
   ingestion: IngestionService;
+  /** The Event page's header and sync rows (#1889), by the League page's rules. */
+  eventOverviews: Pick<SportLeaguePageService, 'getEventOverview'>;
 }
 
 /**
@@ -117,7 +122,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion, eventOverviews }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
@@ -298,6 +303,12 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     listEventRounds: async (request: FastifyRequest<EventParams>): Promise<SportEventRoundListResponse> => {
       await requireEvent(request.params.eventId);
       return { rounds: (await rounds.listRoundViews(request.params.eventId)).map(mapSportEventRoundToDto) };
+    },
+
+    getEventOverview: async (request: FastifyRequest<EventParams>): Promise<SportEventOverviewResponse> => {
+      const overview = await eventOverviews.getEventOverview(request.params.eventId);
+      if (overview === null) throw new SportEventError(`Sport event ${request.params.eventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+      return { overview: mapSportEventOverviewToDto(overview) };
     },
 
     listEventContests: async (request: FastifyRequest<EventParams>): Promise<SportEventContestListResponse> => {
