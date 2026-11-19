@@ -466,8 +466,10 @@ export interface ContestEventChangedEmailData {
 }
 
 /**
- * "Picks are open again" (#1808): a postponement took a live contest back to open, so its members
- * can make or change picks until the event's new start.
+ * "Event postponed, picks are open again" (#1808, #1910): a postponement took a live contest back
+ * to open, so its members can make or change picks until the event's new start. It is the one
+ * email the contest's members get for that postponement: the event changed email (C6) leaves out
+ * a contest the change reopens.
  */
 export interface ContestReopenedEmailData {
   userName: string;
@@ -2078,28 +2080,29 @@ function renderContestReopenedEmail(
   const closesLabel = 'Picks close';
   // To the minute: a postponement is often to later the same day, which the day alone can't say.
   const closesLine = formatInstant(data.closesAt, context);
-  const intro = `${data.event.eventName} was postponed, so ${data.contestName} is open again.`;
-  const ask = 'Make or change your picks before the new start.';
+  const newDay = formatDay(data.event.startsAt, context);
+  const postponed = `${data.event.eventName} has been postponed to ${newDay}.`;
+  const reopened = `${data.contestName} is open again: make or change your picks before they close.`;
   return buildMessage(context, {
     templateKey: 'CONTEST_REOPENED',
-    subject: `Picks are open again: ${data.contestName}`,
-    preheader: intro,
-    title: 'Picks open again',
+    subject: `Postponed: ${data.event.eventName}. Picks are open again`,
+    preheader: postponed,
+    title: 'Event postponed',
     leagueName: data.leagueName,
-    eventStrip: { event: data.event, line: formatDay(data.event.startsAt, context) },
+    eventStrip: { event: data.event, line: newDay },
     notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
-      paragraph(`${escapeHtml(data.event.eventName)} was postponed, so ${strong(data.contestName)} is open again.`),
-      paragraph(escapeHtml(ask)),
+      paragraph(escapeHtml(postponed)),
+      paragraph(`${strong(data.contestName)} is open again: make or change your picks before they close.`),
       goldBand(closesLabel, closesLine),
       button('Make your picks', data.contestUrl),
     ].join(''),
     textLines: [
       `Hi ${data.userName},`,
       '',
-      intro,
-      ask,
+      postponed,
+      reopened,
       '',
       `${closesLabel}: ${closesLine}`,
       `Make your picks: ${data.contestUrl}`,

@@ -4,8 +4,9 @@
  * "Final results" (F1, with F3 for its winners) when it settles. All three go to every active
  * member of the contest's league, and to no other league. A contest that ends with no scores
  * (F2) tells only its commissioners and the members with an entry, and so does an event on it
- * being postponed, moved or cancelled (C6, C7). "Picks are open again" (#1808), when a postponement
- * takes a live contest back to open, goes to every active member, as D1 does.
+ * being postponed, moved or cancelled (C6, C7). "Event postponed, picks are open again" (#1808,
+ * #1910), when a postponement takes a live contest back to open, goes to every active member, as D1
+ * does, in place of C6 for that contest.
  *
  * Each email is queued once per person: its outbox idempotency key is the contest (and for E1
  * the event) and the person, so a retried call finds it recorded and skips. E1 and F1 (#1387)
@@ -90,14 +91,27 @@ export type SportEventChange =
   | { kind: typeof ContestEventChangeKind.RESCHEDULED; previousStart: Date }
   | { kind: typeof ContestEventChangeKind.CANCELLED };
 
+/**
+ * What the caller already knows about the change: `reopening`, the live contests it takes back to
+ * OPEN, which hear of it from "Event postponed, picks are open again" instead (#1910).
+ */
+export interface SportEventChangeContext {
+  reopening: ReadonlySet<string>;
+}
+
 /** The event-changed seam EventLifecycleService calls. */
 export interface SportEventChangedNotice {
   /**
    * C6's job for each contest the change tells, for the caller to write with the change itself
    * (#1464): a postponement or a moved start that fails, or loses a race, queues nothing, and
-   * one that lands always has its jobs. Only `sportEvent`'s id and start are read.
+   * one that lands always has its jobs. Only `sportEvent`'s id and start are read. A contest in
+   * `context.reopening` gets no job: its reopen's email is the one its members get (#1910).
    */
-  sportEventChangedJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, change: SportEventChange): Promise<BackgroundJobRequest[]>;
+  sportEventChangedJobs(
+    sportEvent: Pick<SportEvent, 'id' | 'startDate'>,
+    change: SportEventChange,
+    context?: SportEventChangeContext,
+  ): Promise<BackgroundJobRequest[]>;
   /** Queues those jobs now: a cancellation, which its settle job tells before settling. */
   sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
 }
@@ -265,9 +279,14 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
    * cancelled) ends it, and its no-scores result (F2) says so instead, so it gets no job. That is
    * decided here, before settlement finishes those contests. A failure throws for the caller.
    */
-  async sportEventChangedJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, change: SportEventChange): Promise<BackgroundJobRequest[]> {
+  async sportEventChangedJobs(
+    sportEvent: Pick<SportEvent, 'id' | 'startDate'>,
+    change: SportEventChange,
+    context?: SportEventChangeContext,
+  ): Promise<BackgroundJobRequest[]> {
     const jobs = this.requireJobs();
-    const onEvent = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
+    const onEvent = (await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES }))
+      .filter((contest) => !context?.reopening.has(contest.id));
     const contests = change.kind === ContestEventChangeKind.CANCELLED
       ? await this.stillToPlay(onEvent, sportEvent.id)
       : onEvent;
@@ -326,8 +345,8 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
   }
 
   /**
-   * "Picks are open again", from its job (#1808): tells every active member the postponed event's
-   * contest takes picks again until `reopen.startsAt`, each once per reopen. A failure to queue
+   * "Event postponed, picks are open again", from its job (#1808, #1910): tells every active member
+   * the event was postponed and its contest takes picks again until `reopen.startsAt`, each once per reopen. A failure to queue
    * throws, for its job to retry. Answers how many it queued (#1861).
    */
   async contestReopened(contest: Contest, sportEvent: SportEvent, reopen: ContestReopenedEmailsJobPayload): Promise<number> {

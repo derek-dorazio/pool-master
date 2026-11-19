@@ -1658,7 +1658,7 @@ export const BackgroundJobType = {
   CONTEST_SETTLED_EMAILS: 'CONTEST_SETTLED_EMAILS',
   /** Queues "Event postponed", "New date" or "Event cancelled" (C6, C7) to the league of one contest on the event (#1458). */
   CONTEST_EVENT_CHANGED_EMAILS: 'CONTEST_EVENT_CHANGED_EMAILS',
-  /** Queues "Picks are open again" to the league of one contest a postponement took back to open (#1808). */
+  /** Queues "Event postponed, picks are open again" to the league of one contest a postponement took back to open (#1808, #1910). */
   CONTEST_REOPENED_EMAILS: 'CONTEST_REOPENED_EMAILS',
   /** Settles the contests of one event that just completed or was cancelled (#1448). */
   SETTLE_SPORT_EVENT_CONTESTS: 'SETTLE_SPORT_EVENT_CONTESTS',

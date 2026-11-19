@@ -113,9 +113,9 @@ export const SYSTEM_EMAIL_LABELS: Record<EmailTemplateKey, SystemEmailLabel> = {
     when: 'A contest\'s event is postponed or cancelled',
   },
   [EmailTemplateKey.CONTEST_REOPENED]: {
-    name: 'Picks open again',
+    name: 'Event postponed, picks open again',
     audience: EMAIL_AUDIENCE.MEMBERS,
-    when: 'A postponement takes a live contest back to open',
+    when: 'A postponement takes a live contest back to open, in place of "Event postponed"',
   },
   [EmailTemplateKey.EVENT_COMING_UP]: {
     name: 'Event coming up',
