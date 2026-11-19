@@ -10,7 +10,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { LightMyRequestResponse } from 'fastify';
-import type { AuthResponse, UserListResponse, UserResponse } from '@poolmaster/shared/dto';
+import type { AuthResponse, UserResponse } from '@poolmaster/shared/dto';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
   buildCreateLeaguePayload,
@@ -334,7 +334,7 @@ describe('the auth guard', () => {
   });
 });
 
-describe('reading and listing users', () => {
+describe('reading users', () => {
   it('lets a user read themselves through `me` and refuses them another user with 403 USER_READ_FORBIDDEN', async () => {
     const session = await signedIn();
     const other = await createTestUser();
@@ -345,22 +345,6 @@ describe('reading and listing users', () => {
     expect(me.json<UserResponse>().user.email).toBe(session.identity.email);
     expect(someoneElse.statusCode).toBe(403);
     expect(errorCode(someoneElse)).toBe('USER_READ_FORBIDDEN');
-  });
-
-  it('lets a root admin list users filtered by a search term, and refuses everyone else with 403', async () => {
-    const admin = await createTestUser({ isRootAdmin: true });
-    const session = await signedIn();
-
-    const listed = await getApp().inject({
-      method: 'GET',
-      url: `/api/v1/users?search=${session.identity.username}`,
-      headers: admin.headers,
-    });
-    const refused = await getApp().inject({ method: 'GET', url: '/api/v1/users', headers: session.bearer });
-
-    expect(listed.json<UserListResponse>().users.map((user) => user.id)).toEqual([session.userId]);
-    expect(refused.statusCode).toBe(403);
-    expect(errorCode(refused)).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
   it('answers a root admin asking for a user id that is not a uuid with 400, not a server error', async () => {
@@ -753,11 +737,11 @@ describe('the root-admin role', () => {
 
     expect((await setRole(true)).statusCode).toBe(200);
     expect(await liveRefreshTokens(session.userId)).toBe(1);
-    const stillOldToken = await getApp().inject({ method: 'GET', url: '/api/v1/users?search=root', headers: session.bearer });
+    const stillOldToken = await getApp().inject({ method: 'GET', url: '/api/v1/customers/users', headers: session.bearer });
     const relogin = (await login(session.identity.email)).json<AuthResponse>();
     const withNewToken = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/users?search=root',
+      url: '/api/v1/customers/users',
       headers: { authorization: `Bearer ${relogin.tokens.accessToken}` },
     });
 

@@ -141,8 +141,8 @@ describe('LeagueService — finding leagues', () => {
   });
 });
 
-describe('LeagueService — the "mine" league list', () => {
-  it('omits a league the viewer was removed from, so "mine" never returns a league without the viewer\'s membership', async () => {
+describe('LeagueService — the caller\'s league list', () => {
+  it('omits a league the viewer was removed from, so the list never returns a league without the viewer\'s membership', async () => {
     const world = inMemoryLeagueWorld();
     const viewer = world.addUser();
     const kept = world.addLeague({ name: 'Kept' });
@@ -151,13 +151,13 @@ describe('LeagueService — the "mine" league list', () => {
     const { membership } = world.addMember({ league: left, user: viewer });
     world.tables.memberships.patch(membership.id, { status: LeagueMembershipStatus.INACTIVE });
 
-    const rows = await serviceFor(world).listLeagues({ scope: 'mine', userId: viewer.id });
+    const rows = await serviceFor(world).listLeagues({ userId: viewer.id });
 
     expect(rows.map((row) => row.league.name)).toEqual(['Kept']);
     expect(rows.every((row) => row.membership !== null)).toBe(true);
   });
 
-  it('narrows "mine" by a case-insensitive name search and by isActive', async () => {
+  it('narrows the caller\'s leagues by a case-insensitive name search and by isActive', async () => {
     const world = inMemoryLeagueWorld();
     const viewer = world.addUser();
     for (const [name, isActive] of [['Golf Masters', true], ['Golf Archive', false], ['Hoops', true]] as const) {
@@ -165,9 +165,8 @@ describe('LeagueService — the "mine" league list', () => {
     }
     const service = serviceFor(world);
 
-    const golf = await service.listLeagues({ scope: 'mine', userId: viewer.id, filters: { search: '  GOLF ' } });
+    const golf = await service.listLeagues({ userId: viewer.id, filters: { search: '  GOLF ' } });
     const activeGolf = await service.listLeagues({
-      scope: 'mine',
       userId: viewer.id,
       filters: { search: 'golf', isActive: true },
     });
@@ -185,7 +184,7 @@ describe('LeagueService — the "mine" league list', () => {
     const groupBy = jest.fn().mockResolvedValue([{ leagueId: league.id, _count: { _all: 3 } }]);
 
     const [row] = await serviceFor(world, { prisma: asPrismaClient({ contest: { groupBy } }) })
-      .listLeagues({ scope: 'mine', userId: viewer.id });
+      .listLeagues({ userId: viewer.id });
 
     expect(row).toMatchObject({ memberCount: 2, activeContestCount: 3 });
     expect(groupBy).toHaveBeenCalledWith(expect.objectContaining({
@@ -195,24 +194,9 @@ describe('LeagueService — the "mine" league list', () => {
     }));
   });
 
-  it('returns every league matching the search under scope "all", with the viewer\'s membership only where they hold one', async () => {
-    const world = inMemoryLeagueWorld();
-    const admin = world.addUser({ isRootAdmin: true });
-    const joined = world.addLeague({ name: 'Joined' });
-    world.addLeague({ name: 'Stranger' });
-    world.addMember({ league: joined, user: admin });
-
-    const rows = await serviceFor(world).listLeagues({ scope: 'all', userId: admin.id, filters: { search: 'e' } });
-
-    const byName = new Map(rows.map((row) => [row.league.name, row]));
-    expect(byName.get('Joined')?.membership?.userId).toBe(admin.id);
-    expect(byName.get('Stranger')?.membership).toBeNull();
-    expect(byName.get('Stranger')?.memberCount).toBe(0);
-  });
-
   it('returns no rows and no counts for a viewer with no leagues', async () => {
     const world = inMemoryLeagueWorld();
-    await expect(serviceFor(world).listLeagues({ scope: 'mine', userId: world.addUser().id })).resolves.toEqual([]);
+    await expect(serviceFor(world).listLeagues({ userId: world.addUser().id })).resolves.toEqual([]);
   });
 });
 

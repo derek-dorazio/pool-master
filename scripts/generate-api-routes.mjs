@@ -54,7 +54,6 @@ const MANIFEST = {
       'access rule A6 decides which is allowed. They replaced `/api/v1/auth/me`,',
       '`/api/v1/account/*` and `/api/v1/admin/users/*`.',
     ],
-    list: 'listUsers',
     detail: 'getUser',
     profile: 'updateUserProfile',
     username: 'updateUserUsername',

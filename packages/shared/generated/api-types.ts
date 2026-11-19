@@ -197,26 +197,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List users
-         * @description Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.
-         */
-        get: operations["listUsers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/users/{userId}": {
         parameters: {
             query?: never;
@@ -494,11 +474,9 @@ export interface paths {
         };
         /**
          * List leagues
-         * @description Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).
+         * @description Returns the leagues the caller belongs to, together with the caller's own memberships once as an array. It powers the welcome page, header selector and My Leagues overview. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). `search` and `isActive` narrow it; nothing pages it.
          *
-         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.
-         *
-         *     This replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.
+         *     A root admin reads every league through `listCustomerLeagues`.
          */
         get: operations["listLeagues"];
         put?: never;
@@ -4211,49 +4189,6 @@ export interface components {
                 createdAt?: string;
             };
         };
-        /** @description User-list response. */
-        UserListResponse: {
-            users: {
-                /** @description Stable user identifier. */
-                id: string;
-                /** @description Primary email address for the user account. */
-                email: string;
-                /** @description Unique login identifier for the account. */
-                username: string;
-                /** @description First name shown in account and member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in account and member-management surfaces. */
-                lastName: string;
-                /** @description Whether the account is currently active for normal sign-in and product usage. */
-                isActive: boolean;
-                /** @description Whether the user has platform-level root-admin access. */
-                isRootAdmin: boolean;
-                /**
-                 * @description Authentication provider used for the account when known.
-                 * @enum {string}
-                 */
-                authProvider?: "email" | "google" | "apple";
-                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
-                timezone?: string;
-                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
-                locale?: string;
-                /**
-                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
-                 * @enum {string}
-                 */
-                timeFormat?: "12H" | "24H";
-                /**
-                 * @description Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
-                 * @enum {string}
-                 */
-                colorScheme?: "DEVICE" | "LIGHT" | "DARK";
-                /**
-                 * Format: date-time
-                 * @description Account creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-            }[];
-        };
         /** @description Profile update payload. Sent by the user themselves or by a root admin (access rule A6). */
         UserProfileUpdateRequest: {
             /**
@@ -5828,12 +5763,7 @@ export interface components {
         };
         /** @description League-list query. Narrows the result; it never pages it. */
         LeagueListQuery: {
-            /**
-             * @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
-             * @enum {string}
-             */
-            scope?: "mine" | "all";
-            /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
+            /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
             search?: string;
             /** @description Optional active/inactive filter. Omitted returns both. */
             isActive?: boolean;
@@ -6438,7 +6368,7 @@ export interface components {
                  */
                 eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
             }[];
-            /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
+            /** @description The viewer's own memberships, one per returned league. */
             memberships: {
                 /** @description Membership record identifier. */
                 id: string;
@@ -26431,66 +26361,6 @@ export interface operations {
             };
         };
     };
-    listUsers: {
-        parameters: {
-            query?: {
-                /** @description Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed. */
-                search?: string;
-                isActive?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User-list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     getUser: {
         parameters: {
             query?: never;
@@ -27440,9 +27310,7 @@ export interface operations {
     listLeagues: {
         parameters: {
             query?: {
-                /** @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access. */
-                scope?: "mine" | "all";
-                /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters. */
+                /** @description Case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
                 search?: string;
                 /** @description Optional active/inactive filter. Omitted returns both. */
                 isActive?: boolean;
@@ -27473,15 +27341,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };

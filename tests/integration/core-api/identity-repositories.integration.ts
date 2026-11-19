@@ -63,95 +63,12 @@ async function createLeague(prisma: ReturnType<typeof getPrisma>, code: string, 
 }
 
 describe('identity cluster repositories (#202)', () => {
-  describe('UserRepository.search — the unscoped read (A1)', () => {
-    it('matches the search term across email, username, firstName and lastName', async () => {
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `zzq${Date.now().toString(36)}`;
-
-      const byLastName = await createTestUser({ lastName: `Sur${marker}` });
-      const byFirstName = await createTestUser({ firstName: `Fore${marker}` });
-      const byEmail = await createTestUser({ email: `mail${marker}@integration.test` });
-
-      const users = await repo.search({ search: marker });
-
-      const ids = users.map((user) => user.id);
-      expect(ids).toContain(byLastName.user.id);
-      expect(ids).toContain(byFirstName.user.id);
-      expect(ids).toContain(byEmail.user.id);
-    });
-
-    it('finds a user by full name, each word matching a different column, and not when one word matches nothing', async () => {
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = Date.now().toString(36);
-      const created = await createTestUser({ firstName: `Ali${marker}`, lastName: `Smith${marker}` });
-      await createTestUser({ firstName: `Ali${marker}`, lastName: `Jones${marker}` });
-
-      const fullName = await repo.search({ search: `  Ali${marker}   Smith${marker} ` });
-      const wrongSurname = await repo.search({ search: `Ali${marker} Brown${marker}` });
-
-      expect(fullName.map((user) => user.id)).toEqual([created.user.id]);
-      expect(wrongSurname).toEqual([]);
-    });
-
-    it('matches case-insensitively', async () => {
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `Mixed${Date.now().toString(36)}`;
-      const created = await createTestUser({ lastName: marker });
-
-      const users = await repo.search({ search: marker.toUpperCase() });
-
-      expect(users.map((user) => user.id)).toContain(created.user.id);
-    });
-
-    it('returns every match, unpaged', async () => {
-      // §16 — the API does not page. A filter narrows the set; nothing slices it.
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `all${Date.now().toString(36)}`;
-      await createTestUser({ lastName: marker });
-      await createTestUser({ lastName: marker });
-      await createTestUser({ lastName: marker });
-
-      const users = await repo.search({ search: marker });
-
-      expect(users).toHaveLength(3);
-    });
-
-    it('filters on isActive', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `act${Date.now().toString(36)}`;
-      const active = await createTestUser({ lastName: marker });
-      const inactive = await createTestUser({ lastName: marker });
-      await prisma.user.update({ where: { id: inactive.user.id }, data: { isActive: false } });
-
-      const activeOnly = await repo.search({ search: marker, isActive: true });
-      const inactiveOnly = await repo.search({ search: marker, isActive: false });
-
-      expect(activeOnly.map((user) => user.id)).toEqual([active.user.id]);
-      expect(inactiveOnly.map((user) => user.id)).toEqual([inactive.user.id]);
-    });
-
-    it('filters on isRootAdmin, finding only root admins or only everyone else', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `root${Date.now().toString(36)}`;
-      const rootAdmin = await createTestUser({ lastName: marker });
-      const member = await createTestUser({ lastName: marker });
-      await prisma.user.update({ where: { id: rootAdmin.user.id }, data: { isRootAdmin: true } });
-
-      const rootAdmins = await repo.search({ search: marker, isRootAdmin: true });
-      const others = await repo.search({ search: marker, isRootAdmin: false });
-
-      expect(rootAdmins.map((user) => user.id)).toEqual([rootAdmin.user.id]);
-      expect(others.map((user) => user.id)).toEqual([member.user.id]);
-    });
-
+  describe('UserRepository user mapping', () => {
     it('never returns a password hash on the domain user', async () => {
       const repo = new PrismaUserRepository(getAppPrisma());
-      const marker = `secret${Date.now().toString(36)}`;
-      await createTestUser({ lastName: marker, password: 'TestPass123' });
+      const created = await createTestUser({ password: 'TestPass123' });
 
-      const users = await repo.search({ search: marker });
+      const users = await repo.findByIds([created.user.id]);
 
       expect(users).toHaveLength(1);
       expect(users[0]).not.toHaveProperty('passwordHash');
@@ -602,35 +519,6 @@ describe('identity cluster repositories (#202)', () => {
         [first.id, early.user.id],
         [second.id, late.user.id],
       ]);
-    });
-  });
-
-  describe('LeagueRepository.search — the unscoped read (A1)', () => {
-    it('finds the leagues whose name holds the search term, narrowed by isActive', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(getAppPrisma());
-      const marker = `Findable${Date.now().toString(36)}`;
-
-      const activeLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C1`, `${marker} Active`, true);
-      const inactiveLeague = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C2`, `${marker} Inactive`, false);
-
-      const searched = await repo.search({ search: marker });
-      expect(searched.map((league) => league.id).sort())
-        .toEqual([activeLeague.id, inactiveLeague.id].sort());
-
-      const activeOnly = await repo.search({ search: marker, isActive: true });
-      expect(activeOnly.map((league) => league.id)).toEqual([activeLeague.id]);
-    });
-
-    it('matches the league name case-insensitively', async () => {
-      const prisma = getPrisma();
-      const repo = new PrismaLeagueRepository(getAppPrisma());
-      const marker = `CaseLeague${Date.now().toString(36)}`;
-      const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}C3`, marker);
-
-      const found = await repo.search({ search: marker.toLowerCase() });
-
-      expect(found.map((row) => row.id)).toContain(league.id);
     });
   });
 

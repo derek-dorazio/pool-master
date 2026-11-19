@@ -29,6 +29,7 @@ import {
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
   LeagueContextResponseSchema,
+  LeagueListResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -146,6 +147,24 @@ describe('Contract verification (web)', () => {
     const parsed = LeagueContextResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
     expect(parsed.data?.membership?.role).toBe('COMMISSIONER');
+  });
+
+  it('GET /api/v1/leagues matches LeagueListResponseSchema, listing the caller\'s league with their membership beside it', async () => {
+    const owner = await createTestUser({ displayName: 'Contract League List Owner' });
+    const created = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Contract League List'),
+    });
+    const leagueId = LeagueContextResponseSchema.parse(created.json()).league.id;
+
+    const res = await getApp().inject({ method: 'GET', url: API_ROUTES.leagues.list, headers: owner.headers });
+
+    expect(res.statusCode).toBe(200);
+    const parsed = LeagueListResponseSchema.parse(res.json());
+    expect(parsed.leagues.map((league) => league.id)).toEqual([leagueId]);
+    expect(parsed.memberships.map((membership) => [membership.leagueId, membership.role])).toEqual([[leagueId, 'COMMISSIONER']]);
   });
 
   it('league invitation routes match their response DTOs', async () => {

@@ -31,11 +31,11 @@ import {
   listContestConfigTemplates,
   listContestEntries,
   listContests,
+  listCustomerUsers,
   listEvents,
   listLeagueMembers,
   listLeagueSquads,
   listSportLeagues,
-  listUsers,
   openContest,
   registerUser,
   selectContestPick,
@@ -140,11 +140,13 @@ class ParticipantLoader {
   /** Each test player signed up once; their user id by username. */
   private async ensurePlayers(): Promise<void> {
     const client = await this.options.getClient();
+    // One read of every user: the root admin's Customers list, never paged.
+    const { users } = await must(listCustomerUsers({ client }), 'Look up the test players');
+    const userIdByUsername = new Map(users.map((user) => [user.username, user.id]));
     for (const player of this.players) {
-      const { users } = await must(listUsers({ client, query: { search: player.username } }), `Look up ${player.username}`);
-      const existing = users.find((user) => user.username === player.username);
-      if (existing) {
-        this.userIds.set(player.username, existing.id);
+      const existingId = userIdByUsername.get(player.username);
+      if (existingId !== undefined) {
+        this.userIds.set(player.username, existingId);
         this.report({ sportLeague: '', subject: LoadSubject.TEST_PLAYER, action: LoadAction.SKIP, name: playerName(player), detail: null });
         continue;
       }

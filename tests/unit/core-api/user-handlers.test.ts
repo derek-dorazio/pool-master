@@ -20,7 +20,6 @@ const cookie = 'poolmaster_refresh=refresh-1';
 function userService(overrides: Record<string, unknown> = {}) {
   const answer = (userId: string) => Promise.resolve(buildUser({ id: userId }));
   return {
-    listUsers: jest.fn((..._args: unknown[]) => Promise.resolve([buildUser({ id: 'user-2' })])),
     readUser: jest.fn((_actor: unknown, userId: string) => answer(userId)),
     writableUser: jest.fn((_actor: unknown, userId: string) => answer(userId)),
     updateProfile: jest.fn((_actor: unknown, userId: string, ..._rest: unknown[]) => answer(userId)),
@@ -90,15 +89,6 @@ describe('user handlers: the actor and the subject', () => {
 });
 
 describe('user handlers: reads and profile writes', () => {
-  it('lists users by the search and active filter', async () => {
-    const fake = userService();
-
-    const reply = await callHandler(handlersOver(fake).listUsers, stubRequest({ query: { search: 'ada', isActive: true }, authUser: admin }));
-
-    expect(fake.listUsers).toHaveBeenCalledWith(actorOf(admin), { search: 'ada', isActive: true });
-    expect(reply.body).toMatchObject({ users: [{ id: 'user-2' }] });
-  });
-
   it('updates the caller\'s profile, username and preferences, answering with the user', async () => {
     const fake = userService();
     const handlers = handlersOver(fake);

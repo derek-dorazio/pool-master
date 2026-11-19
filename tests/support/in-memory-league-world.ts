@@ -38,7 +38,6 @@ import type {
   SquadDetails,
   SquadRepository,
   UserRepository,
-  UserSearch,
 } from '@poolmaster/shared/db';
 import type {
   DomainEntity,
@@ -186,14 +185,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     return (filters.isActive === undefined || row.isActive === filters.isActive)
       && (!search || row.name.toLowerCase().includes(search));
   };
-  // The adapter matches every word of the term against any of the four columns; one word is all the
-  // league world's tests search with.
-  const matchesUserSearch = (row: User, filters: UserSearch) => {
-    const search = filters.search.trim().toLowerCase();
-    return (filters.isActive === undefined || row.isActive === filters.isActive)
-      && (filters.isRootAdmin === undefined || (row.isRootAdmin ?? false) === filters.isRootAdmin)
-      && [row.email, row.username, row.firstName, row.lastName].some((value) => value.toLowerCase().includes(search));
-  };
   const isActiveSquadMembership = (row: SquadMembership) => row.status === SquadMembershipStatus.ACTIVE;
   const one = <T>(rows: T[]): T | null => rows[0] ?? null;
 
@@ -201,7 +192,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findById: async (id) => users.get(id),
     findByIds: async (ids) => users.where((row) => ids.includes(row.id)),
     findByEmail: async (email) => one(users.where((row) => row.email === email)),
-    search: async (filters) => users.where((row) => matchesUserSearch(row, filters)),
     findActiveRootAdmins: async () => users.where((row) => row.isRootAdmin === true && row.isActive),
     findActiveByLeague: async (leagueId) => {
       const userIds = new Set(memberships.where((row) => row.leagueId === leagueId && isActiveMembership(row)).map((row) => row.userId));
@@ -233,7 +223,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     findById: async (id) => leagues.get(id),
     findByIds: async (ids) => leagues.where((row) => ids.includes(row.id)),
     findByCode: async (code) => one(leagues.where((row) => row.leagueCode === code)),
-    search: async (filters) => leagues.where((row) => matchesLeagueSearch(row, filters)),
     findActive: async () => leagues.where((row) => row.isActive),
     findByUser: async (userId, filters = {}) => {
       const leagueIds = new Set(

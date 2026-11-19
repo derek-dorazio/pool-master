@@ -53,14 +53,6 @@ export const UserResponseSchema = z.object({
 }).describe('Single-user response.');
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
-// #202 — not paged (§16), and named for its entity like LeagueListResponse and
-// SquadListResponse rather than the generic `items`/`total` envelope it used to share with
-// the audit and error-log surfaces.
-export const UserListResponseSchema = z.object({
-  users: z.array(UserDtoSchema),
-}).describe('User-list response.');
-export type UserListResponse = z.infer<typeof UserListResponseSchema>;
-
 // --- Requests -----------------------------------------------------------------
 // #202 step 3.4 — these were `account.dto.ts`'s `Account*Request` schemas, which named the
 // caller rather than the object. Every one of them is a payload for an operation on a User;
@@ -159,7 +151,6 @@ export type RevokeUserSessionsResponse = z.infer<typeof RevokeUserSessionsRespon
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('UserDto', UserDtoSchema);
 registerSchema('UserResponse', UserResponseSchema);
-registerSchema('UserListResponse', UserListResponseSchema);
 registerSchema('UserProfileUpdateRequest', UserProfileUpdateRequestSchema);
 registerSchema('UserUsernameUpdateRequest', UserUsernameUpdateRequestSchema);
 registerSchema('UserPreferencesUpdateRequest', UserPreferencesUpdateRequestSchema);

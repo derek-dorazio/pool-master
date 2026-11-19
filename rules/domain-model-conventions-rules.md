@@ -668,8 +668,8 @@ a retention policy, not a page parameter.
   Use an entity-named array — `{ users: [...] }`, `{ leagues: [...] }`, `{ squads: [...] }`
   — matching `LeagueListResponse` and `SquadListResponse`.
 - Repository ports that take paging arguments or return `{ items, total }`. A port is not
-  a place to hide a page either: `UserRepository.search` takes a required term and filters,
-  and returns `User[]`.
+  a place to hide a page either: `ParticipantRepository.search` takes a term and filters,
+  and returns `Participant[]`.
 
 **Append-only history is bounded by a window, not a page.** The sync-run history grows
 without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, which took
@@ -678,23 +678,23 @@ hours, backed by an index on `created_at`. That is a filter, not a page — the 
 a time range and gets everything in it. Reach for the same shape for any future log-like
 read.
 
-**A platform-wide list requires its filter.** The lists that cross leagues — every user,
-every league, every sport event, every participant — grow with the platform, not with a
-league, so none of them may be read whole (#1180). Users and leagues (`scope=all`) need a
-search of at least `PLATFORM_SEARCH_MIN_LENGTH` characters, answering 400
-`SEARCH_TERM_REQUIRED`; events need a sport, a sport league or a year
-(`SPORT_EVENT_FILTER_REQUIRED`); participants need a sport or a search. The searches are
-substring matches, so each column they match carries a trigram GIN index. The repository
-read takes the term as required (`UserRepository.search`, `LeagueRepository.search`), so no
-caller can skip it; a background job that must reach every row has its own named read, such
-as `LeagueRepository.findActive` for the commissioner notices (#1313). A Manage page over
-one of these lists asks for the filter first — a search box, or a year that defaults to this
-one — rather than loading everything and filtering in the browser.
+**A platform-wide list requires its filter.** The lists that cross leagues — every sport
+event, every participant — grow with the platform, not with a league, so none of them may be
+read whole (#1180). Events need a sport, a sport league or a year
+(`SPORT_EVENT_FILTER_REQUIRED`); participants need a sport or a search of at least
+`PLATFORM_SEARCH_MIN_LENGTH` characters (`SEARCH_TERM_REQUIRED`). The search is a substring
+match, so each column it matches carries a trigram GIN index. A background job that must
+reach every row has its own named read, such as `LeagueRepository.findActive` for the
+commissioner notices (#1313). A Manage page over one of these lists asks for the filter
+first — a search box, or a year that defaults to this one — rather than loading everything
+and filtering in the browser.
 
-**Except the root admin's Customers grids, which read every league and every user whole**
+**The root admin's Customers grids read every league and every user whole**
 (Derek, 2026-11-18: root admin grids load every row and filter on the client, with no server
 search and no paging). `listCustomerLeagues` and `listCustomerUsers` (#1882) answer from a
 fixed number of grouped queries, so they cost the same for any number of rows (a pinned
-query-count test holds each), and are rate limited per address. A new whole-platform read
+query-count test holds each), and are rate limited per address. They replaced the searched
+user list and `listLeagues`'s every-league scope (#1896); `listLeagues` reads only the
+caller's own leagues. A new whole-platform read
 for a root admin grid follows the same three conditions: grouped queries, a scaling test,
 a rate limit.

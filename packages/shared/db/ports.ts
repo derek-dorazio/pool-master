@@ -35,26 +35,6 @@ import type { EmailMessageRepository } from './email-ports';
 
 // --- Identity ---
 
-/** Filters for the unscoped user read. Access rule A1 restricts that read to rootAdmin. */
-export interface UserSearchFilters {
-  /**
-   * Case-insensitive substring matched against email, username, firstName and lastName.
-   * One `search` term across all four, because that is what the management UI offers.
-   */
-  search?: string;
-  isActive?: boolean;
-  /** Only root admins (true) or only everyone else (false). */
-  isRootAdmin?: boolean;
-}
-
-/**
- * A user search with its term, which `UserRepository.search` requires (#1313): no read lists
- * every user. The caller checks and trims the term with `platformSearchTerm`.
- */
-export interface UserSearch extends UserSearchFilters {
-  search: string;
-}
-
 /**
  * The writable fields of a `User`, as an update.
  *
@@ -85,20 +65,6 @@ export interface UserRepository {
   /** The users with these ids, in one read (#1196); an id with no user is left out. */
   findByIds(ids: readonly string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
-
-  /**
-   * The users matching a search term, further narrowed by the other filters, newest first.
-   *
-   * **This is the unscoped read — access rule A1 permits it to rootAdmin only.** The port
-   * does not enforce that; the route does. Added in #202 because its absence is what sent
-   * `admin/user-service.ts` straight to `prisma.user.findMany`, and from there to a
-   * hand-rolled result shape (§2y). The term is required (#1313), so there is no read of
-   * every user.
-   *
-   * Not paged, by product decision — see §16, "No paging in the API". Filter to narrow a
-   * result set; do not slice it.
-   */
-  search(filters: UserSearch): Promise<User[]>;
 
   /** The active root admins, who get the platform's own notices (#1313). */
   findActiveRootAdmins(): Promise<User[]>;
@@ -180,19 +146,11 @@ export interface UserRepository {
 
 // --- League ---
 
-/** Filters for the unscoped league read. Access rule A1 restricts that read to rootAdmin. */
+/** Filters that narrow a member's own league list. */
 export interface LeagueSearchFilters {
   /** Case-insensitive substring matched against the league name. */
   search?: string;
   isActive?: boolean;
-}
-
-/**
- * A league search with its term, which `LeagueRepository.search` requires (#1313): no read
- * lists every league for a screen. The caller checks and trims the term with `platformSearchTerm`.
- */
-export interface LeagueSearch extends LeagueSearchFilters {
-  search: string;
 }
 
 /** One logged move of a league to another plan (#945), with why it moved (#1032). */
@@ -215,13 +173,6 @@ export interface LeagueRepository {
   findByCode(code: string): Promise<League | null>;
 
   /**
-   * The leagues whose name matches a search term, further narrowed by the active flag, most
-   * recently updated first. **Unscoped — A1 permits it to rootAdmin only.** The term is
-   * required (#1313), so the admin list never reads every league. Not paged (§16).
-   */
-  search(filters: LeagueSearch): Promise<League[]>;
-
-  /**
    * Every active league, for the commissioner notices that go to each league. The one read of
    * all leagues, and no screen calls it.
    */
@@ -237,8 +188,8 @@ export interface LeagueRepository {
    * which is N+1 and had to log and skip memberships whose league had vanished. One query
    * cannot produce that orphan case, because the join only returns rows that exist.
    *
-   * `filters` narrow it in SQL as they narrow `findAll` (#1182), so a member's search never
-   * reads all their leagues to keep a few.
+   * `filters` narrow it in SQL (#1182), so a member's search never reads all their leagues to
+   * keep a few.
    */
   findByUser(userId: string, filters?: LeagueSearchFilters): Promise<League[]>;
 
@@ -311,10 +262,10 @@ export interface LeagueMembershipRepository {
    * Active member counts for several leagues at once, keyed by league id. Leagues with no
    * active members are absent from the map rather than present with 0.
    *
-   * One grouped query for a list, instead of a count per row. Added in #202 so the admin
-   * league list can be assembled from `LeagueRepository.findAll` plus this, rather than
-   * from one hand-written `findMany` with nested `select`s — which is what produced the
-   * shape that service invented (§2y).
+   * One grouped query for a list, instead of a count per row (#202), so a league list is
+   * assembled from its league read plus this, rather than from one hand-written `findMany`
+   * with nested `select`s — which is what produced the shape the old admin service invented
+   * (§2y).
    */
   countActiveByLeagues(leagueIds: string[]): Promise<Map<string, number>>;
   /**

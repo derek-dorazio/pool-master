@@ -13,12 +13,12 @@ import {
   listProviderSyncRuns,
   resetUserPassword,
   getUser,
-  listUsers,
   updateContestConfigTemplate,
   updateIngestionSchedule,
   deleteLeague,
   inactivateLeague,
-  listLeagues,
+  listCustomerLeagues,
+  listCustomerUsers,
   loginUser,
   registerUser,
 } from '@poolmaster/shared/generated/hey-api';
@@ -58,7 +58,7 @@ describe('SDK Functional: Root Admin', () => {
       displayName: 'Root Admin Denial User',
     });
 
-    const response = await listUsers({
+    const response = await listCustomerUsers({
       client: user.client,
     });
 
@@ -76,17 +76,13 @@ describe('SDK Functional: Root Admin', () => {
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
 
-    // #202 — the unscoped league list is a SCOPE on `listLeagues`, not a separate admin
-    // route, so the refusal comes from the scope rather than from the route's existence. Same
-    // access rule (A1), same 403, different code.
-    const leagueResponse = await listLeagues({
+    const leagueResponse = await listCustomerLeagues({
       client: user.client,
-      query: { scope: 'all' },
     });
 
     expectFunctionalError(leagueResponse, {
       status: 403,
-      code: 'LEAGUE_SCOPE_FORBIDDEN',
+      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
 
     const prepareSyncResponse = await submitEventSync({
@@ -128,9 +124,8 @@ describe('SDK Functional: Root Admin', () => {
     });
     await promoteToRootAdmin(user);
 
-    const usersResponse = await listUsers({
+    const usersResponse = await listCustomerUsers({
       client: user.client,
-      query: { search: user.email },
     });
     expect(usersResponse.data?.users.some((item) => item.id === user.userId)).toBe(true);
 
@@ -417,7 +412,7 @@ describe('SDK Functional: Root Admin', () => {
     expect(eventListUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
   });
 
-  it('allows a promoted root-admin user to search, inactivate, and delete leagues', async () => {
+  it('allows a promoted root-admin user to find, inactivate, and delete a league they do not belong to', async () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin League User',
     });
@@ -430,18 +425,11 @@ describe('SDK Functional: Root Admin', () => {
     // #202 — one league list, one inactivate, one delete. These were `adminListLeagues`,
     // `adminInactivateLeague` and `adminDeleteLeague`; the league routes always served root
     // admins, so the duplicates added only an audit entry, and #255 deleted the audit feature.
-    const listResponse = await listLeagues({
+    const listResponse = await listCustomerLeagues({
       client: rootAdmin.client,
-      query: {
-        scope: 'all',
-        search: 'Search League',
-      },
     });
 
     expect(listResponse.data?.leagues.some((item) => item.id === league.id)).toBe(true);
-    // A root admin listing leagues they do not belong to has no memberships among them, and
-    // the response says so rather than inventing a relationship (A8).
-    expect(listResponse.data?.memberships).toEqual([]);
 
     const inactivateResponse = await inactivateLeague({
       client: rootAdmin.client,

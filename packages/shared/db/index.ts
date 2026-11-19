@@ -52,7 +52,6 @@ export type {
   LeagueMembershipRepository,
   MembershipReadOptions,
   LeagueRepository,
-  LeagueSearch,
   LeagueSearchFilters,
   LeaguePlanChange,
   MembershipRepositories,
@@ -71,8 +70,6 @@ export type {
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
   UserRepository,
-  UserSearch,
-  UserSearchFilters,
   UserUpdate,
   LeagueUpdates,
 } from './ports';

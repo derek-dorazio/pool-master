@@ -86,25 +86,6 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
   const payments = new PaymentHistoryService({ payments: new PrismaLeaguePaymentRepository(prisma), logger: fastify.log });
   const handlers = createUserHandlers(service, authService, opts.emailPreferences, payments);
 
-  fastify.get('/', {
-    schema: {
-      tags: ['Users'],
-      summary: 'List users',
-      description:
-        'Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.',
-      operationId: 'listUsers',
-      querystring: {
-        type: 'object',
-        properties: {
-          search: { type: 'string', description: 'Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed.' },
-          isActive: { type: 'boolean' },
-        },
-      },
-      response: withUserErrorResponses({ 200: schemaRef('UserListResponse') }),
-    },
-    handler: handlers.listUsers,
-  });
-
   fastify.get('/:userId', {
     schema: {
       tags: ['Users'],
