@@ -128,6 +128,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
     create: echoCreate('user'),
     update: echoUpdate(),
+    recordSignIn: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }

@@ -224,6 +224,9 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async () => {
       throw new Error('in-memory league world does not model user updates');
     },
+    recordSignIn: async () => {
+      throw new Error('in-memory league world does not model sign-ins');
+    },
   };
 
   const leagueRepo: LeagueRepository = {

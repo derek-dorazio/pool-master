@@ -928,6 +928,16 @@ export const ContestStatusOrder = explicitOrder<ContestStatus>({
   [ContestStatus.ACTIVE]: 2,
   [ContestStatus.COMPLETED]: 3,
 });
+
+/**
+ * Statuses that make a contest count as active for a league's `activeContestCount`. DRAFT is
+ * not one (#117): a draft is the commissioner's private setup, not a contest the league has.
+ */
+export const ACTIVE_LEAGUE_CONTEST_STATUSES = [
+  ContestStatus.OPEN,
+  ContestStatus.ACTIVE,
+] as const;
+
 /**
  * A named priority order (#1841): how League Home lists a league's current contests. Open
  * first, because that is where a step waits, then Live, then Set up (shown to commissioners
