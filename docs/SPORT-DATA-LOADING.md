@@ -268,10 +268,10 @@ minutes. Because its envelope says `testData`, each tournament also gets made-up
   every round. Winners are the real 2026 winners where public results named one; everything
   else is made up.
 
-To test a contest end to end: create and open it, submit entries, then on the tournament's
-Workflow card *Move to In Progress* (the contest goes live and its leaderboard shows the
+To test a contest end to end: create and open it, submit entries, then from the tournament's
+⚙ *Move to In Progress* (the contest goes live and its leaderboard shows the
 stored scores straight away) and *Move to Completed* (the contest settles). The scores are
-visible on the admin field page before that.
+visible on the event's Field tab before that.
 
 Running it again is safe, including straight after *Reset QA database*: a released
 tournament keeps its dates and is skipped, and once a tour's released test tournament has
@@ -303,7 +303,7 @@ create with its reseed rule. Because its envelope says `testData`:
 
 To test a contest end to end, create and open it and submit entries before the first kickoff;
 a run after the Super Bowl enters the rest and completes the event, which settles the contest.
-To finish sooner, enter results and use the event's Workflow card *Move to In Progress* and
+To finish sooner, enter results and use the event's ⚙ *Move to In Progress* and
 *Move to Completed* by hand. Running it again tops it up as above.
 
 ## Seeded NFL regular-season weeks
@@ -318,7 +318,7 @@ it as [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) *Cancelling an ev
 says.
 
 The seed carries no spreads. To try a pool scored against the spread (#720), set each game's
-spread first with *Set spread* on its row of the results page: the home team's spread in half
+spread first with *Set spread* on its row of the Rounds and matches tab: the home team's spread in half
 points, such as -3.5 for a favourite. Create contest refuses such a pool on a week with any game
 still unspread. A game's spread can change until an entry picks it.
 

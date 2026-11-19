@@ -254,6 +254,12 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'overview'] as const,
       event: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
+      // The Event page's header and sync rows (#1890), under the event so any event write refreshes them.
+      eventOverview: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'overview'] as const,
+      // The Event page's Contests grid (#1890), under the event like its overview.
+      eventContests: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'contests'] as const,
       rounds: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'rounds'] as const,
       field: (eventId: QueryKeyId) =>

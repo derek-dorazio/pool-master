@@ -11379,6 +11379,10 @@ export type SportEventContestDto = {
      */
     leagueId: string;
     /**
+     * That league's code, which its pages' links carry.
+     */
+    leagueCode: string;
+    /**
      * That league's name.
      */
     leagueName: string;
@@ -11424,6 +11428,10 @@ export type SportEventContestListResponse = {
          * The customer league that runs the contest.
          */
         leagueId: string;
+        /**
+         * That league's code, which its pages' links carry.
+         */
+        leagueCode: string;
         /**
          * That league's name.
          */

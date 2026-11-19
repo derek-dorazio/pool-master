@@ -144,14 +144,14 @@ describe('the contests on an event on the wire (#1889)', () => {
 
   it('sends each contest\'s league and template flat, its creation time as ISO, and a contest with no template as nulls', () => {
     const response = mapSportEventContestsToResponse([
-      { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, league: { id: 'l1', name: 'Office Hoops' }, contestTemplate: { id: 't1', name: 'Pick 6' }, entryCount: 3, createdAt: AT },
-      { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, league: { id: 'l2', name: 'Golf Pals' }, contestTemplate: null, entryCount: 0, createdAt: AT },
+      { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' }, contestTemplate: { id: 't1', name: 'Pick 6' }, entryCount: 3, createdAt: AT },
+      { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, league: { id: 'l2', leagueCode: 'PALS', name: 'Golf Pals' }, contestTemplate: null, entryCount: 0, createdAt: AT },
     ]);
 
     expect(response).toEqual({
       contests: [
-        { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, leagueId: 'l1', leagueName: 'Office Hoops', contestTemplateId: 't1', contestTemplateName: 'Pick 6', entryCount: 3, createdAt: AT.toISOString() },
-        { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, leagueId: 'l2', leagueName: 'Golf Pals', contestTemplateId: null, contestTemplateName: null, entryCount: 0, createdAt: AT.toISOString() },
+        { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, leagueId: 'l1', leagueCode: 'HOOPS', leagueName: 'Office Hoops', contestTemplateId: 't1', contestTemplateName: 'Pick 6', entryCount: 3, createdAt: AT.toISOString() },
+        { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, leagueId: 'l2', leagueCode: 'PALS', leagueName: 'Golf Pals', contestTemplateId: null, contestTemplateName: null, entryCount: 0, createdAt: AT.toISOString() },
       ],
     });
   });

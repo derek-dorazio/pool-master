@@ -9,7 +9,7 @@ export interface SportEventContest {
   name: string;
   status: ContestStatus;
   /** The customer league that runs it. */
-  league: { id: string; name: string };
+  league: { id: string; leagueCode: string; name: string };
   /** The contest template it was set up from; null for a contest set up without one. */
   contestTemplate: { id: string; name: string } | null;
   entryCount: number;

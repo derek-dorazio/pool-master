@@ -96,7 +96,7 @@ async function seedEventContests(contests: number) {
 }
 
 describe('GET /api/v1/events/{eventId}/contests', () => {
-  it('lists every contest on the event, newest first, with its league, template, status and entry count', async () => {
+  it('lists every contest on the event, newest first, with its league (id, code and name), template, status and entry count', async () => {
     const { event, template, made, rootAdmin } = await seedEventContests(2);
     const [first, second] = made;
 
@@ -106,11 +106,11 @@ describe('GET /api/v1/events/{eventId}/contests', () => {
     expect(response.statusCode).toBe(200);
     expect(body.contests).toEqual([
       {
-        id: second.contest.id, name: 'Event Pool 1', status: ContestStatus.DRAFT, leagueId: second.league.id, leagueName: second.league.name,
+        id: second.contest.id, name: 'Event Pool 1', status: ContestStatus.DRAFT, leagueId: second.league.id, leagueCode: second.league.leagueCode, leagueName: second.league.name,
         contestTemplateId: null, contestTemplateName: null, entryCount: 1, createdAt: '2026-11-01T12:01:00.000Z',
       },
       {
-        id: first.contest.id, name: 'Event Pool 0', status: ContestStatus.OPEN, leagueId: first.league.id, leagueName: first.league.name,
+        id: first.contest.id, name: 'Event Pool 0', status: ContestStatus.OPEN, leagueId: first.league.id, leagueCode: first.league.leagueCode, leagueName: first.league.name,
         contestTemplateId: template.id, contestTemplateName: 'Pick 6', entryCount: 1, createdAt: '2026-11-01T12:00:00.000Z',
       },
     ]);

@@ -8,7 +8,7 @@ import { SportEventContestService } from '../../../packages/core-api/src/modules
 
 const EVENT_ID = '11111111-1111-4111-8111-111111111111';
 const CONTEST: SportEventContest = {
-  id: 'c1', name: 'Sentry pick 6', status: ContestStatus.OPEN, league: { id: 'l1', name: 'Office Hoops' },
+  id: 'c1', name: 'Sentry pick 6', status: ContestStatus.OPEN, league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' },
   contestTemplate: { id: 't1', name: 'Pick 6' }, entryCount: 3, createdAt: new Date('2026-11-18T15:00:00.000Z'),
 };
 

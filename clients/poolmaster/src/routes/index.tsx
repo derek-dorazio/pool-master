@@ -49,13 +49,15 @@ import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
-import { RootAdminSportEventEditPage } from '@/features/root-admin/root-admin-sport-event-edit-page';
 import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
-import { RootAdminSportEventFieldPage } from '@/features/root-admin/root-admin-sport-event-field-page';
-import { RootAdminSportEventHomePage } from '@/features/root-admin/root-admin-sport-event-home-page';
 import { RootAdminSportEventTiersPage } from '@/features/root-admin/root-admin-sport-event-tiers-page';
-import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin-sport-event-results-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
+import { EventPageLayout } from '@/features/root-admin/event-page-layout';
+import { EventFieldTab } from '@/features/root-admin/event-field-tab';
+import { EventRoundsTab } from '@/features/root-admin/event-rounds-tab';
+import { EventContestsTab } from '@/features/root-admin/event-contests-tab';
+import { EventActivityTab } from '@/features/root-admin/event-activity-tab';
+import { EventToolsTab } from '@/features/root-admin/event-tools-tab';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
@@ -432,12 +434,25 @@ export const router = createBrowserRouter([
                         path: 'events/:eventId',
                         element: <ManageSportEventRoute />,
                         children: [
-                          { index: true, element: <RootAdminSportEventHomePage /> },
-                          { path: 'edit', element: <RootAdminSportEventEditPage /> },
-                          { path: 'schedule', element: <RootAdminSportEventSchedulePage /> },
-                          { path: 'field', element: <RootAdminSportEventFieldPage /> },
-                          { path: 'tiers', element: <RootAdminSportEventTiersPage /> },
-                          { path: 'results', element: <RootAdminSportEventResultsPage /> },
+                          {
+                            // An event's own page and its tabs (#1890).
+                            element: <EventPageLayout />,
+                            children: [
+                              { index: true, element: <Navigate replace to="field" /> },
+                              { path: 'field', element: <EventFieldTab /> },
+                              { path: 'rounds', element: <EventRoundsTab /> },
+                              { path: 'contests', element: <EventContestsTab /> },
+                              { path: 'activity', element: <EventActivityTab /> },
+                              { path: 'tools', element: <EventToolsTab /> },
+                              // Reached from the Field and Rounds and matches tabs until their dialogs replace them.
+                              { path: 'tiers', element: <RootAdminSportEventTiersPage /> },
+                              { path: 'schedule', element: <RootAdminSportEventSchedulePage /> },
+                              // Its old edit page: the details are the ⚙ dialog on the page now.
+                              { path: 'edit', element: <Navigate replace to="../field" relative="path" /> },
+                              // Its old results page: results are on the Rounds and matches tab.
+                              { path: 'results', element: <Navigate replace to="../rounds" relative="path" /> },
+                            ],
+                          },
                         ],
                       },
                       { path: 'participants/new', element: <RootAdminParticipantCreatePage /> },

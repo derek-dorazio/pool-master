@@ -5,7 +5,8 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RaceResultPreviewResponse } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
+import { EventRoundsTab } from './event-rounds-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture } from './sport-test-fixtures';
 
 // Issue 623: a horse race's results page: its stored finishing order and the card that loads it,
@@ -113,9 +114,11 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/horse-racing/events/evt-1/results']}>
+      <MemoryRouter initialEntries={['/manage/sports/horse-racing/events/evt-1/rounds']}>
         <Routes>
-          <Route element={<RootAdminSportEventResultsPage />} path="/manage/sports/:sport/events/:eventId/results" />
+          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventRoundsTab />} path="rounds" />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -128,7 +131,7 @@ async function pasteAndPreview(text: string) {
   return screen.findByTestId('root-admin-race-result-upload-preview-table');
 }
 
-describe('RootAdminSportEventResultsPage for a horse race', () => {
+describe('The Rounds and matches tab for a horse race', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -315,7 +318,7 @@ describe('RootAdminSportEventResultsPage for a horse race', () => {
   });
 });
 
-describe('RootAdminSportEventResultsPage for an auto race', () => {
+describe('The Rounds and matches tab for an auto race', () => {
   const autoRace = sportEventFixture({ ...race, sport: 'AUTO_RACING', name: 'Daytona 500', venue: 'Daytona International Speedway' });
 
   afterEach(() => {
@@ -357,7 +360,7 @@ describe('RootAdminSportEventResultsPage for an auto race', () => {
   });
 });
 
-describe('RootAdminSportEventResultsPage for a cycling race', () => {
+describe('The Rounds and matches tab for a cycling race', () => {
   const cyclingRace = sportEventFixture({ ...race, sport: 'CYCLING', name: 'Tour de France', venue: 'France' });
 
   afterEach(() => {
@@ -403,7 +406,7 @@ describe('RootAdminSportEventResultsPage for a cycling race', () => {
   });
 });
 
-describe('RootAdminSportEventResultsPage for a running race', () => {
+describe('The Rounds and matches tab for a running race', () => {
   const marathon = sportEventFixture({ ...race, sport: 'RUNNING', name: 'Boston Marathon', venue: 'Boston' });
 
   afterEach(() => {

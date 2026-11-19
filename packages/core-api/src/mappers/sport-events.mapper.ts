@@ -122,6 +122,7 @@ export function mapSportEventContestsToResponse(contests: readonly SportEventCon
       name: contest.name,
       status: contest.status,
       leagueId: contest.league.id,
+      leagueCode: contest.league.leagueCode,
       leagueName: contest.league.name,
       contestTemplateId: contest.contestTemplate?.id ?? null,
       contestTemplateName: contest.contestTemplate?.name ?? null,

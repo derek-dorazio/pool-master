@@ -59,11 +59,11 @@ The tournament is saved as a **draft**: commissioners can't see it until step 6.
 
 Leave automatic lifecycle off. With it on, a background job moves the tournament to
 In progress and Completed from its round dates, which takes the timing out of your hands.
-You can turn it off later with *Manage lifecycle manually* on the Workflow card.
+You can turn it off later from the tournament's ⚙: *Automatic lifecycle on*, *Turn off*.
 
 ## 2. Link it to the mock provider
 
-On the tournament's home page, choose *Link to a new simulated event* on the score-source
+On the tournament's Tools tab, choose *Link to a new simulated event* on the score-source
 card. That links the tournament to its own mock event, `sandbox-<tournament id>`, which the
 mock builds on request with its 80-golfer field. The card then says "Linked to
 mock-contest-feed event sandbox-…" and the badge reads *Scores synced*.
@@ -86,7 +86,7 @@ not match "WNBA Playoffs".
 
 ## 3. Check the rounds
 
-The Workflow card's *Rounds* list should show R1 to R4. Scores for a round with no round
+The *Rounds* grid on the Rounds and matches tab should show R1 to R4. Scores for a round with no round
 row are skipped, so add any that are missing with *Edit schedule*.
 
 ## 4. Load the field from the mock
@@ -129,8 +129,8 @@ tier-pick contest's configuration is checked against this tier count.
 
 ## 6. Release it for contests
 
-On the tournament's home page, the Workflow card's *Release for contests*, then confirm. The
-button stays disabled, with a list of what is missing, until the field is loaded, every
+On the tournament's page, the *Release ⤢* chip beside its name opens the Release checks;
+*Release now*, then confirm. The button stays disabled, with each check marked ✓ or ✗, until the field is loaded, every
 active golfer has a tier, and every tier has an active golfer in it ("Tier 6 has no golfers":
 no entry could pick from an empty tier, so move golfers into it or delete it). Release moves the tournament from Draft to Scheduled, and
 commissioners can now pick it. It also **locks the tiers and prices for good**: the tier
@@ -178,7 +178,7 @@ Do these two in this order.
    and when the simulation finishes, and it refreshes that every 30 seconds, including
    after you leave and come back. By default each round takes 20 minutes, so a full
    tournament takes 80 minutes.
-2. On the Workflow card, *Move to In Progress*. Open contests on the tournament
+2. From the tournament's ⚙, *Move to In Progress*. Open contests on the tournament
    become active, and the live-score sync starts polling it.
 
 Start the simulation first anyway. A simulated event has no scores until its simulation
@@ -200,8 +200,8 @@ no scores.
 
 ## 10. Finish
 
-When the score-source card says "Simulation finished at …", *Move to Completed* on the
-Workflow card.
+When the score-source card says "Simulation finished at …", *Move to Completed* from the
+tournament's ⚙.
 Final standings are built from the scores PoolMaster has already received.
 
 ## Running it again
@@ -362,7 +362,7 @@ placed, until that team has played.
 
 ## Cancelling an event or a game
 
-An event that will not be played is cancelled from the Workflow card on its home page: *Move to
+An event that will not be played is cancelled from the ⚙ on its page: *Move to
 Cancelled*, then confirm. It is offered from Draft, Scheduled, In Progress and Postponed (*Move
 to Postponed* parks an event whose date is moving; it goes back to Scheduled or In Progress
 later, and while its start is ahead its live contests take entries and pick changes again). Cancelled is final: no move leads out of it, and a data file never changes the event
@@ -379,7 +379,7 @@ A cancelled event counts for nothing, whatever scores or results it already hold
 - A contest still in draft is not settled; delete it from its page.
 
 A single game is cancelled instead, for a week of games that forms no bracket (an NFL
-regular-season week): *Cancel game* on its row of the week's results page, then confirm. It is
+regular-season week): *Cancel game* on its row of the week's Rounds and matches tab, then confirm. It is
 offered only on a released week (a draft's games are edited freely) and an unplayed game; clear
 a result first. A cancelled game counts for nothing in any contest. A game put off to a later
 day of its own week, or of a bracket round, is postponed instead: *Postpone game* on its row,

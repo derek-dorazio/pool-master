@@ -26886,6 +26886,10 @@
             "format": "uuid",
             "description": "The customer league that runs the contest."
           },
+          "leagueCode": {
+            "type": "string",
+            "description": "That league's code, which its pages' links carry."
+          },
           "leagueName": {
             "type": "string",
             "description": "That league's name."
@@ -26922,6 +26926,7 @@
           "name",
           "status",
           "leagueId",
+          "leagueCode",
           "leagueName",
           "contestTemplateId",
           "contestTemplateName",
@@ -26963,6 +26968,10 @@
                   "format": "uuid",
                   "description": "The customer league that runs the contest."
                 },
+                "leagueCode": {
+                  "type": "string",
+                  "description": "That league's code, which its pages' links carry."
+                },
                 "leagueName": {
                   "type": "string",
                   "description": "That league's name."
@@ -26999,6 +27008,7 @@
                 "name",
                 "status",
                 "leagueId",
+                "leagueCode",
                 "leagueName",
                 "contestTemplateId",
                 "contestTemplateName",

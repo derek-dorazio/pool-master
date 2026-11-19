@@ -47,7 +47,8 @@ export function EventFieldUploadCard({
 }: {
   eventId: string;
   entries: readonly SportEventParticipantDto[];
-  onClose: () => void;
+  /** Given, a Close button in its header puts it away; on the Tools tab it stays. */
+  onClose?: () => void;
   sport: Sport;
 }) {
   const { participant } = getSportDefinition(sport).vocabulary;
@@ -90,7 +91,7 @@ export function EventFieldUploadCard({
       padded
       testId="root-admin-event-field-upload-card"
       title="Bulk upload"
-      trailing={(
+      trailing={onClose === undefined ? undefined : (
         <Button data-testid="root-admin-event-field-upload-close" onClick={onClose} size="sm" variant="secondary">
           Close
         </Button>

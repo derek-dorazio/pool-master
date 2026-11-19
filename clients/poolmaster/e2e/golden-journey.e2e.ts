@@ -239,8 +239,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         '/api/v1/events',
       );
       const id = created.event.id;
-      await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}$`));
-      await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}/field$`));
+      await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
       return { eventId: id, eventYear: start.getFullYear() };
     });
     journey.eventId = eventId;
@@ -348,6 +348,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const firstFieldEntryId = journey.fieldEntryIds[0];
     await test.step('release the tournament for contests, which locks its tiers', async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}`);
+      await page.getByTestId('root-admin-event-release-chip').click();
       await expect(page.getByTestId('root-admin-sport-event-release')).toBeEnabled();
       await page.getByTestId('root-admin-sport-event-release').click();
       await expect(page.getByTestId('root-admin-sport-event-release-modal')).toBeVisible();
@@ -358,7 +359,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         `/api/v1/events/${eventId}/release`,
       );
       expect(released.event.status).toBe('SCHEDULED');
-      await expect(page.getByTestId('root-admin-sport-event-release')).toHaveCount(0);
+      await expect(page.getByTestId('root-admin-event-release-chip')).toHaveCount(0);
 
       await page.goto(`/manage/sports/golf/events/${eventId}/tiers`);
       await expect(page.getByTestId('root-admin-tiers-locked')).toBeVisible();
@@ -792,6 +793,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
 
   await test.step('move the tournament to in progress', async () => {
     await page.goto(`/manage/sports/golf/events/${state.eventId}`);
+    await page.getByTestId('root-admin-event-settings').click();
     await page.getByTestId('root-admin-sport-event-transition-IN_PROGRESS').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -1094,6 +1096,7 @@ test('act 6: completing the event settles the contest and freezes its standing a
     // There is no settle operation to call: settlement is a consequence of the event reaching
     // COMPLETED (EventLifecycleService), so the admin's transition is the whole trigger.
     await page.goto(`/manage/sports/golf/events/${state.eventId}`);
+    await page.getByTestId('root-admin-event-settings').click();
     await page.getByTestId('root-admin-sport-event-transition-COMPLETED').click();
     const moved = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -1307,6 +1310,7 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
     await adminSignIn(page, credentials);
     for (const [index, tournament] of tournaments.entries()) {
       await page.goto(`/manage/sports/golf/events/${tournament.eventId}`);
+      await page.getByTestId('root-admin-event-settings').click();
       await page.getByTestId('root-admin-sport-event-transition-IN_PROGRESS').click();
       const moved = await submitAndRead<{ event: { status: string } }>(
         page,
@@ -1396,7 +1400,7 @@ async function buildReleasedTournament(
     '/api/v1/events',
   );
   const eventId = created.event.id;
-  await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
+  await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
 
   await page.goto(`/manage/sports/golf/events/${eventId}/field`);
   await page.getByTestId('root-admin-event-field-add').click();
@@ -1431,6 +1435,7 @@ async function buildReleasedTournament(
   await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
 
   await page.goto(`/manage/sports/golf/events/${eventId}`);
+  await page.getByTestId('root-admin-event-release-chip').click();
   await page.getByTestId('root-admin-sport-event-release').click();
   const released = await submitAndRead<{ event: { status: string } }>(
     page,

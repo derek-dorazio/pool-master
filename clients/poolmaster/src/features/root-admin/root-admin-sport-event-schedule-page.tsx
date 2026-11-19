@@ -70,7 +70,8 @@ function SportEventScheduleForm({
   const { sport, definition } = useManagedSport();
   const { event, round } = definition.vocabulary;
   const roundLabel = useEventRoundLabel(sportEvent);
-  const homePath = buildSportEventPath(sport, eventId);
+  // Saved or cancelled, it returns to the Rounds and matches tab it opened from.
+  const homePath = `${buildSportEventPath(sport, eventId)}/rounds`;
   const { timeZone } = useDisplayPreferences();
 
   const form = useForm<RoundsFormValues>({

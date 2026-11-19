@@ -196,8 +196,8 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
       '/api/v1/events',
     );
     expect(created.event.sport).toBe('HORSE_RACING');
-    await expect(page).toHaveURL(new RegExp(`/manage/sports/horse-racing/events/${created.event.id}$`));
-    await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/manage/sports/horse-racing/events/${created.event.id}/field$`));
+    await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
     return created.event.id;
   });
   journey.raceId = raceId;
@@ -262,6 +262,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
 
   await test.step('release the race for contests', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
+    await page.getByTestId('root-admin-event-release-chip').click();
     await page.getByTestId('root-admin-sport-event-release').click();
     const released = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -413,10 +414,11 @@ test('act 4: the root admin starts the race, loads its official finishing order,
     await moveRaceTo(page, state.raceId, 'IN_PROGRESS');
   });
 
-  await test.step('the race\'s Results page offers the finishing-order card, not golf round scores', async () => {
+  await test.step('the race\'s Rounds and matches tab offers the finishing-order card, not golf round scores', async () => {
     await page.goto(`/manage/sports/horse-racing/events/${state.raceId}/results`);
     await expect(page.getByTestId('root-admin-race-results-panel')).toBeVisible();
-    await expect(page.getByTestId('root-admin-sport-event-menu-results')).toHaveText('Results');
+    // The old results link opens the Rounds and matches tab, which holds the results.
+    await expect(page.getByTestId('root-admin-event-tab-rounds')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('root-admin-race-result-empty')).toBeVisible();
     await expect(page.getByTestId('root-admin-golf-scores-upload-textarea')).toHaveCount(0);
   });
@@ -476,6 +478,7 @@ test('act 4: the root admin starts the race, loads its official finishing order,
 
 async function moveRaceTo(page: Page, raceId: string, status: 'IN_PROGRESS' | 'COMPLETED') {
   await page.goto(`/manage/sports/horse-racing/events/${raceId}`);
+  await page.getByTestId('root-admin-event-settings').click();
   await page.getByTestId(`root-admin-sport-event-transition-${status}`).click();
   const moved = await submitAndRead<{ event: { status: string } }>(
     page,

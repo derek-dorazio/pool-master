@@ -480,9 +480,11 @@ administration area (root admin included), reusing the same shared components.
    whole entry come after the picks. A team or tie to pick in a pick'em,
    survivor or bracket game is a `PickOption` (pressed and marked "Your pick",
    "Used · Week 11" for a spent survivor team, naming the week it was used), and a `PickedLine` once picks lock. An
-   event's pages in Manage share `SportEventHeader` whatever its sport:
-   Overview, Field, Tiers, and the results page its scoring family names
-   (Scores for golf, Results for a race, Bracket for a knockout tournament).
+   event's page in Manage is one `EventPageLayout` whatever its sport, laid out as
+   a league's: its header (trail to its league, status, sync health, issues, a
+   Release chip while it is a draft, ⚙) over the tabs Field, Rounds and matches,
+   Contests, Activity, and Tools only when no provider syncs its league. Its
+   scoring family's results panel sits on Rounds and matches.
 10. **Actions are named for what they do, never "draft".** "Draft" is a contest
     status and also the snake-draft selection type, so no button or link uses
     it as a verb or noun: **Create contest**, **Save**, **Delete contest**,
