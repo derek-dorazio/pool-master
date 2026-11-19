@@ -127,6 +127,11 @@ takes its tiers from it when it is made: another league can start its events on 
 College Football Playoff's "6 tiers of 2": its 12 teams come out two to a tier). A tier-pick
 contest's configuration is checked against this tier count.
 
+One event can override them: the ⚙ dialog's *Edit tiers* (until release) renames, reorders,
+adds and removes this event's tiers. While no tier was set by hand, *Save tiers* places the
+field in the new tiers at once, as *Auto-assign tiers* would. Once one was, everyone keeps their
+place and the dialog asks which tier a removed tier's participants move to.
+
 To move one golfer to another tier, open its Field row's ⤢, then *Edit*, choose the tier and
 *Save corrections*. It goes last in that tier, and its **Set by** reads *Manual*: a manual tier
 stops automatic tiering for the event. *Auto-assign prices*, beside *Auto-assign tiers*,

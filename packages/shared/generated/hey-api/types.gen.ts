@@ -11512,7 +11512,7 @@ export type ReplaceSportEventTiersRequest = {
         tierNumber: number;
     }>;
     /**
-     * A tierKey from this request; required when a removed tier still has participants in it.
+     * A tierKey from this request; where participants in a removed tier go once a tier was placed by hand, and required then when a removed tier still has participants. Ignored otherwise: the field is placed in the new tiers afresh.
      */
     reassignOrphansTo?: string;
 };
@@ -34598,6 +34598,10 @@ export type UpdateEventParticipantsErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type UpdateEventParticipantsError = UpdateEventParticipantsErrors[keyof UpdateEventParticipantsErrors];

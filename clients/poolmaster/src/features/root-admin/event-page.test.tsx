@@ -22,6 +22,7 @@ import {
   sportEventFixture,
   sportEventRoundFixture,
   sportLeagueFixture,
+  tierFixture,
 } from './sport-test-fixtures';
 
 // The root admin's Event page (#1890): the header and its chips, the tab set, the ⚙ and Release
@@ -34,6 +35,7 @@ const {
   listEventContestsMock,
   listEventParticipantsMock,
   listEventRoundsMock,
+  listEventTiersMock,
   listPricingProfilesMock,
   listSportLeagueOverviewsMock,
   listSportLeaguesMock,
@@ -56,6 +58,7 @@ const {
     listEventContestsMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
+    listEventTiersMock: vi.fn(),
     listPricingProfilesMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
@@ -78,6 +81,7 @@ bindApiMocks({
   listEventContests: listEventContestsMock,
   listEventParticipants: listEventParticipantsMock,
   listEventRounds: listEventRoundsMock,
+  listEventTiers: listEventTiersMock,
   listPricingProfiles: listPricingProfilesMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -223,6 +227,8 @@ function renderEventPage(path: string, {
   listActivityMock.mockResolvedValue({ data: { jobs: [] } });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+  // Out of tier order, as a read may answer: the ⚙ lists them by tier number.
+  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ tierNumber: 2, label: 'Field' }), tierFixture({ tierNumber: 1, label: 'Favourites' })] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -646,6 +652,22 @@ describe('Event page ⚙ dialog', () => {
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-priced-with')).toHaveTextContent(
       'Standard: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4',
     );
+  });
+
+  it('lists the event\'s tiers in tier order and opens the Tiers dialog from ⚙ while they are editable, but offers no edit once released', async () => {
+    const { unmount } = renderEventPage('/manage/sports/golf/events/tour-1/field');
+    const released = await openSettings();
+    expect(await within(released).findByTestId('root-admin-event-settings-dialog-tiers')).toHaveTextContent('Favourites · Field');
+    expect(within(released).queryByTestId('root-admin-event-settings-dialog-edit-tiers')).not.toBeInTheDocument();
+    unmount();
+
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ status: 'DRAFT', allowedTransitions: [] }) });
+    const draft = await openSettings();
+    await userEvent.click(await within(draft).findByTestId('root-admin-event-settings-dialog-edit-tiers'));
+
+    expect(await screen.findByTestId('root-admin-event-tiers-dialog')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-event-tiers-dialog-label-1')).toHaveValue('Field');
+    expect(screen.queryByTestId('root-admin-event-settings-dialog')).not.toBeInTheDocument();
   });
 
   it('reads "Not set" for a missing venue, location and round count, and a synced event\'s feed id', async () => {

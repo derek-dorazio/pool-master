@@ -350,7 +350,7 @@ export const ReplaceSportEventTiersRequestSchema = z.object({
     label: z.string().min(1),
     tierNumber: z.number().int().min(1),
   })).min(1),
-  reassignOrphansTo: z.string().optional().describe('A tierKey from this request; required when a removed tier still has participants in it.'),
+  reassignOrphansTo: z.string().optional().describe('A tierKey from this request; where participants in a removed tier go once a tier was placed by hand, and required then when a removed tier still has participants. Ignored otherwise: the field is placed in the new tiers afresh.'),
 }).describe('The event\'s full tier list, replacing the current one.');
 export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTiersRequestSchema>;
 

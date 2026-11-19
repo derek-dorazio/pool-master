@@ -1664,7 +1664,7 @@ export const listEventParticipants = <ThrowOnError extends boolean = false>(opti
 /**
  * Update a sport event's field
  *
- * Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release.
+ * Patches field rows, their manual prices and their moves into another tier, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price or tier would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release. 422 UNKNOWN_TIER_KEY for a tierKey the event has no tier for; 422 SPORT_EVENT_NOT_BRACKET for a play-in place on an event that plays no bracket.
  */
 export const updateEventParticipants = <ThrowOnError extends boolean = false>(options: Options<UpdateEventParticipantsData, ThrowOnError>): RequestResult<UpdateEventParticipantsResponses, UpdateEventParticipantsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEventParticipantsResponses, UpdateEventParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1779,7 +1779,7 @@ export const listEventTiers = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Replace a sport event's tiers
  *
- * 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when a removed tier still has participants and no reassignOrphansTo is given. Root admin only.
+ * The event's optional override of the tiers it copied from its sport league's tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. 409 SPORT_EVENT_TIERS_LOCKED once released. Root admin only.
  */
 export const replaceEventTiers = <ThrowOnError extends boolean = false>(options: Options<ReplaceEventTiersData, ThrowOnError>): RequestResult<ReplaceEventTiersResponses, ReplaceEventTiersErrors, ThrowOnError> => (options.client ?? client).put<ReplaceEventTiersResponses, ReplaceEventTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
