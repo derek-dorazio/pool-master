@@ -104,7 +104,7 @@ function renderCommissionerTools(path: string | string[] = '/league/BIGDAWGS/adm
               </Route>
             </Route>
             <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
-            <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
+            <Route element={<div data-testid="manage-leagues-page" />} path="/manage/customers/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>
           <Toaster />

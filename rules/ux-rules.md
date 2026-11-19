@@ -635,7 +635,12 @@ administration area (root admin included), reusing the same shared components.
     not only settings: a participant, a contest template, a profile. What the
     thing itself can do, such as an email's Preview and Send me this email, sits
     between Close and Edit (`viewActions`), never in the form. A thing with
-    nothing to change has no Edit.
+    nothing to change has no Edit. A dialog whose actions each need a line of
+    explanation, such as a user's Reset password, Deactivate and Delete, passes
+    them as `actions` instead: its view splits into a Details section (the
+    facts) and an Actions section, one row per action with a one-line
+    description and its button, and a destructive action keeps its own
+    `ConfirmDialog` on top. Manage is desktop only for now.
 15. **› navigates, ⤢ opens a dialog.** A Manage grid row ends in › when it
     leads to a page of its own (a sport league, an event), and in ⤢ when its
     details open in a dialog over the grid (a participant, a contest template,
