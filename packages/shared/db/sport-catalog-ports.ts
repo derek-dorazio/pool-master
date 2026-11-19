@@ -609,7 +609,7 @@ export interface SportLeagueOverviewFacts {
   /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
   nextEventStarts: Map<string, Date>;
   clutchCardEvents: SportLeagueClutchCardEvent[];
-  /** Every event that may be overdue (#1865): neither completed nor cancelled, started long enough ago. */
+  /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
   overdueCandidates: SportLeagueOverdueCandidate[];
 }
 

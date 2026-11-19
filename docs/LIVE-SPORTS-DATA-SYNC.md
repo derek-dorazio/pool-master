@@ -232,8 +232,8 @@ latest run per kind for its sync health. A Clutch Card league shows its parent's
 The Field and Scores timers still run outside the job table; moving them onto jobs is the next
 step (#1835).
 
-**Overdue.** An event is `OVERDUE` when it is neither completed nor cancelled more than 4 hours
-after it should have ended (its last round's end, else its last start plus the sport's typical
+**Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
+4 hours after it should have ended; a draft never released is never overdue (its last round's end, else its last start plus the sport's typical
 play). A Clutch Card event is judged by the parent rounds it covers. One function:
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
 
@@ -382,6 +382,5 @@ every league, and the PR must say so.
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
-- **Per-event tier override** from the event ⚙ dialog, and **Overdue skipping never-released
-  drafts** (#1909), are in progress.
+- **Per-event tier override** from the event ⚙ dialog is in progress.
 - **Not read yet**: UCL two-leg ties, MLS best-of-three.
