@@ -20,6 +20,7 @@ import type {
   SportEventParticipantUploadPreviewResponse,
   SportEventParticipantUploadRequest,
   SportEventResponse,
+  SportEventContestListResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
   SportEventYearListQuery,
@@ -62,6 +63,7 @@ import {
   mapProviderEventYearImportToResponse,
   mapSportEventMatchToDto,
   mapSportEventParticipantToDto,
+  mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
   mapSportEventToDto,
@@ -116,7 +118,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket } = services;
+  const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
@@ -295,20 +297,24 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
 
     listEventRounds: async (request: FastifyRequest<EventParams>): Promise<SportEventRoundListResponse> => {
       await requireEvent(request.params.eventId);
-      return { rounds: (await rounds.listRounds(request.params.eventId)).map(mapSportEventRoundToDto) };
+      return { rounds: (await rounds.listRoundViews(request.params.eventId)).map(mapSportEventRoundToDto) };
+    },
+
+    listEventContests: async (request: FastifyRequest<EventParams>): Promise<SportEventContestListResponse> => {
+      return mapSportEventContestsToResponse(await contests.listContests(request.params.eventId));
     },
 
     updateEventRounds: async (
       request: FastifyRequest<EventParams & { Body: UpdateSportEventRoundsRequest }>,
     ): Promise<SportEventRoundListResponse> => {
-      const updated = await rounds.reschedule(request.params.eventId, request.body.rounds.map((round) => ({
+      await rounds.reschedule(request.params.eventId, request.body.rounds.map((round) => ({
         roundNumber: round.roundNumber,
         scheduledDate: new Date(round.scheduledDate),
         ...(round.scheduledEndAt !== undefined && {
           scheduledEndAt: round.scheduledEndAt === null ? null : new Date(round.scheduledEndAt),
         }),
       })));
-      return { rounds: updated.map(mapSportEventRoundToDto) };
+      return { rounds: (await rounds.listRoundViews(request.params.eventId)).map(mapSportEventRoundToDto) };
     },
 
     // Every contest's pick screens poll it: the field read in the last 30 seconds answers (#1163).

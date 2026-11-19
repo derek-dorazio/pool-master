@@ -51,6 +51,10 @@ import type {
   EventPricingConfig,
   EventTierConfig,
   EventSeries,
+  MatchStatus,
+  ParticipantRoundStatus,
+  RoundResultFacts,
+  RoundResultGroup,
   Sport,
   SportConfig,
   SportEvent,
@@ -645,6 +649,38 @@ export class PrismaEventSeriesRepository implements EventSeriesRepository {
 export class PrismaSportEventRoundRepository implements SportEventRoundRepository {
   constructor(private readonly prisma: Db) {}
 
+  async findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>> {
+    const [matches, participantRounds] = await Promise.all([
+      this.prisma.sportEventMatch.groupBy({
+        by: ['sportEventRoundId', 'status'],
+        where: { sportEventId },
+        _count: { _all: true },
+        _max: { completedAt: true },
+      }),
+      this.prisma.sportEventParticipantRound.groupBy({
+        by: ['sportEventRoundId', 'status'],
+        where: { sportEventRound: { sportEventId } },
+        _count: { _all: true },
+        _max: { completedAt: true },
+      }),
+    ]);
+    const facts = new Map<string, { matches: RoundResultGroup<MatchStatus>[]; participantRounds: RoundResultGroup<ParticipantRoundStatus>[] }>();
+    const factsOf = (roundId: string) => {
+      const existing = facts.get(roundId);
+      if (existing) return existing;
+      const created = { matches: [], participantRounds: [] };
+      facts.set(roundId, created);
+      return created;
+    };
+    for (const group of matches) {
+      factsOf(group.sportEventRoundId).matches.push({ status: group.status, count: group._count._all, lastCompletedAt: group._max.completedAt });
+    }
+    for (const group of participantRounds) {
+      factsOf(group.sportEventRoundId).participantRounds.push({ status: group.status, count: group._count._all, lastCompletedAt: group._max.completedAt });
+    }
+    return facts;
+  }
+
   async findBySportEvent(sportEventId: string): Promise<SportEventRound[]> {
     const rows = await this.prisma.sportEventRound.findMany({
       where: { sportEventId },
@@ -1210,6 +1246,9 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     ...(row.tierConfig !== null && { tierConfig: EventTierConfigSchema.parse(row.tierConfig) }),
     ...(row.parentEventId !== null && row.parentEvent !== null && {
       parentEvent: { id: row.parentEventId, name: row.parentEvent.name, roundNumbers: row.parentRoundNumbers },
+    }),
+    ...(row.autoReleaseCheckedAt !== null && row.autoReleaseOutcome !== null && {
+      autoReleaseCheck: { checkedAt: row.autoReleaseCheckedAt, outcome: row.autoReleaseOutcome, failedChecks: row.autoReleaseFailedChecks },
     }),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

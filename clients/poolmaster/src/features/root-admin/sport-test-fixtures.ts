@@ -53,6 +53,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     tierCount: 6,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
     releaseChecks: passingReleaseChecks(),
+    lastAutoReleaseCheck: null,
     allowedTransitions: ['CANCELLED'],
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
@@ -86,6 +87,9 @@ export function sportEventRoundFixture(overrides: Partial<SportEventRoundDto> = 
     roundNumber,
     scheduledDate: `2026-05-0${6 + roundNumber}T12:00:00.000Z`,
     scheduledEndAt: null,
+    status: 'SCHEDULED',
+    resultCount: 0,
+    completedAt: null,
     ...overrides,
   };
 }

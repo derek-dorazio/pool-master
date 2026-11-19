@@ -396,6 +396,7 @@ export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Part
     awayShootoutScore: null,
     ending: 'PLAYED',
     resultSource: null,
+    completedAt: null,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
