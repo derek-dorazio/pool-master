@@ -144,6 +144,7 @@ export function mapSportEventOverviewToDto(overview: SportEventOverview): SportE
       feedId: row.feedId,
       lastInFeedAt: row.lastInFeedAt?.toISOString() ?? null,
     })),
+    eventPageSlug: overview.eventPageSlug,
   };
 }
 

@@ -27,7 +27,6 @@
   "clients/poolmaster/src/features/plans/plan-comparison-table.tsx": 12,
   "clients/poolmaster/src/features/root-admin/bracket-match-row.tsx": 8,
   "clients/poolmaster/src/features/root-admin/bracket-panel.tsx": 6,
-  "clients/poolmaster/src/features/root-admin/event-field-grid-card.tsx": 7,
   "clients/poolmaster/src/features/root-admin/event-field-upload-card.tsx": 6,
   "clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx": 4,
   "clients/poolmaster/src/features/root-admin/golf-round-score-upload-card.tsx": 2,
@@ -40,7 +39,6 @@
   "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-detail-page.tsx": 9,
   "clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx": 1,
   "clients/poolmaster/src/features/root-admin/root-admin-sport-event-create-page.tsx": 2,
-  "clients/poolmaster/src/features/root-admin/root-admin-sport-event-tiers-page.tsx": 2,
   "clients/poolmaster/src/features/root-admin/root-admin-unmapped-participants-page.tsx": 2,
   "clients/poolmaster/src/features/root-admin/sport-event-columns.tsx": 6,
   "clients/poolmaster/src/features/root-admin/sport-event-manual-create-form.tsx": 4,
@@ -49,7 +47,6 @@
   "clients/poolmaster/src/features/root-admin/sport-league-roster-upload-card.tsx": 2,
   "clients/poolmaster/src/features/root-admin/sport-league-year-import.tsx": 2,
   "clients/poolmaster/src/features/root-admin/stat-lines-panel.tsx": 8,
-  "clients/poolmaster/src/features/root-admin/tier-board.tsx": 8,
   "clients/poolmaster/src/features/root-admin/withdrawals-card.tsx": 8,
   "clients/poolmaster/src/features/teams/invites-page-invite-people-section.tsx": 1,
   "clients/poolmaster/src/features/teams/invites-page-row-actions.tsx": 1

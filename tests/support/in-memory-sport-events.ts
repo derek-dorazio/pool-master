@@ -493,14 +493,21 @@ export class InMemorySportEvents {
         if (value !== undefined) (row as unknown as Record<string, unknown>)[key] = nullable(value);
       }
     };
-    const setPrice = (id: string, price: number | null) => {
+    const valuationOf = (id: string) => {
       let valuation = this.valuationRows.find((row) => row.sportEventParticipantId === id);
       if (!valuation) {
         valuation = stamp({ id: this.id('valuation'), sportEventParticipantId: id, sportEventTierId: null, tierOrderIndex: null, tierAssignedSource: null, price: null, priceAssignedSource: null });
         this.valuationRows.push(valuation);
       }
+      return valuation;
+    };
+    const setPrice = (id: string, price: number | null) => {
+      const valuation = valuationOf(id);
       valuation.price = price;
       valuation.priceAssignedSource = 'MANUAL';
+    };
+    const setTier = (id: string, tier: { sportEventTierId: string; tierOrderIndex: number }) => {
+      Object.assign(valuationOf(id), tier, { tierAssignedSource: 'MANUAL' });
     };
     const bySeed = (sportEventId: string) => this.field
       .filter((row) => row.sportEventId === sportEventId)
@@ -533,6 +540,7 @@ export class InMemorySportEvents {
         for (const entry of entries) {
           apply(this.field.find((row) => row.id === entry.id) as SportEventParticipant, entry.updates);
           if (entry.price !== undefined) setPrice(entry.id, entry.price);
+          if (entry.tier !== undefined) setTier(entry.id, entry.tier);
         }
       },
       delete: async (id, jobs) => {

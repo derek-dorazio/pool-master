@@ -5,11 +5,8 @@ import {
   findBudgetPricingProblem,
   formatDollars,
   priceOnBudgetCurve,
-  getSportDefinition,
   type BudgetPricingProfile,
   type EventPricingConfig,
-  type Sport,
-  type SportVocabulary,
 } from '@poolmaster/shared/domain';
 import { autoAssignEventPrices } from '@/lib/api';
 import {
@@ -31,16 +28,14 @@ import { describeFieldOrder } from './field-order-copy';
 /** The five values as the dialog's inputs hold them. */
 type PricingDraft = Record<'salaryCap' | 'unit' | 'topSharePercent' | 'floorSharePercent' | 'steepness', string>;
 
-/** The dialog's five inputs, worded for the event's sport. */
-function valueFields({ event, participant }: SportVocabulary): ReadonlyArray<{ key: keyof PricingDraft; label: string; helper: string }> {
-  return [
-    { key: 'salaryCap', label: 'Salary cap ($)', helper: `Every budget contest on this ${event.one} uses it.` },
-    { key: 'unit', label: 'Round prices to ($)', helper: 'Every price is a multiple of it.' },
-    { key: 'topSharePercent', label: `Best ${participant.one} (% of cap)`, helper: `The first ${participant.one}'s price.` },
-    { key: 'floorSharePercent', label: `Worst ${participant.one} (% of cap)`, helper: `The last ${participant.one}'s price.` },
-    { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
-  ];
-}
+/** The dialog's five inputs. */
+const VALUE_FIELDS: ReadonlyArray<{ key: keyof PricingDraft; label: string; helper: string }> = [
+  { key: 'salaryCap', label: 'Salary cap ($)', helper: 'Every budget contest on this event uses it.' },
+  { key: 'unit', label: 'Round prices to ($)', helper: 'Every price is a multiple of it.' },
+  { key: 'topSharePercent', label: 'Best participant (% of cap)', helper: "The first participant's price." },
+  { key: 'floorSharePercent', label: 'Worst participant (% of cap)', helper: "The last participant's price." },
+  { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
+];
 
 function toDraft(values: BudgetPricingProfile | EventPricingConfig): PricingDraft {
   return {
@@ -80,7 +75,6 @@ export function PriceAssignAction({
   disabled,
   eventId,
   field,
-  sport,
   sportLeagueId,
 }: {
   /** The values the tournament was last priced with, if any: the dialog starts from them. */
@@ -89,14 +83,11 @@ export function PriceAssignAction({
   eventId: string;
   /** The event's field: its active participants are priced, in the order the dialog names (#1807). */
   field: readonly EventFieldEntry[];
-  sport: Sport;
   /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
   sportLeagueId: string;
 }) {
   const activeParticipantCount = field.filter((entry) => entry.isActive).length;
-  const { vocabulary } = getSportDefinition(sport);
-  const { event, participant } = vocabulary;
-  const logger = getLogger().child({ feature: 'root-admin-sport-event-tiers-page' });
+  const logger = getLogger().child({ feature: 'root-admin-event-field' });
   const pricingQuery = usePricingProfilesQuery();
   const profiles = pricingQuery.data ?? [];
   const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
@@ -117,6 +108,7 @@ export function PriceAssignAction({
       QueryKeys.rootAdmin.manageSport.tiers(eventId),
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
+      QueryKeys.rootAdmin.manageSport.eventOverview(eventId),
     ],
     onSuccess: () => setOpen(false),
     onError: (error) => {
@@ -172,7 +164,7 @@ export function PriceAssignAction({
       <ConfirmDialog
         confirmLabel={current ? 'Replace prices' : 'Assign prices'}
         confirmTestId="root-admin-tier-auto-prices-confirm"
-        description={`${describeFieldOrder(field, participant)} Every active ${participant.one} is priced in that order, the order tiers use too, the first dearest. Manual prices are replaced; tiers are untouched. You can price again until the ${event.one} is released.`}
+        description={`${describeFieldOrder(field)} Every active participant is priced in that order, the order tiers use too, the first dearest. Manual prices are replaced; tiers are untouched. You can price again until the event is released.`}
         error={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })
@@ -201,7 +193,7 @@ export function PriceAssignAction({
           </FormField>
           {draft ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              {valueFields(vocabulary).map((field) => (
+              {VALUE_FIELDS.map((field) => (
                 <FormField helperText={field.helper} key={field.key} label={field.label}>
                   <Input
                     data-testid={`root-admin-tier-auto-prices-${field.key}`}
@@ -215,7 +207,7 @@ export function PriceAssignAction({
           ) : null}
           {preview ? (
             <p className="text-sm text-muted-foreground" data-testid="root-admin-tier-auto-prices-preview">
-              {`Best ${participant.one} ${formatDollars(preview.best)}, worst ${formatDollars(preview.worst)}, across ${activeParticipantCount} active ${participant.many}.`}
+              {`Best participant ${formatDollars(preview.best)}, worst ${formatDollars(preview.worst)}, across ${activeParticipantCount} active participants.`}
             </p>
           ) : null}
         </div>

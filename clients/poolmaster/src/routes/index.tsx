@@ -50,7 +50,6 @@ import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/r
 import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
-import { RootAdminSportEventTiersPage } from '@/features/root-admin/root-admin-sport-event-tiers-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
 import { EventFieldTab } from '@/features/root-admin/event-field-tab';
@@ -444,8 +443,9 @@ export const router = createBrowserRouter([
                               { path: 'contests', element: <EventContestsTab /> },
                               { path: 'activity', element: <EventActivityTab /> },
                               { path: 'tools', element: <EventToolsTab /> },
-                              // Reached from the Field and Rounds and matches tabs until their dialogs replace them.
-                              { path: 'tiers', element: <RootAdminSportEventTiersPage /> },
+                              // Its old tiers page: tiers and prices are on the Field tab, corrected per participant.
+                              { path: 'tiers', element: <Navigate replace to="../field" relative="path" /> },
+                              // Reached from the Rounds and matches tab until its dialogs replace it.
                               { path: 'schedule', element: <RootAdminSportEventSchedulePage /> },
                               // Its old edit page: the details are the ⚙ dialog on the page now.
                               { path: 'edit', element: <Navigate replace to="../field" relative="path" /> },

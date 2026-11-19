@@ -5,6 +5,11 @@ export function sportFromPathSegment(segment: string | undefined): Sport | null 
   return Object.values(Sport).find((sport) => sportPathSegment(sport) === segment) ?? null;
 }
 
+/** An event page's own address, `/play/<sport>/<slug>`. */
+export function buildEventPagePath(sport: Sport, slug: string): string {
+  return `/play/${sportPathSegment(sport)}/${slug}`;
+}
+
 /** How to Play, every contest type explained. */
 export const HOW_TO_PLAY_PATH = '/how-to-play';
 

@@ -379,6 +379,8 @@ export interface SportEventParticipantFieldUpdate {
   updates: SportEventParticipantPatch;
   /** A manually set price, or null to clear it; undefined leaves the valuation alone. */
   price?: number | null;
+  /** A manual move into another tier, at this place in it; undefined leaves the tier alone. */
+  tier?: { sportEventTierId: string; tierOrderIndex: number };
 }
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
@@ -717,6 +719,11 @@ export interface SportEventPageFacts {
   /** The event itself when it may be overdue; empty otherwise. */
   overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
+  /**
+   * The slug of the active event page that offers the event's series, in its sport; the first by
+   * the pages' display order when more than one does. Null when none does.
+   */
+  eventPageSlug: string | null;
 }
 
 export interface SportLeaguePageReader {

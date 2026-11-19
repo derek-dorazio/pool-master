@@ -16,6 +16,7 @@ import {
   formatDateTimeDisplay,
   FormField,
   Input,
+  LinkButton,
   showToast,
   useDisplayPreferences,
   type DetailAction,
@@ -25,6 +26,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { describeBudgetPricing } from './budget-pricing-format';
+import { buildEventPagePath } from '@/features/event-pages/event-page-paths';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
@@ -123,6 +126,12 @@ export function EventSettingsDialog({
     { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: `${testId}-tier-profile` },
     { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: `${testId}-pricing-profile` },
     {
+      id: 'pricedWith',
+      label: 'Priced with',
+      value: event.pricing === null ? 'Not priced yet' : `${event.pricing.profileName}: ${describeBudgetPricing(event.pricing)}`,
+      testId: `${testId}-priced-with`,
+    },
+    {
       id: 'tierOrder',
       label: 'Tier order from',
       value: tierOrder,
@@ -134,6 +143,16 @@ export function EventSettingsDialog({
   ];
 
   const actions: DetailAction[] = [
+    ...(overview?.eventPageSlug == null ? [] : [{
+      id: 'event-page',
+      name: 'Event page',
+      description: 'The public page that offers this event\'s contests.',
+      control: (
+        <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={buildEventPagePath(event.sport, overview.eventPageSlug)} variant="secondary">
+          Open event page ›
+        </LinkButton>
+      ),
+    }]),
     ...event.allowedTransitions.map((toStatus) => ({
       id: `transition-${toStatus}`,
       name: `Move to ${formatSportEventStatus(toStatus)}`,
@@ -198,7 +217,7 @@ export function EventSettingsDialog({
           <FormField label="Location">
             <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
           </FormField>
-          <FormField error={form.formState.errors.rounds?.message} label={'Rounds'}>
+          <FormField error={form.formState.errors.rounds?.message} label="Rounds">
             <Input data-testid="root-admin-sport-event-edit-rounds" inputMode="numeric" {...form.register('rounds')} />
           </FormField>
           {scoresUnplayedRoundsAgainstPar ? (
@@ -226,13 +245,13 @@ export function EventSettingsDialog({
         onOpenChange={(open) => !open && setTransitionTarget(null)}
         open={transitionTarget !== null}
         testId="root-admin-sport-event-transition-modal"
-        title={'Change event status'}
+        title="Change event status"
         tone="danger"
       />
       <ConfirmDialog
         confirmLabel={event.autoLifecycleEnabled ? 'Turn off automatic lifecycle' : 'Turn on automatic lifecycle'}
         confirmTestId="root-admin-sport-event-auto-confirm"
-        description={'The scheduler only moves an event along while automatic lifecycle is on.'}
+        description="The scheduler only moves an event along while automatic lifecycle is on."
         error={autoMutation.isError ? extractErrorMessage(autoMutation.error, { fallback: 'The change was rejected.' }) : undefined}
         isPending={autoMutation.isPending}
         onCancel={() => setAutoToggleOpen(false)}

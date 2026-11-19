@@ -11018,6 +11018,8 @@ export interface components {
                  */
                 lastInFeedAt: string | null;
             }[];
+            /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
+            eventPageSlug: string | null;
         };
         /** @description One event's overview. */
         SportEventOverviewResponse: {
@@ -11205,6 +11207,8 @@ export interface components {
                      */
                     lastInFeedAt: string | null;
                 }[];
+                /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
+                eventPageSlug: string | null;
             };
         };
         /** @description One participant on the League page's Participants grid. */
@@ -13327,6 +13331,8 @@ export interface components {
                 seedNumber?: number | null;
                 /** @description A manual price; null clears it. */
                 price?: number | null;
+                /** @description Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for. */
+                tierKey?: string;
                 /** @description Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release. */
                 isPlayInPlace?: boolean;
             }[];

@@ -326,6 +326,7 @@ export const SportEventOverviewDtoSchema = z.object({
   tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.'),
   tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
   fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
+  eventPageSlug: z.string().nullable().describe('The slug of the active event page offering the event\'s series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.'),
 }).describe('The root admin\'s Event page header and sync rows.');
 export type SportEventOverviewDto = z.infer<typeof SportEventOverviewDtoSchema>;
 

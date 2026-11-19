@@ -177,6 +177,32 @@ describe('Saving the field grid (#1252)', () => {
     expect(rows[1]?.valuation).toMatchObject({ id: before.id, createdAt: before.createdAt, sportEventTierId: tier.id, tierOrderIndex: 0, price: null });
     expect(rows[0]?.valuation).toBeNull();
   });
+  it('writes a row\'s price and its move into another tier in the one save, both manual, and writes neither when another row is missing', async () => {
+    const { event, field } = await eventWithField(SMALL_FIELD);
+    const prisma = getPrisma();
+    const row = expectDefined(field[0]);
+    const [tierA, tierB] = await Promise.all([
+      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', label: 'Tier A', tierNumber: 1 } }),
+      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'B', label: 'Tier B', tierNumber: 2 } }),
+    ]);
+    await prisma.sportEventParticipantValuation.create({
+      data: { sportEventParticipantId: row.id, sportEventTierId: tierA.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.AUTO_ODDS, price: 500, priceAssignedSource: ValuationSource.AUTO_ODDS },
+    });
+    const repository = new PrismaSportEventParticipantRepository(getAppPrisma());
+
+    await expect(repository.updateMany([
+      { id: row.id, updates: { ranking: 3 }, price: 900, tier: { sportEventTierId: tierB.id, tierOrderIndex: 4 } },
+      { id: randomUUID(), updates: { ranking: 3 } },
+    ])).rejects.toThrow('A field row to update does not exist.');
+    const untouched = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: row.id } });
+    expect([untouched.sportEventTierId, Number(untouched.price)]).toEqual([tierA.id, 500]);
+
+    await repository.updateMany([{ id: row.id, updates: {}, price: 900, tier: { sportEventTierId: tierB.id, tierOrderIndex: 4 } }]);
+
+    const after = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: row.id } });
+    expect(after).toMatchObject({ sportEventTierId: tierB.id, tierOrderIndex: 4, tierAssignedSource: ValuationSource.MANUAL, priceAssignedSource: ValuationSource.MANUAL });
+    expect(Number(after.price)).toBe(900);
+  });
 });
 
 describe('Assigning an event\'s tiers and prices (#1252)', () => {

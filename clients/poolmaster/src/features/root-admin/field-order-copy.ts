@@ -1,4 +1,4 @@
-import { FieldOrderBasis, fieldOrderDecision, type SportNoun } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, fieldOrderDecision } from '@poolmaster/shared/domain';
 import type { EventFieldEntry } from './event-field-patch';
 
 /** Each value as the order names it, and as a participant without it is said to lack it. */
@@ -15,24 +15,23 @@ const VALUE_WORD: Record<Exclude<FieldOrderBasis, typeof FieldOrderBasis.NAME>, 
  */
 export function describeFieldOrder(
   field: readonly Pick<EventFieldEntry, 'isActive' | 'oddsToWin' | 'seedNumber' | 'ranking' | 'participant'>[],
-  participant: SportNoun,
 ): string {
   const { basis, coversField } = fieldOrderDecision(field
     .filter((entry) => entry.isActive)
     .map((entry) => ({ oddsToWin: entry.oddsToWin, seedNumber: entry.seedNumber, ranking: entry.ranking, name: entry.participant.name })));
   if (basis === FieldOrderBasis.NAME) {
-    return `Ordered by name (no ${participant.one} has odds, a seed or a rank).`;
+    return `Ordered by name (no participant has odds, a seed or a rank).`;
   }
   const word = VALUE_WORD[basis];
   if (!coversField) {
-    return `Ordered by ${word.name}, ${participant.many} without ${word.missing} last (no value is set for every ${participant.one}).`;
+    return `Ordered by ${word.name}, participants without ${word.missing} last (no value is set for every participant).`;
   }
   switch (basis) {
     case FieldOrderBasis.ODDS:
       return 'Ordered by odds, shortest first.';
     case FieldOrderBasis.SEED:
-      return `Ordered by seed (not every ${participant.one} has odds).`;
+      return `Ordered by seed (not every participant has odds).`;
     case FieldOrderBasis.RANKING:
-      return `Ordered by rank (not every ${participant.one} has odds or a seed).`;
+      return `Ordered by rank (not every participant has odds or a seed).`;
   }
 }
