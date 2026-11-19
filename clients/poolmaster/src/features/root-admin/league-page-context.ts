@@ -1,10 +1,12 @@
 import { useOutletContext } from 'react-router';
 import type { SportLeagueDto, SportLeagueOverviewDto } from '@/lib/api';
+import type { ActivityState } from './use-activity';
 
 /** The League page's tabs, in order (the League page spec); Tools only on a league no provider syncs. */
 export const LEAGUE_PAGE_TABS = [
   { segment: 'events', label: 'Events' },
   { segment: 'participants', label: 'Participants' },
+  { segment: 'activity', label: 'Activity' },
   { segment: 'contest-templates', label: 'Contest templates' },
   { segment: 'tools', label: 'Tools' },
 ] as const;
@@ -17,6 +19,8 @@ export type LeaguePageContext = {
   overview: SportLeagueOverviewDto | undefined;
   /** Whether a provider syncs the league's events: its own, or a Clutch Card's parent's. */
   isSynced: boolean;
+  /** The league's jobs, read once for the Activity tab's grid and the failed count on its tab. */
+  activity: ActivityState;
 };
 
 /** The tabs a league shows: every tab, less Tools when a provider syncs its events. */

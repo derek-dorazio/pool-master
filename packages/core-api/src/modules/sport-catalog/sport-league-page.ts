@@ -4,6 +4,7 @@
  * computed from them, with the Sports page's overview rules for health and issues.
  */
 import type {
+  SportEventPageFacts,
   SportLeagueEventFacts,
   SportLeaguePageEvent,
   SportLeaguePageLeague,
@@ -14,6 +15,7 @@ import type { IngestionFeedSchedulePolicy, IngestionScheduleConfig } from '@pool
 import {
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
+  fieldOrderDecision,
   isClutchCardLeague,
   isProviderSyncedEvent,
   ParticipantAddedBy,
@@ -24,6 +26,7 @@ import {
   SportEventReleaseMode,
   SportEventStatus,
   SportLeagueSyncMode,
+  type SportEventOverview,
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
   type SportLeagueSync,
@@ -69,6 +72,13 @@ export class SportLeaguePageService {
       lastInFeedAt: mapping?.lastSeenAt ?? null,
       addedBy: mapping === null ? ParticipantAddedBy.ADMIN : ParticipantAddedBy.FEED,
     }));
+  }
+
+  /** The Event page's header and sync rows (#1889). Null when the event does not exist. */
+  async getEventOverview(sportEventId: string): Promise<SportEventOverview | null> {
+    const now = this.now();
+    const [facts, schedule] = await Promise.all([this.deps.reader.readEventPageFacts(sportEventId, now), this.deps.schedule.getConfig()]);
+    return facts === null ? null : buildSportEventOverview(facts, { schedule, webhookProviderIds: this.deps.webhookProviderIds, now });
   }
 
   private now(): Date {
@@ -177,4 +187,50 @@ export function sportEventReleaseOf(event: SportLeaguePageEvent, league: SportLe
     return { releaseMode, releaseAt: new Date(event.startDate.getTime() - days * DAY_MS), releaseAtKind: SportEventReleaseAtKind.PLANNED };
   }
   return { releaseMode, releaseAt: null, releaseAtKind: null };
+}
+
+/** The syncs that run on one event: its field and its live scores and results. The event list is the league's. */
+const EVENT_SYNC_KINDS: readonly ProviderSyncKind[] = [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES];
+
+/**
+ * One event's overview (#1889), by the League page's rules: its field and scores syncs from its
+ * own latest runs (all OFF for an event no provider syncs, such as one an admin made in a synced
+ * league), its health from those runs, its issues and release as its League page row has them,
+ * and the value its active field is ordered by for tiers and prices (`fieldOrderDecision`).
+ */
+export function buildSportEventOverview(
+  facts: SportEventPageFacts,
+  context: { schedule: IngestionScheduleConfig; webhookProviderIds: readonly string[]; now: Date },
+): SportEventOverview {
+  const { league, event, latestRuns } = facts;
+  const synced = isProviderSyncedEvent({ providerId: event.providerId, syncScope: event.syncScope, eventSyncProviderId: league.eventSyncProviderId ?? undefined });
+  // An event no provider syncs reads as a league no provider syncs: every row OFF, nothing scheduled.
+  const syncLeague = synced ? league : { ...league, eventSyncProviderId: null, parent: null };
+  const eventRuns = latestRuns.filter((run) => EVENT_SYNC_KINDS.includes(run.kind));
+  const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, context).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
+  const failedRuns = eventRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
+  const check = event.lastReleaseCheck;
+  const held = event.status === SportEventStatus.DRAFT && check?.outcome === AutoReleaseCheckOutcome.HELD
+    ? [{ id: event.id, name: event.name, checkedAt: check.checkedAt, failedChecks: check.failedChecks }]
+    : [];
+  const active = facts.field.filter((row) => row.isActive);
+  const decision = active.length === 0 ? null : fieldOrderDecision(active);
+  return {
+    syncHealth: syncHealthOf({
+      isActive: syncLeague.isActive,
+      providerId: synced ? providerOf(league) : null,
+      runCount: eventRuns.length,
+      failedRunCount: failedRuns.length,
+    }),
+    syncs,
+    issues: issuesOf(failedRuns, held, facts.overdueCandidates.filter((candidate) => candidate.id === event.id), context.now),
+    ...sportEventReleaseOf(event, league),
+    tierOrderBasis: decision?.basis ?? null,
+    tierOrderCoversField: decision?.coversField ?? true,
+    fieldFeed: facts.field.map((row) => ({
+      sportEventParticipantId: row.id,
+      feedId: row.mapping?.externalId ?? null,
+      lastInFeedAt: row.mapping?.lastSeenAt ?? null,
+    })),
+  };
 }

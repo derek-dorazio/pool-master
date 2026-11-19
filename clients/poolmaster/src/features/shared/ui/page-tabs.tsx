@@ -7,6 +7,8 @@ import { useScrollRow } from "./scroll-row";
 type PageTabBase = {
   /** How many things the view holds, shown small after its name. */
   count?: number;
+  /** What the count counts, on hover, when its name alone does not say. */
+  countHint?: string;
   label: string;
   testId?: string;
 };
@@ -32,14 +34,14 @@ const TAB_CLASS_NAME =
   "whitespace-nowrap border-b-2 border-transparent pb-2.5 pt-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 const ACTIVE_TAB_CLASS_NAME = "border-selected text-foreground";
 
-function TabLabel({ count, label }: PageTabBase) {
+function TabLabel({ count, countHint, label }: PageTabBase) {
   return (
     <>
       {label}
       {count === undefined ? null : (
         <>
           {" "}
-          <span className="text-xs font-medium tabular-nums text-muted-foreground">{count}</span>
+          <span className="text-xs font-medium tabular-nums text-muted-foreground" title={countHint}>{count}</span>
         </>
       )}
     </>
@@ -64,7 +66,7 @@ export function PageTabs(props: PageTabsProps): ReactNode {
             key={item.to}
             to={item.to}
           >
-            <TabLabel count={item.count} label={item.label} />
+            <TabLabel count={item.count} countHint={item.countHint} label={item.label} />
           </Link>
         ))}
       </nav>
@@ -80,7 +82,7 @@ export function PageTabs(props: PageTabsProps): ReactNode {
           key={item.value}
           value={item.value}
         >
-          <TabLabel count={item.count} label={item.label} />
+          <TabLabel count={item.count} countHint={item.countHint} label={item.label} />
         </TabsPrimitive.Trigger>
       ))}
     </TabsPrimitive.List>

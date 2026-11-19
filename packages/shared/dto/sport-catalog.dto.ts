@@ -33,6 +33,7 @@ import {
 import { ScoringFamily } from '../domain/sports/scoring-family';
 import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
+import { FieldOrderBasis } from '../domain/field-ordering';
 
 // --- Sport ---------------------------------------------------------------------
 
@@ -306,6 +307,33 @@ export const SportLeagueParticipantOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s participants.');
 export type SportLeagueParticipantOverviewListResponse = z.infer<typeof SportLeagueParticipantOverviewListResponseSchema>;
 
+// --- Event page: one event's syncs, health, issues and release (#1889) ------------
+
+export const SportEventFieldFeedRowDtoSchema = z.object({
+  sportEventParticipantId: z.uuid().describe('The field row.'),
+  feedId: z.string().nullable().describe('Its participant\'s provider id in the event\'s sport league; null when it has no provider mapping.'),
+  lastInFeedAt: DateTimeSchema.nullable().describe('When a sync last saw its participant in the provider\'s feed; null when none has.'),
+}).describe('One field row\'s place in its provider\'s feed: the Field grid\'s Last in feed column.');
+export type SportEventFieldFeedRowDto = z.infer<typeof SportEventFieldFeedRowDtoSchema>;
+
+export const SportEventOverviewDtoSchema = z.object({
+  syncHealth: z.enum(SportLeagueSyncHealth).describe('By the Sports page\'s rule, from the event\'s own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.'),
+  syncs: z.array(SportLeagueSyncDtoSchema).describe('Its FIELD then SCORES sync, each from the event\'s own latest run of that kind; the event list sync is the league\'s. Every row OFF for an event no provider syncs.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none.'),
+  releaseMode: z.enum(SportEventReleaseMode).describe('AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.'),
+  releaseAt: DateTimeSchema.nullable().describe('With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league\'s window (PLANNED). Null otherwise.'),
+  releaseAtKind: z.enum(SportEventReleaseAtKind).nullable().describe('What releaseAt is; null with it.'),
+  tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.'),
+  tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
+  fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
+}).describe('The root admin\'s Event page header and sync rows.');
+export type SportEventOverviewDto = z.infer<typeof SportEventOverviewDtoSchema>;
+
+export const SportEventOverviewResponseSchema = z.object({
+  overview: SportEventOverviewDtoSchema,
+}).describe('One event\'s overview.');
+export type SportEventOverviewResponse = z.infer<typeof SportEventOverviewResponseSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('SportDto', SportDtoSchema);
 registerSchema('SportListResponse', SportListResponseSchema);
@@ -321,6 +349,9 @@ registerSchema('SportLeagueSyncDto', SportLeagueSyncDtoSchema);
 registerSchema('SportLeagueSyncListResponse', SportLeagueSyncListResponseSchema);
 registerSchema('SportLeagueEventOverviewDto', SportLeagueEventOverviewDtoSchema);
 registerSchema('SportLeagueEventOverviewListResponse', SportLeagueEventOverviewListResponseSchema);
+registerSchema('SportEventFieldFeedRowDto', SportEventFieldFeedRowDtoSchema);
+registerSchema('SportEventOverviewDto', SportEventOverviewDtoSchema);
+registerSchema('SportEventOverviewResponse', SportEventOverviewResponseSchema);
 registerSchema('SportLeagueParticipantOverviewDto', SportLeagueParticipantOverviewDtoSchema);
 registerSchema('SportLeagueParticipantOverviewListResponse', SportLeagueParticipantOverviewListResponseSchema);
 registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
