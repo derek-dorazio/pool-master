@@ -1,6 +1,5 @@
 import { useOutletContext } from 'react-router';
-import { BackgroundJobStatus } from '@poolmaster/shared/domain';
-import type { ActivityJobDto, SportLeagueDto, SportLeagueOverviewDto } from '@/lib/api';
+import type { SportLeagueDto, SportLeagueOverviewDto } from '@/lib/api';
 import type { ActivityState } from './use-activity';
 
 /** The League page's tabs, in order (the League page spec); Tools only on a league no provider syncs. */
@@ -32,11 +31,6 @@ export function leaguePageTabs(isSynced: boolean): readonly (typeof LEAGUE_PAGE_
 /** Whether a provider syncs the league's events, from its overview row once read, else its own setting. */
 export function isSyncedLeague(sportLeague: Pick<SportLeagueDto, 'eventSyncProviderId'>, overview: Pick<SportLeagueOverviewDto, 'providerId'> | undefined): boolean {
   return (overview === undefined ? sportLeague.eventSyncProviderId : overview.providerId) !== null;
-}
-
-/** How many of the jobs read failed, for the Activity tab's count; none until they are read. */
-export function failedJobCount(jobs: readonly Pick<ActivityJobDto, 'status'>[] | undefined): number | undefined {
-  return jobs?.filter((job) => job.status === BackgroundJobStatus.FAILED).length;
 }
 
 /** The League page context, for a tab under `LeaguePageLayout`. */

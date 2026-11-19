@@ -392,5 +392,6 @@ describe('League page', () => {
     expect(options.query['sportLeagueId']).toBe('nba');
     expect(columnHeaders('activity-grid-table')).not.toContain('Sport league');
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-activity')).toHaveTextContent('Activity 2'));
+    expect(within(screen.getByTestId('root-admin-league-tab-activity')).getByText('2')).toHaveAttribute('title', expect.stringContaining('Started window'));
   });
 });

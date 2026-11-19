@@ -3,7 +3,8 @@ import type { DisplayPreferences } from '@/features/shared/ui';
 import type { SportLeagueParticipantOverviewDto, SportLeagueSyncDto } from '@/lib/api';
 import { contestTemplateUpdateBody, contestTemplateValuesOf } from './league-contest-template-form';
 import { defaultEventYear } from './league-event-columns';
-import { failedJobCount, isSyncedLeague, leaguePageTabs } from './league-page-context';
+import { isSyncedLeague, leaguePageTabs } from './league-page-context';
+import { failedJobCount } from './use-activity';
 import { leagueParticipantColumnIds } from './league-participant-columns';
 import { editableParticipantFields, participantUpdateBody, participantValuesOf } from './league-participant-form';
 import { lastRunText, nextRunText } from './league-syncs-text';
@@ -39,10 +40,9 @@ describe('leaguePageTabs', () => {
 });
 
 describe('failedJobCount', () => {
-  it('counts only the failed jobs, and gives no count before the jobs are read', () => {
+  it('counts only the failed jobs', () => {
     expect(failedJobCount([{ status: 'FAILED' }, { status: 'SUCCEEDED' }, { status: 'FAILED' }, { status: 'RUNNING' }])).toBe(2);
     expect(failedJobCount([])).toBe(0);
-    expect(failedJobCount(undefined)).toBeUndefined();
   });
 });
 
