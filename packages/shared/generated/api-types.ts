@@ -11018,6 +11018,8 @@ export interface components {
                  */
                 lastInFeedAt: string | null;
             }[];
+            /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
+            eventPageSlug: string | null;
         };
         /** @description One event's overview. */
         SportEventOverviewResponse: {
@@ -11205,6 +11207,8 @@ export interface components {
                      */
                     lastInFeedAt: string | null;
                 }[];
+                /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
+                eventPageSlug: string | null;
             };
         };
         /** @description One participant on the League page's Participants grid. */

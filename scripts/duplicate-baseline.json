@@ -8,14 +8,6 @@
       ],
       "count": 1,
       "reason": "Only look alike: both import blocks name the same shared form pieces, which each file uses differently; there is nothing between them to extract."
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/root-admin/tier-board.tsx",
-        "clients/poolmaster/src/features/root-admin/tier-definitions-panel.tsx"
-      ],
-      "count": 1,
-      "reason": "Only look alike: the props tail and the vocabulary and logger lines that open two different components."
     }
   ]
 }

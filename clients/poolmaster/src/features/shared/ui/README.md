@@ -270,12 +270,6 @@ A date in the viewer's zone and format.
   pass a colour class.
 - **Story:** [date-time.stories.tsx](./date-time.stories.tsx)
 
-### `SortableList`
-A list reordered by drag or keyboard.
-- **Props that matter:** `items` (each with an `id`), `renderItem` (given the drag handle's
-  props), `onReorder` with the new id order.
-- **Story:** [sortable-list.stories.tsx](./sortable-list.stories.tsx)
-
 ## More info
 
 Extra information is one of four pieces, chosen by the question it answers

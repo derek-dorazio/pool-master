@@ -65,6 +65,7 @@ const EVENT_OVERVIEW: SportEventOverview = {
   tierOrderBasis: 'ODDS',
   tierOrderCoversField: true,
   fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
+  eventPageSlug: 'the-masters',
 };
 const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
 
@@ -366,6 +367,7 @@ describe('the event overview', () => {
         tierOrderBasis: 'ODDS',
         tierOrderCoversField: true,
         fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: ISO }],
+        eventPageSlug: 'the-masters',
       },
     });
   });

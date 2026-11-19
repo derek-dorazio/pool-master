@@ -717,6 +717,11 @@ export interface SportEventPageFacts {
   /** The event itself when it may be overdue; empty otherwise. */
   overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
+  /**
+   * The slug of the active event page that offers the event's series, in its sport; the first by
+   * the pages' display order when more than one does. Null when none does.
+   */
+  eventPageSlug: string | null;
 }
 
 export interface SportLeaguePageReader {

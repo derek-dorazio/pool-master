@@ -22064,6 +22064,13 @@
               "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
             },
             "description": "One per field row, active or withdrawn, never paged."
+          },
+          "eventPageSlug": {
+            "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -22075,7 +22082,8 @@
           "releaseAtKind",
           "tierOrderBasis",
           "tierOrderCoversField",
-          "fieldFeed"
+          "fieldFeed",
+          "eventPageSlug"
         ],
         "additionalProperties": false,
         "description": "The root admin's Event page header and sync rows."
@@ -22549,6 +22557,13 @@
                   "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
                 },
                 "description": "One per field row, active or withdrawn, never paged."
+              },
+              "eventPageSlug": {
+                "description": "The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "required": [
@@ -22560,7 +22575,8 @@
               "releaseAtKind",
               "tierOrderBasis",
               "tierOrderCoversField",
-              "fieldFeed"
+              "fieldFeed",
+              "eventPageSlug"
             ],
             "additionalProperties": false,
             "description": "The root admin's Event page header and sync rows."

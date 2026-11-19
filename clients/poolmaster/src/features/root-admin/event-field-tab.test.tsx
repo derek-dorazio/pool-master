@@ -12,6 +12,7 @@ import {
   fieldEntryFixture,
   participantFixture,
   sportEventFixture,
+  tierFixture,
   valuationFixture,
 } from './sport-test-fixtures';
 
@@ -20,6 +21,8 @@ import {
 const {
   getEventMock,
   listEventParticipantsMock,
+  listEventTiersMock,
+  replaceEventTierAssignmentsMock,
   updateEventParticipantsMock,
   seedEventParticipantsMock,
   refreshEventParticipantsMock,
@@ -40,6 +43,8 @@ const {
   return {
     getEventMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
+    listEventTiersMock: vi.fn(),
+    replaceEventTierAssignmentsMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     seedEventParticipantsMock: vi.fn(),
     refreshEventParticipantsMock: vi.fn(),
@@ -53,6 +58,8 @@ const {
 bindApiMocks({
   getEvent: getEventMock,
   listEventParticipants: listEventParticipantsMock,
+  listEventTiers: listEventTiersMock,
+  replaceEventTierAssignments: replaceEventTierAssignmentsMock,
   updateEventParticipants: updateEventParticipantsMock,
   seedEventParticipants: seedEventParticipantsMock,
   refreshEventParticipants: refreshEventParticipantsMock,
@@ -99,12 +106,14 @@ function fieldEntry({
   name = 'Rory McIlroy',
   ranking = 2,
   affiliatedWithSportLeague = true,
+  valuation = valuationFixture({ sportEventTierId: 'tier-1', tierAssignedSource: 'AUTO_ODDS', price: 9500, priceAssignedSource: 'AUTO_ODDS' }),
 }: {
   id?: string;
   participantId?: string;
   name?: string;
   ranking?: number;
   affiliatedWithSportLeague?: boolean;
+  valuation?: ReturnType<typeof valuationFixture> | null;
 } = {}) {
   return fieldEntryFixture({
     id,
@@ -113,12 +122,15 @@ function fieldEntry({
     ranking,
     oddsToWin: 8.5,
     seedNumber: 2,
-    valuation: valuationFixture({ price: 9500 }),
+    valuation,
     affiliatedWithSportLeague,
   });
 }
 
+const TIERS = [tierFixture({ tierNumber: 1 }), tierFixture({ tierNumber: 2 })];
+
 function seed(overrides: { tournament?: Parameters<typeof tournament>[0]; entries?: unknown[] } = {}) {
+  listEventTiersMock.mockResolvedValue({ data: { tiers: TIERS } });
   getEventMock.mockResolvedValue({
     data: { event: tournament(overrides.tournament) },
   });
@@ -184,12 +196,42 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
-  it('leaves Load Participant Field off a synced event, whose field sync row offers Sync now instead', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
+  it('offers no hand correction tools on a synced event (no seed, add or load), only automatic tiers and prices', async () => {
+    seed({ tournament: { syncScope: 'SCORES_ONLY', status: 'DRAFT' } });
     renderPage({ isSynced: true });
 
-    expect(await screen.findByTestId('root-admin-event-field-add')).toBeInTheDocument();
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-tier-auto-tiers')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-add')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-seed')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
+  });
+
+  it('hides automatic tiers and prices once the event is released, since its tiers and prices are locked', async () => {
+    seed({ tournament: { status: 'IN_PROGRESS' } });
+    renderPage();
+
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-tier-auto-tiers')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-tier-auto-prices')).not.toBeInTheDocument();
+  });
+
+  it('shows each row\'s tier, price and who set them, and the feed\'s last sighting only on a synced event', async () => {
+    seed({
+      entries: [
+        fieldEntry(),
+        fieldEntry({ id: 'sep-guest', participantId: 'p-guest', name: 'Sponsor Exemption', valuation: valuationFixture({ sportEventTierId: 'tier-2', tierAssignedSource: 'MANUAL', price: 500, priceAssignedSource: 'AUTO_ODDS' }) }),
+        fieldEntry({ id: 'sep-new', participantId: 'p-new', name: 'Late Entry', valuation: null }),
+      ],
+    });
+    renderPage();
+
+    const rory = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    expect(rory).toHaveTextContent('Tier 1');
+    expect(rory).toHaveTextContent('Auto');
+    expect(screen.getByTestId('root-admin-event-field-row-sep-guest')).toHaveTextContent('Manual');
+    expect(screen.getByTestId('root-admin-event-field-row-sep-new')).not.toHaveTextContent(/Auto|Manual/);
+    expect(screen.queryByRole('columnheader', { name: /Last in feed/ })).not.toBeInTheDocument();
   });
 
   it('warns that hand-set rankings, odds, seeds and withdrawals are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
@@ -217,62 +259,103 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     );
   });
 
-  it('pool-master-za4 collects a ranking edit and an activate toggle into one save call', async () => {
+  it('opens a participant\'s details and its tier and price from the row\'s ⤢', async () => {
     seed();
-    updateEventParticipantsMock.mockResolvedValue({
-      data: { participants: [fieldEntry({ ranking: 1 })] },
-    });
     renderPage();
 
-    const rankInput = await screen.findByTestId('root-admin-event-field-ranking-sep-rory');
-    await userEvent.clear(rankInput);
-    await userEvent.type(rankInput, '1');
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
 
-    await userEvent.click(screen.getByTestId('root-admin-event-field-active-sep-guest'));
-    // Reason select appears once a golfer is toggled inactive.
-    await userEvent.selectOptions(
-      await screen.findByTestId('root-admin-event-field-reason-sep-guest'),
-      'ELIMINATED',
-    );
-
-    expect(
-      await screen.findByTestId('root-admin-event-field-dirty-bar'),
-    ).toHaveTextContent('2 unsaved rows');
-
-    await userEvent.click(screen.getByTestId('root-admin-event-field-save'));
-
-    await waitFor(() =>
-      expect(updateEventParticipantsMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          path: { eventId: 'evt-1' },
-          body: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-            participants: expect.arrayContaining([
-              { sportEventParticipantId: 'sep-rory', ranking: 1 },
-              {
-                sportEventParticipantId: 'sep-guest',
-                isActive: false,
-                inactiveReason: 'ELIMINATED',
-              },
-            ]),
-          },
-        }),
-      ),
-    );
+    const dialog = await screen.findByTestId('root-admin-event-participant-dialog');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-rank')).toHaveTextContent('2');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-tier')).toHaveTextContent('Tier 1');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-price')).toHaveTextContent('9500');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-set-by')).toHaveTextContent('Auto');
   });
 
-  it('pool-master-za4 blocks save on an invalid numeric value', async () => {
+  it('withdraws a participant behind a confirmation, sending only its withdrawal', async () => {
+    seed();
+    updateEventParticipantsMock.mockResolvedValue({ data: { participants: [fieldEntry()] } });
+    renderPage();
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-withdraw'));
+    expect(updateEventParticipantsMock).not.toHaveBeenCalled();
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-withdraw-confirm'));
+
+    await waitFor(() => expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1' },
+      body: { participants: [{ sportEventParticipantId: 'sep-rory', isActive: false, inactiveReason: 'WITHDRAWN' }] },
+    })));
+  });
+
+  it('moves a participant to another tier, placed last in it, and sends a corrected price as a field patch', async () => {
+    seed({
+      entries: [
+        fieldEntry(),
+        fieldEntry({ id: 'sep-two', participantId: 'p-two', name: 'Second Tier', valuation: valuationFixture({ sportEventTierId: 'tier-2' }) }),
+      ],
+      tournament: { status: 'DRAFT' },
+    });
+    updateEventParticipantsMock.mockResolvedValue({ data: { participants: [fieldEntry()] } });
+    replaceEventTierAssignmentsMock.mockResolvedValue({ data: { tiers: [] } });
+    renderPage();
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
+    await userEvent.selectOptions(screen.getByTestId('root-admin-event-participant-dialog-edit-tier'), 'TIER_2');
+    const price = screen.getByTestId('root-admin-event-participant-dialog-edit-price');
+    await userEvent.clear(price);
+    await userEvent.type(price, '8000');
+    await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-save'));
+
+    await waitFor(() => expect(replaceEventTierAssignmentsMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1' },
+      body: { assignments: [{ sportEventParticipantId: 'sep-rory', tierKey: 'TIER_2', tierOrderIndex: 1 }] },
+    })));
+    expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { participants: [{ sportEventParticipantId: 'sep-rory', price: 8000 }] },
+    }));
+  });
+
+  it('keeps Save off while a typed odds value is not a number', async () => {
     seed();
     renderPage();
 
-    const oddsInput = await screen.findByTestId('root-admin-event-field-oddsToWin-sep-rory');
-    await userEvent.clear(oddsInput);
-    await userEvent.type(oddsInput, 'abc');
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
+    const odds = screen.getByTestId('root-admin-event-participant-dialog-edit-odds');
+    await userEvent.clear(odds);
+    await userEvent.type(odds, 'abc');
 
-    expect(
-      await screen.findByTestId('root-admin-event-field-dirty-bar'),
-    ).toHaveTextContent('invalid');
-    expect(screen.getByTestId('root-admin-event-field-save')).toBeDisabled();
+    expect(await screen.findByText('Odds are a number above 0, or blank')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-event-participant-dialog-save')).toBeDisabled();
+  });
+
+  it('corrects only tier and price on a synced event, whose feed sets rank, odds and seed', async () => {
+    seed({ tournament: { status: 'DRAFT' } });
+    renderPage({ isSynced: true });
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
+
+    expect(screen.getByTestId('root-admin-event-participant-dialog-edit-tier')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-participant-dialog-edit-odds')).not.toBeInTheDocument();
+  });
+
+  it('offers no Edit on a released synced event, where nothing the dialog corrects is open, but still offers Withdraw', async () => {
+    seed({ tournament: { status: 'IN_PROGRESS' } });
+    renderPage({ isSynced: true });
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-withdraw')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-participant-dialog-edit')).not.toBeInTheDocument();
   });
 
   it('shows the field\'s bulk upload on the Tools tab, open and without a Close', async () => {

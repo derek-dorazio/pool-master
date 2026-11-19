@@ -9275,6 +9275,10 @@ export type SportEventOverviewDto = {
          */
         lastInFeedAt: string | null;
     }>;
+    /**
+     * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+     */
+    eventPageSlug: string | null;
 };
 
 /**
@@ -9481,6 +9485,10 @@ export type SportEventOverviewResponse = {
              */
             lastInFeedAt: string | null;
         }>;
+        /**
+         * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+         */
+        eventPageSlug: string | null;
     };
 };
 

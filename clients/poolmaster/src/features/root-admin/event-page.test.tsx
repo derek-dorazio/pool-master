@@ -128,6 +128,7 @@ function eventOverview(overrides: Partial<SportEventOverviewDto> = {}): SportEve
     tierOrderBasis: 'ODDS',
     tierOrderCoversField: true,
     fieldFeed: [],
+    eventPageSlug: null,
     ...overrides,
   };
 }
@@ -229,6 +230,7 @@ function renderEventPage(path: string, {
             <Route element={<EventActivityTab />} path="activity" />
             <Route element={<EventToolsTab />} path="tools" />
             <Route element={<Navigate replace to="../field" relative="path" />} path="edit" />
+            <Route element={<Navigate replace to="../field" relative="path" />} path="tiers" />
             <Route element={<Navigate replace to="../rounds" relative="path" />} path="results" />
           </Route>
         </Routes>
@@ -290,6 +292,12 @@ describe('Event page header and tabs', () => {
     renderEventPage('/manage/sports/golf/events/tour-1/results');
 
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/tour-1/rounds'), { timeout: 5_000 });
+  });
+
+  it('sends the old tiers page link to Field, where tiers and prices now live', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/tiers');
+
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/tour-1/field'), { timeout: 5_000 });
   });
 
   it('shows the server\'s reason in place of the page when the event cannot be loaded', async () => {
@@ -548,6 +556,31 @@ describe('Event page ⚙ dialog', () => {
     expect(await within(dialog).findByText('Standard')).toBeInTheDocument();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-tier-order')).toHaveTextContent('Rank');
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-tier-order')).toHaveTextContent('those without go last');
+  });
+
+  it('offers Open event page › to the event page that offers its series, and no such action when none does', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { overview: eventOverview({ eventPageSlug: 'the-masters' }) });
+
+    const dialog = await openSettings();
+    expect(await within(dialog).findByTestId('root-admin-event-settings-dialog-open-event-page')).toHaveAttribute('href', '/play/golf/the-masters');
+  });
+
+  it('leaves Open event page › off when no event page offers the event', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/field');
+
+    const dialog = await openSettings();
+    expect(within(dialog).queryByTestId('root-admin-event-settings-dialog-open-event-page')).not.toBeInTheDocument();
+  });
+
+  it('says what the event was priced with, or that it is not priced yet', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/field', {
+      event: tournament({ pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
+    });
+
+    const dialog = await openSettings();
+    expect(within(dialog).getByTestId('root-admin-event-settings-dialog-priced-with')).toHaveTextContent(
+      'Standard: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4',
+    );
   });
 
   it('reads "Not set" for a missing venue, location and round count, and a synced event\'s feed id', async () => {

@@ -232,5 +232,6 @@ export function buildSportEventOverview(
       feedId: row.mapping?.externalId ?? null,
       lastInFeedAt: row.mapping?.lastSeenAt ?? null,
     })),
+    eventPageSlug: facts.eventPageSlug,
   };
 }

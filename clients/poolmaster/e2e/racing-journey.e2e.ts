@@ -5,6 +5,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { correctFieldParticipant } from './helpers/event-field';
 import { submitAndRead } from './helpers/browser-writes';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
@@ -215,7 +216,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
-  const fieldEntryIds = await test.step('set each horse\'s odds to win in the field grid', async () => {
+  const fieldEntryIds = await test.step('set each horse\'s odds to win in its Field dialog', async () => {
     // The field read straight from the API, for the field-entry id of each horse (the golden
     // journey's tiers step has the reason it is not sniffed from the page).
     const fieldResponse = await page.request.get(`/api/v1/events/${raceId}/participants`);
@@ -230,26 +231,17 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await page.getByTestId(`root-admin-event-field-oddsToWin-${entryId}`).fill(String(ODDS_TO_WIN[index]));
-    }
-    await submitAndRead(page, 'root-admin-event-field-save', 'PATCH', `/api/v1/events/${raceId}/participants`);
-    for (const [index, entryId] of entryIds.entries()) {
-      await expect(page.getByTestId(`root-admin-event-field-oddsToWin-${entryId}`)).toHaveValue(String(ODDS_TO_WIN[index]));
+      await correctFieldParticipant(page, raceId, entryId, { oddsToWin: ODDS_TO_WIN[index] });
     }
     return entryIds;
   });
   journey.fieldEntryIds = fieldEntryIds;
 
   await test.step('tier the field from its odds: the three favourites, the middle three, the two longshots', async () => {
-    await page.goto(`/manage/sports/horse-racing/events/${raceId}/tiers`);
     await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
-      await expect(
-        page
-          .getByTestId(`root-admin-tier-column-tier-${TIER_OF_HORSE[index]}`)
-          .getByTestId(`root-admin-tier-card-${entryId}`),
-      ).toBeVisible();
+      await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_HORSE[index])}`);
     }
   });
 
@@ -257,7 +249,6 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await page.getByTestId('root-admin-tier-auto-prices').click();
     await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
     await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${raceId}/prices/auto-assign`);
-    await expect(page.getByTestId('root-admin-tiers-pricing')).toContainText('Priced with');
   });
 
   await test.step('release the race for contests', async () => {
