@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { updateIngestionSchedule, type IngestionScheduleConfigPatch, type SettingsActor } from '@/lib/api';
-import { Checkbox, DateDisplay, DetailEditModal, FormField, Input, showToast } from '@/features/shared/ui';
+import { Checkbox, DateDisplay, DetailEditModal, FormField, Input, showToast, Text } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -95,9 +95,9 @@ export function SyncScheduleDialog({
     >
       <div className="grid gap-4">
         {isField ? null : (
-          <label className="flex items-center gap-2 text-sm text-foreground">
+          <label className="flex items-center gap-2">
             <Checkbox data-testid={`${testId}-enabled`} {...form.register('enabled')} />
-            Runs on its schedule
+            <Text as="span">Runs on its schedule</Text>
           </label>
         )}
         <FormField error={form.formState.errors.interval?.message} label={row.unit === 'seconds' ? 'Every, seconds' : 'Every, minutes'}>
