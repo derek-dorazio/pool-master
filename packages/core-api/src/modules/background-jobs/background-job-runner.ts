@@ -11,10 +11,11 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import type { BackgroundJob, BackgroundJobResult, BackgroundJobType } from '@poolmaster/shared/domain';
+import type { BackgroundJob, BackgroundJobType } from '@poolmaster/shared/domain';
 import { errorMessageWithCause } from '../../core/error-message';
 import { outsideRequest } from '../../core/request-scope';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
+import { DISCARD_BACKGROUND_JOB, type BackgroundJobOutcome } from './background-job-outcome';
 
 /** How long after each failed try the next one is due: 1, 5 and 30 minutes, then FAILED. */
 export const BACKGROUND_JOB_RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000] as const;
@@ -46,9 +47,7 @@ export interface BackgroundJobContext {
   renewLease: () => Promise<boolean>;
 }
 
-/** What a handler's promise resolves to: a result to keep on the job, or nothing. */
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- most handlers are `Promise<void>` service calls; `undefined` in its place would make each of them return a value it has no use for.
-export type BackgroundJobOutcome = BackgroundJobResult | void;
+export { DISCARD_BACKGROUND_JOB, type BackgroundJobOutcome } from './background-job-outcome';
 
 /**
  * One handler per job type, exhaustive, so a new type without a handler fails typecheck. A handler
@@ -70,7 +69,7 @@ export class PermanentBackgroundJobError extends Error {
 }
 
 export interface BackgroundJobRunnerOptions {
-  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed'>;
+  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed' | 'deleteClaimed'>;
   handlers: BackgroundJobHandlers;
   pollMs?: number;
   concurrency?: number;
@@ -243,6 +242,17 @@ export class BackgroundJobRunner {
         logger: this.options.logger,
         renewLease: () => this.options.jobs.renewLease(job, new Date(this.now().getTime() + BACKGROUND_JOB_LEASE_MS)),
       });
+      if (result === DISCARD_BACKGROUND_JOB) {
+        if (!await this.options.jobs.deleteClaimed(job)) {
+          this.lostClaim(job);
+          return;
+        }
+        this.options.logger?.info({
+          action: 'backgroundJobs.discarded',
+          data: { ...refs, durationMs: this.now().getTime() - startedAt },
+        }, 'Background job succeeded with nothing to keep; its row was deleted');
+        return;
+      }
       if (!await this.options.jobs.markSucceeded(job, this.now(), result ?? undefined)) {
         this.lostClaim(job);
         return;

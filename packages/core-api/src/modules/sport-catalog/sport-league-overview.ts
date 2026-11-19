@@ -5,6 +5,7 @@
  */
 import type {
   SportLeagueClutchCardEvent,
+  SportLeagueOverdueCandidate,
   SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
@@ -14,6 +15,7 @@ import type {
 import {
   compareByEnumOrder,
   isClutchCardLeague,
+  overdueExpectedEnd,
   ProviderSyncKind,
   ProviderSyncKindOrder,
   ProviderSyncRunStatus,
@@ -22,8 +24,10 @@ import {
   SportLeagueKind,
   SportLeagueSyncHealth,
   SportOrder,
+  type OverdueEventFacts,
   type SeasonSpan,
   type SportLeagueIssue,
+  type SportLeagueOverdueIssueItem,
   type SportLeagueOverview,
   type SportLeagueSyncIssueItem,
 } from '@poolmaster/shared/domain';
@@ -47,6 +51,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
   const spansByLeague = groupBy(facts.eventYearSpans, (span) => span.sportLeagueId);
   const clutchByLeague = groupBy(facts.clutchCardEvents, (event) => event.sportLeagueId);
+  const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
     const clutchCard = isClutchCardLeague(league);
@@ -63,7 +68,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
       providerId,
       isActive: league.isActive,
       syncHealth: syncHealthOf({ isActive: league.isActive, providerId, runCount: runs.length, failedRunCount: failedRuns.length }),
-      issues: issuesOf(failedRuns, heldByLeague.get(league.id) ?? []),
+      issues: issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
       season: clutchCard
         ? seasonOf(clutchCardSpans(clutchByLeague.get(league.id) ?? []), now)
         : seasonOf((spansByLeague.get(league.id) ?? []).map(yearSpan), now),
@@ -101,10 +106,15 @@ export function syncHealthOf(input: { isActive: boolean; providerId: string | nu
   return SportLeagueSyncHealth.OK;
 }
 
-/** The issue types with something to do, in their fixed order: SYNC, RELEASE. */
-function issuesOf(
-  failedRuns: readonly SportLeagueLatestSyncRun[],
-  heldEvents: SportLeagueOverviewFacts['heldEvents'],
+/**
+ * The issue types with something to do, in their fixed order: SYNC, RELEASE, OVERDUE. The League
+ * page's events read gives each event its own, from that event's runs, hold and dates.
+ */
+export function issuesOf(
+  failedRuns: readonly Omit<SportLeagueLatestSyncRun, 'sportLeagueId'>[],
+  heldEvents: readonly Omit<SportLeagueOverviewFacts['heldEvents'][number], 'sportLeagueId'>[],
+  overdueCandidates: readonly OverdueEventFacts[],
+  now: Date,
 ): SportLeagueIssue[] {
   const issues: SportLeagueIssue[] = [];
   if (failedRuns.length > 0) {
@@ -129,7 +139,21 @@ function issuesOf(
       }));
     issues.push({ type: SportLeagueIssueType.RELEASE, count: items.length, items });
   }
+  const overdue = overdueItemsOf(overdueCandidates, now);
+  if (overdue.length > 0) {
+    issues.push({ type: SportLeagueIssueType.OVERDUE, count: overdue.length, items: overdue });
+  }
   return issues;
+}
+
+/** The overdue events among the candidates (#1865), most overdue first, each with when it should have ended. */
+function overdueItemsOf(candidates: readonly OverdueEventFacts[], now: Date): SportLeagueOverdueIssueItem[] {
+  return candidates
+    .flatMap((event): SportLeagueOverdueIssueItem[] => {
+      const expectedEnd = overdueExpectedEnd(event, now);
+      return expectedEnd === null ? [] : [{ label: event.name, occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: event.id } }];
+    })
+    .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime() || left.label.localeCompare(right.label));
 }
 
 /** One event year's span, from its first start to its last end or start, whichever is later. */

@@ -189,6 +189,18 @@ describe('SportEventService ready checks on a root admin\'s read (#1823)', () =>
     expect((await service.requireSummary(event.id, { adminCounts: true })).releaseChecks).toBeUndefined();
   });
 
+  it('says whether a hold is for the same failed checks as the stored one: not the first, yes the same again, not a changed one (#1865)', async () => {
+    const { store, service, sportLeague } = setup();
+    const event = await readySyncedDraft(store, sportLeague.id, 3);
+    store.contestSetupCounts.set(sportLeague.id, 0);
+
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD, sameHoldAsBefore: false });
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD, sameHoldAsBefore: true });
+    store.roundRows = store.roundRows.filter((round) => round.sportEventId !== event.id);
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD, sameHoldAsBefore: false });
+    await expect(service.autoReleaseEvent(event.id)).resolves.toMatchObject({ outcome: ReleaseAttemptOutcome.HELD, sameHoldAsBefore: true });
+  });
+
   it('lets a root admin release a draft the automatic release would hold for its rounds or league setups', async () => {
     const { store, service, sportLeague } = setup();
     const event = await readySyncedDraft(store, sportLeague.id, 3);

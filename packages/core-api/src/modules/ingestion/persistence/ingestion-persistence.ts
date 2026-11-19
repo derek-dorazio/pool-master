@@ -179,6 +179,16 @@ export class IngestionPersistence {
         updates.push(this.prisma.participant.update({ where: { id: mapping.participantId }, data: values }));
       }
     }
+    const changedCount = updates.length;
+    // Every mapped participant the feed listed was seen now (#1865), in one statement for the
+    // whole field, written with the changed values.
+    const seenAt = new Date();
+    if (mappings.length > 0) {
+      updates.push(this.prisma.participantProviderMapping.updateMany({
+        where: { id: { in: mappings.map((mapping) => mapping.id) } },
+        data: { lastSeenAt: seenAt },
+      }));
+    }
     if (updates.length > 0) {
       await this.prisma.$transaction(updates);
     }
@@ -201,6 +211,7 @@ export class IngestionPersistence {
           providerId: participant.providerId,
           externalId: participant.externalId,
           confidence: MappingConfidence.EXACT,
+          lastSeenAt: seenAt,
         }));
         await tx.participantProviderMapping.createMany({ data: createdMappings });
         return createdMappings;
@@ -208,7 +219,7 @@ export class IngestionPersistence {
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
     }
 
-    this.logger?.info({ count: latestByKey.size, sportLeagueId: league.id, updated: updates.length, created: unmapped.length }, 'Persisted participants from ingestion');
+    this.logger?.info({ count: latestByKey.size, sportLeagueId: league.id, updated: changedCount, created: unmapped.length }, 'Persisted participants from ingestion');
     return { count: latestByKey.size, participantIdByKey };
   }
 

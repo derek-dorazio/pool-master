@@ -205,6 +205,7 @@ export class EventLifecycleService {
       from: fromStatus,
       to: input.toStatus,
       ...(endDate && { endDate }),
+      ...(isRelease && { releasedAt: now }),
       ...(jobs.length > 0 && { jobs }),
     });
     if (!updated) {

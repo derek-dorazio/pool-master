@@ -78,6 +78,13 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, leaseUntil: undefined })),
     markFailed: (claim, { error, completedAt }) =>
       Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.FAILED, lastError: error, completedAt, leaseUntil: undefined })),
+    deleteClaimed: (claim) => {
+      const row = rows.find((candidate) => candidate.id === claim.id);
+      if (!row) throw new Error(`No background job ${claim.id}`);
+      if (row.status !== BackgroundJobStatus.RUNNING || row.attempts !== claim.attempts) return Promise.resolve(false);
+      rows.splice(rows.indexOf(row), 1);
+      return Promise.resolve(true);
+    },
     deleteBatchCompletedBefore: (status, cutoff, limit) => {
       const batch = rows
         .filter((row) => row.status === status && row.completedAt !== undefined && row.completedAt < cutoff)

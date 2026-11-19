@@ -16,6 +16,7 @@ import {
 import type { ReleaseCheckDto } from '@poolmaster/shared/dto/events.dto';
 import { mapReleaseCheckToDto } from '../../mappers/sport-events.mapper';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import { DISCARD_BACKGROUND_JOB, type BackgroundJobOutcome } from '../background-jobs/background-job-outcome';
 
 export const ReleaseSportEventJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
@@ -44,4 +45,16 @@ export type ReleaseAttemptResultJson =
 
 export function releaseAttemptResultToJson(result: ReleaseAttemptResult): ReleaseAttemptResultJson {
   return result.outcome === ReleaseAttemptOutcome.SKIPPED ? result : { outcome: result.outcome, checks: result.checks.map(mapReleaseCheckToDto) };
+}
+
+/**
+ * The job's handler: one automatic release attempt, its result kept on the job for Activity. A
+ * hold for the same failed checks as the event's stored one only moves that check's time, so the
+ * job leaves no row (#1865): a week-long hold shows once, not once an hour.
+ */
+export function releaseSportEventJobHandler(sportEvents: { autoReleaseEvent(sportEventId: string): Promise<ReleaseAttemptResult> }) {
+  return async (payload: ReleaseSportEventJobPayload): Promise<BackgroundJobOutcome> => {
+    const attempt = await sportEvents.autoReleaseEvent(payload.sportEventId);
+    return attempt.outcome === ReleaseAttemptOutcome.HELD && attempt.sameHoldAsBefore ? DISCARD_BACKGROUND_JOB : releaseAttemptResultToJson(attempt);
+  };
 }

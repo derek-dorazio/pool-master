@@ -126,7 +126,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
 });
 
 describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
-  it('stores a held check, overwrites it with a release, and clears it', async () => {
+  it('stores a held check and reads it back, overwrites it with a release, and clears it', async () => {
     const tour = await sportLeague('Release Tour');
     const draft = await event(tour.id, { eventYear: 2027, startDate: days(3), status: 'DRAFT' });
     const repository = new PrismaSportEventRepository(getAppPrisma());
@@ -135,8 +135,12 @@ describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
       select: { autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true },
     });
 
+    await expect(repository.findAutoReleaseCheck(draft.id)).resolves.toBeNull();
     await repository.recordAutoReleaseCheck(draft.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] });
     await expect(stored()).resolves.toEqual({ autoReleaseCheckedAt: NOW, autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED', 'CONTEST_SETUPS_ON'] });
+    await expect(repository.findAutoReleaseCheck(draft.id)).resolves.toEqual({
+      checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON],
+    });
 
     await repository.recordAutoReleaseCheck(draft.id, { checkedAt: days(1), outcome: AutoReleaseCheckOutcome.RELEASED, failedChecks: [] });
     await expect(stored()).resolves.toEqual({ autoReleaseCheckedAt: days(1), autoReleaseOutcome: 'RELEASED', autoReleaseFailedChecks: [] });

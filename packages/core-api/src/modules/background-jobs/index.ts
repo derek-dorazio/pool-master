@@ -13,6 +13,7 @@ export {
   BACKGROUND_JOB_POLL_MS,
   BACKGROUND_JOB_RETRY_DELAYS_MS,
   BackgroundJobRunner,
+  DISCARD_BACKGROUND_JOB,
   PermanentBackgroundJobError,
   readBackgroundJobPollMs,
   type BackgroundJobContext,

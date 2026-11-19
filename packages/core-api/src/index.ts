@@ -91,7 +91,7 @@ import { createEventLifecycleService, createSportEventServices, eventFieldCache 
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
-import { releaseAttemptResultToJson } from './modules/events/release-sport-event-job';
+import { releaseSportEventJobHandler } from './modules/events/release-sport-event-job';
 import { EventScoreSourceService } from './modules/events/event-score-source-service';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
@@ -334,12 +334,13 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
+  const notifiedProviderCadence = readNotifiedProviderCadence(process.env);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
     jobLock,
-    notifiedProviderCadence: readNotifiedProviderCadence(process.env),
+    notifiedProviderCadence,
   });
   const ingestionService = new IngestionService({
     registry,
@@ -370,7 +371,7 @@ export function buildApp() {
       REBUILD_LEADERBOARDS: (payload) => leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)),
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
-      RELEASE_SPORT_EVENT: async (payload) => releaseAttemptResultToJson(await sportEventServices.sportEvents.autoReleaseEvent(payload.sportEventId)),
+      RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -416,7 +417,13 @@ export function buildApp() {
     services: sportEventServices,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
-  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry: registry });
+  app.register(sportLeaguesModule, {
+    prefix: '/api/v1/sport-leagues',
+    cdn,
+    providerRegistry: registry,
+    schedule: ingestionConfigService,
+    webhookProviderIds: notifiedProviderCadence?.providerIds ?? [],
+  });
   const profiles = createProfileServices(prisma, app.log);
   app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   app.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });

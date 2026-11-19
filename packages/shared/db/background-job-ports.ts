@@ -48,6 +48,11 @@ export interface BackgroundJobRepository {
   renewLease(claim: BackgroundJobClaim, leaseUntil: Date): Promise<boolean>;
   /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed. */
   markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string }): Promise<boolean>;
+  /**
+   * Deletes the job its try ran, leaving no row (#1865): for a try that did nothing worth showing
+   * in Activity, such as a release check that held an event for the same reason as before.
+   */
+  deleteClaimed(claim: BackgroundJobClaim): Promise<boolean>;
   /** FAILED for good at `completedAt`. */
   markFailed(claim: BackgroundJobClaim, failed: { error: string; completedAt: Date }): Promise<boolean>;
   /**
