@@ -11,12 +11,13 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import { JobErrorType, type BackgroundJob, type BackgroundJobOutcome, type BackgroundJobType, type JobTrigger } from '@poolmaster/shared/domain';
+import { JobErrorType, type BackgroundJob, type BackgroundJobType, type JobTrigger } from '@poolmaster/shared/domain';
 import { errorMessageWithCause } from '../../core/error-message';
 import { runWithJobStart, SYSTEM_START } from '../../core/job-start';
 import { jobErrorTypeOf } from './job-error-type';
 import { outsideRequest } from '../../core/request-scope';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
+import { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from './background-job-outcome';
 
 /** How long after each failed try the next one is due: 1, 5 and 30 minutes, then FAILED. */
 export const BACKGROUND_JOB_RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000] as const;
@@ -53,13 +54,16 @@ export interface BackgroundJobContext {
   trigger: JobTrigger;
 }
 
+export { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from './background-job-outcome';
+
 /**
  * One handler per job type, exhaustive, so a new type without a handler fails typecheck. A handler
  * answers what it did (#1861): how many rows it changed, whether it was held back, and anything to
- * keep as its result (#1819). The job keeps it with SUCCEEDED and Activity shows it.
+ * keep as its result (#1819). The job keeps it with SUCCEEDED and Activity shows it, unless the
+ * handler answers DISCARD_BACKGROUND_JOB: the try did nothing worth a row, and the job is deleted (#1865).
  */
 export type BackgroundJobHandlers = {
-  [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
+  [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>, context: BackgroundJobContext) => Promise<BackgroundJobAnswer>;
 };
 
 /**
@@ -74,7 +78,7 @@ export class PermanentBackgroundJobError extends Error {
 }
 
 export interface BackgroundJobRunnerOptions {
-  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed'>;
+  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed' | 'deleteClaimed'>;
   handlers: BackgroundJobHandlers;
   pollMs?: number;
   concurrency?: number;
@@ -240,7 +244,7 @@ export class BackgroundJobRunner {
       }
       const startedAt = this.now().getTime();
       // The registry is exhaustive over the type, so the handler for `job.type` reads this payload.
-      const handler = this.options.handlers[job.type] as (payload: unknown, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
+      const handler = this.options.handlers[job.type] as (payload: unknown, context: BackgroundJobContext) => Promise<BackgroundJobAnswer>;
       // Jobs the handler queues were started by this one (#1861).
       const outcome = await runWithJobStart(SYSTEM_START, () => handler(parsed.data, {
         jobId: job.id,
@@ -249,6 +253,17 @@ export class BackgroundJobRunner {
         renewLease: () => this.options.jobs.renewLease(job, new Date(this.now().getTime() + BACKGROUND_JOB_LEASE_MS)),
         trigger: job.trigger,
       }));
+      if (outcome === DISCARD_BACKGROUND_JOB) {
+        if (!await this.options.jobs.deleteClaimed(job)) {
+          this.lostClaim(job);
+          return;
+        }
+        this.options.logger?.info({
+          action: 'backgroundJobs.discarded',
+          data: { ...refs, durationMs: this.now().getTime() - startedAt },
+        }, 'Background job succeeded with nothing to keep; its row was deleted');
+        return;
+      }
       if (!await this.options.jobs.markSucceeded(job, this.now(), outcome)) {
         this.lostClaim(job);
         return;

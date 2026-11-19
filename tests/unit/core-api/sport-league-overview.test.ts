@@ -4,11 +4,13 @@
  */
 import { expect } from '@jest/globals';
 import {
+  OVERDUE_AFTER_MS,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
   ScoringFamily,
   Sport,
+  SportEventStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueKind,
@@ -43,6 +45,7 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
     eventYearSpans: [],
     nextEventStarts: new Map(),
     clutchCardEvents: [],
+    overdueCandidates: [],
     ...overrides,
   };
 }
@@ -118,6 +121,28 @@ describe('sport league issues', () => {
     expect(row.issues[1]?.items).toEqual([
       { label: 'ALCS', occurredAt: at('2027-04-15T11:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e1' }, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] },
       { label: 'World Series', occurredAt: at('2027-04-15T09:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e2' }, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] },
+    ]);
+  });
+
+  it('counts the league\'s overdue events as an OVERDUE issue after RELEASE, most overdue first, leaving out one not yet overdue and another league\'s', () => {
+    const endedAgo = (ms: number) => new Date(NOW.getTime() - ms);
+    const overdue = (id: string, sportLeagueId: string, name: string, endDate: Date) => ({
+      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [],
+    });
+    const row = only(facts({
+      heldEvents: [{ id: 'e9', sportLeagueId: 'mlb', name: 'Held', checkedAt: NOW, failedChecks: [ReleaseCheckKey.FIELD_LOADED] }],
+      overdueCandidates: [
+        overdue('late', 'mlb', 'Game 2', endedAgo(OVERDUE_AFTER_MS + 60_000)),
+        overdue('later', 'mlb', 'Game 1', endedAgo(2 * OVERDUE_AFTER_MS)),
+        overdue('almost', 'mlb', 'Game 3', endedAgo(OVERDUE_AFTER_MS - 60_000)),
+        overdue('elsewhere', 'other', 'Not this league', endedAgo(2 * OVERDUE_AFTER_MS)),
+      ],
+    }));
+
+    expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.RELEASE, 1], [SportLeagueIssueType.OVERDUE, 2]]);
+    expect(row.issues[1]?.items.map((item) => [item.target.id, item.occurredAt])).toEqual([
+      ['later', endedAgo(2 * OVERDUE_AFTER_MS)],
+      ['late', endedAgo(OVERDUE_AFTER_MS + 60_000)],
     ]);
   });
 });

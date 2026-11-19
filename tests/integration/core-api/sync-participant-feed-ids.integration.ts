@@ -65,6 +65,34 @@ const mappingOf = (externalId: string, sportLeagueId: string) => getPrisma().par
 });
 const fieldOfEvent = (sportEventId: string) => getPrisma().sportEventParticipant.findMany({ where: { sportEventId }, select: { participantId: true, ranking: true } });
 
+describe('a field sync records when it last saw each participant in the feed (#1865)', () => {
+  it('stamps a new feed participant\'s mapping as seen when the sync creates it, and moves the stamp on each later sync that lists it', async () => {
+    const { golfer, detail, sportLeagueId } = await fieldOf();
+    const before = new Date();
+
+    await sync(detail);
+    const first = (await mappingOf(golfer.externalId, sportLeagueId))?.lastSeenAt;
+    await sync(detail);
+    const second = (await mappingOf(golfer.externalId, sportLeagueId))?.lastSeenAt;
+
+    expect(first?.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(second?.getTime()).toBeGreaterThan(first?.getTime() ?? Infinity);
+  });
+
+  it('leaves a mapping the feed did not list as last seen when it was', async () => {
+    const prisma = getPrisma();
+    const { golfer, detail, sportLeagueId } = await fieldOf();
+    const absent = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} absent`, participantType: 'INDIVIDUAL' } });
+    const seenLongAgo = new Date('2026-01-01T00:00:00.000Z');
+    await prisma.participantProviderMapping.create({ data: { participantId: absent.id, sportLeagueId, providerId: PROVIDER, externalId: `absent-${golfer.externalId}`, lastSeenAt: seenLongAgo } });
+
+    await sync(detail);
+
+    await expect(mappingOf(`absent-${golfer.externalId}`, sportLeagueId)).resolves.toMatchObject({ lastSeenAt: seenLongAgo });
+    await expect(mappingOf(golfer.externalId, sportLeagueId)).resolves.toMatchObject({ lastSeenAt: expect.any(Date) });
+  });
+});
+
 describe('the sync matches feed participants by feed id only, within the event\'s sport league (#1850, #1853)', () => {
   it('creates a new golfer of the event\'s sport league, with an EXACT mapping and on the field, for a feed id no participant is mapped to, though the league holds an unmapped golfer of the same name', async () => {
     const prisma = getPrisma();

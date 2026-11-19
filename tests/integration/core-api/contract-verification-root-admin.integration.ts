@@ -36,6 +36,9 @@ import {
   SportLeagueListResponseSchema,
   SportLeagueRankingUploadPreviewResponseSchema,
   SportLeagueOverviewListResponseSchema,
+  SportLeagueSyncListResponseSchema,
+  SportLeagueEventOverviewListResponseSchema,
+  SportLeagueParticipantOverviewListResponseSchema,
   SportLeagueResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -1679,6 +1682,21 @@ describe('Contract verification (root admin)', () => {
       expect(releaseRes.statusCode).toBe(200);
       expect(SportEventResponseSchema.safeParse(releaseRes.json()).success).toBe(true);
       expect(releaseRes.json<SportEventResponse>().event.status).toBe('SCHEDULED');
+
+      // --- the League page reads (200) (#1865): syncs, events, participants -----
+      const leagueSyncsRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/syncs`, headers: rootAdmin.headers });
+      expect(leagueSyncsRes.statusCode).toBe(200);
+      expect(SportLeagueSyncListResponseSchema.safeParse(leagueSyncsRes.json()).success).toBe(true);
+      const leagueEventsRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/events/overview`, headers: rootAdmin.headers });
+      expect(leagueEventsRes.statusCode).toBe(200);
+      const leagueEvents = SportLeagueEventOverviewListResponseSchema.safeParse(leagueEventsRes.json());
+      expect(leagueEvents.success).toBe(true);
+      expect(leagueEvents.data?.events.find((row) => row.id === eventId)).toMatchObject({ status: 'SCHEDULED', releaseAtKind: 'ACTUAL', fieldSize: expect.any(Number) });
+      const leagueParticipantsRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/participants/overview`, headers: rootAdmin.headers });
+      expect(leagueParticipantsRes.statusCode).toBe(200);
+      const leagueParticipants = SportLeagueParticipantOverviewListResponseSchema.safeParse(leagueParticipantsRes.json());
+      expect(leagueParticipants.success).toBe(true);
+      expect(leagueParticipants.data?.participants.length).toBeGreaterThanOrEqual(3);
 
       // --- updateSportLeague: set as current (200: { sportLeague }) ------------
       const setCurrentRes = await getApp().inject({
