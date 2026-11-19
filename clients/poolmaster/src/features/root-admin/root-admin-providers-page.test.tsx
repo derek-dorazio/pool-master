@@ -102,7 +102,21 @@ describe('RootAdminProvidersPage', () => {
     expect(mock.getByText('Not paced')).toBeInTheDocument();
   });
 
-  it('opens a provider in a view-only dialog with Close and Check now, no Edit, and Check now checks the providers again', async () => {
+  it('sorts Status by the live check\'s own order, Up then Slow then Down, not by the words A to Z', async () => {
+    seed({ providers: [
+      provider({ providerId: 'down', providerName: 'Down feed', status: 'DOWN' }),
+      provider({ providerId: 'up', providerName: 'Up feed', status: 'HEALTHY' }),
+      provider({ providerId: 'slow', providerName: 'Slow feed', status: 'DEGRADED' }),
+    ] });
+    renderPage();
+
+    await screen.findByTestId('root-admin-provider-down');
+    await userEvent.click(screen.getByTestId('data-grid-sort-status'));
+    const shown = screen.getAllByTestId(/^root-admin-provider-(up|slow|down)$/).map((row) => row.getAttribute('data-testid'));
+    expect(shown).toEqual(['root-admin-provider-up', 'root-admin-provider-slow', 'root-admin-provider-down']);
+  });
+
+  it('opens a provider in a view-only dialog with Close and Check now, no Edit (why sits behind its help), and Check now checks the providers again', async () => {
     seed();
     renderPage();
 
@@ -113,6 +127,9 @@ describe('RootAdminProvidersPage', () => {
     expect(dialog.getByText('420 ms')).toBeInTheDocument();
     expect(dialog.getByText('Checked')).toBeInTheDocument();
     expect(dialog.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(dialog.queryByText(/set in Terraform/)).not.toBeInTheDocument();
+    await userEvent.click(dialog.getByTestId('root-admin-provider-dialog-help'));
+    expect(await screen.findByText(/The key and the rate are set in Terraform/)).toBeInTheDocument();
     expect(mocks.listProviders).toHaveBeenCalledTimes(1);
 
     await userEvent.click(dialog.getByTestId('root-admin-provider-dialog-check'));

@@ -531,7 +531,8 @@ Yes or no before a destructive or irreversible action: inactivate, delete, leave
 Choose an item from a list; or look only: payloads and metadata, a sentence on why an action
 isn't available (`size="sm"`), or a whole page shown unboxed (`size="xl"`,
 `isFullScreenOnPhone`), such as a pick screen's preview. A look-only dialog may carry one
-`action` that changes nothing, such as a provider's Check now, after Close.
+`action` that changes nothing, such as a provider's Check now, after Close. Without
+`detailContent` its details stand alone, with no box under them.
 - **Story:** [modal-templates.stories.tsx](./modal-templates.stories.tsx)
 
 ### `DialogActions` and `Modal`

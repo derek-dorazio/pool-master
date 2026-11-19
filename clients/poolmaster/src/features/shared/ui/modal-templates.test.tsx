@@ -147,18 +147,20 @@ describe("pool-master-3ew: shared modal templates", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
-  it("offers a read-only modal's one action after Close, and holds it with its pending words while it runs", () => {
+  it("offers a read-only modal's one action after Close, and no content box when it shows only details; holds the action with its pending words while it runs", () => {
     const onCheck = vi.fn();
     const { rerender } = render(
       <ReadOnlyDetailModal
         action={{ label: "Check now", onClick: onCheck, pendingLabel: "Checking...", testId: "detail-check" }}
-        detailContent={<p>Note</p>}
+        details={[{ id: "status", label: "Status", value: "Up" }]}
         onCancel={vi.fn()}
         onOpenChange={vi.fn()}
         open
+        testId="detail"
         title="Provider"
       />,
     );
+    expect(screen.queryByTestId("detail-content")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("detail-check"));
     expect(onCheck).toHaveBeenCalledTimes(1);

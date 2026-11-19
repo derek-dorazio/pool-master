@@ -16,6 +16,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
+  type ProviderHealthStatus,
   ProviderSyncRunStatus,
   type Sport,
   SportEventSyncScope,
@@ -44,8 +45,6 @@ import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export type ProviderHealthStatus = 'HEALTHY' | 'DEGRADED' | 'DOWN';
 
 export interface ProviderSummary {
   providerId: string;

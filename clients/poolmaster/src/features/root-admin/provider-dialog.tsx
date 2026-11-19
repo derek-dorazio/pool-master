@@ -1,4 +1,4 @@
-import { DateDisplay, ReadOnlyDetailModal, Text } from '@/features/shared/ui';
+import { DateDisplay, HelpTip, ReadOnlyDetailModal } from '@/features/shared/ui';
 import type { ProviderSummaryDto } from '@/lib/api';
 import { errorRatePercent, requestsPerMinuteText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
@@ -26,7 +26,6 @@ export function ProviderDialog({
   return (
     <ReadOnlyDetailModal
       action={{ label: 'Check now', onClick: onCheckNow, isPending: isChecking, pendingLabel: 'Checking...', testId: `${testId}-check` }}
-      detailContent={<Text tone="muted">No Edit: the key and the rate are set in Terraform, so this dialog only reads and checks.</Text>}
       details={[
         { id: 'status', label: 'Status', value: <ProviderStatusChip status={provider.status} /> },
         { id: 'rate', label: 'Requests a minute', value: requestsPerMinuteText(provider) },
@@ -41,7 +40,14 @@ export function ProviderDialog({
       open
       size="sm"
       testId={testId}
-      title={provider.providerName}
+      title={(
+        <span className="inline-flex items-center gap-2">
+          {provider.providerName}
+          <HelpTip label={`About ${provider.providerName}`} testId={`${testId}-help`}>
+            The key and the rate are set in Terraform, so this dialog only reads and checks: there is no Edit.
+          </HelpTip>
+        </span>
+      )}
     />
   );
 }

@@ -1,11 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { optionsFromLabels } from '@/features/shared/ui';
+import { ProviderHealthStatusOrder, type ProviderHealthStatus } from '@poolmaster/shared/domain';
 import type { ProviderSummaryDto } from '@/lib/api';
 import { errorRatePercent, PROVIDER_STATUS_LABELS, requestsPerMinuteText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
-
-/** Up first, then Slow, then Down, as the Status filter lists them. */
-const PROVIDER_STATUS_OPTIONS = optionsFromLabels(PROVIDER_STATUS_LABELS);
 
 const columnHelper = createColumnHelper<ProviderSummaryDto>();
 
@@ -19,7 +16,7 @@ export const providerColumns = [
     header: 'Status',
     meta: {
       info: 'Up, Slow or Down, from a live check made as the page loads and the last hour of calls.',
-      type: { kind: 'enum', values: PROVIDER_STATUS_OPTIONS },
+      type: { kind: 'enum', order: ProviderHealthStatusOrder, label: (status) => PROVIDER_STATUS_LABELS[status as ProviderHealthStatus] },
     },
     cell: ({ getValue }) => <ProviderStatusChip status={getValue()} />,
   }),

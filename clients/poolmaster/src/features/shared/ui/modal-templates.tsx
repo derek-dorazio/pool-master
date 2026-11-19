@@ -357,7 +357,8 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
     label: ReactNode;
     value: ReactNode;
   }>;
-  detailContent: ReactNode;
+  /** What it shows under the details; without it the details stand alone. */
+  detailContent?: ReactNode;
   /** What Copy puts on the clipboard; without it the modal has no Copy button. */
   copyText?: string;
   /** Fills a phone's screen, for a dialog that holds a whole page. */
@@ -428,17 +429,19 @@ export function ReadOnlyDetailModal({
       {details?.length ? (
         <FactList columns={2} facts={details} layout="columns" />
       ) : null}
-      <div
-        className={cn(
-          size === "xl"
-            ? null
-            : "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
-          details?.length ? "mt-4" : null,
-        )}
-        data-testid={testId ? `${testId}-content` : undefined}
-      >
-        {detailContent}
-      </div>
+      {detailContent === undefined ? null : (
+        <div
+          className={cn(
+            size === "xl"
+              ? null
+              : "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
+            details?.length ? "mt-4" : null,
+          )}
+          data-testid={testId ? `${testId}-content` : undefined}
+        >
+          {detailContent}
+        </div>
+      )}
     </Modal>
   );
 }
