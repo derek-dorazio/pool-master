@@ -4,36 +4,24 @@ import {
   SportLeagueIssueTypeOrder,
   SportLeagueKind,
   SportLeagueKindOrder,
-  SportLeagueSyncHealth,
   SportLeagueSyncHealthOrder,
+  type SportLeagueSyncHealth,
   SportOrder,
   type Sport,
 } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
-import { Button, Chip, Text, type ChipProps, type DateRangeValue } from '@/features/shared/ui';
+import { Button, Text, type DateRangeValue } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
+import { OnOffChip } from './on-off-chip';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
-import { SPORT_LEAGUE_ISSUE_LABELS } from './sport-league-overview-text';
+import { SPORT_LEAGUE_ISSUE_LABELS, SYNC_HEALTH_LABELS } from './sport-league-overview-text';
+import { SyncHealthChip } from './sync-health-chip';
 
 const columnHelper = createColumnHelper<SportLeagueOverviewDto>();
 
 export const SPORT_LEAGUE_KIND_LABELS: Record<SportLeagueKind, string> = {
   [SportLeagueKind.REAL]: 'Real',
   [SportLeagueKind.CLUTCH_CARD]: 'Clutch Card',
-};
-
-export const SYNC_HEALTH_LABELS: Record<SportLeagueSyncHealth, string> = {
-  [SportLeagueSyncHealth.OK]: 'OK',
-  [SportLeagueSyncHealth.ERROR]: 'ERROR',
-  [SportLeagueSyncHealth.NOT_RUN_YET]: 'NOT RUN YET',
-  [SportLeagueSyncHealth.OFF]: 'OFF',
-};
-
-const SYNC_HEALTH_TONES: Record<SportLeagueSyncHealth, ChipProps['tone']> = {
-  [SportLeagueSyncHealth.OK]: 'success',
-  [SportLeagueSyncHealth.ERROR]: 'danger',
-  [SportLeagueSyncHealth.NOT_RUN_YET]: 'neutral',
-  [SportLeagueSyncHealth.OFF]: 'inactive',
 };
 
 /** The Status column's values: a league is On (offered and synced) or Off. */
@@ -152,13 +140,13 @@ export function sportLeagueOverviewColumns({
         info: 'OK: the last run of every sync (event list, field, live scores and results) worked. ERROR: at least one failed; Issues says which. NOT RUN YET: on, but no run so far. OFF: the league is off or has no provider.',
         type: { kind: 'enum', order: SportLeagueSyncHealthOrder, label: (health) => SYNC_HEALTH_LABELS[health as SportLeagueSyncHealth] },
       },
-      cell: ({ getValue }) => <Chip tone={SYNC_HEALTH_TONES[getValue()]}>{SYNC_HEALTH_LABELS[getValue()]}</Chip>,
+      cell: ({ getValue }) => <SyncHealthChip health={getValue()} />,
     }),
     columnHelper.accessor((overview) => overview.issues.map((issue) => issue.type), {
       id: 'issues',
       header: 'Issues',
       meta: {
-        info: 'What on this sport league needs you, one chip per type with a count: Sync (failed syncs), Release (held by a failed ready check). Hover a chip for the items.',
+        info: 'What on this sport league needs you, one chip per type with a count: Sync (failed syncs), Release (held by a failed ready check), Overdue (results missing well after it should have ended). Hover a chip for the items.',
         type: {
           kind: 'enum',
           manyPerCell: true,
@@ -198,9 +186,7 @@ export function sportLeagueOverviewColumns({
         info: 'On: offered to customers and synced. Off: hidden and not synced. Starts filtered to On.',
         type: { kind: 'enum', values: LEAGUE_STATUS_OPTIONS, initial: [LEAGUE_STATUS.ON] },
       },
-      cell: ({ getValue }) => (getValue() === LEAGUE_STATUS.ON
-        ? <Chip tone="success">On</Chip>
-        : <Chip tone="inactive">Off</Chip>),
+      cell: ({ getValue }) => <OnOffChip on={getValue() === LEAGUE_STATUS.ON} />,
     }),
   ];
 }

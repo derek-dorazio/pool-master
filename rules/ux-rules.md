@@ -336,9 +336,11 @@ administration area (root admin included), reusing the same shared components.
    league and the way back, then its tools as one row of `PageTabs` on every
    width, with no side menu; a tool's sub-pages keep its tab lit. Manage, the
    root admin area, uses the same frame: its menu is Sports · Activity ·
-   Notifications · Providers · Customers · Plans, and Sports, its landing page,
-   adds a second row of Sport leagues, Events, Contest templates and one tab per
-   sport (#1848; the second row goes once the league page carries its own tabs).
+   Notifications · Providers · Customers · Plans · Pricing, with Sports its
+   landing page.
+   A sport league's page under Sports carries its own tabs (Events,
+   Participants, Activity, Contest templates, and Tools where no provider
+   syncs it) in its `PageHeader`, so Sports has no second row (#1866).
    Each page in an area opens with one `PageHeader`
    (a `FormPage` brings its own); an entity's landing page shows the entity's
    icon in it. A page never adds a second header or "Back to" link of its own;
@@ -629,9 +631,21 @@ administration area (root admin included), reusing the same shared components.
     template), never a sport's member words such as Tournament or Golfer, so one
     page reads the same for every sport. A settings dialog in Manage opens in view
     mode, its settings as facts with Close and Edit, and Edit swaps in the form
-    with Cancel and Save (`DetailEditModal`). What the thing itself can do, such as
-    an email's Preview and Send me this email, sits between Close and Edit
-    (`viewActions`), never in the form. A thing with nothing to change has no Edit.
+    with Cancel and Save (`DetailEditModal`). Every Manage dialog does this,
+    not only settings: a participant, a contest template, a profile. What the
+    thing itself can do, such as an email's Preview and Send me this email, sits
+    between Close and Edit (`viewActions`), never in the form. A thing with
+    nothing to change has no Edit.
+15. **› navigates, ⤢ opens a dialog.** A Manage grid row ends in › when it
+    leads to a page of its own (a sport league, an event), and in ⤢ when its
+    details open in a dialog over the grid (a participant, a contest template,
+    a job). A row never does both.
+16. **Correction tools only where no sync runs.** Once a provider syncs a sport
+    league, the sync owns its events and participants, so the League page shows
+    their data but offers no tool that adds or rewrites it by hand (clone an
+    event, upload a roster or ranks). Those tools live on the League page's
+    Tools tab, which shows only on a league no provider syncs. A dialog may
+    still edit what the feed never sends, such as a participant's short name.
 
 ## 13. Event Pages
 

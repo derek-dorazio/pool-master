@@ -6,7 +6,7 @@ import {
   type AdminCredentials,
 } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
-import { addLeagueParticipants, openLeagueParticipantList } from './helpers/league-participants';
+import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
@@ -146,14 +146,11 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   journey = { run };
   console.log(`[racing journey ${runId}] race="${run.tournamentName}" league=${run.leagueCode}`);
 
-  await test.step('root admin signs in, and Manage lists horse racing beside golf', async () => {
+  await test.step('root admin signs in, and Manage opens on Sports', async () => {
     await adminSignIn(page, credentials);
     await page.goto('/manage');
     await page.getByTestId('root-admin-manage-menu-sports').click();
-    await expect(page.getByTestId('root-admin-manage-menu-horse-racing')).toBeVisible();
-    await page.getByTestId('root-admin-manage-menu-horse-racing').click();
-    await expect(page).toHaveURL(/\/manage\/sports\/horse-racing\/events$/);
-    await expect(page.getByTestId('root-admin-sport-event-list-page')).toBeVisible();
+    await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
   });
 
   const circuitId = await test.step('create a racing circuit', async () => {
@@ -177,11 +174,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
     const names = Array.from({ length: HORSE_COUNT }, (_, index) => horseName(run, index + 1));
     const ids = await addLeagueParticipants(page, 'horse-racing', circuitId, names);
-    await openLeagueParticipantList(page, 'horse-racing', circuitId);
-    await page.getByTestId('root-admin-participant-list-search').fill(run.playerNamePrefix);
-    for (const id of ids) {
-      await expect(page.getByTestId(`root-admin-participant-row-${id}`)).toBeVisible();
-    }
+    await expectLeagueParticipants(page, 'horse-racing', circuitId, ids);
     return ids;
   });
   journey.horseIds = horseIds;
