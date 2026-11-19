@@ -4,19 +4,16 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { QueryKeys } from '@/lib/query-keys';
-import { useIngestionScheduleQuery } from './use-ingestion-schedule-query';
 import { useProvidersQuery } from './use-providers-query';
 import { useUpdateSportLeague } from './use-update-sport-league';
 import { fieldWriteKeys } from './use-sport-event';
 
-const { getIngestionScheduleMock, listProvidersMock, updateSportLeagueMock } = vi.hoisted(() => ({
-  getIngestionScheduleMock: vi.fn(),
+const { listProvidersMock, updateSportLeagueMock } = vi.hoisted(() => ({
   listProvidersMock: vi.fn(),
   updateSportLeagueMock: vi.fn(),
 }));
 
 bindApiMocks({
-  getIngestionSchedule: getIngestionScheduleMock,
   listProviders: listProvidersMock,
   updateSportLeague: updateSportLeagueMock,
 });
@@ -30,14 +27,6 @@ function wrapperFor(queryClient: QueryClient) {
 function newClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
-
-const SCHEDULE = {
-  scheduledSports: ['GOLF'],
-  healthCheck: { enabled: true, intervalMinutes: 5 },
-  eventParticipants: { enabled: true, intervalMinutes: 60, lookaheadDays: 14 },
-  eventLiveScores: { enabled: false, intervalSeconds: 60 },
-  eventList: { enabled: true, intervalMinutes: 360 },
-};
 
 describe('useProvidersQuery', () => {
   beforeEach(() => listProvidersMock.mockReset());
@@ -54,19 +43,6 @@ describe('useProvidersQuery', () => {
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(listProvidersMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('useIngestionScheduleQuery', () => {
-  it('hands the page its own copy of the schedule, so editing a draft never edits the cache', async () => {
-    getIngestionScheduleMock.mockResolvedValue({ data: SCHEDULE });
-    const queryClient = newClient();
-    const { result } = renderHook(() => useIngestionScheduleQuery(), { wrapper: wrapperFor(queryClient) });
-
-    await waitFor(() => expect(result.current.data).toBeDefined());
-    const cached = queryClient.getQueryData(QueryKeys.rootAdmin.ingestionConfig);
-    expect(result.current.data).toEqual(cached);
-    expect(result.current.data).not.toBe(cached);
   });
 });
 

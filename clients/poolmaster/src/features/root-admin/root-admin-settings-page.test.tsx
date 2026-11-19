@@ -126,11 +126,11 @@ describe('RootAdminSettingsPage', () => {
     expect(email.getByText('Never changed: using the defaults.')).toBeInTheDocument();
   });
 
-  it('links the ingestion schedule section to its edit page under Settings', async () => {
+  it('links the ingestion schedule section to the Providers page, where it is edited', async () => {
     renderPage();
 
     expect(await screen.findByTestId('root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG'))
-      .toHaveAttribute('href', '/manage/settings/ingestion-schedule');
+      .toHaveAttribute('href', '/manage/providers');
   });
 
   it('loads a group\'s recent changes only when asked, naming who changed which field', async () => {

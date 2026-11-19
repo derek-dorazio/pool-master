@@ -24,7 +24,7 @@ function renderManage(path: string) {
           <Route element={<LocationProbe />} path="sports" />
           <Route element={<div>Plans body</div>} path="plans" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
-          <Route element={<div>Ingestion schedule body</div>} path="settings/ingestion-schedule" />
+          <Route element={<div>Providers body</div>} path="providers" />
           <Route element={<EntityHomeProbe />} path="users/:userId" />
           <Route element={<div>Golf events body</div>} path="sports/golf/events" />
           <Route element={<div>Event field body</div>} path="sports/golf/events/:eventId/field" />
@@ -116,14 +116,13 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getByText('Detail body')).toBeInTheDocument();
   });
 
-  it('keeps Notifications lit for the ingestion schedule, with the trail back to the settings page', () => {
-    renderManage('/manage/settings/ingestion-schedule');
+  it('lights Providers on the Providers page, whose menu item leads there, with no trail of its own', () => {
+    renderManage('/manage/providers');
 
-    const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
-    expect(within(breadcrumbNav).getByRole('link', { name: 'Notifications' })).toHaveAttribute('href', '/manage/settings');
-    expect(within(breadcrumbNav).getByText('Global Ingestion Schedule')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByTestId('root-admin-manage-menu-notifications')).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByText('Ingestion schedule body')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Manage breadcrumbs')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-menu-providers')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-manage-menu-providers')).toHaveAttribute('href', '/manage/providers');
+    expect(screen.getByText('Providers body')).toBeInTheDocument();
   });
 
   it('names an entity in the trail by the name its page gives', () => {

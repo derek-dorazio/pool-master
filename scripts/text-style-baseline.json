@@ -42,7 +42,6 @@
   "clients/poolmaster/src/features/root-admin/root-admin-content-configuration-list-page.tsx": 10,
   "clients/poolmaster/src/features/root-admin/root-admin-email-settings-form.tsx": 4,
   "clients/poolmaster/src/features/root-admin/root-admin-events-page.tsx": 11,
-  "clients/poolmaster/src/features/root-admin/root-admin-ingestion-schedule-page.tsx": 2,
   "clients/poolmaster/src/features/root-admin/root-admin-manage-leagues-page.tsx": 8,
   "clients/poolmaster/src/features/root-admin/root-admin-manage-users-page.tsx": 5,
   "clients/poolmaster/src/features/root-admin/root-admin-participant-list-page.tsx": 2,

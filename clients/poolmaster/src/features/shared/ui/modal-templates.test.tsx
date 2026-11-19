@@ -147,6 +147,37 @@ describe("pool-master-3ew: shared modal templates", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("{ \"status\": \"COMPLETED\" }"));
   });
 
+  it("offers a read-only modal's one action after Close, and holds it with its pending words while it runs", () => {
+    const onCheck = vi.fn();
+    const { rerender } = render(
+      <ReadOnlyDetailModal
+        action={{ label: "Check now", onClick: onCheck, pendingLabel: "Checking...", testId: "detail-check" }}
+        detailContent={<p>Note</p>}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        title="Provider"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("detail-check"));
+    expect(onCheck).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+
+    rerender(
+      <ReadOnlyDetailModal
+        action={{ label: "Check now", onClick: onCheck, isPending: true, pendingLabel: "Checking...", testId: "detail-check" }}
+        detailContent={<p>Note</p>}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        title="Provider"
+      />,
+    );
+    expect(screen.getByTestId("detail-check")).toBeDisabled();
+    expect(screen.getByTestId("detail-check")).toHaveTextContent("Checking...");
+  });
+
   it("shows a whole page unboxed in an xl read-only modal that fills a phone's screen, and boxes a payload otherwise", () => {
     const { rerender } = render(
       <ReadOnlyDetailModal
