@@ -27,7 +27,7 @@ import { ContestSettlementService } from '../../../packages/core-api/src/modules
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import type { DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import type { ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { SquaresAutoDrawScheduler } from '../../../packages/core-api/src/modules/selections/squares-auto-draw-scheduler';
@@ -742,7 +742,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     const standings = context.world.standingRepo();
     const standingReads = jest.spyOn(standings, 'findByContest');
     const recordContest = jest.fn<ChampionshipService['recordContest']>(async () => 0);
-    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
     const queued = jest.spyOn(jobs, 'queued');
     const settlement = new ContestSettlementService({
       ...context.deps,
@@ -769,6 +769,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       type: BackgroundJobType.CONTEST_SETTLED_EMAILS,
       payload: { contestId: context.contest.id },
       runAt: undefined,
+      start: TEST_JOB_START,
       dedupeKey: `CONTEST_SETTLED_EMAILS:${context.contest.id}`,
     }]);
     expect(queued).toHaveBeenCalledTimes(1);

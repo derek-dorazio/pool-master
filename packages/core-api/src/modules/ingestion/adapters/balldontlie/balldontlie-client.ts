@@ -10,6 +10,8 @@
 import { z } from 'zod';
 import { errorMessage } from '../../../../core/error-message';
 import type { ProviderPayloadRecorder } from '../provider-payload-recorder';
+import { JobErrorType } from '@poolmaster/shared/domain';
+import { jobErrorTypeOf, jobErrorTypeOfStatus } from '../../../background-jobs/job-error-type';
 
 /** A query value: arrays are sent once per item, under the key exactly as given (`tournament_ids[]`). */
 export type BalldontlieQueryValue = string | number | boolean | readonly (string | number)[];
@@ -52,6 +54,9 @@ const MAX_PAGES = 200;
 
 /** The response did not match the documented shape PoolMaster relies on. */
 export class BalldontlieContractError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.BAD_DATA;
+
   constructor(
     readonly path: string,
     readonly issues: readonly string[],
@@ -71,6 +76,15 @@ export class BalldontlieRequestError extends Error {
   ) {
     super(`BALLDONTLIE request ${path} failed: ${message}`, options);
     this.name = 'BalldontlieRequestError';
+  }
+
+  /**
+   * Activity's Error column (#1861): a 429 is RATE_LIMITED and any other status PROVIDER_ERROR; no
+   * answer at all is TIMEOUT when the last try timed out, else PROVIDER_ERROR.
+   */
+  get jobErrorType(): JobErrorType {
+    if (this.status !== null) return jobErrorTypeOfStatus(this.status);
+    return jobErrorTypeOf(this.cause) === JobErrorType.TIMEOUT ? JobErrorType.TIMEOUT : JobErrorType.PROVIDER_ERROR;
   }
 }
 

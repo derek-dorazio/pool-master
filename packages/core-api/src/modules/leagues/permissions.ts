@@ -12,7 +12,9 @@
  *   where the path names no squad (#458).
  *
  * Root admins bypass all of them (access rule A10). Membership is read per request, never from
- * the access token (access rule A12).
+ * the access token (access rule A12). The commissioner gates name the role their routes require,
+ * so a job the request queues records COMMISSIONER and the person, whoever passes, a root admin
+ * included (#1861).
  *
  * Every rejection **awaits** `sendError`. An async hook that sends without awaiting resolves
  * before the response has finished (the etag `onSend` hook makes it finish later), `reply.sent`
@@ -29,11 +31,14 @@ import type {
   SquadRepository,
 } from '@poolmaster/shared/db';
 import {
+  JobTrigger,
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  type PersonJobTrigger,
 } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
+import { actsAs } from '../../plugins/request-job-start';
 
 type Gate =
   | 'requireMemberOfLeague'
@@ -41,6 +46,19 @@ type Gate =
   | 'requireCommissionerForContest'
   | 'requireMemberOfSquad'
   | 'requireOwnSquad';
+
+/**
+ * The role each gate's routes require, as a job the request queues records it (#1861): the
+ * commissioner gates' routes are a league's commissioner tools. The member gates name none: a
+ * member's own action queues no job of its own.
+ */
+const GATE_JOB_TRIGGERS: Record<Gate, PersonJobTrigger | null> = {
+  requireMemberOfLeague: null,
+  requireCommissioner: JobTrigger.COMMISSIONER,
+  requireCommissionerForContest: JobTrigger.COMMISSIONER,
+  requireMemberOfSquad: null,
+  requireOwnSquad: null,
+};
 
 function loggerOf(request: FastifyRequest) {
   return request.contextLogger ?? request.log;
@@ -190,6 +208,8 @@ async function resolveLeagueAccess(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
+  const jobTrigger = GATE_JOB_TRIGGERS[gate];
+  if (jobTrigger !== null) actsAs(request, jobTrigger);
   const logger = loggerOf(request);
   logger.debug({
     action: `leaguePermission.${gate}.enter`,

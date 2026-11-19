@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, type BackgroundJob } from '@poolmaster/shared/domain';
+import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob } from '@poolmaster/shared/domain';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 
@@ -11,7 +11,7 @@ const NOW = new Date('2026-11-18T12:00:00.000Z');
 const HOUR = 60 * 60_000;
 
 function job(id: string): BackgroundJob {
-  return { id, type: BackgroundJobType.SYNC_LEAGUE_EVENTS, payload: {}, status: BackgroundJobStatus.SUCCEEDED, runAt: NOW, attempts: 1, createdAt: NOW };
+  return { id, type: BackgroundJobType.SYNC_LEAGUE_EVENTS, payload: {}, status: BackgroundJobStatus.SUCCEEDED, runAt: NOW, attempts: 1, trigger: JobTrigger.SCHEDULE, createdAt: NOW };
 }
 
 function build(jobs: BackgroundJob[] = []) {

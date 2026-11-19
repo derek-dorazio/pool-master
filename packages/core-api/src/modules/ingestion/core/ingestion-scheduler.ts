@@ -16,7 +16,7 @@
  * task holding that loop's job lock.
  */
 
-import { SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
 import type { IngestionFeedPolicyKey, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import { SCHEDULE_RECHECK_MS, schedulePolicyDelayMs } from '../../../core/schedule-policy-delay';
 import type { FastifyBaseLogger } from 'fastify';
@@ -44,6 +44,7 @@ import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 import type { ProviderSyncRunLedger } from '../persistence/provider-sync-run-ledger';
 import type { LiveScorePersistenceResult } from './score-publisher';
 import { countLiveScoreUpdates } from './live-score-count';
+import { runWithJobStart, SCHEDULE_START } from '../../../core/job-start';
 
 export type { IngestionFeedType } from './sync-orchestrator';
 
@@ -630,7 +631,7 @@ export class IngestionScheduler {
    * over REST, so a duplicated, late or out-of-order notification writes nothing stale. It runs
    * only where the scheduled sweep would: a sport scheduled for ingestion, with live scores on.
    */
-  async runNotifiedEventSync(request: NotifiedEventSync, context: { jobId?: string } = {}): Promise<IngestionJobRecord | null> {
+  async runNotifiedEventSync(request: NotifiedEventSync, context: { jobId: string; trigger: JobTrigger }): Promise<IngestionJobRecord | null> {
     const feed = 'EVENTLIVESCORES' as const;
     if (!(await this.isSportScheduled(request.sport))) {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
@@ -655,7 +656,7 @@ export class IngestionScheduler {
     const { scope } = normalized;
     return this.executeScheduledSyncRun(normalized, () =>
       this.pollLiveScores(scope.sport, scope.providerId, scope.eventId, scope.providerOptions),
-    'WEBHOOK_EVENT_SYNC', { backgroundJobId: context.jobId, sportEventId: request.sportEventId });
+    'WEBHOOK_EVENT_SYNC', { backgroundJobId: context.jobId, sportEventId: request.sportEventId, trigger: context.trigger });
   }
 
   private normalizeScheduledEventSync(input: {
@@ -681,7 +682,7 @@ export class IngestionScheduler {
     normalizedRequest: NormalizedSyncRequest,
     run: () => Promise<IngestionJobRecord>,
     runType: 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC' = 'SCHEDULED_EVENT_SYNC',
-    scope: { backgroundJobId?: string; sportEventId?: string } = {},
+    scope: { backgroundJobId?: string; sportEventId?: string; trigger?: JobTrigger } = {},
   ): Promise<IngestionJobRecord> {
     const syncRunLedger = this.options.syncRunLedger;
     if (!syncRunLedger) {
@@ -694,6 +695,8 @@ export class IngestionScheduler {
       submittedAt: this.getNow(),
       runType,
       ...scope,
+      // A scheduled run has no job; a webhook's run records its job's trigger (#1861).
+      trigger: scope.trigger ?? JobTrigger.SCHEDULE,
     });
     const syncRun = syncRuns.at(0);
 
@@ -849,7 +852,8 @@ export class IngestionScheduler {
 
       try {
         this.logger?.debug({ label }, 'Recurring ingestion loop tick started');
-        await (lockKey ? this.runExclusive(label, lockKey, runner) : runner());
+        // Jobs a scheduled sync queues, such as settling an event it found final, record SCHEDULE (#1861).
+        await runWithJobStart(SCHEDULE_START, () => (lockKey ? this.runExclusive(label, lockKey, runner) : runner()));
       } catch (error) {
         this.logger?.error({ error, label }, 'Recurring ingestion loop failed');
       }

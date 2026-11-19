@@ -68,6 +68,7 @@ import type {
   Sport,
   SportEvent,
   CupWeight,
+  BackgroundJobOutcome,
   BackgroundJobRequest,
 } from '@poolmaster/shared/domain';
 import {
@@ -86,6 +87,7 @@ import {
   UpsetBonusRule,
   PlanCap,
   survivorLivesOf,
+  JobErrorType,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
@@ -697,18 +699,20 @@ export class ContestManagementService {
    * release) is logged and skipped, so the job succeeds and is not retried; any other failure
    * throws, for the runner to retry. That includes another edition's job adding its own edition
    * to the pool between this job's read and its write: the write is refused rather than drop the
-   * other edition, and the retry reads both.
+   * other edition, and the retry reads both. Reports the one contest it changed, or none (#1861);
+   * a refusal by the contest's rules is held back as CHECK_FAILED.
    */
-  async addReleasedEditionToContest(payload: AddReleasedEditionToContestJobPayload): Promise<void> {
+  async addReleasedEditionToContest(payload: AddReleasedEditionToContestJobPayload): Promise<BackgroundJobOutcome> {
     const { contestId, sportEventId } = payload;
     const contest = await this.contestRepo.findById(contestId);
     if (!contest || contest.sportEventIds.includes(sportEventId)) {
       this.logger.info({ contestId, sportEventId, found: contest !== null }, 'contest management left a released edition out of a contest that is gone or already has it');
-      return;
+      return { changedCount: 0 };
     }
     try {
       await this.changeSportEvents(contest, [...contest.sportEventIds, sportEventId], { onlyIfUnchanged: true });
       this.logger.info({ contestId, sportEventId }, 'contest management added a released edition to a template contest');
+      return { changedCount: 1 };
     } catch (error) {
       if (!(error instanceof ContestManagementError)) {
         throw error;
@@ -718,6 +722,7 @@ export class ContestManagementService {
         sportEventId,
         code: error.code,
       }, 'contest management left a released edition out of a template contest its rules refuse');
+      return { changedCount: 0, heldBack: JobErrorType.CHECK_FAILED };
     }
   }
 

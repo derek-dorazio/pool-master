@@ -11,8 +11,10 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import type { BackgroundJob, BackgroundJobResult, BackgroundJobType } from '@poolmaster/shared/domain';
+import { JobErrorType, type BackgroundJob, type BackgroundJobOutcome, type BackgroundJobType, type JobTrigger } from '@poolmaster/shared/domain';
 import { errorMessageWithCause } from '../../core/error-message';
+import { runWithJobStart, SYSTEM_START } from '../../core/job-start';
+import { jobErrorTypeOf } from './job-error-type';
 import { outsideRequest } from '../../core/request-scope';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
 
@@ -44,15 +46,17 @@ export interface BackgroundJobContext {
    * should stop.
    */
   renewLease: () => Promise<boolean>;
+  /**
+   * What started this job (#1861), for what it records of its own start, such as its sync runs'
+   * trigger. Jobs it queues in turn record SYSTEM.
+   */
+  trigger: JobTrigger;
 }
-
-/** What a handler's promise resolves to: a result to keep on the job, or nothing. */
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- most handlers are `Promise<void>` service calls; `undefined` in its place would make each of them return a value it has no use for.
-export type BackgroundJobOutcome = BackgroundJobResult | void;
 
 /**
  * One handler per job type, exhaustive, so a new type without a handler fails typecheck. A handler
- * may answer what it did (#1819); the job keeps it with SUCCEEDED and Activity shows it.
+ * answers what it did (#1861): how many rows it changed, whether it was held back, and anything to
+ * keep as its result (#1819). The job keeps it with SUCCEEDED and Activity shows it.
  */
 export type BackgroundJobHandlers = {
   [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
@@ -216,7 +220,7 @@ export class BackgroundJobRunner {
     try {
       if (job.attempts > BACKGROUND_JOB_MAX_ATTEMPTS) {
         // Only a lease that lapsed again and again gets here: each task running it stopped mid-run.
-        if (!await this.options.jobs.markFailed(job, { error: 'Gave up: every lease on this job lapsed', completedAt: this.now() })) {
+        if (!await this.options.jobs.markFailed(job, { error: 'Gave up: every lease on this job lapsed', errorType: JobErrorType.TIMEOUT, completedAt: this.now() })) {
           this.lostClaim(job);
           return;
         }
@@ -227,7 +231,7 @@ export class BackgroundJobRunner {
       if (!parsed.success) {
         // A payload that fails its schema fails every try alike, so it is not retried.
         const error = `Invalid payload: ${parsed.error.message}`;
-        if (!await this.options.jobs.markFailed(job, { error, completedAt: this.now() })) {
+        if (!await this.options.jobs.markFailed(job, { error, errorType: JobErrorType.BAD_DATA, completedAt: this.now() })) {
           this.lostClaim(job);
           return;
         }
@@ -237,13 +241,15 @@ export class BackgroundJobRunner {
       const startedAt = this.now().getTime();
       // The registry is exhaustive over the type, so the handler for `job.type` reads this payload.
       const handler = this.options.handlers[job.type] as (payload: unknown, context: BackgroundJobContext) => Promise<BackgroundJobOutcome>;
-      const result = await handler(parsed.data, {
+      // Jobs the handler queues were started by this one (#1861).
+      const outcome = await runWithJobStart(SYSTEM_START, () => handler(parsed.data, {
         jobId: job.id,
         attempt: job.attempts,
         logger: this.options.logger,
         renewLease: () => this.options.jobs.renewLease(job, new Date(this.now().getTime() + BACKGROUND_JOB_LEASE_MS)),
-      });
-      if (!await this.options.jobs.markSucceeded(job, this.now(), result ?? undefined)) {
+        trigger: job.trigger,
+      }));
+      if (!await this.options.jobs.markSucceeded(job, this.now(), outcome)) {
         this.lostClaim(job);
         return;
       }
@@ -269,18 +275,19 @@ export class BackgroundJobRunner {
 
   private async recordFailure(job: BackgroundJob, err: unknown): Promise<void> {
     const error = errorMessageWithCause(err);
-    const refs = { jobId: job.id, type: job.type, attempt: job.attempts, error };
+    const errorType = jobErrorTypeOf(err);
+    const refs = { jobId: job.id, type: job.type, attempt: job.attempts, error, errorType };
     try {
       if (job.attempts <= BACKGROUND_JOB_RETRY_DELAYS_MS.length && !(err instanceof PermanentBackgroundJobError)) {
         const retryInMs = BACKGROUND_JOB_RETRY_DELAYS_MS[job.attempts - 1];
-        if (!await this.options.jobs.markRetry(job, { runAt: new Date(this.now().getTime() + retryInMs), error })) {
+        if (!await this.options.jobs.markRetry(job, { runAt: new Date(this.now().getTime() + retryInMs), error, errorType })) {
           this.lostClaim(job);
           return;
         }
         this.options.logger?.warn({ action: 'backgroundJobs.retry', data: { ...refs, retryInMs } }, 'Background job failed; it will be tried again');
         return;
       }
-      if (!await this.options.jobs.markFailed(job, { error, completedAt: this.now() })) {
+      if (!await this.options.jobs.markFailed(job, { error, errorType, completedAt: this.now() })) {
         this.lostClaim(job);
         return;
       }
@@ -294,3 +301,4 @@ export class BackgroundJobRunner {
     }
   }
 }
+

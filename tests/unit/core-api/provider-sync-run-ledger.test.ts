@@ -1,12 +1,13 @@
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { BackgroundJobType, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
+import { TEST_JOB_START } from '../../support/in-memory-background-jobs';
 
 function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -117,7 +118,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC' });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
     expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('mock-provider', 'linked');
@@ -126,7 +127,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   it('leaves both null for a provider event linked to no event of ours', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC' });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: null, sportLeagueId: null });
   });
@@ -139,9 +140,10 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
       providerId: 'mock-provider',
       submittedAt: now,
       runType: 'MANUAL_EVENT_SYNC',
+      trigger: JobTrigger.ADMIN,
       sportEventId: 'named-event',
       sportLeagueId: 'named-league',
-      job: () => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: {} }),
+      job: () => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: {}, start: TEST_JOB_START }),
     });
 
     expect(run).toMatchObject({ sportEventId: 'named-event', sportLeagueId: 'named-league' });
@@ -165,13 +167,14 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'mock-provider',
       submittedAt: now,
       runType: 'MANUAL_EVENT_SYNC',
-      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) } }),
+      trigger: JobTrigger.ADMIN,
+      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) }, start: TEST_JOB_START }),
     });
 
     expect(syncRuns.create).not.toHaveBeenCalled();
-    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt])).toEqual([
-      ['SUBMITTED', 'EVENTPARTICIPANTS', now],
-      ['SUBMITTED', 'EVENTLIVESCORES', now],
+    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt, run.trigger])).toEqual([
+      ['SUBMITTED', 'EVENTPARTICIPANTS', now, JobTrigger.ADMIN],
+      ['SUBMITTED', 'EVENTLIVESCORES', now, JobTrigger.ADMIN],
     ]);
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ payload: { ids: runs.map((run) => run.id) } })]);
   });
@@ -200,6 +203,7 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'mock-provider',
       submittedAt: now,
       runType: 'SCHEDULED_EVENT_SYNC',
+      trigger: JobTrigger.SCHEDULE,
     });
 
     expect(runs).toHaveLength(1);

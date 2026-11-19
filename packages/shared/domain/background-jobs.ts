@@ -1,4 +1,4 @@
-import { BackgroundJobKind, BackgroundJobType, type BackgroundJobStatus } from './enums';
+import { BackgroundJobKind, BackgroundJobType, type BackgroundJobStatus, type JobErrorType, type JobTrigger, type PersonJobTrigger } from './enums';
 
 /**
  * One background job (#1439): durable work a request handed off, run by whichever server task
@@ -27,9 +27,52 @@ export interface BackgroundJob {
   sportEventId?: string;
   /** What a SUCCEEDED job's handler reported it did (#1819). */
   result?: BackgroundJobResult;
+  /** What started it (#1861). */
+  trigger: JobTrigger;
+  /** The person whose request queued it: set only for ADMIN and COMMISSIONER, while their account exists. */
+  startedBy?: BackgroundJobStarter;
+  /** When its latest try started (#1861); unset until it is first claimed. */
+  startedAt?: Date;
+  /**
+   * How many rows a SUCCEEDED job created or changed (#1861): events, field participants,
+   * contests settled, boards rebuilt, emails queued. Unset until it succeeds.
+   */
+  changedCount?: number;
+  /**
+   * Why it did not do its work (#1861): set with `lastError` on a failed try, and on a job that
+   * finished but was held back, such as a release whose checks failed.
+   */
+  errorType?: JobErrorType;
   createdAt: Date;
   /** When it SUCCEEDED or FAILED. */
   completedAt?: Date;
+}
+
+/** Who started a job from a request (#1861), named as screens name a person. */
+export interface BackgroundJobStarter {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+}
+
+/**
+ * What started a job (#1861): every job queued records one. ADMIN and COMMISSIONER name the
+ * signed-in person whose request queued it; the others name no one.
+ */
+export type JobStart =
+  | { trigger: Exclude<JobTrigger, PersonJobTrigger> }
+  | { trigger: PersonJobTrigger; startedByUserId: string };
+
+/**
+ * What a job's handler reports (#1861): how many rows it created or changed, a reason it was
+ * held back when it finished without doing its work, and anything else to keep as its result.
+ */
+export interface BackgroundJobOutcome {
+  changedCount: number;
+  heldBack?: JobErrorType;
+  result?: BackgroundJobResult;
 }
 
 /** What a job's handler may report it did, kept on the job and shown on Activity (#1819). JSON. */
@@ -53,6 +96,8 @@ export interface BackgroundJobRequest extends BackgroundJobScope {
   /** Due at once when omitted. */
   runAt?: Date;
   dedupeKey?: string;
+  /** What started it (#1861). */
+  start: JobStart;
 }
 
 /**
