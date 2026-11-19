@@ -13,11 +13,12 @@ export function planCapColumns(locale: string) {
       header: 'Cap',
       meta: { info: 'What the plan limits.', type: { kind: 'text' } },
     }),
-    ...LEAGUE_PLANS.map((plan) => capColumn.accessor((row) => row.limits[plan], {
+    // Unlimited sorts and filters as the largest limit: above every number, in both directions.
+    ...LEAGUE_PLANS.map((plan) => capColumn.accessor((row) => row.limits[plan] ?? Number.POSITIVE_INFINITY, {
       id: plan,
       header: LEAGUE_PLAN_LABEL[plan],
       meta: { info: `The most a league on ${LEAGUE_PLAN_LABEL[plan]} may have. Unlimited: no cap.`, type: { kind: 'number' } },
-      cell: ({ getValue }) => formatPlanLimit(getValue(), locale),
+      cell: ({ row }) => formatPlanLimit(row.original.limits[plan], locale),
     })),
   ];
 }

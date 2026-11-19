@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  LeaguePlan,
+  type LeaguePlan,
   PLAN_FEATURE_GROUP,
   PlanCap,
   PlanFeature,
@@ -81,11 +81,3 @@ export function planCapFormSchema(config: PlanConfig, cap: PlanCap) {
     }
   });
 }
-
-/** A feature dialog's Starts at choices: the plan it starts at, and the plans above it that have it too. */
-export const FEATURE_STARTS_AT_LABEL: Readonly<Record<LeaguePlan, string>> = {
-  [LeaguePlan.FREE]: 'Every plan',
-  [LeaguePlan.PRO]: 'Pro and up',
-  [LeaguePlan.PREMIUM]: 'Premium and up',
-  [LeaguePlan.PLATINUM]: 'Platinum only',
-};

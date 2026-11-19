@@ -83,7 +83,7 @@ function CapsSection({ group }: { group: PlanSettingsGroup }) {
 
   return (
     <SectionCard
-      help="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
+      help="The most each plan allows. Entries per contest counts drafts; the sport leagues cap counts the different sport leagues of the league's contests this calendar year."
       padded
       testId="root-admin-plans-caps"
       title="Caps"

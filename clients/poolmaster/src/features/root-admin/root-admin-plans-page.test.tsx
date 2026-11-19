@@ -110,6 +110,24 @@ describe('RootAdminPlansPage', () => {
     expect(leagues.getByText('Unlimited')).toBeInTheDocument();
   });
 
+  it('sorts Unlimited as the largest limit, last going up and first going down', async () => {
+    getSettingsGroupMock.mockResolvedValue({ data: savedGroup({
+      ...planGroupFixture().value,
+      caps: {
+        ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100, PLATINUM: null },
+        SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: 50 },
+      },
+    }) });
+    renderPage();
+    const shownCaps = () => screen.getAllByTestId(/^root-admin-plans-cap-[A-Z_]+$/).map((row) => row.getAttribute('data-testid'));
+
+    await screen.findByTestId('root-admin-plans-cap-ENTRIES_PER_CONTEST');
+    await userEvent.click(screen.getByTestId('data-grid-sort-PLATINUM'));
+    expect(shownCaps()).toEqual(['root-admin-plans-cap-SPORTS_LEAGUES_PER_YEAR', 'root-admin-plans-cap-ENTRIES_PER_CONTEST']);
+    await userEvent.click(screen.getByTestId('data-grid-sort-PLATINUM'));
+    expect(shownCaps()).toEqual(['root-admin-plans-cap-ENTRIES_PER_CONTEST', 'root-admin-plans-cap-SPORTS_LEAGUES_PER_YEAR']);
+  });
+
   it('lists each feature with its group and the plan it starts at', async () => {
     renderPage();
 

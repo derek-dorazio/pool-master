@@ -4,7 +4,7 @@ import { LEAGUE_PLANS, LeaguePlan } from '@poolmaster/shared/domain';
 import { FormField, Select } from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL, PLAN_FEATURE_GROUP_LABEL } from '@/features/plans/plan-labels';
 import { PlanRowDialog, type PlanSettingsGroup } from './plan-row-dialog';
-import { FEATURE_STARTS_AT_LABEL, withPlanFeature, type PlanFeatureGridRow } from './plan-rows';
+import { withPlanFeature, type PlanFeatureGridRow } from './plan-rows';
 
 const featureFormSchema = z.object({ startsAt: z.enum(LeaguePlan) });
 type FeatureFormValues = z.infer<typeof featureFormSchema>;
@@ -31,7 +31,7 @@ export function PlanFeatureDialog({ group, onClose, row }: { group: PlanSettings
         <FormField help="The first plan with it; every plan above has it too." label="Starts at">
           <Select data-testid={`${testId}-starts-at-select`} {...form.register('startsAt')}>
             {LEAGUE_PLANS.map((plan) => (
-              <option key={plan} value={plan}>{FEATURE_STARTS_AT_LABEL[plan]}</option>
+              <option key={plan} value={plan}>{LEAGUE_PLAN_LABEL[plan]}</option>
             ))}
           </Select>
         </FormField>
