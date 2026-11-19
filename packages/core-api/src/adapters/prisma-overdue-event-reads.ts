@@ -17,19 +17,22 @@ import {
 export type OverdueCandidate = OverdueEventFacts & { eventSeriesId: string };
 
 /**
- * Every event that may be overdue at `now`, of every series or only of `eventSeriesIds`. The
- * judging itself is `overdueExpectedEnd`; this reads what it needs.
+ * Every event that may be overdue at `now`, of every series or only of `eventSeriesIds`, and only
+ * `eventIds` when given (the Event page's one event, #1889). The judging itself is
+ * `overdueExpectedEnd`; this reads what it needs.
  */
 export async function readOverdueCandidates(
   prisma: PrismaClient,
   now: Date,
   eventSeriesIds?: readonly string[],
+  eventIds?: readonly string[],
 ): Promise<OverdueCandidate[]> {
   const events = await prisma.sportEvent.findMany({
     where: {
       status: { notIn: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] },
       startDate: { lt: overdueStartCutoff(now) },
       ...(eventSeriesIds !== undefined && { eventSeriesId: { in: [...eventSeriesIds] } }),
+      ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
       id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true, parentEventId: true, parentRoundNumbers: true,

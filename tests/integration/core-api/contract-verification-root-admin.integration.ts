@@ -1,4 +1,7 @@
 import { expect } from '@jest/globals';
+import { AppSettingsService } from '../../../packages/core-api/src/modules/platform/app-settings-service';
+import { IngestionConfigService } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
 import { randomUUID } from 'node:crypto';
 import Fastify from 'fastify';
 import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
@@ -78,6 +81,7 @@ import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import {
   PrismaBackgroundJobRepository,
   PrismaParticipantProviderMappingRepository,
+  PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -380,7 +384,17 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   });
   await app.register(activityModule, { prefix: '/api/v1/activity', activity });
   await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
-  await app.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry: registry, cdn: new RecordingCdnInvalidator(), leaderboards: new RecordingLeaderboardRebuilds() });
+  const settings = new AppSettingsService({ repository: new PrismaPlatformRuntimeConfigRepository(prisma), groups: SETTINGS_GROUPS, env: process.env });
+  await settings.load();
+  await app.register(eventsModule, {
+    prefix: '/api/v1/events',
+    ingestionService,
+    providerRegistry: registry,
+    cdn: new RecordingCdnInvalidator(),
+    leaderboards: new RecordingLeaderboardRebuilds(),
+    schedule: new IngestionConfigService(settings),
+    webhookProviderIds: [],
+  });
   await app.ready();
 
   return app;

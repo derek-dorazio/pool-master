@@ -691,6 +691,29 @@ export interface SportLeaguePageParticipant {
   mapping: { externalId: string; lastSeenAt: Date | null } | null;
 }
 
+/** One field row of an event as its Event page reads it (#1889). */
+export interface SportEventPageFieldRow {
+  id: string;
+  isActive: boolean;
+  oddsToWin: number | null;
+  seedNumber: number | null;
+  ranking: number | null;
+  name: string;
+  /** Its participant's latest provider mapping in the event's sport league, if any. */
+  mapping: { externalId: string; lastSeenAt: Date | null } | null;
+}
+
+/** What the Event page's header and sync rows are computed from, in a fixed number of reads. */
+export interface SportEventPageFacts {
+  league: SportLeaguePageLeague;
+  event: SportLeaguePageEvent;
+  /** The event's latest run of each kind. */
+  latestRuns: SportLeaguePageRun[];
+  /** The event itself when it may be overdue; empty otherwise. */
+  overdueCandidates: OverdueEventFacts[];
+  field: SportEventPageFieldRow[];
+}
+
 export interface SportLeaguePageReader {
   /** Null when the league does not exist. */
   readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null>;
@@ -698,6 +721,8 @@ export interface SportLeaguePageReader {
   readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null>;
   /** Null when the league does not exist. */
   readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null>;
+  /** One event's facts (#1889). Null when the event does not exist. */
+  readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
 }
 
 /** A profile write: its name and values. */

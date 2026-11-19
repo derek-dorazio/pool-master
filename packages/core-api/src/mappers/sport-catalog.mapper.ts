@@ -7,6 +7,7 @@ import {
   SportLeagueIssueType,
   assertNever,
   type SportConfig,
+  type SportEventOverview,
   type SportLeagueEventOverview,
   type SportLeagueIssue,
   type SportLeagueIssueTarget,
@@ -20,6 +21,7 @@ import type {
   SportLeagueRankingUploadPreviewRowDto,
   SportLeagueIssueDto,
   SportLeagueEventOverviewDto,
+  SportEventOverviewDto,
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeagueSyncDto,
@@ -124,6 +126,24 @@ export function mapSportLeagueSyncToDto(sync: SportLeagueSync): SportLeagueSyncD
         changedCount: sync.lastRun.changedCount,
       },
     nextRunAt: sync.nextRunAt?.toISOString() ?? null,
+  };
+}
+
+export function mapSportEventOverviewToDto(overview: SportEventOverview): SportEventOverviewDto {
+  return {
+    syncHealth: overview.syncHealth,
+    syncs: overview.syncs.map(mapSportLeagueSyncToDto),
+    issues: overview.issues.map(mapSportLeagueIssueToDto),
+    releaseMode: overview.releaseMode,
+    releaseAt: overview.releaseAt?.toISOString() ?? null,
+    releaseAtKind: overview.releaseAtKind,
+    tierOrderBasis: overview.tierOrderBasis,
+    tierOrderCoversField: overview.tierOrderCoversField,
+    fieldFeed: overview.fieldFeed.map((row) => ({
+      sportEventParticipantId: row.sportEventParticipantId,
+      feedId: row.feedId,
+      lastInFeedAt: row.lastInFeedAt?.toISOString() ?? null,
+    })),
   };
 }
 
