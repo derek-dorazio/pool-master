@@ -23049,10 +23049,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23182,10 +23182,10 @@ export interface components {
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
             /**
-             * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
              * @enum {string}
              */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
             /**
              * Format: uuid
              * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23444,10 +23444,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23589,10 +23589,10 @@ export interface components {
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
                 /**
-                 * @description What started a sync run: its SCHEDULE, the provider's WEBHOOK, or an ADMIN's Sync now.
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
                  * @enum {string}
                  */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN";
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
                 /**
                  * Format: uuid
                  * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
@@ -23869,6 +23869,32 @@ export interface components {
             completedAt: string | null;
             /** @description The error of its last failed try. */
             lastError: string | null;
+            /**
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+            /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+            startedBy: {
+                /** Format: uuid */
+                id: string;
+                /** @description Their name, for display. */
+                displayName: string;
+            } | null;
+            /**
+             * Format: date-time
+             * @description When its latest try started; null until it is first claimed.
+             */
+            startedAt: string | null;
+            /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+            durationSeconds: number | null;
+            /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+            changedCount: number | null;
+            /**
+             * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+             * @enum {string|null}
+             */
+            errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
             /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
             result: {
                 [key: string]: unknown;
@@ -23955,6 +23981,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;
@@ -24013,6 +24065,32 @@ export interface components {
                 completedAt: string | null;
                 /** @description The error of its last failed try. */
                 lastError: string | null;
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /** @description The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted. */
+                startedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /**
+                 * Format: date-time
+                 * @description When its latest try started; null until it is first claimed.
+                 */
+                startedAt: string | null;
+                /** @description How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED. */
+                durationSeconds: number | null;
+                /** @description How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds. */
+                changedCount: number | null;
+                /**
+                 * @description Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.
+                 * @enum {string|null}
+                 */
+                errorType: "RATE_LIMITED" | "TIMEOUT" | "PROVIDER_ERROR" | "BAD_DATA" | "CHECK_FAILED" | "OTHER" | null;
                 /** @description What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run. */
                 result: {
                     [key: string]: unknown;

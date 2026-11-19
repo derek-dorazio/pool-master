@@ -68,6 +68,24 @@ export const ReadOnlyDetail: StoryObj = {
   ),
 };
 
+/** A look-only dialog with one action that changes nothing, such as checking a provider again. */
+export const ReadOnlyWithAction: StoryObj = {
+  render: () => (
+    <ReadOnlyDetailModal
+      action={{ label: "Check now", onClick: () => undefined }}
+      detailContent={<Text>No Edit: the key and the rate are set in Terraform.</Text>}
+      details={[
+        { id: "status", label: "Status", value: "Up" },
+        { id: "rate", label: "Requests a minute", value: 5 },
+      ]}
+      onCancel={() => undefined}
+      onOpenChange={() => undefined}
+      open
+      title="BALLDONTLIE"
+    />
+  ),
+};
+
 function DetailEditDemo() {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [days, setDays] = useState("3");

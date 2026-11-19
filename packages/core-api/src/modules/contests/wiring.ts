@@ -38,6 +38,7 @@ import { ContestService } from './service';
 import { JobLeaderboardRebuilds, readLeaderboardSnapshotMaxAgeMs, type LeaderboardRebuilds } from './leaderboard-snapshots';
 import { createChampionshipService } from '../championship/wiring';
 import { BackgroundJobQueue } from '../background-jobs';
+import { currentJobStart } from '../../core/job-start';
 
 /** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
 function createContestLeaderboardReadDeps(
@@ -91,7 +92,7 @@ export function createContestService(
     leaderboardSnapshotMaxAgeMs,
     // Stale stored boards that my entries or a cup's projection computed are rebuilt by a job
     // (#1788), which the runner on any task claims on its next poll.
-    leaderboardRebuilds: new JobLeaderboardRebuilds(new BackgroundJobQueue({ jobs: new PrismaBackgroundJobRepository(prisma) })),
+    leaderboardRebuilds: new JobLeaderboardRebuilds(new BackgroundJobQueue({ jobs: new PrismaBackgroundJobRepository(prisma), currentStart: currentJobStart })),
   });
 }
 

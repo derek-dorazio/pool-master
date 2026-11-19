@@ -15,7 +15,7 @@ on one server task*). The job table is for one-off work.
 |---|---|---|---|
 | `MANUAL_EVENT_SYNC` | A root admin's event sync (`submitEventSync`, #1441), with the `SUBMITTED` runs in one transaction | `IngestionService.runManualEventSync`: runs each run's feed in turn | It runs only the runs still `SUBMITTED`, so a feed an earlier try started never runs twice; on a retry, a run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted (#1445). A feed whose failure could not be written fails the job after the other feeds, so that retry happens. A feed that fails is recorded on its run; the job still succeeds |
 | `PROVIDER_EVENT_SYNC` | A verified provider webhook about a game or tournament linked to an in-progress event (`ProviderNotificationService.receive`, #1498): one job per notified event, due about 60 seconds out so a burst coalesces. Payload: the sport, the provider and the event's external id; dedupe key `provider-event-sync:<providerId>:<externalId>` (hashed when too long), released when a worker claims the job | `IngestionScheduler.runNotifiedEventSync`: one live-score sync of the event, recorded as a `WEBHOOK_EVENT_SYNC` run; skipped when the sport is not scheduled or its live scores are off. The flow is in `docs/LIVE-SPORTS-DATA-SYNC.md` | It reads the provider's current scores over REST and writes them through the same writers as the scheduled sweep, so a repeat writes the same state, and nothing from the delivery itself is stored |
-| `SYNC_LEAGUE_EVENTS` | A root admin's **Sync now** on a synced sport league (`POST /api/v1/ingestion/sport-leagues/:id/events-sync`, the one asked year or this year and next), and the synced league sweep every 6 hours (`LeagueEventsSync.queueScheduled`, one job per synced league, #1819). Payload: the league, its years, the trigger (`ADMIN` or `SCHEDULE`) and who asked; dedupe key `SYNC_LEAGUE_EVENTS:<sportLeagueId>:<years>`, so a press for another year gets its own job | `LeagueEventsSync.run`: one `EVENTS` sync run per job, created `IN_PROGRESS` with the job's id; for each year it lists the provider's events, creates the new ones and keeps the rest current, writing progress to the run; the run ends `COMPLETED` with what changed, and the job's result carries the counts. A league gone or no longer synced, or a provider refusal that would repeat, is a `PermanentBackgroundJobError` | Creating an event is keyed by the provider and its external id, so a retry updates what an earlier try created; on a retry the run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted |
+| `SYNC_LEAGUE_EVENTS` | A root admin's **Sync now** on a synced sport league (`POST /api/v1/ingestion/sport-leagues/:id/events-sync`, the one asked year or this year and next), and the synced league sweep every 6 hours (`LeagueEventsSync.queueScheduled`, one job per synced league, #1819). Payload: the league and its years (what started it, and the admin, are the job's own, #1861); dedupe key `SYNC_LEAGUE_EVENTS:<sportLeagueId>:<years>`, so a press for another year gets its own job | `LeagueEventsSync.run`: one `EVENTS` sync run per job, created `IN_PROGRESS` with the job's id; for each year it lists the provider's events, creates the new ones and keeps the rest current, writing progress to the run; the run ends `COMPLETED` with what changed, and the job's result carries the counts. A league gone or no longer synced, or a provider refusal that would repeat, is a `PermanentBackgroundJobError` | Creating an event is keyed by the provider and its external id, so a retry updates what an earlier try created; on a retry the run an earlier try left `IN_PROGRESS` is marked `FAILED` as interrupted |
 | `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
 | `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
 | `CONTEST_REOPENED_EMAILS` | Each live contest a postponement takes back to `OPEN` while its event's start is ahead (`EventLifecycleService.followPostponedStart`, #1808), with its move. Payload: the contest, the event and the start the reopen set; dedupe key `CONTEST_REOPENED_EMAILS:<contestId>:<sportEventId>:reopened-<start>` | `ContestEmailJobs.contestReopened`: reads the contest and event again and queues "Picks are open again" to the league; a contest no longer open to that start, or gone, is skipped | Keyed by the contest, the event, the start and the person, so a retry queues only what an earlier try did not |
@@ -46,10 +46,32 @@ handler is idempotent.
 - A handler throws `PermanentBackgroundJobError` for a failure every try would repeat; the job
   is `FAILED` at once, with no retry.
 
+## Trigger and outcome (#1861)
+
+- **Trigger**: every job records what started it, `SCHEDULE`, `WEBHOOK`, `ADMIN`,
+  `COMMISSIONER` or `SYSTEM`, and for `ADMIN` and `COMMISSIONER` the person
+  (`started_by_user_id`). The queue reads it from the entry point's scope (`core/job-start.ts`):
+  a timed sweep and the sync scheduler open `SCHEDULE`, the webhook receiver passes `WEBHOOK`,
+  the runner opens `SYSTEM` around each handler, and a request records the role its route
+  requires (the root admin guard `ADMIN`, a commissioner gate `COMMISSIONER`, even for a root
+  admin) or `SYSTEM` for upkeep a member's request asks for. A job queued outside any of them
+  throws `JobStartMissingError`. A member's own action never queues a job of its own
+  (`rules/architecture-rules.md` §4 *Service Topology*). A sync run records its job's trigger.
+- **Changed count**: each handler returns `{ changedCount }`, the rows it created or changed
+  (emails queued, events created or updated, contests settled, boards written); null on a job
+  that has not succeeded.
+- **Error type** (`JobErrorType`): set with the error on a retry or failure (`RATE_LIMITED` for a
+  provider's 429, `TIMEOUT` for an aborted request or lapsed leases, `PROVIDER_ERROR` for another
+  provider error status or refusal, `BAD_DATA` for a payload or response that broke its schema,
+  `OTHER` otherwise), and `CHECK_FAILED` on a succeeded job a check held back (a release hold, a
+  contest whose rules refused an added event).
+- **Duration**: `started_at` is set when a try is claimed; Activity answers `durationSeconds`
+  from it to `completed_at`.
 ## Activity
 
 `GET /api/v1/activity` (root admin) lists jobs newest first, narrowed by kind, status, league or
-event, each with the ids of the sync runs it recorded. There is no paging: the read is bounded
+event, each with the ids of the sync runs it recorded, its trigger and starter (`startedBy`, with
+a display name, read in one batched query), changed count, error type and duration. There is no paging: the read is bounded
 by its window instead, `from` to `to`, which defaults to the last 24 hours, or the whole 30 days
 kept when a league or event narrows it; a `from` after `to` answers 400 `ACTIVITY_WINDOW_INVALID`. One address may read it 60 times a minute (`@fastify/rate-limit` on this route only, per process); more answer 429 `ACTIVITY_RATE_LIMITED`. It costs the same statements for any number of jobs
 (pinned in `root-admin-route-query-scaling.integration.ts`).
@@ -102,7 +124,7 @@ job runs outside any request: its own reads, no request query budget.
 | What happens | The job becomes |
 |---|---|
 | Claimed | `RUNNING`, one more attempt, leased for 5 minutes |
-| The handler finishes | `SUCCEEDED`, with its result if it returned one |
+| The handler finishes | `SUCCEEDED`, with its changed count and its result if it returned one |
 | The handler throws | `QUEUED` again, due 1, 5 then 30 minutes later; on the fourth failure, `FAILED` |
 | Its stored payload fails its schema | `FAILED` at once: every try would fail alike |
 | The handler throws `PermanentBackgroundJobError` | `FAILED` at once |

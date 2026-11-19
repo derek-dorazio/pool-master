@@ -4,7 +4,7 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { IngestionJobStatus, ProviderSyncKind, ProviderSyncRunStatus, ProviderSyncTrigger, Sport } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, JobTrigger, ProviderHealthStatus, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -51,8 +51,7 @@ export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
 
 // --- Providers ---
 
-export const ProviderHealthStatusSchema = z.enum(['HEALTHY', 'DEGRADED', 'DOWN']);
-export type ProviderHealthStatus = z.infer<typeof ProviderHealthStatusSchema>;
+export const ProviderHealthStatusSchema = z.enum(ProviderHealthStatus);
 
 export const ProviderSummaryDtoSchema = z.object({
   providerId: z.string().describe('Registered provider identifier.'),
@@ -80,7 +79,7 @@ export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 
 export const ProviderSyncRunStatusSchema = z.enum(ProviderSyncRunStatus);
 export const ProviderSyncKindSchema = z.enum(ProviderSyncKind).describe('What a sync run syncs: a sport league\'s EVENTS, an event\'s FIELD, or an event\'s SCORES.');
-export const ProviderSyncTriggerSchema = z.enum(ProviderSyncTrigger).describe('What started a sync run: its SCHEDULE, the provider\'s WEBHOOK, or an ADMIN\'s Sync now.');
+export const JobTriggerSchema = z.enum(JobTrigger).describe('What started a job or sync run: a SCHEDULE, the provider\'s WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league\'s COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board\'s rebuild). A person\'s trigger is the role the route requires, not their highest role. A sync run has its job\'s.');
 
 export const ProviderSyncOutcomeSeveritySchema = z.enum(['SUCCESS', 'WARNING', 'ERROR']);
 export type ProviderSyncOutcomeSeverity = z.infer<typeof ProviderSyncOutcomeSeveritySchema>;
@@ -223,7 +222,7 @@ export const ProviderSyncRunDtoSchema = z.object({
   sport: SportDtoSchema,
   eventId: z.string().nullable().describe('Provider event identifier when the run was narrowed to one event; null for a whole-sport run.'),
   kind: ProviderSyncKindSchema,
-  trigger: ProviderSyncTriggerSchema,
+  trigger: JobTriggerSchema,
   sportLeagueId: z.uuid().nullable().describe('The sport league an EVENTS run synced, or a FIELD or SCORES run\'s event\'s league, where known.'),
   sportEventId: z.uuid().nullable().describe('The PoolMaster event a FIELD or SCORES run synced, where known.'),
   backgroundJobId: z.uuid().nullable().describe('The background job that ran it (its Activity row); null when no job ran it.'),

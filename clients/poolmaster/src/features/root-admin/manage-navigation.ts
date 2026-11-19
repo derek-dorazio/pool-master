@@ -62,10 +62,14 @@ export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 export const EVENTS_PATH = '/manage/events';
 export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
 
+/** The providers and the one sync schedule every sport league follows (#1873). */
+export const PROVIDERS_PATH = '/manage/providers';
+
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans. Activity, Notifications and Providers have no pages of their own yet, so each opens
- * today's page for it: the sync runs, the settings and Run event sync.
+ * Plans. Activity and Notifications have no pages of their own yet, so each opens today's page for
+ * it: the sync runs and the settings. Providers keeps Run event sync and Unmapped participants lit
+ * until they move.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
@@ -74,8 +78,8 @@ const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   {
     key: 'providers',
     title: 'Providers',
-    to: '/manage/sync/run-event-sync',
-    paths: ['/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
+    to: PROVIDERS_PATH,
+    paths: [PROVIDERS_PATH, '/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
   },
   { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
@@ -90,8 +94,6 @@ export const SEARCH_DEBOUNCE_MS = 300;
 export function buildManageUserPath(userId: string) {
   return `/manage/users/${userId}`;
 }
-
-export const SETTINGS_PATH = '/manage/settings';
 
 export const PLANS_PATH = '/manage/plans';
 
@@ -180,7 +182,7 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   'run-event-sync': 'Run event sync',
   'unmapped-participants': 'Unmapped participants',
   map: 'Map competitor',
-  'ingestion-schedule': 'Global Ingestion Schedule',
+  providers: 'Providers',
   field: 'Field',
   tiers: 'Tiers',
   results: 'Results',

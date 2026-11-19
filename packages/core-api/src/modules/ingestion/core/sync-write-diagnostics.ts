@@ -79,3 +79,13 @@ export function syncWriteStats(
     writeDeleted: diagnostics.summary.deleted,
   };
 }
+
+/**
+ * The rows a sync wrote (#1861): created, updated and deleted. A feed that reports no writes
+ * wrote none: every feed that writes reports its diagnostics.
+ */
+export function syncChangedRows(diagnostics: SyncWriteDiagnostics | undefined): number {
+  if (!diagnostics) return 0;
+  const { created, updated, deleted } = diagnostics.summary;
+  return created + updated + deleted;
+}

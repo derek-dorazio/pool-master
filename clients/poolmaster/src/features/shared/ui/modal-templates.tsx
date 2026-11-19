@@ -357,7 +357,8 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
     label: ReactNode;
     value: ReactNode;
   }>;
-  detailContent: ReactNode;
+  /** What it shows under the details; without it the details stand alone. */
+  detailContent?: ReactNode;
   /** What Copy puts on the clipboard; without it the modal has no Copy button. */
   copyText?: string;
   /** Fills a phone's screen, for a dialog that holds a whole page. */
@@ -367,9 +368,21 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
    * such as a pick screen's preview: the content sits unboxed and the dialog itself scrolls.
    */
   size?: "sm" | "lg" | "xl";
+  /**
+   * One thing the dialog can do besides Close that changes nothing, such as checking a provider
+   * again; the primary button after Close. Held while it runs.
+   */
+  action?: {
+    label: string;
+    onClick: () => void;
+    isPending?: boolean;
+    pendingLabel?: string;
+    testId?: string;
+  };
 };
 
 export function ReadOnlyDetailModal({
+  action,
   copyLabel = "Copy details",
   copyText,
   description,
@@ -389,9 +402,20 @@ export function ReadOnlyDetailModal({
       footer={
         <>
           {copyText === undefined ? null : <CopyButton label={copyLabel} text={copyText} />}
-          <Button onClick={onCancel} type="button">
+          <Button onClick={onCancel} type="button" variant={action ? "secondary" : undefined}>
             Close
           </Button>
+          {action ? (
+            <Button
+              data-testid={action.testId}
+              disabled={action.isPending}
+              onClick={action.onClick}
+              type="button"
+              variant="primary"
+            >
+              {action.isPending ? (action.pendingLabel ?? action.label) : action.label}
+            </Button>
+          ) : null}
         </>
       }
       isFullScreenOnPhone={isFullScreenOnPhone}
@@ -405,17 +429,19 @@ export function ReadOnlyDetailModal({
       {details?.length ? (
         <FactList columns={2} facts={details} layout="columns" />
       ) : null}
-      <div
-        className={cn(
-          size === "xl"
-            ? null
-            : "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
-          details?.length ? "mt-4" : null,
-        )}
-        data-testid={testId ? `${testId}-content` : undefined}
-      >
-        {detailContent}
-      </div>
+      {detailContent === undefined ? null : (
+        <div
+          className={cn(
+            size === "xl"
+              ? null
+              : "max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground",
+            details?.length ? "mt-4" : null,
+          )}
+          data-testid={testId ? `${testId}-content` : undefined}
+        >
+          {detailContent}
+        </div>
+      )}
     </Modal>
   );
 }

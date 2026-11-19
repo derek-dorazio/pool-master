@@ -22,7 +22,7 @@ import {
   LiveScoreResultSchema,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import { SportEventStatus, JobErrorType } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
@@ -31,6 +31,9 @@ import type { EventFieldCache } from '../../events/event-field-cache';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
 
 export class LiveScoreValidationError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.BAD_DATA;
+
   constructor(reason: string, public readonly issues: unknown) {
     super(`LiveScoreResult failed Zod validation: ${reason}`);
     this.name = 'LiveScoreValidationError';

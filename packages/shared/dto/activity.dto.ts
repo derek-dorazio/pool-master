@@ -3,13 +3,15 @@
  * and the rest), filtered by kind, status, sport league and event. Root admin only.
  */
 import { z } from 'zod';
-import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType } from '@poolmaster/shared/domain';
+import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobErrorType } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { JobTriggerSchema } from './ingestion.dto';
 import { registerSchema } from './schema-registry';
 
 export const BackgroundJobKindSchema = z.enum(BackgroundJobKind).describe('What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event\'s RELEASE, or OTHER.');
 export const BackgroundJobStatusSchema = z.enum(BackgroundJobStatus).describe('QUEUED waits for its run time, RUNNING is claimed, SUCCEEDED finished, FAILED will not run again.');
 export const BackgroundJobTypeSchema = z.enum(BackgroundJobType).describe('The job\'s handler. Its kind follows from it.');
+export const JobErrorTypeSchema = z.enum(JobErrorType).describe('Why a job did not do its work: the provider RATE_LIMITED it, a request hit a TIMEOUT, the provider answered with a PROVIDER_ERROR, BAD_DATA came back or was given, a CHECK_FAILED (such as an event\'s ready checks before release), or OTHER.');
 
 export const ActivityJobDtoSchema = z.object({
   id: z.uuid(),
@@ -23,6 +25,15 @@ export const ActivityJobDtoSchema = z.object({
   createdAt: DateTimeSchema.describe('When it was queued.'),
   completedAt: DateTimeSchema.nullable().describe('When it SUCCEEDED or FAILED.'),
   lastError: z.string().nullable().describe('The error of its last failed try.'),
+  trigger: JobTriggerSchema,
+  startedBy: z.object({
+    id: z.uuid(),
+    displayName: z.string().describe('Their name, for display.'),
+  }).nullable().describe('The person whose request started an ADMIN or COMMISSIONER job; null for any other trigger, or when that account was deleted.'),
+  startedAt: DateTimeSchema.nullable().describe('When its latest try started; null until it is first claimed.'),
+  durationSeconds: z.number().int().nonnegative().nullable().describe('How long its latest try took, in whole seconds, from startedAt to completedAt; null until it SUCCEEDED or FAILED.'),
+  changedCount: z.number().int().nonnegative().nullable().describe('How many rows a SUCCEEDED job created or changed: events, field participants, contests settled, boards rebuilt, emails queued. Null until it succeeds.'),
+  errorType: JobErrorTypeSchema.nullable().describe('Why it did not do its work: set with lastError on a failed try (kept while it waits to be retried, and once FAILED), and on a SUCCEEDED job that was held back, such as a release whose checks failed (CHECK_FAILED). Null otherwise.'),
   result: JsonObjectSchema.nullable().describe('What its handler reported it did, once SUCCEEDED; null when it reported nothing. An events sync reports its created, updated and skipped counts and its run.'),
   syncRunIds: z.array(z.uuid()).describe('The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts.'),
 }).describe('One background job on the Activity grid.');

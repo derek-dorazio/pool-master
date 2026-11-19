@@ -1,5 +1,5 @@
 import { expect, jest } from '@jest/globals';
-import { BackgroundJobType, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -18,6 +18,7 @@ const SETTLE_GAME_JOB: BackgroundJobRequest = {
   type: BackgroundJobType.SETTLE_GAME_CONTESTS,
   payload: { sportEventId: 'event', sportEventMatchId: 'game', completedAt: AS_OF.toISOString() },
   dedupeKey: 'SETTLE_GAME_CONTESTS:game',
+  start: { trigger: JobTrigger.ADMIN, startedByUserId: 'admin' },
 };
 
 /** A lifecycle's game settlement that hands over SETTLE_GAME_JOB, and records the wake after the write. */
