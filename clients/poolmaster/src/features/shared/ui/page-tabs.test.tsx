@@ -42,6 +42,20 @@ describe("PageTabs", () => {
     expect(screen.getByRole("link", { name: "Current 3" })).toBeInTheDocument();
   });
 
+  it("explains on hover what a view's count counts, when given a hint", () => {
+    render(
+      <MemoryRouter>
+        <PageTabs
+          aria-label="League views"
+          items={[{ count: 2, countHint: "Jobs that failed in the past day", isActive: false, label: "Activity", to: "/activity" }]}
+          variant="link"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("2")).toHaveAttribute("title", "Jobs that failed in the past day");
+  });
+
   it("switches state-backed views as Radix tabs, telling the page which one was chosen", async () => {
     const onValueChange = vi.fn();
     render(

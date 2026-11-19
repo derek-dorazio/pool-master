@@ -1,5 +1,7 @@
+import { ParticipantRoundStatus, RoundStatus } from '@poolmaster/shared/domain';
 import { dailyRoundSchedule, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { expectDefined } from '../../support/expect-defined';
 
 // The round schedule's rules against an in-memory store: the default is sequential days, new
 // events' schedules are written together, and rescheduling only ever moves rounds that exist.
@@ -111,5 +113,31 @@ describe('SportEventRoundService.extendTo', () => {
     await service.extendTo({ sportEventId: event.id, rounds: 2, startDate: new Date('2030-01-01T00:00:00.000Z') });
 
     expect(store.roundRows.map((round) => round.scheduledDate.toISOString().slice(0, 10))).toEqual(['2026-06-04', '2026-06-05']);
+  });
+});
+
+describe('SportEventRoundService.listRoundViews (#1889)', () => {
+  it('gives each round where it stands from its recorded results, and a round with none as scheduled', async () => {
+    const { store, event } = setup();
+    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: START }, { roundNumber: 2, scheduledDate: START }]);
+    const rounds = store.roundRepo();
+    const [first] = await rounds.findBySportEvent(event.id);
+    const completedAt = new Date('2026-06-04T22:00:00.000Z');
+    const service = new SportEventRoundService({
+      rounds: {
+        ...rounds,
+        findResultFacts: async () => new Map([[expectDefined(first).id, {
+          matches: [],
+          participantRounds: [{ status: ParticipantRoundStatus.COMPLETED, count: 3, lastCompletedAt: completedAt }],
+        }]]),
+      },
+    });
+
+    const views = await service.listRoundViews(event.id);
+
+    expect(views.map((view) => [view.roundNumber, view.progress])).toEqual([
+      [1, { status: RoundStatus.COMPLETED, resultCount: 3, completedAt }],
+      [2, { status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null }],
+    ]);
   });
 });

@@ -10,12 +10,13 @@ import {
   type ReleaseCheck,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SportEventStatus,
-  type SportEventRound,
+  type SportEventContest,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
 import type {
   ImportSportEventYearFromProviderResponse,
   ReleaseCheckDto,
+  SportEventContestListResponse,
   SportEventDto,
   SportEventLiveSimulationResponse,
   SportEventRoundDto,
@@ -25,6 +26,7 @@ import type {
 import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import type { ProviderEventYearImport, SportEventSummary } from '../modules/events/service';
+import type { SportEventRoundView } from '../modules/events/sport-event-round-service';
 
 /**
  * The statuses the generic transition may move an event to. DRAFT → SCHEDULED is declared,
@@ -80,6 +82,9 @@ export function mapSportEventToDto({
     providerSynced: isProviderSyncedEvent(event),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
+    lastAutoReleaseCheck: event.autoReleaseCheck
+      ? { checkedAt: event.autoReleaseCheck.checkedAt.toISOString(), outcome: event.autoReleaseCheck.outcome, failedChecks: [...event.autoReleaseCheck.failedChecks] }
+      : null,
     adminCounts,
     releaseChecks: releaseChecks?.map(mapReleaseCheckToDto) ?? null,
     allowedTransitions: genericTransitionsFrom(event.status),
@@ -97,13 +102,32 @@ export function mapSportEventYearsToResponse(years: readonly number[]): SportEve
   return { years: [...years] };
 }
 
-export function mapSportEventRoundToDto(round: SportEventRound): SportEventRoundDto {
+export function mapSportEventRoundToDto(round: SportEventRoundView): SportEventRoundDto {
   return {
     id: round.id,
     sportEventId: round.sportEventId,
     roundNumber: round.roundNumber,
     scheduledDate: round.scheduledDate.toISOString(),
     scheduledEndAt: round.scheduledEndAt?.toISOString() ?? null,
+    status: round.progress.status,
+    resultCount: round.progress.resultCount,
+    completedAt: round.progress.completedAt?.toISOString() ?? null,
+  };
+}
+
+export function mapSportEventContestsToResponse(contests: readonly SportEventContest[]): SportEventContestListResponse {
+  return {
+    contests: contests.map((contest) => ({
+      id: contest.id,
+      name: contest.name,
+      status: contest.status,
+      leagueId: contest.league.id,
+      leagueName: contest.league.name,
+      contestTemplateId: contest.contestTemplate?.id ?? null,
+      contestTemplateName: contest.contestTemplate?.name ?? null,
+      entryCount: contest.entryCount,
+      createdAt: contest.createdAt.toISOString(),
+    })),
   };
 }
 

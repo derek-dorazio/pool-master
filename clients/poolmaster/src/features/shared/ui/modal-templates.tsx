@@ -4,10 +4,12 @@ import { Button } from "./button";
 import { cn } from "./class-names";
 import { CopyButton } from "./copy-button";
 import { DialogActions } from "./dialog-actions";
+import { Eyebrow } from "./eyebrow";
 import { FormField, Input } from "./form-field";
 import { Notice } from "./notice";
 import { FactList, type Fact } from "./fact-list";
 import { Modal } from "./modal";
+import { SectionRow, SectionRows } from "./section-card";
 import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
 
@@ -97,11 +99,41 @@ export function FormModal({
   );
 }
 
+/** One action in a detail dialog's Actions section: its name, a line on what it does, and its button. */
+export type DetailAction = {
+  id: string;
+  name: ReactNode;
+  description: ReactNode;
+  /** The button, which usually opens the action's own confirm dialog. */
+  control: ReactNode;
+  testId?: string;
+};
+
+/** A titled part of a dialog's body, such as Details or Actions: a small caption over its content. */
+export function DialogSection({ children, testId, title }: { children: ReactNode; testId?: string; title: string }) {
+  return (
+    <section aria-label={title} className="space-y-2" data-testid={testId}>
+      <Eyebrow tone="muted">{title}</Eyebrow>
+      {children}
+    </section>
+  );
+}
+
 export type DetailEditModalProps = BaseModalTemplateProps & {
   /** `view` shows the facts with Close and Edit; `edit` shows the form with Cancel and Save. */
   mode: "view" | "edit";
   /** Every setting as it stands, shown first. */
   facts: Fact[];
+  /**
+   * What can be done to the thing, each with its own button, under the facts in `view`. Given, the
+   * facts sit in a Details section and these in an Actions section.
+   */
+  actions?: DetailAction[];
+  /**
+   * The facts' section title, such as "Subscription", when the dialog has more than one
+   * section; `viewContent` then carries the others under their own `Eyebrow`.
+   */
+  factsTitle?: string;
   /** More to see under the facts in `view`, such as the sport leagues naming a profile. */
   viewContent?: ReactNode;
   /** The form's fields, shown in `edit`. */
@@ -134,6 +166,7 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
  * facts, and Save. A refused save stays in the form with a red bar above the buttons.
  */
 export function DetailEditModal({
+  actions,
   canSave = true,
   children,
   description,
@@ -142,6 +175,7 @@ export function DetailEditModal({
   error,
   errorFallback,
   facts,
+  factsTitle,
   isPending = false,
   mode,
   onCancel,
@@ -193,8 +227,30 @@ export function DetailEditModal({
       testId={testId}
       title={title}
     >
-      {mode === "view" ? (
+      {mode === "view" && actions ? (
+        <div className="space-y-5">
+          <DialogSection testId={testId ? `${testId}-details` : undefined} title={factsTitle ?? "Details"}>
+            <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
+            {viewContent ? <div className="mt-4">{viewContent}</div> : null}
+          </DialogSection>
+          <DialogSection testId={testId ? `${testId}-actions` : undefined} title="Actions">
+            <SectionRows>
+              {actions.map((action) => (
+                <SectionRow
+                  aside={action.control}
+                  facts={action.description}
+                  key={action.id}
+                  layout="action"
+                  name={action.name}
+                  testId={action.testId}
+                />
+              ))}
+            </SectionRows>
+          </DialogSection>
+        </div>
+      ) : mode === "view" ? (
         <>
+          {factsTitle ? <Eyebrow tone="muted">{factsTitle}</Eyebrow> : null}
           <FactList facts={facts} testId={testId ? `${testId}-facts` : undefined} />
           {viewContent ? <div className="mt-4">{viewContent}</div> : null}
         </>

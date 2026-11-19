@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { FormField, Input } from "./form-field";
 import { Button } from "./button";
+import { FormField, Input } from "./form-field";
 import { DetailEditModal, FormModal, PickerModal, ReadOnlyDetailModal } from "./modal-templates";
 import { Text } from "./text";
 
@@ -139,6 +139,33 @@ export const DetailEditWithViewActions: StoryObj = {
           <Button type="button" variant="secondary">Send me this email</Button>
         </>
       )}
+    >
+      {null}
+    </DetailEditModal>
+  ),
+};
+
+/** A thing's dialog with a Details section and an Actions section, each action with its line and button. */
+export const DetailEditWithActions: StoryObj = {
+  render: () => (
+    <DetailEditModal
+      actions={[
+        { id: "reset", name: "Reset password", description: "Makes a temporary password to give them.", control: <Button size="sm" variant="secondary">Reset password</Button> },
+        { id: "deactivate", name: "Deactivate", description: "Signs them out and blocks sign-in. Reversible.", control: <Button size="sm" variant="danger">Deactivate</Button> },
+      ]}
+      facts={[
+        { id: "email", label: "Email", value: "ana@example.com" },
+        { id: "role", label: "Role", value: "Member" },
+      ]}
+      mode="view"
+      onCancel={() => undefined}
+      onCancelEdit={() => undefined}
+      onEdit={() => undefined}
+      onOpenChange={() => undefined}
+      onSave={() => undefined}
+      open
+      saveLabel="Save"
+      title="Ana Ruiz"
     >
       {null}
     </DetailEditModal>

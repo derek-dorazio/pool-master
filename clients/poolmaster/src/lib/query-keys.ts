@@ -235,6 +235,11 @@ export const QueryKeys = {
       // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const,
+      // The League page's Participants grid (#1866), under `participants` like the roster.
+      leagueParticipantOverviews: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,
+      // The League page's Syncs card (#1866), under `leagues` so a league's change refreshes it.
+      leagueSyncs: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'syncs', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId, eventYear: number) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
@@ -244,6 +249,9 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, eventYear] as const,
       leagueEventYears: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'years'] as const,
+      // The League page's Events grid (#1866), every year, under `events` like each year's list.
+      leagueEventOverviews: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'overview'] as const,
       event: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId] as const,
       rounds: (eventId: QueryKeyId) =>
@@ -285,21 +293,20 @@ export const QueryKeys = {
         search,
         dateWindow ?? null,
       ] as const,
-    // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
+    // Customers › Leagues (#1883): every league, which any league's plan or gift change refreshes.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,
-    manageUsersSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-users', search] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // The platform's tier and pricing profiles (#1844), which sport leagues name.
     tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
     pricingProfiles: ['poolmaster', 'root-admin', 'pricing-profiles'] as const,
-    // Every settings group (#450). History sits under the same prefix, so invalidating
-    // `settings` after any save refreshes each group's recent changes too.
+    // The prefix every settings group's reads sit under (#450), so any save refreshes them all.
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
     // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
-    settingsHistory: (key: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
+    // Every Activity read (#1887) sits under this prefix, so a queued job refreshes each grid.
+    activity: ['poolmaster', 'root-admin', 'activity'] as const,
+    activityWindow: (scope: QueryKeyId, from: string, to: string | null) =>
+      ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>
@@ -312,6 +319,7 @@ export const QueryKeys = {
     // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
     unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
+    // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },
 } as const;

@@ -216,10 +216,10 @@ export class MatchResultService {
       this.assertNextMatchOpen(sportEventId, bracket, match);
     }
 
-    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: source };
+    const now = this.deps.now?.() ?? new Date();
+    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: source, completedAt: now };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
-    const now = this.deps.now?.() ?? new Date();
     // The squares contests on the game settle in a job written with its result, and the event's
     // boards are rebuilt by another (#1466).
     const jobs = combineJobsForWrite(this.gameSettlement(sportEventId, match.id, now), this.rebuild(sportEventId));
@@ -246,7 +246,7 @@ export class MatchResultService {
       return bracket;
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
-    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null };
+    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
     const rebuild = this.rebuild(sportEventId);
     const after = await this.write(sportEventId, bracket, result, this.advance(bracket, match, null), rebuild.jobs);
     rebuild.queued();
@@ -287,7 +287,7 @@ export class MatchResultService {
       );
     }
     // Only an admin cancels a match.
-    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.ADMIN };
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.ADMIN, completedAt: null };
     // A squares contest on the game ends Final with no scores (#711, #743), in a job written with it.
     const jobs = combineJobsForWrite(this.gameSettlement(sportEventId, match.id, this.deps.now?.() ?? new Date()), this.rebuild(sportEventId));
     const after = await this.write(sportEventId, bracket, result, null, jobs.jobs);
@@ -316,7 +316,7 @@ export class MatchResultService {
       this.deps.logger?.warn({ sportEventId, matchNumber, status: match.status, code: refusal.code }, 'Refused to postpone a game');
       throw new SportEventError(`Match ${matchNumber} ${refusal.reason}, so it cannot be postponed.`, refusal.code, 409);
     }
-    const result = { id: match.id, status: MatchStatus.POSTPONED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null };
+    const result = { id: match.id, status: MatchStatus.POSTPONED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
     // The game's chip shows on the event's contests' boards, so they are rebuilt (#1466).
     const rebuild = this.rebuild(sportEventId);
     const after = await this.write(sportEventId, bracket, result, null, rebuild.jobs);

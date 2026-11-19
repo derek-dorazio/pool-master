@@ -10,9 +10,7 @@
   "clients/poolmaster/src/features/leagues/league-settings-page.tsx": 4,
   "clients/poolmaster/src/features/plans/league-plan-page.tsx": 4,
   "clients/poolmaster/src/features/plans/public-plans-page.tsx": 2,
-  "clients/poolmaster/src/features/root-admin/root-admin-participant-home-page.tsx": 2,
   "clients/poolmaster/src/features/root-admin/root-admin-plans-page.tsx": 2,
   "clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx": 2,
-  "clients/poolmaster/src/features/root-admin/root-admin-user-page.tsx": 3,
   "clients/poolmaster/src/features/teams/manage-team-page.tsx": 2
 }

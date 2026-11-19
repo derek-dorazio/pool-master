@@ -5,7 +5,9 @@
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
+  SportEventPageFacts,
   SportLeagueEventFacts,
+  SportLeaguePageEvent,
   SportLeaguePageLeague,
   SportLeaguePageParticipant,
   SportLeaguePageReader,
@@ -17,6 +19,10 @@ import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
 
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, payloadJson: true } as const;
+const EVENT_SELECT = {
+  id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true, providerId: true, syncScope: true, releasedAt: true,
+  autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true,
+} as const;
 
 export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   constructor(private readonly prisma: PrismaClient) {}
@@ -54,10 +60,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const [events, overdueCandidates] = await Promise.all([
       this.prisma.sportEvent.findMany({
         where: { eventSeriesId: { in: seriesIds } },
-        select: {
-          id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true, providerId: true, syncScope: true, releasedAt: true,
-          autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true,
-        },
+        select: EVENT_SELECT,
         orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
       }),
       readOverdueCandidates(this.prisma, now, seriesIds),
@@ -84,13 +87,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     }
     return {
       league,
-      events: events.map(({ autoReleaseCheckedAt, autoReleaseOutcome, autoReleaseFailedChecks, ...event }) => ({
-        ...event,
-        // The check constraint sets the time and the outcome together.
-        lastReleaseCheck: autoReleaseCheckedAt === null || autoReleaseOutcome === null
-          ? null
-          : { checkedAt: autoReleaseCheckedAt, outcome: autoReleaseOutcome, failedChecks: autoReleaseFailedChecks },
-      })),
+      events: events.map(toPageEvent),
       fieldSizes: new Map(fieldGroups.map((group) => [group.sportEventId, group._count._all])),
       latestRunsByEvent: new Map([...runsByEvent].map(([sportEventId, runs]) => [sportEventId, oneRunPerKind(runs)])),
       overdueCandidates,
@@ -122,6 +119,59 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     return participants.map((participant) => ({ participant, mapping: mappingByParticipant.get(participant.id) ?? null }));
   }
 
+  async readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null> {
+    const event = await this.prisma.sportEvent.findUnique({
+      where: { id: sportEventId },
+      select: { ...EVENT_SELECT, eventSeries: { select: { sportLeagueId: true } } },
+    });
+    if (event === null) return null;
+    const { eventSeries, ...eventRow } = event;
+    const [league, latestRunGroups, overdueCandidates, field] = await Promise.all([
+      this.league(eventSeries.sportLeagueId),
+      this.prisma.providerSyncRun.groupBy({ by: ['kind'], where: { sportEventId }, _max: { createdAt: true } }),
+      readOverdueCandidates(this.prisma, now, undefined, [sportEventId]),
+      this.prisma.sportEventParticipant.findMany({
+        where: { sportEventId },
+        select: { id: true, participantId: true, isActive: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
+        orderBy: { id: 'asc' },
+      }),
+    ]);
+    // Every series names a sport league (a foreign key), so it is there.
+    if (league === null) return null;
+    const keys = latestRunGroups.flatMap((group) => (group._max.createdAt === null ? [] : [{ sportEventId, kind: group.kind, createdAt: group._max.createdAt }]));
+    const participantIds = field.map((row) => row.participantId);
+    const [runRows, mappings] = await Promise.all([
+      keys.length === 0 ? [] : this.prisma.providerSyncRun.findMany({ where: { OR: keys }, select: RUN_SELECT, orderBy: { id: 'asc' } }),
+      participantIds.length === 0 ? [] : this.prisma.participantProviderMapping.findMany({
+        where: { sportLeagueId: eventSeries.sportLeagueId, participantId: { in: participantIds } },
+        select: { participantId: true, externalId: true, lastSeenAt: true },
+        // Of two providers' mappings, the latest made names the participant's feed id, as on the League page.
+        orderBy: [{ mappedAt: 'desc' }, { id: 'asc' }],
+      }),
+    ]);
+    const mappingByParticipant = new Map<string, { externalId: string; lastSeenAt: Date | null }>();
+    for (const mapping of mappings) {
+      if (!mappingByParticipant.has(mapping.participantId)) {
+        mappingByParticipant.set(mapping.participantId, { externalId: mapping.externalId, lastSeenAt: mapping.lastSeenAt });
+      }
+    }
+    return {
+      league,
+      event: toPageEvent(eventRow),
+      latestRuns: oneRunPerKind(runRows.map(toRun)),
+      overdueCandidates,
+      field: field.map((row) => ({
+        id: row.id,
+        isActive: row.isActive,
+        oddsToWin: row.oddsToWin === null ? null : row.oddsToWin.toNumber(),
+        seedNumber: row.seedNumber,
+        ranking: row.ranking,
+        name: row.participant.name,
+        mapping: mappingByParticipant.get(row.participantId) ?? null,
+      })),
+    };
+  }
+
   private async league(sportLeagueId: string): Promise<SportLeaguePageLeague | null> {
     const row = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
@@ -138,6 +188,17 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
 }
 
 type RunRow = Prisma.ProviderSyncRunGetPayload<{ select: typeof RUN_SELECT }>;
+type EventRow = Prisma.SportEventGetPayload<{ select: typeof EVENT_SELECT }>;
+
+function toPageEvent({ autoReleaseCheckedAt, autoReleaseOutcome, autoReleaseFailedChecks, ...event }: EventRow): SportLeaguePageEvent {
+  return {
+    ...event,
+    // The check constraint sets the time and the outcome together.
+    lastReleaseCheck: autoReleaseCheckedAt === null || autoReleaseOutcome === null
+      ? null
+      : { checkedAt: autoReleaseCheckedAt, outcome: autoReleaseOutcome, failedChecks: autoReleaseFailedChecks },
+  };
+}
 
 function toRun(row: RunRow): SportLeaguePageRun {
   return {

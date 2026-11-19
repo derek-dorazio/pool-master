@@ -256,22 +256,6 @@ describe('Sport and SportLeague repositories', () => {
     expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`, `${tag} Synced Clutch Card`]);
   });
 
-  it('reads each event\'s id, name, sport league and provider alone, leaving out an unknown id and reading nothing for no ids (#1881)', async () => {
-    const first = await createEvent('first');
-    const second = await createEvent('second', { providerId: 'balldontlie' });
-    const sportEvents = new PrismaSportEventRepository(getAppPrisma());
-
-    const leagueOf = async (event: { eventSeriesId: string }) => (await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId;
-
-    const links = await sportEvents.findLinks([first.id, second.id, randomUUID()]);
-
-    expect([...links].sort((a, b) => a.providerId.localeCompare(b.providerId))).toEqual([
-      { id: second.id, name: 'Catalog second', sportLeagueId: await leagueOf(second), providerId: 'balldontlie' },
-      { id: first.id, name: 'Catalog first', sportLeagueId: await leagueOf(first), providerId: 'integration-test' },
-    ]);
-    await expect(sportEvents.findLinks([])).resolves.toEqual([]);
-  });
-
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {
     const sport = await golfSport();
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());

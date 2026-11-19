@@ -87,6 +87,14 @@ describe('RootAdminProvidersPage', () => {
     expect(await screen.findByTestId('root-admin-providers-counts')).toHaveTextContent('2 providers · 1 up');
   });
 
+  it('links Run event sync and Unmapped competitors from the header, to their pages under Providers', async () => {
+    seed();
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-open-run-event-sync-page')).toHaveAttribute('href', '/manage/providers/run-event-sync');
+    expect(screen.getByTestId('root-admin-open-unmapped-participants-page')).toHaveAttribute('href', '/manage/providers/unmapped-participants');
+  });
+
   it('lists each provider with its status in a word, its request rate, sport leagues, error rate as a percent, rate-limited jobs of the last 24 hours and latency', async () => {
     seed();
     renderPage();

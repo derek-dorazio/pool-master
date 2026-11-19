@@ -14,7 +14,7 @@ function rowKey(row: UnmappedProviderParticipantDto): string {
 }
 
 /**
- * #205 — /manage/sync/unmapped-participants. A competitor a provider reports that no
+ * #205 — /manage/providers/unmapped-participants. A competitor a provider reports that no
  * participant is mapped to has nowhere for their synced scores to land, so the leaderboard
  * is quietly wrong rather than visibly broken. This lists them and binds each one to a
  * participant of the same sport, each on its own Map competitor page.

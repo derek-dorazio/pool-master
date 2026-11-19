@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
+import { CUSTOMER_LEAGUES_PATH } from '@/features/root-admin/manage-navigation';
 import {
   Button,
   ConfirmDialog,
@@ -77,7 +78,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
       queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
         removeLeague(current, league.id),
       );
-      void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
+      void navigate(auth.isRootAdmin ? CUSTOMER_LEAGUES_PATH : '/welcome');
     },
     invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });

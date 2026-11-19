@@ -9122,6 +9122,433 @@ export type SportLeagueEventOverviewListResponse = {
 };
 
 /**
+ * One field row's place in its provider's feed: the Field grid's Last in feed column.
+ */
+export type SportEventFieldFeedRowDto = {
+    /**
+     * The field row.
+     */
+    sportEventParticipantId: string;
+    /**
+     * Its participant's provider id in the event's sport league; null when it has no provider mapping.
+     */
+    feedId: string | null;
+    /**
+     * When a sync last saw its participant in the provider's feed; null when none has.
+     */
+    lastInFeedAt: string | null;
+};
+
+/**
+ * The root admin's Event page header and sync rows.
+ */
+export type SportEventOverviewDto = {
+    /**
+     * By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.
+     */
+    syncHealth: 'OK' | 'ERROR' | 'NOT_RUN_YET' | 'OFF';
+    /**
+     * Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs.
+     */
+    syncs: Array<{
+        /**
+         * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+         */
+        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        /**
+         * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+         */
+        health: 'OK' | 'ERROR' | 'NOT_RUN_YET' | 'OFF';
+        /**
+         * SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+         */
+        mode: 'SCHEDULE' | 'WEBHOOK';
+        /**
+         * Its latest run; null before any.
+         */
+        lastRun: {
+            /**
+             * The run, on the run log.
+             */
+            id: string;
+            status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+            /**
+             * When it was queued.
+             */
+            createdAt: string;
+            /**
+             * When it started; null while it waits.
+             */
+            startedAt: string | null;
+            /**
+             * Its outcome summary as the sync history shows it, as data; null when it has none.
+             */
+            summary: string | null;
+            /**
+             * Rows it created or updated; null unless it completed and counted them.
+             */
+            changedCount: number | null;
+        } | null;
+        /**
+         * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+         */
+        nextRunAt: string | null;
+    }>;
+    /**
+     * One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.
+     */
+    issues: Array<{
+        type: 'SYNC';
+        /**
+         * How many of its syncs' latest runs failed.
+         */
+        count: number;
+        /**
+         * Event list, then field, then scores.
+         */
+        items: Array<{
+            /**
+             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+             */
+            label: string;
+            /**
+             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             */
+            occurredAt: string;
+            /**
+             * What an issue item links to.
+             */
+            target: {
+                /**
+                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                 */
+                type: 'SYNC_RUN' | 'SPORT_EVENT';
+                /**
+                 * The sync run's or event's id.
+                 */
+                id: string;
+            };
+            /**
+             * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+             */
+            syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+        }>;
+    } | {
+        type: 'RELEASE';
+        /**
+         * How many draft events the latest automatic release check held.
+         */
+        count: number;
+        /**
+         * By event name.
+         */
+        items: Array<{
+            /**
+             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+             */
+            label: string;
+            /**
+             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             */
+            occurredAt: string;
+            /**
+             * What an issue item links to.
+             */
+            target: {
+                /**
+                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                 */
+                type: 'SYNC_RUN' | 'SPORT_EVENT';
+                /**
+                 * The sync run's or event's id.
+                 */
+                id: string;
+            };
+            /**
+             * The ready checks that held it, in check order.
+             */
+            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+        }>;
+    } | {
+        type: 'OVERDUE';
+        /**
+         * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+         */
+        count: number;
+        /**
+         * Most overdue first.
+         */
+        items: Array<{
+            /**
+             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+             */
+            label: string;
+            /**
+             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             */
+            occurredAt: string;
+            /**
+             * What an issue item links to.
+             */
+            target: {
+                /**
+                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                 */
+                type: 'SYNC_RUN' | 'SPORT_EVENT';
+                /**
+                 * The sync run's or event's id.
+                 */
+                id: string;
+            };
+        }>;
+    }>;
+    /**
+     * AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+     */
+    releaseMode: 'AUTO' | 'MANUAL';
+    /**
+     * With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.
+     */
+    releaseAt: string | null;
+    /**
+     * What releaseAt is; null with it.
+     */
+    releaseAtKind: 'PLANNED' | 'ACTUAL' | null;
+    /**
+     * The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+     */
+    tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | 'NAME' | null;
+    /**
+     * False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.
+     */
+    tierOrderCoversField: boolean;
+    /**
+     * One per field row, active or withdrawn, never paged.
+     */
+    fieldFeed: Array<{
+        /**
+         * The field row.
+         */
+        sportEventParticipantId: string;
+        /**
+         * Its participant's provider id in the event's sport league; null when it has no provider mapping.
+         */
+        feedId: string | null;
+        /**
+         * When a sync last saw its participant in the provider's feed; null when none has.
+         */
+        lastInFeedAt: string | null;
+    }>;
+};
+
+/**
+ * One event's overview.
+ */
+export type SportEventOverviewResponse = {
+    /**
+     * The root admin's Event page header and sync rows.
+     */
+    overview: {
+        /**
+         * By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.
+         */
+        syncHealth: 'OK' | 'ERROR' | 'NOT_RUN_YET' | 'OFF';
+        /**
+         * Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs.
+         */
+        syncs: Array<{
+            /**
+             * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+             */
+            kind: 'EVENTS' | 'FIELD' | 'SCORES';
+            /**
+             * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
+             */
+            health: 'OK' | 'ERROR' | 'NOT_RUN_YET' | 'OFF';
+            /**
+             * SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).
+             */
+            mode: 'SCHEDULE' | 'WEBHOOK';
+            /**
+             * Its latest run; null before any.
+             */
+            lastRun: {
+                /**
+                 * The run, on the run log.
+                 */
+                id: string;
+                status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+                /**
+                 * When it was queued.
+                 */
+                createdAt: string;
+                /**
+                 * When it started; null while it waits.
+                 */
+                startedAt: string | null;
+                /**
+                 * Its outcome summary as the sync history shows it, as data; null when it has none.
+                 */
+                summary: string | null;
+                /**
+                 * Rows it created or updated; null unless it completed and counted them.
+                 */
+                changedCount: number | null;
+            } | null;
+            /**
+             * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
+             */
+            nextRunAt: string | null;
+        }>;
+        /**
+         * One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.
+         */
+        issues: Array<{
+            type: 'SYNC';
+            /**
+             * How many of its syncs' latest runs failed.
+             */
+            count: number;
+            /**
+             * Event list, then field, then scores.
+             */
+            items: Array<{
+                /**
+                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+                 */
+                label: string;
+                /**
+                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 */
+                occurredAt: string;
+                /**
+                 * What an issue item links to.
+                 */
+                target: {
+                    /**
+                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                     */
+                    type: 'SYNC_RUN' | 'SPORT_EVENT';
+                    /**
+                     * The sync run's or event's id.
+                     */
+                    id: string;
+                };
+                /**
+                 * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                 */
+                syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+            }>;
+        } | {
+            type: 'RELEASE';
+            /**
+             * How many draft events the latest automatic release check held.
+             */
+            count: number;
+            /**
+             * By event name.
+             */
+            items: Array<{
+                /**
+                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+                 */
+                label: string;
+                /**
+                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 */
+                occurredAt: string;
+                /**
+                 * What an issue item links to.
+                 */
+                target: {
+                    /**
+                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                     */
+                    type: 'SYNC_RUN' | 'SPORT_EVENT';
+                    /**
+                     * The sync run's or event's id.
+                     */
+                    id: string;
+                };
+                /**
+                 * The ready checks that held it, in check order.
+                 */
+                failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+            }>;
+        } | {
+            type: 'OVERDUE';
+            /**
+             * How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended.
+             */
+            count: number;
+            /**
+             * Most overdue first.
+             */
+            items: Array<{
+                /**
+                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
+                 */
+                label: string;
+                /**
+                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 */
+                occurredAt: string;
+                /**
+                 * What an issue item links to.
+                 */
+                target: {
+                    /**
+                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
+                     */
+                    type: 'SYNC_RUN' | 'SPORT_EVENT';
+                    /**
+                     * The sync run's or event's id.
+                     */
+                    id: string;
+                };
+            }>;
+        }>;
+        /**
+         * AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
+         */
+        releaseMode: 'AUTO' | 'MANUAL';
+        /**
+         * With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.
+         */
+        releaseAt: string | null;
+        /**
+         * What releaseAt is; null with it.
+         */
+        releaseAtKind: 'PLANNED' | 'ACTUAL' | null;
+        /**
+         * The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+         */
+        tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | 'NAME' | null;
+        /**
+         * False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.
+         */
+        tierOrderCoversField: boolean;
+        /**
+         * One per field row, active or withdrawn, never paged.
+         */
+        fieldFeed: Array<{
+            /**
+             * The field row.
+             */
+            sportEventParticipantId: string;
+            /**
+             * Its participant's provider id in the event's sport league; null when it has no provider mapping.
+             */
+            feedId: string | null;
+            /**
+             * When a sync last saw its participant in the provider's feed; null when none has.
+             */
+            lastInFeedAt: string | null;
+        }>;
+    };
+};
+
+/**
  * One participant on the League page's Participants grid.
  */
 export type SportLeagueParticipantOverviewDto = {
@@ -9374,6 +9801,24 @@ export type ReleaseCheckDto = {
      * CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes.
      */
     value: number;
+};
+
+/**
+ * The last automatic release try of an event: when, its result, and the checks that held it.
+ */
+export type SportEventAutoReleaseCheckDto = {
+    /**
+     * When the hourly release sweep last judged the event.
+     */
+    checkedAt: string;
+    /**
+     * RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+     */
+    outcome: 'RELEASED' | 'HELD';
+    /**
+     * The ready checks that held it, in check order; empty when RELEASED.
+     */
+    failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
 };
 
 /**
@@ -9639,6 +10084,23 @@ export type SportEventDto = {
          */
         value: number;
     }> | null;
+    /**
+     * The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)
+     */
+    lastAutoReleaseCheck: {
+        /**
+         * When the hourly release sweep last judged the event.
+         */
+        checkedAt: string;
+        /**
+         * RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+         */
+        outcome: 'RELEASED' | 'HELD';
+        /**
+         * The ready checks that held it, in check order; empty when RELEASED.
+         */
+        failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+    } | null;
     /**
      * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
      */
@@ -9968,6 +10430,23 @@ export type SportEventListResponse = {
             value: number;
         }> | null;
         /**
+         * The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)
+         */
+        lastAutoReleaseCheck: {
+            /**
+             * When the hourly release sweep last judged the event.
+             */
+            checkedAt: string;
+            /**
+             * RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+             */
+            outcome: 'RELEASED' | 'HELD';
+            /**
+             * The ready checks that held it, in check order; empty when RELEASED.
+             */
+            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+        } | null;
+        /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
         adminCounts: {
@@ -10290,6 +10769,23 @@ export type SportEventResponse = {
              */
             value: number;
         }> | null;
+        /**
+         * The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)
+         */
+        lastAutoReleaseCheck: {
+            /**
+             * When the hourly release sweep last judged the event.
+             */
+            checkedAt: string;
+            /**
+             * RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+             */
+            outcome: 'RELEASED' | 'HELD';
+            /**
+             * The ready checks that held it, in check order; empty when RELEASED.
+             */
+            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+        } | null;
         /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
@@ -10689,6 +11185,23 @@ export type ImportSportEventYearFromProviderResponse = {
             value: number;
         }> | null;
         /**
+         * The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)
+         */
+        lastAutoReleaseCheck: {
+            /**
+             * When the hourly release sweep last judged the event.
+             */
+            checkedAt: string;
+            /**
+             * RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft.
+             */
+            outcome: 'RELEASED' | 'HELD';
+            /**
+             * The ready checks that held it, in check order; empty when RELEASED.
+             */
+            failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
+        } | null;
+        /**
          * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
         adminCounts: {
@@ -10827,7 +11340,7 @@ export type SportEventLiveSimulationResponse = {
 };
 
 /**
- * A scheduled round of an event — its own date, independent of any result in it.
+ * A scheduled round of an event: its own date, and where its results stand.
  */
 export type SportEventRoundDto = {
     id: string;
@@ -10841,6 +11354,18 @@ export type SportEventRoundDto = {
      */
     scheduledDate: string;
     scheduledEndAt: string | null;
+    /**
+     * Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+    /**
+     * Matches with a result, or participant rounds finished.
+     */
+    resultCount: number;
+    /**
+     * When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.
+     */
+    completedAt: string | null;
 };
 
 /**
@@ -10862,6 +11387,18 @@ export type SportEventRoundListResponse = {
          */
         scheduledDate: string;
         scheduledEndAt: string | null;
+        /**
+         * Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+        /**
+         * Matches with a result, or participant rounds finished.
+         */
+        resultCount: number;
+        /**
+         * When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.
+         */
+        completedAt: string | null;
     }>;
 };
 
@@ -10882,6 +11419,95 @@ export type UpdateSportEventRoundsRequest = {
          * Omitted keeps it; null clears it.
          */
         scheduledEndAt?: string | null;
+    }>;
+};
+
+/**
+ * A customer contest run on the event, as the root admin's Event page lists it.
+ */
+export type SportEventContestDto = {
+    /**
+     * Contest identifier.
+     */
+    id: string;
+    /**
+     * The contest's name, as its league named it.
+     */
+    name: string;
+    /**
+     * The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.
+     */
+    status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+    /**
+     * The customer league that runs the contest.
+     */
+    leagueId: string;
+    /**
+     * That league's name.
+     */
+    leagueName: string;
+    /**
+     * The contest template the contest was set up from; null for one set up without a template.
+     */
+    contestTemplateId: string | null;
+    /**
+     * That template's name; null with contestTemplateId.
+     */
+    contestTemplateName: string | null;
+    /**
+     * Entries in the contest, across every team.
+     */
+    entryCount: number;
+    /**
+     * When the contest was created.
+     */
+    createdAt: string;
+};
+
+/**
+ * The customer contests on one event.
+ */
+export type SportEventContestListResponse = {
+    /**
+     * Every contest on the event, across every league, newest first. Never paged.
+     */
+    contests: Array<{
+        /**
+         * Contest identifier.
+         */
+        id: string;
+        /**
+         * The contest's name, as its league named it.
+         */
+        name: string;
+        /**
+         * The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.
+         */
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+        /**
+         * The customer league that runs the contest.
+         */
+        leagueId: string;
+        /**
+         * That league's name.
+         */
+        leagueName: string;
+        /**
+         * The contest template the contest was set up from; null for one set up without a template.
+         */
+        contestTemplateId: string | null;
+        /**
+         * That template's name; null with contestTemplateId.
+         */
+        contestTemplateName: string | null;
+        /**
+         * Entries in the contest, across every team.
+         */
+        entryCount: number;
+        /**
+         * When the contest was created.
+         */
+        createdAt: string;
     }>;
 };
 
@@ -20801,6 +21427,10 @@ export type SportEventMatchDto = {
      */
     resultSource: 'ADMIN' | 'PROVIDER' | null;
     /**
+     * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+     */
+    completedAt: string | null;
+    /**
      * The match the winner moves on to; null for the final.
      */
     advancesToMatchId: string | null;
@@ -20901,6 +21531,10 @@ export type SportEventBracketResponse = {
          * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
          */
         resultSource: 'ADMIN' | 'PROVIDER' | null;
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -21003,6 +21637,10 @@ export type SportEventMatchResponse = {
          * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
          */
         resultSource: 'ADMIN' | 'PROVIDER' | null;
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -21423,6 +22061,10 @@ export type SquaresBoardResponse = {
          * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
          */
         resultSource: 'ADMIN' | 'PROVIDER' | null;
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -28212,6 +28854,20 @@ export type ActivityJobDto = {
      */
     sportEventId: string | null;
     /**
+     * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+     */
+    sportLeague: {
+        id: string;
+        name: string;
+    } | null;
+    /**
+     * The event the job is about, for display; null when it is about none.
+     */
+    sportEvent: {
+        id: string;
+        name: string;
+    } | null;
+    /**
      * Tries so far, counting one in progress.
      */
     attempts: number;
@@ -28327,6 +28983,20 @@ export type ActivityListResponse = {
          */
         sportEventId: string | null;
         /**
+         * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+         */
+        sportLeague: {
+            id: string;
+            name: string;
+        } | null;
+        /**
+         * The event the job is about, for display; null when it is about none.
+         */
+        sportEvent: {
+            id: string;
+            name: string;
+        } | null;
+        /**
          * Tries so far, counting one in progress.
          */
         attempts: number;
@@ -28418,6 +29088,20 @@ export type ActivityJobResponse = {
          * The event the job is about; null when it is about none.
          */
         sportEventId: string | null;
+        /**
+         * The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.
+         */
+        sportLeague: {
+            id: string;
+            name: string;
+        } | null;
+        /**
+         * The event the job is about, for display; null when it is about none.
+         */
+        sportEvent: {
+            id: string;
+            name: string;
+        } | null;
         /**
          * Tries so far, counting one in progress.
          */
@@ -33873,6 +34557,84 @@ export type UpdateEventRoundsResponses = {
 };
 
 export type UpdateEventRoundsResponse = UpdateEventRoundsResponses[keyof UpdateEventRoundsResponses];
+
+export type ListEventContestsData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/contests';
+};
+
+export type ListEventContestsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListEventContestsError = ListEventContestsErrors[keyof ListEventContestsErrors];
+
+export type ListEventContestsResponses = {
+    /**
+     * The customer contests on one event.
+     */
+    200: SportEventContestListResponse;
+};
+
+export type ListEventContestsResponse = ListEventContestsResponses[keyof ListEventContestsResponses];
+
+export type GetEventOverviewData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/overview';
+};
+
+export type GetEventOverviewErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type GetEventOverviewError = GetEventOverviewErrors[keyof GetEventOverviewErrors];
+
+export type GetEventOverviewResponses = {
+    /**
+     * One event's overview.
+     */
+    200: SportEventOverviewResponse;
+};
+
+export type GetEventOverviewResponse = GetEventOverviewResponses[keyof GetEventOverviewResponses];
 
 export type ListEventParticipantsData = {
     body?: never;

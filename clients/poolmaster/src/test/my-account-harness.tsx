@@ -70,7 +70,7 @@ export function renderMyAccount(initialEntry = '/my-account') {
             <Route element={<MyAccountPage />} path="/my-account" />
             <Route element={<UserPageRedirect />} path="/users/:userId" />
             <Route element={<div data-testid="root-route" />} path="/" />
-            <Route element={<div data-testid="manage-user-route" />} path="/manage/users/user-2" />
+            <Route element={<div data-testid="manage-user-route" />} path="/manage/customers/users" />
           </Routes>
           <Toaster />
         </MemoryRouter>

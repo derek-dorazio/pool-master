@@ -21670,6 +21670,1012 @@
         "additionalProperties": false,
         "description": "A sport league's events."
       },
+      "SportEventFieldFeedRowDto": {
+        "type": "object",
+        "properties": {
+          "sportEventParticipantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The field row."
+          },
+          "feedId": {
+            "description": "Its participant's provider id in the event's sport league; null when it has no provider mapping.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastInFeedAt": {
+            "description": "When a sync last saw its participant in the provider's feed; null when none has.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "sportEventParticipantId",
+          "feedId",
+          "lastInFeedAt"
+        ],
+        "additionalProperties": false,
+        "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
+      },
+      "SportEventOverviewDto": {
+        "type": "object",
+        "properties": {
+          "syncHealth": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ERROR",
+              "NOT_RUN_YET",
+              "OFF"
+            ],
+            "description": "By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise."
+          },
+          "syncs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "EVENTS",
+                    "FIELD",
+                    "SCORES"
+                  ],
+                  "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+                },
+                "health": {
+                  "type": "string",
+                  "enum": [
+                    "OK",
+                    "ERROR",
+                    "NOT_RUN_YET",
+                    "OFF"
+                  ],
+                  "description": "By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise."
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULE",
+                    "WEBHOOK"
+                  ],
+                  "description": "SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set)."
+                },
+                "lastRun": {
+                  "description": "Its latest run; null before any.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The run, on the run log."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SUBMITTED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "FAILED",
+                        "CANCELLED"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When it was queued."
+                    },
+                    "startedAt": {
+                      "description": "When it started; null while it waits.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "summary": {
+                      "description": "Its outcome summary as the sync history shows it, as data; null when it has none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "changedCount": {
+                      "description": "Rows it created or updated; null unless it completed and counted them.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "createdAt",
+                    "startedAt",
+                    "summary",
+                    "changedCount"
+                  ],
+                  "additionalProperties": false
+                },
+                "nextRunAt": {
+                  "description": "When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "kind",
+                "health",
+                "mode",
+                "lastRun",
+                "nextRunAt"
+              ],
+              "additionalProperties": false,
+              "description": "One of a sport league's syncs, as the League page's Syncs card shows it."
+            },
+            "description": "Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SYNC"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many of its syncs' latest runs failed."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "syncKind": {
+                            "type": "string",
+                            "enum": [
+                              "EVENTS",
+                              "FIELD",
+                              "SCORES"
+                            ],
+                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "syncKind"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync whose latest run failed; its target is that run."
+                      },
+                      "description": "Event list, then field, then scores."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Syncs whose latest run failed."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASE"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many draft events the latest automatic release check held."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          },
+                          "failedChecks": {
+                            "minItems": 1,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "NOT_STARTED",
+                                "ROUNDS_SCHEDULED",
+                                "FIELD_LOADED",
+                                "TIERS_ASSIGNED",
+                                "TIERS_FILLED",
+                                "PRICES_ASSIGNED",
+                                "BRACKET_COMPLETE",
+                                "CONTEST_SETUPS_ON"
+                              ]
+                            },
+                            "description": "The ready checks that held it, in check order."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target",
+                          "failedChecks"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A draft event its latest automatic release check held; its target is the event."
+                      },
+                      "description": "By event name."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Draft events held by a failed ready check."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "OVERDUE"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "SYNC_RUN",
+                                  "SPORT_EVENT"
+                                ],
+                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The sync run's or event's id."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false,
+                            "description": "What an issue item links to."
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "occurredAt",
+                          "target"
+                        ],
+                        "additionalProperties": false,
+                        "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
+                      },
+                      "description": "Most overdue first."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Events whose results are still missing well after they should have ended."
+                }
+              ]
+            },
+            "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none."
+          },
+          "releaseMode": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "MANUAL"
+            ],
+            "description": "AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise."
+          },
+          "releaseAt": {
+            "description": "With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "releaseAtKind": {
+            "description": "What releaseAt is; null with it.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "PLANNED",
+              "ACTUAL",
+              null
+            ]
+          },
+          "tierOrderBasis": {
+            "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "ODDS",
+              "SEED",
+              "RANKING",
+              "NAME",
+              null
+            ]
+          },
+          "tierOrderCoversField": {
+            "type": "boolean",
+            "description": "False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last."
+          },
+          "fieldFeed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row."
+                },
+                "feedId": {
+                  "description": "Its participant's provider id in the event's sport league; null when it has no provider mapping.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lastInFeedAt": {
+                  "description": "When a sync last saw its participant in the provider's feed; null when none has.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "sportEventParticipantId",
+                "feedId",
+                "lastInFeedAt"
+              ],
+              "additionalProperties": false,
+              "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
+            },
+            "description": "One per field row, active or withdrawn, never paged."
+          }
+        },
+        "required": [
+          "syncHealth",
+          "syncs",
+          "issues",
+          "releaseMode",
+          "releaseAt",
+          "releaseAtKind",
+          "tierOrderBasis",
+          "tierOrderCoversField",
+          "fieldFeed"
+        ],
+        "additionalProperties": false,
+        "description": "The root admin's Event page header and sync rows."
+      },
+      "SportEventOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "overview": {
+            "type": "object",
+            "properties": {
+              "syncHealth": {
+                "type": "string",
+                "enum": [
+                  "OK",
+                  "ERROR",
+                  "NOT_RUN_YET",
+                  "OFF"
+                ],
+                "description": "By the Sports page's rule, from the event's own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise."
+              },
+              "syncs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
+                      ],
+                      "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+                    },
+                    "health": {
+                      "type": "string",
+                      "enum": [
+                        "OK",
+                        "ERROR",
+                        "NOT_RUN_YET",
+                        "OFF"
+                      ],
+                      "description": "By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise."
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULE",
+                        "WEBHOOK"
+                      ],
+                      "description": "SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider's webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set)."
+                    },
+                    "lastRun": {
+                      "description": "Its latest run; null before any.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The run, on the run log."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SUBMITTED",
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "FAILED",
+                            "CANCELLED"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When it was queued."
+                        },
+                        "startedAt": {
+                          "description": "When it started; null while it waits.",
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "summary": {
+                          "description": "Its outcome summary as the sync history shows it, as data; null when it has none.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "changedCount": {
+                          "description": "Rows it created or updated; null unless it completed and counted them.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "createdAt",
+                        "startedAt",
+                        "summary",
+                        "changedCount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "nextRunAt": {
+                      "description": "When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "health",
+                    "mode",
+                    "lastRun",
+                    "nextRunAt"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One of a sport league's syncs, as the League page's Syncs card shows it."
+                },
+                "description": "Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "SYNC"
+                          ]
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many of its syncs' latest runs failed."
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                              },
+                              "occurredAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                              },
+                              "target": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SYNC_RUN",
+                                      "SPORT_EVENT"
+                                    ],
+                                    "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                  },
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "The sync run's or event's id."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false,
+                                "description": "What an issue item links to."
+                              },
+                              "syncKind": {
+                                "type": "string",
+                                "enum": [
+                                  "EVENTS",
+                                  "FIELD",
+                                  "SCORES"
+                                ],
+                                "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "occurredAt",
+                              "target",
+                              "syncKind"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A sync whose latest run failed; its target is that run."
+                          },
+                          "description": "Event list, then field, then scores."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "count",
+                        "items"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Syncs whose latest run failed."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "RELEASE"
+                          ]
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many draft events the latest automatic release check held."
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                              },
+                              "occurredAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                              },
+                              "target": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SYNC_RUN",
+                                      "SPORT_EVENT"
+                                    ],
+                                    "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                  },
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "The sync run's or event's id."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false,
+                                "description": "What an issue item links to."
+                              },
+                              "failedChecks": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "NOT_STARTED",
+                                    "ROUNDS_SCHEDULED",
+                                    "FIELD_LOADED",
+                                    "TIERS_ASSIGNED",
+                                    "TIERS_FILLED",
+                                    "PRICES_ASSIGNED",
+                                    "BRACKET_COMPLETE",
+                                    "CONTEST_SETUPS_ON"
+                                  ]
+                                },
+                                "description": "The ready checks that held it, in check order."
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "occurredAt",
+                              "target",
+                              "failedChecks"
+                            ],
+                            "additionalProperties": false,
+                            "description": "A draft event its latest automatic release check held; its target is the event."
+                          },
+                          "description": "By event name."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "count",
+                        "items"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Draft events held by a failed ready check."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "OVERDUE"
+                          ]
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many events are neither completed nor cancelled more than 4 hours after their last round or match should have ended."
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
+                              },
+                              "occurredAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                              },
+                              "target": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SYNC_RUN",
+                                      "SPORT_EVENT"
+                                    ],
+                                    "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
+                                  },
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "The sync run's or event's id."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id"
+                                ],
+                                "additionalProperties": false,
+                                "description": "What an issue item links to."
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "occurredAt",
+                              "target"
+                            ],
+                            "additionalProperties": false,
+                            "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
+                          },
+                          "description": "Most overdue first."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "count",
+                        "items"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Events whose results are still missing well after they should have ended."
+                    }
+                  ]
+                },
+                "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none."
+              },
+              "releaseMode": {
+                "type": "string",
+                "enum": [
+                  "AUTO",
+                  "MANUAL"
+                ],
+                "description": "AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise."
+              },
+              "releaseAt": {
+                "description": "With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league's window (PLANNED). Null otherwise.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "releaseAtKind": {
+                "description": "What releaseAt is; null with it.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "PLANNED",
+                  "ACTUAL",
+                  null
+                ]
+              },
+              "tierOrderBasis": {
+                "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "ODDS",
+                  "SEED",
+                  "RANKING",
+                  "NAME",
+                  null
+                ]
+              },
+              "tierOrderCoversField": {
+                "type": "boolean",
+                "description": "False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last."
+              },
+              "fieldFeed": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The field row."
+                    },
+                    "feedId": {
+                      "description": "Its participant's provider id in the event's sport league; null when it has no provider mapping.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastInFeedAt": {
+                      "description": "When a sync last saw its participant in the provider's feed; null when none has.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "feedId",
+                    "lastInFeedAt"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One field row's place in its provider's feed: the Field grid's Last in feed column."
+                },
+                "description": "One per field row, active or withdrawn, never paged."
+              }
+            },
+            "required": [
+              "syncHealth",
+              "syncs",
+              "issues",
+              "releaseMode",
+              "releaseAt",
+              "releaseAtKind",
+              "tierOrderBasis",
+              "tierOrderCoversField",
+              "fieldFeed"
+            ],
+            "additionalProperties": false,
+            "description": "The root admin's Event page header and sync rows."
+          }
+        },
+        "required": [
+          "overview"
+        ],
+        "additionalProperties": false,
+        "description": "One event's overview."
+      },
       "SportLeagueParticipantOverviewDto": {
         "type": "object",
         "properties": {
@@ -22327,6 +23333,48 @@
           }
         ]
       },
+      "SportEventAutoReleaseCheckDto": {
+        "type": "object",
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the hourly release sweep last judged the event."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "RELEASED",
+              "HELD"
+            ],
+            "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+          },
+          "failedChecks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NOT_STARTED",
+                "ROUNDS_SCHEDULED",
+                "FIELD_LOADED",
+                "TIERS_ASSIGNED",
+                "TIERS_FILLED",
+                "PRICES_ASSIGNED",
+                "BRACKET_COMPLETE",
+                "CONTEST_SETUPS_ON"
+              ]
+            },
+            "description": "The ready checks that held it, in check order; empty when RELEASED."
+          }
+        },
+        "required": [
+          "checkedAt",
+          "outcome",
+          "failedChecks"
+        ],
+        "additionalProperties": false,
+        "description": "The last automatic release try of an event: when, its result, and the checks that held it."
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -22902,6 +23950,51 @@
               ]
             }
           },
+          "lastAutoReleaseCheck": {
+            "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "checkedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the hourly release sweep last judged the event."
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "RELEASED",
+                  "HELD"
+                ],
+                "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+              },
+              "failedChecks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_STARTED",
+                    "ROUNDS_SCHEDULED",
+                    "FIELD_LOADED",
+                    "TIERS_ASSIGNED",
+                    "TIERS_FILLED",
+                    "PRICES_ASSIGNED",
+                    "BRACKET_COMPLETE",
+                    "CONTEST_SETUPS_ON"
+                  ]
+                },
+                "description": "The ready checks that held it, in check order; empty when RELEASED."
+              }
+            },
+            "required": [
+              "checkedAt",
+              "outcome",
+              "failedChecks"
+            ],
+            "additionalProperties": false
+          },
           "adminCounts": {
             "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
             "type": [
@@ -23001,6 +24094,7 @@
           "autoLifecycleEnabled",
           "tierCount",
           "releaseChecks",
+          "lastAutoReleaseCheck",
           "adminCounts",
           "allowedTransitions",
           "createdAt",
@@ -23643,6 +24737,51 @@
                     ]
                   }
                 },
+                "lastAutoReleaseCheck": {
+                  "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the hourly release sweep last judged the event."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASED",
+                        "HELD"
+                      ],
+                      "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                    },
+                    "failedChecks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "NOT_STARTED",
+                          "ROUNDS_SCHEDULED",
+                          "FIELD_LOADED",
+                          "TIERS_ASSIGNED",
+                          "TIERS_FILLED",
+                          "PRICES_ASSIGNED",
+                          "BRACKET_COMPLETE",
+                          "CONTEST_SETUPS_ON"
+                        ]
+                      },
+                      "description": "The ready checks that held it, in check order; empty when RELEASED."
+                    }
+                  },
+                  "required": [
+                    "checkedAt",
+                    "outcome",
+                    "failedChecks"
+                  ],
+                  "additionalProperties": false
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -23742,6 +24881,7 @@
                 "autoLifecycleEnabled",
                 "tierCount",
                 "releaseChecks",
+                "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -24371,6 +25511,51 @@
                   ]
                 }
               },
+              "lastAutoReleaseCheck": {
+                "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "checkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the hourly release sweep last judged the event."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "RELEASED",
+                      "HELD"
+                    ],
+                    "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                  },
+                  "failedChecks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "ROUNDS_SCHEDULED",
+                        "FIELD_LOADED",
+                        "TIERS_ASSIGNED",
+                        "TIERS_FILLED",
+                        "PRICES_ASSIGNED",
+                        "BRACKET_COMPLETE",
+                        "CONTEST_SETUPS_ON"
+                      ]
+                    },
+                    "description": "The ready checks that held it, in check order; empty when RELEASED."
+                  }
+                },
+                "required": [
+                  "checkedAt",
+                  "outcome",
+                  "failedChecks"
+                ],
+                "additionalProperties": false
+              },
               "adminCounts": {
                 "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                 "type": [
@@ -24470,6 +25655,7 @@
               "autoLifecycleEnabled",
               "tierCount",
               "releaseChecks",
+              "lastAutoReleaseCheck",
               "adminCounts",
               "allowedTransitions",
               "createdAt",
@@ -25227,6 +26413,51 @@
                     ]
                   }
                 },
+                "lastAutoReleaseCheck": {
+                  "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "checkedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the hourly release sweep last judged the event."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "RELEASED",
+                        "HELD"
+                      ],
+                      "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
+                    },
+                    "failedChecks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "NOT_STARTED",
+                          "ROUNDS_SCHEDULED",
+                          "FIELD_LOADED",
+                          "TIERS_ASSIGNED",
+                          "TIERS_FILLED",
+                          "PRICES_ASSIGNED",
+                          "BRACKET_COMPLETE",
+                          "CONTEST_SETUPS_ON"
+                        ]
+                      },
+                      "description": "The ready checks that held it, in check order; empty when RELEASED."
+                    }
+                  },
+                  "required": [
+                    "checkedAt",
+                    "outcome",
+                    "failedChecks"
+                  ],
+                  "additionalProperties": false
+                },
                 "adminCounts": {
                   "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
                   "type": [
@@ -25326,6 +26557,7 @@
                 "autoLifecycleEnabled",
                 "tierCount",
                 "releaseChecks",
+                "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
                 "createdAt",
@@ -25570,6 +26802,29 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored."
+          },
+          "resultCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Matches with a result, or participant rounds finished."
+          },
+          "completedAt": {
+            "description": "When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         },
         "required": [
@@ -25577,10 +26832,13 @@
           "sportEventId",
           "roundNumber",
           "scheduledDate",
-          "scheduledEndAt"
+          "scheduledEndAt",
+          "status",
+          "resultCount",
+          "completedAt"
         ],
         "additionalProperties": false,
-        "description": "A scheduled round of an event — its own date, independent of any result in it."
+        "description": "A scheduled round of an event: its own date, and where its results stand."
       },
       "SportEventRoundListResponse": {
         "type": "object",
@@ -25615,6 +26873,29 @@
                     "null"
                   ],
                   "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED"
+                  ],
+                  "description": "Where the round stands, read off its results: by its matches where it has any (COMPLETED once every one is finished or cancelled), otherwise by its participants' rounds (COMPLETED once some are recorded and none is still under way). Not stored."
+                },
+                "resultCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Matches with a result, or participant rounds finished."
+                },
+                "completedAt": {
+                  "description": "When the round's last result was recorded, once it is COMPLETED; null before, and for a round whose matches were all cancelled.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
                 }
               },
               "required": [
@@ -25622,10 +26903,13 @@
                 "sportEventId",
                 "roundNumber",
                 "scheduledDate",
-                "scheduledEndAt"
+                "scheduledEndAt",
+                "status",
+                "resultCount",
+                "completedAt"
               ],
               "additionalProperties": false,
-              "description": "A scheduled round of an event — its own date, independent of any result in it."
+              "description": "A scheduled round of an event: its own date, and where its results stand."
             },
             "description": "By round number."
           }
@@ -25678,6 +26962,164 @@
         ],
         "additionalProperties": false,
         "description": "How a rain delay or an irregular schedule is recorded."
+      },
+      "SportEventContestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Contest identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "The contest's name, as its league named it."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "OPEN",
+              "ACTIVE",
+              "COMPLETED"
+            ],
+            "description": "The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final."
+          },
+          "leagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The customer league that runs the contest."
+          },
+          "leagueName": {
+            "type": "string",
+            "description": "That league's name."
+          },
+          "contestTemplateId": {
+            "description": "The contest template the contest was set up from; null for one set up without a template.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "contestTemplateName": {
+            "description": "That template's name; null with contestTemplateId.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Entries in the contest, across every team."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the contest was created."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "leagueId",
+          "leagueName",
+          "contestTemplateId",
+          "contestTemplateName",
+          "entryCount",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "description": "A customer contest run on the event, as the root admin's Event page lists it."
+      },
+      "SportEventContestListResponse": {
+        "type": "object",
+        "properties": {
+          "contests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Contest identifier."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The contest's name, as its league named it."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "DRAFT",
+                    "OPEN",
+                    "ACTIVE",
+                    "COMPLETED"
+                  ],
+                  "description": "The contest's lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final."
+                },
+                "leagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The customer league that runs the contest."
+                },
+                "leagueName": {
+                  "type": "string",
+                  "description": "That league's name."
+                },
+                "contestTemplateId": {
+                  "description": "The contest template the contest was set up from; null for one set up without a template.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "contestTemplateName": {
+                  "description": "That template's name; null with contestTemplateId.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "entryCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Entries in the contest, across every team."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest was created."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "status",
+                "leagueId",
+                "leagueName",
+                "contestTemplateId",
+                "contestTemplateName",
+                "entryCount",
+                "createdAt"
+              ],
+              "additionalProperties": false,
+              "description": "A customer contest run on the event, as the root admin's Event page lists it."
+            },
+            "description": "Every contest on the event, across every league, newest first. Never paged."
+          }
+        },
+        "required": [
+          "contests"
+        ],
+        "additionalProperties": false,
+        "description": "The customer contests on one event."
       },
       "SportEventTierDto": {
         "type": "object",
@@ -48245,6 +49687,14 @@
               null
             ]
           },
+          "completedAt": {
+            "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
           "advancesToMatchId": {
             "description": "The match the winner moves on to; null for the final.",
             "type": [
@@ -48331,6 +49781,7 @@
           "awayShootoutScore",
           "ending",
           "resultSource",
+          "completedAt",
           "advancesToMatchId",
           "advancesToSide",
           "regionLabel",
@@ -48477,6 +49928,14 @@
                     null
                   ]
                 },
+                "completedAt": {
+                  "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
                 "advancesToMatchId": {
                   "description": "The match the winner moves on to; null for the final.",
                   "type": [
@@ -48563,6 +50022,7 @@
                 "awayShootoutScore",
                 "ending",
                 "resultSource",
+                "completedAt",
                 "advancesToMatchId",
                 "advancesToSide",
                 "regionLabel",
@@ -48716,6 +50176,14 @@
                   null
                 ]
               },
+              "completedAt": {
+                "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
               "advancesToMatchId": {
                 "description": "The match the winner moves on to; null for the final.",
                 "type": [
@@ -48802,6 +50270,7 @@
               "awayShootoutScore",
               "ending",
               "resultSource",
+              "completedAt",
               "advancesToMatchId",
               "advancesToSide",
               "regionLabel",
@@ -49546,6 +51015,14 @@
                   null
                 ]
               },
+              "completedAt": {
+                "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
               "advancesToMatchId": {
                 "description": "The match the winner moves on to; null for the final.",
                 "type": [
@@ -49632,6 +51109,7 @@
               "awayShootoutScore",
               "ending",
               "resultSource",
+              "completedAt",
               "advancesToMatchId",
               "advancesToSide",
               "regionLabel",
@@ -70285,6 +71763,48 @@
             ],
             "format": "uuid"
           },
+          "sportLeague": {
+            "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "sportEvent": {
+            "description": "The event the job is about, for display; null when it is about none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
           "attempts": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -70415,6 +71935,8 @@
           "status",
           "sportLeagueId",
           "sportEventId",
+          "sportLeague",
+          "sportEvent",
           "attempts",
           "runAt",
           "createdAt",
@@ -70546,6 +72068,48 @@
                   ],
                   "format": "uuid"
                 },
+                "sportLeague": {
+                  "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "sportEvent": {
+                  "description": "The event the job is about, for display; null when it is about none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
                 "attempts": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -70676,6 +72240,8 @@
                 "status",
                 "sportLeagueId",
                 "sportEventId",
+                "sportLeague",
+                "sportEvent",
                 "attempts",
                 "runAt",
                 "createdAt",
@@ -70765,6 +72331,48 @@
                   "null"
                 ],
                 "format": "uuid"
+              },
+              "sportLeague": {
+                "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "sportEvent": {
+                "description": "The event the job is about, for display; null when it is about none.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
               "attempts": {
                 "type": "integer",
@@ -70896,6 +72504,8 @@
               "status",
               "sportLeagueId",
               "sportEventId",
+              "sportLeague",
+              "sportEvent",
               "attempts",
               "runAt",
               "createdAt",
@@ -81318,6 +82928,7 @@
         "tags": [
           "Events"
         ],
+        "description": "Every round by number, each with where it stands (status, result count, completion time) read off the results recorded in it, in a fixed number of reads.",
         "parameters": [
           {
             "schema": {
@@ -81422,6 +83033,152 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/contests": {
+      "get": {
+        "operationId": "listEventContests",
+        "summary": "List the contests on a sport event",
+        "tags": [
+          "Events"
+        ],
+        "description": "Every customer contest run on the event, across every league, newest first and never paged, with its league, contest template, status and entry count. The root admin's Event page reads it; one read however many contests. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The customer contests on one event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventContestListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/overview": {
+      "get": {
+        "operationId": "getEventOverview",
+        "summary": "Get an event's syncs, health, issues, release and tier order",
+        "tags": [
+          "Events"
+        ],
+        "description": "The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One event's overview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventOverviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

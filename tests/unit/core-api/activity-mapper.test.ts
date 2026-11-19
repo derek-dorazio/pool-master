@@ -1,10 +1,11 @@
 /**
- * Unit tests for the Activity mapper: one background job, with the sync runs it ran, as the
- * Activity read answers it.
+ * Unit tests for the Activity mapper: one background job, with the sync runs it ran and the
+ * sport league and event it is about, as the Activity read answers it.
  */
 import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, type BackgroundJob } from '@poolmaster/shared/domain';
 import { ActivityJobDtoSchema } from '@poolmaster/shared/dto';
 import { toActivityJobDto } from '../../../packages/core-api/src/mappers/activity.mapper';
+import type { ActivityJob } from '../../../packages/core-api/src/modules/activity/activity-service';
 
 const JOB_ID = '00000000-0000-4000-8000-000000000001';
 const LEAGUE_ID = '00000000-0000-4000-8000-000000000002';
@@ -27,9 +28,14 @@ function buildJob(overrides: Partial<BackgroundJob> = {}): BackgroundJob {
   };
 }
 
+/** A job as Activity presents it: about no league or event unless the test says so. */
+function presented(job: BackgroundJob, syncRunIds: string[] = [], scope: Partial<Pick<ActivityJob, 'sportLeague' | 'sportEvent'>> = {}): ActivityJob {
+  return { job, syncRunIds, sportLeague: null, sportEvent: null, ...scope };
+}
+
 describe('toActivityJobDto', () => {
   it('maps a finished league job with its kind, scope, trigger, changed rows, duration, result, error and sync runs, and the answer passes the contract schema', () => {
-    const dto = toActivityJobDto(buildJob({
+    const dto = toActivityJobDto(presented(buildJob({
       status: BackgroundJobStatus.SUCCEEDED,
       attempts: 2,
       sportLeagueId: LEAGUE_ID,
@@ -38,7 +44,7 @@ describe('toActivityJobDto', () => {
       lastError: 'first try timed out',
       changedCount: 2,
       result: { created: 2 },
-    }), [RUN_1, RUN_2]);
+    }), [RUN_1, RUN_2], { sportLeague: { id: LEAGUE_ID, name: 'PGA Tour' } }));
 
     expect(dto).toEqual({
       id: JOB_ID,
@@ -47,6 +53,8 @@ describe('toActivityJobDto', () => {
       status: BackgroundJobStatus.SUCCEEDED,
       sportLeagueId: LEAGUE_ID,
       sportEventId: null,
+      sportLeague: { id: LEAGUE_ID, name: 'PGA Tour' },
+      sportEvent: null,
       attempts: 2,
       runAt: '2026-11-18T03:00:00.000Z',
       createdAt: '2026-11-18T03:00:00.000Z',
@@ -64,13 +72,19 @@ describe('toActivityJobDto', () => {
     expect(() => ActivityJobDtoSchema.parse(dto)).not.toThrow();
   });
 
-  it('answers null for what a waiting event job has not got yet: no league, no start, no duration, no changed rows, no error, no result', () => {
-    const dto = toActivityJobDto(buildJob({ type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, sportEventId: EVENT_ID, trigger: JobTrigger.SYSTEM }), []);
+  it('names a waiting event job\'s event and the event\'s league, and answers null for what it has not got yet: no league id of its own, no start, no duration, no changed rows, no error, no result', () => {
+    const dto = toActivityJobDto(presented(
+      buildJob({ type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, sportEventId: EVENT_ID, trigger: JobTrigger.SYSTEM }),
+      [],
+      { sportLeague: { id: LEAGUE_ID, name: 'PGA Tour' }, sportEvent: { id: EVENT_ID, name: 'The Sentry' } },
+    ));
 
     expect(dto).toMatchObject({
       kind: BackgroundJobKind.RELEASE,
       sportLeagueId: null,
       sportEventId: EVENT_ID,
+      sportLeague: { id: LEAGUE_ID, name: 'PGA Tour' },
+      sportEvent: { id: EVENT_ID, name: 'The Sentry' },
       trigger: JobTrigger.SYSTEM,
       startedBy: null,
       startedAt: null,
@@ -87,24 +101,24 @@ describe('toActivityJobDto', () => {
   it('names the admin who started an ADMIN job by their full name, falling back to their username when they have none', () => {
     const starter = { id: '00000000-0000-4000-8000-0000000000aa', firstName: 'Dana', lastName: 'Lee', username: 'dlee', email: 'dana@example.com' };
 
-    expect(toActivityJobDto(buildJob({ trigger: JobTrigger.ADMIN, startedBy: starter }), []).startedBy)
+    expect(toActivityJobDto(presented(buildJob({ trigger: JobTrigger.ADMIN, startedBy: starter }))).startedBy)
       .toEqual({ id: starter.id, displayName: 'Dana Lee' });
-    expect(toActivityJobDto(buildJob({ trigger: JobTrigger.ADMIN, startedBy: { ...starter, firstName: '', lastName: ' ' } }), []).startedBy)
+    expect(toActivityJobDto(presented(buildJob({ trigger: JobTrigger.ADMIN, startedBy: { ...starter, firstName: '', lastName: ' ' } }))).startedBy)
       .toEqual({ id: starter.id, displayName: 'dlee' });
   });
 
   it('answers a still-running try with no duration, and a failed job with its error type', () => {
-    const running = toActivityJobDto(buildJob({ status: BackgroundJobStatus.RUNNING, attempts: 1, startedAt: CREATED_AT }), []);
+    const running = toActivityJobDto(presented(buildJob({ status: BackgroundJobStatus.RUNNING, attempts: 1, startedAt: CREATED_AT })));
     expect(running).toMatchObject({ startedAt: '2026-11-18T03:00:00.000Z', durationSeconds: null });
 
-    const failed = toActivityJobDto(buildJob({
+    const failed = toActivityJobDto(presented(buildJob({
       status: BackgroundJobStatus.FAILED,
       attempts: 4,
       startedAt: CREATED_AT,
       completedAt: new Date('2026-11-18T03:00:09.000Z'),
       lastError: 'BALLDONTLIE request /pga/v1/tournaments failed: 429 Too Many Requests',
       errorType: JobErrorType.RATE_LIMITED,
-    }), []);
+    })));
     expect(failed).toMatchObject({ durationSeconds: 9, changedCount: null, errorType: JobErrorType.RATE_LIMITED });
     expect(() => ActivityJobDtoSchema.parse(failed)).not.toThrow();
   });

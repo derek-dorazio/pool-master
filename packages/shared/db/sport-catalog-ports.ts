@@ -19,10 +19,12 @@ import type {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
+  RoundResultFacts,
   ScoringFamily,
   Sport,
   SportConfig,
   SportEvent,
+  SportEventContest,
   SportEventMatch,
   SportEventParent,
   SportEventParticipant,
@@ -353,6 +355,11 @@ export interface SportEventRoundRepository {
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
   /** The event's round of this number, created (scheduled now) when a score arrives for a round it lacks. */
   findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound>;
+  /**
+   * The results recorded in each of the event's rounds, by round id, grouped by status (#1889): two
+   * grouped reads however many rounds and results. A round with nothing recorded is absent.
+   */
+  findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>>;
 }
 
 /** undefined leaves a field alone; null clears it. */
@@ -689,6 +696,29 @@ export interface SportLeaguePageParticipant {
   mapping: { externalId: string; lastSeenAt: Date | null } | null;
 }
 
+/** One field row of an event as its Event page reads it (#1889). */
+export interface SportEventPageFieldRow {
+  id: string;
+  isActive: boolean;
+  oddsToWin: number | null;
+  seedNumber: number | null;
+  ranking: number | null;
+  name: string;
+  /** Its participant's latest provider mapping in the event's sport league, if any. */
+  mapping: { externalId: string; lastSeenAt: Date | null } | null;
+}
+
+/** What the Event page's header and sync rows are computed from, in a fixed number of reads. */
+export interface SportEventPageFacts {
+  league: SportLeaguePageLeague;
+  event: SportLeaguePageEvent;
+  /** The event's latest run of each kind. */
+  latestRuns: SportLeaguePageRun[];
+  /** The event itself when it may be overdue; empty otherwise. */
+  overdueCandidates: OverdueEventFacts[];
+  field: SportEventPageFieldRow[];
+}
+
 export interface SportLeaguePageReader {
   /** Null when the league does not exist. */
   readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null>;
@@ -696,6 +726,8 @@ export interface SportLeaguePageReader {
   readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null>;
   /** Null when the league does not exist. */
   readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null>;
+  /** One event's facts (#1889). Null when the event does not exist. */
+  readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
 }
 
 /** A profile write: its name and values. */
@@ -730,3 +762,9 @@ export interface ProfileRepository<TProfile, TWrite> {
 
 export type TierProfileRepository = ProfileRepository<TierProfile, TierProfileWrite>;
 export type PricingProfileRepository = ProfileRepository<PricingProfile, PricingProfileWrite>;
+
+/** The customer contests on one sport event (#1889), for the root admin's Event page. */
+export interface SportEventContestReader {
+  /** Every contest on the event, across every league, newest first; one read however many contests and entries. */
+  findContests(sportEventId: string): Promise<SportEventContest[]>;
+}

@@ -11,6 +11,7 @@ import type {
 } from './enums';
 import type { EventPricingConfig } from './budget-pricing';
 import type { EventTierConfig } from './tier-profiles';
+import type { AutoReleaseCheck } from './sport-league-overview';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { ScoringFamily } from './sports/scoring-family';
@@ -94,6 +95,11 @@ export interface SportEvent extends DomainEntity {
    * event, and on a Clutch Card event created before #1820 whose parent was never loaded.
    */
   parentEvent?: SportEventParent;
+  /**
+   * The latest automatic release check (#1847): when the release job last judged the event, and
+   * whether it released or held it. Unset until the first check, and after a release by hand.
+   */
+  autoReleaseCheck?: AutoReleaseCheck;
 }
 
 /** The season event a Clutch Card event is rounds of, and which rounds (#1820). */

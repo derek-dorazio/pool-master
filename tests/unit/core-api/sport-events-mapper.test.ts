@@ -1,7 +1,8 @@
-import type { SportEvent } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, type SportEvent } from '@poolmaster/shared/domain';
 import {
   mapLiveSimulationToResponse,
   mapProviderEventYearImportToResponse,
+  mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
   mapSportEventToDto,
@@ -122,6 +123,40 @@ describe('SportEvent parent on the wire (#1820)', () => {
   });
 });
 
+describe('SportEvent last automatic release try on the wire (#1889)', () => {
+  it('sends the stored try with its time as ISO and its failed checks', () => {
+    const checkedAt = new Date('2026-11-18T21:04:00.000Z');
+    const dto = mapSportEventToDto(summary(event({
+      status: 'DRAFT',
+      autoReleaseCheck: { checkedAt, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_FILLED] },
+    }), 1));
+
+    expect(dto.lastAutoReleaseCheck).toEqual({ checkedAt: checkedAt.toISOString(), outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_FILLED] });
+  });
+
+  it('sends null for an event never tried', () => {
+    expect(mapSportEventToDto(summary(event(), 1)).lastAutoReleaseCheck).toBeNull();
+  });
+});
+
+describe('the contests on an event on the wire (#1889)', () => {
+  const AT = new Date('2026-11-18T15:00:00.000Z');
+
+  it('sends each contest\'s league and template flat, its creation time as ISO, and a contest with no template as nulls', () => {
+    const response = mapSportEventContestsToResponse([
+      { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, league: { id: 'l1', name: 'Office Hoops' }, contestTemplate: { id: 't1', name: 'Pick 6' }, entryCount: 3, createdAt: AT },
+      { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, league: { id: 'l2', name: 'Golf Pals' }, contestTemplate: null, entryCount: 0, createdAt: AT },
+    ]);
+
+    expect(response).toEqual({
+      contests: [
+        { id: 'c1', name: 'Sentry pick 6', status: ContestStatus.DRAFT, leagueId: 'l1', leagueName: 'Office Hoops', contestTemplateId: 't1', contestTemplateName: 'Pick 6', entryCount: 3, createdAt: AT.toISOString() },
+        { id: 'c2', name: 'One and done', status: ContestStatus.OPEN, leagueId: 'l2', leagueName: 'Golf Pals', contestTemplateId: null, contestTemplateName: null, entryCount: 0, createdAt: AT.toISOString() },
+      ],
+    });
+  });
+});
+
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
     expect(mapSportEventToDto({ event: event(), loadedParticipantCount: 72, tierCount: 6, adminCounts: null })).toMatchObject({
@@ -153,10 +188,25 @@ describe('the event\'s rounds, tiers, years, live simulation and year import on 
   const AT = new Date('2026-04-09T12:00:00.000Z');
 
   it('sends a round\'s scheduled end as ISO, and a round with none as null', () => {
-    const round = { id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT, scheduledEndAt: AT, createdAt: AT, updatedAt: AT };
+    const round = {
+      id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT, scheduledEndAt: AT, createdAt: AT, updatedAt: AT,
+      progress: { status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null },
+    };
 
-    expect(mapSportEventRoundToDto(round)).toEqual({ id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString() });
+    expect(mapSportEventRoundToDto(round)).toEqual({
+      id: 'r1', sportEventId: 'e1', roundNumber: 1, scheduledDate: AT.toISOString(), scheduledEndAt: AT.toISOString(),
+      status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null,
+    });
     expect(mapSportEventRoundToDto({ ...round, scheduledEndAt: null }).scheduledEndAt).toBeNull();
+  });
+
+  it('sends a finished round\'s status, result count and completion time as ISO', () => {
+    const round = {
+      id: 'r1', sportEventId: 'e1', roundNumber: 2, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT,
+      progress: { status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT },
+    };
+
+    expect(mapSportEventRoundToDto(round)).toMatchObject({ status: RoundStatus.COMPLETED, resultCount: 8, completedAt: AT.toISOString() });
   });
 
   it('sends a tier\'s key, label and number', () => {

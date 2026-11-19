@@ -28,12 +28,15 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import { toActivityJobDto } from '../../mappers';
 import type { LeagueEventsSync } from '../events/league-events-sync';
+import type { ActivityService } from '../activity/activity-service';
 
 export interface IngestionModuleOptions {
   ingestionService: IngestionService;
   providerRegistry: ProviderRegistry;
   /** A sport league's events sync (#1819), for its Sync now. */
   leagueEventsSync: Pick<LeagueEventsSync, 'syncNow'>;
+  /** Answers the queued job as its Activity row reads. */
+  activity: Pick<ActivityService, 'present'>;
 }
 
 const SPORT_PARAM = { type: 'string', enum: Object.values(Sport) };
@@ -129,7 +132,8 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
         eventYear: request.body.eventYear,
         requestedByUserId: requireAuthUser(request).userId,
       });
-      return reply.code(202).send({ job: toActivityJobDto(job, []) });
+      const [presented] = await opts.activity.present([job]);
+      return reply.code(202).send({ job: toActivityJobDto(presented) });
     },
   });
 

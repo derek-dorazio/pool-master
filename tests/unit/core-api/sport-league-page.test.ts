@@ -6,6 +6,7 @@
 import { expect } from '@jest/globals';
 import {
   AutoReleaseCheckOutcome,
+  FieldOrderBasis,
   OVERDUE_AFTER_MS,
   ParticipantAddedBy,
   ProviderSyncKind,
@@ -22,19 +23,22 @@ import {
   SportLeagueSyncHealth,
   SportLeagueSyncMode,
 } from '@poolmaster/shared/domain';
-import type { SportLeagueEventFacts, SportLeaguePageEvent, SportLeaguePageLeague, SportLeaguePageParticipant, SportLeaguePageReader, SportLeaguePageRun } from '@poolmaster/shared/db';
+import type { SportEventPageFacts, SportEventPageFieldRow, SportLeagueEventFacts, SportLeaguePageEvent, SportLeaguePageLeague, SportLeaguePageParticipant, SportLeaguePageReader, SportLeaguePageRun } from '@poolmaster/shared/db';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import {
+  SportEventOverviewDtoSchema,
   SportLeagueEventOverviewDtoSchema,
   SportLeagueParticipantOverviewDtoSchema,
   SportLeagueSyncDtoSchema,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import {
+  mapSportEventOverviewToDto,
   mapSportLeagueEventOverviewToDto,
   mapSportLeagueParticipantOverviewToDto,
   mapSportLeagueSyncToDto,
 } from '../../../packages/core-api/src/mappers';
 import {
+  buildSportEventOverview,
   buildSportLeagueEvents,
   buildSportLeagueSyncs,
   SportLeaguePageService,
@@ -77,6 +81,14 @@ function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePa
 
 function eventFacts(overrides: Partial<SportLeagueEventFacts> = {}): SportLeagueEventFacts {
   return { league: league(), events: [pageEvent()], fieldSizes: new Map(), latestRunsByEvent: new Map(), overdueCandidates: [], ...overrides };
+}
+
+function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPageFieldRow {
+  return { id: 'sep1', isActive: true, oddsToWin: null, seedNumber: null, ranking: null, name: 'Aaron Judge', mapping: null, ...overrides };
+}
+
+function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
+  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], ...overrides };
 }
 
 const context = { schedule: SCHEDULE, webhookProviderIds: [] as string[], now: NOW };
@@ -206,6 +218,96 @@ describe('buildSportLeagueEvents', () => {
   });
 });
 
+describe('buildSportEventOverview', () => {
+  it('reports the event\'s field and scores syncs from its own runs, never the league\'s event list', () => {
+    const overview = buildSportEventOverview(eventPageFacts({
+      latestRuns: [run(ProviderSyncKind.FIELD), run(ProviderSyncKind.SCORES), run(ProviderSyncKind.EVENTS)],
+    }), context);
+
+    expect(overview.syncs.map((sync) => [sync.kind, sync.health, sync.lastRun?.id])).toEqual([
+      [ProviderSyncKind.FIELD, SportLeagueSyncHealth.OK, 'field-run'],
+      [ProviderSyncKind.SCORES, SportLeagueSyncHealth.OK, 'scores-run'],
+    ]);
+    expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OK);
+  });
+
+  it('reads ERROR with a SYNC issue when the event\'s latest field or scores run failed, and NOT_RUN_YET before any run', () => {
+    const failed = buildSportEventOverview(eventPageFacts({ latestRuns: [run(ProviderSyncKind.FIELD, { status: ProviderSyncRunStatus.FAILED })] }), context);
+    const fresh = buildSportEventOverview(eventPageFacts(), context);
+
+    expect(failed.syncHealth).toBe(SportLeagueSyncHealth.ERROR);
+    expect(failed.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.SYNC, 1]]);
+    expect(fresh).toMatchObject({ syncHealth: SportLeagueSyncHealth.NOT_RUN_YET, issues: [] });
+  });
+
+  it('reads every sync OFF, with nothing scheduled, for an event no provider syncs, as one an admin made in a synced league', () => {
+    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE }) }), context);
+
+    expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OFF);
+    expect(overview.syncs.map((sync) => [sync.health, sync.nextRunAt])).toEqual([[SportLeagueSyncHealth.OFF, null], [SportLeagueSyncHealth.OFF, null]]);
+    expect(overview.releaseMode).toBe(SportEventReleaseMode.MANUAL);
+  });
+
+  it('gives a held draft its RELEASE issue and an automatic draft its planned release, its start less the league\'s window', () => {
+    const check = { checkedAt: at('2027-04-15T11:00:00.000Z'), outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] };
+    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ lastReleaseCheck: check }) }), context);
+
+    expect(overview.issues.map((issue) => issue.type)).toEqual([SportLeagueIssueType.RELEASE]);
+    expect(overview).toMatchObject({
+      releaseMode: SportEventReleaseMode.AUTO,
+      releaseAt: new Date(at('2027-04-20T17:00:00.000Z').getTime() - 7 * DAY),
+      releaseAtKind: SportEventReleaseAtKind.PLANNED,
+    });
+  });
+
+  it('counts only this event\'s overdue candidate as its OVERDUE issue', () => {
+    const expectedEnd = new Date(NOW.getTime() - OVERDUE_AFTER_MS - MINUTE);
+    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.DRAFT, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] };
+    const overview = buildSportEventOverview(eventPageFacts({ overdueCandidates: [candidate, { ...candidate, id: 'e2' }] }), context);
+
+    expect(overview.issues).toEqual([{
+      type: SportLeagueIssueType.OVERDUE, count: 1, items: [{ label: 'Opening Day', occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e1' } }],
+    }]);
+  });
+
+  it('orders the active field by the first value every active participant has, ignoring a withdrawn one without it', () => {
+    const overview = buildSportEventOverview(eventPageFacts({
+      field: [fieldRow({ oddsToWin: 5, ranking: 1 }), fieldRow({ id: 'sep2', oddsToWin: 12 }), fieldRow({ id: 'sep3', isActive: false })],
+    }), context);
+
+    expect(overview).toMatchObject({ tierOrderBasis: FieldOrderBasis.ODDS, tierOrderCoversField: true });
+  });
+
+  it('names the first value anyone has when none covers the field, and no basis with no active field', () => {
+    const partial = buildSportEventOverview(eventPageFacts({ field: [fieldRow({ seedNumber: 1 }), fieldRow({ id: 'sep2' })] }), context);
+    const empty = buildSportEventOverview(eventPageFacts({ field: [fieldRow({ isActive: false })] }), context);
+
+    expect(partial).toMatchObject({ tierOrderBasis: FieldOrderBasis.SEED, tierOrderCoversField: false });
+    expect(empty).toMatchObject({ tierOrderBasis: null, tierOrderCoversField: true });
+  });
+
+  it('gives every field row, withdrawn ones too, its feed id and when the feed last listed it', () => {
+    const seen = at('2027-04-15T09:00:00.000Z');
+    const overview = buildSportEventOverview(eventPageFacts({
+      field: [fieldRow({ mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen } }), fieldRow({ id: 'sep2', isActive: false })],
+    }), context);
+
+    expect(overview.fieldFeed).toEqual([
+      { sportEventParticipantId: 'sep1', feedId: 'mlb-player-592450', lastInFeedAt: seen },
+      { sportEventParticipantId: 'sep2', feedId: null, lastInFeedAt: null },
+    ]);
+  });
+
+  it('sends the overview in the shape the contract declares', () => {
+    const overview = buildSportEventOverview(eventPageFacts({
+      latestRuns: [run(ProviderSyncKind.FIELD, { id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32' })],
+      field: [fieldRow({ id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d33', mapping: { externalId: 'x', lastSeenAt: NOW } })],
+    }), context);
+
+    expect(SportEventOverviewDtoSchema.parse(mapSportEventOverviewToDto(overview))).toBeTruthy();
+  });
+});
+
 describe('SportLeaguePageService', () => {
   const participant = {
     id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', name: 'Aaron Judge', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: 'USA',
@@ -238,6 +340,7 @@ describe('SportLeaguePageService', () => {
     await expect(missing.listSyncs('nope')).resolves.toBeNull();
     await expect(missing.listEvents('nope')).resolves.toBeNull();
     await expect(missing.listParticipants('nope')).resolves.toBeNull();
+    await expect(missing.getEventOverview('nope')).resolves.toBeNull();
   });
 
   it('reads the syncs and events of a sport league that exists', async () => {
@@ -245,6 +348,7 @@ describe('SportLeaguePageService', () => {
 
     await expect(found.listSyncs('mlb')).resolves.toHaveLength(3);
     await expect(found.listEvents('mlb')).resolves.toHaveLength(1);
+    await expect(found.getEventOverview('e1')).resolves.toMatchObject({ syncs: [{ kind: ProviderSyncKind.FIELD }, { kind: ProviderSyncKind.SCORES }] });
   });
 });
 
@@ -255,5 +359,6 @@ function makeReader(participants: SportLeaguePageParticipant[] | null): SportLea
     readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [] } : null),
     readEventFacts: () => Promise.resolve(exists ? eventFacts() : null),
     readParticipants: () => Promise.resolve(participants),
+    readEventPageFacts: () => Promise.resolve(exists ? eventPageFacts() : null),
   };
 }

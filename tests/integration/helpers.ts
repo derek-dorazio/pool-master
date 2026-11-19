@@ -363,7 +363,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
-  testApp.register(eventsModule, { prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards });
+  testApp.register(eventsModule, {
+    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
+  });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
@@ -374,11 +376,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
-  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync });
-  testApp.register(activityModule, {
-    prefix: '/api/v1/activity',
-    activity: new ActivityService({ jobs: new PrismaBackgroundJobRepository(prisma), syncRuns: providerSyncRuns }),
+  const activity = new ActivityService({
+    jobs: new PrismaBackgroundJobRepository(prisma),
+    syncRuns: providerSyncRuns,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
   });
+  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync, activity });
+  testApp.register(activityModule, { prefix: '/api/v1/activity', activity });
   testApp.register(customersModule, {
     prefix: '/api/v1/customers',
     customers: new CustomerService({ reader: new PrismaCustomerReader(prisma) }),

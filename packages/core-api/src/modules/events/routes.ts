@@ -9,7 +9,9 @@
  * write needs the root-admin claim (access rule A10). Admin-only fields on the DTOs are
  * annotated, not stripped (plans/145 rule 4).
  */
+import rateLimit from '@fastify/rate-limit';
 import type { FastifyInstance } from 'fastify';
+import type { ApiErrorCode } from '@poolmaster/shared/dto/api-error-codes';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
@@ -20,6 +22,7 @@ import '@poolmaster/shared/dto/events.dto';
 import '@poolmaster/shared/dto/golf-scores.dto';
 import '@poolmaster/shared/dto/race-results.dto';
 import '@poolmaster/shared/dto/bracket.dto';
+import '@poolmaster/shared/dto/sport-catalog.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
@@ -28,6 +31,8 @@ import type { IngestionService } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
+import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
+import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
@@ -48,6 +53,9 @@ export interface EventsModuleOptions {
    * write through the same instances; omitted, the module builds its own.
    */
   services?: SportEventServices;
+  /** The Event page's sync rows (#1889): the one ingestion schedule, and which providers' webhooks drive their live scores. */
+  schedule: SportLeaguePageServiceDeps['schedule'];
+  webhookProviderIds: readonly string[];
 }
 
 const TAGS = ['Events'];
@@ -66,8 +74,30 @@ const ROUND_PARAMS = {
 };
 const NO_CONTENT = { 204: { type: 'null' } };
 
-export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions): void {
+/**
+ * Reads one address may make a minute on each root-admin-only event read (#1889). The Event page
+ * makes a handful; a script hammering a route does not stay inside it. Per process, as the other
+ * per-address limits.
+ */
+export const EVENT_ADMIN_READS_PER_MINUTE = 120;
+const ADMIN_READ_LIMIT = { rateLimit: { max: EVENT_ADMIN_READS_PER_MINUTE, timeWindow: 60_000 } };
+
+/** An address over its reads for the minute on a root-admin-only event read. */
+export class EventAdminRateLimitError extends Error {
+  readonly statusCode = 429;
+  readonly code: ApiErrorCode = 'EVENT_ADMIN_RATE_LIMITED';
+
+  constructor() {
+    super('Too many event reads from this address; try again in a minute.');
+    this.name = 'EventAdminRateLimitError';
+  }
+}
+
+export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions): Promise<void> {
   void fastify.register(schemaComponentsPlugin);
+  // Only the routes that ask for a limit get one (`config.rateLimit`); keyed by `request.ip`.
+  // Awaited, so its route hook is in place before the routes below are declared.
+  await fastify.register(rateLimit, { global: false, errorResponseBuilder: () => new EventAdminRateLimitError() });
 
   const prisma = getAppPrisma(fastify);
   const eventLifecycle = opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log });
@@ -76,6 +106,11 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
+    eventOverviews: new SportLeaguePageService({
+      reader: new PrismaSportLeaguePageReader(prisma),
+      schedule: opts.schedule,
+      webhookProviderIds: opts.webhookProviderIds,
+    }),
   });
   const write = { onRequest: requireRootAdmin };
 
@@ -327,6 +362,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'List a sport event\'s rounds',
+      description: 'Every round by number, each with where it stands (status, result count, completion time) read off the results recorded in it, in a fixed number of reads.',
       operationId: 'listEventRounds',
       params: EVENT_PARAMS,
       response: { 200: schemaRef('SportEventRoundListResponse'), ...errors(401, 404) },
@@ -346,6 +382,40 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: { 200: schemaRef('SportEventRoundListResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.updateEventRounds,
+  });
+
+  // --- The contests on the event (#1889) ---------------------------------------------
+
+  fastify.get('/:eventId/contests', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List the contests on a sport event',
+      description: 'Every customer contest run on the event, across every league, newest first and never paged, with its league, contest template, status and entry count. The root admin\'s Event page reads it; one read however many contests. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. '
+        + `More than ${EVENT_ADMIN_READS_PER_MINUTE} reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.`,
+      operationId: 'listEventContests',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventContestListResponse'), ...errors(401, 403, 404, 429) },
+    },
+    config: ADMIN_READ_LIMIT,
+    handler: handler.listEventContests,
+  });
+
+  fastify.get('/:eventId/overview', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'Get an event\'s syncs, health, issues, release and tier order',
+      description: 'The root admin\'s Event page header and sync rows (#1889), by the League page\'s rules applied to one event: its field and scores syncs from its own latest runs, '
+        + 'its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, '
+        + 'and each field row\'s feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. '
+        + `404 EVENT_NOT_FOUND for an unknown event. More than ${EVENT_ADMIN_READS_PER_MINUTE} reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.`,
+      operationId: 'getEventOverview',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventOverviewResponse'), ...errors(401, 403, 404, 429) },
+    },
+    config: ADMIN_READ_LIMIT,
+    handler: handler.getEventOverview,
   });
 
   // --- The field (SportEventParticipant) -----------------------------------------------

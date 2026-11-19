@@ -304,7 +304,9 @@ export class InMemorySportEvents {
     return {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
-      findLinks: async (ids) => this.events.filter((row) => ids.includes(row.id)).map((row) => ({ id: row.id, name: row.name, sportLeagueId: row.sportLeagueId, providerId: row.providerId })),
+      findLinks: async (ids) => this.events
+        .filter((row) => ids.includes(row.id))
+        .map(({ id, name, sportLeagueId, providerId }) => ({ id, name, sportLeagueId, providerId })),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
       // No sport filter: every event is golf while Sport has one member.
@@ -480,6 +482,8 @@ export class InMemorySportEvents {
         }
         return row;
       },
+      // The in-memory store keeps no match or participant-round rows: every round reads as scheduled.
+      findResultFacts: async () => new Map(),
     };
   }
 
@@ -834,6 +838,7 @@ export class InMemorySportEvents {
             homeSpread: null,
             externalGameId: null,
             resultSource: null,
+            completedAt: null,
             periodScores: [],
             status: MatchStatus.SCHEDULED,
             winnerSide: null,

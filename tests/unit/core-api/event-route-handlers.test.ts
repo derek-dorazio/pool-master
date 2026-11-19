@@ -4,7 +4,7 @@
  * and the status each provider sync refusal is sent with.
  */
 import { expect } from '@jest/globals';
-import { SportEventStatus, SportEventSyncScope, type SportEvent } from '@poolmaster/shared/domain';
+import { SportEventStatus, SportEventSyncScope, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
@@ -51,7 +51,22 @@ const fieldRow = {
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
   valuation: null, standing: null, rounds: [], raceResult: null, affiliatedWithSportLeague: true,
 };
-const round = { id: 'r1', sportEventId: EVENT_ID, roundNumber: 1, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT };
+const round = {
+  id: 'r1', sportEventId: EVENT_ID, roundNumber: 1, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT,
+  progress: { status: 'COMPLETED', resultCount: 4, completedAt: AT },
+};
+const EVENT_OVERVIEW: SportEventOverview = {
+  syncHealth: 'OK',
+  syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null, nextRunAt: AT }],
+  issues: [],
+  releaseMode: 'AUTO',
+  releaseAt: AT,
+  releaseAtKind: 'PLANNED',
+  tierOrderBasis: 'ODDS',
+  tierOrderCoversField: true,
+  fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
+};
+const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
 
 function fakes() {
   const fn = <T>(value: T) => jest.fn((..._args: unknown[]) => Promise.resolve(value));
@@ -70,7 +85,8 @@ function fakes() {
       deleteEvent: fn(undefined),
       releaseEvent: fn(summary),
     },
-    rounds: { listRounds: fn([round]), reschedule: fn([round]) },
+    rounds: { listRoundViews: fn([round]), reschedule: fn([round]) },
+    contests: { listContests: fn([contest]) },
     field: {
       listEventParticipants: fn([fieldRow]),
       getEventParticipant: fn(fieldRow),
@@ -114,14 +130,16 @@ function fakes() {
     startLiveSimulation: fn({ startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 1 }),
     getLiveSimulation: fn({ startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 1 }),
   };
+  const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
   const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
     eventLifecycle: lifecycle as unknown as EventLifecycleService,
     scoreSource: scoreSource as unknown as EventScoreSourceService,
     ingestion: ingestion as unknown as IngestionService,
+    eventOverviews,
   });
-  return { services, lifecycle, scoreSource, ingestion, handlers };
+  return { services, lifecycle, scoreSource, ingestion, eventOverviews, handlers };
 }
 const params = { eventId: EVENT_ID };
 
@@ -317,6 +335,50 @@ describe('field refresh from the provider', () => {
   });
 });
 
+describe('the contests on an event (#1889)', () => {
+  it('answers with the event\'s contests from the contest service, mapped flat', async () => {
+    const { services, handlers } = fakes();
+
+    const listed = await callHandler(handlers.listEventContests, stubRequest({ params, authUser: admin }));
+
+    expect(services.contests.listContests).toHaveBeenCalledWith(EVENT_ID);
+    expect(listed.body).toEqual({
+      contests: [{ id: 'c1', name: 'Sentry pick 6', status: 'OPEN', leagueId: 'l1', leagueName: 'Office Hoops', contestTemplateId: null, contestTemplateName: null, entryCount: 2, createdAt: ISO }],
+    });
+  });
+});
+
+describe('the event overview', () => {
+  it('answers with the event\'s overview from the League page service, mapped to the contract', async () => {
+    const { eventOverviews, handlers } = fakes();
+
+    const read = await callHandler(handlers.getEventOverview, stubRequest({ params, authUser: admin }));
+
+    expect(eventOverviews.getEventOverview).toHaveBeenCalledWith(EVENT_ID);
+    expect(read.body).toEqual({
+      overview: {
+        syncHealth: 'OK',
+        syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null, nextRunAt: ISO }],
+        issues: [],
+        releaseMode: 'AUTO',
+        releaseAt: ISO,
+        releaseAtKind: 'PLANNED',
+        tierOrderBasis: 'ODDS',
+        tierOrderCoversField: true,
+        fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: ISO }],
+      },
+    });
+  });
+
+  it('refuses an event the service does not know with 404 EVENT_NOT_FOUND', async () => {
+    const { eventOverviews, handlers } = fakes();
+    eventOverviews.getEventOverview.mockResolvedValueOnce(null);
+
+    await expect(callHandler(handlers.getEventOverview, stubRequest({ params, authUser: admin })))
+      .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
 describe('rounds, field and tiers', () => {
   it('lists an event\'s rounds and reschedules them, a round\'s end cleared, set or left alone', async () => {
     const { services, handlers } = fakes();
@@ -331,7 +393,7 @@ describe('rounds, field and tiers', () => {
       ] },
     }));
 
-    expect(listed.body).toMatchObject({ rounds: [{ id: 'r1', scheduledDate: ISO, scheduledEndAt: null }] });
+    expect(listed.body).toMatchObject({ rounds: [{ id: 'r1', scheduledDate: ISO, scheduledEndAt: null, status: 'COMPLETED', resultCount: 4, completedAt: ISO }] });
     expect(services.rounds.reschedule).toHaveBeenCalledWith(EVENT_ID, [
       { roundNumber: 1, scheduledDate: AT, scheduledEndAt: null },
       { roundNumber: 2, scheduledDate: AT, scheduledEndAt: AT },
