@@ -111,6 +111,7 @@ export class InMemoryGamePicks {
       homeSpread: null,
       externalGameId: null,
       resultSource: null,
+      completedAt: null,
       periodScores: [],
       createdAt: T0,
       updatedAt: T0,

@@ -23,6 +23,7 @@ export function mapSportEventMatchToDto(match: SportEventMatch): SportEventMatch
     awayShootoutScore: match.awayShootoutScore,
     ending: match.ending,
     resultSource: match.resultSource,
+    completedAt: match.completedAt?.toISOString() ?? null,
     advancesToMatchId: match.advancesToMatchId,
     advancesToSide: match.advancesToSide,
     regionLabel: match.regionLabel,

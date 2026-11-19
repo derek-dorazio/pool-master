@@ -277,6 +277,11 @@ export interface SportEventMatch extends DomainEntity {
    */
   resultSource: MatchResultSource | null;
   /**
+   * When the result was last recorded (#1889): each write of a COMPLETED result sets it, a
+   * correction included; null in every other status.
+   */
+  completedAt: Date | null;
+  /**
    * The score at the end of each period entered so far (#772), in period order: the end of each
    * quarter but the last in American football. The final score is `homeScore`/`awayScore`.
    * Empty for a sport without periods (`SportDefinition.matchPeriods`).

@@ -49,6 +49,8 @@ import { ReadCache } from '../../core/read-cache';
 import { readEventFieldCacheTtlMs, type EventFieldCache } from './event-field-cache';
 import { SportEventParticipantService } from './sport-event-participant-service';
 import { SportEventRoundService } from './sport-event-round-service';
+import { SportEventContestService } from './sport-event-contest-service';
+import { PrismaSportEventContestReader } from '../../adapters/prisma-sport-event-contest-reader';
 import { SportEventTierService } from './sport-event-tier-service';
 
 export function createSportEventTierService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventTierService {
@@ -167,6 +169,8 @@ export interface SportEventServices {
   sportLeagues: SportLeagueService;
   /** A synced league's event's games from its provider (#1728). */
   providerGames: ProviderGameSlateService;
+  /** The customer contests on an event, for the root admin (#1889). */
+  contests: SportEventContestService;
 }
 
 export function createMatchResultService(
@@ -255,23 +259,25 @@ export function createSportEventServices(
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
   const tiers = createSportEventTierService(prisma, logger);
   const bracket = createSportEventBracketService(prisma, logger, leaderboards);
+  const sportEventService = new SportEventService({
+    sportEvents: events,
+    eventSeries: new PrismaEventSeriesRepository(prisma),
+    sportLeagues,
+    sports,
+    rounds,
+    tiers,
+    bracket,
+    lifecycle,
+    contests: new PrismaContestRepository(prisma),
+    leaderboards,
+    logger,
+  });
   return {
     rounds,
     tiers,
     bracket,
-    sportEvents: new SportEventService({
-      sportEvents: events,
-      eventSeries: new PrismaEventSeriesRepository(prisma),
-      sportLeagues,
-      sports,
-      rounds,
-      tiers,
-      bracket,
-      lifecycle,
-      contests: new PrismaContestRepository(prisma),
-      leaderboards,
-      logger,
-    }),
+    sportEvents: sportEventService,
+    contests: new SportEventContestService({ sportEvents: sportEventService, reader: new PrismaSportEventContestReader(prisma) }),
     field: createSportEventParticipantService(prisma, logger, leaderboards),
     providerGames: new ProviderGameSlateService({
       sportEvents: events,

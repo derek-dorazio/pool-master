@@ -10,10 +10,13 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRoundRepository, SportEventRoundSchedule } from '@poolmaster/shared/db';
-import type { SportEventRound } from '@poolmaster/shared/domain';
+import { NO_ROUND_RESULTS, roundProgressOf, type RoundProgress, type SportEventRound } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** A round with where it stands (#1889): what the rounds read answers with. */
+export type SportEventRoundView = SportEventRound & { progress: RoundProgress };
 
 export interface SportEventRoundServiceDeps {
   rounds: SportEventRoundRepository;
@@ -25,6 +28,12 @@ export class SportEventRoundService {
 
   listRounds(sportEventId: string): Promise<SportEventRound[]> {
     return this.deps.rounds.findBySportEvent(sportEventId);
+  }
+
+  /** The event's rounds, each with its status, result count and completion time read off its results. */
+  async listRoundViews(sportEventId: string): Promise<SportEventRoundView[]> {
+    const [rounds, facts] = await Promise.all([this.deps.rounds.findBySportEvent(sportEventId), this.deps.rounds.findResultFacts(sportEventId)]);
+    return rounds.map((round) => ({ ...round, progress: roundProgressOf(facts.get(round.id) ?? NO_ROUND_RESULTS) }));
   }
 
   /**
