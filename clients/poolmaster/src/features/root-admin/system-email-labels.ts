@@ -1,15 +1,33 @@
-import { EmailTemplateKey, EmailTemplateStatus, type LeaguePlan } from '@poolmaster/shared/domain';
+import { EmailTemplateKey, EmailTemplateStatus, explicitOrder, type LeaguePlan } from '@poolmaster/shared/domain';
 import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 
-/** Who a system email goes to, as the Notifications page's Audience column says it. */
+/** Who a system email goes to: a code, worded by `EMAIL_AUDIENCE_LABELS`. */
 export const EMAIL_AUDIENCE = {
-  MEMBERS: 'Members',
-  COMMISSIONERS: 'Commissioners',
-  ROOT_ADMINS: 'Root admins',
-  PEOPLE_INVITED: 'People invited',
-  ACCOUNT_HOLDERS: 'Account holders',
+  MEMBERS: 'MEMBERS',
+  COMMISSIONERS: 'COMMISSIONERS',
+  ROOT_ADMINS: 'ROOT_ADMINS',
+  PEOPLE_INVITED: 'PEOPLE_INVITED',
+  ACCOUNT_HOLDERS: 'ACCOUNT_HOLDERS',
 } as const;
 export type EmailAudience = (typeof EMAIL_AUDIENCE)[keyof typeof EMAIL_AUDIENCE];
+
+/** The Audience column's order: the widest group first, then the people who run leagues and the site. */
+export const EmailAudienceOrder = explicitOrder<EmailAudience>({
+  [EMAIL_AUDIENCE.ACCOUNT_HOLDERS]: 0,
+  [EMAIL_AUDIENCE.MEMBERS]: 1,
+  [EMAIL_AUDIENCE.PEOPLE_INVITED]: 2,
+  [EMAIL_AUDIENCE.COMMISSIONERS]: 3,
+  [EMAIL_AUDIENCE.ROOT_ADMINS]: 4,
+});
+
+/** Each audience as the Notifications page says it. */
+export const EMAIL_AUDIENCE_LABELS: Record<EmailAudience, string> = {
+  [EMAIL_AUDIENCE.MEMBERS]: 'Members',
+  [EMAIL_AUDIENCE.COMMISSIONERS]: 'Commissioners',
+  [EMAIL_AUDIENCE.ROOT_ADMINS]: 'Root admins',
+  [EMAIL_AUDIENCE.PEOPLE_INVITED]: 'People invited',
+  [EMAIL_AUDIENCE.ACCOUNT_HOLDERS]: 'Account holders',
+};
 
 export type SystemEmailLabel = {
   /** The email's name on the page. */

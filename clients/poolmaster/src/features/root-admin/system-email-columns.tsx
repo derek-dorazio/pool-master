@@ -3,14 +3,12 @@ import { EmailTemplateStatusOrder, LEAGUE_PLANS, type EmailTemplateStatus } from
 import type { SystemEmailDto } from '@/lib/api';
 import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { EmailStatusChip } from './email-status-chip';
-import { EMAIL_AUDIENCE, EMAIL_STATUS_LABELS, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
+import { EMAIL_AUDIENCE_LABELS, EMAIL_STATUS_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
 
 const PLAN_OPTIONS = [
   { value: EVERY_PLAN, label: planText(null) },
   ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: LEAGUE_PLAN_LABEL[plan] })),
 ];
-
-const AUDIENCE_OPTIONS = Object.values(EMAIL_AUDIENCE).map((audience) => ({ value: audience, label: audience }));
 
 const columnHelper = createColumnHelper<SystemEmailDto>();
 
@@ -24,7 +22,8 @@ export const systemEmailColumns = [
   columnHelper.accessor((email) => SYSTEM_EMAIL_LABELS[email.templateKey].audience, {
     id: 'audience',
     header: 'Audience',
-    meta: { info: 'Who gets it.', type: { kind: 'enum', values: AUDIENCE_OPTIONS } },
+    meta: { info: 'Who gets it.', type: { kind: 'enum', order: EmailAudienceOrder, label: (audience) => EMAIL_AUDIENCE_LABELS[audience as EmailAudience] } },
+    cell: ({ getValue }) => EMAIL_AUDIENCE_LABELS[getValue()],
   }),
   columnHelper.accessor((email) => SYSTEM_EMAIL_LABELS[email.templateKey].when, {
     id: 'when',

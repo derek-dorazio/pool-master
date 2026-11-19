@@ -9,7 +9,7 @@ import { emailSendResultToast } from './email-send-result';
 import type { EmailSettingsGroup } from './use-email-settings-form';
 import { SettingsSaveError } from './settings-save-error';
 import { EmailStatusChip } from './email-status-chip';
-import { planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
+import { EMAIL_AUDIENCE_LABELS, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
 import { SystemEmailPreviewDialog } from './system-email-preview-dialog';
 import { useSendLatestToMe } from './use-system-emails';
 import { useSettingsGroupForm } from './use-settings-group-form';
@@ -64,11 +64,17 @@ export function SystemEmailDialog({ email, group, onClose }: { email: SystemEmai
   };
   const dismiss = mode === 'edit' ? cancelEdit : onClose;
   const facts: Fact[] = [
-    { id: 'audience', label: 'Audience', value: label.audience, testId: `${TEST_ID}-audience` },
+    { id: 'audience', label: 'Audience', value: EMAIL_AUDIENCE_LABELS[label.audience], testId: `${TEST_ID}-audience` },
     { id: 'when', label: 'When', value: label.when, testId: `${TEST_ID}-when` },
     { id: 'plan', label: 'Plan', value: planText(email.planStartsAt), testId: `${TEST_ID}-plan` },
     { id: 'status', label: 'Status', value: <EmailStatusChip status={email.status} />, testId: `${TEST_ID}-status` },
     { id: 'sent', label: 'Sent (30 days)', value: email.sentLast30Days, testId: `${TEST_ID}-sent` },
+    ...(hasPreview ? [] : [{
+      id: 'preview',
+      label: 'Preview',
+      value: email.lastSentAt === null ? 'Not sent yet' : 'None kept from the last 30 days',
+      testId: `${TEST_ID}-not-sent`,
+    }]),
   ];
 
   return (
@@ -116,13 +122,6 @@ export function SystemEmailDialog({ email, group, onClose }: { email: SystemEmai
             {sendToMe.isPending ? 'Sending...' : SEND_TO_ME}
           </Button>
         </>
-      )}
-      viewContent={hasPreview ? null : (
-        <Text as="p" data-testid={`${TEST_ID}-not-sent`} variant="meta">
-          {email.lastSentAt === null
-            ? 'Not sent yet, so there is nothing to preview or send you.'
-            : 'Nothing to preview or send you: no send of the last 30 days still keeps its content.'}
-        </Text>
       )}
     >
       <div className="space-y-4">

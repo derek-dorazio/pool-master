@@ -274,7 +274,7 @@ describe('Notifications page: an email\'s dialog', () => {
     const dialog = await openEmail('PASSWORD_RESET');
 
     expect(footerButtons(dialog)).toEqual(['Close', 'Preview', 'Send me this email']);
-    expect(within(dialog).getByTestId('root-admin-system-email-dialog-not-sent')).toHaveTextContent('no send of the last 30 days still keeps its content');
+    expect(within(dialog).getByTestId('root-admin-system-email-dialog-not-sent')).toHaveTextContent('None kept from the last 30 days');
   });
 
   it('Edit switches the email off through its switch in the email settings, sending the version it was read at, then shows the view', async () => {
