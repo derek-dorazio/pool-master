@@ -165,8 +165,9 @@ layers are still shaped like the old model, the slice remains `In Progress`.
   old model allowed, edge cases included: a scratch database migrated to the migration before,
   the old rows inserted, this migration applied, the result read back with the new client.
   A test database that is reset empty never runs the migration's `UPDATE`s, so a NOT NULL that
-  fails on real rows passes every other gate. `tests/integration/core-api/participants-one-sport-league-migration.integration.ts`
-  is the pattern (#1853).
+  fails on real rows passes every other gate. #1853's test was the pattern; it left with the
+  migration it tested in the 2026-11-19 squash, and is in git at that squash's parent
+  (`tests/integration/core-api/participants-one-sport-league-migration.integration.ts`).
 - A migration may drop data the no-data rule below allows it to, but it must still apply to any
   database it reaches: when a fill has no source (a sport with participants and no league), it
   creates what it needs rather than failing.
@@ -206,9 +207,9 @@ columns the history had built as `varchar(255)`.
 ## Squashing The Migration History
 
 The history was squashed on 2026-11-04 (#1429), 217 migrations into two baselines; again on
-2026-11-11, folding the 12 migrations added since; and again on 2026-11-12, folding the 17 added
-since into `20271119000000_baseline_schema` and `20271119000100_baseline_reference_data`, with the
-backend and live-sync work in and before a QA reset the owner asked for. A squash is only free
+2026-11-11, folding the 12 migrations added since; again on 2026-11-12, folding 17; and again on
+2026-11-19, folding the 23 added since into `20271217000000_baseline_schema` and
+`20271217000100_baseline_reference_data`, before a QA reset the owner asked for. A squash is only free
 while no environment holds data worth keeping, so each one has gone with a QA reset the owner
 approved. Once QA holds data the owner wants kept, a squash instead means marking the baseline
 applied there (`prisma migrate resolve --applied`) after proving its schema matches, and the QA

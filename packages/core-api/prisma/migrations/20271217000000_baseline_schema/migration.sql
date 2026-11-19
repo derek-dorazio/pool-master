@@ -1,9 +1,9 @@
--- Baseline: the whole migration history squashed on 2026-11-04 (#1429), again on 2026-11-11 and
--- again on 2026-11-12, each just before a QA reset. The history before each squash is in git (at
--- 7bff210, and at the parent of each later squash commit) under packages/core-api/prisma/migrations. Generated
--- from schema.prisma with `prisma migrate diff --from-empty --to-schema-datamodel`, enum labels
--- kept in the order the history added them, plus the section at the end that the schema cannot
--- declare. Reference rows are in the next migration.
+-- Baseline: the whole migration history squashed on 2026-11-04 (#1429), again on 2026-11-11,
+-- 2026-11-12 and 2026-11-19, each just before a QA reset. The history before each squash is in git
+-- (at 7bff210, and at the parent of each later squash commit) under packages/core-api/prisma/migrations.
+-- Generated from schema.prisma with `prisma migrate diff --from-empty --to-schema-datamodel`, enum
+-- labels kept in the order the history added them, plus the section at the end that the schema
+-- cannot declare. Reference rows are in the next migration.
 
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
@@ -41,13 +41,13 @@ CREATE TYPE "PrismaLeagueInviteType" AS ENUM ('EMAIL', 'LINK');
 CREATE TYPE "PrismaLeagueInvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED');
 
 -- CreateEnum
-CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JOIN_SUCCESS', 'CONTEST_ENTRY_COMPLETED', 'CONTEST_STARTED_SUMMARY', 'PASSWORD_RESET', 'PASSWORD_CHANGED', 'CONTEST_ENTRY_REMINDER', 'CONTEST_OPENED', 'CONTEST_STANDINGS', 'CONTEST_RESULTS', 'CONTEST_EVENT_CHANGED', 'EVENT_COMING_UP', 'EVENT_READY_FOR_CONTESTS', 'CONTEST_NOT_OPEN', 'EVENT_STILL_DRAFT', 'SQUAD_OWNER_INVITE', 'SQUAD_OWNER_ADDED', 'EMAIL_TEST', 'YEAR_IN_REVIEW', 'EVENT_WEEKLY_DIGEST', 'LEAGUE_MEMBER_JOINED', 'CONTEST_EXPANDED', 'EMAIL_CHANGED', 'LEAGUE_PLAN_PREVIEW_ENDING');
+CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JOIN_SUCCESS', 'CONTEST_ENTRY_COMPLETED', 'CONTEST_STARTED_SUMMARY', 'PASSWORD_RESET', 'PASSWORD_CHANGED', 'CONTEST_ENTRY_REMINDER', 'CONTEST_OPENED', 'CONTEST_STANDINGS', 'CONTEST_RESULTS', 'CONTEST_EVENT_CHANGED', 'EVENT_COMING_UP', 'EVENT_READY_FOR_CONTESTS', 'CONTEST_NOT_OPEN', 'EVENT_STILL_DRAFT', 'SQUAD_OWNER_INVITE', 'SQUAD_OWNER_ADDED', 'EMAIL_TEST', 'YEAR_IN_REVIEW', 'EVENT_WEEKLY_DIGEST', 'LEAGUE_MEMBER_JOINED', 'CONTEST_EXPANDED', 'EMAIL_CHANGED', 'LEAGUE_PLAN_PREVIEW_ENDING', 'CONTEST_REOPENED');
 
 -- CreateEnum
 CREATE TYPE "PrismaEmailMessageStatus" AS ENUM ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'SKIPPED', 'DELIVERED', 'BOUNCED', 'COMPLAINED');
 
 -- CreateEnum
-CREATE TYPE "PrismaBackgroundJobType" AS ENUM ('MANUAL_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_EVENT_CHANGED_EMAILS', 'ADD_RELEASED_EDITION_TO_CONTEST', 'PROVIDER_EVENT_SYNC');
+CREATE TYPE "PrismaBackgroundJobType" AS ENUM ('MANUAL_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_EVENT_CHANGED_EMAILS', 'ADD_RELEASED_EDITION_TO_CONTEST', 'PROVIDER_EVENT_SYNC', 'CONTEST_REOPENED_EMAILS', 'SYNC_LEAGUE_EVENTS', 'RELEASE_SPORT_EVENT');
 
 -- CreateEnum
 CREATE TYPE "PrismaBackgroundJobStatus" AS ENUM ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED');
@@ -86,7 +86,7 @@ CREATE TYPE "ParticipantInactiveReason" AS ENUM ('WITHDRAWN', 'ELIMINATED');
 CREATE TYPE "PrismaSportEventSyncScope" AS ENUM ('NONE', 'SCORES_ONLY');
 
 -- CreateEnum
-CREATE TYPE "ValuationSource" AS ENUM ('AUTO_ODDS', 'AUTO_RANKING', 'MANUAL');
+CREATE TYPE "ValuationSource" AS ENUM ('AUTO_ODDS', 'AUTO_RANKING', 'MANUAL', 'AUTO_SEED', 'AUTO_NAME');
 
 -- CreateEnum
 CREATE TYPE "ParticipantStandingStatus" AS ENUM ('ACTIVE', 'IN_PROGRESS', 'COMPLETE', 'WITHDRAWN', 'ELIMINATED');
@@ -98,7 +98,7 @@ CREATE TYPE "PrismaSport" AS ENUM ('GOLF', 'HORSE_RACING', 'AUTO_RACING', 'CYCLI
 CREATE TYPE "PrismaTournamentFormat" AS ENUM ('STROKE_PLAY_TOURNAMENT', 'RACE', 'MATCHES');
 
 -- CreateEnum
-CREATE TYPE "PrismaMatchStatus" AS ENUM ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+CREATE TYPE "PrismaMatchStatus" AS ENUM ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'POSTPONED');
 
 -- CreateEnum
 CREATE TYPE "PrismaMatchSide" AS ENUM ('HOME', 'AWAY');
@@ -178,6 +178,24 @@ CREATE TYPE "PrismaParticipantRoundStatus" AS ENUM ('IN_PROGRESS', 'COMPLETED', 
 -- CreateEnum
 CREATE TYPE "PrismaProviderSyncRunStatus" AS ENUM ('SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED');
 
+-- CreateEnum
+CREATE TYPE "PrismaProviderSyncKind" AS ENUM ('EVENTS', 'FIELD', 'SCORES');
+
+-- CreateEnum
+CREATE TYPE "PrismaAutoReleaseCheckOutcome" AS ENUM ('RELEASED', 'HELD');
+
+-- CreateEnum
+CREATE TYPE "PrismaReleaseCheckKey" AS ENUM ('NOT_STARTED', 'ROUNDS_SCHEDULED', 'FIELD_LOADED', 'TIERS_ASSIGNED', 'TIERS_FILLED', 'PRICES_ASSIGNED', 'BRACKET_COMPLETE', 'CONTEST_SETUPS_ON');
+
+-- CreateEnum
+CREATE TYPE "PrismaJobTrigger" AS ENUM ('SCHEDULE', 'WEBHOOK', 'ADMIN', 'COMMISSIONER', 'SYSTEM');
+
+-- CreateEnum
+CREATE TYPE "PrismaJobErrorType" AS ENUM ('RATE_LIMITED', 'TIMEOUT', 'PROVIDER_ERROR', 'BAD_DATA', 'CHECK_FAILED', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "PrismaTierProfileLastTier" AS ENUM ('ALL_REMAINING', 'CAPPED');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -194,6 +212,7 @@ CREATE TABLE "users" (
     "locale" VARCHAR(10) DEFAULT 'en-US',
     "time_format" "UserTimeFormat" DEFAULT '12H',
     "color_scheme" "UserColorScheme",
+    "last_sign_in_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -459,7 +478,8 @@ CREATE TABLE "sport_leagues" (
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "bracket_advancement" "PrismaBracketAdvancement" NOT NULL DEFAULT 'FIXED',
     "round_names" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "tier_count" INTEGER,
+    "tier_profile_id" UUID NOT NULL,
+    "pricing_profile_id" UUID NOT NULL,
     "match_period_layout" "PrismaMatchPeriodLayout",
     "squares_from_round" INTEGER,
     "round_series_lengths" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
@@ -468,10 +488,43 @@ CREATE TABLE "sport_leagues" (
     "display_order" INTEGER,
     "participant_type" "PrismaParticipantType",
     "scoring_family" "PrismaScoringFamily",
+    "parent_sport_league_id" UUID,
+    "parent_round_numbers" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    "event_sync_provider_id" VARCHAR(100),
+    "auto_release_days_before_start" INTEGER DEFAULT 7,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "sport_leagues_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tier_profiles" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "name" VARCHAR(50) NOT NULL,
+    "tier_count" INTEGER NOT NULL,
+    "tier_size" INTEGER NOT NULL,
+    "last_tier" "PrismaTierProfileLastTier" NOT NULL DEFAULT 'ALL_REMAINING',
+    "last_tier_max" INTEGER,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "tier_profiles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "pricing_profiles" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "name" VARCHAR(50) NOT NULL,
+    "salary_cap" INTEGER NOT NULL,
+    "unit" INTEGER NOT NULL,
+    "top_share_percent" DOUBLE PRECISION NOT NULL,
+    "floor_share_percent" DOUBLE PRECISION NOT NULL,
+    "steepness" DOUBLE PRECISION NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "pricing_profiles_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -487,21 +540,10 @@ CREATE TABLE "event_series" (
 );
 
 -- CreateTable
-CREATE TABLE "participant_league_affiliations" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "participant_id" UUID NOT NULL,
-    "sport_league_id" UUID NOT NULL,
-    "ranking" INTEGER,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "participant_league_affiliations_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "participants" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "sport_id" UUID NOT NULL,
+    "sport_league_id" UUID NOT NULL,
+    "ranking" INTEGER,
     "name" TEXT NOT NULL,
     "participant_type" "PrismaParticipantType" NOT NULL,
     "external_id" TEXT,
@@ -526,10 +568,12 @@ CREATE TABLE "participants" (
 CREATE TABLE "participant_provider_mappings" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "participant_id" UUID NOT NULL,
+    "sport_league_id" UUID NOT NULL,
     "provider_id" VARCHAR(100) NOT NULL,
     "external_id" VARCHAR(255) NOT NULL,
     "confidence" "PrismaParticipantMappingConfidence" NOT NULL DEFAULT 'EXACT',
     "mapped_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_seen_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -649,7 +693,7 @@ CREATE TABLE "contest_configurations" (
 CREATE TABLE "contest_config_templates" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "sport" "PrismaSport" NOT NULL,
-    "sport_league_id" UUID,
+    "sport_league_id" UUID NOT NULL,
     "event_type" "PrismaContestTemplateEventType",
     "contest_type" "PrismaContestFormat" NOT NULL,
     "selection_type" "PrismaSelectionType" NOT NULL,
@@ -816,6 +860,7 @@ CREATE TABLE "contest_leaderboard_snapshots" (
     "contest_id" UUID NOT NULL,
     "shown_event" VARCHAR(36) NOT NULL,
     "version" INTEGER NOT NULL DEFAULT 1,
+    "board_format" INTEGER NOT NULL DEFAULT 0,
     "computed_from" TIMESTAMPTZ NOT NULL,
     "contest_updated_at" TIMESTAMPTZ NOT NULL,
     "valid_until" TIMESTAMPTZ,
@@ -932,7 +977,14 @@ CREATE TABLE "sport_events" (
     "sync_scope" "PrismaSportEventSyncScope" NOT NULL DEFAULT 'NONE',
     "auto_lifecycle_enabled" BOOLEAN NOT NULL DEFAULT true,
     "pricing_config" JSONB,
+    "tier_config" JSONB,
     "last_provider_notification_at" TIMESTAMPTZ,
+    "parent_event_id" UUID,
+    "parent_round_numbers" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    "auto_release_checked_at" TIMESTAMPTZ,
+    "auto_release_outcome" "PrismaAutoReleaseCheckOutcome",
+    "auto_release_failed_checks" "PrismaReleaseCheckKey"[] DEFAULT ARRAY[]::"PrismaReleaseCheckKey"[],
+    "released_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -993,6 +1045,7 @@ CREATE TABLE "sport_event_matches" (
     "home_spread" DECIMAL(4,1),
     "external_game_id" VARCHAR(255),
     "result_source" "PrismaMatchResultSource",
+    "completed_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -1127,6 +1180,11 @@ CREATE TABLE "provider_sync_runs" (
     "provider_id" VARCHAR(100) NOT NULL,
     "sport" "PrismaSport" NOT NULL,
     "event_id" VARCHAR(255),
+    "kind" "PrismaProviderSyncKind" NOT NULL,
+    "trigger" "PrismaJobTrigger" NOT NULL,
+    "sport_league_id" UUID,
+    "sport_event_id" UUID,
+    "background_job_id" UUID,
     "status" "PrismaProviderSyncRunStatus" NOT NULL,
     "started_at" TIMESTAMPTZ,
     "completed_at" TIMESTAMPTZ,
@@ -1160,6 +1218,14 @@ CREATE TABLE "background_jobs" (
     "lease_until" TIMESTAMPTZ,
     "last_error" TEXT,
     "dedupe_key" VARCHAR(200),
+    "sport_league_id" UUID,
+    "sport_event_id" UUID,
+    "result" JSONB,
+    "trigger" "PrismaJobTrigger" NOT NULL,
+    "started_by_user_id" UUID,
+    "started_at" TIMESTAMPTZ,
+    "changed_count" INTEGER,
+    "error_type" "PrismaJobErrorType",
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "completed_at" TIMESTAMPTZ,
 
@@ -1345,6 +1411,9 @@ CREATE INDEX "email_messages_league_id_idx" ON "email_messages"("league_id");
 CREATE INDEX "email_messages_recipient_user_id_idx" ON "email_messages"("recipient_user_id");
 
 -- CreateIndex
+CREATE INDEX "email_messages_template_key_sent_at_idx" ON "email_messages"("template_key", "sent_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "email_suppressions_email_key" ON "email_suppressions"("email");
 
 -- CreateIndex
@@ -1369,22 +1438,34 @@ CREATE INDEX "squad_owner_invitations_accepted_by_idx" ON "squad_owner_invitatio
 CREATE UNIQUE INDEX "sports_sport_key" ON "sports"("sport");
 
 -- CreateIndex
+CREATE INDEX "sport_leagues_parent_sport_league_id_idx" ON "sport_leagues"("parent_sport_league_id");
+
+-- CreateIndex
+CREATE INDEX "sport_leagues_tier_profile_id_idx" ON "sport_leagues"("tier_profile_id");
+
+-- CreateIndex
+CREATE INDEX "sport_leagues_pricing_profile_id_idx" ON "sport_leagues"("pricing_profile_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sport_leagues_sport_id_name_key" ON "sport_leagues"("sport_id", "name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tier_profiles_name_key" ON "tier_profiles"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "pricing_profiles_name_key" ON "pricing_profiles"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "event_series_sport_league_id_name_key" ON "event_series"("sport_league_id", "name");
 
 -- CreateIndex
-CREATE INDEX "participant_league_affiliations_sport_league_id_ranking_idx" ON "participant_league_affiliations"("sport_league_id", "ranking");
+CREATE INDEX "participants_sport_league_id_status_idx" ON "participants"("sport_league_id", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "participant_league_affiliations_participant_id_sport_league_key" ON "participant_league_affiliations"("participant_id", "sport_league_id");
+CREATE INDEX "participants_sport_league_id_name_idx" ON "participants"("sport_league_id", "name");
 
 -- CreateIndex
-CREATE INDEX "participants_sport_id_status_idx" ON "participants"("sport_id", "status");
-
--- CreateIndex
-CREATE INDEX "participants_sport_id_name_idx" ON "participants"("sport_id", "name");
+CREATE INDEX "participants_sport_league_id_ranking_idx" ON "participants"("sport_league_id", "ranking");
 
 -- CreateIndex
 CREATE INDEX "participants_name_trgm_idx" ON "participants" USING GIN ("name" gin_trgm_ops);
@@ -1402,10 +1483,13 @@ CREATE INDEX "participants_short_name_trgm_idx" ON "participants" USING GIN ("sh
 CREATE INDEX "participants_team_affiliation_trgm_idx" ON "participants" USING GIN ("team_affiliation" gin_trgm_ops);
 
 -- CreateIndex
+CREATE INDEX "participant_provider_mappings_sport_league_id_provider_id_idx" ON "participant_provider_mappings"("sport_league_id", "provider_id");
+
+-- CreateIndex
 CREATE INDEX "participant_provider_mappings_participant_id_idx" ON "participant_provider_mappings"("participant_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "participant_provider_mappings_provider_id_external_id_key" ON "participant_provider_mappings"("provider_id", "external_id");
+CREATE UNIQUE INDEX "participant_provider_mappings_provider_id_external_id_sport_key" ON "participant_provider_mappings"("provider_id", "external_id", "sport_league_id");
 
 -- CreateIndex
 CREATE INDEX "contests_league_id_season_year_idx" ON "contests"("league_id", "season_year");
@@ -1462,10 +1546,7 @@ CREATE INDEX "contest_configurations_template_id_idx" ON "contest_configurations
 CREATE INDEX "contest_config_templates_sport_contest_type_active_sort_ord_idx" ON "contest_config_templates"("sport", "contest_type", "active", "sort_order");
 
 -- CreateIndex
-CREATE INDEX "contest_config_templates_sport_league_id_idx" ON "contest_config_templates"("sport_league_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "contest_config_templates_sport_event_type_contest_type_sele_key" ON "contest_config_templates"("sport", "event_type", "contest_type", "selection_type", "template_key");
+CREATE UNIQUE INDEX "contest_config_templates_sport_league_id_event_type_contest_key" ON "contest_config_templates"("sport_league_id", "event_type", "contest_type", "selection_type", "template_key");
 
 -- CreateIndex
 CREATE INDEX "event_pages_redirect_to_page_id_idx" ON "event_pages"("redirect_to_page_id");
@@ -1573,6 +1654,9 @@ CREATE INDEX "contest_entry_picks_sport_event_participant_id_idx" ON "contest_en
 CREATE INDEX "sport_events_event_year_idx" ON "sport_events"("event_year");
 
 -- CreateIndex
+CREATE INDEX "sport_events_parent_event_id_idx" ON "sport_events"("parent_event_id");
+
+-- CreateIndex
 CREATE INDEX "sport_events_sport_status_idx" ON "sport_events"("sport", "status");
 
 -- CreateIndex
@@ -1666,6 +1750,15 @@ CREATE INDEX "provider_sync_runs_sport_created_at_idx" ON "provider_sync_runs"("
 CREATE INDEX "provider_sync_runs_status_created_at_idx" ON "provider_sync_runs"("status", "created_at" DESC);
 
 -- CreateIndex
+CREATE INDEX "provider_sync_runs_background_job_id_idx" ON "provider_sync_runs"("background_job_id");
+
+-- CreateIndex
+CREATE INDEX "provider_sync_runs_sport_league_id_kind_created_at_idx" ON "provider_sync_runs"("sport_league_id", "kind", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "provider_sync_runs_sport_event_id_kind_created_at_idx" ON "provider_sync_runs"("sport_event_id", "kind", "created_at" DESC);
+
+-- CreateIndex
 CREATE UNIQUE INDEX "platform_runtime_configs_config_key_key" ON "platform_runtime_configs"("config_key");
 
 -- CreateIndex
@@ -1679,6 +1772,18 @@ CREATE INDEX "background_jobs_status_lease_until_idx" ON "background_jobs"("stat
 
 -- CreateIndex
 CREATE INDEX "background_jobs_status_completed_at_idx" ON "background_jobs"("status", "completed_at");
+
+-- CreateIndex
+CREATE INDEX "background_jobs_created_at_idx" ON "background_jobs"("created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "background_jobs_sport_league_id_created_at_idx" ON "background_jobs"("sport_league_id", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "background_jobs_sport_event_id_created_at_idx" ON "background_jobs"("sport_event_id", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "background_jobs_started_by_user_id_idx" ON "background_jobs"("started_by_user_id");
 
 -- CreateIndex
 CREATE INDEX "platform_runtime_config_history_config_key_changed_at_idx" ON "platform_runtime_config_history"("config_key", "changed_at" DESC);
@@ -1786,19 +1891,25 @@ ALTER TABLE "squad_owner_invitations" ADD CONSTRAINT "squad_owner_invitations_ac
 ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_sport_id_fkey" FOREIGN KEY ("sport_id") REFERENCES "sports"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_tier_profile_id_fkey" FOREIGN KEY ("tier_profile_id") REFERENCES "tier_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_pricing_profile_id_fkey" FOREIGN KEY ("pricing_profile_id") REFERENCES "pricing_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sport_leagues" ADD CONSTRAINT "sport_leagues_parent_sport_league_id_fkey" FOREIGN KEY ("parent_sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "event_series" ADD CONSTRAINT "event_series_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "participant_league_affiliations" ADD CONSTRAINT "participant_league_affiliations_participant_id_fkey" FOREIGN KEY ("participant_id") REFERENCES "participants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "participant_league_affiliations" ADD CONSTRAINT "participant_league_affiliations_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "participants" ADD CONSTRAINT "participants_sport_id_fkey" FOREIGN KEY ("sport_id") REFERENCES "sports"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "participants" ADD CONSTRAINT "participants_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "participant_provider_mappings" ADD CONSTRAINT "participant_provider_mappings_participant_id_fkey" FOREIGN KEY ("participant_id") REFERENCES "participants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "participant_provider_mappings" ADD CONSTRAINT "participant_provider_mappings_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "contests" ADD CONSTRAINT "contests_league_id_fkey" FOREIGN KEY ("league_id") REFERENCES "leagues"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1945,6 +2056,9 @@ ALTER TABLE "contest_entry_picks" ADD CONSTRAINT "contest_entry_picks_entry_id_f
 ALTER TABLE "contest_entry_picks" ADD CONSTRAINT "contest_entry_picks_sport_event_participant_id_fkey" FOREIGN KEY ("sport_event_participant_id") REFERENCES "sport_event_participants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_parent_event_id_fkey" FOREIGN KEY ("parent_event_id") REFERENCES "sport_events"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_event_series_id_fkey" FOREIGN KEY ("event_series_id") REFERENCES "event_series"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -2005,6 +2119,9 @@ ALTER TABLE "sport_event_participant_valuations" ADD CONSTRAINT "sport_event_par
 ALTER TABLE "sport_event_participant_valuations" ADD CONSTRAINT "sport_event_participant_valuations_sport_event_tier_id_fkey" FOREIGN KEY ("sport_event_tier_id") REFERENCES "sport_event_tiers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "background_jobs" ADD CONSTRAINT "background_jobs_started_by_user_id_fkey" FOREIGN KEY ("started_by_user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "email_opt_outs" ADD CONSTRAINT "email_opt_outs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 
@@ -2030,7 +2147,7 @@ ALTER TABLE "background_jobs" ADD CONSTRAINT background_jobs_completed_when_fini
 ALTER TABLE "background_jobs" ADD CONSTRAINT background_jobs_leased_when_running CHECK (((status <> 'RUNNING'::"PrismaBackgroundJobStatus") OR (lease_until IS NOT NULL)));
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT contest_entry_match_predictions_confidence_positive CHECK (((confidence IS NULL) OR (confidence >= 1)));
 ALTER TABLE "contest_entry_match_predictions" ADD CONSTRAINT contest_entry_match_predictions_team_with_team_result CHECK (((predicted_result = 'TEAM'::"PrismaPredictedResult") = (sport_event_participant_id IS NOT NULL)));
-ALTER TABLE "contest_entry_squares" ADD CONSTRAINT contest_entry_squares_position_check CHECK ((((row_index >= 0) AND (row_index <= 9)) AND ((column_index >= 0) AND (column_index <= 9))));
+ALTER TABLE "contest_entry_squares" ADD CONSTRAINT contest_entry_squares_position_check CHECK (((row_index >= 0) AND (row_index <= 9) AND ((column_index >= 0) AND (column_index <= 9))));
 ALTER TABLE "contest_expansions" ADD CONSTRAINT contest_expansions_entries_per_contest_positive CHECK ((entries_per_contest >= 1));
 ALTER TABLE "contest_squares_draws" ADD CONSTRAINT contest_squares_draws_digits_check CHECK (((array_length(row_digits, 1) = 10) AND (row_digits @> ARRAY[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) AND (array_length(column_digits, 1) = 10) AND (column_digits @> ARRAY[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])));
 ALTER TABLE "contest_squares_winners" ADD CONSTRAINT contest_squares_winners_values_check CHECK (((period_number >= 1) AND (home_score >= 0) AND (away_score >= 0) AND ((row_index >= 0) AND (row_index <= 9)) AND ((column_index >= 0) AND (column_index <= 9))));
@@ -2043,6 +2160,7 @@ ALTER TABLE "event_pages" ADD CONSTRAINT event_pages_redirect_check CHECK (((red
 ALTER TABLE "event_pages" ADD CONSTRAINT event_pages_slug_check CHECK (((slug)::text ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text));
 ALTER TABLE "league_payments" ADD CONSTRAINT league_payments_amount_cents_not_negative CHECK ((amount_cents >= 0));
 ALTER TABLE "leagues" ADD CONSTRAINT leagues_cup_custom_points_check CHECK (((cup_points_scale = 'CUSTOM'::"PrismaCupPointsScale") = (cardinality(cup_custom_points) > 0)));
+ALTER TABLE "pricing_profiles" ADD CONSTRAINT pricing_profiles_values_range CHECK (((salary_cap >= 1) AND (unit >= 1) AND (top_share_percent > (0)::double precision) AND (floor_share_percent > (0)::double precision) AND (floor_share_percent <= top_share_percent) AND (steepness > (0)::double precision)));
 ALTER TABLE "sport_event_match_period_scores" ADD CONSTRAINT sport_event_match_period_scores_period_number_check CHECK ((period_number >= 1));
 ALTER TABLE "sport_event_match_period_scores" ADD CONSTRAINT sport_event_match_period_scores_scores_check CHECK (((home_score >= 0) AND (away_score >= 0)));
 ALTER TABLE "sport_event_matches" ADD CONSTRAINT sport_event_matches_advances_elsewhere CHECK (((advances_to_match_id IS NULL) OR (advances_to_match_id <> id)));
@@ -2058,6 +2176,13 @@ ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_f
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_official_finisher_has_place CHECK (((NOT is_official) OR (result_status <> 'FINISHED'::"RaceResultStatus") OR (finish_position IS NOT NULL)));
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_place_only_when_finished CHECK (((finish_position IS NULL) OR (result_status = 'FINISHED'::"RaceResultStatus")));
 ALTER TABLE "sport_event_participant_race_results" ADD CONSTRAINT race_results_start_position_positive CHECK (((start_position IS NULL) OR (start_position >= 1)));
+ALTER TABLE "sport_events" ADD CONSTRAINT sport_events_auto_release_check_complete CHECK (((auto_release_checked_at IS NULL) = (auto_release_outcome IS NULL)));
+ALTER TABLE "sport_events" ADD CONSTRAINT sport_events_auto_release_released_has_no_failed_checks CHECK (((auto_release_outcome IS DISTINCT FROM 'RELEASED'::"PrismaAutoReleaseCheckOutcome") OR (cardinality(auto_release_failed_checks) = 0)));
+ALTER TABLE "sport_events" ADD CONSTRAINT sport_events_parent_with_rounds CHECK (((parent_event_id IS NULL) = (COALESCE(cardinality(parent_round_numbers), 0) = 0)));
+ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_auto_release_days_before_start_range CHECK (((auto_release_days_before_start IS NULL) OR ((auto_release_days_before_start >= 1) AND (auto_release_days_before_start <= 30))));
+ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_parent_rounds_need_parent_league CHECK (((COALESCE(cardinality(parent_round_numbers), 0) = 0) OR (parent_sport_league_id IS NOT NULL)));
 ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_round_series_lengths_check CHECK ((round_series_lengths <@ ARRAY[1, 3, 5, 7, 9]));
 ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_squares_from_round_check CHECK (((squares_from_round IS NULL) OR (squares_from_round >= 1)));
-ALTER TABLE "sport_leagues" ADD CONSTRAINT sport_leagues_tier_count_positive CHECK (((tier_count IS NULL) OR (tier_count >= 1)));
+ALTER TABLE "tier_profiles" ADD CONSTRAINT tier_profiles_last_tier_max_when_capped CHECK ((((last_tier = 'CAPPED'::"PrismaTierProfileLastTier") = (last_tier_max IS NOT NULL)) AND ((last_tier_max IS NULL) OR ((last_tier_max >= 1) AND (last_tier_max <= 500)))));
+ALTER TABLE "tier_profiles" ADD CONSTRAINT tier_profiles_tier_count_range CHECK (((tier_count >= 1) AND (tier_count <= 20)));
+ALTER TABLE "tier_profiles" ADD CONSTRAINT tier_profiles_tier_size_range CHECK (((tier_size >= 1) AND (tier_size <= 500)));
