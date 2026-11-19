@@ -1,6 +1,8 @@
 /**
  * Prisma adapter for the contests on one sport event (#1889): one read of the event's contest
- * links with each contest's league, template and entry count, however many there are.
+ * links with each contest's league and template, and one count of their entries grouped by
+ * contest, however many there are. The count filters by contest id, so it reads only those
+ * contests' entries; a nested `_count` would group every entry in the table.
  */
 import type { PrismaClient } from '@prisma/client';
 import type { SportEventContestReader } from '@poolmaster/shared/db';
@@ -22,18 +24,22 @@ export class PrismaSportEventContestReader implements SportEventContestReader {
             createdAt: true,
             league: { select: { id: true, name: true } },
             configuration: { select: { template: { select: { id: true, name: true } } } },
-            _count: { select: { entries: true } },
           },
         },
       },
     });
+    const contestIds = rows.map(({ contest }) => contest.id);
+    const counts = contestIds.length
+      ? await this.prisma.contestEntry.groupBy({ by: ['contestId'], where: { contestId: { in: contestIds } }, _count: { _all: true } })
+      : [];
+    const entryCounts = new Map(counts.map((row) => [row.contestId, row._count._all]));
     return rows.map(({ contest }) => ({
       id: contest.id,
       name: contest.name,
       status: contest.status,
       league: contest.league,
       contestTemplate: contest.configuration?.template ?? null,
-      entryCount: contest._count.entries,
+      entryCount: entryCounts.get(contest.id) ?? 0,
       createdAt: contest.createdAt,
     }));
   }
