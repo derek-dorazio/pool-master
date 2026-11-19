@@ -749,7 +749,7 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
 8. **Dates, rarely times.** An email sent days ahead shows only the day. A time, with its zone
    named, appears only when it matters that day: the entry reminder sent less than a day before
    picks close, the commissioner's "contest isn't open yet" email, an event moved within its own
-   day, when picks close in "New contest open" and "Picks are open again" (an entry made late is
+   day, when picks close in "New contest open" and "Event postponed, picks are open again" (an entry made late is
    still in time, and a postponement is often to later the same day), and an email recording when something happened (account emails, entry receipts). It is
    always in the reader's time zone, locale and clock.
 9. **The site's type, without its fonts.** The brand bar's `PRODUCT_NAME` is italic caps, as

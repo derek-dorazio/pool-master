@@ -1,7 +1,7 @@
 /**
  * The contest email jobs: "Contest is live" and "Final results" as a contest's move writes them
  * (#1387), and the event postponed, moved and cancelled emails one job per contest on the event
- * (#1458), and "Picks are open again" as a postponement reopens a contest (#1808). Their payloads
+ * (#1458), and "Event postponed, picks are open again" as a postponement reopens a contest (#1808). Their payloads
  * and the requests that build them; the handlers are in contest-email-jobs.
  */
 
@@ -110,7 +110,7 @@ export function contestReopenedAbout(payload: ContestReopenedEmailsJobPayload): 
 }
 
 /**
- * "Picks are open again" for one contest a postponement took back to open (#1808), written with
+ * "Event postponed, picks are open again" for one contest a postponement took back to open (#1808), written with
  * its move. Its dedupe key is the reopen itself, so the same reopen told twice queues one job.
  */
 export function contestReopenedEmailsJob(

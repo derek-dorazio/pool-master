@@ -30,7 +30,7 @@ export const JOB_TYPE_LABELS: Record<BackgroundJobType, string> = {
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: 'Contest is live',
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: 'Results',
   [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS]: 'Event changed',
-  [BackgroundJobType.CONTEST_REOPENED_EMAILS]: 'Picks open again',
+  [BackgroundJobType.CONTEST_REOPENED_EMAILS]: 'Event postponed, picks open again',
   [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS]: 'Settle contests',
   [BackgroundJobType.SETTLE_GAME_CONTESTS]: 'Settle game contests',
   [BackgroundJobType.REBUILD_LEADERBOARDS]: 'Rebuild leaderboards',
