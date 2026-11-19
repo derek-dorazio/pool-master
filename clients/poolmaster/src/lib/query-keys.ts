@@ -300,6 +300,10 @@ export const QueryKeys = {
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
     settingsHistory: (key: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
+    // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
+    systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
+    systemEmailLatestSend: (templateKey: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'settings', 'system-emails', templateKey, 'latest-send'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
     // Under the list's prefix, so refreshing the list refreshes an open run's details too.
     providerSyncRun: (syncRunId: QueryKeyId) =>
