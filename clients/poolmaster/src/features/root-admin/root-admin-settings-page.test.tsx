@@ -409,8 +409,16 @@ describe('RootAdminSettingsPage plans card', () => {
   });
 });
 
+const PLAN_PRICES = {
+  FREE: { yearlyCents: 0, monthlyCents: 0 },
+  PRO: { yearlyCents: 9900, monthlyCents: 999 },
+  PREMIUM: { yearlyCents: 0, monthlyCents: 0 },
+  PLATINUM: { yearlyCents: 0, monthlyCents: 0 },
+};
+
 const BILLING_DEFAULTS = {
   paymentsEnabled: false,
+  planPrices: PLAN_PRICES,
   expansionPrices: {
     FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2000 }],
     PRO: [{ entriesPerContest: 100, priceCents: 1500 }],
@@ -448,7 +456,7 @@ describe('RootAdminSettingsPage payments card', () => {
     expect(card.getByText('None')).toBeInTheDocument();
   });
 
-  it('saves a changed price and an added size in cents, keeping payments off, with the version it was read at', async () => {
+  it('saves a changed price and an added size in cents, keeping payments off and the plan prices as stored, with the version it was read at', async () => {
     updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_BILLING });
     renderPage();
 
@@ -466,6 +474,7 @@ describe('RootAdminSettingsPage payments card', () => {
         expectedUpdatedAt: null,
         value: {
           paymentsEnabled: false,
+          planPrices: PLAN_PRICES,
           expansionPrices: {
             FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2250 }],
             PRO: [{ entriesPerContest: 100, priceCents: 1500 }],

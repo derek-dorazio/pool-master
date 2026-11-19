@@ -4614,34 +4614,72 @@ export interface components {
             /** @description What expanding a contest to this band costs, in US cents. */
             priceCents: number;
         };
-        /** @description Payments: whether they are on, and what expanding a contest costs on each plan. */
+        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+        PlanPrice: {
+            /** @description A year of the plan, in US cents. */
+            yearlyCents: number;
+            /** @description A month of the plan, in US cents. */
+            monthlyCents: number;
+        };
+        /** @description Payments: whether they are on, what each plan costs, and what expanding a contest costs on each plan. */
         BillingConfig: {
             /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
             paymentsEnabled: boolean;
+            /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+            planPrices: {
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                FREE: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PRO: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PREMIUM: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+                /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                PLATINUM: {
+                    /** @description A year of the plan, in US cents. */
+                    yearlyCents: number;
+                    /** @description A month of the plan, in US cents. */
+                    monthlyCents: number;
+                };
+            };
             /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
             expansionPrices: {
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 FREE: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PRO: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PREMIUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PLATINUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
@@ -4820,28 +4858,28 @@ export interface components {
             paymentsEnabled: boolean;
             /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
             expansionPrices: {
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 FREE: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PRO: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PREMIUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
                     /** @description What expanding a contest to this band costs, in US cents. */
                     priceCents: number;
                 }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                 PLATINUM: {
                     /** @description The band: the most entries an expanded contest takes. */
                     entriesPerContest: number;
@@ -16387,30 +16425,61 @@ export interface components {
             value: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -16423,30 +16492,61 @@ export interface components {
             defaults: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -17081,30 +17181,61 @@ export interface components {
                 value: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -17117,30 +17248,61 @@ export interface components {
                 defaults: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -17423,30 +17585,61 @@ export interface components {
             value: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -18056,30 +18249,61 @@ export interface components {
             previousValue: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -18092,30 +18316,61 @@ export interface components {
             newValue: {
                 /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                 paymentsEnabled: boolean;
+                /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                planPrices: {
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    FREE: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PRO: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PREMIUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                    /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                    PLATINUM: {
+                        /** @description A year of the plan, in US cents. */
+                        yearlyCents: number;
+                        /** @description A month of the plan, in US cents. */
+                        monthlyCents: number;
+                    };
+                };
                 /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                 expansionPrices: {
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     FREE: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PRO: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PREMIUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
                         /** @description What expanding a contest to this band costs, in US cents. */
                         priceCents: number;
                     }[];
-                    /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                    /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                     PLATINUM: {
                         /** @description The band: the most entries an expanded contest takes. */
                         entriesPerContest: number;
@@ -18722,30 +18977,61 @@ export interface components {
                 previousValue: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
@@ -18758,30 +19044,61 @@ export interface components {
                 newValue: {
                     /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
                     paymentsEnabled: boolean;
+                    /** @description Each plan's yearly and monthly subscription price, set on the Pricing page. */
+                    planPrices: {
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        FREE: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PRO: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PREMIUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                        /** @description What a plan costs a year and a month, in US cents. Nothing charges it while payments are off. */
+                        PLATINUM: {
+                            /** @description A year of the plan, in US cents. */
+                            yearlyCents: number;
+                            /** @description A month of the plan, in US cents. */
+                            monthlyCents: number;
+                        };
+                    };
                     /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
                     expansionPrices: {
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         FREE: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PRO: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PREMIUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
                             /** @description What expanding a contest to this band costs, in US cents. */
                             priceCents: number;
                         }[];
-                        /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                        /** @description The plan's bands, smallest first; each band and each price above the one before. A band at or below the plan's included entries (PLAN_CONFIG's ENTRIES_PER_CONTEST cap) is never offered. */
                         PLATINUM: {
                             /** @description The band: the most entries an expanded contest takes. */
                             entriesPerContest: number;
