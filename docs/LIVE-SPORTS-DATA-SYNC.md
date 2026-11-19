@@ -130,17 +130,17 @@ the order it happens.
 | Table | Row | Why the sync needs it |
 |---|---|---|
 | `sports` | One per sport (baseline). | Participants and events hang off it. |
-| `sport_leagues` | One per league or Clutch Card league (baseline `20271119000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import finds the league's provider events, and the league a new feed participant joins (#1800). |
+| `sport_leagues` | One per league or Clutch Card league (baseline `20271217000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import finds the league's provider events, and the league a new feed participant joins (#1800). |
 | `sport_leagues.match_keyword` | Every league below is set in the baseline. A league added later gets a small migration that sets it only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
 | `sport_leagues.round_series_lengths` | Baseline: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
-| `background_jobs` enum | Baseline `20271119000000_baseline_schema` carries `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
+| `background_jobs` enum | Baseline `20271217000000_baseline_schema` carries `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
 
-The keyword each league is seeded with in the baseline, and the tour it matches. The history was squashed on 2026-11-12, so each league's own keyword migration is folded into the baseline:
+The keyword each league is seeded with in the baseline, and the tour it matches. The history was last squashed on 2026-11-19, so each league's own keyword migration is folded into the baseline:
 
 | Sport league | `match_keyword` | Migration | Adapter tour constant |
 |---|---|---|---|
 | NFL | `NFL` | baseline | `NFL_LEAGUE_NAME` (`nfl-mapping.ts`) |
-| College Football Playoff | `CFP` | `20271119000300_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
+| College Football Playoff | `CFP` | baseline | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
 | NCAA Division I Men (basketball) | `NCAAM` | baseline | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
 | NCAA Division I Women (basketball) | `NCAAW` | baseline | `NCAA_WOMEN.tour` |
 | Premier League | `EPL` | baseline | `EPL_TOUR` (`epl-mapping.ts`) |
@@ -641,8 +641,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 
 ### College Football Playoff (#1496)
 
-- **Registration.** College Football Playoff sport league, keyword `CFP` (migration
-  `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
+- **Registration.** College Football Playoff sport league, keyword `CFP` (set in the
+  baseline). One event per season
   (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
   own four. Teams carry the tour `CFP`, so a team the sync creates joins the playoff league.
 - **The date rule.** The vendor's college games carry no postseason flag, bowl name or venue. So
@@ -797,8 +797,8 @@ vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see 
 ### Switched off: the leagues no provider syncs (#1812)
 
 Every sport league left on is one a provider syncs. The leagues no provider covers yet are
-**inactive** (`sport_leagues.is_active = false`) by the migration
-`20271126000000_switch_off_unsynced_sport_leagues`, so a reset database and a new environment keep
+**inactive** (`sport_leagues.is_active = false`) in the reference-data baseline
+(`20271217000100_baseline_reference_data`), so a reset database and a new environment keep
 them off. They are not deleted: their rows, contest setups, round names and copy stay, and bringing
 one back is one flip (root admin **Activate**, or a migration) once it has a source. Existing events
 and contests on them are left as they are.

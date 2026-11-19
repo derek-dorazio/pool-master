@@ -580,9 +580,9 @@ that it was already there.
   Postgres refuses a new enum value inside the transaction that adds it.
 - Change it in a *later* migration, never by editing an applied one: Prisma records applied
   migrations by checksum, and an edited migration makes the next `migrate deploy` fail.
-- Every reference row that existed when the history was last squashed (2026-11-12) is in
-  `20271119000100_baseline_reference_data`: the sports, sport leagues, contest config templates,
-  event pages and their offers. Later reference data arrives in its own migrations after it.
+- Every reference row that existed when the history was last squashed (2026-11-19) is in
+  `20271217000100_baseline_reference_data`: the sports, sport leagues, tier and pricing profiles,
+  contest config templates, event pages and their offers. Later reference data arrives in its own migrations after it.
 - A new sport needs code as well as a row, so its row arrives in the migration that adds its
   support — not in a list of every sport the `Sport` enum names.
 - A sport league that a seeded contest template names is reference data too, though leagues are
