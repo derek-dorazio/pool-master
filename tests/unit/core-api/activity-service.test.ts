@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob } from '@poolmaster/shared/domain';
+import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob, type SportLeague } from '@poolmaster/shared/domain';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 
@@ -10,8 +10,8 @@ import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 const NOW = new Date('2026-11-18T12:00:00.000Z');
 const HOUR = 60 * 60_000;
 
-function job(id: string): BackgroundJob {
-  return { id, type: BackgroundJobType.SYNC_LEAGUE_EVENTS, payload: {}, status: BackgroundJobStatus.SUCCEEDED, runAt: NOW, attempts: 1, trigger: JobTrigger.SCHEDULE, createdAt: NOW };
+function job(id: string, scope: Pick<BackgroundJob, 'sportLeagueId' | 'sportEventId'> = {}): BackgroundJob {
+  return { id, type: BackgroundJobType.SYNC_LEAGUE_EVENTS, payload: {}, status: BackgroundJobStatus.SUCCEEDED, runAt: NOW, attempts: 1, trigger: JobTrigger.SCHEDULE, createdAt: NOW, ...scope };
 }
 
 function build(jobs: BackgroundJob[] = []) {
@@ -20,8 +20,20 @@ function build(jobs: BackgroundJob[] = []) {
     { id: 'run-2', providerId: 'p', sport: 'GOLF', eventId: null, ...SCHEDULED_SCORES_RUN, backgroundJobId: 'job-1', status: 'COMPLETED', startedAt: null, completedAt: null, createdAt: NOW, payload: {} },
     { id: 'run-3', providerId: 'p', sport: 'GOLF', eventId: null, ...SCHEDULED_SCORES_RUN, backgroundJobId: 'job-1', status: 'FAILED', startedAt: null, completedAt: null, createdAt: NOW, payload: {} },
   ]);
-  const service = new ActivityService({ jobs: { findActivity }, syncRuns: { findByBackgroundJobIds }, now: () => NOW });
-  return { service, findActivity, findByBackgroundJobIds };
+  const findEvents = jest.fn((ids: readonly string[]) => Promise.resolve(
+    [{ id: 'event-1', name: 'The Sentry', sportLeagueId: 'league-2', providerId: 'p' }].filter((event) => ids.includes(event.id)),
+  ));
+  const findLeagues = jest.fn((ids: readonly string[]) => Promise.resolve(
+    [{ id: 'league-1', name: 'NBA' }, { id: 'league-2', name: 'PGA Tour' }].filter((league) => ids.includes(league.id)) as SportLeague[],
+  ));
+  const service = new ActivityService({
+    jobs: { findActivity },
+    syncRuns: { findByBackgroundJobIds },
+    sportEvents: { findLinks: findEvents },
+    sportLeagues: { findByIds: findLeagues },
+    now: () => NOW,
+  });
+  return { service, findActivity, findByBackgroundJobIds, findEvents, findLeagues };
 }
 
 describe('ActivityService', () => {
@@ -76,5 +88,34 @@ describe('ActivityService', () => {
     expect(findByBackgroundJobIds).toHaveBeenCalledTimes(1);
     expect(findByBackgroundJobIds).toHaveBeenCalledWith(['job-1', 'job-2']);
     expect(listed.map(({ job: listedJob, syncRunIds }) => [listedJob.id, syncRunIds])).toEqual([['job-1', ['run-2', 'run-3']], ['job-2', []]]);
+  });
+
+  it('names each job\'s league and event in one read of each, a job on an event taking its event\'s league, and reads neither when no job names one', async () => {
+    const { service, findEvents, findLeagues } = build([job('job-1', { sportLeagueId: 'league-1' }), job('job-2', { sportEventId: 'event-1' }), job('job-3')]);
+
+    const listed = await service.list({});
+
+    expect(findEvents).toHaveBeenCalledTimes(1);
+    expect(findEvents).toHaveBeenCalledWith(['event-1']);
+    expect(findLeagues).toHaveBeenCalledTimes(1);
+    expect(findLeagues).toHaveBeenCalledWith(['league-1', 'league-2']);
+    expect(listed.map(({ sportLeague, sportEvent }) => [sportLeague, sportEvent])).toEqual([
+      [{ id: 'league-1', name: 'NBA' }, null],
+      [{ id: 'league-2', name: 'PGA Tour' }, { id: 'event-1', name: 'The Sentry' }],
+      [null, null],
+    ]);
+
+    const none = build([job('job-3')]);
+    await none.service.list({});
+    expect(none.findEvents).not.toHaveBeenCalled();
+    expect(none.findLeagues).not.toHaveBeenCalled();
+  });
+
+  it('answers a job whose league or event is gone with no name rather than failing', async () => {
+    const { service } = build([job('job-1', { sportLeagueId: 'league-gone', sportEventId: 'event-gone' })]);
+
+    const [listed] = await service.present([job('job-1', { sportLeagueId: 'league-gone', sportEventId: 'event-gone' })]);
+
+    expect(listed).toMatchObject({ sportLeague: null, sportEvent: null });
   });
 });

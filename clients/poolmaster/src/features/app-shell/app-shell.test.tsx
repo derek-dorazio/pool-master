@@ -320,7 +320,7 @@ describe('AppShell', () => {
     clearSessionMock.mockResolvedValue(undefined);
     authState.isRootAdmin = true;
 
-    renderAppShell(['/manage/sync']);
+    renderAppShell(['/manage/activity']);
 
     await screen.findByTestId('mock-outlet');
     expect(listLeaguesMock).not.toHaveBeenCalled();

@@ -208,7 +208,7 @@ export function RootAdminRunEventSyncPage() {
         'Submitted manual provider event sync',
       );
     },
-    invalidates: [QueryKeys.rootAdmin.providerSyncRuns],
+    invalidates: [QueryKeys.rootAdmin.activity, QueryKeys.rootAdmin.providerSyncRuns],
     onError: (error) => {
       // ApiError wraps every SDK rejection (see throwApiError) so it is
       // always `instanceof Error`; check for it explicitly rather than

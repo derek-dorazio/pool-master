@@ -70639,6 +70639,48 @@
             ],
             "format": "uuid"
           },
+          "sportLeague": {
+            "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "sportEvent": {
+            "description": "The event the job is about, for display; null when it is about none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
           "attempts": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -70769,6 +70811,8 @@
           "status",
           "sportLeagueId",
           "sportEventId",
+          "sportLeague",
+          "sportEvent",
           "attempts",
           "runAt",
           "createdAt",
@@ -70900,6 +70944,48 @@
                   ],
                   "format": "uuid"
                 },
+                "sportLeague": {
+                  "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "sportEvent": {
+                  "description": "The event the job is about, for display; null when it is about none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
                 "attempts": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -71030,6 +71116,8 @@
                 "status",
                 "sportLeagueId",
                 "sportEventId",
+                "sportLeague",
+                "sportEvent",
                 "attempts",
                 "runAt",
                 "createdAt",
@@ -71119,6 +71207,48 @@
                   "null"
                 ],
                 "format": "uuid"
+              },
+              "sportLeague": {
+                "description": "The sport league the job is about, for display: its own league, or for a job on an event, the event's league. Null when it is about neither.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "sportEvent": {
+                "description": "The event the job is about, for display; null when it is about none.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
               },
               "attempts": {
                 "type": "integer",
@@ -71250,6 +71380,8 @@
               "status",
               "sportLeagueId",
               "sportEventId",
+              "sportLeague",
+              "sportEvent",
               "attempts",
               "runAt",
               "createdAt",

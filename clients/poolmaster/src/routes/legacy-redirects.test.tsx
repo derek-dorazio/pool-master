@@ -11,6 +11,7 @@ import {
   LegacyGolfManageRedirect,
   LegacyLeagueContestsRedirect,
   LegacyManageContestsRedirect,
+  LegacyManageSyncRedirect,
 } from './legacy-redirects';
 
 const { getLeagueByCodeMock } = vi.hoisted(() => ({ getLeagueByCodeMock: vi.fn() }));
@@ -186,5 +187,37 @@ describe('The Contest types link from before it moved to Commissioner tools', ()
     renderContestTypesLink('MEMBER');
 
     expect(await screen.findByTestId('location')).toHaveTextContent('/how-to-play');
+  });
+});
+
+describe('Links to the old sync run history page and its tools (#1887)', () => {
+  function renderSyncLinkAt(path: string) {
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route element={<LegacyManageSyncRedirect />} path="/manage/sync/*" />
+          <Route element={<FullLocationProbe />} path="/manage/activity" />
+          <Route element={<FullLocationProbe />} path="/manage/providers/*" />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  it('sends the old sync run history page to Activity', () => {
+    renderSyncLinkAt('/manage/sync');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent(/^\/manage\/activity$/);
+  });
+
+  it('sends Run event sync to its page under Providers', () => {
+    renderSyncLinkAt('/manage/sync/run-event-sync');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent(/^\/manage\/providers\/run-event-sync$/);
+  });
+
+  it('sends a Map competitor link under Providers, keeping the provider and competitor it names', () => {
+    renderSyncLinkAt('/manage/sync/unmapped-participants/map?provider=bdl&competitor=golfer-7');
+
+    expect(screen.getByTestId('full-location')).toHaveTextContent('/manage/providers/unmapped-participants/map?provider=bdl&competitor=golfer-7');
   });
 });

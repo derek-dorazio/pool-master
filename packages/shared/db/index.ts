@@ -131,6 +131,7 @@ export type {
   ProviderNotifiedEvent,
   ProviderNotificationReceipt,
   ProviderNotifiedEventQuery,
+  SportEventLink,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,

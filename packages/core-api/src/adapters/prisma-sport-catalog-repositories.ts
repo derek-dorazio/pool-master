@@ -29,6 +29,7 @@ import type {
   ProviderNotifiedEvent,
   ProviderNotifiedEventQuery,
   ProviderNotificationReceipt,
+  SportEventLink,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -221,6 +222,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
       const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...missing] } }, include: SPORT_EVENT_INCLUDE });
       return rows.map(toSportEvent);
     });
+  }
+
+  async findLinks(ids: readonly string[]): Promise<SportEventLink[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.sportEvent.findMany({
+      where: { id: { in: [...ids] } },
+      select: { id: true, name: true, providerId: true, eventSeries: { select: { sportLeagueId: true } } },
+    });
+    return rows.map((row) => ({ id: row.id, name: row.name, sportLeagueId: row.eventSeries.sportLeagueId, providerId: row.providerId }));
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
