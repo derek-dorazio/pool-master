@@ -134,6 +134,7 @@ export type {
   ProviderNotifiedEvent,
   ProviderNotificationReceipt,
   ProviderNotifiedEventQuery,
+  SportEventLink,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundCreate,
@@ -167,6 +168,12 @@ export type {
   TierProfileRepository,
   TierProfileWrite,
 } from './sport-catalog-ports';
+export type {
+  CustomerLeagueCommissioner,
+  CustomerLeagueFacts,
+  CustomerLeagueRecord,
+  CustomerReader,
+} from './customer-ports';
 export type {
   ContestEntrySquareClaim,
   ContestEntrySquareClaimResult,

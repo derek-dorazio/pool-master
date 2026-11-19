@@ -12,6 +12,7 @@
  */
 import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
+import type { FastifyBaseLogger } from 'fastify';
 import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -243,6 +244,67 @@ describe('AuthService', () => {
         code: 'INVALID_CREDENTIALS',
         statusCode: 401,
       } satisfies Partial<AuthError>);
+    });
+  });
+
+  describe('last sign-in', () => {
+    it('stamps the user\'s last sign-in when they sign in, sign up or are issued a session, and not on a wrong password', async () => {
+      const passwordHash = await bcrypt.hash('Password123!', 10);
+      const users = fakeUserRepo({
+        // Only the existing account's identifier finds anyone, so the new one is free to sign up.
+        findByIdentifier: jest.fn().mockImplementation(async (identifier: string) => (identifier === 'userone' ? buildUser() : null)),
+        findById: jest.fn().mockResolvedValue(buildUser()),
+        create: jest.fn().mockImplementation(async (input: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => buildUser({ ...input, id: 'user-new' })),
+      });
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
+      const before = Date.now();
+
+      await expect(service.login('userone', 'WrongPassword123!')).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' });
+      expect(users.recordSignIn).not.toHaveBeenCalled();
+
+      await service.login('userone', 'Password123!');
+      await service.register('newuser', 'new@example.com', 'Password123!', 'New', 'User');
+      await service.issueSessionForUser('user-1');
+
+      expect(jest.mocked(users.recordSignIn).mock.calls.map(([userId]) => userId)).toEqual(['user-1', 'user-new', 'user-1']);
+      for (const [, at] of jest.mocked(users.recordSignIn).mock.calls) {
+        expect(at.getTime()).toBeGreaterThanOrEqual(before);
+      }
+    });
+
+    it('still signs the user in, and logs a warning, when stamping the last sign-in fails', async () => {
+      const passwordHash = await bcrypt.hash('Password123!', 10);
+      const users = fakeUserRepo({
+        findByIdentifier: jest.fn().mockResolvedValue(buildUser()),
+        recordSignIn: jest.fn().mockRejectedValue(new Error('connection reset')),
+      });
+      const warn = jest.fn();
+      const logger = { warn, info: jest.fn(), debug: jest.fn(), error: jest.fn() } as unknown as FastifyBaseLogger;
+
+      const result = await new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)), logger).login('userone', 'Password123!');
+
+      expect(result.tokens.accessToken).toEqual(expect.any(String));
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'authService.signIn.stampFailed', data: { userId: 'user-1' } }),
+        'Could not record the last sign-in',
+      );
+    });
+
+    it('does not stamp a sign-in when a refresh continues a session', async () => {
+      const prisma = createPrismaMock();
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'refresh-1',
+        tokenHash: hashRefreshToken('refresh-token'),
+        sessionId: 'session-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
+      });
+      const users = fakeUserRepo();
+
+      await new AuthService(users, asPrismaClient(prisma)).refresh('refresh-token');
+
+      expect(users.recordSignIn).not.toHaveBeenCalled();
     });
   });
 

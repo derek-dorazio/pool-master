@@ -690,3 +690,11 @@ caller can skip it; a background job that must reach every row has its own named
 as `LeagueRepository.findActive` for the commissioner notices (#1313). A Manage page over
 one of these lists asks for the filter first — a search box, or a year that defaults to this
 one — rather than loading everything and filtering in the browser.
+
+**Except the root admin's Customers grids, which read every league and every user whole**
+(Derek, 2026-11-18: root admin grids load every row and filter on the client, with no server
+search and no paging). `listCustomerLeagues` and `listCustomerUsers` (#1882) answer from a
+fixed number of grouped queries, so they cost the same for any number of rows (a pinned
+query-count test holds each), and are rate limited per address. A new whole-platform read
+for a root admin grid follows the same three conditions: grouped queries, a scaling test,
+a rate limit.

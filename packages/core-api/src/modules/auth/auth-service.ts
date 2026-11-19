@@ -134,7 +134,7 @@ export class AuthService {
       ...(preferences.locale !== undefined && { locale: preferences.locale }),
     }, { passwordHash });
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
+    const tokens = await this.startSession(user);
     this.logger?.info({
       action: 'authService.register.success',
       data: {
@@ -188,7 +188,7 @@ export class AuthService {
       throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
+    const tokens = await this.startSession(user);
     this.logger?.info({
       action: 'authService.login.success',
       data: {
@@ -327,7 +327,7 @@ export class AuthService {
       );
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
+    const tokens = await this.startSession(user);
     this.logger?.info({
       action: 'authService.issueSession.success',
       data: { userId: user.id },
@@ -338,6 +338,26 @@ export class AuthService {
   // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
+
+  /**
+   * A new session for `user`: its tokens, and the user's last sign-in stamped (#1882). Every
+   * way a session starts goes through here (sign-in, sign-up, a session issued for a user); a
+   * refresh continues one and does not.
+   */
+  private async startSession(user: User): Promise<TokenPair> {
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
+    try {
+      await this.users.recordSignIn(user.id, new Date());
+    } catch (error) {
+      // Last sign-in is informational: a failed stamp is logged and the session still starts.
+      this.logger?.warn({
+        action: 'authService.signIn.stampFailed',
+        data: { userId: user.id },
+        err: error,
+      }, 'Could not record the last sign-in');
+    }
+    return tokens;
+  }
 
   private async issueTokens(
     userId: string,

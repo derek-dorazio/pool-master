@@ -299,6 +299,9 @@ export class InMemorySportEvents {
     return {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
+      findLinks: async (ids) => this.events
+        .filter((row) => ids.includes(row.id))
+        .map(({ id, name, sportLeagueId, providerId }) => ({ id, name, sportLeagueId, providerId })),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
       // No sport filter: every event is golf while Sport has one member.

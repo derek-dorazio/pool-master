@@ -69,7 +69,7 @@ export class ActivityService {
   constructor(private readonly deps: {
     jobs: Pick<BackgroundJobRepository, 'findActivity'>;
     syncRuns: Pick<ProviderSyncRunRepository, 'findByBackgroundJobIds'>;
-    sportEvents: Pick<SportEventRepository, 'findByIds'>;
+    sportEvents: Pick<SportEventRepository, 'findLinks'>;
     sportLeagues: Pick<SportLeagueRepository, 'findByIds'>;
     now?: () => Date;
   }) {}
@@ -100,7 +100,7 @@ export class ActivityService {
     const eventIds = unique(jobs.map((job) => job.sportEventId));
     const [runs, events] = await Promise.all([
       this.deps.syncRuns.findByBackgroundJobIds(jobs.map((job) => job.id)),
-      eventIds.length === 0 ? [] : this.deps.sportEvents.findByIds(eventIds),
+      eventIds.length === 0 ? [] : this.deps.sportEvents.findLinks(eventIds),
     ]);
     const eventsById = new Map(events.map((event) => [event.id, event]));
     const leagueIds = unique([...jobs.map((job) => job.sportLeagueId), ...events.map((event) => event.sportLeagueId)]);

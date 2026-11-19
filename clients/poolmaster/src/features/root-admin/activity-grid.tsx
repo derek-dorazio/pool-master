@@ -19,9 +19,11 @@ type Opened = { jobId: string } | { syncRunId: string } | null;
 export function ActivityGrid({ activity }: { activity: ActivityState }) {
   const { scope, query, onFiltersChange } = activity;
   const [opened, setOpened] = useState<Opened>(null);
+  // Keyed on what the scope is, not on the object, which a caller may build afresh each render.
+  const scopeKind = scope === null ? 'all' : 'sportEventId' in scope ? 'event' : 'league';
   const columns = useMemo(
-    () => activityColumns({ showSportLeague: scope === null, showEvent: scope === null || !('sportEventId' in scope) }),
-    [scope],
+    () => activityColumns({ showSportLeague: scopeKind === 'all', showEvent: scopeKind !== 'event' }),
+    [scopeKind],
   );
   const jobs = query.data ?? [];
   const openJob = opened !== null && 'jobId' in opened ? jobs.find((job) => job.id === opened.jobId) : undefined;

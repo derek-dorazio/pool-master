@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobKind, BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob, type SportLeague } from '@poolmaster/shared/domain';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 
@@ -21,7 +21,7 @@ function build(jobs: BackgroundJob[] = []) {
     { id: 'run-3', providerId: 'p', sport: 'GOLF', eventId: null, ...SCHEDULED_SCORES_RUN, backgroundJobId: 'job-1', status: 'FAILED', startedAt: null, completedAt: null, createdAt: NOW, payload: {} },
   ]);
   const findEvents = jest.fn((ids: readonly string[]) => Promise.resolve(
-    [{ id: 'event-1', name: 'The Sentry', sportLeagueId: 'league-2' }].filter((event) => ids.includes(event.id)) as SportEvent[],
+    [{ id: 'event-1', name: 'The Sentry', sportLeagueId: 'league-2', providerId: 'p' }].filter((event) => ids.includes(event.id)),
   ));
   const findLeagues = jest.fn((ids: readonly string[]) => Promise.resolve(
     [{ id: 'league-1', name: 'NBA' }, { id: 'league-2', name: 'PGA Tour' }].filter((league) => ids.includes(league.id)) as SportLeague[],
@@ -29,7 +29,7 @@ function build(jobs: BackgroundJob[] = []) {
   const service = new ActivityService({
     jobs: { findActivity },
     syncRuns: { findByBackgroundJobIds },
-    sportEvents: { findByIds: findEvents },
+    sportEvents: { findLinks: findEvents },
     sportLeagues: { findByIds: findLeagues },
     now: () => NOW,
   });
