@@ -304,7 +304,7 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
     expect(changes).toEqual([{ sportEventId: eventId, externalId: 'pga-2026-a', changed: ['name', 'venue', 'startDate', 'endDate'] }]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Invitational', venue: 'B Links', startDate: moved.startDate, endDate: moved.endDate }));
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith({ id: eventId, startDate: moved.startDate }, { kind: 'RESCHEDULED', previousStart: listed.startDate });
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith({ id: eventId, startDate: moved.startDate }, { kind: 'RESCHEDULED', previousStart: listed.startDate }, { reopening: new Set() });
   });
 
   it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {
@@ -795,6 +795,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(
       { id: released.id, startDate: moved },
       { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
+      { reopening: new Set() },
     );
     // Written with the new start, not queued after it.
     expect(store.backgroundJobs).toEqual([eventChangedJob(released.id, 'RESCHEDULED')]);
@@ -925,6 +926,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
     expect(context.notice.sportEventChangedJobs).toHaveBeenCalledWith(
       { id: event.id, startDate: new Date('2026-06-04T11:45:00.000Z') },
       { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
+      { reopening: new Set() },
     );
     expect(context.store.backgroundJobs).toEqual([eventChangedJob(event.id, 'RESCHEDULED')]);
   });

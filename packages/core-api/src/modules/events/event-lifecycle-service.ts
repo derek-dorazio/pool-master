@@ -122,6 +122,14 @@ const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN];
 /** A live contest is the only kind a postponement takes back to OPEN (#1792). */
 const REOPENABLE: readonly ContestStatus[] = [ContestStatus.ACTIVE];
 
+/** The live contests a postponed event takes back to OPEN, by the start (epoch ms) each reopens to. */
+type ReopenPlan = ReadonlyMap<number, readonly string[]>;
+
+/** The contests a reopen plan moves (#1910). */
+function reopeningIdsOf(plan: ReopenPlan): Set<string> {
+  return new Set([...plan.values()].flat());
+}
+
 export class EventLifecycleService {
   constructor(
     private readonly contestDeps: EventLifecycleContestDeps,
@@ -192,10 +200,19 @@ export class EventLifecycleService {
       : [];
     // A first postponement tells the leagues on the event by one job per contest written with the
     // status (#1464): a postponement that fails or loses a race queues nothing, and one that lands
-    // always has its jobs. Its start does not move, so the jobs read it from the event as it is.
+    // always has its jobs. Its start does not move, so the jobs read it from the event as it is. A
+    // live contest the postponement reopens below is told by its reopen's email instead (#1910).
     const postponing = input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED;
-    const postponedJobs = postponing && this.sportEventChanged
-      ? await this.sportEventChanged.sportEventChangedJobs(before, { kind: ContestEventChangeKind.POSTPONED })
+    // Read once, for the jobs here and the reopen after the write. A planned contest the reopen's
+    // guarded write then misses is still told: either another caller reopened it first, and its
+    // write queued the same reopen email, or the contest left ACTIVE, and the C6 a live contest
+    // would get no longer applies. A reopen write that fails after the status landed is retried by
+    // the next lifecycle sweep, which plans again and sends the reopen email then.
+    const reopenPlan = postponing ? await this.contestsToReopen({ ...before, status: SportEventStatus.POSTPONED }, now) : undefined;
+    const postponedJobs = reopenPlan && this.sportEventChanged
+      ? await this.sportEventChanged.sportEventChangedJobs(before, { kind: ContestEventChangeKind.POSTPONED }, {
+        reopening: reopeningIdsOf(reopenPlan),
+      })
       : [];
     // A status shows on the event's contests' boards, so they are rebuilt by a job written with
     // it (#1466).
@@ -232,7 +249,9 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
-    if (input.toStatus === SportEventStatus.POSTPONED) {
+    if (reopenPlan) {
+      await this.followPostponedStart(updated, now, reopenPlan);
+    } else if (input.toStatus === SportEventStatus.POSTPONED) {
       await this.followPostponedStart(updated);
     }
     // The cancellation email (C7) is sent by the settlement job, before it finishes the contests
@@ -250,11 +269,17 @@ export class EventLifecycleService {
   /**
    * C6 for a released event whose start an admin's edit moves from `previousStart` to
    * `sportEvent.startDate`: one job per contest on it, for the edit to write with the new start
-   * (#1464), and the wake to call once it has committed. Without a notice, there are none.
+   * (#1464), and the wake to call once it has committed. Without a notice, there are none. On a
+   * postponed event, a live contest the new start reopens is told by its reopen's email instead
+   * (#1910), sent when the next lifecycle sweep reopens it.
    */
-  async sportEventRescheduledJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate'>, previousStart: Date): Promise<JobsForWrite> {
+  async sportEventRescheduledJobs(sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'status'>, previousStart: Date): Promise<JobsForWrite> {
     if (!this.sportEventChanged) return NO_JOBS_FOR_WRITE;
-    const jobs = await this.sportEventChanged.sportEventChangedJobs(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
+    const reopening = sportEvent.status === SportEventStatus.POSTPONED
+      ? reopeningIdsOf(await this.contestsToReopen(sportEvent, new Date()))
+      : new Set<string>();
+    const moved = { id: sportEvent.id, startDate: sportEvent.startDate };
+    const jobs = await this.sportEventChanged.sportEventChangedJobs(moved, { kind: ContestEventChangeKind.RESCHEDULED, previousStart }, { reopening });
     const queue = this.requireJobs('tell the leagues an event moved');
     return { jobs, queued: () => queue.queued() };
   }
@@ -336,30 +361,33 @@ export class EventLifecycleService {
    * its contests go live as at any start. The lifecycle scheduler asks on each sweep of a postponed
    * event, so a start moved later reopens them and the new start closes them.
    */
-  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date()): Promise<void> {
+  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date(), reopenPlan?: ReopenPlan): Promise<void> {
     if (hasSportEventStarted(sportEvent, now)) {
       await this.activateContestsPastCutoff(sportEvent, now);
       return;
     }
     // A reopened contest goes live again through the same activation, which queues its "Contest is
     // live" job a second time; the outbox's idempotency key (contest, event and member) sends nothing new.
-    await this.reopenContestsBeforeStart(sportEvent, now);
+    await this.reopenContestsBeforeStart(reopenPlan ?? await this.contestsToReopen(sportEvent, now), sportEvent);
   }
 
   /**
-   * Back to OPEN, the live contests on a postponed event that has not started (#1792), when the
-   * contest closes at the event's start and none of its events has started: a season contest whose
-   * earlier week was played stays live, and its postponed week takes pick changes as any later
-   * week does. The contest's start moves to its first event's start, so its pages count down to
-   * the new start and close entries at it. A bracket that starts at a later round and a squares contest close at a game, and a
-   * contest with a random draw has dealt its picks, so those stay live too. A game already under
-   * way, or with a period score, means play began before the postponement, so nothing reopens.
+   * The live contests on a postponed event that has not started which go back to OPEN (#1792),
+   * by the start each reopens to: those that close at the event's start and none of whose events
+   * has started. A season contest whose earlier week was played stays live, and its postponed week
+   * takes pick changes as any later week does. A bracket that starts at a later round and a squares
+   * contest close at a game, and a contest with a random draw has dealt its picks, so those stay
+   * live too. A game already under way, or with a period score, means play began before the
+   * postponement, so nothing reopens. One decision for the reopen and for the event changed email
+   * that leaves those contests to the reopen's email (#1910).
    */
-  private async reopenContestsBeforeStart(sportEvent: SportEvent, now: Date): Promise<void> {
+  private async contestsToReopen(sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'status'>, now: Date): Promise<ReopenPlan> {
+    const dueByStart = new Map<number, string[]>();
+    if (hasSportEventStarted(sportEvent, now)) return dueByStart;
     const live = (await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: REOPENABLE }))
       .filter((contest) => contest.drawnAt === undefined && contest.selectionType !== SelectionType.SQUARES);
-    if (live.length === 0) return;
-    if ((await this.contestDeps.matches.findBySportEvent(sportEvent.id)).some(hasGameMovedOn)) return;
+    if (live.length === 0) return dueByStart;
+    if ((await this.contestDeps.matches.findBySportEvent(sportEvent.id)).some(hasGameMovedOn)) return dueByStart;
 
     const brackets = live.filter((contest) => contest.selectionType === SelectionType.BRACKET);
     const configJsonByContest = new Map(
@@ -377,13 +405,23 @@ export class EventLifecycleService {
     }
 
     // A reopened contest starts at its first event's start again, now ahead, which is what its
-    // pages count down to and close entries at: one guarded write per start, as when contests go live.
-    const dueByStart = new Map<number, string[]>();
+    // pages count down to and close entries at.
     for (const contest of atEventStart) {
       if (contest.sportEventIds.some((id) => started.has(id))) continue;
       const startsAt = Math.min(...contest.sportEventIds.map((id) => startById.get(id)?.getTime() ?? sportEvent.startDate.getTime()));
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), contest.id]);
     }
+    return dueByStart;
+  }
+
+  /**
+   * Back to OPEN, the live contests on a postponed event that has not started (#1792), as
+   * `contestsToReopen` decided. The contest's start moves to its first event's start, so its pages
+   * count down to the new start and close entries at it: one guarded write per start, as when
+   * contests go live.
+   */
+  private async reopenContestsBeforeStart(dueByStart: ReopenPlan, sportEvent: SportEvent): Promise<void> {
+    if (dueByStart.size === 0) return;
     const { jobs } = this;
     let reopenedCount = 0;
     try {
@@ -393,7 +431,7 @@ export class EventLifecycleService {
           from: REOPENABLE,
           to: ContestStatus.OPEN,
           startsAt: new Date(startsAt),
-          // "Picks are open again" (#1808): one job per contest that reopened, written with its move.
+          // "Event postponed, picks are open again" (#1808, #1910): one job per contest that reopened, written with its move.
           ...(jobs && { jobs: (movedIds) => movedIds.map((contestId) => contestReopenedEmailsJob(jobs, contestId, sportEvent.id, new Date(startsAt))) }),
         });
         for (const contestId of reopened) {

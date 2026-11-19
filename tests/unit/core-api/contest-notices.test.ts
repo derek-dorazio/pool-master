@@ -366,7 +366,8 @@ describe('ContestNotices', () => {
       expect(recipientIds()).toEqual([nora.user.id, sam.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_REOPENED')).toBe(true);
       const text = textTo(nora.user.id);
-      expect(text).toContain('Masters Tournament was postponed, so Masters Pick 6 is open again.');
+      expect(text).toContain('Masters Tournament has been postponed to Thu, Apr 16, 2026.');
+      expect(text).toContain('Masters Pick 6 is open again, so you can make or change your picks before the new start.');
       expect(text).toContain('Picks close: Apr 16, 2026, 7:40 AM EDT');
       expect(text).toContain(`Make your picks: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
@@ -676,6 +677,21 @@ describe('ContestNotices', () => {
 
       expect(jobs.map((job) => (job.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([open.id]);
       expect(jobRows.rows).toEqual([]);
+    });
+
+    it('answers no job for a contest the change reopens, since its picks are open again email tells the whole league, and one for every other contest', async () => {
+      const league = world.addLeague();
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
+      const reopening = world.addContest(league.id, { sportEventIds: [masters.id], status: ContestStatus.ACTIVE });
+      const open = world.addContest(league.id, { sportEventIds: [masters.id] });
+
+      const jobs = await notices().sportEventChangedJobs(
+        { id: masters.id, startDate: STARTS_AT },
+        { kind: ContestEventChangeKind.POSTPONED },
+        { reopening: new Set([reopening.id]) },
+      );
+
+      expect(jobs.map((job) => (job.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([open.id]);
     });
 
     it('throws when the jobs cannot be written, so the cancelled event\'s settle job that asked fails and is retried', async () => {
