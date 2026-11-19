@@ -9,7 +9,7 @@ import {
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
   ProviderCatalogEventListResponseSchema,
-  LeagueListResponseSchema,
+  CustomerLeagueListResponseSchema,
   LeagueResponseSchema,
   ProviderListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
@@ -19,7 +19,6 @@ import {
   UnmappedProviderParticipantListResponseSchema,
   SuccessResponseSchema,
   UserResponseSchema,
-  UserListResponseSchema,
   ParticipantListResponseSchema,
   ParticipantResponseSchema,
   SportEventListResponseSchema,
@@ -47,7 +46,6 @@ import type {
   ContestConfigTemplateResponse,
   ErrorEnvelope,
   IngestionScheduleConfig,
-  LeagueListResponse,
   LeagueResponse,
   ParticipantListResponse,
   ParticipantProviderMappingResponse,
@@ -411,30 +409,6 @@ describe('Contract verification (root admin)', () => {
     await teardownIntegrationTests();
   });
 
-  // #202 step 3.4 — the user list moved out from under `/api/v1/admin`, so the two failures
-  // are now distinguishable, which they were not before: an anonymous caller is not
-  // authenticated, and an authenticated caller who is not a root admin is not authorized. The
-  // old admin prefix answered ROOT_ADMIN_SESSION_REQUIRED to both.
-  it('separates "not signed in" from "not a root admin" on the unscoped user list (A1)', async () => {
-    const anonymous = await getApp().inject({
-      method: 'GET',
-      url: '/api/v1/users',
-    });
-    expect(anonymous.statusCode).toBe(401);
-    expect(ErrorEnvelopeSchema.safeParse(anonymous.json()).success).toBe(true);
-    expect(anonymous.json<ErrorEnvelope>().error.code).toBe('AUTH_SESSION_REQUIRED');
-
-    const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin User' });
-    const forbidden = await getApp().inject({
-      method: 'GET',
-      url: '/api/v1/users',
-      headers: ordinaryUser.headers,
-    });
-    expect(forbidden.statusCode).toBe(403);
-    expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
-    expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
-  });
-
   it('refuses one sync run\'s details, raw provider payload included, to a non-root-admin with 403', async () => {
     const run = await getPrisma().providerSyncRun.create({
       data: {
@@ -463,15 +437,11 @@ describe('Contract verification (root admin)', () => {
     await getPrisma().providerSyncRun.delete({ where: { id: run.id } });
   });
 
-  // #1180 — no platform list reads every row: users and leagues take a search of at least 3
-  // characters, events a sport, sport league or year, and participants a sport or a search.
+  // #1180 — no searched platform list reads every row: events take a sport, sport league or
+  // year, and participants a sport or a search. Customers reads every user and league whole.
   it('refuses the platform lists a root admin asks for without a filter, with stable 400 codes', async () => {
     const rootAdmin = await createTestUser({ displayName: 'Root Admin Filter Required', isRootAdmin: true });
     const refusals: Array<{ url: string; code: string }> = [
-      { url: '/api/v1/users', code: 'SEARCH_TERM_REQUIRED' },
-      { url: '/api/v1/users?search=ab', code: 'SEARCH_TERM_REQUIRED' },
-      { url: '/api/v1/leagues?scope=all', code: 'SEARCH_TERM_REQUIRED' },
-      { url: '/api/v1/leagues?scope=all&search=ab', code: 'SEARCH_TERM_REQUIRED' },
       { url: '/api/v1/events', code: 'SPORT_EVENT_FILTER_REQUIRED' },
       { url: '/api/v1/participants', code: 'SEARCH_TERM_REQUIRED' },
       { url: '/api/v1/participants?q=ab', code: 'SEARCH_TERM_REQUIRED' },
@@ -523,16 +493,6 @@ describe('Contract verification (root admin)', () => {
       expect({ url, status: response.statusCode }).toEqual({ url, status: 200 });
       expect(SportEventListResponseSchema.safeParse(response.json()).success).toBe(true);
     }
-  });
-
-  it('refuses every league to a non-root-admin with 403 before it asks for a search, so the 400 never reveals the route', async () => {
-    const member = await createTestUser({ displayName: 'Contract Non Admin League Scope' });
-
-    const response = await getApp().inject({ method: 'GET', url: '/api/v1/leagues?scope=all', headers: member.headers });
-
-    expect(response.statusCode).toBe(403);
-    expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
-    expect(response.json<ErrorEnvelope>().error.code).toBe('LEAGUE_SCOPE_FORBIDDEN');
   });
 
   it('root-admin user reads match their DTOs on happy paths', async () => {
@@ -595,15 +555,6 @@ describe('Contract verification (root admin)', () => {
         },
       ],
     });
-
-    const listRes = await getApp().inject({
-      method: 'GET',
-      url: `/api/v1/users?search=${encodeURIComponent(targetUser.user.email)}`,
-      headers: rootAdmin.headers,
-    });
-    expect(listRes.statusCode).toBe(200);
-    expect(UserListResponseSchema.safeParse(listRes.json()).success).toBe(true);
-    expect(listRes.json<{ users: { id: string }[] }>().users.map((user) => user.id)).toEqual([targetUser.user.id]);
 
     const detailRes = await getApp().inject({
       method: 'GET',
@@ -828,14 +779,12 @@ describe('Contract verification (root admin)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      // #202 — one league list, scope as a parameter. `scope=all` is access rule A1's
-      // unscoped read; this replaced `GET /api/v1/admin/leagues`.
-      url: '/api/v1/leagues?scope=all&search=Lifecycle',
+      // Customers is the root admin's read of every league (#1896).
+      url: '/api/v1/customers/leagues',
       headers: rootAdmin.headers,
     });
     expect(listRes.statusCode).toBe(200);
-    expect(LeagueListResponseSchema.safeParse(listRes.json()).success).toBe(true);
-    expect(listRes.json<LeagueListResponse>().leagues.some((item) => item.id === league.id)).toBe(true);
+    expect(CustomerLeagueListResponseSchema.parse(listRes.json()).leagues.some((item) => item.id === league.id)).toBe(true);
 
     const inactivateRes = await getApp().inject({
       method: 'POST',

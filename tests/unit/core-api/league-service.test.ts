@@ -199,7 +199,7 @@ describe('LeagueService', () => {
    * These cases migrated from `admin-league-service.test.ts` with the code they cover
    * (`rules/testing-rules.md` §1D): the composition they assert — filters handed to the port,
    * counts joined onto the right league, no count query for an empty result — did not change,
-   * only its home did. The scope cases below are new, because the parameter is new.
+   * only its home did.
    */
   describe('listLeagues', () => {
     function createCountingPrisma(
@@ -225,42 +225,7 @@ describe('LeagueService', () => {
       });
     }
 
-    it('searches every league for scope "all" and reads only the viewer\'s for scope "mine"', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        search: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
-        findByUser: jest.fn().mockResolvedValue([buildLeague({ id: 'league-2' })]),
-      });
-
-      const all = await createService({ leagueRepo }).listLeagues({
-        scope: 'all',
-        userId: 'user-1',
-        filters: { search: 'league' },
-      });
-      const mine = await createService({ leagueRepo }).listLeagues({
-        scope: 'mine',
-        userId: 'user-1',
-      });
-
-      // The scope picks the read. Authorization for 'all' is the route's job — a service
-      // cannot see the request — and is asserted in the league route tests.
-      expect(all.map((row) => row.league.id)).toEqual(['league-1']);
-      expect(mine.map((row) => row.league.id)).toEqual(['league-2']);
-    });
-
-    it('passes the search and isActive filters to the port rather than building a query', async () => {
-      const leagueRepo = createMockLeagueRepo();
-
-      await createService({ leagueRepo }).listLeagues({
-        scope: 'all',
-        userId: 'user-1',
-        filters: { search: 'Ryder', isActive: true },
-      });
-
-      // Handed over as filters — the service composes, it does not query.
-      expect(leagueRepo.search).toHaveBeenCalledWith({ search: 'Ryder', isActive: true });
-    });
-
-    it('hands the same filters to the member-scoped read, so the query narrows it rather than the service (#1182)', async () => {
+    it('hands the search and isActive filters to the member-scoped read, so the query narrows it rather than the service (#1182)', async () => {
       const leagueRepo = createMockLeagueRepo({
         findByUser: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-1', name: 'Ryder Cup Pool', isActive: true }),
@@ -268,19 +233,17 @@ describe('LeagueService', () => {
       });
 
       const rows = await createService({ leagueRepo }).listLeagues({
-        scope: 'mine',
         userId: 'user-1',
         filters: { search: 'ryder', isActive: true },
       });
 
-      // `search` and `isActive` describe the query, not the caller, so they narrow either scope.
       expect(leagueRepo.findByUser).toHaveBeenCalledWith('user-1', { search: 'ryder', isActive: true });
       expect(rows.map((row) => row.league.id)).toEqual(['league-1']);
     });
 
     it('joins member and active-contest counts onto the right leagues', async () => {
       const leagueRepo = createMockLeagueRepo({
-        search: jest.fn().mockResolvedValue([
+        findByUser: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-1', name: 'First' }),
           buildLeague({ id: 'league-2', name: 'Second' }),
         ]),
@@ -294,7 +257,7 @@ describe('LeagueService', () => {
         leagueRepo,
         membershipRepo,
         prisma: createCountingPrisma([{ leagueId: 'league-2', _count: { _all: 7 } }]),
-      }).listLeagues({ scope: 'all', userId: 'user-1', filters: { search: 'league' } });
+      }).listLeagues({ userId: 'user-1' });
 
       expect(membershipRepo.countActiveByLeagues).toHaveBeenCalledWith(['league-1', 'league-2']);
       // Counts land on their own league, and a league absent from a count map reads 0
@@ -318,7 +281,7 @@ describe('LeagueService', () => {
         leagueRepo,
         membershipRepo,
         prisma: createCountingPrisma([{ leagueId: 'league-1', _count: { _all: 2 } }]),
-      }).listLeagues({ scope: 'mine', userId: 'user-1' });
+      }).listLeagues({ userId: 'user-1' });
 
       // The defect the collapse fixed: the member list called the mapper with no counts, so
       // every league it returned reported memberCount 0 and activeContestCount 0 while the
@@ -344,7 +307,6 @@ describe('LeagueService', () => {
       });
 
       const rows = await createService({ leagueRepo, membershipRepo }).listLeagues({
-        scope: 'mine',
         userId: 'user-1',
       });
 
@@ -367,16 +329,16 @@ describe('LeagueService', () => {
       const prisma = createCountingPrisma();
 
       await expect(
-        createService({ membershipRepo, prisma }).listLeagues({ scope: 'all', userId: 'user-1', filters: { search: 'league' } }),
+        createService({ membershipRepo, prisma }).listLeagues({ userId: 'user-1' }),
       ).resolves.toEqual([]);
 
       // An empty `in` list would scan, so the member count is skipped entirely.
       expect(membershipRepo.countActiveByLeagues).not.toHaveBeenCalled();
     });
 
-    it('attaches the viewer\'s own membership, and null for a league they do not belong to', async () => {
+    it('attaches the viewer\'s own membership to each league, and null where none was read beside it', async () => {
       const leagueRepo = createMockLeagueRepo({
-        search: jest.fn().mockResolvedValue([
+        findByUser: jest.fn().mockResolvedValue([
           buildLeague({ id: 'league-mine' }),
           buildLeague({ id: 'league-theirs' }),
         ]),
@@ -389,27 +351,22 @@ describe('LeagueService', () => {
       });
 
       const rows = await createService({ leagueRepo, membershipRepo }).listLeagues({
-        scope: 'all',
         userId: 'user-1',
-        filters: { search: 'league' },
       });
 
       // A8's one exception is a SET of the viewer's memberships beside the leagues, so a
-      // root admin listing leagues they do not belong to gets null — not an invented
-      // relationship, which is what the deleted `adminListLeagues` used to fabricate.
+      // league whose membership was not among them gets null, never an invented relationship.
       expect(rows[0]?.membership?.id).toBe('membership-1');
       expect(rows[1]?.membership).toBeNull();
     });
 
     it('returns leagues carrying no viewer context on the league itself (A8)', async () => {
       const leagueRepo = createMockLeagueRepo({
-        search: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
+        findByUser: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
       });
 
       const [row] = await createService({ leagueRepo }).listLeagues({
-        scope: 'all',
         userId: 'user-1',
-        filters: { search: 'league' },
       });
 
       // The admin list used to hard-code `isRootAdmin: true`, `memberType: null` and an

@@ -40,7 +40,6 @@ export const API_ROUTES = {
   // access rule A6 decides which is allowed. They replaced `/api/v1/auth/me`,
   // `/api/v1/account/*` and `/api/v1/admin/users/*`.
   users: {
-    list: '/api/v1/users/',
     detail: (userId: string) => `/api/v1/users/${userId}`,
     profile: (userId: string) => `/api/v1/users/${userId}/profile`,
     username: (userId: string) => `/api/v1/users/${userId}/username`,

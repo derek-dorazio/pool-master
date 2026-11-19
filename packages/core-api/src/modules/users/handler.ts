@@ -41,7 +41,6 @@ export function createUserHandlers(
   payments: Pick<PaymentHistoryService, 'listForPayer'>,
 ) {
   return {
-    listUsers,
     readUser,
     updateProfile,
     updateUsername,
@@ -106,20 +105,6 @@ export function createUserHandlers(
   }
 
   // --- Reads ------------------------------------------------------------------
-
-  async function listUsers(
-    request: FastifyRequest<{ Querystring: { search?: string; isActive?: boolean } }>,
-    reply: FastifyReply,
-  ) {
-    return run(request, reply, 'user.list', async (actor) => {
-      // No paging (§16). `search` and `isActive` narrow the result; nothing slices it.
-      const users = await userService.listUsers(actor, {
-        search: request.query.search,
-        isActive: request.query.isActive,
-      });
-      return reply.send({ users: users.map(toUserDto) });
-    });
-  }
 
   async function readUser(
     request: FastifyRequest<{ Params: { userId: string } }>,

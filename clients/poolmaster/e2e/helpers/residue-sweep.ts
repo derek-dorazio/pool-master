@@ -2,7 +2,6 @@ import type { APIRequestContext } from '@playwright/test';
 import { expectOk, type AuthHeaders, type Log } from './admin-api';
 import { removeLeague, removeTour, removeUser } from './journey-teardown';
 import {
-  E2E_EMAIL_DOMAIN,
   E2E_NAME_PREFIX,
   isRunOlderThan,
   runIdOfLeagueCode,
@@ -84,7 +83,7 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
 
   await remove('leagues (listing)', async () => {
     const list = await expectOk(
-      api.get('/api/v1/leagues', { headers, params: { scope: 'all', search: E2E_NAME_PREFIX } }),
+      api.get('/api/v1/customers/leagues', { headers }),
       'list leagues',
     );
     const { leagues } = (await list.json()) as { leagues: { name: string; leagueCode: string }[] };
@@ -142,7 +141,7 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
   });
 
   await remove('users (listing)', async () => {
-    const list = await expectOk(api.get('/api/v1/users/', { headers, params: { search: E2E_EMAIL_DOMAIN } }), 'search users');
+    const list = await expectOk(api.get('/api/v1/customers/users', { headers }), 'list users');
     const { users } = (await list.json()) as { users: { username: string; email: string; isRootAdmin: boolean }[] };
     // A root admin is never a run's: the suite's own admin has an e2e address too.
     for (const user of users.filter((candidate) => !candidate.isRootAdmin && due(runIdOfUser(candidate)))) {

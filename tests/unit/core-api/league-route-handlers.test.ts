@@ -70,12 +70,12 @@ function handlersOver(service = leagueService(), plans = planService(), repos: R
 }
 
 describe('league list handler', () => {
-  it('lists the caller\'s own leagues by default, with their memberships beside the leagues', async () => {
+  it('lists the caller\'s own leagues, narrowed by the search and active filter, with their memberships beside the leagues', async () => {
     const fake = leagueService();
 
     const reply = await callHandler(handlersOver(fake).listLeagues, stubRequest({ query: { search: 'off', isActive: true }, authUser: me, contextLogger: false }));
 
-    expect(fake.listLeagues).toHaveBeenCalledWith({ scope: 'mine', userId: 'user-1', filters: { search: 'off', isActive: true } });
+    expect(fake.listLeagues).toHaveBeenCalledWith({ userId: 'user-1', filters: { search: 'off', isActive: true } });
     expect(reply.body).toMatchObject({
       leagues: [{ id: 'league-1', memberCount: 4, activeContestCount: 2 }, { id: 'league-2' }],
       memberships: [{ leagueId: 'league-1', user: { id: 'user-1' } }],
@@ -88,28 +88,23 @@ describe('league list handler', () => {
 
     await callHandler(handlersOver(fake).listLeagues, stubRequest({ query: {}, authUser: me }));
 
-    expect(fake.listLeagues).toHaveBeenCalledWith({ scope: 'mine', userId: 'user-1', filters: {} });
+    expect(fake.listLeagues).toHaveBeenCalledWith({ userId: 'user-1', filters: {} });
   });
 
-  it('lists every league for a root admin with a search term, and sends no memberships when the viewer is gone', async () => {
+  it('sends no memberships when the viewer\'s user record is gone', async () => {
     const fake = leagueService();
 
-    const reply = await callHandler(handlersOver(fake, planService(), { viewer: false }).listLeagues, stubRequest({ query: { scope: 'all', search: 'office' }, authUser: admin }));
+    const reply = await callHandler(handlersOver(fake, planService(), { viewer: false }).listLeagues, stubRequest({ query: {}, authUser: me }));
 
-    expect(fake.listLeagues).toHaveBeenCalledWith({ scope: 'all', userId: 'admin', filters: { search: 'office' } });
     expect(reply.body).toMatchObject({ memberships: [] });
   });
 
-  it.each([
-    ['no session with 401 AUTH_SESSION_REQUIRED', { query: {} }, 401, 'AUTH_SESSION_REQUIRED'],
-    ['every league for a member with 403 LEAGUE_SCOPE_FORBIDDEN', { query: { scope: 'all', search: 'office' }, authUser: me }, 403, 'LEAGUE_SCOPE_FORBIDDEN'],
-    ['every league with no search term with 400 SEARCH_TERM_REQUIRED', { query: { scope: 'all' }, authUser: admin }, 400, 'SEARCH_TERM_REQUIRED'],
-  ] as const)('refuses a list of %s, reading nothing', async (_label, fields, status, code) => {
+  it('refuses a list with no session with 401 AUTH_SESSION_REQUIRED, reading nothing', async () => {
     const fake = leagueService();
 
-    const reply = await callHandler(handlersOver(fake).listLeagues, stubRequest(fields));
+    const reply = await callHandler(handlersOver(fake).listLeagues, stubRequest({ query: {} }));
 
-    expect(reply).toMatchObject({ statusCode: status, body: { error: { code } } });
+    expect(reply).toMatchObject({ statusCode: 401, body: { error: { code: 'AUTH_SESSION_REQUIRED' } } });
     expect(fake.listLeagues).not.toHaveBeenCalled();
   });
 });

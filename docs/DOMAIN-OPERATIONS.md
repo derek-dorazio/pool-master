@@ -1326,18 +1326,18 @@ filters that existed on one half though they described the query rather than the
 | Delete a user | `DELETE /users/:userId` |
 | Revoke a user's sessions | `POST /users/:userId/revoke-sessions` |
 | Read a user | `GET /users/:userId` (`me` resolves to the caller) |
-| List leagues | `GET /leagues?scope=mine\|all` |
 | Inactivate / delete a league | `POST /leagues/:id/inactivate`, `DELETE /leagues/:id` |
 | List squads | `GET /leagues/:id/squads` |
 | List contest templates | `GET /contest-config-templates` |
 | Create a contest | `POST /leagues/:id/contests` |
 
-**A list takes an explicit scope; a path-addressed operation does not.** For an operation
-whose subject is named in the path, the caller's role decides only whether they may. A list
-is different: a root admin legitimately needs both their own leagues (for the selector) and
-every league (for management), and one request cannot mean both. So `GET /leagues` takes
-`scope`, and the role decides whether the requested scope is permitted — not which scope the
-caller gets.
+**A path-addressed operation takes the caller's role only to decide whether they may.** A
+list is different: a root admin needs both their own leagues (for the selector) and every
+league (for management). Those are two reads with different rows, not one read with a scope:
+`GET /leagues` is the caller's own leagues for everyone, root admins included, with their
+memberships beside them, and every league is `listCustomerLeagues`, whose rows carry what the
+Customers grid shows (owner, preview end) and no viewer context. The old `scope=all` was
+removed with the searched user list once Customers replaced them (#1896).
 
 ## Soft and hard delete both exist, and hard delete is gated
 

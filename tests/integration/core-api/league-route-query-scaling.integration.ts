@@ -16,7 +16,6 @@ import {
   ListLeagueInvitationsResponseSchema,
   SquadResponseSchema,
   TeamOwnerInvitationListResponseSchema,
-  UserListResponseSchema,
   UserPaymentListResponseSchema,
 } from '@poolmaster/shared/dto';
 import {
@@ -148,15 +147,6 @@ async function seedUserPayments(payments: number) {
   return payer;
 }
 
-/** A root admin, and `users` users whose names all hold one search term no other user has. */
-async function seedUsersFound(users: number) {
-  const term = `scaling${randomUUID().slice(0, 8)}`;
-  for (let index = 0; index < users; index += 1) {
-    await createTestUser({ firstName: term, lastName: `Member ${String(index)}` });
-  }
-  return { term, rootAdmin: await createTestUser({ isRootAdmin: true }) };
-}
-
 describe('league, team and user reads cost the same statements for 2 rows as for 20', () => {
   it('GET a league: the same statements for 2 teams as for 20 (#1176)', async () => {
     await expectConstantQueries({
@@ -221,14 +211,6 @@ describe('league, team and user reads cost the same statements for 2 rows as for
     });
   });
 
-  it('GET the users a search finds: the same statements for 2 users as for 20', async () => {
-    await expectConstantQueries({
-      route: 'GET /api/v1/users/',
-      seed: seedUsersFound,
-      call: ({ term, rootAdmin }) => get(`/api/v1/users/?search=${term}`, rootAdmin),
-      rowsShown: (response) => okBody(response, UserListResponseSchema).users.length,
-    });
-  });
 });
 
 describe('fixed-length lists cost the same statements every time', () => {

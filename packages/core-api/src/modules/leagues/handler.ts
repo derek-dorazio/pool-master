@@ -19,7 +19,7 @@ import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueActivityCounts, LeagueForViewer, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueMembershipStatus, PLATFORM_SEARCH_MIN_LENGTH, platformSearchTerm } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
 import type {
   SquadMembershipRepository,
@@ -67,7 +67,6 @@ export function createLeagueHandlers(
   async function listLeagues(
     request: FastifyRequest<{
       Querystring: {
-        scope?: 'mine' | 'all';
         search?: string;
         isActive?: boolean;
       };
@@ -75,14 +74,9 @@ export function createLeagueHandlers(
     reply: FastifyReply,
   ): Promise<LeagueListResponse | FastifyReply> {
     const logger = request.contextLogger ?? request.log;
-    const scope = request.query.scope ?? 'mine';
     logger.debug({
       action: 'leagueRoute.list.enter',
-      data: {
-        scope,
-        userId: request.authUser?.userId ?? null,
-        isRootAdmin: request.authUser?.isRootAdmin === true,
-      },
+      data: { userId: request.authUser?.userId ?? null },
     }, 'Handling list leagues request');
     const userId = request.authUser?.userId;
     if (!userId) {
@@ -92,54 +86,23 @@ export function createLeagueHandlers(
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
 
-    // A1 — the unscoped read is root admins only. This is the authorization that used to be
-    // the `/api/v1/admin/leagues` route's existence; making scope a parameter means it has to
-    // be stated, and it is stated here rather than in a preHandler because only one value of
-    // the parameter needs it.
-    if (scope === 'all' && request.authUser?.isRootAdmin !== true) {
-      logger.warn({
-        action: 'leagueRoute.list.scopeForbidden',
-        data: { userId, scope },
-      }, 'Rejected unscoped league list for non-root-admin');
-      return sendError(
-        reply,
-        403,
-        'LEAGUE_SCOPE_FORBIDDEN',
-        'Listing every league requires root-admin access',
-      );
-    }
-    // Every league on the platform is the largest list a root admin reads, and nothing pages it
-    // (§16), so it takes a search term (#1180). A member's own leagues need none.
-    const search = platformSearchTerm(request.query.search);
-    if (scope === 'all' && search === null) {
-      logger.warn({
-        action: 'leagueRoute.list.searchRequired',
-        data: { userId, scope },
-      }, 'Rejected unscoped league list without a search term');
-      return sendError(
-        reply,
-        400,
-        'SEARCH_TERM_REQUIRED',
-        `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a league.`,
-      );
-    }
-
-    const isActive = request.query.isActive !== undefined ? { isActive: request.query.isActive } : {};
-    // An `all` without a search term was refused above, so the other branch is always `mine`.
-    const rows = await leagueService.listLeagues(scope === 'all' && search !== null
-      ? { scope: 'all', userId, filters: { search, ...isActive } }
-      : { scope: 'mine', userId, filters: { ...(request.query.search ? { search: request.query.search } : {}), ...isActive } });
+    const rows = await leagueService.listLeagues({
+      userId,
+      filters: {
+        ...(request.query.search ? { search: request.query.search } : {}),
+        ...(request.query.isActive !== undefined ? { isActive: request.query.isActive } : {}),
+      },
+    });
     // The memberships below are all the VIEWER's, so the member embedded in each is the
     // viewer — one read, not one per league.
     const viewer = await userRepo.findById(userId);
     logger.info({
       action: 'leagueRoute.list.success',
-      data: { scope, userId, leagueCount: rows.length },
+      data: { userId, leagueCount: rows.length },
     }, 'Listed leagues');
     // A8's one exception: the leagues list is inherently multi-league and the viewer's
     // relationship differs per league, so it travels as a SET beside the leagues rather than
-    // as fields repeated on every row. Under `scope: 'all'` it is legitimately shorter than
-    // the league list, and empty for a root admin who belongs to none of them.
+    // as fields repeated on every row.
     return {
       leagues: rows.map((row) => leagueDto(row.league, {
         memberCount: row.memberCount,
