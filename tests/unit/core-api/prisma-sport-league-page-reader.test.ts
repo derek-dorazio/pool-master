@@ -176,6 +176,18 @@ describe('PrismaSportLeaguePageReader.readParticipants', () => {
 });
 
 describe('readOverdueCandidates', () => {
+  it('never reads a never-released draft, nor a completed or cancelled event, as a candidate', async () => {
+    const prisma = prismaDouble();
+
+    await readOverdueCandidates(asPrismaClient(prisma), NOW);
+
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        status: { notIn: expect.arrayContaining([SportEventStatus.DRAFT, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) },
+      }),
+    }));
+  });
+
   it('reads no rounds when no event may be overdue', async () => {
     const prisma = prismaDouble();
 

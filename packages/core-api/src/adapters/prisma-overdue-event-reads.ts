@@ -1,14 +1,14 @@
 /**
  * The facts to judge which sport events' results are overdue (#1865), for the Sports page's
- * overview and the League page's events read alike: every event neither completed nor cancelled
- * that started long enough ago to be overdue, with its rounds and each round's latest match
+ * overview and the League page's events read alike: every released event neither completed nor
+ * cancelled that started long enough ago to be overdue, with its rounds and each round's latest match
  * start. A Clutch Card event plays no rounds of its own, so it takes the rounds of its parent
  * event it covers (#1820). At most three grouped reads, however many events.
  */
 import type { PrismaClient } from '@prisma/client';
 import {
+  NEVER_OVERDUE_STATUSES,
   overdueStartCutoff,
-  SportEventStatus,
   type OverdueEventFacts,
   type OverdueRoundFacts,
 } from '@poolmaster/shared/domain';
@@ -29,7 +29,7 @@ export async function readOverdueCandidates(
 ): Promise<OverdueCandidate[]> {
   const events = await prisma.sportEvent.findMany({
     where: {
-      status: { notIn: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] },
+      status: { notIn: [...NEVER_OVERDUE_STATUSES] },
       startDate: { lt: overdueStartCutoff(now) },
       ...(eventSeriesIds !== undefined && { eventSeriesId: { in: [...eventSeriesIds] } }),
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),

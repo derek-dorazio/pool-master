@@ -443,8 +443,8 @@ of grouped statements and never paged:
   sync last saw it in the feed (`participant_provider_mappings.last_seen_at`, set on every mapping
   a field sync matches, in one update per sync), and whether the feed or an admin added it.
 
-An event is `OVERDUE`, on both pages, when it is neither completed nor cancelled more than 4
-hours after it should have ended: its last round's scheduled end, else its last round or match
+An event is `OVERDUE`, on both pages, when it was released and is neither completed nor
+cancelled more than 4 hours after it should have ended (a never-released DRAFT never is, #1908): its last round's scheduled end, else its last round or match
 start plus the sport's typical play, else its own end date or start plus typical play. A Clutch
 Card event is judged by the parent rounds it covers. The rule is one function,
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
