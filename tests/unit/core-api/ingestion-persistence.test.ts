@@ -79,11 +79,14 @@ function fieldSyncPrisma(options: {
     },
     participantProviderMapping: {
       findMany: jest.fn().mockResolvedValue([{
+        id: 'mapping-1',
         providerId: 'mock-contest-feed',
         externalId: options.externalId,
         participantId: 'participant-1',
         participant: { id: 'participant-1', name: 'Stored Name' },
       }]),
+      // Marks the mappings the field matched as seen in the feed (#1865).
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
     sportEventParticipant: {
@@ -675,7 +678,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
           data.map((row) => ({ id: `created-${row.externalId}`, sportLeagueId: row.sportLeagueId, externalId: row.externalId })),
         )),
       },
-      participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
     };
     // A callback transaction runs on the double itself; a batch runs all, in order.
     const $transaction = jest.fn((work: unknown): Promise<unknown> => (typeof work === 'function'
@@ -701,7 +704,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     const { mappings, logger } = await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
 
     expect(createdNames(prisma)).toEqual(['Scottie Scheffler']);
-    expect(mappings).toEqual([{ participantId: 'created-bdl-1', sportLeagueId: EVENT_LEAGUE.id, providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.EXACT }]);
+    expect(mappings).toEqual([{ participantId: 'created-bdl-1', sportLeagueId: EVENT_LEAGUE.id, providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.EXACT, lastSeenAt: expect.any(Date) }]);
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ created: 1 }), 'Persisted participants from ingestion');
   });
 
@@ -757,6 +760,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       providerId: participant.providerId,
       externalId: participant.externalId,
       confidence: MappingConfidence.EXACT,
+      lastSeenAt: expect.any(Date),
     })));
   });
 });

@@ -363,7 +363,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry, schedule: ingestionConfigService, webhookProviderIds: [] });
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
