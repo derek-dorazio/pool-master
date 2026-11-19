@@ -47,7 +47,7 @@ the one people read.
 | Setting up a race's odds, tiers and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
 | Loading schedules, fields and brackets from a data file, and the test seeds for trying contests | [`docs/SPORT-DATA-LOADING.md`](docs/SPORT-DATA-LOADING.md) |
 | Where each sport's real schedules and fields come from | [`docs/SPORT-DATA-SOURCES.md`](docs/SPORT-DATA-SOURCES.md) |
-| How a provider sync works end to end: registration rows, triggers, the write path and each league's reader | [`docs/LIVE-SPORTS-DATA-SYNC.md`](docs/LIVE-SPORTS-DATA-SYNC.md) |
+| How a provider sync works end to end: which leagues sync, the events, field and scores syncs, triggers and each league's reader | [`docs/LIVE-SPORTS-DATA-SYNC.md`](docs/LIVE-SPORTS-DATA-SYNC.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |
 | Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md). The promotion model: QA deploys when someone runs CI by hand on `main` (pushes to `main` test but do not deploy); staging and prod are a manual `workflow_dispatch` of `deploy.yml` promoting an immutable QA image tag |
