@@ -18,7 +18,7 @@ import {
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { buildContest } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
@@ -67,7 +67,7 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
 
 /** A real job queue, whose `queued` (the wake after commit) is watched. */
 function startedJobs() {
-  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs() });
+  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
   jest.spyOn(queue, 'queued');
   return queue;
 }
@@ -79,6 +79,7 @@ function startedEmailsJob(contestId: string) {
     payload: { contestId, sportEventId: 'sport-event-1' },
     sportEventId: 'sport-event-1',
     runAt: undefined,
+    start: TEST_JOB_START,
     dedupeKey: `CONTEST_STARTED_EMAILS:${contestId}`,
   };
 }
@@ -90,6 +91,7 @@ function settleJob(completedAt: Date) {
     payload: { sportEventId: 'sport-event-1', completedAt: completedAt.toISOString() },
     sportEventId: 'sport-event-1',
     runAt: undefined,
+    start: TEST_JOB_START,
     dedupeKey: 'SETTLE_SPORT_EVENT_CONTESTS:sport-event-1',
   };
 }
@@ -598,6 +600,7 @@ describe('EventLifecycleService settling a decided game\'s squares contests in a
       payload: { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: decidedAt.toISOString() },
       sportEventId: 'sport-event-1',
       runAt: undefined,
+      start: TEST_JOB_START,
       dedupeKey: 'SETTLE_GAME_CONTESTS:game-1',
     }]);
     expect(jobs.queued).not.toHaveBeenCalled();
@@ -1009,6 +1012,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
       payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', startsAt: NEW_START.toISOString() },
       sportEventId: 'sport-event-1',
       runAt: undefined,
+      start: TEST_JOB_START,
       dedupeKey: `CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-${NEW_START.toISOString()}`,
     }]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);

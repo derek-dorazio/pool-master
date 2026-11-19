@@ -59,9 +59,9 @@ import { RootAdminSportEventResultsPage } from '@/features/root-admin/root-admin
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
-import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
+import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
 import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { SPORTS_PATH } from '@/features/root-admin/manage-navigation';
+import { PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
@@ -471,8 +471,13 @@ export const router = createBrowserRouter([
                     element: <RootAdminSettingsPage />,
                   },
                   {
+                    // The schedule moved to the Providers page (#1873).
                     path: 'settings/ingestion-schedule',
-                    element: <RootAdminIngestionSchedulePage />,
+                    element: <Navigate replace to={PROVIDERS_PATH} />,
+                  },
+                  {
+                    path: 'providers',
+                    element: <RootAdminProvidersPage />,
                   },
                 ],
               },

@@ -8,7 +8,9 @@
 import { z } from 'zod';
 import {
   BackgroundJobType,
+  JobErrorType,
   ReleaseAttemptOutcome,
+  type BackgroundJobOutcome,
   ReleaseAttemptTrigger,
   type BackgroundJobRequest,
   type ReleaseAttemptResult,
@@ -16,7 +18,7 @@ import {
 import type { ReleaseCheckDto } from '@poolmaster/shared/dto/events.dto';
 import { mapReleaseCheckToDto } from '../../mappers/sport-events.mapper';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { DISCARD_BACKGROUND_JOB, type BackgroundJobOutcome } from '../background-jobs/background-job-outcome';
+import { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from '../background-jobs/background-job-outcome';
 
 export const ReleaseSportEventJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
@@ -48,13 +50,25 @@ export function releaseAttemptResultToJson(result: ReleaseAttemptResult): Releas
 }
 
 /**
- * The job's handler: one automatic release attempt, its result kept on the job for Activity. A
- * hold for the same failed checks as the event's stored one only moves that check's time, so the
- * job leaves no row (#1865): a week-long hold shows once, not once an hour.
+ * What the job reports (#1861): a release changed the one event; a hold changed nothing and is
+ * CHECK_FAILED, since a ready check failed; a skip changed nothing. The attempt is its result.
+ */
+export function releaseAttemptJobOutcome(result: ReleaseAttemptResult): BackgroundJobOutcome {
+  return {
+    changedCount: result.outcome === ReleaseAttemptOutcome.RELEASED ? 1 : 0,
+    ...(result.outcome === ReleaseAttemptOutcome.HELD && { heldBack: JobErrorType.CHECK_FAILED }),
+    result: releaseAttemptResultToJson(result),
+  };
+}
+
+/**
+ * The job's handler: one automatic release attempt, reported as above. A hold for the same failed
+ * checks as the event's stored one only moves that check's time, so the job leaves no row
+ * (#1865): a week-long hold shows in Activity once, not once an hour.
  */
 export function releaseSportEventJobHandler(sportEvents: { autoReleaseEvent(sportEventId: string): Promise<ReleaseAttemptResult> }) {
-  return async (payload: ReleaseSportEventJobPayload): Promise<BackgroundJobOutcome> => {
+  return async (payload: ReleaseSportEventJobPayload): Promise<BackgroundJobAnswer> => {
     const attempt = await sportEvents.autoReleaseEvent(payload.sportEventId);
-    return attempt.outcome === ReleaseAttemptOutcome.HELD && attempt.sameHoldAsBefore ? DISCARD_BACKGROUND_JOB : releaseAttemptResultToJson(attempt);
+    return attempt.outcome === ReleaseAttemptOutcome.HELD && attempt.sameHoldAsBefore ? DISCARD_BACKGROUND_JOB : releaseAttemptJobOutcome(attempt);
   };
 }

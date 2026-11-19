@@ -5,12 +5,13 @@
  */
 
 import type { BackgroundJobClaim, BackgroundJobRepository } from '@poolmaster/shared/db';
-import { BackgroundJobStatus, BackgroundJobType, type BackgroundJob, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobTrigger, type BackgroundJob, type BackgroundJobRequest, type JobStart } from '@poolmaster/shared/domain';
+import { currentJobStart, JobStartMissingError } from '../../packages/core-api/src/core/job-start';
 import type { BackgroundJobHandlers } from '../../packages/core-api/src/modules/background-jobs';
 
 export interface InMemoryBackgroundJobs extends BackgroundJobRepository {
-  /** Every job, in the order queued. */
-  rows: (BackgroundJob & { dedupeKey?: string })[];
+  /** Every job, in the order queued, with the starter's id as queued (the adapter reads the person). */
+  rows: (BackgroundJob & { dedupeKey?: string; startedByUserId?: string })[];
   /** The `limit` of every claim, in order. */
   claimLimits: number[];
 }
@@ -45,6 +46,8 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
       runAt: request.runAt ?? createdAt,
       attempts: 0,
       dedupeKey: request.dedupeKey,
+      trigger: request.start.trigger,
+      ...('startedByUserId' in request.start && { startedByUserId: request.start.startedByUserId }),
       ...(request.sportLeagueId !== undefined && { sportLeagueId: request.sportLeagueId }),
       ...(request.sportEventId !== undefined && { sportEventId: request.sportEventId }),
       createdAt,
@@ -67,17 +70,24 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
         .sort((a, b) => a.runAt.getTime() - b.runAt.getTime())
         .slice(0, limit);
       for (const row of due) {
-        Object.assign(row, { status: BackgroundJobStatus.RUNNING, attempts: row.attempts + 1, leaseUntil: leaseUntil, dedupeKey: undefined });
+        Object.assign(row, { status: BackgroundJobStatus.RUNNING, attempts: row.attempts + 1, startedAt: at, leaseUntil: leaseUntil, dedupeKey: undefined });
       }
       return Promise.resolve(due.map((row) => ({ ...row })));
     },
-    markSucceeded: (claim, completedAt, result) =>
-      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.SUCCEEDED, completedAt, leaseUntil: undefined, ...(result !== undefined && { result }) })),
+    markSucceeded: (claim, completedAt, { changedCount, heldBack, result }) =>
+      Promise.resolve(markClaimed(claim, {
+        status: BackgroundJobStatus.SUCCEEDED,
+        completedAt,
+        leaseUntil: undefined,
+        changedCount,
+        errorType: heldBack,
+        ...(result !== undefined && { result }),
+      })),
     renewLease: (claim, leaseUntil) => Promise.resolve(markClaimed(claim, { leaseUntil })),
-    markRetry: (claim, { runAt, error }) =>
-      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, leaseUntil: undefined })),
-    markFailed: (claim, { error, completedAt }) =>
-      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.FAILED, lastError: error, completedAt, leaseUntil: undefined })),
+    markRetry: (claim, { runAt, error, errorType }) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, errorType, leaseUntil: undefined })),
+    markFailed: (claim, { error, errorType, completedAt }) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.FAILED, lastError: error, errorType, completedAt, leaseUntil: undefined })),
     deleteClaimed: (claim) => {
       const row = rows.find((candidate) => candidate.id === claim.id);
       if (!row) throw new Error(`No background job ${claim.id}`);
@@ -104,4 +114,21 @@ export function jobHandlers(handlers: Partial<BackgroundJobHandlers>): Backgroun
   const unexpected = (type: BackgroundJobType) => () => Promise.reject(new Error(`No ${type} job was expected in this test`));
   return Object.fromEntries(Object.values(BackgroundJobType)
     .map((type) => [type, handlers[type] ?? unexpected(type)])) as BackgroundJobHandlers;
+}
+
+/** What a test's directly written job says started it, where the test is not about that. */
+export const TEST_JOB_START: JobStart = { trigger: JobTrigger.SCHEDULE };
+
+/**
+ * A test queue's `currentStart` (#1861): what the entry point under way says, as in the app (a
+ * request through the test app, a sweep, the runner's handler), or else `TEST_JOB_START`, so a
+ * test that calls a service directly may queue a job.
+ */
+export function testCurrentJobStart(): JobStart {
+  try {
+    return currentJobStart();
+  } catch (error) {
+    if (error instanceof JobStartMissingError) return TEST_JOB_START;
+    throw error;
+  }
 }

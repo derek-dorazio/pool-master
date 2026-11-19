@@ -285,7 +285,6 @@ export const QueryKeys = {
         search,
         dateWindow ?? null,
       ] as const,
-    ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     // The search term is part of the key (#1180); invalidating the bare prefix refreshes every search.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     manageLeaguesSearch: (search: string) => ['poolmaster', 'root-admin', 'manage-leagues', search] as const,

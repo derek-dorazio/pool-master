@@ -621,11 +621,24 @@ enum PrismaReleaseCheckKey {
   CONTEST_SETUPS_ON
 }
 
-/// What started a provider sync run (#1819).
-enum PrismaProviderSyncTrigger {
+/// What started a background job or a provider sync run (#1861; sync runs since #1819). A sync
+/// run records its job's.
+enum PrismaJobTrigger {
   SCHEDULE
   WEBHOOK
   ADMIN
+  COMMISSIONER
+  SYSTEM
+}
+
+/// Why a background job did not do its work (#1861).
+enum PrismaJobErrorType {
+  RATE_LIMITED
+  TIMEOUT
+  PROVIDER_ERROR
+  BAD_DATA
+  CHECK_FAILED
+  OTHER
 }
 
 // =============================================================================
@@ -683,6 +696,7 @@ model User {
   leaguePlanChanges        LeaguePlanChange[]        @relation("LeaguePlanChangedBy")
   leaguePlanRenewalChanges LeaguePlanRenewalChange[] @relation("LeaguePlanRenewalChangedBy")
   leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
+  startedBackgroundJobs    BackgroundJob[]           @relation("BackgroundJobStartedBy")
 
   @@index([isRootAdmin, isActive])
   /// Trigram indexes serve the root admin user search, a substring match on each column (#1180).
@@ -2420,7 +2434,7 @@ model ProviderSyncRun {
   eventId         String?                     @map("event_id") @db.VarChar(255)
   /// What the run syncs and what started it (#1819).
   kind            PrismaProviderSyncKind
-  trigger         PrismaProviderSyncTrigger
+  trigger         PrismaJobTrigger
   /// The run's scope in PoolMaster's own ids (#1819): the sport league of an EVENTS run; the
   /// event of a FIELD or SCORES run and that event's sport league (#1847). Null where the run's
   /// provider event is linked to no event of ours.
@@ -2468,28 +2482,40 @@ model PlatformRuntimeConfig {
 /// Durable work a request handed off (#1439), claimed and run by any server task. Written in
 /// the transaction of the change that caused it; the nightly cleanup deletes finished jobs.
 model BackgroundJob {
-  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type          PrismaBackgroundJobType
-  payload       Json
-  status        PrismaBackgroundJobStatus @default(QUEUED)
-  runAt         DateTime                  @default(now()) @map("run_at") @db.Timestamptz
-  attempts      Int                       @default(0)
+  id              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type            PrismaBackgroundJobType
+  payload         Json
+  status          PrismaBackgroundJobStatus @default(QUEUED)
+  runAt           DateTime                  @default(now()) @map("run_at") @db.Timestamptz
+  attempts        Int                       @default(0)
   /// While RUNNING, until when the claiming task holds it; past this the job is due again.
-  leaseUntil    DateTime?                 @map("lease_until") @db.Timestamptz
-  lastError     String?                   @map("last_error")
+  leaseUntil      DateTime?                 @map("lease_until") @db.Timestamptz
+  lastError       String?                   @map("last_error")
   /// One job waiting for its first try per subject: an enqueue with a key such a job holds
   /// writes nothing. Cleared for good when the job is claimed, so a later enqueue (even while
   /// the job waits to be retried) queues a fresh job.
-  dedupeKey     String?                   @unique @map("dedupe_key") @db.VarChar(200)
+  dedupeKey       String?                   @unique @map("dedupe_key") @db.VarChar(200)
   /// The job's scope (#1819), set from its payload when queued (`BACKGROUND_JOB_SCOPES`), so
   /// Activity filters by sport league and event on indexed columns. A job on an event carries the
   /// event; its league is read through the event.
-  sportLeagueId String?                   @map("sport_league_id") @db.Uuid
-  sportEventId  String?                   @map("sport_event_id") @db.Uuid
+  sportLeagueId   String?                   @map("sport_league_id") @db.Uuid
+  sportEventId    String?                   @map("sport_event_id") @db.Uuid
   /// What a SUCCEEDED job's handler reported it did (#1819), shown on Activity; null when it reported nothing.
-  result        Json?
-  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  completedAt   DateTime?                 @map("completed_at") @db.Timestamptz
+  result          Json?
+  /// What started it (#1861); jobs from before #1861 read SYSTEM.
+  trigger         PrismaJobTrigger
+  /// The person whose request queued it: set only for ADMIN and COMMISSIONER (#1861). Null once they are deleted.
+  startedByUserId String?                   @map("started_by_user_id") @db.Uuid
+  /// When its latest try started (#1861); null until first claimed.
+  startedAt       DateTime?                 @map("started_at") @db.Timestamptz
+  /// How many rows a SUCCEEDED job created or changed (#1861); null until it succeeds.
+  changedCount    Int?                      @map("changed_count")
+  /// Why it did not do its work (#1861): with a failed try's error, or a hold on a finished job.
+  errorType       PrismaJobErrorType?       @map("error_type")
+  createdAt       DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  completedAt     DateTime?                 @map("completed_at") @db.Timestamptz
+
+  startedBy User? @relation("BackgroundJobStartedBy", fields: [startedByUserId], references: [id], onDelete: SetNull)
 
   @@index([status, runAt])
   @@index([status, leaseUntil])
@@ -2497,6 +2523,7 @@ model BackgroundJob {
   @@index([createdAt(sort: Desc)])
   @@index([sportLeagueId, createdAt(sort: Desc)])
   @@index([sportEventId, createdAt(sort: Desc)])
+  @@index([startedByUserId])
   @@map("background_jobs")
 }
 

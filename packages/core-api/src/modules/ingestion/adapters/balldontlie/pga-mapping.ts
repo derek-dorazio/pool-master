@@ -4,7 +4,7 @@
  * `BalldontlieContractError`, never a guess.
  */
 
-import { ParticipantRoundStatus, Sport } from '@poolmaster/shared/domain';
+import { ParticipantRoundStatus, Sport, JobErrorType } from '@poolmaster/shared/domain';
 import type { GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -93,6 +93,9 @@ export function requireStrokePlay(tournament: PgaTournament): void {
 }
 
 export class UnsupportedPgaFormatError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.BAD_DATA;
+
   constructor(readonly tournamentId: number, readonly formatType: string | null) {
     super(`BALLDONTLIE tournament ${String(tournamentId)} is ${formatType ?? 'of no stated format'}; only STROKE_PLAY tournaments can be scored.`);
     this.name = 'UnsupportedPgaFormatError';

@@ -4,6 +4,7 @@
  */
 import { expect } from '@jest/globals';
 import {
+  JobErrorType,
   ReleaseAttemptOutcome,
   ReleaseAttemptSkipReason,
   ReleaseAttemptTrigger,
@@ -28,14 +29,18 @@ describe('releaseSportEventJobHandler', () => {
 
   it('reports a new or changed hold, and a release, with every check', async () => {
     await expect(handlerAnswering({ outcome: ReleaseAttemptOutcome.HELD, checks: [TIERS_MISSING], sameHoldAsBefore: false })(PAYLOAD))
-      .resolves.toEqual({ outcome: ReleaseAttemptOutcome.HELD, checks: [expect.objectContaining({ key: ReleaseCheckKey.TIERS_ASSIGNED, passed: false })] });
+      .resolves.toEqual({
+        changedCount: 0,
+        heldBack: JobErrorType.CHECK_FAILED,
+        result: { outcome: ReleaseAttemptOutcome.HELD, checks: [expect.objectContaining({ key: ReleaseCheckKey.TIERS_ASSIGNED, passed: false })] },
+      });
     await expect(handlerAnswering({ outcome: ReleaseAttemptOutcome.RELEASED, checks: [] })(PAYLOAD))
-      .resolves.toEqual({ outcome: ReleaseAttemptOutcome.RELEASED, checks: [] });
+      .resolves.toEqual({ changedCount: 1, result: { outcome: ReleaseAttemptOutcome.RELEASED, checks: [] } });
   });
 
   it('reports a skipped attempt with why it was skipped', async () => {
     const skipped = { outcome: ReleaseAttemptOutcome.SKIPPED, reason: ReleaseAttemptSkipReason.NOT_DRAFT } as const;
 
-    await expect(handlerAnswering(skipped)(PAYLOAD)).resolves.toEqual(skipped);
+    await expect(handlerAnswering(skipped)(PAYLOAD)).resolves.toEqual({ changedCount: 0, result: skipped });
   });
 });

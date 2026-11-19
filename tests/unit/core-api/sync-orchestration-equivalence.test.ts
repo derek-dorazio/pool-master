@@ -6,7 +6,7 @@
  * different source, actor, and runType fields.
  */
 
-import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import { JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { ProviderSyncRunLedger, type FeedRunType } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -158,6 +158,7 @@ async function runAndReadPayload(input: {
     providerId: 'mock-provider',
     submittedAt: new Date('2026-05-30T12:00:00.000Z'),
     runType: input.runType,
+    trigger: JobTrigger.SCHEDULE,
   });
   const syncRun = syncRuns.at(0);
   if (!syncRun) {
