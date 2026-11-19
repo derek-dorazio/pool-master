@@ -1,897 +1,387 @@
 # Live Sports Data Sync
 
-How a sport league's data gets from a provider (BALLDONTLIE today) into PoolMaster's tables,
-end to end: what has to be in the database before a sync can do anything, what starts a sync,
-the one path every sync takes, and what each league adds on top. It is written for reviewing
-provider PRs, so each section ends with the files to read and what a change there should touch.
-
-The plan behind the work, and the decisions Derek made on it, are in
-`plans/live-sports-data-balldontlie.md` (epic #1494). This page describes the code as it is on
-`main`; the plan says what is still to come.
+How a sport league's data gets from a provider (BALLDONTLIE) into PoolMaster: which leagues
+sync, what each sync writes, what starts it, and what a new league adds. It describes `main` and
+is written for reviewing provider PRs. The plan and Derek's decisions are in
+`plans/live-sports-data-balldontlie.md` (epic #1494); the background jobs named here are
+specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 
 ## The short version
 
-- **Where this is going: the sync creates a live league's events** (ADR 0011, superseding
-  ADR 0009). Once a league's sync is live, it creates the league's events, loads their fields
-  and keeps their dates current, and the lifecycle scheduler moves their status from those
-  dates; the admin reviews, releases and browses. **Today** a sweep on the schedule's Event list policy (every six hours by default) creates a
-  synced league's events and keeps their name, venue and dates current (*2b*), and the field loop
-  loads their fields and, while an event is a draft, tiers and prices them (*2c*), and a game week and the NFL postseason take their games from the provider (*2d*); for every other league an admin makes or imports each `sport_events`
-  row. A sync never moves status. *Toward ADR 0011* below lists what is still missing.
-- **Every sync is one event.** An event is linked to a provider by `(provider_id, external_id)`.
-  The external id is the provider's id for the event, or for providers like BALLDONTLIE that have
-  games but no events, a *scope id* the adapter invents and parses back (`nfl-2026-week-12`,
-  `nba-2025-postseason`).
-- **There are three triggers and one path.** The scheduled sweep, an admin's manual sync and a
-  webhook all end in `IngestionScheduler.pollLiveScores` → `provider.getLiveScores(externalId)` →
-  `publishLiveScoreUpdate` → the event's scoring family's writer.
-- **Each league adds a reader, not a pipeline.** A league is a scope id format, a few vendor
-  reads, a mapping into one of three shared shapes (`GOLF`, `GAME`, `STAT_LINE`), and a
-  `match_keyword` on its sport league so imports find it and a new participant joins it.
-- **A feed participant is matched by its feed id alone** (#1850), within the event's sport league
-  (#1853). An id no participant of that league is mapped to is a new participant of that league;
-  names are never compared. A Clutch Card league owns its players, so the World Series and the
-  ALCS each have a row for one player, under the same feed id. Test data shares a row with the sync by
-  carrying the same feed id ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Feed ids*).
-
-## The pieces
+- **Every active sport league is synced, or switched off.** A league is synced when a root admin
+  sets its `event_sync_provider_id`. Leagues no provider covers are inactive (*Switched-off
+  leagues*). Formula 1 is the one active league without a feed: an admin runs its events.
+- **The sync owns a synced league's events** (ADR 0011). It creates them, keeps their name,
+  venue and dates current, loads their fields and games, and tiers and prices the field while
+  the event is a draft. **The provider wins** over an admin's edit of those details. A sync never
+  sets status: status follows the dates. A draft releases itself once its ready checks pass.
+- **Three syncs, one schedule.** Events (the league's event list), Field (participants and
+  games) and Scores (live scores). One ingestion schedule covers every league; webhooks carry
+  live scores between scheduled runs.
+- **An event links to a provider by `(provider_id, external_id)`.** For BALLDONTLIE, which has
+  games but no events, the external id is a *scope id* the adapter invents and parses back
+  (`nfl-2026-week-12`, `nba-2025-postseason`).
+- **A participant links by feed id only**, within its event's sport league. Names are never
+  compared. Test data shares a row with the sync by carrying the same feed id.
+- **Each league adds a reader, not a pipeline**: a scope id format, a few vendor reads, and a
+  mapping into one of three shared shapes (`GOLF`, `GAME`, `STAT_LINE`).
 
 ```mermaid
 flowchart LR
   subgraph Triggers
-    T1[Scheduled sweep<br/>IngestionScheduler loop]
-    T2[Admin manual sync<br/>MANUAL_EVENT_SYNC job]
-    T3[BALLDONTLIE webhook<br/>PROVIDER_EVENT_SYNC job]
+    T1[Schedule]
+    T2[Admin: Sync now / event sync]
+    T3[BALLDONTLIE webhook]
   end
   subgraph Core["ingestion/core"]
     S[IngestionScheduler<br/>pollLiveScores / runEventFieldSync]
+    E[LeagueEventsSync]
     R[ProviderRegistry]
-    L[ProviderSyncRunLedger<br/>provider_sync_runs]
+    L[provider_sync_runs]
   end
   subgraph Adapter["adapters/balldontlie"]
     A[BalldontlieAdapter<br/>routes by scope id]
-    RD[League readers<br/>nfl / ncaa / nba / epl / wc / pga]
-    C[BalldontlieClient<br/>rate limit, retry, Zod]
+    RD[League readers]
+    C[BalldontlieClient<br/>pacing, retry, Zod]
   end
-  subgraph Write["Writers"]
-    P[publishLiveScoreUpdate<br/>score-publisher.ts]
-    G[GOLF: GolfScoreService]
-    H[GAME: writeGameScores]
-    SL[STAT_LINE: writeStatLineGames]
-    IP[IngestionPersistence<br/>fields + participants]
-  end
-  T1 --> S
-  T2 --> S
-  T3 --> S
-  S --> R --> A --> RD --> C --> V[(api.balldontlie.io)]
-  S --> L
-  S -- live scores --> P
-  P --> G & H & SL
-  S -- field --> IP
-  G & H & SL & IP --> J[REBUILD_LEADERBOARDS job]
+  T1 & T2 --> E
+  T1 & T2 & T3 --> S
+  E & S --> R --> A --> RD --> C --> V[(api.balldontlie.io)]
+  E & S --> L
+  S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME / STAT_LINE writer]
+  S -- field --> IP[IngestionPersistence] --> TP[tiers and prices]
+  W & IP --> J[REBUILD_LEADERBOARDS job]
 ```
 
-## 1. Boot: which providers exist
+## 1. Configuration
 
-Nothing about a provider is in the database. It is configuration, read once at startup.
+Providers are configuration, read once at boot by `registerConfiguredProviders`
+(`ingestion/core/provider-bindings.ts`):
 
 | Setting | What it does |
 |---|---|
-| `SPORT_DATA_DEFAULT_PROVIDER` | The provider that is PRIMARY for every sport it covers: the catalog browse and new links start with it. |
-| `SPORT_DATA_PROVIDER_BINDINGS_JSON` | `{"providers": {"balldontlie": {"baseUrl": "…", "requestsPerMinute": 60}, "mock-contest-feed": {…}}}`. Every bound provider is built; the non-default ones register as SECONDARY and serve the events linked to them. |
-| `BALLDONTLIE_API_KEY` | The vendor key, from Secrets Manager through the task definition; never in the bindings JSON. |
-| `BALLDONTLIE_WEBHOOK_SECRET` | The webhook signing secret. Unset, every delivery is refused with 403. |
+| `SPORT_DATA_DEFAULT_PROVIDER` | The provider that is PRIMARY for every sport it covers. |
+| `SPORT_DATA_PROVIDER_BINDINGS_JSON` | Each bound provider's `baseUrl` and `requestsPerMinute`; non-default ones register as SECONDARY. Staging and prod refuse the mock without an override. |
+| `BALLDONTLIE_API_KEY` | The vendor key, from Secrets Manager. |
+| `BALLDONTLIE_WEBHOOK_SECRET` | The webhook signing secret. Unset, every delivery is refused (403) and live scores fall back to polling. |
 
-`registerConfiguredProviders` (`ingestion/core/provider-bindings.ts`) builds each adapter and
-calls `ProviderRegistry.register(sport, provider, priority)` for each sport in its
-`sportsCovered`. The BALLDONTLIE adapter covers `GOLF`, `AMERICAN_FOOTBALL`, `BASKETBALL`,
-`SOCCER`, `HOCKEY` and `BASEBALL` (`balldontlie-adapter.ts`, the `leagues` map). A sport's leagues
-are read one by one (#1797): a league the plan refuses (the NCAA brackets and the World Cup need
-the GOAT tier, college football a paid one) or whose read fails is left out of the sport's events
-and teams and logged as `balldontlie.league.unavailable` with the league, the status and whether
-it was a refusal, so its neighbours still list; only when every league fails does the sport's list
-fail. Staging and prod refuse the mock unless an override with a reason is set.
+A sport's leagues are read one by one: a league the vendor plan refuses (401/403) or whose read
+fails is logged as `balldontlie.league.unavailable` and left out, so its neighbours still list.
 
-The root admin's Providers page (`GET /api/v1/ingestion/providers`) also counts each
-provider's **rate-limited jobs of the last 24 hours** (`rateLimitedJobsLast24h`, #1881): jobs
-whose latest try hit `RATE_LIMITED` (the client's 429), whether they ended `FAILED` in the window
-or wait `QUEUED` for a retry started in it; a job that later succeeded clears its error type and
-no longer counts. Jobs have no provider column, so a job belongs to the provider syncing its sport
-league (`event_sync_provider_id`; a Clutch Card league's, its parent's, whose sync creates its
-events) or the provider its event is linked to. One grouped count of the job table and one read of
-those events' provider ids serve every provider, beside the read of the synced leagues that also
-brings their Clutch Cards; a job with neither scope, or on an unsynced league, counts for none.
+**The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
+(`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule
+serves every sport league; there are no per-sport or per-league overrides.
 
-The *schedule* is the one runtime setting: the `INGESTION_SCHEDULE_CONFIG` settings group
-(`platform/ingestion-config-service.ts`), edited on the root admin's ingestion page. It is **one
-schedule for every sport league** (#1871): four policies, each with its own interval.
-
-| Sync | Policy | Default | Read by |
-|---|---|---|---|
-| Health check | `healthCheck.intervalMinutes` | 5 min | the ingestion scheduler's health loop |
-| Event list | `eventList.intervalMinutes` | 360 min | `SyncedEventCreationScheduler` (*2b*) |
-| Field | `eventParticipants.intervalMinutes`, `lookaheadDays` | 360 min, 14 days, off for leagues not synced | each sport's field loop (*2c*) |
-| Live scores | `eventLiveScores.intervalSeconds` | 300 s | each sport's live-score sweep; webhooks arrive between runs |
-
-Each loop reads its interval again after every run, so a saved change applies from the next run
-without a restart; a policy switched off rechecks every minute. Every supported sport is
-scheduled by default. There are **no per-sport overrides**: webhooks cover fast live scores, and a
-per-league override can come later if a league needs one. A value stored before #1871 still
-loads: the settings group drops the `perSportOverrides` key on read, the next save stores the
-value without it, and the missing `eventList` takes its default.
-
-## 2. Registration: the rows a sync needs first
-
-A sync writes onto rows that must already exist. This is the "registration" a league needs, in
-the order it happens.
-
-### 2a. Seed rows, by migration
-
-| Table | Row | Why the sync needs it |
+| Policy | Default | Runs |
 |---|---|---|
-| `sports` | One per sport (baseline). | Participants and events hang off it. |
-| `sport_leagues` | One per league or Clutch Card league (baseline `20271119000100_baseline_reference_data`). Carries `scoring_family`, `round_names`, `round_series_lengths` and `match_keyword`. | The scoring family, which picks the writer, is the sport's own unless the league overrides it to `COMPOSITE` (a stat pool, such as a Clutch Card league); the column is `NULL` for every other league, and a new league needs nothing set there. `match_keyword` is how the year import finds the league's provider events, and the league a new feed participant joins (#1800). |
-| `sport_leagues.match_keyword` | Every league below is set in the baseline. A league added later gets a small migration that sets it only where `NULL`, so an admin's own keyword is never overwritten. | Must equal the `metadata.tour` the adapter puts on that league's events and participants, ignoring case (`core/league-keyword.ts`, `isLeagueTour`). |
-| `sport_leagues.round_series_lengths` | Baseline: NBA and NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`, MLS `[1,3,1,1,1]`. | The GAME writer counts a series' wins against it (#1545). Empty means single games. |
-| `background_jobs` enum | Baseline `20271119000000_baseline_schema` carries `PROVIDER_EVENT_SYNC`. | The webhook's job type. |
+| `healthCheck.intervalMinutes` | 5 min | provider health check |
+| `eventList.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
+| `eventParticipants.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
+| `eventLiveScores.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
-The keyword each league is seeded with in the baseline, and the tour it matches. The history was squashed on 2026-11-12, so each league's own keyword migration is folded into the baseline:
+Each loop re-reads its interval after every run, so a saved change applies without a restart.
 
-| Sport league | `match_keyword` | Migration | Adapter tour constant |
-|---|---|---|---|
-| NFL | `NFL` | baseline | `NFL_LEAGUE_NAME` (`nfl-mapping.ts`) |
-| College Football Playoff | `CFP` | `20271119000300_set_cfp_match_keyword` | `CFP_LEAGUE.tour` (`ncaaf-mapping.ts`) |
-| NCAA Division I Men (basketball) | `NCAAM` | baseline | `NCAA_MEN.tour` (`ncaa-tournament-mapping.ts`) |
-| NCAA Division I Women (basketball) | `NCAAW` | baseline | `NCAA_WOMEN.tour` |
-| Premier League | `EPL` | baseline | `EPL_TOUR` (`epl-mapping.ts`) |
-| FIFA World Cup | `FIFAWC` | baseline | `FIFA_WC_TOUR` (`fifa-world-cup-mapping.ts`) |
-| NBA | `NBA` | baseline | `NBA_PLAYOFFS.tour` (`nba-mapping.ts`) |
-| NBA Finals, NBA Conference Finals (Clutch Card) | the league's own name | baseline | the round's `name` in `NBA_PLAYOFFS.rounds` |
-| PGA TOUR | `PGA TOUR` | baseline | `PGA_TOUR_NAME` (`pga-mapping.ts`) |
-| NHL | `NHL` | baseline | `NHL_PLAYOFFS.tour` (`nhl-mapping.ts`) |
-| MLB | `MLB` | baseline | `MLB_POSTSEASON.tour` (`mlb-mapping.ts`) |
-| WNBA | `WNBA` | baseline | `WNBA_PLAYOFFS.tour` (`wnba-mapping.ts`) |
+**The Providers page** also counts each provider's rate-limited jobs of the last 24 hours (jobs
+whose latest try hit the client's 429). Jobs carry no provider: a job belongs to the provider
+syncing its sport league (a Clutch Card league counts toward its parent league's provider) or to
+the provider its event is linked to.
 
-### 2b. Event rows, by the synced league sweep or an admin action
+## 2. Events sync
 
-A sport league whose `event_sync_provider_id` a root admin has set (the sport league's Edit
-details, "Event sync"; #1725) is **synced**: on the schedule's Event list policy (every six hours by default; off queues
-nothing) `SyncedEventCreationScheduler`
-(`events/synced-event-creation-scheduler.ts`, job lock `synced-event-creation`, started with the
-ingestion scheduler) queues one `SYNC_LEAGUE_EVENTS` background job per active synced league
-(#1819), and a root admin's **Sync now** (`POST /api/v1/ingestion/sport-leagues/:sportLeagueId/events-sync`,
-202 with the queued job; 422 `SPORT_LEAGUE_NOT_SYNCED` on a league with no event sync) queues the
-same job. `LeagueEventsSync.run` (`events/league-events-sync.ts`) runs the year import below for
-this calendar year and the next (or the one year Sync now names), recording one `EVENTS` sync run
-with its trigger, progress and what it created and updated (`docs/BACKGROUND-JOBS.md`). Sync now
-replaces the Year import action below, which stays until the admin UI moves to it. New events are
-born `DRAFT`; each releases itself once every ready check passes, within its league's
-`autoReleaseDaysBeforeStart` window (#1823, the `RELEASE_SPORT_EVENT` job in
-`docs/BACKGROUND-JOBS.md`), or by an admin's press before then. Each automatic check that holds
-or releases the event is stored on it (#1847: `auto_release_checked_at`, `auto_release_outcome`,
-`auto_release_failed_checks`), overwriting the one before, and an admin's release clears it; the
-Sports page counts the drafts a check held as `RELEASE` issues. Activity shows a hold only when
-its failed checks change (#1865). Every release, by hand or automatic, records when it happened
-(`sport_events.released_at`, #1865); events released before then have none. A provider event whose start has already
-passed is never created (#1821): the import skips it as `ALREADY_STARTED`, and the run counts those
-as `alreadyStarted`. Setting the provider is refused unless it is registered and covers the
-league's sport, and the league has a match keyword. One league's failed read fails only its own
-job, which retries. Within one scheduled pass, each Clutch Card league's job is due 10 minutes
-after the season leagues' jobs (an admin's Sync now runs at once, and a Sync now with no year
-pressed while a scheduled job waits answers that job, so it waits the same 10 minutes): a Clutch Card event names its season event (the World Series
-round names the MLB Postseason, #1820), so a new season event is created before its rounds are
-imported. A Clutch Card provider event whose season event is not on the site, or not one event, is
-skipped as `NO_PARENT_EVENT` and created by a later sync.
+### What a league needs first
 
-The same sweep then keeps the league's already-linked events current with what the provider just
-listed (`SportEventService.keepProviderEventsCurrent`, #1727). The provider wins over an admin's
-edit. Which details it may change depends on the status:
+Seeded by migration on `sport_leagues`:
+
+| Column | Why the sync needs it |
+|---|---|
+| `match_keyword` | Must equal the `metadata.tour` the adapter puts on the league's events (`core/league-keyword.ts`, case-insensitive). Required before `event_sync_provider_id` can be set. |
+| `event_sync_provider_id` | Makes the league synced. Refused unless the provider is registered and covers the sport. |
+| `scoring_family` | `NULL` (the sport's own family) except `COMPOSITE` on stat pool leagues such as Clutch Cards. |
+| `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
+| `parent_sport_league_id`, `parent_round_numbers` | A Clutch Card league's season league and the rounds its events cover. |
+| `tier_profile_id`, `pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
+| `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
+
+### The run
+
+`SyncedEventCreationScheduler` queues one `SYNC_LEAGUE_EVENTS` job per active synced league on
+the Event list policy; a root admin's **Sync now**
+(`POST /api/v1/ingestion/sport-leagues/:id/events-sync`) queues the same job.
+`LeagueEventsSync.run` lists the provider's events for this year and next and records one
+`EVENTS` sync run. For each provider event:
+
+- **New, start in the future**: created as a `DRAFT` `sport_events` row in a find-or-create
+  `event_series`, linked by `(provider_id, external_id)` (unique) with `sync_scope = SCORES_ONLY`.
+- **New, start already passed**: never created (`ALREADY_STARTED`).
+- **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through
+  `updateEvent`, the admin's own edit, so a moved start shifts the rounds and notifies leagues
+  on a released event. A value the provider stops sending is kept.
 
 | Status | Provider may change |
 |---|---|
 | `DRAFT`, `SCHEDULED`, `POSTPONED` | name, venue, start, end |
-| `IN_PROGRESS` | name, venue, end (never the start that already happened) |
+| `IN_PROGRESS` | name, venue, end |
 | `COMPLETED`, `CANCELLED` | nothing |
 
-Each change goes through `updateEvent`, the admin's own edit, so a moved start shifts every round
-and tells the leagues on a released event, exactly as an admin's move does. A venue or end the
-provider stops sending is kept, not cleared. The sweep never sets a status: the lifecycle scheduler
-moves it on the new dates.
+**Clutch Card events** name their parent: the season event of the parent league whose rounds they
+cover (the World Series round of the MLB Postseason). Clutch Card jobs are queued 10 minutes after
+the season leagues' jobs so the parent exists first; one with no single parent on the site is
+skipped as `NO_PARENT_EVENT` and created by a later run.
 
-Every other league's events come from an admin, in one of three ways, all root admin routes under
-`/api/v1/events` (`events/routes.ts`):
+On a synced event the admin's Edit details shows name, venue and dates read-only
+(`SportEventDto.providerSynced`); location, rounds, field, tiers, prices, release and result entry
+stay the admin's. The older admin routes (Year import, Create from provider event, Link score
+source under `/api/v1/events`) remain as a fallback for an event the feed lacks.
 
-| Action | Route | What it writes |
-|---|---|---|
-| Year import | `POST /import-year-from-provider` | `EventScoreSourceService.listTourEventsForYear` asks the adapter for the year's events of the league's tour (`getUpcomingEvents` with `{ tour }`, so BALLDONTLIE reads only that league) and keeps those whose `metadata.tour` matches the league's `match_keyword` (422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD` without one). When the provider's plan refuses that league (a 401 or 403), the adapter throws `ProviderLeagueRefusedError` and the import answers 422 `PROVIDER_LEAGUE_REFUSED`, which the admin sees as such (#1797). `SportEventService.importProviderEventYear` then creates an `event_series` (find-or-create by name) and a `sport_events` row per event, with `provider_id`, `external_id` and `sync_scope = SCORES_ONLY`. Re-runnable: linked events and existing editions are skipped, and so is a provider event whose start has passed (`ALREADY_STARTED`, #1821). |
-| Create from a browsed event | `POST /from-provider-event` | The same, for one event picked in the catalog browse (`GET /api/v1/ingestion/providers/:providerId/catalog-events`); 409 `SPORT_EVENT_ALREADY_STARTED` when its start has passed. |
-| Link an existing event | `PUT /:eventId/score-source` | `EventScoreSourceService.linkScoreSource` sets `provider_id`, `external_id` and `sync_scope = SCORES_ONLY` on an admin-made event. `DELETE` puts it back to the manual-admin placeholder and `sync_scope = NONE`. |
+### Auto-release
 
-`sport_events` has `@@unique([provider_id, external_id])`, so one provider event links to at most
-one site event (409 `EXTERNAL_EVENT_ALREADY_LINKED`).
+`SportEventAutoReleaseScheduler` runs hourly and queues a `RELEASE_SPORT_EVENT` job per synced
+draft inside its league's `auto_release_days_before_start` window. The job judges every ready
+check: all passing releases the event through the manual button's path; any failing holds it.
+Each attempt is stored on the event (`auto_release_checked_at`, `_outcome`, `_failed_checks`) and
+shows in Activity; a repeat hold for the same failed checks is not logged again. An admin can
+release earlier by hand. `sport_events.released_at` records every release.
 
-For a bracket, the admin still builds the bracket (`sport_event_rounds`, `sport_event_matches`)
-the usual way; a synced game week takes its games from the provider (*2d*). For a Clutch Card, the event's rounds are its games (game N is round N).
+## 3. Field sync
 
-### 2c. Participant rows, by the field load
+The Field loop runs every participant interval over each provider's next two `DRAFT` or
+`SCHEDULED` events of synced leagues starting inside the lookahead window. An admin's **Load
+Participant Field** (`POST /api/v1/events/:eventId/participants/refresh`) queues a
+`MANUAL_EVENT_SYNC` job down the same path: `runEventFieldSync` →
+`provider.getEventDetails(externalId)` → `IngestionPersistence.persistEventDetailWithDiagnostics`,
+then games, then tiers and prices.
 
-"Load Participant Field" (`POST /api/v1/events/:eventId/participants/refresh`, or the scheduled
-field loop). The field loop always runs for synced leagues' events (#1726); the *Event
-participants* switch widens it to every linked event. The route queues a `MANUAL_EVENT_SYNC` job for the participants feed, and that job runs `runEventFieldSync` → `provider.getEventDetails(externalId)` →
-`IngestionPersistence.persistEventDetailWithDiagnostics`
-(`ingestion/persistence/ingestion-persistence.ts`):
+### Participants
 
-```mermaid
-flowchart TD
-  D[getEventDetails: event + participants] --> M{participant_provider_mappings<br/>has provider_id + external_id<br/>in the event's sport league?}
-  M -- yes --> U[update participants row if a value changed]
-  M -- no --> CR[create participants row in the event's sport league<br/>+ mapping, confidence EXACT]
-  U & CR --> F[upsert sport_event_participants<br/>active, ranking, seed, odds, metadata]
-  F --> J[REBUILD_LEADERBOARDS job in the same transaction]
-  J --> W[list the field's ranked rows with no mapping<br/>from this provider: RANKED_PARTICIPANTS_UNLINKED warning]
-  W --> G[games, 2d]
-  G --> T{event still a draft?}
-  T -- yes --> TP[tier and price the field<br/>unless edited by hand: #1822]
-```
-
-| Table | Key | Written |
-|---|---|---|
-| `participants` | `id` | Created in the event's sport league (#1853) for every feed id no participant of that league is mapped to (#1850), whatever the site already holds by that name, with the sport's participant type. All of a field's new participants go in one insert. |
-| `participant_provider_mappings` | `@@unique([provider_id, external_id, sport_league_id])` | One per provider participant per sport league (#1853), carrying its participant's league; every feed id lookup names the event's league. `EXACT` when the sync created it, `MANUAL` when bound by hand or by the test data load. This mapping is how every later sync finds the participant. |
-| `sport_event_participants` | `(sport_event_id, participant_id)` | The event's field row. A released bracket's seeds are kept as they were (#698). |
-| `sport_events.participant_count` | | Updated if the provider's count changed. |
-
-Names are never compared (#1850). Matching by name once linked a data file's team to the feed's,
-and held a name two candidates shared as "needs linking"; both went, because a guessed link puts
-one feed's scores on the wrong row, and the site's real participants now all come from the sync.
-A participant the site holds under the feed's name but no mapping (an old row, or test data loaded
-without its feed id) stays as it was beside the new one: merge them, or bind the feed id on the
-participant page (`PUT /api/v1/participants/{id}/provider-mappings`) before the sync first sees it.
-The test data load binds each test player's feed id the same way, so the sync fields that row.
-
-After the field is written, its ranked rows with no mapping from the event's provider are listed,
-best rank first, in a `RANKED_PARTICIPANTS_UNLINKED` warning on the sync run (#1664), which names
-the first 20 and counts the rest. Those are the
-stars the feed named some other way or not at all: its scores never reach them, so the root admin
-merges or maps each by hand.
-
-Then, after its games (*2d*) and while the event is still a draft, the field is tiered and priced with no typing (#1822,
-`SyncedFieldValuationService`), the way the *Auto-assign* buttons would: in the field's one order
-(odds, then seed, then rank, by the first value every participant has, then name), on the event's
-own tiers in its sport league's tier profile, priced with the values the event was last priced with
-or else its sport league's pricing profile (#1844). It runs in the same field sync run and adds to its stats (`tiersMadeFromOdds: 6` is six
-tiers made from odds, `pricesMadeFromOdds: 64` the participants priced; `tiersUnchanged` and
-`pricesUnchanged` when nothing moved, so nothing was written). An admin's correction is kept: once
-any tier on the event was placed by hand, the sync leaves every tier alone (`tiersKeptAsEdited`),
-and once any price was typed by hand, every price (`pricesKeptAsEdited`); pressing an *Auto-assign*
-button is not a correction (a tier size sent to it is not kept). A bracket replacement of a
-withdrawn participant places the replacement by hand, so it counts as a correction. After a
-correction, a participant the field gains is left for an admin to place, and the run warns
-`FIELD_ROWS_UNTIERED` or `FIELD_ROWS_UNPRICED` with the count. A released event's tiers and prices are locked
-(`tiersAndPricesLocked`). A failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written
-either way, and the next field sync tries again.
-
-Participant external ids are prefixed by league (`nfl-team-12`, `nba-player-3202`) because one
-provider's ids share one namespace. PGA TOUR golfers are the exception: their id is the vendor's
-bare player id.
-
-### 2d. Game rows for a synced game week or playoff, after the field load
-
-A game week's event detail (an NFL week, a Premier League matchweek) carries the provider's
-`games`: each game's id, round, both teams and kickoff. A game is matched to a stored match by its
-two teams, whichever side each is on (`ProviderScheduledGame`,
-`nfl-mapping.ts` `toNflScheduledGames`, `epl-mapping.ts` `toEplScheduledGames`). After every field load, `ProviderGameSlateService.afterFieldLoad`
-(`events/provider-game-slate.ts`, #1728) turns them into the event's matches when the event is
-provider-synced (`isProviderSyncedEvent`):
-
-| Event status | What the provider's games do |
+| Table | Written |
 |---|---|
-| `DRAFT` | On a one-round event (a game week), when the provider's pairings differ from the stored ones (or none are stored), they become the event's matches through `SportEventBracketService.loadBracket`, in kickoff order, each side the field row of the team the provider names. An admin's differing set is replaced, since the provider wins and nobody has picked yet. When the pairings are the same, every match is kept, with its spread, and takes the provider's kickoff and its home and away (`updateMatch`, the spread turned around on a swap). |
-| Released, not finished | Pairings and sides stay fixed. A match not yet started takes the provider's moved kickoff (`updateMatch`). A pairing no match holds, or a home and away swap, is logged for an admin. |
+| `participants` | One per feed id per sport league. A feed id no participant of the event's league is mapped to creates a new participant in that league, whatever the site already holds by that name. A Clutch Card league owns its players, so the World Series and the ALCS each have a row for one player under the same feed id. |
+| `participant_provider_mappings` | Unique on `(provider_id, external_id, sport_league_id)`. `EXACT` when the sync created it, `MANUAL` when bound by hand or by test data. `last_seen_at` is set on every mapping a field sync matches. |
+| `sport_event_participants` | The field row: active, ranking, seed, odds. A released bracket's seeds are kept. |
+
+A participant the site holds by name with no mapping stays beside the new one: merge them, or
+bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`). The
+field's ranked rows with no mapping are listed in a `RANKED_PARTICIPANTS_UNLINKED` warning on the
+run. Participant ids are prefixed by league (`nfl-team-12`, `nba-player-3202`); PGA TOUR golfers
+use the vendor's bare id.
+
+**Load sport data is test data only.** It never creates a production participant the sync would
+match differently: test rows carry the feed id ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
+*Feed ids*).
+
+### Tiers and prices
+
+While the event is a draft, the field is tiered and priced with no typing
+(`SyncedFieldValuationService`): one field order (odds, then seed, then rank, whichever every
+participant has, then name), the event's tiers from its league's tier profile, and prices from
+the event's last pricing or the league's pricing profile. Any tier placed by hand freezes tiers
+for that event, and any price typed by hand freezes prices (`tiersKeptAsEdited`,
+`pricesKeptAsEdited`); later field additions then warn `FIELD_ROWS_UNTIERED` / `UNPRICED`.
+Pressing *Auto-assign* is not a hand edit. A released event's tiers and prices are locked. A
+failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written regardless.
+
+### Games and brackets
+
+After each field load, `ProviderGameSlateService.afterFieldLoad` (`events/provider-game-slate.ts`)
+turns the provider's games into the event's matches. A game is matched to a stored match by its
+two teams. Nothing loads while a team is missing from the field; a refused load is logged and
+never fails the field sync. Spreads stay the admin's. Each round with kickoffs starts at its
+earliest one.
+
+| Event status | Effect |
+|---|---|
+| `DRAFT` | When the provider's pairings or bracket differ (or none is stored), they replace the stored ones through `loadBracket`. Otherwise matches are kept and take the provider's kickoff and home/away. |
+| Released, not finished | Pairings stay fixed. Unstarted matches take moved kickoffs. A reseeded round is placed by the server's own reseed when the provider pairs the same teams. Anything else is logged for an admin. |
 | `COMPLETED`, `CANCELLED` | Nothing. |
 
-The games wait for the field: when a team is not in the event's field yet, nothing loads and the
-missing teams are logged. A refused load is logged and never fails the field load, and the next
-field load tries again. Spreads stay the admin's (#720). A game links to its match on the first
-live-score sync, as below.
-
-**A fixed-shape playoff** (the NFL postseason) also carries its whole `bracket`
-(`ProviderBracketMatch`): every match from the first round to the final, numbered, linked and in
-its region as an admin would load it, each side the team the seeds place there or empty. The NFL's
-field is each conference's seeds 1 to 7 from `/nfl/v1/standings` (`playoff_seed`), so the 1 seeds
-are in the field before they play (until the standings seed anyone, the field is the vendor's
-NFL teams in its games so far, never an all-star game's sides), and its bracket is matches 1 to 6 for the Wild Card (2 hosts 7,
-3 hosts 6, 4 hosts 5; AFC first), 7 to 10 for the Divisional round with each 1 seed home in 7 and
-9, 11 and 12 for the Conference Championships, linked to the Super Bowl, 13, at a neutral site
-(`toNflPlayoffField`, `toNflPlayoffBracket`). Its games are the ones with both teams in the field,
-each in its round by its week's place among the postseason's weeks, since the vendor skips a week
-before the Super Bowl (`toNflPostseasonGames`). The event has four rounds. After any sync that
-loads or changes matches, week or playoff, each round whose matches have a kickoff starts at the
-earliest of them (`SportEventRoundService.reschedule`); a round with none yet keeps its date.
-
-| Event status | What the bracket and games do |
+| League | Shape the provider gives |
 |---|---|
-| `DRAFT` | When the stored bracket's shape or teams differ from the provider's, match by match (or none is stored), the provider's bracket is loaded through `loadBracket`. Otherwise it is kept and its matches take the games' kickoffs, as for a week. |
-| Released, not finished | A reseeded round still open, whose every game the provider lists with both teams once the round before is played, is placed by the server's own reseed (`proposeRoundMatchups`, then `setRoundMatchups`) when the provider pairs the same teams; a different pairing is logged for an admin. A placed match then takes its game's kickoff. The bracket is not read: a side it names may have left the field (a filled play-in place). |
+| NFL weeks, Premier League matchweeks | One round of games. |
+| NFL postseason | Full bracket: seeds 1–7 per conference from `/nfl/v1/standings`, 13 matches over four rounds (`toNflPlayoffBracket`). |
+| NCAA men's tournament | Full bracket from `/ncaab/v1/bracket`; First Four pairings are play-in places filled by the live-score sync. **Which regions meet in the semifinals is read from `region_id` order, which the vendor does not promise**: check it before a live tournament (`crossRegionPairings` log, `EVENT-SETUP-PROCEDURES.md` *Knockout brackets*). Release the event before the First Four ends. |
+| NCAA women's, College Football Playoff | Games only: the women's bracket has no region and the CFP feed has no committee seeds, so an admin builds the bracket and the sync only links games to open matches. |
+| NBA, WNBA playoffs | Each series as one game; once the first round is out, a fixed bracket seeded from standings (`series-playoff-bracket.ts`). |
+| NHL playoffs | As the NBA, seeded by division from standings points (`toNhlSeedRanks`). |
+| MLB postseason | As the NBA, six seeds per league with byes for the top two (`toMlbSeeds`). |
+| World Cup knockout | Single games, bracket read back from the final through each match's team sources (`toWorldCupBracket`); third place is left out. |
 
-**The NCAA men's tournament** carries its whole bracket too, built from the vendor's
-`/ncaab/v1/bracket` (`ncaa-tournament-mapping.ts`). Each First Four pairing is a play-in place in
-the field (`toNcaaPlayInPlaces`): a participant named for its two teams
-(`ncaab-2025-east-11-seed-play-in`), with the pairing's seed and `metadata.playInPlace`, whose row
-the field load marks `is_play_in_place` when it makes it. A place is listed only while its game is
-unplayed, so a load after the First Four never writes the pairing a row again, and the winner
-fills the place through the live-score fill (#1571). The bracket (`toNcaaBracket`) puts each
-region's round of 64 in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 v 14, 7 v 10,
-2 v 15), the better seed home, the regions in `region_id` order as matches 1 to 32, each pair of
-games linked into the next round, the first two regions' champions meeting in semifinal 61 and the
-last two in 62, the championship 63, all at neutral sites. **Which regions meet in the
-semifinals is read from `region_id` order, which the vendor's document does not promise; check it
-against a real bracket before a live tournament.** Each bracket load logs the regions it pairs
-(`crossRegionPairings`), and the release checklist in `EVENT-SETUP-PROCEDURES.md` *Knockout
-brackets* has an admin check them. The games are those from the round of 64 on
-with both teams, a First Four team's round of 64 game left out until its place is filled
-(`toNcaaScheduledGames`). The women's bracket names no region (`NCAAWBracket` has no
-`region_id`), so it carries games but no bracket, and an admin builds it. Games without a bracket
-never load into an event of more than one round: they would replace the admin's bracket with one
-round's games, so a draft only takes their kickoffs (the same holds for the NFL postseason before
-the standings seed anyone). A draft still unreleased when its First Four games end keeps its bracket as
-last loaded, and its places stay empty: the live-score fill that puts each winner in its place
-runs only on a released event, so an admin releases the tournament before the First Four ends.
+When standings are refused or don't place the whole first round, the read logs it
+(`standingsRefused`, `bracketUnplaced`) and loads games without a bracket. Games without a bracket
+never replace a multi-round event's bracket; a draft only takes their kickoffs.
 
-**A best-of-series playoff whose bracket is fixed by seed** (the NBA's and the WNBA's) gives each
-series as one game, numbered by its Game 1's vendor id, in its round (`playoffSeries`), at Game 1's
-tip-off (`toPlayoffSeriesGames`, `series-playoff-bracket.ts`). Once the vendor lists the whole first
-round, the standings seed it (`/nba/v1/standings` `conference_rank`, `/wnba/v1/standings`
-`playoff_seed`; `PlayoffsSource.seedRanks`) and the playoffs carry their whole bracket
-(`toPlayoffsBracket`): in each first-round series the better-ranked team's rank is its seed `s` and
-its opponent's is `n + 1 - s`. That is right for the NBA, whose standings rank the play-in's 7 and
-8 seeds by record, not by the play-in, because only the 1 and 2 seeds meet them. Each group (an NBA
-conference, the West first as an admin loads it; the WNBA seeds as one) runs 1 v 8, 4 v 5, 3 v 6
-and 2 v 7 from the top, the winners of each two consecutive matches meeting next, each later
-match's home side the half holding the better seed (the West's in the NBA Finals), no game at a
-neutral site. The bracket is fixed, so the links advance every winner. A later round's series takes
-the bracket's sides, not Game 1's, so a lower seed with home court is no swap to the slate. The
-standings are read only once the whole first round is out, so an NBA playoffs is a draft with no
-matches until the play-in is played. The vendor documents no tier for the standings: where the
-plan refuses them (401 or 403), the read logs `balldontlie.playoffs.standingsRefused` and carries on
-with the field and the series games but no bracket, which an admin then builds; any other failure
-fails the read as before. MLB's teams list is read the same way (`balldontlie.playoffs.teamsRefused`).
-When the reads succeed but the standings do not place the whole first round, the read logs
-`balldontlie.playoffs.bracketUnplaced` and loads no bracket, so a refusal is never silent. **The NHL's bracket** is seeded by division instead
-(`BracketShapeKind.DIVISIONS`): `/nhl/v1/standings` gives no rank, so every team is ranked across
-the league by points, then regulation wins, regulation and overtime wins, and wins
-(`toNhlSeedRanks`; the league's later tie-breaks are not read). In each conference, East first,
-each division has two first-round series, told by its teams: its best-ranked team is its winner,
-whose series is whichever one it plays (the wild card it meets may have more points and be home),
-and its other series is the one between two more of its own teams, its second and third. The
-winner's series is listed first, Atlantic, Metropolitan, Central, Pacific, and the conference is
-each match's region.
-Home ice in the conference finals and the Stanley Cup Final goes to the better-ranked half. **MLB's
-bracket** has byes (`BracketShapeKind.BYES`): `/mlb/v1/standings` gives no seed, so each league's
-division winners are seeded 1 to 3 by `league_rank` and its next three clubs 4 to 6 (`toMlbSeeds`;
-a league with a club missing either place gets no seeds). In each league, American first, the
-Wild Card Series are 4 v 5 and 3 v 6, the 1 seed hosts the 4/5 winner and the 2 seed the 3/6
-winner in the Division Series, and the 1 seed's half hosts the League Championship Series; the
-American League's champion is home in the World Series, display only (home field there goes to the
-better record, which is not modelled). The two top seeds play no
-first-round game, so the read also takes the league's teams (`/mlb/v1/teams`) and adds them to the
-field, since the slate loads nothing while a bracket team is missing from it.
+## 4. Triggers, jobs and Activity
 
-**The World Cup's knockout bracket** is single games, built from the edition's
-`/fifa/worldcup/v1/matches` (`fifa-world-cup-mapping.ts`). The play-off for third place fits no
-match of the site's bracket and is left out (`bracketMatchesOf`). The rounds are the knockout
-stages in the vendor's stage order, the first one round 1: five from 2026, the round of 32 on, and
-four before; a listing that skips a stage or is not a whole bracket's worth tells no rounds, and
-gives no games or bracket. Each later match names the matches its sides come from
-(`home_team_source`, "Winner of Match 74") until a side is decided, when the team stands there
-instead, so the bracket (`toWorldCupBracket`) reads the order back from the final: each match puts
-the match its home side comes from (by source, or the one its team won) before its away side's,
-the round of 32 numbered 1 to 16 in that order and each later round below it, each side the
-vendor's home or away, every match at a neutral site with no region. It loads once every round of
-32 team is decided. The games are the bracket's matches with both teams decided
-(`toWorldCupScheduledGames`).
+| Trigger | Starts | Job / runner |
+|---|---|---|
+| Schedule, Event list policy | Events sync per synced league | `SYNC_LEAGUE_EVENTS` |
+| Root admin **Sync now** | Events sync for one league | `SYNC_LEAGUE_EVENTS` |
+| Schedule, participants policy | Field sync | `runConfiguredSportFieldSync` timer, one loop per sport |
+| Schedule, live scores policy | Scores sync of every `IN_PROGRESS`, `SCORES_ONLY` event with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
+| Root admin event sync or field refresh | Field or scores for one event | `MANUAL_EVENT_SYNC` |
+| BALLDONTLIE webhook | Scores for the notified events | `PROVIDER_EVENT_SYNC` |
+| Hourly release sweep | Auto-release check | `RELEASE_SPORT_EVENT` |
 
-## 3. Triggers
+Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`),
+its **trigger** (`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER`, `SYSTEM`; a job's own when a job
+ran it), its sport league and event (looked up from the linked event when the caller named
+none), and the job that ran it. Each background job records the same trigger and who started it
+("Started by" on screen). The root admin's shared Activity grid (`GET /api/v1/activity`) lists
+jobs with their runs, and the Sports, League and Event pages read each league's and event's
+latest run per kind for its sync health. A Clutch Card league shows its parent's `EVENTS` run.
 
-All three record a `provider_sync_runs` row through `ProviderSyncRunLedger`
-(`ingestion/persistence/provider-sync-run-ledger.ts`), which the root admin's sync history lists,
-and all three go through `SyncOrchestrator.normalizeRequest` (`core/sync-orchestrator.ts`), which
-checks the source and actor agree.
+The Field and Scores timers still run outside the job table; moving them onto jobs is the next
+step (#1835).
 
-| Trigger | Source / actor | Run type | Starts from | Notes |
-|---|---|---|---|---|
-| Scheduled sweep | `SCHEDULED` / `SYSTEM:scheduler` | `SCHEDULED_EVENT_SYNC` | `IngestionScheduler.runConfiguredLiveScoreSweep`, one loop per scheduled sport, under the job lock `ingestion:<sport>:live-scores` | Lists events with `createScheduledEventReader` (`core/scheduled-event-reader.ts`): linked to a provider serving the sport, `status = IN_PROGRESS`, `sync_scope = SCORES_ONLY`, at least one field row. Every interval (default 300 s). |
-| Manual sync | `MANUAL` / `ROOT_ADMIN` | `MANUAL_EVENT_SYNC` | `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` → `IngestionService.syncEventData` → `MANUAL_EVENT_SYNC` job → `runManualEventSync` | Either feed. The field refresh button uses the same path. |
-| Webhook | `WEBHOOK` / `SYSTEM:webhook` | `WEBHOOK_EVENT_SYNC` | `POST /api/v1/provider-webhooks/balldontlie` → `ProviderNotificationService.receive` → `PROVIDER_EVENT_SYNC` job → `IngestionScheduler.runNotifiedEventSync` | See below. |
-| Field loop | `SCHEDULED` | `SCHEDULED_EVENT_SYNC` | `runConfiguredSportFieldSync`, every participant interval (default 6 h) | Each provider's next two `DRAFT` or `SCHEDULED` events with `sync_scope = SCORES_ONLY`, starting inside the lookahead window (default 14 days). With the *Event participants* switch off (the default), only events of active sport leagues whose sync names that provider (#1726); on, every linked event. |
-
-Every run also records its **kind** (`EVENTS`, `FIELD` or `SCORES`) and its **trigger**
-(`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER` or `SYSTEM`, the job's own when a job ran it,
-#1861), and a run a background job ran names that job, so Activity
-(`GET /api/v1/activity`) shows each job with its runs (#1819). What scope a run records depends
-on how it started:
-
-| Run | League | Event | Job |
-|---|---|---|---|
-| League events sync (`SYNC_LEAGUE_EVENTS`, an `EVENTS` run outside this ledger) | yes | no | yes |
-| Manual sync | when its provider event is linked | when linked | yes |
-| Webhook sync | when its provider event is linked | yes | yes |
-| Scheduled sweep and field loop | when its provider event is linked | when linked | no |
-| Runs from before #1819 (backfilled by the migration from their provider event) | yes, when linked | yes, when linked | no |
-
-Since #1847 the ledger fills in a field or scores run's event and sport league whenever its
-caller named no league: it looks up the event of ours the provider event is linked to
-(`ProviderSyncRunLedger`, given the event repository), and the #1847 migration did the same for
-the runs written before it. The root admin's Sports page (`GET /api/v1/sport-leagues/overview`)
-reads each sport league's latest run of each kind by that league, through the
-`(sport_league_id, kind, created_at DESC)` index: a failed one is its league's sync health
-`ERROR` and a `SYNC` issue. A Clutch Card league takes its parent's `EVENTS` run, since its
-parent's event list sync creates its events.
-
-The root admin's League page (#1865) reads one sport league in three parts, each a fixed number
-of grouped statements and never paged:
-
-- `GET /api/v1/sport-leagues/{id}/syncs`: one row per kind (`EVENTS`, `FIELD`, `SCORES`) with its
-  health by the same rule, its latest run (a Clutch Card's `EVENTS` run being its parent's), the
-  rows that run created or updated, and when the one ingestion schedule runs it next. A webhook
-  provider's live scores say `WEBHOOK` and have no next run.
-- `GET /api/v1/sport-leagues/{id}/events/overview`: each event's release (`AUTO` or `MANUAL`, with
-  the actual release time or an automatic draft's planned window opening), its latest release
-  check, field size, issues and latest sync, through the `(sport_event_id, kind, created_at DESC)`
-  index.
-- `GET /api/v1/sport-leagues/{id}/participants/overview`: each participant with its feed id, when a
-  sync last saw it in the feed (`participant_provider_mappings.last_seen_at`, set on every mapping
-  a field sync matches, in one update per sync), and whether the feed or an admin added it.
-
-An event is `OVERDUE`, on both pages, when it was released and is neither completed nor
-cancelled more than 4 hours after it should have ended (a never-released DRAFT never is, #1908): its last round's scheduled end, else its last round or match
-start plus the sport's typical play, else its own end date or start plus typical play. A Clutch
-Card event is judged by the parent rounds it covers. The rule is one function,
+**Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
+4 hours after it should have ended (its last round's end, else its last start plus the sport's
+typical play). A draft never released is never overdue. A Clutch Card event is judged by the
+parent rounds it covers. One function:
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
 
-The per-league schedule override the League page spec once showed is left out: every sport
-league syncs on the one ingestion schedule (#1871).
+### Webhooks
 
-The scheduled sweep and field loop still run on their own timers, outside the job table; moving
-them onto jobs, with their scope, is the next step.
+`POST /api/v1/provider-webhooks/balldontlie` checks the HMAC-SHA256 signature of
+`"{ts}.{raw body}"` (5 minute tolerance; bad or missing → 403), drops unsubscribed leagues and
+event types with a 200, and hands the rest to `ProviderNotificationService.receive`. It queues
+one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 seconds out, deduped
+on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. The job runs the normal
+scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
 
-### The webhook path (#1498)
+Subscribed types are `BALLDONTLIE_WEBHOOK_EVENT_TYPES`: `game.started`, `game.period_ended`
+(`game.halftime` for soccer) and `game.ended` for each league in
+`BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, and the four PGA tournament and round events.
 
-```mermaid
-sequenceDiagram
-  participant BDL as BALLDONTLIE
-  participant R as provider-webhook-routes.ts
-  participant W as balldontlie-webhooks.ts
-  participant N as ProviderNotificationService
-  participant Q as background_jobs
-  participant S as IngestionScheduler
-  BDL->>R: POST /api/v1/provider-webhooks/balldontlie
-  R->>W: checkBalldontlieSignature (HMAC-SHA256 of "{ts}.{raw body}", 5 min tolerance)
-  alt bad or missing signature
-    R-->>BDL: 403 PROVIDER_WEBHOOK_UNVERIFIED
-  end
-  R->>W: readBalldontlieNotification(body)
-  alt league or event type not subscribed
-    R-->>BDL: 200, dropped
-  end
-  R->>N: receive({sport, subject GAME or EVENT, gameId, eventIdPrefix})
-  N->>N: findLiveNotifiedEvents: IN_PROGRESS, SCORES_ONLY,<br/>external_id = tournament id, or starts with the league prefix
-  N->>Q: PROVIDER_EVENT_SYNC per event, runAt +60 s,<br/>dedupe key provider-event-sync:<provider>:<externalId>
-  R-->>BDL: 200
-  Q->>S: runNotifiedEventSync (after the burst settles)
-  S->>S: pollLiveScores (the same path as the sweep)
-```
+While the webhook secret is set, polling is only the safety net:
 
-The delivery is a trigger, never a record: nothing in the body is written. A game notification
-syncs the event whose match holds that `external_game_id`; while no match holds it (before the
-first sync links it, or a series, which links no game), it syncs every in-progress event of the
-league. Duplicates inside the 60 seconds coalesce on the dedupe key, which is released when a
-worker claims the job.
+- **Pace.** BALLDONTLIE events poll every 15 minutes, a golf round every 2.
+- **Start.** A start notification also syncs a linked event still `SCHEDULED` six minutes out,
+  after the lifecycle has moved it.
+- **Reconcile.** An end notification queues a second sync ten minutes out for late corrections.
+- **Quiet alert.** When an event in play hears nothing for longer than its league's
+  `quietAfterMinutes` (or 6 hours for a golf round), the sweep logs
+  `ingestion.providerNotifications.quiet`, which a CloudWatch alarm forwards.
 
-The subscribed types are in `BALLDONTLIE_WEBHOOK_EVENT_TYPES`: `game.started`,
-`game.period_ended` (`game.halftime` for soccer) and `game.ended` for each league in
-`BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, and for golf `pga.tournament.started`,
-`pga.tournament.round_started`, `pga.player.round_completed` and `pga.tournament.ended`. Not each
-hole: golf polls every 2 minutes during a round instead (see *The safety net* below).
-
-### The safety net (#1499)
-
-While `BALLDONTLIE_WEBHOOK_SECRET` is set, the webhook carries BALLDONTLIE's live scores and the
-scheduled sweep only backs it up (`NotifiedProviderCadence`, read by
-`notified-provider-cadence.ts`):
-
-- **Pace.** The live-score sweep ticks once a minute and syncs each BALLDONTLIE event that is due:
-  every 15 minutes, or a golf event every 2 minutes while a round is under way. Other providers'
-  events keep the admin's interval. With no secret set, every event polls every sweep as before.
-  The pace is kept in memory by the task holding the sweep's job lock.
-- **Start before the lifecycle.** A start notification (`game.started`, `tournament.started`,
-  `round_started`) also finds a linked event still `SCHEDULED` past its start with auto lifecycle
-  on, and syncs it six minutes out, once the lifecycle sweep has moved it in progress.
-- **Reconciliation.** An end notification also queues a second sync ten minutes out under
-  `provider-event-reconcile:<provider>:<externalId>`, for the vendor's late corrections. It writes
-  nothing once the lifecycle sweep has completed the event.
-- **Quiet alert.** Each notification sets `sport_events.last_provider_notification_at` on the
-  events it is about. When an event is in play (golf's latest round under way, or a match in
-  progress since its scheduled start) with no notification for longer than its league's
-  `quietAfterMinutes` in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` (75 to 90 minutes, a period or half
-  plus its break; college football 110, for a long playoff halftime; World Cup 150, for extra time and penalties; MLB 210, in case innings are not
-  notified), or 6 hours for a golf round, the sweep logs `ingestion.providerNotifications.quiet`
-  at most once per window, and a CloudWatch alarm (`monitoring.tf`) sends it to the alerts topic.
-  A long stoppage, such as a weather delay, sets off the warning too, since nothing is notified
-  while play is stopped.
-
-## 4. The one sync path
+## 5. Scores sync
 
 ```mermaid
 sequenceDiagram
   participant S as IngestionScheduler.pollLiveScores
   participant A as BalldontlieAdapter.getLiveScores
-  participant RD as League reader
   participant P as publishLiveScoreUpdate
   participant F as Scoring family writer
   S->>A: getLiveScores(externalId)
-  A->>A: parse the scope id (nfl-, ncaab-, nba-…-round-N, nba-…, epl-, fifa-wc-, else a PGA tournament id)
-  A->>RD: liveScores(scope)
-  RD->>RD: BalldontlieClient: paced to requestsPerMinute, retries 429/5xx, every page, Zod-parsed
-  RD-->>S: LiveScoreResult {category GOLF | GAME | STAT_LINE, externalEventId, …}
+  A->>A: route by scope id to the league reader
+  A-->>S: LiveScoreResult {GOLF | GAME | STAT_LINE}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate (LiveScoreResultSchema)
-  P->>P: find sport_events by (provider_id, external_id); skip unless IN_PROGRESS
-  P->>F: scoring family's liveScores.persist, only if its category matches
-  F-->>P: rows written + REBUILD_LEADERBOARDS job in the same transaction
+  P->>P: Zod-validate; find event by (provider_id, external_id); skip unless IN_PROGRESS
+  P->>F: the event's scoring family's writer, if it accepts the category
+  F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
 
-`publishLiveScoreUpdate` is `ingestion/core/score-publisher.ts`. The family is the event's sport's own, unless its sport league
-(`event_series → sport_leagues.scoring_family`) overrides it to `COMPOSITE`
-(`scoringFamilyForEvent`, `shared/domain/sports/sport-league-definition.ts`,
-`scoring-families/registry.ts`). Each family that takes live scores accepts exactly one category;
-finish position (racing) accepts none, and its batches are skipped with
-`liveScore.publish.categoryNotAccepted`:
+The family is the sport's own unless the league overrides it to `COMPOSITE`
+(`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
 
-| Category | Family | Writer | Tables written |
-|---|---|---|---|
-| `GOLF` | stroke play | `GolfScoreService.persistRoundUpdatesForSportEvent` (`golf/golf-score-service.ts`) | `sport_event_participant_rounds`, `sport_event_participant_golf_rounds`, `sport_event_participant_standings` + `…_golf_standings`. A round the admin did not schedule, or a hole past 18, is skipped. |
-| `GAME` | head to head | `writeGameScores` (`scoring-families/head-to-head/game-score-writer.ts`) | `sport_event_matches`: links `external_game_id`, writes live scores, and records finals through `MatchResultService.recordResult`, the admin's own path (`result_source = PROVIDER`). A game the provider postpones is marked `POSTPONED` (#1791) and scheduled again when the provider says so; the game slate moves a postponed game to its new kickoff. |
-| `STAT_LINE` | composite | `writeStatLineGames` (`scoring-families/composite/stat-line-writer.ts`) → `StatLineService.applyGames` | `sport_event_participant_rounds` (one per star per game), `sport_event_participant_stat_lines` (`@@unique([participant_round_id, stat])`). |
-
-### GAME: how a provider game finds its match
-
-A `GameScoreUpdate` carries the vendor game id, both teams' prefixed external ids, a state and the
-score. The writer maps the two teams through `participant_provider_mappings` to field rows, then:
-
-1. **Single-game rounds** (NFL, College Football Playoff, NCAA, World Cup, Premier League). A game no match holds yet is
-   linked to the one open match whose two sides are those teams (`gamesToLink`). Two candidates
-   either way link nothing; a later sync tries again. Once linked, `@@unique([sport_event_id,
-   external_game_id])` holds it. A game naming a First Four winner first fills that side's
-   play-in place (see *First Four* under the NCAA tournaments below).
-2. **Best-of series** (`round_series_lengths[round] > 1`: NBA, NHL, MLB, WNBA). The match links no
-   game. Every sync the reader hands over *every* game of the event; the writer counts each final
-   game's winner between the match's two teams and writes the wins so far as the live score, and
-   the result once a side has more than half.
-3. **Final** → `recordResult`. An admin's result stands (#1531): a different provider final is
-   logged, not written. Clearing it hands the match back to the provider.
-4. **Live** → `applyLiveScores`, read-only (`status = IN_PROGRESS`, no winner).
-5. A level knockout game with a shoot-out (World Cup) takes its winner from the shoot-out scores
-   (#1532).
-
-### STAT_LINE: how a box score finds a star
-
-A `StatLineGameUpdate` carries the vendor game id, the event's game number, a state and each
-player's lines. The writer maps each `nba-player-<id>` through `participant_provider_mappings` to
-the event's field; a player who is not a mapped star is counted and left out. Final lines are
-stored `COMPLETED`, live ones `IN_PROGRESS` and rewritten each sync. A completed line is never
-reopened. The sync overwrites an admin's correction (admin entry is the stop gap for leagues with
-no feed). The lifecycle sweep will not complete an event holding a line still in progress (#1660,
-`events/event-lifecycle-scheduler.ts`).
-
-### What moves an event's status
-
-Not the sync, and ADR 0011 keeps it that way: status follows the event's dates. The sync keeps
-a synced event's dates current (*2b*), so a rescheduled event moves on its new dates.
-
-Today, `EventLifecycleScheduler` (every 5 minutes) moves `SCHEDULED → IN_PROGRESS →
-COMPLETED` from the event's round schedule, unless `auto_lifecycle_enabled` is off, and settlement
-and emails follow from that as background jobs (see `docs/BACKGROUND-JOBS.md`). Until an event is
-`IN_PROGRESS`, every live score for it is skipped with the warning
-`liveScore.publish.eventNotInProgress`.
-
-## 5. Per league
-
-The adapter routes by the event's external id in `BalldontlieAdapter.getEventDetails` and
-`getLiveScores`; any id no league parser claims is read as a PGA TOUR tournament id. All files are
-under `packages/core-api/src/modules/ingestion/adapters/balldontlie/`, and every league has a
-vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/` (see its README and
-`rules/testing-rules.md` on the fake API).
-
-| League | Event (external id) | Participants | Vendor reads | Category | Files | Webhooks |
-|---|---|---|---|---|---|---|
-| PGA TOUR | the vendor's tournament id (`18`) | golfer, bare vendor id | `/pga/v2/tournaments`, `/pga/v2/tournament_competitors` (GOAT), `/pga/v1/players` (OWGR), `/pga/v2/tournament_results` (ALL-STAR) | `GOLF` | `pga-contract.ts`, `pga-mapping.ts`, the PGA half of `balldontlie-adapter.ts` | 4 tournament events |
-| NFL | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `/nfl/v1/games`, `/nfl/v1/teams` | `GAME` | `nfl-contract.ts`, `nfl-mapping.ts`, `nfl-reader.ts` | `nfl.game.*` |
-| College Football Playoff | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `/ncaaf/v1/games` (`start_date`, `end_date`: the season's window), `/ncaaf/v1/teams` | `GAME` | `ncaaf-contract.ts`, `ncaaf-mapping.ts`, `ncaaf-reader.ts` | `ncaaf.game.*` (names assumed) |
-| NCAA men / women | `ncaab-<season>-tournament`, `ncaaw-<season>-tournament` | `ncaab-team-<id>`, `ncaaw-team-<id>` | `/ncaab/v1/bracket` (GOAT), `/ncaab/v1/teams` (and `ncaaw`) | `GAME` | `ncaa-tournament-contract.ts`, `-mapping.ts`, `-reader.ts` | `ncaab.game.*`, `ncaaw.game.*` |
-| NBA playoffs (bracket) | `nba-<season>-postseason` | `nba-team-<id>` | `/nba/v1/games` (postseason), `/nba/v1/teams` | `GAME`, as series | `nba-contract.ts`, `nba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nba.game.*` (#1667) |
-| NBA round (Clutch Card) | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `/nba/v1/games`, `/nba/v1/stats` (`game_ids[]`), `/nba/v1/players/active` (`team_ids[]`) | `STAT_LINE` | the above plus `series-playoff-rounds.ts` | `nba.game.*` (the `nba-` prefix covers both) |
-| NHL playoffs (bracket) | `nhl-<season>-postseason` | `nhl-team-<id>` | `/nhl/v1/games` (`seasons`, postseason), `/nhl/v1/teams` | `GAME`, as series | `nhl-contract.ts`, `nhl-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `nhl.game.*` (names assumed, see below) |
-| MLB postseason (bracket) | `mlb-<season>-postseason` | `mlb-team-<id>` | `/mlb/v1/games` (`seasons[]`, postseason), `/mlb/v1/teams` | `GAME`, as series | `mlb-contract.ts`, `mlb-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `mlb.game.*` (names assumed, see below) |
-| WNBA playoffs (bracket) | `wnba-<season>-postseason` | `wnba-team-<id>` | `/wnba/v1/games` (the whole season: no postseason filter), `/wnba/v1/teams` | `GAME`, as series | `wnba-contract.ts`, `wnba-mapping.ts`, shared `series-playoffs.ts`, `series-playoffs-reader.ts` | `wnba.game.*` (names assumed) |
-| Premier League | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `/epl/v2/matches`, `/epl/v2/teams` | `GAME` (a draw is a result) | `soccer-contract.ts`, `epl-mapping.ts`, `epl-reader.ts` | `epl.game.*` |
-| FIFA World Cup | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `/fifa/worldcup/v1/matches` (GOAT), `/fifa/worldcup/v1/teams` | `GAME` with shoot-outs | `fifa-world-cup-contract.ts`, `-mapping.ts`, `-reader.ts` | `worldcup.game.*` |
-
-### PGA TOUR (#1495)
-
-- **Registration.** PGA TOUR sport league (seeded; golf scores by stroke play). Events come from
-  the catalog browse or a link; the field load reads the competitors, then the world rankings in
-  pages of 100, and writes each golfer's `ranking`.
-- **Sync.** `getLiveScores(id)` finds the tournament, refuses any format but `STROKE_PLAY`
-  (`requireStrokePlay`), reads every result page and maps each started round of each golfer to a
-  `GolfRoundUpdate` (`toGolfRoundUpdates`). `GolfScoreService` writes rounds and re-ranks the
-  standings.
-- **Key code.** `BalldontlieAdapter.getEventDetails` / `getLiveScores` (PGA branch),
-  `pga-mapping.ts` `toSportEvent`, `toFieldParticipants`, `toGolfRoundUpdates`.
-
-### NFL (#1496 parts 1 to 2c)
-
-- **Registration.** NFL sport league, keyword `NFL` (baseline). An event is a regular season week
-  or the postseason; its event year is the calendar year it is played in. Teams are found by
-  their feed id (`nfl-team-<id>`); the test data's teams carry it (#1850).
-- **Sync.** `NflReader.liveScores(scope)` reads the scope's games and returns every game as a
-  `GameScoreUpdate`; the writer links each to its match by the two teams.
-- **Key code.** `nfl-mapping.ts` `parseNflScope`, `nflScopeId`, `nflTeamExternalId`;
-  `nfl-reader.ts`.
-
-### College Football Playoff (#1496)
-
-- **Registration.** College Football Playoff sport league, keyword `CFP` (migration
-  `20271119000300_set_cfp_match_keyword`, only where `NULL`). One event per season
-  (`ncaaf-2025-cfp`, played December 2025 to January 2026); its rounds are the sport league's
-  own four. Teams carry the tour `CFP`, so a team the sync creates joins the playoff league.
-- **The date rule.** The vendor's college games carry no postseason flag, bowl name or venue. So
-  a season's playoff games are every game from noon UTC on the day after the first Saturday of
-  December (conference championship day) through January 31 of the next year:
-  `CFP_LEAGUE.window` (`cfpGameWindow`) in `ncaaf-mapping.ts`, a rule in code, not stored
-  data. Derek chose it on 2026-11-13, to be backed out for the vendor's own marker if a key
-  shows the feed has one. The reader asks by `start_date`/`end_date` and keeps only the games
-  inside the window whatever the filter let through, since a Saturday night title game kicks
-  off on the Sunday in UTC (the 2025 Big Ten title game, 01:00 UTC on December 7).
-- **Why the window starts there.** A conference title game can pair two playoff teams (2025:
-  Indiana v Ohio State). Handed to the GAME writer with the bracket's games, it would link to
-  the open match between those two teams, a first round or later match, and score it.
-- **Sync.** `NcaafReader.liveScores(scope)` hands over every game in the window, bowls between
-  other schools included; the writer's team-pair link keeps only the bracket's games. The event
-  is complete only once the window has closed and every game in it is done, since the window
-  names no game as the last.
-- **The field.** The event's field is every team playing in the window, so it holds every bowl
-  team as well as the twelve in the bracket; the admin still places the twelve seeds.
-- **The sport's team list is long by design.** `getParticipants(AMERICAN_FOOTBALL)` returns the
-  NFL's 32 teams and every college team `/ncaaf/v1/teams` lists, as basketball's returns every
-  Division I team. The admin's unmapped teams for football are therefore mostly college teams;
-  each has its own feed id (`ncaaf-team-<id>`), so none takes an NFL row.
-- **Key code.** `ncaaf-mapping.ts` `CFP_LEAGUE`, `cfpGameWindow`, `cfpGamesOf`,
-  `parseCfpScope`; `ncaaf-reader.ts`.
-
-### NCAA men's and women's tournaments (#1496 parts 4a, 4b)
-
-- **Registration.** Keywords `NCAAM` / `NCAAW` by migration. One event per season. The bracket
-  starts at the round of 64; First Four games carry no score (see *First Four* below). Teams carry their seed and their
-  league's tour, so a school's men's and women's teams link to their own rows.
-- **Sync.** `NcaaTournamentReader.liveScores(season)` reads the bracket; one reader class serves
-  both, configured by `NCAA_MEN` / `NCAA_WOMEN`.
-- **First Four (#1571).** Each First Four pairing is a play-in place on the site ("UMBC / Howard"),
-  which names its two teams only in that label. Once the vendor calls a First Four game final, the
-  winner's round of 64 game carries `playInWinnerTeamExternalId`. The GAME writer finds the one
-  match where the winner's opponent plays a play-in place, and fills that place with the winner
-  through `fillPlayInSlot`, the admin's own path (`head-to-head/play-in-fill.ts`). The game then
-  links and scores like any other, in the same sync. Region and seed are not used: the women's
-  bracket document has no region. Nothing is filled, and a warning is logged
-  (`liveScore.playIn.*`), when:
-  - the winner has no team mapping, or the opponent is not on the field;
-  - the opponent plays no play-in place, or plays two;
-  - `fillPlayInSlot` refuses the winner.
-  In each case the admin fills the place, as before. A place already filled is never touched.
-- **Key code.** `ncaa-tournament-mapping.ts` (`parseNcaaTournamentScope`, the league configs),
-  `ncaa-tournament-reader.ts`.
-
-### NBA playoffs bracket (#1496, PR #1656)
-
-- **Registration.** NBA sport league, keyword `NBA` (baseline), `round_series_lengths
-  [7,7,7,7]` (baseline). One event per season (`nba-2025-postseason`, played in 2026:
-  `playoffYearOffset: 1`).
-- **Sync.** `PlayoffsReader.liveScores(season)` reads every postseason game of the season and
-  hands all of them over every time, because the GAME writer counts series wins from the batch.
-  The event is complete when N teams have played N − 1 series and a side has won the final.
-- **The shared shape.** `series-playoffs.ts` defines `PlayoffsLeague`: `key`, `tour`, `sport`,
-  `eventName`, `rounds[]` (`{ name, seriesLength, seriesCount }` per round, first to final),
-  `playoffYearOffset` and `seasonRolloverMonth`. A league supplies a `PlayoffsSource`
-  (`series-playoffs-reader.ts`): its config plus its games and teams, already normalized into
-  `PlayoffGame` and `PlayoffTeam`, read by `PlayoffsReader`. A league whose rounds are Clutch Card
-  events supplies a `PlayoffRoundsSource` instead, adding `PlayoffStatLine` and `PlayoffPlayer`
-  reads, and is read by `PlayoffRoundsReader`. Only that reader lists round events, so a league
-  without box scores lists none it could not answer for. Either reader keeps only the games the
-  vendor marks `postseason` for the asked `season`, whatever the query's filters did, so every
-  normalizer must read the flag.
-- **Bracket.** `NBA_PLAYOFFS.bracket` seeds each conference's half from `/nba/v1/standings`
-  (`toNbaSeedRanks`) once the first round is out, and gives each series as a game (*2d*).
-- **Key code.** `nba-mapping.ts` `NBA_PLAYOFFS`, `nbaPlayoffsSource`, `toNbaPlayoffGame`;
-  `series-playoffs.ts` `toPlayoffsEvent`, `toPlayoffsGameScoreUpdates`, `isComplete`;
-  `series-playoffs-reader.ts` `PlayoffsReader`, `PlayoffRoundsReader`.
-
-### NHL playoffs bracket (#1496, PR #1662)
-
-- **Registration.** NHL sport league, keyword `NHL` (baseline), `round_series_lengths
-  [7,7,7,7]` (baseline). One event per season (`nhl-2025-postseason`, played in 2026:
-  `playoffYearOffset: 1`). `NHL_PLAYOFFS.rounds` names the four rounds a future NHL Clutch Card
-  league would key to (*NHL First Round*, *NHL Second Round*, *NHL Conference Finals*, *Stanley
-  Cup Final*), but the NHL reads no box scores yet, so it is a `PlayoffsReader` and lists no round.
-- **Sync.** As the NBA bracket's. The vendor's NHL games endpoint declares its season filter as
-  `seasons`, not `seasons[]`; a game is placed on its `game_date`, since `start_time_utc` has no
-  documented format. The teams list keeps only teams in a conference, leaving out a moved or folded
-  franchise.
-- **Bracket.** `NHL_PLAYOFFS.bracket` seeds by division from `/nhl/v1/standings` points
-  (`toNhlSeedRanks`) once the first round is out, and gives each series as a game (*2d*).
-- **Key code.** `nhl-contract.ts`; `nhl-mapping.ts` `NHL_PLAYOFFS`, `nhlPlayoffsSource`,
-  `toNhlPlayoffGame`, `isNhlFranchise`.
-
-### MLB postseason bracket (#1496)
-
-- **Registration.** MLB sport league, keyword `MLB` (baseline), `round_series_lengths
-  [3,5,7,7]` (baseline). One event per season (`mlb-2026-postseason`, played the same
-  year: `playoffYearOffset: 0`). `MLB_POSTSEASON.rounds` names *MLB Wild Card Series*, *MLB
-  Division Series*, *MLB League Championship Series* and *World Series*; the four top seeds' byes
-  are no series, so their first series is round 2. No round is listed until MLB reads box scores.
-- **Sync.** As the NBA bracket's, a side's runs being its score. The teams list keeps only the
-  American and National League clubs, so an All-Star side is left out.
-- **Bracket.** `MLB_POSTSEASON.bracket` seeds six clubs a league from `/mlb/v1/standings`
-  (`toMlbSeeds`), the top two with byes, and gives each series as a game (*2d*).
-- **Key code.** `mlb-contract.ts`; `mlb-mapping.ts` `MLB_POSTSEASON`, `mlbPostseasonSource`,
-  `toMlbPlayoffGame`, `isMlbClub`.
-
-### WNBA playoffs bracket (#1496)
-
-- **Registration.** WNBA sport league, keyword `WNBA` (baseline), `round_series_lengths
-  [3,5,7]` (baseline; the semifinals are best of five). One
-  event per season (`wnba-2026-postseason`, played the same year: `playoffYearOffset: 0`).
-  `WNBA_PLAYOFFS.rounds` names *WNBA First Round*, *WNBA Semifinals* and *WNBA Finals*; no round
-  is listed until the WNBA reads box scores.
-- **Sync.** As the NBA bracket's. The vendor's WNBA games endpoint documents no postseason filter,
-  so the whole season is read (about three pages) and the shared reader keeps the playoffs by each
-  game's `postseason` flag. The event picker matches a keyword in an event's name only as whole
-  words, so the NBA league, whose keyword "WNBA" contains, never lists WNBA events.
-- **Bracket.** `WNBA_PLAYOFFS.bracket` seeds the eight teams as one from `/wnba/v1/standings`
-  `playoff_seed` (`toWnbaSeedRanks`), as the NBA's (*2d*).
-- **Key code.** `wnba-contract.ts`; `wnba-mapping.ts` `WNBA_PLAYOFFS`, `wnbaPlayoffsSource`,
-  `toWnbaPlayoffGame`, `isWnbaFranchise`; `isLeagueEvent` in `event-score-source-service.ts`.
-
-### NBA Clutch Card rounds (#1497, PRs #1659, #1661, #1663)
-
-- **Registration.** Each round reached is listed as an event of its own
-  (`nba-2025-postseason-round-4`), named and toured by `NBA_PLAYOFFS.rounds[r-1].name`. The two
-  Clutch Card sport leagues, *NBA Finals* and *NBA Conference Finals*, are keyed to their own names
-  (baseline), so each league's import finds only its round, and the NBA league's import
-  finds only the season. Rounds 1 and 2 are listed but no sport league imports them. The field is
-  the round's teams' active players, `nba-player-<id>`, toured by the round name so a star the sync creates joins the round's league; a test star
-  carrying the same `nba-player-<id>` is the same row. The existing Load Participant Field
-  does this, so no "load stars" endpoint is needed.
-- **Round numbering.** The vendor names no round, so `playoffSeries` works it out: a team's first
-  series is round 1, and each later series is one past the later of its two teams' previous
-  series. That puts MLB's bye teams in round 2. Each series' games are numbered by start time, and
-  each series' Game N is the event's game N.
-- **Sync.** `PlayoffRoundsReader.roundLiveScores(season, round)` reads the season's games, keeps the
-  round's series, reads stats for every game live or final in one call, and maps each player who
-  played (non-zero minutes) to points, rebounds and assists (`toNbaStatLine`, Triple Threat).
-- **Key code.** `series-playoff-rounds.ts` `parsePlayoffRoundScope`, `playoffSeries`,
-  `toPlayoffRoundEvent`, `toPlayoffRoundBoxScores`, `toPlayoffPlayerParticipant`;
-  `nba-mapping.ts` `toNbaStatLine`, `toNbaPlayoffPlayer`.
-
-### Premier League (#1496 part 4c) and World Cup (#1496 part 4d, #1728)
-
-- **Registration.** Keywords `EPL` / `FIFAWC` by migration. A Premier League matchweek is the
-  season's matches grouped by round number and forms no bracket, so a draw is a result. A World
-  Cup edition's knockout bracket is one event.
-- **Sync.** `EplReader.liveScores` / `WorldCupReader.liveScores`. World Cup games level after
-  extra time carry shoot-out scores, which the writer uses to name the winner.
-- **Bracket.** The World Cup's games and whole knockout bracket come from its matches' stages and
-  team sources: see *2d*.
-- **Key code.** `epl-mapping.ts`, `epl-reader.ts`, `fifa-world-cup-mapping.ts`,
-  `fifa-world-cup-reader.ts`, shared `competition-status.ts` (the vendor's game states to ours).
-
-### Switched off: the leagues no provider syncs (#1812)
-
-Every sport league left on is one a provider syncs. The leagues no provider covers yet are
-**inactive** (`sport_leagues.is_active = false`) by the migration
-`20271126000000_switch_off_unsynced_sport_leagues`, so a reset database and a new environment keep
-them off. They are not deleted: their rows, contest setups, round names and copy stay, and bringing
-one back is one flip (root admin **Activate**, or a migration) once it has a source. Existing events
-and contests on them are left as they are.
-
-An inactive league is left off How to Play and Contest types (a sport whose every league is off,
-such as cycling, gets no chip), Create contest's sport choices and events (a member's list of
-events open for contests leaves out an inactive league's), event page and start link offers, event
-emails' league list, the sync's scheduled reads, and the root admin's Create event.
-
-| Switched off | Comes back with |
-|---|---|
-| Cycling: UCI WorldTour, UCI Women's WorldTour | #682 |
-| Running: World Marathon Majors (men), (women) | #683 |
-| FIFA Women's World Cup and its Clutch Card leagues (Women's World Cup Semifinals, Final), UEFA European Championship, Copa América | #1814 |
-| NASCAR Cup Series, IndyCar | #681 (provider check #1813, deferred) |
-| Every horse racing league (US Thoroughbred) | #680 (provider check #1813, deferred) |
-| NWSL; PWHL; college hockey (NCAA Division I Men and Women, Men's Frozen Four, Men's Hockey National Championship); NCAA soccer and NCAA tennis (Division I Men and Women) | #1815 |
-
-Formula 1 and every NCAA basketball league stay on. Each return ticket first re-checks
-BALLDONTLIE's specs (the index and each `openapi/<league>.yml` directly) before any other provider.
-
-## 6. In flight
-
-| Work | Where | What it adds |
+| Category | Writer | Writes |
 |---|---|---|
-| Not read yet | | UCL two-leg ties, MLS best-of-three. |
-| Waiting for the GOAT key | #1500 | College Football Playoff: confirm the vendor carries bowl and playoff games, how it numbers their season and week, and whether a game marks the playoff. If one does, swap `CFP_LEAGUE.window` for it. Confirm the `ncaaf.game.*` webhook names. |
+| `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
+| `GAME` | `writeGameScores` | `sport_event_matches`: links `external_game_id`, live scores, finals through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
+| `STAT_LINE` | `writeStatLineGames` | One participant round per star per game, plus stat lines. |
 
-### Toward ADR 0011
+**GAME linking.** A single-game round links the game to the one open match between its two
+teams; two candidates link nothing until a later sync. A best-of series links no game: the
+writer counts each final game's winner and records the result once a side has more than half.
+A First Four winner first fills its play-in place. **An admin's result stands**: a different
+provider final is logged, not written; clearing the result hands the match back. A level
+knockout game takes its winner from the shoot-out.
 
-ADR 0011 makes a live league's sync the source of its events. Scheduled creation, field loading
-and keeping details current are built (*2b*, *2c*), and so are read-only admin pages; games and bracket rows are not yet. Two choices are settled (`rules/architecture-rules.md` §4 *A live provider sync is the source of
-its league's events*): on a synced event the provider wins over an admin's edit, and a new
-event waits for an admin's release for now, with automatic release the aim once sync is stable.
+**STAT_LINE.** Each `nba-player-<id>` maps to a star in the field; others are skipped. Live lines
+are rewritten each sync, final lines are never reopened, and the sync overwrites an admin's
+correction. The lifecycle will not complete an event with a line still in progress.
 
-- **Scheduled event creation per league** (#1725). Built: see *2b*.
-- **Field load on by default** (#1726) for synced leagues. Built: see *2c*.
-- **The sync keeps an event's details current** (#1727). Built: see *2b*.
-- **Games and bracket rows from the feed** (#1728). Built for game weeks (NFL weeks, Premier
-  League matchweeks), the NFL postseason, the NCAA men's tournament, the NBA's, WNBA's and NHL's
-  playoffs, MLB's postseason and the World Cup's knockout stage: see *2d*. The
-  CFP has no committee seeds in the feed, and the women's NCAA bracket names no region, so for those an admin
-  still builds the bracket, and the sync only links a provider game to an open match (*GAME: how a
-  provider game finds its match*).
-- **Admin event pages become read and browse** (#1729). Built: an event is provider-synced when its
-  sport league's `event_sync_provider_id` names the provider it is linked to for scores
-  (`isProviderSyncedEvent`, `SportEventDto.providerSynced`). Manage shows such an event's source
-  as that provider's sync, and its name, venue and dates read-only on Edit details, never sent;
-  location, rounds, par, field, tiers, prices, release and result entry stay the admin's. Create
-  stays for leagues no provider covers and for an event the feed lacks.
+**Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
+`SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
+jobs. Scores for an event not yet `IN_PROGRESS` are skipped
+(`liveScore.publish.eventNotInProgress`).
 
-## 7. Reviewing a provider PR: what a new league should touch
+## 6. Per league
 
-A new league usually touches all of these, and nothing in the core:
+All files are under `packages/core-api/src/modules/ingestion/adapters/balldontlie/`. Each league
+has a vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/`. The adapter
+routes by external id; an id no league claims is read as a PGA TOUR tournament.
 
-1. **Vendored spec and fixtures**: `tests/fixtures/balldontlie/openapi/<league>.yml` and fixtures
-   that fit it; a contract test comparing the Zod schemas with the vendor's components.
+| League | Keyword | External id | Participants | Category | Files |
+|---|---|---|---|---|---|
+| PGA TOUR | `PGA TOUR` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
+| NFL | `NFL` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `GAME` | `nfl-*` |
+| College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `GAME` | `ncaaf-*` |
+| NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | `ncaab-team-<id>`, `ncaaw-…` | `GAME` | `ncaa-tournament-*` |
+| NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | `<league>-team-<id>` | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
+| NBA Clutch Cards (Finals, Conference Finals) | the league's name | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `STAT_LINE` | `series-playoff-rounds.ts`, `nba-mapping.ts` |
+| Premier League | `EPL` | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
+| FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `GAME` with shoot-outs | `fifa-world-cup-*` |
+
+League notes that are not obvious from the code:
+
+- **CFP date rule.** College games carry no playoff marker, so the playoff is every game from
+  noon UTC the day after conference championship Saturday through January 31
+  (`CFP_LEAGUE.window`). The window starts after title games because one can pair two playoff
+  teams and would score the wrong match. Swap it for a vendor marker if the paid tier has one.
+- **Series playoffs** hand every postseason game over each sync, because the writer counts
+  wins from the batch. Readers keep games by the vendor's `postseason` flag for the asked
+  season, so every normalizer must read it. A league whose rounds are Clutch Cards supplies a
+  `PlayoffRoundsSource` (box scores); only it lists round events.
+- **Round numbering** (`playoffSeries`): a team's first series is round 1, each later one is one
+  past the later of its teams' previous series, which puts MLB's bye teams in round 2.
+- **WNBA** has no postseason filter, so the whole season is read. **NHL** places games on
+  `game_date`.
+
+### Switched-off leagues
+
+Leagues no provider covers are `is_active = false` by migration, not deleted; bringing one back is
+**Activate** on the root admin, or a migration, once it has a source. An inactive league is left
+out of How to Play, Contest types, Create contest, event pages and offers, event emails and the
+scheduled syncs.
+
+| Switched off | Return ticket |
+|---|---|
+| Cycling | #682 |
+| Running | #683 |
+| FIFA Women's World Cup (and its Clutch Cards), UEFA Euro, Copa América | #1814 |
+| NASCAR, IndyCar | #681 (provider check #1813, deferred) |
+| Horse racing | #680 (provider check #1813, deferred) |
+| NWSL, PWHL, college hockey, NCAA soccer and tennis | #1815 |
+
+Each return first re-checks BALLDONTLIE's specs before any other provider.
+
+## 7. Reviewing a provider PR
+
+A new league usually touches only these:
+
+1. **Spec and fixtures**: `tests/fixtures/balldontlie/openapi/<league>.yml`, fixtures, and a
+   contract test comparing the Zod schemas with the vendor's.
 2. **Contract**: `<league>-contract.ts`, Zod schemas for exactly the fields read.
-3. **Mapping**: a scope id format with a `parse…Scope` that cannot claim another league's ids, a
-   prefixed participant id, a `tour` equal to the sport league's keyword, and the vendor states
-   mapped through `competition-status.ts`.
-4. **Reader**: the reads, through `BalldontlieClient` only (so pacing, retries and payload capture
-   apply). A series league supplies a `PlayoffsSource` instead of a reader.
-5. **Adapter routing**: a branch in `getEventDetails` and `getLiveScores`, ahead of the PGA
-   fallback, and the league's events and teams added to its sport in the `leagues` map.
-6. **Migration**: `match_keyword` on the sport league, only where `NULL`; `round_series_lengths`
-   for a series league.
-7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with the scope prefix and its
-   `quietAfterMinutes` (the longest normal gap between its notifications), or its notifications
-   are acknowledged and dropped. The vendor dashboard's subscribed list follows
-   `BALLDONTLIE_WEBHOOK_EVENT_TYPES`.
-8. **Docs**: the tables in this page and the plan's narrative.
+3. **Mapping**: a scope id whose `parse…Scope` cannot claim another league's ids, a prefixed
+   participant id, a `tour` equal to the league's keyword, states through `competition-status.ts`.
+4. **Reader**: reads through `BalldontlieClient` only (pacing, retries, payload capture). A series
+   league supplies a `PlayoffsSource` instead.
+5. **Adapter routing**: a branch in `getEventDetails` and `getLiveScores` ahead of the PGA
+   fallback, and the league in the `leagues` map.
+6. **Migration**: `match_keyword` only where `NULL`; `round_series_lengths` for a series league;
+   `parent_*` for a Clutch Card league.
+7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with its prefix and
+   `quietAfterMinutes`, or its notifications are dropped.
+8. **Docs**: this page.
 
-What should *not* change for a new league: `score-publisher.ts`, the scheduler, the writers, or
-the persistence layer. A PR that does change one is changing every league, and needs that said in
-its description.
+A change to `score-publisher.ts`, the schedulers, the writers or the persistence layer changes
+every league, and the PR must say so.
 
-## 8. Gaps noticed while writing this page
+## 8. Open items
 
-These are on `main` as of the NBA Clutch Card merge (#1661) and the webhook receiver (#1657).
-None is fixed here; each is for the owning thread to confirm.
-
-- **NBA had no webhook entry.** Fixed by #1667: `nba` is in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`
-  with the prefix `nba-`, which covers both the bracket and the round events.
-- **College football's webhook event names are assumed** (`ncaaf.game.started`,
-  `game.period_ended`, `game.ended`, the NFL's names). The subscription covers every college
-  game, but a notification queues a sync only for a CFP event in play, so a regular
-  season Saturday triggers nothing.
-- **NHL, MLB and WNBA webhook event names are assumed.** Their entries subscribe to `game.started`,
-  `game.period_ended` and `game.ended`, the NFL and NCAA names. The vendor's webhook document
-  has not been checked for hockey, baseball or the WNBA (an inning may not be a "period"); confirm the
-  names once the key exists.
-- **PGA TOUR's `match_keyword` was seeded `NULL`.** Fixed by #1666, which set it to `PGA TOUR`;
-  the baseline now carries it.
-- **`PROVIDER_EVENT_SYNC` was missing from `docs/BACKGROUND-JOBS.md`**, whose rule is that a new
-  job type is added to its table. This PR adds the row.
+- **Unconfirmed webhook names** for college football, NHL, MLB and WNBA (assumed from the NFL's);
+  MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
+  (#1500).
+- **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
+- **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
+- **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
+- **Per-event tier override** from the event ⚙ dialog is in progress.
+- **Not read yet**: UCL two-leg ties, MLS best-of-three.
