@@ -261,12 +261,15 @@ async function findEventParticipantByExternalIds(input: {
         externalId: input.eventExternalId,
       },
     },
+    include: { eventSeries: { select: { sportLeagueId: true } } },
   });
+  // A feed id names one participant per sport league (#1853): the one in the event's league.
   const participantMapping = await prisma.participantProviderMapping.findUniqueOrThrow({
     where: {
-      providerId_externalId: {
+      providerId_externalId_sportLeagueId: {
         providerId: input.providerId,
         externalId: input.participantExternalId,
+        sportLeagueId: persistedEvent.eventSeries.sportLeagueId,
       },
     },
   });

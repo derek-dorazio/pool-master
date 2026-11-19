@@ -13,6 +13,7 @@ import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domai
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -321,7 +322,7 @@ async function createGolfLeaderboardParticipant(input: {
   const prisma = getPrisma();
   const participant = await prisma.participant.create({
     data: {
-      sportId: input.sportId,
+      sportLeagueId: await participantLeagueId(prisma, input.sportId),
       name: input.name,
       participantType: 'INDIVIDUAL',
       status: 'ACTIVE',

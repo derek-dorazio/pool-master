@@ -35,7 +35,7 @@ const GAPS_FILE = 'scripts/contract-verification-gaps.mjs';
  * Without it a new schema could go on the list with its endpoint and pass, so growing the list now
  * means editing this line, which a reviewer sees.
  */
-export const GAP_CEILING = 15;
+export const GAP_CEILING = 12;
 
 /** The `<Name>ResponseSchema` constants a DTO file exports. */
 export function readResponseSchemaNames(text) {

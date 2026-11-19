@@ -42,6 +42,7 @@ import { contestStartedEmailsJob, createContestEmailJobs, createContestNotices, 
 import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -118,7 +119,7 @@ async function createLeagueAndEvent() {
   const field = [];
   for (const [name, role] of [['Golfer One', 'GOLFER'], ['Golfer Two', null], ['Golfer Three', null]] as const) {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE', role },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE', role },
     });
     field.push(await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id, isActive: true },
@@ -145,7 +146,7 @@ async function createLaterEvent(suffix: string, startDate = new Date('2026-07-16
   const field = [];
   for (const name of ['Later One', 'Later Two']) {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id, isActive: true },

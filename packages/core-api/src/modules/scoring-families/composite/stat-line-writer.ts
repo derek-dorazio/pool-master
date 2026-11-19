@@ -75,7 +75,7 @@ export async function writeStatLineGames(
   const playerIds = [...new Set(underWay.flatMap(({ game }) => game.lines.map((line) => line.participantExternalId)))];
   const [field, mappings] = await Promise.all([
     deps.field.findBySportEvent(sportEventId),
-    deps.mappings.findByProviderExternalIds(deps.providerId, playerIds),
+    deps.mappings.findByProviderExternalIds(deps.providerId, { sportEventId }, playerIds),
   ]);
   const inField = new Set(field.map((entry) => entry.participantId));
   const starOf = new Map(mappings.flatMap((mapping) => (inField.has(mapping.participantId) ? [[mapping.externalId, mapping.participantId] as const] : [])));

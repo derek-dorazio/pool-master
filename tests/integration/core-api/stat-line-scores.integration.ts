@@ -57,8 +57,8 @@ async function linkedFinals() {
     data: [1, 2, 3, 4, 5, 6, 7].map((roundNumber) => ({ sportEventId: event.id, roundNumber, scheduledDate: new Date(Date.UTC(2026, 5, 2 + roundNumber * 2)) })),
   });
   const player = async (name: string, inField: boolean) => {
-    const participant = await prisma.participant.create({ data: { sportId: basketball.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' } });
-    await prisma.participantProviderMapping.create({ data: { participantId: participant.id, providerId: PROVIDER, externalId: `bdl-${name.toLowerCase()}` } });
+    const participant = await prisma.participant.create({ data: { sportLeagueId: finals.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL' } });
+    await prisma.participantProviderMapping.create({ data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId: `bdl-${name.toLowerCase()}` } });
     return inField ? prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }) : null;
   };
   const ace = await player('Ace', true);
@@ -121,6 +121,18 @@ describe('box scores from a provider', () => {
       [blaze.id, 1, ParticipantRoundStatus.COMPLETED, true, { POINTS: 12, REBOUNDS: 3, ASSISTS: 9 }],
       [ace.id, 2, ParticipantRoundStatus.IN_PROGRESS, false, { POINTS: 10 }],
     ]);
+  });
+
+  it('writes a box score line only to the event\'s own sport league\'s player, when another Clutch Card league holds a player of the same feed id', async () => {
+    // Two Clutch Card leagues, as the LCS and the World Series are: each owns a player for the
+    // same provider player (#1853), so a line for one league's game is that league's player's.
+    const worldSeries = await linkedFinals();
+    const lcs = await linkedFinals();
+
+    await publish(worldSeries.externalId, [boxScore(1, ProviderGameState.FINAL, { 'bdl-ace': { POINTS: 31 } })]);
+
+    expect(await storedLines(worldSeries.event.id)).toEqual([[worldSeries.ace.id, 1, ParticipantRoundStatus.COMPLETED, true, { POINTS: 31 }]]);
+    expect(await storedLines(lcs.event.id)).toEqual([]);
   });
 
   it('completes a live game\'s lines when a later sync calls it final, and writes nothing when the same box score arrives again', async () => {

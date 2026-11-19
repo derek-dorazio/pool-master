@@ -25,7 +25,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryMatchPredictionRepository,
   ContestRepository,
-  ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
   ReplacementValuation,
   SportLeagueRepository,
@@ -186,8 +185,6 @@ export interface SportEventBracketServiceDeps {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
-  /** The event's league roster, which a replacement or play-in winner must be on once it has one (#830). */
-  affiliations: Pick<ParticipantLeagueAffiliationRepository, 'find' | 'countBySportLeagues'>;
   matches: SportEventMatchRepository;
   /** The event's tiers and valuations, which a replacement joins at the bottom of. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
@@ -433,8 +430,8 @@ export class SportEventBracketService {
    * play-in place. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event, 409
    * EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE for a row not marked as one (#709: filling Duke's row would
    * make every pick of Duke a pick of the winner), 404 PARTICIPANT_NOT_FOUND for a
-   * winner that is not a participant of the event's sport, 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for
-   * one off the event's league roster, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
+   * winner that is not an active participant, 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for one of
+   * another sport league (#1853: of another sport too), 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
    * when the winner already has a field row, 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has
    * played or started a bracket match.
    */
@@ -460,14 +457,14 @@ export class SportEventBracketService {
       this.deps.participants.findById(entry.participantId),
       this.deps.participants.findById(winnerParticipantId),
     ]);
-    if (!pairing || !winner || winner.sportId !== pairing.sportId || winner.status !== ParticipantStatus.ACTIVE) {
+    if (!pairing || !winner || winner.status !== ParticipantStatus.ACTIVE) {
       throw new SportEventError(
-        `Participant ${winnerParticipantId} is not an active participant of this event's sport.`,
+        `Participant ${winnerParticipantId} is not an active participant.`,
         'PARTICIPANT_NOT_FOUND',
         404,
       );
     }
-    await this.requireOnLeagueRoster(event, winner);
+    this.requireOnLeagueRoster(event, winner);
     const field = await this.deps.field.findBySportEvent(sportEventId);
     if (field.some((row) => row.participantId === winnerParticipantId)) {
       throw new SportEventError(
@@ -562,14 +559,14 @@ export class SportEventBracketService {
       this.deps.participants.findById(entry.participantId),
       this.deps.participants.findById(replacementParticipantId),
     ]);
-    if (!withdrawn || !replacement || replacement.sportId !== withdrawn.sportId || replacement.status !== ParticipantStatus.ACTIVE) {
+    if (!withdrawn || !replacement || replacement.status !== ParticipantStatus.ACTIVE) {
       throw new SportEventError(
-        `Participant ${replacementParticipantId} is not an active participant of this event's sport.`,
+        `Participant ${replacementParticipantId} is not an active participant.`,
         'PARTICIPANT_NOT_FOUND',
         404,
       );
     }
-    await this.requireOnLeagueRoster(event, replacement);
+    this.requireOnLeagueRoster(event, replacement);
     const field = await this.deps.field.findBySportEvent(sportEventId);
     if (field.some((row) => row.participantId === replacementParticipantId)) {
       throw new SportEventError(
@@ -698,16 +695,12 @@ export class SportEventBracketService {
   }
 
   /**
-   * 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for a participant off the event's league roster, once the
-   * league has one (#830): men's and women's are separate leagues, so a WTA player never joins an
-   * ATP draw. A league with no roster yet takes any active participant of the sport.
+   * 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for a participant of another sport league (#830, #1853):
+   * a participant belongs to one league, and men's and women's are separate leagues, so a WTA
+   * player never joins an ATP draw.
    */
-  private async requireOnLeagueRoster(event: SportEvent, participant: Participant): Promise<void> {
-    const [rosterSize, affiliation] = await Promise.all([
-      this.deps.affiliations.countBySportLeagues([event.sportLeagueId]),
-      this.deps.affiliations.find(event.sportLeagueId, participant.id),
-    ]);
-    if (affiliation !== null || (rosterSize.get(event.sportLeagueId) ?? 0) === 0) {
+  private requireOnLeagueRoster(event: SportEvent, participant: Participant): void {
+    if (participant.sportLeagueId === event.sportLeagueId) {
       return;
     }
     this.deps.logger?.warn({ sportEventId: event.id, sportLeagueId: event.sportLeagueId, participantId: participant.id }, 'Refused a participant off the event\'s league roster');

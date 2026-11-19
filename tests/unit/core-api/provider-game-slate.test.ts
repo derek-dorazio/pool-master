@@ -36,7 +36,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
   void store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
   const field = Object.fromEntries(TEAMS.map((name) => {
     const team = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
-    void store.mappingRepo().bind({ participantId: team.id, providerId: PROVIDER, externalId: `team-${name}`, confidence: 'EXACT', mappedAt: KICKOFF });
+    void store.mappingRepo().bind({ participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: PROVIDER, externalId: `team-${name}`, confidence: 'EXACT', mappedAt: KICKOFF });
     return [name, store.addToField(event.id, team.id).id];
   })) as Record<(typeof TEAMS)[number], string>;
   let sequence = 0;
@@ -46,7 +46,6 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    affiliations: store.affiliationRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -281,7 +280,7 @@ describe('ProviderGameSlateService', () => {
       void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })));
       const field = new Map(SEEDS.map((seed) => {
         const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
-        void store.mappingRepo().bind({ participantId: participant.id, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT', mappedAt: KICKOFF });
+        void store.mappingRepo().bind({ participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT', mappedAt: KICKOFF });
         return [seed, store.addToField(event.id, participant.id, { seedNumber: seed }).id] as const;
       }));
       const rowOf = (seed: number) => field.get(seed) ?? '';
@@ -292,7 +291,6 @@ describe('ProviderGameSlateService', () => {
         rounds: store.roundRepo(),
         field: store.fieldRepo(),
         participants: store.participantRepo(),
-        affiliations: store.affiliationRepo(),
         matches: store.matchRepo(),
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),

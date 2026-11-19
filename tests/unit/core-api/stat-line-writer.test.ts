@@ -21,10 +21,10 @@ async function setup(options: { rounds?: number | null } = {}) {
   const bat = store.addToField(event.id, store.addParticipant(sportRow.id, 'Bat').id);
   const outsider = store.addParticipant(sportRow.id, 'Outsider');
   const mappings = store.mappingRepo();
-  await mappings.bind({ participantId: ace.participantId, providerId: PROVIDER, externalId: 'bdl-ace', confidence: 'EXACT', mappedAt: NOW });
-  await mappings.bind({ participantId: bat.participantId, providerId: PROVIDER, externalId: 'bdl-bat', confidence: 'EXACT', mappedAt: NOW });
+  await mappings.bind({ participantId: ace.participantId, sportLeagueId: store.leagueOf(ace.participantId), providerId: PROVIDER, externalId: 'bdl-ace', confidence: 'EXACT', mappedAt: NOW });
+  await mappings.bind({ participantId: bat.participantId, sportLeagueId: store.leagueOf(bat.participantId), providerId: PROVIDER, externalId: 'bdl-bat', confidence: 'EXACT', mappedAt: NOW });
   // Mapped, but not one of this event's stars.
-  await mappings.bind({ participantId: outsider.id, providerId: PROVIDER, externalId: 'bdl-outsider', confidence: 'EXACT', mappedAt: NOW });
+  await mappings.bind({ participantId: outsider.id, sportLeagueId: outsider.sportLeagueId, providerId: PROVIDER, externalId: 'bdl-outsider', confidence: 'EXACT', mappedAt: NOW });
   const logger = fakeLogger();
   const statLines = new StatLineService({
     events: store.sportEventRepo(), rounds: store.roundRepo(), field: store.fieldRepo(), statLines: store.statLineRepo(), now: () => NOW,

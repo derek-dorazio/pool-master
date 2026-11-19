@@ -1,6 +1,6 @@
 /**
- * The cross-sport catalog's contract (#236): Sport, SportLeague and the
- * Participant↔SportLeague affiliation edge. One DTO per object; the counts
+ * The cross-sport catalog's contract (#236): Sport, SportLeague and a sport league's roster of
+ * participants and their ranks (#1853). One DTO per object; the counts
  * and derived facts a screen reads are fields of that DTO, never a second shape
  * (plans/145 rules 3 and 5). These replace the golf-named admin DTOs, which were
  * projections of the same rows.
@@ -26,7 +26,6 @@ import {
 import { ScoringFamily } from '../domain/sports/scoring-family';
 import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
-import { ParticipantDtoSchema } from './participants.dto';
 
 // --- Sport ---------------------------------------------------------------------
 
@@ -73,7 +72,7 @@ export const SportLeagueDtoSchema = z.object({
   displayOrder: z.number().int().nullable().describe('Where the sport league sits among its sport\'s leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA\'s. Lower comes first; null comes after every ordered league, by name. Set with the league\'s reference data, never by a request.'),
   parentSportLeagueId: z.uuid().nullable().describe('The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men\'s Frozen Four. Null for a league that is no other\'s round. Set with the league\'s reference data, never by a request.'),
   parentRoundNumbers: z.array(z.number().int()).describe('The rounds of its parent league\'s season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league\'s reference data, never by a request.'),
-  affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
+  participantCount: z.number().int().describe('The sport league\'s participants.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
@@ -120,71 +119,45 @@ export const UpdateSportLeagueRequestSchema = z.object({
 }).describe('Changes to a sport league; omitted fields are left alone.');
 export type UpdateSportLeagueRequest = z.infer<typeof UpdateSportLeagueRequestSchema>;
 
-// --- ParticipantLeagueAffiliation — the Participant↔SportLeague edge ----------
+// --- A sport league's roster: its participants and their ranks (#1853) ----------
 
-export const ParticipantLeagueAffiliationDtoSchema = z.object({
-  id: z.uuid().describe('Affiliation identifier.'),
-  sportLeagueId: z.uuid(),
-  participantId: z.uuid(),
-  ranking: z.number().int().nullable().describe('The participant\'s current rank in the sport league; 1 is best. Null when unranked.'),
-  participant: ParticipantDtoSchema.describe('The canonical participant.'),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('A participant\'s membership of a sport league, and their current rank there.');
-export type ParticipantLeagueAffiliationDto = z.infer<typeof ParticipantLeagueAffiliationDtoSchema>;
-
-export const ParticipantLeagueAffiliationListResponseSchema = z.object({
-  affiliations: z.array(ParticipantLeagueAffiliationDtoSchema).describe('Best rank first, unranked last, then by name.'),
-}).describe('A sport league\'s affiliations.');
-export type ParticipantLeagueAffiliationListResponse = z.infer<typeof ParticipantLeagueAffiliationListResponseSchema>;
-
-export const ParticipantLeagueAffiliationResponseSchema = z.object({
-  affiliation: ParticipantLeagueAffiliationDtoSchema,
-}).describe('One affiliation.');
-export type ParticipantLeagueAffiliationResponse = z.infer<typeof ParticipantLeagueAffiliationResponseSchema>;
-
-export const CreateParticipantLeagueAffiliationRequestSchema = z.object({
-  participantId: z.uuid(),
-}).describe('Affiliates a participant with the sport league.');
-export type CreateParticipantLeagueAffiliationRequest = z.infer<typeof CreateParticipantLeagueAffiliationRequestSchema>;
-
-export const UpdateParticipantLeagueAffiliationRankingsRequestSchema = z.object({
+export const SportLeagueParticipantRankingsRequestSchema = z.object({
   rankings: z.array(z.object({
     participantId: z.uuid(),
     ranking: z.number().int().nullable().describe('null unranks.'),
-  })).min(1).max(500).describe('Existing affiliations to re-rank, all or none.'),
-}).describe('Re-ranks existing affiliations.');
-export type UpdateParticipantLeagueAffiliationRankingsRequest = z.infer<typeof UpdateParticipantLeagueAffiliationRankingsRequestSchema>;
+  })).min(1).max(500).describe('Participants of the sport league to re-rank, all or none.'),
+}).describe('Re-ranks participants of the sport league.');
+export type SportLeagueParticipantRankingsRequest = z.infer<typeof SportLeagueParticipantRankingsRequestSchema>;
 
-export const ParticipantLeagueAffiliationUploadRowSchema = z.object({
+export const SportLeagueRankingUploadRowSchema = z.object({
   participantId: z.uuid().optional(),
   externalId: z.string().optional(),
   playerName: z.string().optional(),
   ranking: z.number().int().optional(),
-}).describe('One uploaded affiliation. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName.');
-export type ParticipantLeagueAffiliationUploadRow = z.infer<typeof ParticipantLeagueAffiliationUploadRowSchema>;
+}).describe('One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league\'s participants.');
+export type SportLeagueRankingUploadRow = z.infer<typeof SportLeagueRankingUploadRowSchema>;
 
-export const ParticipantLeagueAffiliationUploadRequestSchema = z.object({
-  rows: z.array(ParticipantLeagueAffiliationUploadRowSchema).min(1).max(2000),
-}).describe('An affiliation upload.');
-export type ParticipantLeagueAffiliationUploadRequest = z.infer<typeof ParticipantLeagueAffiliationUploadRequestSchema>;
+export const SportLeagueRankingUploadRequestSchema = z.object({
+  rows: z.array(SportLeagueRankingUploadRowSchema).min(1).max(2000),
+}).describe('A ranking upload for a sport league\'s participants.');
+export type SportLeagueRankingUploadRequest = z.infer<typeof SportLeagueRankingUploadRequestSchema>;
 
 export const UploadRowResolutionDtoSchema = z.enum(['MATCHED', 'UNRESOLVED', 'AMBIGUOUS'])
   .describe('How an uploaded row resolved to a participant: one match, none, or several.');
 export type UploadRowResolutionDto = z.infer<typeof UploadRowResolutionDtoSchema>;
 
-export const ParticipantLeagueAffiliationUploadPreviewRowDtoSchema = z.object({
-  row: ParticipantLeagueAffiliationUploadRowSchema,
+export const SportLeagueRankingUploadPreviewRowDtoSchema = z.object({
+  row: SportLeagueRankingUploadRowSchema,
   resolution: UploadRowResolutionDtoSchema,
   participantId: z.uuid().nullable().describe('Set only when MATCHED.'),
   participantName: z.string().nullable().describe('Set only when MATCHED.'),
 }).describe('What applying one uploaded row would do.');
-export type ParticipantLeagueAffiliationUploadPreviewRowDto = z.infer<typeof ParticipantLeagueAffiliationUploadPreviewRowDtoSchema>;
+export type SportLeagueRankingUploadPreviewRowDto = z.infer<typeof SportLeagueRankingUploadPreviewRowDtoSchema>;
 
-export const ParticipantLeagueAffiliationUploadPreviewResponseSchema = z.object({
-  rows: z.array(ParticipantLeagueAffiliationUploadPreviewRowDtoSchema).describe('One per uploaded row, in upload order.'),
-}).describe('A dry run of an affiliation upload. Nothing is written.');
-export type ParticipantLeagueAffiliationUploadPreviewResponse = z.infer<typeof ParticipantLeagueAffiliationUploadPreviewResponseSchema>;
+export const SportLeagueRankingUploadPreviewResponseSchema = z.object({
+  rows: z.array(SportLeagueRankingUploadPreviewRowDtoSchema).describe('One per uploaded row, in upload order.'),
+}).describe('A dry run of a ranking upload. Nothing is written.');
+export type SportLeagueRankingUploadPreviewResponse = z.infer<typeof SportLeagueRankingUploadPreviewResponseSchema>;
 
 // --- Sport league overview: the root admin's Sports page (#1847) -----------------
 
@@ -258,11 +231,7 @@ registerSchema('CreateSportLeagueRequest', CreateSportLeagueRequestSchema);
 registerSchema('UpdateSportLeagueRequest', UpdateSportLeagueRequestSchema);
 registerSchema('SportLeagueOverviewDto', SportLeagueOverviewDtoSchema);
 registerSchema('SportLeagueOverviewListResponse', SportLeagueOverviewListResponseSchema);
-registerSchema('ParticipantLeagueAffiliationDto', ParticipantLeagueAffiliationDtoSchema);
-registerSchema('ParticipantLeagueAffiliationListResponse', ParticipantLeagueAffiliationListResponseSchema);
-registerSchema('ParticipantLeagueAffiliationResponse', ParticipantLeagueAffiliationResponseSchema);
-registerSchema('CreateParticipantLeagueAffiliationRequest', CreateParticipantLeagueAffiliationRequestSchema);
-registerSchema('UpdateParticipantLeagueAffiliationRankingsRequest', UpdateParticipantLeagueAffiliationRankingsRequestSchema);
-registerSchema('ParticipantLeagueAffiliationUploadRequest', ParticipantLeagueAffiliationUploadRequestSchema);
+registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
+registerSchema('SportLeagueRankingUploadRequest', SportLeagueRankingUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);
-registerSchema('ParticipantLeagueAffiliationUploadPreviewResponse', ParticipantLeagueAffiliationUploadPreviewResponseSchema);
+registerSchema('SportLeagueRankingUploadPreviewResponse', SportLeagueRankingUploadPreviewResponseSchema);

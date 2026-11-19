@@ -33,11 +33,6 @@ test('the residue sweep removes a run left behind, league first and users last, 
     const commissioner = { username: e2eUsername('wc', runId), email: e2eEmail('wc', runId) };
 
     // --- The run a cancelled journey leaves behind ---------------------------------------
-    const { sports } = (await (await expectOk(api.get('/api/v1/sports/', { headers: admin }), 'list sports')).json()) as {
-      sports: Array<{ id: string; sport: string }>;
-    };
-    const golfSportId = sports.find((row) => row.sport === 'GOLF')?.id;
-    if (!golfSportId) throw new Error('golf is not in the sports table');
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', {
       sport: 'GOLF',
       name: tourName,
@@ -54,7 +49,7 @@ test('the residue sweep removes a run left behind, league first and users last, 
     const participantIds: string[] = [];
     for (const name of playerNames) {
       const { participant } = await postJson<{ participant: { id: string } }>(api, admin, '/api/v1/participants/', {
-        sportId: golfSportId,
+        sportLeagueId: sportLeague.id,
         participantType: 'INDIVIDUAL',
         name,
       });

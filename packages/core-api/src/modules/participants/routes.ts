@@ -54,7 +54,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       tags: ['Participants'],
       summary: 'List participants',
       description:
-        'The participant catalog, narrowed by text and filters and never paged. `sportId` or a `q` of at least 3 characters is required, so the list never reads every sport\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. '
+        'The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. '
         + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event\'s field by the event, never the catalog (#1348).',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
@@ -71,16 +71,16 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
     onRequest: requireRootAdmin,
     schema: {
       tags: ['Participants'],
-      summary: 'List a provider\'s identities for a sport\'s participants',
-      description: 'Every identity one provider has for the participants of one sport, by external id, never paged: how the Load test data run finds the participant a test player\'s feed id already belongs to, so it never makes a second one beside the sync\'s (#1850). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
-      operationId: 'listSportProviderMappings',
-      querystring: schemaRef('SportProviderMappingListQuery'),
+      summary: 'List a provider\'s identities for a sport league\'s participants',
+      description: 'Every identity one provider has for the participants of one sport league, by external id, never paged: how the Load test data run finds the participant a test player\'s feed id already belongs to in that league, so it never makes a second one beside the sync\'s (#1853). Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
+      operationId: 'listSportLeagueProviderMappings',
+      querystring: schemaRef('SportLeagueProviderMappingListQuery'),
       response: {
         200: schemaRef('ParticipantProviderMappingListResponse'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
-    handler: handler.listSportProviderMappings,
+    handler: handler.listSportLeagueProviderMappings,
   });
 
   // --- CRUD ---
@@ -141,7 +141,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
       tags: ['Participants'],
       summary: 'Delete a participant',
       description:
-        'Deletes a participant no event field holds, with their sport league affiliations and provider identities. '
+        'Deletes a participant no event field holds, with their provider identities. '
         + '409 PARTICIPANT_IN_USE while any event\'s field, in any year, has them: remove them from the field, or delete the event, first. '
         + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'deleteParticipant',

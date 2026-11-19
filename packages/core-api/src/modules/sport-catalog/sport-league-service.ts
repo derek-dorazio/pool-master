@@ -1,16 +1,13 @@
 /**
- * SportLeagueService — cross-sport SportLeague CRUD and the sport league's
- * affiliations: who competes in it, and their current ranking there
- * (plans/124 §3.2/§4.2). Nothing here is golf-shaped; the golf admin routes
- * call it scoped to Sport.GOLF, and another sport reuses it unchanged.
+ * SportLeagueService — cross-sport SportLeague CRUD and the sport league's roster: its
+ * participants, each of whom belongs to it alone (#1853), and their current ranking there.
+ * Nothing here is golf-shaped.
  *
- * Affiliation is sport-league-scoped, not year-scoped — a competitor's
- * membership and ranking don't reset every year (plans/124 §4.2).
+ * A ranking is sport-league-scoped, not year-scoped: it does not reset every year.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
   ParticipantRepository,
   PricingProfileRepository,
@@ -25,7 +22,7 @@ import {
   BracketAdvancement,
   getSportDefinition,
   sportPlaysMatches,
-  type ParticipantLeagueAffiliation,
+  type Participant,
   type Sport,
   type SportLeague,
 } from '@poolmaster/shared/domain';
@@ -36,23 +33,23 @@ import { matchAmong, participantMatchQuery, resolveParticipantRow, type Particip
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
   sport: Sport;
-  affiliationCount: number;
+  participantCount: number;
   /** Events across every series of the sport league, every year. */
   sportEventCount: number;
 }
 
-export interface AffiliationUploadRow {
+export interface RankingUploadRow {
   participantId?: string;
   externalId?: string;
   playerName?: string;
   ranking?: number;
 }
 
-export type AffiliationUploadResolution = ParticipantRowResolution;
+export type RankingUploadResolution = ParticipantRowResolution;
 
-export interface AffiliationUploadPreviewRow {
-  row: AffiliationUploadRow;
-  resolution: AffiliationUploadResolution;
+export interface RankingUploadPreviewRow {
+  row: RankingUploadRow;
+  resolution: RankingUploadResolution;
   participantId: string | null;
   participantName: string | null;
 }
@@ -69,7 +66,6 @@ export interface SportLeagueServiceDeps {
   sports: SportRepository;
   sportLeagues: SportLeagueRepository;
   sportEvents: SportEventRepository;
-  affiliations: ParticipantLeagueAffiliationRepository;
   participants: ParticipantRepository;
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
@@ -242,10 +238,10 @@ export class SportLeagueService {
   }
 
   /**
-   * Deletes a sport league nothing uses any more (#1400), with its affiliations and its series that
-   * have no events. 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it,
-   * while it has an event, a contest setup, an event page offer, a league's cup or a playoff round
-   * that names it as its season league.
+   * Deletes a sport league nothing uses any more (#1400), with its series that have no events.
+   * 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an
+   * event, a contest setup, an event page offer, a league's cup, a playoff round that names it as
+   * its season league, or a participant (#1853: a participant belongs to one sport league).
    */
   async deleteSportLeague(sportLeagueId: string): Promise<void> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
@@ -307,63 +303,38 @@ export class SportLeagueService {
     }
   }
 
-  /** 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
-  async listAffiliations(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]> {
+  /** The sport league's participants, best rank first. 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
+  async listParticipants(sportLeagueId: string): Promise<Participant[]> {
     await this.requireSportLeague(sportLeagueId);
-    return this.deps.affiliations.findBySportLeague(sportLeagueId);
-  }
-
-  async addAffiliation(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation> {
-    await this.requireSportLeague(sportLeagueId);
-    if (await this.deps.affiliations.find(sportLeagueId, participantId)) {
-      throw new SportCatalogError(
-        'This participant is already affiliated with the sport league.',
-        'SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS',
-        409,
-      );
-    }
-    return this.deps.affiliations.create(sportLeagueId, participantId);
-  }
-
-  async removeAffiliation(sportLeagueId: string, participantId: string): Promise<void> {
-    if (!(await this.deps.affiliations.find(sportLeagueId, participantId))) {
-      throw new SportCatalogError(
-        'This participant is not affiliated with the sport league.',
-        'SPORT_LEAGUE_AFFILIATION_NOT_FOUND',
-        404,
-      );
-    }
-    await this.deps.affiliations.delete(sportLeagueId, participantId);
+    return this.deps.participants.findBySportLeague(sportLeagueId);
   }
 
   async updateRankings(
     sportLeagueId: string,
     rankings: readonly ParticipantRanking[],
-  ): Promise<ParticipantLeagueAffiliation[]> {
-    await this.deps.affiliations.updateRankings(sportLeagueId, rankings);
-    return this.listAffiliations(sportLeagueId);
+  ): Promise<Participant[]> {
+    await this.requireSportLeague(sportLeagueId);
+    await this.deps.participants.updateRankings(sportLeagueId, rankings);
+    return this.deps.participants.findBySportLeague(sportLeagueId);
   }
 
   /**
-   * Dry run — resolves each row to an existing Participant of the sport league's
-   * sport (participantId, then externalId, then an exact case-insensitive name),
+   * Dry run — resolves each row to an existing Participant of the sport league
+   * (participantId, then externalId, then an exact case-insensitive name),
    * writing nothing. Never creates a Participant from a row.
    */
-  async previewAffiliationUpload(
+  async previewRankingUpload(
     sportLeagueId: string,
-    rows: AffiliationUploadRow[],
-  ): Promise<AffiliationUploadPreviewRow[]> {
-    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
-    if (!sportLeague) {
-      throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
-    }
+    rows: RankingUploadRow[],
+  ): Promise<RankingUploadPreviewRow[]> {
+    await this.requireSportLeague(sportLeagueId);
     // Every row's candidates in one read, then each row matched among them (#1183), as the
     // golf round-score preview matches among the event's field.
     const queries = rows.flatMap((row) => {
       const query = participantMatchQuery(row);
       return query ? [query] : [];
     });
-    const findCandidates = matchAmong(await this.deps.participants.findMatchingAny(sportLeague.sportId, queries));
+    const findCandidates = matchAmong(await this.deps.participants.findMatchingAny(sportLeagueId, queries));
     return Promise.all(rows.map(async (row) => {
       const { resolution, participant } = await resolveParticipantRow(row, findCandidates);
       return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };
@@ -371,24 +342,24 @@ export class SportLeagueService {
   }
 
   /** Applies a previewed upload. Throws when any row is unresolved — all or nothing. */
-  async applyAffiliationUpload(
+  async applyRankingUpload(
     sportLeagueId: string,
-    rows: AffiliationUploadRow[],
-  ): Promise<ParticipantLeagueAffiliation[]> {
-    const preview = await this.previewAffiliationUpload(sportLeagueId, rows);
+    rows: RankingUploadRow[],
+  ): Promise<Participant[]> {
+    const preview = await this.previewRankingUpload(sportLeagueId, rows);
     const unresolved = preview.filter((row) => row.resolution !== 'MATCHED');
     if (unresolved.length > 0) {
       throw new SportCatalogError(
         `${unresolved.length} upload row(s) could not be resolved to a participant.`,
-        'SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS',
+        'SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS',
         422,
       );
     }
-    await this.deps.affiliations.upsertRankings(sportLeagueId, preview.map((resolved) => ({
+    await this.deps.participants.updateRankings(sportLeagueId, preview.map((resolved) => ({
       participantId: resolved.participantId as string,
       ranking: resolved.row.ranking ?? null,
     })));
-    return this.listAffiliations(sportLeagueId);
+    return this.deps.participants.findBySportLeague(sportLeagueId);
   }
 
   private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {
@@ -399,16 +370,16 @@ export class SportLeagueService {
 
   private async summarize(sportLeagues: SportLeague[]): Promise<SportLeagueSummary[]> {
     const ids = sportLeagues.map((sportLeague) => sportLeague.id);
-    const [sportRows, affiliationCounts, eventCounts] = await Promise.all([
+    const [sportRows, participantCounts, eventCounts] = await Promise.all([
       this.deps.sports.findAll(),
-      this.deps.affiliations.countBySportLeagues(ids),
+      this.deps.participants.countBySportLeagues(ids),
       this.deps.sportEvents.countBySportLeagues(ids),
     ]);
     const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow.sport]));
     return sportLeagues.map((sportLeague) => ({
       ...sportLeague,
       sport: requireSportOf(sportsById, sportLeague),
-      affiliationCount: affiliationCounts.get(sportLeague.id) ?? 0,
+      participantCount: participantCounts.get(sportLeague.id) ?? 0,
       sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
     }));
   }
@@ -436,5 +407,6 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
     ...counted(uses.eventPageOfferCount, 'event page offer', 'event page offers'),
     ...counted(uses.cupCount, 'league cup', 'league cups'),
     ...counted(uses.roundCount, 'playoff round', 'playoff rounds'),
+    ...counted(uses.participantCount, 'participant', 'participants'),
   ];
 }

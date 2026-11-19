@@ -41,15 +41,37 @@ export async function freshEventEdition(
   // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league.
   const tour = options.onPgaTour
     ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
-    : await prisma.sportLeague.upsert({
-      where: { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } },
-      create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: FIXTURE_TOUR_NAME },
-      update: {},
-    });
+    : { id: await fixtureTourId(prisma) };
   const series = await prisma.eventSeries.create({
     data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
   });
   return { eventSeriesId: series.id, eventYear: options.eventYear ?? new Date().getUTCFullYear() };
+}
+
+/**
+ * The fixture tour's id, made on first use. A provider feed's participants are the event league's
+ * (#1853), so a test whose sync or live scores reach a `freshEventEdition` event puts its golfers
+ * here.
+ */
+export async function fixtureTourId(prisma: Db): Promise<string> {
+  const sport = await prisma.sport.upsert({
+    where: { sport: 'GOLF' },
+    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    update: {},
+  });
+  const where = { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } };
+  try {
+    return (await prisma.sportLeague.upsert({
+      where,
+      create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: FIXTURE_TOUR_NAME },
+      update: {},
+      select: { id: true },
+    })).id;
+  } catch (error) {
+    // Two reads made it at once: the one that lost finds the winner's.
+    if ((error as { code?: string }).code !== 'P2002') throw error;
+    return (await prisma.sportLeague.findUniqueOrThrow({ where, select: { id: true } })).id;
+  }
 }
 
 /** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */

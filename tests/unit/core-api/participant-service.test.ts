@@ -5,7 +5,7 @@ import { fakeLogger } from '../../support/fake-logger';
 
 // ParticipantService's reads, its update, and how it reports a store failure on a write.
 
-const PARTICIPANT = { id: 'participant-1', sportId: 'sport-1', name: 'Scottie Scheffler' };
+const PARTICIPANT = { id: 'participant-1', sportLeagueId: 'league-1', name: 'Scottie Scheffler' };
 
 describe('ParticipantService reads', () => {
   it('reads a participant by id straight from the store', async () => {
@@ -19,8 +19,8 @@ describe('ParticipantService reads', () => {
     const participants = fakeParticipantRepo({ search: jest.fn().mockResolvedValue([PARTICIPANT]) });
     const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
 
-    await expect(service.search({ filters: { sportId: 'sport-1' } })).resolves.toEqual([PARTICIPANT]);
-    expect(participants.search).toHaveBeenCalledWith('', { sportId: 'sport-1' });
+    await expect(service.search({ filters: { sportLeagueId: 'league-1' } })).resolves.toEqual([PARTICIPANT]);
+    expect(participants.search).toHaveBeenCalledWith('', { sportLeagueId: 'league-1' });
   });
 
   it('lists a participant\'s provider mappings', async () => {
@@ -31,13 +31,13 @@ describe('ParticipantService reads', () => {
     await expect(service.getProviderMappings('participant-1')).resolves.toEqual([mapping]);
   });
 
-  it('lists the feed ids one provider has mapped among one sport\'s participants', async () => {
+  it('lists the feed ids one provider has mapped among one sport league\'s participants', async () => {
     const mapping = { participantId: 'participant-1', providerId: 'feed', externalId: 'ext-9' };
-    const mappings = fakeParticipantProviderMappingRepo({ findByProviderAndSport: jest.fn().mockResolvedValue([mapping]) });
+    const mappings = fakeParticipantProviderMappingRepo({ findByProviderAndSportLeague: jest.fn().mockResolvedValue([mapping]) });
     const service = new ParticipantService(fakeParticipantRepo(), mappings, fakeLogger());
 
-    await expect(service.listSportProviderMappings('feed', 'sport-1')).resolves.toEqual([mapping]);
-    expect(mappings.findByProviderAndSport).toHaveBeenCalledWith('feed', 'sport-1');
+    await expect(service.listSportLeagueProviderMappings('feed', 'league-1')).resolves.toEqual([mapping]);
+    expect(mappings.findByProviderAndSportLeague).toHaveBeenCalledWith('feed', 'league-1');
   });
 });
 
@@ -70,7 +70,7 @@ describe('ParticipantService writes', () => {
     const participants = fakeParticipantRepo({ create: jest.fn().mockRejectedValue(new Error('duplicate')) });
     const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), logger);
 
-    await expect(service.create({ sportId: 'sport-1', name: 'x', participantType: 'INDIVIDUAL', externalId: 'e' }))
+    await expect(service.create({ sportLeagueId: 'league-1', name: 'x', participantType: 'INDIVIDUAL', externalId: 'e' }))
       .rejects.toThrow('duplicate');
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'participants.create.failed' }), expect.any(String));
   });

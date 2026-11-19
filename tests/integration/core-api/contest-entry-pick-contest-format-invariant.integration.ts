@@ -21,6 +21,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { holdEntryLock, waitUntilBlockedBy } from '../contest-lock';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -96,7 +97,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   for (const [index, name] of (['One', 'Two'] as const).entries()) {
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Invariant Participant ${name} ${suffix}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},

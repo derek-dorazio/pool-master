@@ -17,6 +17,7 @@ import {
 } from '../helpers';
 import { ParticipantType, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId } from '../../support/participant-league';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -96,7 +97,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   });
   const participantA = await prisma.participant.create({
     data: {
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Participant A ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
       externalIds: {},
@@ -104,7 +105,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   });
   const participantB = await prisma.participant.create({
     data: {
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Participant B ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
       externalIds: {},

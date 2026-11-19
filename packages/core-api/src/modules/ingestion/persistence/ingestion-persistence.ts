@@ -8,7 +8,6 @@
 import { type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
-  getDefaultTournamentFormatForSport,
   MappingConfidence,
   ParticipantStatus,
   type ParticipantType,
@@ -25,7 +24,6 @@ import type {
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/ingestion-scheduler';
-import { isLeagueTour } from '../core/league-keyword';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
@@ -134,17 +132,23 @@ export class IngestionPersistence {
   }
 
   /**
-   * Upserts participants by external ID through the provider mapping table, and returns each
-   * one's internal id by provider identity (#1183). The mappings are read in one query; a
-   * mapped participant is updated only when a value changed, all in one transaction. A feed id
-   * no participant is mapped to is a new participant: it is created with its mapping, and never
-   * linked to a participant by its name (#1850), all in one transaction. A test data file's
-   * participant the sync should share carries the provider's feed id, mapped as the file loads.
-   * Every participant joins the sport leagues its tour names (#1800).
+   * Upserts the event's participants by external ID through the provider mapping table, within
+   * the event's sport league, and returns each one's internal id by provider identity (#1183,
+   * #1853). A participant belongs to one sport league, so the same feed player in two leagues (an
+   * LCS and a World Series) is two participants, each mapped in its own league. The mappings are
+   * read in one query; a mapped participant is updated only when a value changed, all in one
+   * transaction. A feed id the league has no participant mapped to is a new participant of the
+   * league: it is created with its mapping, and never linked to a participant by its name
+   * (#1850), all in one transaction. A test data file's participant the sync should share carries
+   * the provider's feed id, mapped as the file loads.
    */
-  private async persistParticipants(participants: readonly ProviderParticipant[]): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
+  private async persistParticipants(
+    participants: readonly ProviderParticipant[],
+    league: LeagueOfEvent,
+  ): Promise<{ count: number; participantIdByKey: Map<string, string> }> {
     this.logger?.debug({
       count: participants.length,
+      sportLeagueId: league.id,
       participants: participants.slice(0, 10).map((participant) => ({
         providerId: participant.providerId,
         externalId: participant.externalId,
@@ -157,7 +161,7 @@ export class IngestionPersistence {
     // A provider naming the same participant twice is taken at its last word, as it was when
     // each was written in turn.
     const latestByKey = new Map(participants.map((participant) => [providerKey(participant), participant]));
-    const mappings = await this.findMappings([...latestByKey.values()]);
+    const mappings = await this.findMappings([...latestByKey.values()], league.id);
     const mappingByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping]));
     const participantIdByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping.participantId]));
 
@@ -179,65 +183,32 @@ export class IngestionPersistence {
       await this.prisma.$transaction(updates);
     }
 
-    const sportBySport = new Map<Sport, { id: string; participantType: ParticipantType }>();
-    for (const sport of new Set(unmapped.map((participant) => participant.sport))) {
-      // poolmaster-allow-query-in-loop: once per distinct sport among new participants
-      sportBySport.set(sport, await this.prisma.sport.upsert({
-        where: { sport },
-        create: {
-          sport,
-          participantType: 'INDIVIDUAL',
-          // No schema default (#236): a new sport row must not become golf by omission.
-          tournamentFormat: getDefaultTournamentFormatForSport(sport),
-        },
-        update: {},
-        select: { id: true, participantType: true },
-      }));
-    }
-    const sportIdOf = (participant: ProviderParticipant) =>
-      mappingByKey.get(providerKey(participant))?.participant.sportId ?? (sportBySport.get(participant.sport) as { id: string }).id;
-    // The sport leagues the feed's participants name (`metadata.tour`), each of which a
-    // participant of it is affiliated with (#1800).
-    const leagues = await this.leaguesNamedBy([...latestByKey.values()], sportIdOf);
-    /** Each participant's affiliation with every league it names, once its id is known. */
-    const affiliationsOf = (ids: ReadonlyMap<string, string>) => [...latestByKey].flatMap(([key, participant]) => {
-      const participantId = ids.get(key);
-      return participantId === undefined ? [] : leagues.idsOf(participant).map((sportLeagueId) => ({ participantId, sportLeagueId }));
-    });
     if (unmapped.length > 0) {
       const created = await this.prisma.$transaction(async (tx) => {
         const rows = await tx.participant.createManyAndReturn({
-          data: unmapped.map((participant) => {
-            const sport = sportBySport.get(participant.sport) as { id: string; participantType: ParticipantType };
-            return { sportId: sport.id, participantType: sport.participantType, externalId: participant.externalId, ...participantValues(participant) };
-          }),
-          select: { id: true, sportId: true, externalId: true },
+          data: unmapped.map((participant) => ({
+            sportLeagueId: league.id,
+            participantType: league.participantType,
+            externalId: participant.externalId,
+            ...participantValues(participant),
+          })),
+          select: { id: true, externalId: true },
         });
-        const idBySportAndExternalId = new Map(rows.map((row) => [`${row.sportId}:${row.externalId}`, row.id]));
+        const idByExternalId = new Map(rows.map((row) => [row.externalId, row.id]));
         const createdMappings = unmapped.map((participant) => ({
-          participantId: idBySportAndExternalId.get(`${sportIdOf(participant)}:${participant.externalId}`) as string,
+          participantId: idByExternalId.get(participant.externalId) as string,
+          sportLeagueId: league.id,
           providerId: participant.providerId,
           externalId: participant.externalId,
           confidence: MappingConfidence.EXACT,
         }));
         await tx.participantProviderMapping.createMany({ data: createdMappings });
-        // In the same write, every participant joins the leagues it names, so a team the feed
-        // brings that the site lacked is on its league's roster, not a guest in the field.
-        const ids = new Map(participantIdByKey);
-        for (const mapping of createdMappings) ids.set(providerKey(mapping), mapping.participantId);
-        const affiliations = affiliationsOf(ids);
-        if (affiliations.length > 0) await tx.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
         return createdMappings;
       });
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
-    } else {
-      // A participant the feed already maps joins the leagues it names too, so one created
-      // before the sync affiliated new teams is put right by the next sync.
-      const affiliations = affiliationsOf(participantIdByKey);
-      if (affiliations.length > 0) await this.prisma.participantLeagueAffiliation.createMany({ data: affiliations, skipDuplicates: true });
     }
 
-    this.logger?.info({ count: latestByKey.size, updated: updates.length, created: unmapped.length }, 'Persisted participants from ingestion');
+    this.logger?.info({ count: latestByKey.size, sportLeagueId: league.id, updated: updates.length, created: unmapped.length }, 'Persisted participants from ingestion');
     return { count: latestByKey.size, participantIdByKey };
   }
 
@@ -253,43 +224,15 @@ export class IngestionPersistence {
     });
   }
 
-  /**
-   * The sport leagues the participants name by `metadata.tour` (a league's match keyword, as
-   * `isLeagueTour` matches it: case and surrounding space ignored), in one read of their sports'
-   * keyed leagues, a reference table; no read when none names a league.
-   */
-  private async leaguesNamedBy(participants: readonly ProviderParticipant[], sportIdOf: (participant: ProviderParticipant) => string): Promise<LeaguesNamed> {
-    const toursBySportId = new Map<string, Set<string>>();
-    for (const participant of participants) {
-      const tour = tourOf(participant);
-      if (tour === undefined) continue;
-      const sportId = sportIdOf(participant);
-      toursBySportId.set(sportId, (toursBySportId.get(sportId) ?? new Set()).add(tour.trim()));
-    }
-    const keyedLeagues = toursBySportId.size === 0 ? [] : await this.prisma.sportLeague.findMany({
-      where: { sportId: { in: [...toursBySportId.keys()] }, matchKeyword: { not: null } },
-      select: { id: true, sportId: true, matchKeyword: true },
-    });
-    const named = keyedLeagues.filter((league) => [...toursBySportId.get(league.sportId) ?? []].some((tour) => isLeagueTour(tour, league.matchKeyword)));
-    return {
-      idsOf: (participant) => {
-        const tour = tourOf(participant);
-        if (tour === undefined) return [];
-        const sportId = sportIdOf(participant);
-        return named.filter((league) => league.sportId === sportId && isLeagueTour(tour, league.matchKeyword)).map((league) => league.id);
-      },
-    };
-  }
-
-  /** The provider mappings of these participants, with their participant, in one query. */
-  private async findMappings(participants: readonly ProviderParticipant[]) {
+  /** The sport league's provider mappings of these participants, with their participant, in one query. */
+  private async findMappings(participants: readonly ProviderParticipant[], sportLeagueId: string) {
     const externalIdsByProvider = new Map<string, string[]>();
     for (const participant of participants) {
       externalIdsByProvider.set(participant.providerId, [...(externalIdsByProvider.get(participant.providerId) ?? []), participant.externalId]);
     }
     if (externalIdsByProvider.size === 0) return [];
     return this.prisma.participantProviderMapping.findMany({
-      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+      where: { sportLeagueId, OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
       include: { participant: true },
     });
   }
@@ -315,22 +258,32 @@ export class IngestionPersistence {
           externalId: detail.externalId,
         },
       },
-      include: { eventSeries: { select: { sportLeague: { select: { participantType: true, scoringFamily: true } } } } },
+      include: {
+        eventSeries: {
+          select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { participantType: true } } } } },
+        },
+      },
     });
-    const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants);
     const detailRows: SyncWriteDetailRow[] = [];
 
     if (!persistedEvent) {
-      // No event is linked to this provider event, so there is no field to write
-      // (persistEventsWithDiagnostics above skipped it too).
+      // No event is linked to this provider event, so there is no field to write and no sport
+      // league for its participants to belong to (persistEventsWithDiagnostics above skipped it
+      // too).
       return {
         count: 0,
-        value: { eventsPersisted, participantsPersisted, sportEventParticipantsPersisted: 0 },
+        value: { eventsPersisted, participantsPersisted: 0, sportEventParticipantsPersisted: 0 },
         writeDiagnostics: summarizeSyncWriteRows(detailRows),
         unlinkedRankedParticipants: [],
       };
     }
 
+    const { sportLeague } = persistedEvent.eventSeries;
+    const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, {
+      id: sportLeague.id,
+      // A league's participants are its own kind, else its sport's.
+      participantType: sportLeague.participantType ?? sportLeague.sport.participantType,
+    });
     let sportEventParticipantsPersisted: number;
     const seedsLocked = seedsLockedOn(persistedEvent);
 
@@ -487,15 +440,10 @@ function seedsLockedOn(event: {
   return eventPlaysMatches({ sport: event.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
 }
 
-/** The sport leagues a feed's participants name (`leaguesNamedBy`). */
-interface LeaguesNamed {
-  /** The leagues one participant names: none when it names none, or one the site does not have. */
-  idsOf(participant: ProviderParticipant): string[];
-}
-
-/** The sport league a provider participant names by its match keyword, when it names one. */
-function tourOf(participant: ProviderParticipant): string | undefined {
-  return participant.metadata.tour;
+/** The sport league an event's participants belong to (#1853), and the kind of participant it holds. */
+interface LeagueOfEvent {
+  id: string;
+  participantType: ParticipantType;
 }
 
 /** A participant's provider identity. */

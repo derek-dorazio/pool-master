@@ -22,6 +22,7 @@ import { SelectionPickResponseSchema } from '@poolmaster/shared/dto';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { participantLeagueId } from '../support/participant-league';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -282,7 +283,7 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
 
   const firstParticipant = await prisma.participant.create({
     data: {
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
@@ -294,7 +295,7 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
 
   const secondParticipant = await prisma.participant.create({
     data: {
-      sportId: sport.id,
+      sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
@@ -429,7 +430,7 @@ async function seedTieredDraftFixture(options: {
   for (let index = 0; index < participantCount; index += 1) {
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Draft Tiered Player ${index + 1} ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
         externalIds: {},
@@ -510,7 +511,7 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
     for (let golferIndex = 0; golferIndex < options.golfersPerTier; golferIndex += 1) {
       const participant = await prisma.participant.create({
         data: {
-          sportId: sport.id,
+          sportLeagueId: await participantLeagueId(prisma, sport.id),
           name: `Multi Tier Golfer ${tierIndex + 1}-${golferIndex + 1} ${randomUUID().slice(0, 8)}`,
           participantType: 'INDIVIDUAL',
           externalIds: {},

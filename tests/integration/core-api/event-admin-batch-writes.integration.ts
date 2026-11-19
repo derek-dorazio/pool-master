@@ -13,7 +13,7 @@ import {
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import {
-  PrismaParticipantLeagueAffiliationRepository,
+  PrismaParticipantRepository,
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
@@ -25,6 +25,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardo
 import { recordStatements, statementCounts, type RecordedStatement } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
+import { participantLeagueId } from '../../support/participant-league';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -67,11 +68,11 @@ async function golfEvent() {
   return { sport, sportLeagueId, event, round };
 }
 
-/** `count` new participants of the sport, not on any field. */
-async function participants(sportId: string, count: number) {
+/** `count` new participants of the sport league, not on any field. */
+async function participants(sportLeagueId: string, count: number) {
   const prisma = getPrisma();
   return Promise.all(Array.from({ length: count }, (_, index) => prisma.participant.create({
-    data: { sportId, name: `Golfer ${index + 1} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+    data: { sportLeagueId, name: `Golfer ${index + 1} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
   })));
 }
 
@@ -79,7 +80,7 @@ async function participants(sportId: string, count: number) {
 async function eventWithField(size: number) {
   const prisma = getPrisma();
   const setup = await golfEvent();
-  const golfers = await participants(setup.sport.id, size);
+  const golfers = await participants(setup.sportLeagueId, size);
   const field = [];
   for (const golfer of golfers) {
     field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: setup.event.id, participantId: golfer.id } }));
@@ -109,8 +110,8 @@ async function queriesFor(test: (fieldSize: number, measure: <Result>(write: () 
 describe('Adding players to an event\'s field (#1252)', () => {
   it('adds any number of players in one insert', async () => {
     const counts = await queriesFor(async (size, measure) => {
-      const { sport, event } = await golfEvent();
-      const golfers = await participants(sport.id, size);
+      const { sportLeagueId, event } = await golfEvent();
+      const golfers = await participants(sportLeagueId, size);
       await measure(() => new PrismaSportEventParticipantRepository(getAppPrisma()).createMany(event.id, golfers.map((golfer, index) => ({
         participantId: golfer.id,
         seedNumber: index + 1,
@@ -231,42 +232,41 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
 });
 
 describe('Uploading a sport league\'s rankings (#1252)', () => {
-  it('ranks every player in a fixed number of queries, adding missing affiliations and keeping existing ones\' ids', async () => {
+  it('ranks every player of the league in a fixed number of queries', async () => {
     const counts = await queriesFor(async (size, measure) => {
-      const { sport, sportLeagueId } = await golfEvent();
-      const golfers = await participants(sport.id, size);
-      const existing = await getPrisma().participantLeagueAffiliation.create({
-        data: { participantId: expectDefined(golfers[0]).id, sportLeagueId, ranking: 99 },
-      });
+      const { sportLeagueId } = await golfEvent();
+      const golfers = await participants(sportLeagueId, size);
+      await getPrisma().participant.update({ where: { id: expectDefined(golfers[0]).id }, data: { ranking: 99 } });
 
-      await measure(() => new PrismaParticipantLeagueAffiliationRepository(getAppPrisma()).upsertRankings(sportLeagueId, golfers.map((golfer, index) => ({
+      await measure(() => new PrismaParticipantRepository(getAppPrisma()).updateRankings(sportLeagueId, golfers.map((golfer, index) => ({
         participantId: golfer.id,
         ranking: index + 1,
       }))));
 
-      const rows = await getPrisma().participantLeagueAffiliation.findMany({
-        where: { sportLeagueId, participantId: { in: golfers.map((golfer) => golfer.id) } },
+      const rows = await getPrisma().participant.findMany({
+        where: { id: { in: golfers.map((golfer) => golfer.id) } },
         orderBy: { ranking: 'asc' },
       });
-      expect(rows.map((row) => [row.participantId, row.ranking])).toEqual(golfers.map((golfer, index) => [golfer.id, index + 1]));
-      expect(rows[0]).toMatchObject({ id: existing.id, createdAt: existing.createdAt });
+      expect(rows.map((row) => [row.id, row.ranking])).toEqual(golfers.map((golfer, index) => [golfer.id, index + 1]));
     });
 
     expect(counts[1]).toEqual(counts[0]);
   });
 
-  it('refuses to re-rank a player with no affiliation, writing none of the rankings', async () => {
+  it('refuses to rank a participant of another sport league, writing none of the rankings', async () => {
     const { sport, sportLeagueId } = await golfEvent();
-    const [ranked, stranger] = await participants(sport.id, 2);
-    await getPrisma().participantLeagueAffiliation.create({ data: { participantId: expectDefined(ranked).id, sportLeagueId, ranking: 5 } });
+    const [ranked] = await participants(sportLeagueId, 1);
+    const [stranger] = await participants(await participantLeagueId(getPrisma(), sport.id), 1);
+    await getPrisma().participant.update({ where: { id: expectDefined(ranked).id }, data: { ranking: 5 } });
 
-    await expect(new PrismaParticipantLeagueAffiliationRepository(getAppPrisma()).updateRankings(sportLeagueId, [
+    await expect(new PrismaParticipantRepository(getAppPrisma()).updateRankings(sportLeagueId, [
       { participantId: expectDefined(ranked).id, ranking: 1 },
       { participantId: expectDefined(stranger).id, ranking: 2 },
-    ])).rejects.toThrow(expectDefined(stranger).id);
+    ])).rejects.toThrow(`Only 1 of the 2 participants to rank are in sport league ${sportLeagueId}.`);
 
-    const rows = await getPrisma().participantLeagueAffiliation.findMany({ where: { sportLeagueId, participantId: { in: [expectDefined(ranked).id, expectDefined(stranger).id] } } });
-    expect(rows.map((row) => [row.participantId, row.ranking])).toEqual([[expectDefined(ranked).id, 5]]);
+    const rows = await getPrisma().participant.findMany({ where: { id: { in: [expectDefined(ranked).id, expectDefined(stranger).id] } }, orderBy: { name: 'asc' } });
+    const rankingById = new Map(rows.map((row) => [row.id, row.ranking]));
+    expect([rankingById.get(expectDefined(ranked).id), rankingById.get(expectDefined(stranger).id)]).toEqual([5, null]);
   });
 });
 

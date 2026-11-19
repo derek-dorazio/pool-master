@@ -43,7 +43,7 @@ export const SPORT_DATA_SCHEMA_VERSION = 1;
 export const SportDataContent = {
   /** Events: name, dates, venue, location, rounds, par. */
   SCHEDULE: 'SCHEDULE',
-  /** Players and their sport league affiliation and ranking. */
+  /** The sport league's players and their ranking in it. */
   PLAYERS: 'PLAYERS',
   /** Each event's field: who plays, their ranking and seed. */
   FIELDS: 'FIELDS',

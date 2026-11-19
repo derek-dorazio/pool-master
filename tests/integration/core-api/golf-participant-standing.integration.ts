@@ -9,7 +9,7 @@ import {
 import { Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
@@ -35,7 +35,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
   it('persists round thru and one standing row per event participant', async () => {
     const prisma = getPrisma();
 
-    const sport = await prisma.sport.upsert({
+    await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
@@ -46,7 +46,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     });
     const participant = await prisma.participant.create({
       data: {
-        sportId: sport.id,
+        sportLeagueId: await fixtureTourId(prisma),
         externalId: 'golf-standing-player-1',
         name: 'Golf Standing Player',
         participantType: 'INDIVIDUAL',
@@ -56,6 +56,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     await prisma.participantProviderMapping.create({
       data: {
         participantId: participant.id,
+        sportLeagueId: participant.sportLeagueId,
         providerId: 'integration-test',
         externalId: 'golf-standing-player-1',
       },
@@ -170,7 +171,7 @@ describe('Golf live-score persistence', () => {
 
   async function createLiveField(suffix: string, golferKeys: string[]) {
     const prisma = getPrisma();
-    const sport = await prisma.sport.upsert({
+    await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
@@ -193,10 +194,10 @@ describe('Golf live-score persistence', () => {
     for (const key of golferKeys) {
       const externalId = `${suffix}-${key}`;
       const participant = await prisma.participant.create({
-        data: { sportId: sport.id, name: `Golfer ${externalId}`, participantType: 'INDIVIDUAL' },
+        data: { sportLeagueId: await fixtureTourId(prisma), name: `Golfer ${externalId}`, participantType: 'INDIVIDUAL' },
       });
       await prisma.participantProviderMapping.create({
-        data: { participantId: participant.id, providerId: PROVIDER, externalId },
+        data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId },
       });
       // The same golfer is also in a second event, so scoping to the named event is observable.
       sepByKey.set(key, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } })).id);

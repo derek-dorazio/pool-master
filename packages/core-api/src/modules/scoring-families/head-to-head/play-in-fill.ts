@@ -57,7 +57,7 @@ export async function fillPlayInPlaces(
   const placeIds = new Set(field.filter((row) => row.isPlayInPlace).map((row) => row.id));
   if (placeIds.size === 0) return;
   const teamIds = [...new Set(winnerGames.flatMap((each) => [each.winnerExternalId, each.opponentExternalId]))];
-  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, teamIds);
+  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, { sportEventId }, teamIds);
   const participantOf = new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));
   const rowOfParticipant = new Map(field.map((row) => [row.participantId, row.id]));
 

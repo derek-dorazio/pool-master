@@ -224,18 +224,17 @@ export const QueryKeys = {
     // sport's.
     manageSport: {
       all: ['poolmaster', 'root-admin', 'manage-sport'] as const,
-      sport: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'sport', sport] as const,
       leagues: ['poolmaster', 'root-admin', 'manage-sport', 'leagues'] as const,
       sportLeagues: (sport: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', sport] as const,
       // Every sport league's overview row (the Sports page, #1848), under `leagues` so a league's
       // change refreshes it.
       overviews: ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'overview'] as const,
       sportLeague: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'one', sportLeagueId] as const,
-      // Deliberately NOT nested under the `leagues` prefix: invalidating the
-      // `leagues` list (a league rename / active toggle) must not also wipe every
-      // league's roster cache, since TanStack invalidation is prefix-match.
+      // A sport league's participants (#1853). Under the `participants` prefix, so a participant's
+      // create or edit refreshes its league's roster, and NOT under `leagues`: a league rename
+      // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'league-roster', sportLeagueId] as const,
+        ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId, eventYear: number) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
@@ -261,8 +260,6 @@ export const QueryKeys = {
       liveSimulation: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
       participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,
-      participantSearch: (sport: QueryKeyId, search: string, status = 'ACTIVE') =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', sport, 'search', search, status] as const,
       participant: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId] as const,
       participantMappings: (participantId: QueryKeyId) =>
@@ -311,8 +308,6 @@ export const QueryKeys = {
     // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
     unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
-    participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'participant-candidates', sportId, search] as const,
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },
 } as const;

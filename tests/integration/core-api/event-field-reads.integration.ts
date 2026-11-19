@@ -20,6 +20,7 @@ import { recordStatements, statementCounts, statementParams, statementsOn, State
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
+import { participantLeagueId } from '../../support/participant-league';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -65,9 +66,12 @@ async function golfEvent() {
   ];
   const golfer = async (name: string, seedNumber: number | null, affiliated: boolean) => {
     const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+      data: {
+        // On the event's sport league's roster, or a participant of another league of the sport.
+        sportLeagueId: affiliated ? sportLeagueId : await participantLeagueId(prisma, sport.id),
+        name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
+      },
     });
-    if (affiliated) await prisma.participantLeagueAffiliation.create({ data: { participantId: participant.id, sportLeagueId } });
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, seedNumber, ranking: 10 } });
   };
   const cal = await golfer('Cal', null, false);
@@ -109,7 +113,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
   const field = [];
   for (const name of names) {
     const participant = await prisma.participant.create({
-      data: { sportId: sportRow.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM', status: 'ACTIVE' },
+      data: { sportLeagueId: await participantLeagueId(prisma, sportRow.id), name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } }));
   }
@@ -117,7 +121,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
 }
 
 describe('An event\'s field', () => {
-  it('is read in one call on the field table, each row with its participant, affiliation, price, standing and rounds in round order, seeded first', async () => {
+  it('is read in one call on the field table, each row with its participant, whether it is in the event league, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
 
     const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id));
@@ -126,7 +130,6 @@ describe('An event\'s field', () => {
     // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
     expect(statementCounts(statements)).toEqual([
       ['SELECT event_series', 1],
-      ['SELECT participant_league_affiliations', 1],
       ['SELECT participants', 1],
       ['SELECT sport_event_matches', 2],
       ['SELECT sport_event_participant_golf_rounds', 1],
@@ -190,8 +193,8 @@ describe('An event\'s field', () => {
     expect(polled.find((row) => row.id === bea.id)?.ranking).toBe(3);
   });
 
-  it('is read afresh once a participant on it is renamed, or the event\'s sport league affiliates another, so the next poll shows it', async () => {
-    const { event, ana, cal } = await golfEvent();
+  it('is read afresh once a participant on it is renamed, or the event\'s sport league re-ranks one, so the next poll shows it', async () => {
+    const { event, ana, bea } = await golfEvent();
     const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
     const admin = await createTestUser({ isRootAdmin: true });
     const readField = async () => (await getApp().inject({
@@ -208,17 +211,17 @@ describe('An event\'s field', () => {
       payload: { name: 'Ana Renamed' },
     });
     const afterRename = await readField();
-    const affiliated = await getApp().inject({
-      method: 'POST',
-      url: `/api/v1/sport-leagues/${sportLeagueId}/affiliations`,
+    const ranked = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/sport-leagues/${sportLeagueId}/participants/rankings`,
       headers: admin.headers,
-      payload: { participantId: cal.participantId },
+      payload: { rankings: [{ participantId: bea.participantId, ranking: 4 }] },
     });
-    const afterAffiliation = await readField();
+    const afterRanking = await readField();
 
-    expect([renamed.statusCode, affiliated.statusCode]).toEqual([200, 201]);
+    expect([renamed.statusCode, ranked.statusCode]).toEqual([200, 200]);
     expect(afterRename.find((row) => row.id === ana.id)?.participant.name).toBe('Ana Renamed');
-    expect(afterAffiliation.find((row) => row.id === cal.id)?.affiliatedWithSportLeague).toBe(true);
+    expect(afterRanking.find((row) => row.id === bea.id)?.participant.ranking).toBe(4);
   });
 });
 

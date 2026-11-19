@@ -5,22 +5,19 @@ import {
   autoAssignEventTiers,
   createEvent,
   createParticipant,
-  createParticipantLeagueAffiliation,
   createSportLeague,
   getEventBracket,
   listEventParticipants,
-  listSports,
   loadEventBracket,
   recordEventMatchResult,
   releaseEvent,
   replaceEventParticipant,
   replaceEventTiers,
 } from '@poolmaster/shared/generated/hey-api';
-import { MatchSide, ParticipantInactiveReason, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import {
   SportEventBracketResponseSchema,
   SportEventParticipantResponseSchema,
-  SportListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
@@ -71,7 +68,6 @@ async function cleanup(): Promise<void> {
     await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
-    await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: [...created.participantIds] } } });
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
@@ -96,7 +92,6 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const admin = await buildRegisteredUser({ displayName: 'Tournament Referee' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectMatchesSchema(SportListResponseSchema, (await listSports({ client: a })).data).sports, Sport.TENNIS)).id;
 
     // --- A tour, a draw in it, its field, tiers and prices --------------------------------------
     const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
@@ -114,7 +109,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
 
     const playerIdOf = new Map<string, string>();
     for (const name of [...FIELD.map((player) => player.name), LUCKY_LOSER]) {
-      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `${name} ${RUN}` } });
+      const participant = await createParticipant({ client: a, body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${name} ${RUN}` } });
       const id = expectDefined(participant.data).participant.id;
       created.participantIds.add(id);
       playerIdOf.set(name, id);
@@ -156,14 +151,12 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const released = await releaseEvent({ client: a, path: { eventId } });
     expect([released.data?.event.status, released.error]).toEqual(['SCHEDULED', undefined]);
 
-    // --- The lucky loser is on the tour's roster; a women's tour player is not, so is refused -------
-    expect((await createParticipantLeagueAffiliation({ client: a, path: { sportLeagueId }, body: { participantId: expectDefined(playerIdOf.get(LUCKY_LOSER)) } })).error).toBeUndefined();
+    // --- The lucky loser is the tour's participant; a women's tour player is not, so is refused -----
     const womensTour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
     const womensTourId = expectDefined(womensTour.data).sportLeague.id;
     created.sportLeagueIds.add(womensTourId);
-    const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;
+    const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportLeagueId: womensTourId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;
     created.participantIds.add(womensPlayer);
-    expect((await createParticipantLeagueAffiliation({ client: a, path: { sportLeagueId: womensTourId }, body: { participantId: womensPlayer } })).error).toBeUndefined();
     expectFunctionalError(
       await replaceEventParticipant({ client: a, path: { eventId, sportEventParticipantId: rowOf('Fritz').id }, body: { participantId: womensPlayer } }),
       { status: 409, code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE' },
