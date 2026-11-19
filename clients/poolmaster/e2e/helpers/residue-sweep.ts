@@ -142,7 +142,7 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
 
   await remove('users (listing)', async () => {
     const list = await expectOk(api.get('/api/v1/customers/users', { headers }), 'list users');
-    const { users } = (await list.json()) as { users: { username: string; email: string; isRootAdmin: boolean }[] };
+    const { users } = (await list.json()) as { users: { id: string; username: string; email: string; isRootAdmin: boolean }[] };
     // A root admin is never a run's: the suite's own admin has an e2e address too.
     for (const user of users.filter((candidate) => !candidate.isRootAdmin && due(runIdOfUser(candidate)))) {
       await remove(`user ${user.username}`, () => removeUser(api, headers, user, log), report.users, user.username);
