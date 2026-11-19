@@ -9,9 +9,8 @@
 
 import { z } from 'zod';
 import type { NotifiedProviderCadence } from './core/ingestion-scheduler';
-import { BALLDONTLIE_PROVIDER_ID } from './adapters/balldontlie/pga-mapping';
 import { balldontlieQuietAfterMs } from './adapters/balldontlie/balldontlie-webhooks';
-import { readBalldontlieWebhookSecret } from './provider-webhook-routes';
+import { readWebhookProviderIds } from './provider-webhook-routes';
 
 /** Each notified event's safety-net poll: 15 minutes (Derek, 2026-11-12). */
 export const DEFAULT_NOTIFIED_POLL_SECONDS = 15 * 60;
@@ -32,7 +31,7 @@ function seconds(env: NodeJS.ProcessEnv, name: string, fallback: number): number
 
 /** The cadence for the providers whose webhook secret is set, or undefined when none is. */
 export function readNotifiedProviderCadence(env: NodeJS.ProcessEnv): NotifiedProviderCadence | undefined {
-  const providerIds = readBalldontlieWebhookSecret(env) === undefined ? [] : [BALLDONTLIE_PROVIDER_ID];
+  const providerIds = readWebhookProviderIds(env);
   if (providerIds.length === 0) return undefined;
   return {
     providerIds,

@@ -53,7 +53,8 @@ describe('pool-master-3dg RootAdminSportEventListPage', () => {
 
     const menu = await screen.findByRole('navigation', { name: 'Golf lists' });
     expect(within(menu).getByRole('link', { name: 'Tournaments' })).toHaveAttribute('aria-current', 'page');
-    expect(within(menu).getByRole('link', { name: 'Tours' })).not.toHaveAttribute('aria-current');
+    // Sport leagues moved to the Sports page (#1848), so a sport lists only its events and participants.
+    expect(within(menu).getAllByRole('link').map((link) => link.textContent)).toEqual(['Tournaments', 'Golfers']);
     fireEvent.click(within(menu).getByRole('link', { name: 'Golfers' }));
 
     expect(await screen.findByTestId('golf-players-list')).toBeInTheDocument();

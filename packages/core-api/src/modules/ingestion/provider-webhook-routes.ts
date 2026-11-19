@@ -18,6 +18,7 @@ import '@poolmaster/shared/dto/provider-webhooks.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { sendError } from '../../core/error-handler';
 import { checkBalldontlieSignature, readBalldontlieNotification } from './adapters/balldontlie/balldontlie-webhooks';
+import { BALLDONTLIE_PROVIDER_ID } from './adapters/balldontlie/pga-mapping';
 import type { ProviderNotificationService } from './provider-notifications';
 
 export interface ProviderWebhooksModuleOptions {
@@ -33,6 +34,14 @@ const WEBHOOK_BODY_LIMIT_BYTES = 64 * 1024;
 /** The secret a webhook is signed with, from BALLDONTLIE_WEBHOOK_SECRET; undefined when unset or blank. */
 export function readBalldontlieWebhookSecret(env: NodeJS.ProcessEnv): string | undefined {
   return env['BALLDONTLIE_WEBHOOK_SECRET']?.trim() || undefined;
+}
+
+/**
+ * The providers whose webhooks are on: those whose signing secret is set. Before it is, every
+ * delivery is refused, so nothing arrives.
+ */
+export function readWebhookProviderIds(env: NodeJS.ProcessEnv): readonly string[] {
+  return readBalldontlieWebhookSecret(env) === undefined ? [] : [BALLDONTLIE_PROVIDER_ID];
 }
 
 export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderWebhooksModuleOptions): void {

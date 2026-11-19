@@ -34,9 +34,8 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 1. **Live-score sync is on, every 60 seconds.** Open *Settings → Global
    Ingestion Schedule* (`/manage/settings/ingestion-schedule`). On the **Event live
    scores** row, tick *Enabled* and set *Seconds* to `60`. The default is 300. This one
-   setting applies to every sport and every linked tournament in the environment. Then on
-   *Sport Ingestion Overrides* (`/manage/settings/sport-overrides`), check that Event
-   live scores is not switched off for Golf. A new interval starts only after the current
+   setting applies to every sport and every linked tournament in the environment: there are no
+   per-sport overrides (#1871). A new interval starts only after the current
    wait runs out, so the first poll after the change can take up to the old 300 seconds.
 2. **Field sync is off by default for leagues not synced.** The *Event participants* row on
    the same page is unticked in a new environment (#123), so a field changes only when you load

@@ -14,17 +14,22 @@ import { errorMessage } from './error-message';
 import type { JobLock } from './job-lock';
 import { runWithJobStart, SCHEDULE_START } from './job-start';
 import { runWithReadMemo } from './request-read-memo';
+import { SCHEDULE_RECHECK_MS } from './schedule-policy-delay';
 
 export interface LockedSweepOptions {
   /** The job lock that keeps the sweep to one server task; it also names the sweep in the logs. */
   lockKey: string;
   jobLock: JobLock;
-  /** How often the sweep runs once started. */
-  intervalMs: number;
+  /**
+   * How often the sweep runs once started: a fixed interval, or a read of it made after each run,
+   * so a setting an admin changes takes effect from the next run without a restart (#1871). A read
+   * that fails waits `SCHEDULE_RECHECK_MS` and tries again.
+   */
+  intervalMs: number | (() => Promise<number>);
   /**
    * How long after `start` the first run comes, after which it runs every `intervalMs`. Defaults
-   * to `intervalMs`. Sweeps started together use it to spread out, so they don't all hit the
-   * database on the same tick.
+   * to `intervalMs` when that is fixed, and to `SCHEDULE_RECHECK_MS` when it is read. Sweeps
+   * started together use it to spread out, so they don't all hit the database on the same tick.
    */
   firstRunAfterMs?: number;
   /** Names the sweep in its log lines, such as "event lifecycle sweep". */
@@ -35,6 +40,8 @@ export interface LockedSweepOptions {
 export class LockedSweep {
   private timer?: ReturnType<typeof setTimeout>;
   private running = false;
+  /** Bumped by each start and stop, so a read-interval run that ends after a stop schedules nothing. */
+  private generation = 0;
 
   constructor(
     private readonly options: LockedSweepOptions,
@@ -44,6 +51,11 @@ export class LockedSweep {
   start(): void {
     if (this.timer) return;
     const { intervalMs, firstRunAfterMs } = this.options;
+    if (typeof intervalMs === 'function') {
+      this.generation += 1;
+      this.scheduleRead(this.generation, firstRunAfterMs ?? SCHEDULE_RECHECK_MS);
+      return;
+    }
     this.timer = setTimeout(() => {
       this.timer = setInterval(() => {
         void this.run();
@@ -55,6 +67,7 @@ export class LockedSweep {
   }
 
   stop(): void {
+    this.generation += 1;
     if (this.timer) {
       // One call clears either: the first run's timeout or the interval after it.
       clearTimeout(this.timer);
@@ -82,6 +95,36 @@ export class LockedSweep {
       }, `The ${label} failed`);
     } finally {
       this.running = false;
+    }
+  }
+
+  /** A read-interval sweep: run after `delayMs`, then read the next interval and schedule again. */
+  private scheduleRead(generation: number, delayMs: number): void {
+    this.timer = setTimeout(() => {
+      void this.runThenScheduleRead(generation);
+    }, delayMs);
+    this.timer.unref();
+  }
+
+  private async runThenScheduleRead(generation: number): Promise<void> {
+    await this.run();
+    const nextDelayMs = await this.readIntervalMs();
+    if (generation === this.generation) {
+      this.scheduleRead(generation, nextDelayMs);
+    }
+  }
+
+  private async readIntervalMs(): Promise<number> {
+    const { intervalMs, lockKey, label, logger } = this.options;
+    if (typeof intervalMs === 'number') return intervalMs;
+    try {
+      return await intervalMs();
+    } catch (error) {
+      logger?.error({
+        action: 'lockedSweep.intervalReadFailed',
+        data: { lockKey, error: errorMessage(error) },
+      }, `Could not read the ${label}'s interval; trying again shortly`);
+      return SCHEDULE_RECHECK_MS;
     }
   }
 }

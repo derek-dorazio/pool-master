@@ -63,6 +63,14 @@ describe('RootAdminProfilesPage', () => {
     vi.clearAllMocks();
   });
 
+  it('sits under the Sports page\'s header as its Profiles tab, marked, beside Sport leagues', async () => {
+    seed();
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-sports-tab-profiles')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('root-admin-sports-tab-leagues')).toHaveAttribute('href', '/manage/sports');
+  });
+
   it('lists every tier profile with its layout and use, a capped last tier with its cap, and every pricing profile in dollars', async () => {
     seed();
     renderPage();
@@ -100,7 +108,7 @@ describe('RootAdminProfilesPage', () => {
       body: { name: '6 tiers of 12', tierCount: 6, tierSize: 12, lastTier: 'ALL_REMAINING', lastTierMax: null },
     })));
     expect(await screen.findByTestId('root-admin-tier-profile-dialog-edit')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-tier-profile-editor')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-tier-profile-editor-name')).not.toBeInTheDocument();
   });
 
   it('asks a new tier profile for the most in its last tier only once Capped is chosen, and creates it with that cap', async () => {

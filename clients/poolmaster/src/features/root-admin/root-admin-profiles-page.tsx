@@ -1,5 +1,6 @@
 import { PageHeader } from '@/features/shared/ui';
 import { PricingProfilesSection } from './pricing-profiles-section';
+import { SportsPageTabs } from './sports-page-tabs';
 import { TierProfilesSection } from './tier-profiles-section';
 
 /**
@@ -9,7 +10,7 @@ import { TierProfilesSection } from './tier-profiles-section';
 export function RootAdminProfilesPage() {
   return (
     <section className="space-y-6" data-testid="root-admin-profiles-page">
-      <PageHeader testId="root-admin-profiles-header" title="Profiles" />
+      <PageHeader tabs={<SportsPageTabs active="profiles" />} testId="root-admin-profiles-header" title="Sports" />
       <TierProfilesSection />
       <PricingProfilesSection />
     </section>

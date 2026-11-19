@@ -8,6 +8,7 @@ import { throwApiError } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
+import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
 
 const { shape } = PricingProfileWriteRequestSchema;
@@ -38,33 +39,29 @@ const NUMBER_FIELDS = [
 
 const NEW_PROFILE: PricingProfileWriteRequest = { name: '', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
+function formValuesOf(profile: PricingProfileDto | null): PricingProfileWriteRequest {
+  return profile
+    ? {
+      name: profile.name,
+      salaryCap: profile.salaryCap,
+      unit: profile.unit,
+      topSharePercent: profile.topSharePercent,
+      floorSharePercent: profile.floorSharePercent,
+      steepness: profile.steepness,
+    }
+    : NEW_PROFILE;
+}
+
 /**
- * A pricing profile's form (#1849): a new one, or Edit on one's dialog. Save writes the whole
- * profile and hands back what the server saved; a refusal (a taken name, values that disagree)
- * stays in the dialog. Mounted only while editing, so it starts from the profile as it is.
+ * A pricing profile's dialog (#1849): its view, then its form on Edit, or a new one's form. Save
+ * writes the whole profile and hands back what the server saved; a refusal (a taken name, values
+ * that disagree) stays in the dialog.
  */
-export function PricingProfileEditor({
-  onCancel,
-  onSaved,
-  profile,
-}: {
-  onCancel: () => void;
-  onSaved: (saved: PricingProfileDto) => void;
-  /** The profile being edited, or null for a new one. */
-  profile: PricingProfileDto | null;
-}) {
+export function PricingProfileEditor(dialog: ProfileEditorProps<PricingProfileDto>) {
+  const { onSaved, profile } = dialog;
   const form = useForm<PricingProfileWriteRequest>({
     resolver: zodResolver(PricingProfileFormSchema, { error: pricingErrors }),
-    defaultValues: profile
-      ? {
-        name: profile.name,
-        salaryCap: profile.salaryCap,
-        unit: profile.unit,
-        topSharePercent: profile.topSharePercent,
-        floorSharePercent: profile.floorSharePercent,
-        steepness: profile.steepness,
-      }
-      : NEW_PROFILE,
+    defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
     action: async (body: PricingProfileWriteRequest) => {
@@ -85,12 +82,14 @@ export function PricingProfileEditor({
 
   return (
     <ProfileFormModal
+      dialog={dialog}
       errorFallback="We could not save the pricing profile."
       form={form}
-      onCancel={onCancel}
+      formValues={formValuesOf(profile)}
       save={save}
-      testId="root-admin-pricing-profile-editor"
-      title={profile ? `${profile.name} · Edit` : 'New pricing profile'}
+      saveTestId="root-admin-pricing-profile-editor-save"
+      testId="root-admin-pricing-profile-dialog"
+      newTitle="New pricing profile"
     >
       <div className="space-y-4">
         <FormField error={errors.name?.message} id="pricing-profile-name" label="Name">

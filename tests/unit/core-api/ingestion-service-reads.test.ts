@@ -17,6 +17,7 @@ import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../su
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
+import { buildSportLeague } from '../../factories';
 import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
@@ -29,11 +30,11 @@ const GOLF_ONLY_CONFIG = {
   healthCheck: { enabled: true, intervalMinutes: 5 },
   eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
   eventLiveScores: { enabled: true, intervalSeconds: 300 },
-  perSportOverrides: {},
+  eventList: { enabled: true, intervalMinutes: 360 },
 };
 
 function configReader(config = GOLF_ONLY_CONFIG) {
-  return { getConfig: jest.fn().mockResolvedValue(config), getPerSportConfig: jest.fn().mockResolvedValue(config) };
+  return { getConfig: jest.fn().mockResolvedValue(config) };
 }
 
 function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): InMemorySyncRuns {
@@ -52,6 +53,8 @@ function service(
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
+    sportLeagues: { findEventSynced: () => Promise.resolve([]) },
+    webhookProviderIds: [],
     logger: fakeLogger(),
     jobs,
     ...deps,
@@ -125,6 +128,25 @@ describe('IngestionService.listProviders', () => {
     expect(providers).toEqual([
       expect.objectContaining({ providerId: 'feed', sportsCovered: [Sport.GOLF], primaryForSports: [] }),
       expect.objectContaining({ providerId: 'mock', sportsCovered: [Sport.GOLF], primaryForSports: [Sport.GOLF] }),
+    ]);
+  });
+
+  it('shows each provider\'s request rate, whether its webhooks are on, and how many active sport leagues its sync creates', async () => {
+    const paced = { ...fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }), requestsPerMinute: 600 };
+    const unpaced = fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' });
+    const registry = registryWith(paced);
+    registry.register(Sport.GOLF, unpaced, 'SECONDARY');
+    const findEventSynced = jest.fn().mockResolvedValue([
+      buildSportLeague({ name: 'PGA TOUR', eventSyncProviderId: 'balldontlie' }),
+      buildSportLeague({ name: 'NFL', eventSyncProviderId: 'balldontlie' }),
+    ]);
+
+    const providers = await service({ registry, sportLeagues: { findEventSynced }, webhookProviderIds: ['balldontlie'] }).listProviders();
+
+    expect(findEventSynced).toHaveBeenCalledTimes(1);
+    expect(providers).toEqual([
+      expect.objectContaining({ providerId: 'balldontlie', requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 2 }),
+      expect.objectContaining({ providerId: 'mock', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0 }),
     ]);
   });
 

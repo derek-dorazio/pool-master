@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { SportLeagueDto } from '@/lib/api';
-import { ReadOnlyDetailModal, type Fact } from '@/features/shared/ui';
+import type { Fact } from '@/features/shared/ui';
 import { ProfileLeagues } from './profile-leagues';
 
 /** Which profile's dialog is open, and whether it shows the profile or its form. */
@@ -9,18 +9,29 @@ export type ProfileDialogState<TProfile> =
   | { mode: 'new' }
   | null;
 
-/** What a profile's form needs: the profile (null for a new one), and where Save and Cancel go. */
+/**
+ * What a profile's dialog needs (`ProfileFormModal`): the mode, the profile (null for a new one),
+ * what its view shows, and where Close, Edit, Cancel and Save go.
+ */
 export type ProfileEditorProps<TProfile> = {
-  onCancel: () => void;
-  onSaved: (saved: TProfile) => void;
+  mode: 'view' | 'edit';
   profile: TProfile | null;
+  /** The profile's values, as the view lists them; none for a new profile. */
+  facts: Fact[];
+  /** The sport leagues naming the profile, under its values in the view. */
+  viewContent: ReactNode;
+  onClose: () => void;
+  onEdit: () => void;
+  /** Cancel in the form: back to the view, or closed for a new profile. */
+  onCancelEdit: () => void;
+  onSaved: (saved: TProfile) => void;
 };
 
 /**
- * A tier or pricing profile's dialog (#1849): see it, then Edit. The view lists its values and
- * the sport leagues naming it, with Close and Edit; Edit turns it into the profile's form, whose
- * Cancel and Save come back to the view. New opens straight on an empty form, and its Save shows
- * the new profile.
+ * A tier or pricing profile's dialog (#1849), one `DetailEditModal` (rules/ux-rules.md §12 item
+ * 14): the view lists its values and the sport leagues naming it, with Close and Edit; Edit turns
+ * it into the profile's form, whose Cancel and Save come back to the view. New opens straight on
+ * an empty form, and its Save shows the new profile.
  */
 export function ProfileDialog<TProfile extends { id: string; name: string }>({
   facts,
@@ -47,25 +58,26 @@ export function ProfileDialog<TProfile extends { id: string; name: string }>({
   const showSaved = (saved: TProfile) => onStateChange({ mode: 'view', profile: saved });
 
   if (state.mode === 'new') {
-    return renderEditor({ onCancel: close, onSaved: showSaved, profile: null });
+    return renderEditor({
+      facts: [],
+      mode: 'edit',
+      onCancelEdit: close,
+      onClose: close,
+      onEdit: close,
+      onSaved: showSaved,
+      profile: null,
+      viewContent: null,
+    });
   }
   const profile = liveProfile(state.profile.id) ?? state.profile;
-  if (state.mode === 'edit') {
-    return renderEditor({ onCancel: () => onStateChange({ mode: 'view', profile }), onSaved: showSaved, profile });
-  }
-  return (
-    <ReadOnlyDetailModal
-      detailContent={<ProfileLeagues names={(league) => names(league, profile)} testId={`${testId}-leagues`} />}
-      details={facts(profile)}
-      editTestId={`${testId}-edit`}
-      onCancel={close}
-      onEdit={() => onStateChange({ mode: 'edit', profile })}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) close();
-      }}
-      open
-      testId={testId}
-      title={profile.name}
-    />
-  );
+  return renderEditor({
+    facts: facts(profile),
+    mode: state.mode,
+    onCancelEdit: () => onStateChange({ mode: 'view', profile }),
+    onClose: close,
+    onEdit: () => onStateChange({ mode: 'edit', profile }),
+    onSaved: showSaved,
+    profile,
+    viewContent: <ProfileLeagues names={(league) => names(league, profile)} testId={`${testId}-leagues`} />,
+  });
 }

@@ -8,6 +8,7 @@ import { throwApiError } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
+import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
 import { LAST_TIER_LABELS } from './tier-profile-format';
 
@@ -28,26 +29,22 @@ const TierProfileFormSchema = TierProfileWriteRequestSchema.superRefine((values,
 
 const NEW_PROFILE: TierProfileWriteRequest = { name: '', tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 
+function formValuesOf(profile: TierProfileDto | null): TierProfileWriteRequest {
+  return profile
+    ? { name: profile.name, tierCount: profile.tierCount, tierSize: profile.tierSize, lastTier: profile.lastTier, lastTierMax: profile.lastTierMax }
+    : NEW_PROFILE;
+}
+
 /**
- * A tier profile's form (#1849): a new one, or Edit on one's dialog. Save writes the whole
- * profile and hands back what the server saved; a refusal (a taken name, a bad layout) stays in
- * the dialog. Mounted only while editing, so it starts from the profile as it is.
+ * A tier profile's dialog (#1849): its view, then its form on Edit, or a new one's form. Save
+ * writes the whole profile and hands back what the server saved; a refusal (a taken name, a bad
+ * layout) stays in the dialog.
  */
-export function TierProfileEditor({
-  onCancel,
-  onSaved,
-  profile,
-}: {
-  onCancel: () => void;
-  onSaved: (saved: TierProfileDto) => void;
-  /** The profile being edited, or null for a new one. */
-  profile: TierProfileDto | null;
-}) {
+export function TierProfileEditor(dialog: ProfileEditorProps<TierProfileDto>) {
+  const { onSaved, profile } = dialog;
   const form = useForm<TierProfileWriteRequest>({
     resolver: zodResolver(TierProfileFormSchema, { error: tierErrors }),
-    defaultValues: profile
-      ? { name: profile.name, tierCount: profile.tierCount, tierSize: profile.tierSize, lastTier: profile.lastTier, lastTierMax: profile.lastTierMax }
-      : NEW_PROFILE,
+    defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
     action: async (values: TierProfileWriteRequest) => {
@@ -70,12 +67,14 @@ export function TierProfileEditor({
 
   return (
     <ProfileFormModal
+      dialog={dialog}
       errorFallback="We could not save the tier profile."
       form={form}
-      onCancel={onCancel}
+      formValues={formValuesOf(profile)}
       save={save}
-      testId="root-admin-tier-profile-editor"
-      title={profile ? `${profile.name} · Edit` : 'New tier profile'}
+      saveTestId="root-admin-tier-profile-editor-save"
+      testId="root-admin-tier-profile-dialog"
+      newTitle="New tier profile"
     >
       <div className="space-y-4">
         <FormField error={errors.name?.message} id="tier-profile-name" label="Name">

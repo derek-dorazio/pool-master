@@ -253,7 +253,7 @@ export function RootAdminRunEventSyncPage() {
     >
       <PageHeader
         testId="root-admin-run-event-sync-header"
-        title="Run Event Sync"
+        title="Run event sync"
         titleAside={(
           <HelpTip label="About running an event sync" testId="root-admin-run-event-sync-help">
             Use this action when a linked event needs a targeted refresh of its field or live

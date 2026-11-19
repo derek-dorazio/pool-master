@@ -24,6 +24,12 @@ export interface SportDataProvider {
   sportsCovered: Sport[];
 
   /**
+   * The request rate the adapter holds its calls to, a minute: the provider plan's limit, set in
+   * the deployment's provider bindings. Absent for an adapter that does not pace itself.
+   */
+  readonly requestsPerMinute?: number;
+
+  /**
    * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
    * without one, every event the provider has for the sport (#402: the catalog browse no
    * longer defaults to a window around today). Called on demand by the catalog browse,
