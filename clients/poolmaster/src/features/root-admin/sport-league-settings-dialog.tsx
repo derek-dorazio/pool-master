@@ -48,18 +48,11 @@ function valuesOf(sportLeague: SportLeagueDto): SettingsValues {
 }
 
 /**
- * A Clutch Card league with no match keyword and no provider of its own: no provider can sync its
- * events (the server refuses one with SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD), so its Provider is shown
- * locked rather than offered and then refused.
+ * A Clutch Card follows its parent league's sync: the parent's provider keeps its events, so its
+ * own Provider is shown, locked, as the parent's rather than offered as a choice of its own.
  */
-function isProviderLocked(sportLeague: SportLeagueDto): boolean {
-  return isClutchCardLeague(sportLeague)
-    && sportLeague.eventSyncProviderId === null
-    && !sportLeague.matchKeyword?.trim();
-}
-
-function lockedProviderHelp(sportLeague: SportLeagueDto): string {
-  return `${sportLeague.name} is a Clutch Card with no match keyword, so no provider syncs its events. An admin adds them, and each is linked to its parent league's season event.`;
+function followsParent(sportLeague: SportLeagueDto): boolean {
+  return isClutchCardLeague(sportLeague) && sportLeague.parentSportLeagueId !== null;
 }
 
 function autoReleaseText(days: number | null): string {
@@ -105,7 +98,8 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   const tierProfilesQuery = useTierProfilesQuery();
   const pricingProfilesQuery = usePricingProfilesQuery();
   const current = valuesOf(sportLeague);
-  const providerLocked = isProviderLocked(sportLeague);
+  const providerLocked = followsParent(sportLeague);
+  const parentQuery = useSportLeagueQuery(providerLocked ? sportLeague.parentSportLeagueId : null);
 
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
@@ -147,6 +141,13 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
   const pricingProfileName = pricingProfilesQuery.data?.find((profile) => profile.id === sportLeague.pricingProfileId)?.name ?? '…';
 
+  const parent = parentQuery.data;
+  const parentName = parent?.name ?? 'its parent league';
+  const followsText = parent === undefined
+    ? 'Follows its parent league'
+    : `Follows ${parent.name} (${parent.eventSyncProviderId === null ? 'No provider' : providerName(parent.eventSyncProviderId)})`;
+  const followsHelp = `${sportLeague.name} is a Clutch Card, so it follows ${parentName}'s sync and its provider. Change the provider on ${parentName}.`;
+
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
     providerLocked
@@ -155,10 +156,10 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
           label: (
             <span className="inline-flex items-center gap-1.5">
               Provider
-              <HelpTip label="About Provider" testId="root-admin-sport-league-settings-provider-help">{lockedProviderHelp(sportLeague)}</HelpTip>
+              <HelpTip label="About Provider" testId="root-admin-sport-league-settings-provider-help">{followsHelp}</HelpTip>
             </span>
           ),
-          value: 'None',
+          value: followsText,
           testId: 'root-admin-sport-league-settings-provider',
         }
       : { id: 'provider', label: 'Provider', value: sportLeague.eventSyncProviderId === null ? 'No provider' : providerName(sportLeague.eventSyncProviderId), testId: 'root-admin-sport-league-settings-provider' },
@@ -200,9 +201,9 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
           </Select>
         </FormField>
         {providerLocked ? (
-          <FormField help={lockedProviderHelp(sportLeague)} id="root-admin-sport-league-settings-provider-input" label="Provider">
+          <FormField help={followsHelp} id="root-admin-sport-league-settings-provider-input" label="Provider">
             <Select data-testid="root-admin-sport-league-settings-provider-input" disabled value="">
-              <option value="">None</option>
+              <option value="">{followsText}</option>
             </Select>
           </FormField>
         ) : (
