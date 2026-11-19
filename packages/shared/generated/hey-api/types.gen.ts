@@ -28474,6 +28474,192 @@ export type ActivityJobResponse = {
 };
 
 /**
+ * The league's longest-serving active commissioner: the one who created it, unless they stepped down.
+ */
+export type CustomerLeagueOwnerDto = {
+    userId: string;
+    firstName: string;
+    lastName: string;
+};
+
+/**
+ * One league on the root admin's Customers › Leagues grid.
+ */
+export type CustomerLeagueDto = {
+    id: string;
+    /**
+     * The league's code, its web address.
+     */
+    leagueCode: string;
+    name: string;
+    /**
+     * False for a league a root admin inactivated: read-only outside its lifecycle actions.
+     */
+    isActive: boolean;
+    /**
+     * The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+     */
+    plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+    /**
+     * Null when the league has no active commissioner.
+     */
+    owner: {
+        userId: string;
+        firstName: string;
+        lastName: string;
+    } | null;
+    /**
+     * Active members.
+     */
+    memberCount: number;
+    /**
+     * Open and live contests. Contests still being set up are not counted.
+     */
+    activeContestCount: number;
+    /**
+     * When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+     */
+    previewEndsAt: string | null;
+    /**
+     * ISO 8601 datetime string.
+     */
+    createdAt: string;
+};
+
+/**
+ * Every league on the platform, for the Customers › Leagues grid.
+ */
+export type CustomerLeagueListResponse = {
+    /**
+     * Every league, active or not, by name. Never paged.
+     */
+    leagues: Array<{
+        id: string;
+        /**
+         * The league's code, its web address.
+         */
+        leagueCode: string;
+        name: string;
+        /**
+         * False for a league a root admin inactivated: read-only outside its lifecycle actions.
+         */
+        isActive: boolean;
+        /**
+         * The league's plan: FREE, PRO, PREMIUM or PLATINUM.
+         */
+        plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * Null when the league has no active commissioner.
+         */
+        owner: {
+            userId: string;
+            firstName: string;
+            lastName: string;
+        } | null;
+        /**
+         * Active members.
+         */
+        memberCount: number;
+        /**
+         * Open and live contests. Contests still being set up are not counted.
+         */
+        activeContestCount: number;
+        /**
+         * When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.
+         */
+        previewEndsAt: string | null;
+        /**
+         * ISO 8601 datetime string.
+         */
+        createdAt: string;
+    }>;
+};
+
+/**
+ * A league the user is an active member of.
+ */
+export type CustomerUserLeagueDto = {
+    id: string;
+    leagueCode: string;
+    name: string;
+};
+
+/**
+ * One user on the root admin's Customers › Users grid.
+ */
+export type CustomerUserDto = {
+    id: string;
+    email: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    /**
+     * Root admin (true) or member (false). Change it with setUserRootAdmin.
+     */
+    isRootAdmin: boolean;
+    /**
+     * False for a deactivated account: it is signed out and blocked until reactivated.
+     */
+    isActive: boolean;
+    /**
+     * The leagues the user is an active member of, by name. Its length is the user's league count.
+     */
+    leagues: Array<{
+        id: string;
+        leagueCode: string;
+        name: string;
+    }>;
+    /**
+     * When the account was created.
+     */
+    joinedAt: string;
+    /**
+     * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
+     */
+    lastSignInAt: string | null;
+};
+
+/**
+ * Every user on the platform, for the Customers › Users grid.
+ */
+export type CustomerUserListResponse = {
+    /**
+     * Every user, active or not, by last then first name. Never paged.
+     */
+    users: Array<{
+        id: string;
+        email: string;
+        username: string;
+        firstName: string;
+        lastName: string;
+        /**
+         * Root admin (true) or member (false). Change it with setUserRootAdmin.
+         */
+        isRootAdmin: boolean;
+        /**
+         * False for a deactivated account: it is signed out and blocked until reactivated.
+         */
+        isActive: boolean;
+        /**
+         * The leagues the user is an active member of, by name. Its length is the user's league count.
+         */
+        leagues: Array<{
+            id: string;
+            leagueCode: string;
+            name: string;
+        }>;
+        /**
+         * When the account was created.
+         */
+        joinedAt: string;
+        /**
+         * When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.
+         */
+        lastSignInAt: string | null;
+    }>;
+};
+
+/**
  * A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise.
  */
 export type TierProfileWriteRequest = {
@@ -36996,6 +37182,72 @@ export type ListActivityResponses = {
 };
 
 export type ListActivityResponse = ListActivityResponses[keyof ListActivityResponses];
+
+export type ListCustomerLeaguesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/customers/leagues';
+};
+
+export type ListCustomerLeaguesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListCustomerLeaguesError = ListCustomerLeaguesErrors[keyof ListCustomerLeaguesErrors];
+
+export type ListCustomerLeaguesResponses = {
+    /**
+     * Every league on the platform, for the Customers › Leagues grid.
+     */
+    200: CustomerLeagueListResponse;
+};
+
+export type ListCustomerLeaguesResponse = ListCustomerLeaguesResponses[keyof ListCustomerLeaguesResponses];
+
+export type ListCustomerUsersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/customers/users';
+};
+
+export type ListCustomerUsersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListCustomerUsersError = ListCustomerUsersErrors[keyof ListCustomerUsersErrors];
+
+export type ListCustomerUsersResponses = {
+    /**
+     * Every user on the platform, for the Customers › Users grid.
+     */
+    200: CustomerUserListResponse;
+};
+
+export type ListCustomerUsersResponse = ListCustomerUsersResponses[keyof ListCustomerUsersResponses];
 
 export type IngestClientLogsData = {
     body: ClientLogBatch;

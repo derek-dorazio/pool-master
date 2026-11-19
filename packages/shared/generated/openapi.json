@@ -70906,6 +70906,430 @@
         "additionalProperties": false,
         "description": "One background job, as Activity shows it."
       },
+      "CustomerLeagueOwnerDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "firstName",
+          "lastName"
+        ],
+        "additionalProperties": false,
+        "description": "The league's longest-serving active commissioner: the one who created it, unless they stepped down."
+      },
+      "CustomerLeagueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leagueCode": {
+            "type": "string",
+            "description": "The league's code, its web address."
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "False for a league a root admin inactivated: read-only outside its lifecycle actions."
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "description": "The league's plan: FREE, PRO, PREMIUM or PLATINUM."
+          },
+          "owner": {
+            "description": "Null when the league has no active commissioner.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "userId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "userId",
+              "firstName",
+              "lastName"
+            ],
+            "additionalProperties": false
+          },
+          "memberCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Active members."
+          },
+          "activeContestCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Open and live contests. Contests still being set up are not counted."
+          },
+          "previewEndsAt": {
+            "description": "When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 datetime string."
+          }
+        },
+        "required": [
+          "id",
+          "leagueCode",
+          "name",
+          "isActive",
+          "plan",
+          "owner",
+          "memberCount",
+          "activeContestCount",
+          "previewEndsAt",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "description": "One league on the root admin's Customers › Leagues grid."
+      },
+      "CustomerLeagueListResponse": {
+        "type": "object",
+        "properties": {
+          "leagues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "leagueCode": {
+                  "type": "string",
+                  "description": "The league's code, its web address."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "False for a league a root admin inactivated: read-only outside its lifecycle actions."
+                },
+                "plan": {
+                  "type": "string",
+                  "enum": [
+                    "FREE",
+                    "PRO",
+                    "PREMIUM",
+                    "PLATINUM"
+                  ],
+                  "description": "The league's plan: FREE, PRO, PREMIUM or PLATINUM."
+                },
+                "owner": {
+                  "description": "Null when the league has no active commissioner.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "userId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "userId",
+                    "firstName",
+                    "lastName"
+                  ],
+                  "additionalProperties": false
+                },
+                "memberCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Active members."
+                },
+                "activeContestCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Open and live contests. Contests still being set up are not counted."
+                },
+                "previewEndsAt": {
+                  "description": "When the league's gifted plan (the Premium preview) ends; null once it has ended. Extend it with extendLeaguePlanRenewal.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 datetime string."
+                }
+              },
+              "required": [
+                "id",
+                "leagueCode",
+                "name",
+                "isActive",
+                "plan",
+                "owner",
+                "memberCount",
+                "activeContestCount",
+                "previewEndsAt",
+                "createdAt"
+              ],
+              "additionalProperties": false,
+              "description": "One league on the root admin's Customers › Leagues grid."
+            },
+            "description": "Every league, active or not, by name. Never paged."
+          }
+        },
+        "required": [
+          "leagues"
+        ],
+        "additionalProperties": false,
+        "description": "Every league on the platform, for the Customers › Leagues grid."
+      },
+      "CustomerUserLeagueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leagueCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "leagueCode",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A league the user is an active member of."
+      },
+      "CustomerUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "isRootAdmin": {
+            "type": "boolean",
+            "description": "Root admin (true) or member (false). Change it with setUserRootAdmin."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "False for a deactivated account: it is signed out and blocked until reactivated."
+          },
+          "leagues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "leagueCode": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "leagueCode",
+                "name"
+              ],
+              "additionalProperties": false,
+              "description": "A league the user is an active member of."
+            },
+            "description": "The leagues the user is an active member of, by name. Its length is the user's league count."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the account was created."
+          },
+          "lastSignInAt": {
+            "description": "When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "username",
+          "firstName",
+          "lastName",
+          "isRootAdmin",
+          "isActive",
+          "leagues",
+          "joinedAt",
+          "lastSignInAt"
+        ],
+        "additionalProperties": false,
+        "description": "One user on the root admin's Customers › Users grid."
+      },
+      "CustomerUserListResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "isRootAdmin": {
+                  "type": "boolean",
+                  "description": "Root admin (true) or member (false). Change it with setUserRootAdmin."
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "False for a deactivated account: it is signed out and blocked until reactivated."
+                },
+                "leagues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "leagueCode": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "leagueCode",
+                      "name"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A league the user is an active member of."
+                  },
+                  "description": "The leagues the user is an active member of, by name. Its length is the user's league count."
+                },
+                "joinedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the account was created."
+                },
+                "lastSignInAt": {
+                  "description": "When the user last signed in, signed up or was given a session. Null if they have not since sign-ins were first recorded.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "email",
+                "username",
+                "firstName",
+                "lastName",
+                "isRootAdmin",
+                "isActive",
+                "leagues",
+                "joinedAt",
+                "lastSignInAt"
+              ],
+              "additionalProperties": false,
+              "description": "One user on the root admin's Customers › Users grid."
+            },
+            "description": "Every user, active or not, by last then first name. Never paged."
+          }
+        },
+        "required": [
+          "users"
+        ],
+        "additionalProperties": false,
+        "description": "Every user on the platform, for the Customers › Users grid."
+      },
       "TierProfileWriteRequest": {
         "type": "object",
         "properties": {
@@ -87598,6 +88022,110 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/leagues": {
+      "get": {
+        "operationId": "listCustomerLeagues",
+        "summary": "List every league for the Customers grid",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Every league on the platform, active or not, by name: never paged and never searched on the server, since the grid filters on the client. Each row carries its plan, owner (its longest-serving active commissioner), active member and open-or-live contest counts, and when its Premium preview ends. Read from four queries, however many leagues. Change the plan with updateLeaguePlan and the preview with extendLeaguePlanRenewal. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.",
+        "responses": {
+          "200": {
+            "description": "Every league on the platform, for the Customers › Leagues grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerLeagueListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/users": {
+      "get": {
+        "operationId": "listCustomerUsers",
+        "summary": "List every user for the Customers grid",
+        "tags": [
+          "Customers"
+        ],
+        "description": "Every user on the platform, active or not, by last then first name: never paged and never searched on the server, since the grid filters on the client. Each row carries its role, status, the leagues it is an active member of, when it joined and when it last signed in. Read from two queries, however many users. Change the name with updateUserProfile and the role with setUserRootAdmin. Root admin only. More than 60 reads a minute from one address answer 429 CUSTOMERS_RATE_LIMITED.",
+        "responses": {
+          "200": {
+            "description": "Every user on the platform, for the Customers › Users grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerUserListResponse"
                 }
               }
             }

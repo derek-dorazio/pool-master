@@ -145,6 +145,14 @@ export class PrismaUserRepository implements UserRepository {
     return mapToUser(row);
   }
 
+  async recordSignIn(id: string, at: Date): Promise<void> {
+    // `updateMany`, so a user deleted meanwhile is no error: there is nobody left to stamp.
+    await forgettingReads(ReadMemoKey.user, () => this.prisma.user.updateMany({
+      where: { id },
+      data: { lastSignInAt: at },
+    }));
+  }
+
   /**
    * A field left out is untouched; a nullable field set to `null` is cleared.
    *

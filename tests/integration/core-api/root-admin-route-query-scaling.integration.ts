@@ -19,6 +19,8 @@ import {
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ActivityListResponseSchema,
+  CustomerLeagueListResponseSchema,
+  CustomerUserListResponseSchema,
   SettingsChangeListSchema,
   SettingsGroupListSchema,
   SettingsGroupSchema,
@@ -341,6 +343,43 @@ async function seedSportLeagueOverviews(leagues: number) {
   return { suffix, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
+/**
+ * `leagues` leagues, each with a commissioner, a member and an open contest, and a root admin:
+ * every row of the Customers › Leagues grid has an owner and counts to read.
+ */
+async function seedCustomerLeagues(leagues: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  for (let index = 0; index < leagues; index += 1) {
+    const commissioner = await createTestUser({ displayName: `Owner ${suffix}${String(index)}` });
+    const member = await createTestUser({ displayName: `Member ${suffix}${String(index)}` });
+    const league = await prisma.league.create({
+      data: { cupName: 'Customers Cup', leagueCode: `CU${suffix.toUpperCase()}${String(index)}`, name: `Customers League ${suffix} ${String(index)}` },
+    });
+    await prisma.leagueMembership.createMany({
+      data: [
+        { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER', status: 'ACTIVE' },
+        { leagueId: league.id, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE' },
+      ],
+    });
+  }
+  return createTestUser({ isRootAdmin: true });
+}
+
+/** `users` users, each in a league of their own, and a root admin: every Users row has leagues to read. */
+async function seedCustomerUsers(users: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  for (let index = 0; index < users; index += 1) {
+    const user = await createTestUser({ displayName: `Customer ${suffix}${String(index)}` });
+    const league = await prisma.league.create({
+      data: { cupName: 'Customers Cup', leagueCode: `CV${suffix.toUpperCase()}${String(index)}`, name: `Customer League ${suffix} ${String(index)}` },
+    });
+    await prisma.leagueMembership.create({ data: { leagueId: league.id, userId: user.user.id, role: 'COMMISSIONER', status: 'ACTIVE' } });
+  }
+  return createTestUser({ isRootAdmin: true });
+}
+
 /** A synced sport league of its own with `events` events, each with a field, a round, a field run and, every other one, overdue results (#1865). */
 async function seedLeagueEventOverviews(events: number) {
   const prisma = getPrisma();
@@ -438,6 +477,31 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         }
         return rows.length;
       },
+    });
+  });
+
+  it('GET every league for Customers: the same statements for 2 leagues, each with an owner and a member, as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/customers/leagues',
+      seed: seedCustomerLeagues,
+      call: (rootAdmin) => get('/api/v1/customers/leagues', rootAdmin),
+      rowsShown: (response) => {
+        const { leagues } = okBody(response, CustomerLeagueListResponseSchema);
+        for (const league of leagues) {
+          expect(league.memberCount).toBe(2);
+          expect(league.owner).not.toBeNull();
+        }
+        return leagues.length;
+      },
+    });
+  });
+
+  it('GET every user for Customers: the same statements for 2 users, each in a league, as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/customers/users',
+      seed: seedCustomerUsers,
+      call: (rootAdmin) => get('/api/v1/customers/users', rootAdmin),
+      rowsShown: (response) => okBody(response, CustomerUserListResponseSchema).users.filter((user) => user.leagues.length === 1).length,
     });
   });
 

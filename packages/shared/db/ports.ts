@@ -170,6 +170,12 @@ export interface UserRepository {
    * surface offers.
    */
   update(id: string, updates: UserUpdate): Promise<User>;
+
+  /**
+   * Stamps when the user last started a session (#1882): signing in, signing up, or a session
+   * issued for them. A refresh is not a sign-in and does not call this.
+   */
+  recordSignIn(id: string, at: Date): Promise<void>;
 }
 
 // --- League ---
