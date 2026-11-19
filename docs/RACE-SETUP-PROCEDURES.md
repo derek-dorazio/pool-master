@@ -83,8 +83,8 @@ before release even when every contest on the race will be a random draw.
 
 ### Release
 
-On the race's page, the Workflow card's *Release for contests*, then confirm. The button
-stays disabled, with a list of what is missing, until the field has horses, every horse
+On the race's page, the *Release ⤢* chip beside its name opens the Release checks; *Release
+now*, then confirm. The button stays disabled, with each check marked ✓ or ✗, until the field has horses, every horse
 still in it has a tier and a price, and no tier is empty ("Tier 3 has no horses": move horses
 into it or delete it, since no entry could pick from it). Release moves the race to Scheduled, commissioners can
 pick it, and **tiers and prices lock for good**. Odds, seeds and scratches stay editable.
@@ -139,7 +139,7 @@ A scratched horse needs no row in the result. Once the result is official it sco
 
 ### At post time
 
-On the Workflow card, *Move to In Progress* and confirm. Open contests on the race go live.
+From the race's ⚙, *Move to In Progress* and confirm. Open contests on the race go live.
 
 ### The finishing order
 
@@ -181,7 +181,7 @@ need none.
 
 ### Complete
 
-Once the official result is in and checked, *Move to Completed* on the Workflow card. This
+Once the official result is in and checked, *Move to Completed* from the race's ⚙. This
 settles every contest on the race and cannot be undone: a correction entered after it updates
 the race's result but not the settled standings.
 

@@ -22,7 +22,7 @@ export class PrismaSportEventContestReader implements SportEventContestReader {
             name: true,
             status: true,
             createdAt: true,
-            league: { select: { id: true, name: true } },
+            league: { select: { id: true, leagueCode: true, name: true } },
             configuration: { select: { template: { select: { id: true, name: true } } } },
           },
         },

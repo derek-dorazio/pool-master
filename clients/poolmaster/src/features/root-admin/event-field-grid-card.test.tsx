@@ -53,7 +53,6 @@ function renderCard(props: Partial<Parameters<typeof EventFieldGridCard>[0]> = {
         <EventFieldGridCard
           entries={[entry()]}
           eventId="evt-1"
-          fieldError={null}
           fieldLoading={false}
           sport="GOLF"
           sportLeagueNoun={{ one: 'tour', many: 'tours' }}
@@ -106,7 +105,6 @@ describe('pool-master-za4 EventFieldGridCard', () => {
             eventId="evt-1"
             sport="GOLF"
             sportLeagueNoun={{ one: 'tour', many: 'tours' }}
-            fieldError={null}
             fieldLoading={false}
           />
         </MemoryRouter>
@@ -131,7 +129,6 @@ describe('pool-master-za4 EventFieldGridCard', () => {
             eventId="evt-2"
             sport="GOLF"
             sportLeagueNoun={{ one: 'tour', many: 'tours' }}
-            fieldError={null}
             fieldLoading={false}
           />
         </MemoryRouter>

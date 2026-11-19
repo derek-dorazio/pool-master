@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
+import { EventRoundsTab } from './event-rounds-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import {
   fieldEntryFixture,
   participantFixture,
@@ -131,19 +132,18 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/results']}>
+      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/rounds']}>
         <Routes>
-          <Route
-            element={<RootAdminSportEventResultsPage />}
-            path="/manage/sports/:sport/events/:eventId/results"
-          />
+          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventRoundsTab />} path="rounds" />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-describe('pool-master-r11 RootAdminSportEventResultsPage for a golf event', () => {
+describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -343,7 +343,7 @@ describe('pool-master-r11 RootAdminSportEventResultsPage for a golf event', () =
     expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeDisabled();
   });
 
-  it('pool-master-r11 surfaces a round-schedule load error without blocking the tools', async () => {
+  it('pool-master-r11 surfaces a round-schedule load error in the Rounds grid and the scores panel without blocking the tools', async () => {
     seed();
     listEventRoundsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL', message: 'Round schedule offline' } },
@@ -351,20 +351,9 @@ describe('pool-master-r11 RootAdminSportEventResultsPage for a golf event', () =
     });
     renderPage();
 
-    expect(await screen.findByText('Round schedule offline')).toBeInTheDocument();
+    // Both the Rounds grid and the scores panel read the schedule, and each says it failed.
+    expect(await screen.findAllByText('Round schedule offline')).toHaveLength(2);
     // Rounds fall back to numbered options from tournament.rounds.
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
-  });
-
-  it('pool-master-r11 surfaces the tournament load error', async () => {
-    getEventMock.mockResolvedValue({
-      error: { error: { code: 'NOT_FOUND', message: 'No such tournament' } },
-      response: { status: 404 },
-    });
-    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    renderPage();
-
-    expect(await screen.findByText('No such tournament')).toBeInTheDocument();
   });
 });

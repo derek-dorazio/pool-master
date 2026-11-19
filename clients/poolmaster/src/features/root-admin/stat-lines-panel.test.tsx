@@ -5,7 +5,8 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
+import { EventRoundsTab } from './event-rounds-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture } from './sport-test-fixtures';
 
 // #935: a stat pool event's results page is its box scores, one game at a time, and an admin
@@ -76,16 +77,18 @@ function renderPage(event = worldSeries) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/baseball/events/evt-1/results']}>
+      <MemoryRouter initialEntries={['/manage/sports/baseball/events/evt-1/rounds']}>
         <Routes>
-          <Route element={<RootAdminSportEventResultsPage />} path="/manage/sports/:sport/events/:eventId/results" />
+          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventRoundsTab />} path="rounds" />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-describe('RootAdminSportEventResultsPage for a stat pool event', () => {
+describe('The Rounds and matches tab for a stat pool event', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);

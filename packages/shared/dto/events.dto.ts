@@ -314,6 +314,7 @@ export const SportEventContestDtoSchema = z.object({
   name: z.string().describe('The contest\'s name, as its league named it.'),
   status: z.enum(ContestStatus).describe('The contest\'s lifecycle status: DRAFT is shown as Set up, OPEN as Open, ACTIVE as Live, COMPLETED as Final.'),
   leagueId: z.uuid().describe('The customer league that runs the contest.'),
+  leagueCode: z.string().describe('That league\'s code, which its pages\' links carry.'),
   leagueName: z.string().describe('That league\'s name.'),
   contestTemplateId: z.uuid().nullable().describe('The contest template the contest was set up from; null for one set up without a template.'),
   contestTemplateName: z.string().nullable().describe('That template\'s name; null with contestTemplateId.'),

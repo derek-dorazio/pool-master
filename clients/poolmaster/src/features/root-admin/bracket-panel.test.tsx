@@ -6,7 +6,8 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
+import { EventRoundsTab } from './event-rounds-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // MSW hands path parameters over as strings, so a match number reads '1'.
@@ -63,7 +64,11 @@ const {
   };
 });
 
+// The Rounds and matches tab reads the rounds beside the bracket; an empty schedule keeps its grid quiet.
+const listEventRoundsMock = vi.fn(() => ({ data: { rounds: [] } }));
+
 bindApiMocks({
+  listEventRounds: listEventRoundsMock,
   getEvent: getEventMock,
   getEventBracket: getEventBracketMock,
   listEventParticipants: listEventParticipantsMock,
@@ -149,16 +154,18 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/basketball/events/evt-1/results']}>
+      <MemoryRouter initialEntries={['/manage/sports/basketball/events/evt-1/rounds']}>
         <Routes>
-          <Route element={<RootAdminSportEventResultsPage />} path="/manage/sports/:sport/events/:eventId/results" />
+          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventRoundsTab />} path="rounds" />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
+describe('The Rounds and matches tab for a basketball tournament', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);

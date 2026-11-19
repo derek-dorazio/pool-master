@@ -7,12 +7,10 @@ import type {
   GolfRoundScoreUploadRequest,
   ParticipantDto,
   SportLeagueRankingUploadRequest,
-  ReleaseCheckDto,
   SportEventDto,
   SportEventParticipantDto,
-  SportEventRoundDto,
 } from '@/lib/api';
-import { SportEventStatus, assertNever, blocksManualRelease, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
+import { SportEventStatus, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -79,175 +77,9 @@ export function sportEventStatusTone(status: SportEventDtoStatus): BadgeTone {
   return 'neutral';
 }
 
-// --- Workflow rail lifecycle stages (plans/124 §6.3 block 2, #431) ---
-
-export type EventLifecycleStageKey =
-  | 'DRAFT'
-  | 'RELEASED'
-  | 'LIVE'
-  | 'COMPLETED';
-
-export const EVENT_LIFECYCLE_STAGES: ReadonlyArray<{
-  key: EventLifecycleStageKey;
-  label: string;
-}> = [
-  { key: 'DRAFT', label: 'Draft' },
-  { key: 'RELEASED', label: 'Released for contests' },
-  { key: 'LIVE', label: 'Live' },
-  { key: 'COMPLETED', label: 'Completed' },
-];
-
-export type EventLifecycleStage = {
-  key: EventLifecycleStageKey;
-  label: string;
-  index: number;
-};
-
-/** The rail stage each on-rail status sits at; Cancelled and Postponed are off the rail. */
-const RAIL_STAGE_BY_STATUS: Partial<Record<SportEventDtoStatus, EventLifecycleStageKey>> = {
-  DRAFT: 'DRAFT',
-  SCHEDULED: 'RELEASED',
-  IN_PROGRESS: 'LIVE',
-  COMPLETED: 'COMPLETED',
-};
-
-/**
- * Which rail stage a tournament currently sits at, straight from its status. Returns null
- * for CANCELLED / POSTPONED — those are off the Draft → Completed rail and the caller shows
- * a plain status note instead.
- */
-export function resolveEventLifecycleStage(status: SportEventDtoStatus): EventLifecycleStage | null {
-  const key = RAIL_STAGE_BY_STATUS[status];
-  const index = EVENT_LIFECYCLE_STAGES.findIndex((stage) => stage.key === key);
-  if (index < 0) {
-    return null;
-  }
-  return { key: EVENT_LIFECYCLE_STAGES[index].key, label: EVENT_LIFECYCLE_STAGES[index].label, index };
-}
-
-// --- Release (#431) ---
-
-/** A draft event's failed ready checks, worded: what stops a root admin's release, and what only the automatic release waits for. */
-export interface FailedReleaseChecks {
-  /** Each refuses "Release for contests" until fixed. */
-  manual: string[];
-  /** The automatic release waits for these too; the button does not (#1823). */
-  automaticOnly: string[];
-}
-
-const NO_FAILED_CHECKS: FailedReleaseChecks = { manual: [], automaticOnly: [] };
-
-/**
- * What still stops a draft event's release, one sentence per failed ready check, in the sport's
- * words. The server judges the checks (#1823) and the event read carries them; this only words
- * them and sorts them by `blocksManualRelease`. Nothing once the event is released, or when every
- * check passes.
- */
-export function describeFailedReleaseChecks(
-  tournament: Pick<SportEventDto, 'sport' | 'status' | 'releaseChecks'>,
-): FailedReleaseChecks {
-  if (tournament.status !== SportEventStatus.DRAFT) {
-    return NO_FAILED_CHECKS;
-  }
-  // Without the checks nothing says the event is ready, so the release waits for them.
-  if (tournament.releaseChecks === null) {
-    return { manual: ['Its ready checks have not loaded yet.'], automaticOnly: [] };
-  }
-  const { participant } = getSportDefinition(tournament.sport).vocabulary;
-  const some = (count: number): string => (count === 1 ? `1 active ${participant.one}` : `${count} active ${participant.many}`);
-  const words = (check: ReleaseCheckDto): string[] => {
-    switch (check.key) {
-      case 'NOT_STARTED':
-        return ['Its start time has passed, so it can no longer be released.'];
-      case 'ROUNDS_SCHEDULED':
-        return ['Schedule its rounds.'];
-      case 'FIELD_LOADED':
-        return ['Load the field.'];
-      case 'TIERS_ASSIGNED':
-        return [check.value === 1 ? `Put the ${some(1)} without a tier into a tier.` : `Put the ${some(check.value)} without a tier into tiers.`];
-      case 'TIERS_FILLED':
-        return check.value.map((label) => `${label} has no ${participant.many}. Move ${participant.many} into it or delete it.`);
-      case 'PRICES_ASSIGNED':
-        return [check.value === null ? 'Assign prices on the Tiers page.' : `Price the ${some(check.value)} without a price.`];
-      case 'BRACKET_COMPLETE':
-        return check.value.map((missing) => `${missing.charAt(0).toUpperCase()}${missing.slice(1)}.`);
-      case 'CONTEST_SETUPS_ON':
-        return ['Turn on a contest setup for its sport league.'];
-      default:
-        return assertNever(check);
-    }
-  };
-  const failed = tournament.releaseChecks.filter((check) => !check.passed);
-  return {
-    manual: failed.filter((check) => blocksManualRelease(check.key)).flatMap(words),
-    automaticOnly: failed.filter((check) => !blocksManualRelease(check.key)).flatMap(words),
-  };
-}
-
 /** Tiers and prices lock when the tournament is released (#431). */
 export function eventTiersLocked(status: SportEventDtoStatus): boolean {
   return status !== 'DRAFT';
-}
-
-// --- Auto-lifecycle hint (plans/124 §3.6 / §6.3) ---
-
-export type EventAutoTransition = {
-  toStatus: Extract<SportEventDtoStatus, 'IN_PROGRESS' | 'COMPLETED'>;
-  at: string;
-};
-
-function sortRoundsAscending(
-  rounds: readonly SportEventRoundDto[],
-): SportEventRoundDto[] {
-  return [...rounds].sort((left, right) => left.roundNumber - right.roundNumber);
-}
-
-function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
-  for (const value of values) {
-    if (value !== null && value !== undefined && value !== '') {
-      return value;
-    }
-  }
-  return null;
-}
-
-/**
- * The next transition the background scheduler (§3.6) will apply on its own, and
- * roughly when — mirrors the scheduler's own comparison: SCHEDULED → IN_PROGRESS
- * at round 1's scheduled date (falling back to the tournament start), IN_PROGRESS
- * → COMPLETED at the last round's scheduled end (falling back to the tournament
- * end). Returns null when auto-lifecycle is off, the status is terminal, or no
- * date is available to compare against.
- */
-export function deriveEventAutoTransition(input: {
-  status: SportEventDtoStatus;
-  autoLifecycleEnabled: boolean;
-  startDate: string;
-  endDate: string | null;
-  rounds: readonly SportEventRoundDto[];
-}): EventAutoTransition | null {
-  if (!input.autoLifecycleEnabled) {
-    return null;
-  }
-
-  const ordered = sortRoundsAscending(input.rounds);
-
-  if (input.status === SportEventStatus.SCHEDULED) {
-    const at = firstNonEmpty(ordered[0]?.scheduledDate, input.startDate);
-    return at ? { toStatus: 'IN_PROGRESS', at } : null;
-  }
-
-  if (input.status === SportEventStatus.IN_PROGRESS) {
-    const lastRound = ordered.at(-1);
-    const at = firstNonEmpty(
-      lastRound?.scheduledEndAt,
-      input.endDate,
-      lastRound?.scheduledDate,
-    );
-    return at ? { toStatus: 'COMPLETED', at } : null;
-  }
-
-  return null;
 }
 
 // --- Readiness (plans/124 §6.3 tournament list) ---

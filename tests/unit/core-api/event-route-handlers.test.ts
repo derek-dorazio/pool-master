@@ -66,7 +66,7 @@ const EVENT_OVERVIEW: SportEventOverview = {
   tierOrderCoversField: true,
   fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
 };
-const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
+const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
 
 function fakes() {
   const fn = <T>(value: T) => jest.fn((..._args: unknown[]) => Promise.resolve(value));
@@ -343,7 +343,7 @@ describe('the contests on an event (#1889)', () => {
 
     expect(services.contests.listContests).toHaveBeenCalledWith(EVENT_ID);
     expect(listed.body).toEqual({
-      contests: [{ id: 'c1', name: 'Sentry pick 6', status: 'OPEN', leagueId: 'l1', leagueName: 'Office Hoops', contestTemplateId: null, contestTemplateName: null, entryCount: 2, createdAt: ISO }],
+      contests: [{ id: 'c1', name: 'Sentry pick 6', status: 'OPEN', leagueId: 'l1', leagueCode: 'HOOPS', leagueName: 'Office Hoops', contestTemplateId: null, contestTemplateName: null, entryCount: 2, createdAt: ISO }],
     });
   });
 });

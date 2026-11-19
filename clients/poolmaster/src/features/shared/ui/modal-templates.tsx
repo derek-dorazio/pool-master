@@ -444,6 +444,8 @@ export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
     isPending?: boolean;
     pendingLabel?: string;
     testId?: string;
+    /** Held off, such as a release while a check it needs still fails. */
+    isDisabled?: boolean;
   };
 };
 
@@ -474,7 +476,7 @@ export function ReadOnlyDetailModal({
           {action ? (
             <Button
               data-testid={action.testId}
-              disabled={action.isPending}
+              disabled={action.isPending || action.isDisabled}
               onClick={action.onClick}
               type="button"
               variant="primary"

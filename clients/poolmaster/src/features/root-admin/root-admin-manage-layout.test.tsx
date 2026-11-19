@@ -9,8 +9,8 @@ function LocationProbe() {
 }
 
 function EntityHomeProbe() {
-  useManageBreadcrumbOverride('evt-1', 'Target Event');
-  return <h1>Target Event</h1>;
+  useManageBreadcrumbOverride('golf-tiered-pick-6', 'Tiered Pick 6');
+  return <h1>Tiered Pick 6</h1>;
 }
 
 function renderManage(path: string) {
@@ -24,10 +24,11 @@ function renderManage(path: string) {
           <Route element={<LocationProbe />} path="sports" />
           <Route element={<div>Plans body</div>} path="plans" />
           <Route element={<div>Detail body</div>} path="content-configuration/:templateKey" />
+          <Route element={<EntityHomeProbe />} path="content-configuration/:templateKey/home" />
           <Route element={<div>Providers body</div>} path="providers" />
           <Route element={<div>League page body</div>} path="sports/golf/leagues/:leagueId/participants" />
           <Route element={<div>Event field body</div>} path="sports/golf/events/:eventId/field" />
-          <Route element={<EntityHomeProbe />} path="sports/golf/events/:eventId" />
+          <Route element={<div>New participant body</div>} path="sports/golf/participants/new" />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -84,12 +85,12 @@ describe('RootAdminManageLayout', () => {
   });
 
   it('shows a page under a sport the trail from the sport, skipping the sport\'s old list page', () => {
-    renderManage('/manage/sports/golf/events/evt-1/field');
+    renderManage('/manage/sports/golf/participants/new');
 
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
     expect(within(breadcrumbNav).getByRole('link', { name: 'Golf' })).toHaveAttribute('href', '/manage/sports/golf');
-    expect(within(breadcrumbNav).queryByText('Tournaments')).not.toBeInTheDocument();
-    expect(within(breadcrumbNav).getByText('Field')).toHaveAttribute('aria-current', 'page');
+    expect(within(breadcrumbNav).queryByText('Golfers')).not.toBeInTheDocument();
+    expect(screen.getByText('New participant body')).toBeInTheDocument();
   });
 
   it('leaves a League page\'s trail to its own header', () => {
@@ -97,6 +98,13 @@ describe('RootAdminManageLayout', () => {
 
     expect(screen.queryByLabelText('Manage breadcrumbs')).not.toBeInTheDocument();
     expect(screen.getByText('League page body')).toBeInTheDocument();
+  });
+
+  it('leaves an Event page\'s trail to its own header', () => {
+    renderManage('/manage/sports/golf/events/evt-1/field');
+
+    expect(screen.queryByLabelText('Manage breadcrumbs')).not.toBeInTheDocument();
+    expect(screen.getByText('Event field body')).toBeInTheDocument();
   });
 
   it('shows a deep page the trail back up to its tab, starting at the tab', () => {
@@ -123,11 +131,10 @@ describe('RootAdminManageLayout', () => {
   });
 
   it('names an entity in the trail by the name its page gives', () => {
-    renderManage('/manage/sports/golf/events/evt-1');
+    renderManage('/manage/content-configuration/golf-tiered-pick-6/home');
 
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const breadcrumbNav = screen.getByLabelText('Manage breadcrumbs');
-    expect(within(breadcrumbNav).getByRole('link', { name: 'Golf' })).toHaveAttribute('href', '/manage/sports/golf');
-    expect(within(breadcrumbNav).getByText('Target Event')).toHaveAttribute('aria-current', 'page');
+    expect(within(breadcrumbNav).getByRole('link', { name: 'Tiered Pick 6' })).toHaveAttribute('href', '/manage/content-configuration/golf-tiered-pick-6');
   });
 });

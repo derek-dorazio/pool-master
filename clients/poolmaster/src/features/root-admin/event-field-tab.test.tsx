@@ -5,7 +5,9 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { Toaster } from '@/features/shared/ui';
-import { RootAdminSportEventFieldPage } from './root-admin-sport-event-field-page';
+import { EventFieldTab } from './event-field-tab';
+import { EventToolsTab } from './event-tools-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import {
   fieldEntryFixture,
   participantFixture,
@@ -136,18 +138,18 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0]; entrie
   });
 }
 
-function renderPage() {
+function renderPage({ tab = 'field', isSynced = false }: { tab?: 'field' | 'tools'; isSynced?: boolean } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/golf/events/evt-1/field']}>
+      <MemoryRouter initialEntries={[`/manage/sports/golf/events/evt-1/${tab}`]}>
         <Routes>
-          <Route
-            element={<RootAdminSportEventFieldPage />}
-            path="/manage/sports/:sport/events/:eventId/field"
-          />
+          <Route element={<EventTabOutlet isSynced={isSynced} />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventFieldTab />} path="field" />
+            <Route element={<EventToolsTab />} path="tools" />
+          </Route>
         </Routes>
         <Toaster />
       </MemoryRouter>
@@ -155,7 +157,7 @@ function renderPage() {
   );
 }
 
-describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
+describe('pool-master-za4 the Event page\'s Field tab', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -174,15 +176,6 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
   });
 
-  it('shows the shared tournament header with Field marked as its current tab, in place of a back link', async () => {
-    seed();
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-sport-event-identity')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sport-event-menu-field')).toHaveAttribute('aria-current', 'page');
-    expect(screen.queryByTestId('root-admin-event-field-back')).not.toBeInTheDocument();
-  });
-
   it('pool-master-za4 shows the Load Participant Field action only for a linked tournament', async () => {
     seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
     renderPage();
@@ -191,12 +184,22 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
+  it('leaves Load Participant Field off a synced event, whose field sync row offers Sync now instead', async () => {
+    seed({ tournament: { syncScope: 'SCORES_ONLY' }, entries: [] });
+    renderPage({ isSynced: true });
+
+    expect(await screen.findByTestId('root-admin-event-field-add')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
+  });
+
   it('warns that hand-set rankings, odds, seeds and withdrawals are replaced before refreshing a loaded field, and refreshes only on confirm', async () => {
     seed({ tournament: { syncScope: 'SCORES_ONLY' } });
     refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
     renderPage();
 
-    const refresh = await screen.findByTestId('root-admin-event-field-refresh');
+    // The action's words follow the field, so they are read once it has loaded.
+    await screen.findByText('Rory McIlroy');
+    const refresh = screen.getByTestId('root-admin-event-field-refresh');
     expect(refresh).toHaveTextContent('Refresh Participant Field');
     await userEvent.click(refresh);
 
@@ -212,17 +215,6 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
         path: { eventId: 'evt-1' },
       }),
     );
-  });
-
-  it('pool-master-za4 surfaces the tournament load error', async () => {
-    getEventMock.mockResolvedValue({
-      error: { error: { code: 'NOT_FOUND', message: 'No such tournament' } },
-      response: { status: 404 },
-    });
-    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
-    renderPage();
-
-    expect(await screen.findByText('No such tournament')).toBeInTheDocument();
   });
 
   it('pool-master-za4 collects a ranking edit and an activate toggle into one save call', async () => {
@@ -283,18 +275,14 @@ describe('pool-master-za4 RootAdminSportEventFieldPage', () => {
     expect(screen.getByTestId('root-admin-event-field-save')).toBeDisabled();
   });
 
-  it('opens the bulk upload card from the Bulk upload action, above the field grid, and closes it again', async () => {
+  it('shows the field\'s bulk upload on the Tools tab, open and without a Close', async () => {
     seed();
-    renderPage();
+    renderPage({ tab: 'tools' });
 
-    await userEvent.click(await screen.findByTestId('root-admin-event-field-upload-open'));
-
-    expect(screen.getByTestId('root-admin-event-field-upload-card')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-event-field-upload-card')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-field-upload-textarea')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-event-field-upload-open')).toBeDisabled();
-
-    await userEvent.click(screen.getByTestId('root-admin-event-field-upload-close'));
-    expect(screen.queryByTestId('root-admin-event-field-upload-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-upload-close')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-upload-open')).not.toBeInTheDocument();
   });
 
   it('pool-master-za4 seeds the field from the league roster behind a confirmation', async () => {

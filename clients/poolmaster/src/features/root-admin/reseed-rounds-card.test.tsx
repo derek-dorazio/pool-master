@@ -6,7 +6,8 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RoundMatchupDto, SportEventDto, SportEventMatchDto, SportLeagueDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
-import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
+import { EventRoundsTab } from './event-rounds-tab';
+import { EventTabOutlet } from './test/event-tab-outlet';
 import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // #722, #785: the NFL reseeds after Wild Card weekend. The admin asks the server to suggest the
@@ -160,9 +161,11 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/sports/american-football/events/evt-1/results']}>
+      <MemoryRouter initialEntries={['/manage/sports/american-football/events/evt-1/rounds']}>
         <Routes>
-          <Route element={<RootAdminSportEventResultsPage />} path="/manage/sports/:sport/events/:eventId/results" />
+          <Route element={<EventTabOutlet />} path="/manage/sports/:sport/events/:eventId">
+            <Route element={<EventRoundsTab />} path="rounds" />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

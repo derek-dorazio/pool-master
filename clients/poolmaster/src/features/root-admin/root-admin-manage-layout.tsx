@@ -16,7 +16,7 @@ type BreadcrumbOverrides = Record<string, string>;
 /**
  * The trail from the open tab down to the page, shown only on a page deeper than its tab. Under
  * `sports/<sport>/` it starts at the sport and skips the sport's old list pages, which now open
- * Sports; a League page draws its own trail in its header, so it gets none here.
+ * Sports; a League or Event page draws its own trail in its header, so it gets none here.
  */
 function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   const segments = pathname.split("/").filter(Boolean);
@@ -28,7 +28,8 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
 
   const relevantSegments = segments.slice(manageIndex + 1);
   const underSport = relevantSegments[0] === "sports" && relevantSegments.length > 2;
-  if (underSport && relevantSegments[2] === "leagues" && relevantSegments.length > 3 && relevantSegments[3] !== "new") {
+  const ownsTrail = relevantSegments[2] === "leagues" || relevantSegments[2] === "events";
+  if (underSport && ownsTrail && relevantSegments.length > 3 && relevantSegments[3] !== "new") {
     return [];
   }
   // Customers' own tabs name the view, so its pages show no trail.

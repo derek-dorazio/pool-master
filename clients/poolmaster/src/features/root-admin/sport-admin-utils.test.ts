@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 import {
-  deriveEventAutoTransition,
   deriveSportEventReadiness,
-  describeFailedReleaseChecks,
   formatSportEventStatus,
   syncScopeLabel,
   syncScopeTone,
@@ -11,22 +9,12 @@ import {
   participantFieldActionLabel,
   parseRosterUpload,
   parseGolfRoundScoreUpload,
-  resolveEventLifecycleStage,
   golfRoundScoreRows,
   sportProviderOptions,
 } from './sport-admin-utils';
-import { fieldEntryFixture, participantFixture, passingReleaseChecks } from './sport-test-fixtures';
-import type { ReleaseCheckDto, SportEventRoundDto } from '@/lib/api';
+import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
 // plans/124 §6.3/§6.4 — pure helpers backing the golf admin keystone screens (pool-master-3dg).
-
-function round(
-  roundNumber: number,
-  scheduledDate: string,
-  scheduledEndAt = '',
-): SportEventRoundDto {
-  return { id: `round-${roundNumber}`, sportEventId: 'event-1', roundNumber, scheduledDate, scheduledEndAt, status: 'SCHEDULED', resultCount: 0, completedAt: null };
-}
 
 describe('pool-master-3dg sport-admin-utils: sync scope', () => {
   it('pool-master-3dg maps every sync scope to a label and tone', () => {
@@ -53,123 +41,7 @@ describe('pool-master-3dg sport-admin-utils: status formatting', () => {
   });
 });
 
-describe('sport-admin-utils: resolveEventLifecycleStage', () => {
-  it('puts CANCELLED and POSTPONED off the rail (null)', () => {
-    expect(resolveEventLifecycleStage('CANCELLED')).toBeNull();
-    expect(resolveEventLifecycleStage('POSTPONED')).toBeNull();
-  });
-
-  it('places DRAFT, SCHEDULED, IN_PROGRESS and COMPLETED on Draft, Released, Live and Completed in order', () => {
-    expect(resolveEventLifecycleStage('DRAFT')).toEqual({ key: 'DRAFT', label: 'Draft', index: 0 });
-    expect(resolveEventLifecycleStage('SCHEDULED')?.key).toBe('RELEASED');
-    expect(resolveEventLifecycleStage('IN_PROGRESS')?.index).toBe(2);
-    expect(resolveEventLifecycleStage('COMPLETED')?.key).toBe('COMPLETED');
-  });
-});
-
 const STANDARD_PRICING = { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
-
-describe('sport-admin-utils: describeFailedReleaseChecks', () => {
-  const ready = { sport: 'GOLF' as const, status: 'DRAFT' as const, releaseChecks: passingReleaseChecks() };
-  const failing = (check: ReleaseCheckDto, sport: 'GOLF' | 'AUTO_RACING' = 'GOLF') => describeFailedReleaseChecks({ ...ready, sport, releaseChecks: passingReleaseChecks(check) });
-  const blocking = (check: ReleaseCheckDto, sport?: 'GOLF' | 'AUTO_RACING') => failing(check, sport).manual;
-  const waiting = (check: ReleaseCheckDto) => failing(check).automaticOnly;
-
-  it('lists nothing for a draft whose every ready check passes', () => {
-    expect(describeFailedReleaseChecks(ready)).toEqual({ manual: [], automaticOnly: [] });
-  });
-
-  it('lists nothing once the event is released, whatever its checks said', () => {
-    expect(describeFailedReleaseChecks({ ...ready, status: 'SCHEDULED', releaseChecks: null })).toEqual({ manual: [], automaticOnly: [] });
-  });
-
-  it('keeps a draft whose checks are missing from looking releasable, saying they have not loaded', () => {
-    expect(describeFailedReleaseChecks({ ...ready, releaseChecks: null }).manual).toEqual(['Its ready checks have not loaded yet.']);
-  });
-
-  it('says a draft whose start time has passed can no longer be released', () => {
-    expect(blocking({ key: 'NOT_STARTED', passed: false, value: '2026-03-01T00:00:00.000Z' })).toEqual([
-      'Its start time has passed, so it can no longer be released.',
-    ]);
-  });
-
-  it('asks for the field to be loaded before an admin can release it', () => {
-    expect(blocking({ key: 'FIELD_LOADED', passed: false, value: 0 })).toEqual(['Load the field.']);
-  });
-
-  it('lists unscheduled rounds and a league with no setups as what only the automatic release waits for, not as blockers', () => {
-    expect(failing({ key: 'ROUNDS_SCHEDULED', passed: false, value: 0 })).toEqual({ manual: [], automaticOnly: ['Schedule its rounds.'] });
-    expect(waiting({ key: 'CONTEST_SETUPS_ON', passed: false, value: 0 })).toEqual(['Turn on a contest setup for its sport league.']);
-  });
-
-  it('counts the active golfers still without a tier', () => {
-    expect(blocking({ key: 'TIERS_ASSIGNED', passed: false, value: 1 })).toEqual(['Put the 1 active golfer without a tier into a tier.']);
-    expect(blocking({ key: 'TIERS_ASSIGNED', passed: false, value: 3 })).toEqual(['Put the 3 active golfers without a tier into tiers.']);
-  });
-
-  it('names each empty tier in the sport\'s words, so a race with an empty Tier 4 cannot be released', () => {
-    expect(blocking({ key: 'TIERS_FILLED', passed: false, value: ['Tier 4'] }, 'AUTO_RACING')).toEqual([
-      'Tier 4 has no drivers. Move drivers into it or delete it.',
-    ]);
-  });
-
-  it('asks for prices to be assigned before any are, then counts the golfers still without one', () => {
-    expect(blocking({ key: 'PRICES_ASSIGNED', passed: false, value: null })).toEqual(['Assign prices on the Tiers page.']);
-    expect(blocking({ key: 'PRICES_ASSIGNED', passed: false, value: 2 })).toEqual(['Price the 2 active golfers without a price.']);
-  });
-
-  it('turns each thing a bracket lacks into a sentence that blocks the release', () => {
-    expect(blocking({ key: 'BRACKET_COMPLETE', passed: false, value: ['its bracket is not loaded'] })).toEqual(['Its bracket is not loaded.']);
-  });
-});
-
-describe('pool-master-3dg sport-admin-utils: deriveEventAutoTransition', () => {
-  const base = {
-    autoLifecycleEnabled: true,
-    startDate: '2026-03-12T13:00:00.000Z',
-    endDate: '2026-03-15T22:00:00.000Z',
-    rounds: [
-      round(1, '2026-03-12T13:00:00.000Z', '2026-03-12T23:00:00.000Z'),
-      round(2, '2026-03-13T13:00:00.000Z', '2026-03-13T23:00:00.000Z'),
-    ],
-  };
-
-  it('pool-master-3dg returns null when auto-lifecycle is off or the status is terminal', () => {
-    expect(
-      deriveEventAutoTransition({ ...base, status: 'SCHEDULED', autoLifecycleEnabled: false }),
-    ).toBeNull();
-    expect(
-      deriveEventAutoTransition({ ...base, status: 'COMPLETED' }),
-    ).toBeNull();
-  });
-
-  it('pool-master-3dg targets IN_PROGRESS from round 1 when SCHEDULED', () => {
-    expect(deriveEventAutoTransition({ ...base, status: 'SCHEDULED' })).toEqual({
-      toStatus: 'IN_PROGRESS',
-      at: '2026-03-12T13:00:00.000Z',
-    });
-  });
-
-  it('pool-master-3dg falls back to startDate when no rounds are populated', () => {
-    expect(
-      deriveEventAutoTransition({ ...base, status: 'SCHEDULED', rounds: [] }),
-    ).toEqual({ toStatus: 'IN_PROGRESS', at: '2026-03-12T13:00:00.000Z' });
-  });
-
-  it('pool-master-3dg targets COMPLETED from the last round end, then endDate', () => {
-    expect(deriveEventAutoTransition({ ...base, status: 'IN_PROGRESS' })).toEqual({
-      toStatus: 'COMPLETED',
-      at: '2026-03-13T23:00:00.000Z',
-    });
-    expect(
-      deriveEventAutoTransition({
-        ...base,
-        status: 'IN_PROGRESS',
-        rounds: [round(1, '2026-03-12T13:00:00.000Z')],
-      }),
-    ).toEqual({ toStatus: 'COMPLETED', at: '2026-03-15T22:00:00.000Z' });
-  });
-});
 
 describe('sport-admin-utils: deriveSportEventReadiness', () => {
   const base = {

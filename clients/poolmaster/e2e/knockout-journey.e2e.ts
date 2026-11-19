@@ -227,7 +227,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
       '/api/v1/events',
     );
     expect(created.event.sport).toBe('BASKETBALL');
-    await expect(page).toHaveURL(new RegExp(`/manage/sports/basketball/events/${created.event.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/manage/sports/basketball/events/${created.event.id}/field$`));
     return created.event.id;
   });
   journey.eventId = eventId;
@@ -338,6 +338,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
 
   await test.step('release the tournament for contests', async () => {
     await page.goto(`/manage/sports/basketball/events/${eventId}`);
+    await page.getByTestId('root-admin-event-release-chip').click();
     await page.getByTestId('root-admin-sport-event-release').click();
     const released = await submitAndRead<{ event: { status: string } }>(
       page,
@@ -626,6 +627,7 @@ async function recordWinner(page: Page, eventId: string, matchNumber: number, wi
 
 async function moveTournamentTo(page: Page, eventId: string, status: 'IN_PROGRESS' | 'COMPLETED') {
   await page.goto(`/manage/sports/basketball/events/${eventId}`);
+  await page.getByTestId('root-admin-event-settings').click();
   await page.getByTestId(`root-admin-sport-event-transition-${status}`).click();
   const moved = await submitAndRead<{ event: { status: string } }>(
     page,

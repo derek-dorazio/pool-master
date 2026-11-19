@@ -207,7 +207,6 @@ function fieldColumnsFor(sport: Sport) {
 export function EventFieldGridCard({
   entries,
   eventId,
-  fieldError,
   fieldLoading,
   pricesLocked = false,
   sport,
@@ -218,7 +217,6 @@ export function EventFieldGridCard({
   sport: Sport;
   /** What the event's sport league is called (#834), for the copy. */
   sportLeagueNoun: SportNoun;
-  fieldError: string | null;
   fieldLoading: boolean;
   pricesLocked?: boolean;
 }) {
@@ -290,12 +288,6 @@ export function EventFieldGridCard({
         </LinkButton>
         .
       </p>
-
-      {fieldError ? (
-        <Notice data-testid="root-admin-event-field-load-error" tone="danger">
-          {fieldError}
-        </Notice>
-      ) : null}
 
       <DataGrid
         urlKey="field"

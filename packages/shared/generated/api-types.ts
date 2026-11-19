@@ -12695,6 +12695,8 @@ export interface components {
              * @description The customer league that runs the contest.
              */
             leagueId: string;
+            /** @description That league's code, which its pages' links carry. */
+            leagueCode: string;
             /** @description That league's name. */
             leagueName: string;
             /**
@@ -12733,6 +12735,8 @@ export interface components {
                  * @description The customer league that runs the contest.
                  */
                 leagueId: string;
+                /** @description That league's code, which its pages' links carry. */
+                leagueCode: string;
                 /** @description That league's name. */
                 leagueName: string;
                 /**

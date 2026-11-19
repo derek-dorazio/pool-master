@@ -8,7 +8,6 @@ import {
   SplitContentLayout,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { SportEventHeader } from './sport-event-header';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { describeBudgetPricing } from './budget-pricing-format';
 import { PriceAssignAction } from './price-assign-action';
@@ -76,8 +75,6 @@ export function RootAdminSportEventTiersPage() {
       >
         {(tournament) => (
         <div className="space-y-6">
-          <SportEventHeader current="tiers" tournament={tournament} />
-
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground" data-testid="root-admin-tiers-pricing">
               {tournament.pricing
