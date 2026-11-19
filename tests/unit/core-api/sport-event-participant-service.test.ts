@@ -22,7 +22,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    matches: store.matchRepo(),
+    matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     leaderboards,
     random: () => 0.5,
   });
@@ -86,7 +86,7 @@ describe('SportEventParticipantService — the field viewers share', () => {
       sportEvents: context.store.sportEventRepo(),
       field: context.store.fieldRepo(),
       participants: context.store.participantRepo(),
-      matches: context.store.matchRepo(),
+      matches: context.store.matchRepo(), tiers: context.store.tierRepo(), valuations: context.store.valuationRepo(),
       fieldCache,
       now: () => now,
     });
@@ -205,7 +205,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({
       sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
-      matches: store.matchRepo(), random: () => 0.5,
+      matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(), random: () => 0.5,
     });
     const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
     const moved = store.addToField(event.id, store.addParticipant(sport.id, 'Moved').id, { ranking: 5, oddsToWin: 30 });
@@ -230,6 +230,68 @@ describe('SportEventParticipantService — changing the field', () => {
       .rejects.toMatchObject({ code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 });
     expect(entry.ranking).toBe(4);
     expect(store.valuationRows).toEqual([]);
+  });
+
+  describe('a tier move in the same save', () => {
+    async function tiered() {
+      const context = setup();
+      const { store, sport, event } = context;
+      await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }, { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 }]);
+      const [tier1, tier2] = await store.tierRepo().findBySportEvent(event.id);
+      const add = (name: string) => store.addToField(event.id, store.addParticipant(sport.id, name).id);
+      return { ...context, tier1, tier2, add };
+    }
+
+    it('places the moved participant after the highest place in its new tier, so a tier with gaps never repeats a place, and marks the tier and price manual', async () => {
+      const { store, service, event, tier1, tier2, add } = await tiered();
+      const [first, third, moving] = [add('First'), add('Third'), add('Moving')];
+      await store.valuationRepo().assignTiers([
+        { sportEventParticipantId: first.id, sportEventTierId: tier2.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: third.id, sportEventTierId: tier2.id, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: moving.id, sportEventTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+      ]);
+
+      await service.updateParticipants(event.id, [{ sportEventParticipantId: moving.id, tierKey: 'tier-2', price: 900 }]);
+
+      expect(store.valuationRows.find((row) => row.sportEventParticipantId === moving.id)).toMatchObject({
+        sportEventTierId: tier2.id, tierOrderIndex: 3, tierAssignedSource: 'MANUAL', price: 900, priceAssignedSource: 'MANUAL',
+      });
+    });
+
+    it('gives two participants moved into one tier in one save consecutive places, starting at 0 in an empty tier', async () => {
+      const { store, service, event, tier1, add } = await tiered();
+      const [a, b] = [add('A'), add('B')];
+
+      await service.updateParticipants(event.id, [
+        { sportEventParticipantId: a.id, tierKey: 'tier-1' },
+        { sportEventParticipantId: b.id, tierKey: 'tier-1' },
+      ]);
+
+      expect(store.valuationRows.map((row) => [row.sportEventParticipantId, row.sportEventTierId, row.tierOrderIndex])).toEqual([
+        [a.id, tier1.id, 0],
+        [b.id, tier1.id, 1],
+      ]);
+    });
+
+    it('refuses a tier the event does not have (422 UNKNOWN_TIER_KEY) and writes none of the save', async () => {
+      const { store, service, event, add } = await tiered();
+      const entry = add('A');
+
+      await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: entry.id, ranking: 3, tierKey: 'tier-9' }]))
+        .rejects.toMatchObject({ code: 'UNKNOWN_TIER_KEY', statusCode: 422 });
+      expect(entry.ranking).not.toBe(3);
+      expect(store.valuationRows).toEqual([]);
+    });
+
+    it('refuses a tier move once the event is released (409 SPORT_EVENT_TIERS_LOCKED)', async () => {
+      const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.SCHEDULED);
+      await store.addTiers(event.id, [{ tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 }]);
+      const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id);
+
+      await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: entry.id, tierKey: 'tier-1' }]))
+        .rejects.toMatchObject({ code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 });
+      expect(store.valuationRows).toEqual([]);
+    });
   });
 
   it('still saves rank, odds, seed and withdrawals in the grid after the event is released', async () => {
@@ -426,7 +488,7 @@ describe('SportEventParticipantService — field upload', () => {
       sportEvents: store.sportEventRepo(),
       field: fieldRepo,
       participants: store.participantRepo(),
-      matches: store.matchRepo(),
+      matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     });
 
     for (const rows of [

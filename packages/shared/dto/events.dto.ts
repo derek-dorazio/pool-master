@@ -498,6 +498,7 @@ export const UpdateSportEventParticipantsRequestSchema = z.object({
     sportEventParticipantId: z.uuid(),
     ...SportEventParticipantPatchShape,
     price: z.number().nullable().optional().describe('A manual price; null clears it.'),
+    tierKey: z.string().min(1).optional().describe('Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for.'),
     isPlayInPlace: z.boolean().optional().describe('Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.'),
   })).min(1).describe('Field rows to patch, all or none. Omitted fields are left alone; null clears.'),
 }).describe('One save of the field grid.');

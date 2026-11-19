@@ -19,10 +19,7 @@ export async function closeFieldParticipant(page: Page): Promise<void> {
   await expect(page.getByTestId(DIALOG)).toBeHidden();
 }
 
-/**
- * Corrects one participant on the Field tab through its dialog, then closes it. A tier move saves
- * after a price, odds or seed patch, so the move's own write is the one awaited when there is one.
- */
+/** Corrects one participant on the Field tab through its dialog, then closes it. */
 export async function correctFieldParticipant(
   page: Page,
   eventId: string,
@@ -35,10 +32,8 @@ export async function correctFieldParticipant(
   if (values.price !== undefined) await page.getByTestId(`${DIALOG}-edit-price`).fill(String(values.price));
   if (values.oddsToWin !== undefined) await page.getByTestId(`${DIALOG}-edit-odds`).fill(String(values.oddsToWin));
   if (values.seedNumber !== undefined) await page.getByTestId(`${DIALOG}-edit-seed`).fill(String(values.seedNumber));
-  const [method, path] = values.tierKey === undefined
-    ? ['PATCH', `/api/v1/events/${eventId}/participants`]
-    : ['PUT', `/api/v1/events/${eventId}/tiers/assignments`];
-  await submitAndRead(page, `${DIALOG}-save`, method, path);
+  // One save: the tier move rides in the field patch, so it stands or falls with the rest.
+  await submitAndRead(page, `${DIALOG}-save`, 'PATCH', `/api/v1/events/${eventId}/participants`);
   // Saved, the dialog goes back to its view.
   await expect(page.getByTestId(`${DIALOG}-edit`)).toBeVisible();
   await closeFieldParticipant(page);

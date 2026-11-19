@@ -57,7 +57,6 @@ export function EventFieldGridCard({
       {openRow === undefined ? null : (
         <EventParticipantDialog
           event={event}
-          field={field}
           isSynced={isSynced}
           key={openRow.id}
           onClose={() => setOpenRowId(null)}

@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  replaceEventTierAssignments,
   updateEventParticipants,
   type SportEventDto,
   type SportEventTierDto,
@@ -25,7 +24,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { fieldOutLabel } from './event-field-columns';
-import type { EventFieldEntry, EventFieldPatch } from './event-field-patch';
+import type { EventFieldPatch } from './event-field-patch';
 import { FIELD_VALUE_SET_BY_LABELS, type EventFieldRow } from './event-field-rows';
 import {
   participantCorrection,
@@ -52,14 +51,12 @@ function shown(value: number | string | null): string {
  */
 export function EventParticipantDialog({
   event,
-  field,
   isSynced,
   onClose,
   row,
   tiers,
 }: {
   event: SportEventDto;
-  field: readonly EventFieldEntry[];
   isSynced: boolean;
   onClose: () => void;
   row: EventFieldRow;
@@ -81,12 +78,8 @@ export function EventParticipantDialog({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: ParticipantValues) => {
-      const { patch, tierMove } = participantCorrection(values, current, entry, { editable, field, tiers });
+      const patch = participantCorrection(values, current, entry, editable);
       if (patch !== null) await patchField(patch);
-      if (tierMove !== null) {
-        const response = await replaceEventTierAssignments({ path: { eventId: event.id }, body: { assignments: [tierMove] } });
-        if (!response.data) throwApiError(response.error, 'Tier assignment response is missing data.');
-      }
     },
     invalidates,
     onSuccess: () => dialog.saved(),
@@ -153,13 +146,13 @@ export function EventParticipantDialog({
         <div className="grid gap-4">
           {editable.tierAndPrice ? (
             <>
-              <FormField helperText="A manual tier stops automatic tiering for this event." label="Tier">
+              <FormField help="A manual tier stops automatic tiering for this event." label="Tier">
                 <Select data-testid={`${testId}-edit-tier`} {...form.register('tierKey')}>
                   {current.tierKey === '' ? <option value="">Untiered</option> : null}
                   {tiers.map((tier) => <option key={tier.id} value={tier.tierKey}>{tier.label}</option>)}
                 </Select>
               </FormField>
-              <FormField error={form.formState.errors.price?.message} helperText="A manual price stops automatic pricing for this event." label="Price">
+              <FormField error={form.formState.errors.price?.message} help="A manual price stops automatic pricing for this event." label="Price">
                 <Input data-testid={`${testId}-edit-price`} inputMode="numeric" {...form.register('price')} />
               </FormField>
             </>

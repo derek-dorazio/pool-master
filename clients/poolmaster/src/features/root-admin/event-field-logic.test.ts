@@ -65,8 +65,8 @@ describe('the participant dialog\'s corrections', () => {
     const row = entry('a', { ranking: 4, oddsToWin: 12.5 });
     const current = participantValuesOf(row, TIERS);
 
-    expect(participantCorrection(current, current, row, { editable: both, field: [row], tiers: TIERS })).toEqual({ patch: null, tierMove: null });
-    expect(participantCorrection({ ...current, ranking: '', oddsToWin: '9' }, current, row, { editable: both, field: [row], tiers: TIERS }).patch)
+    expect(participantCorrection(current, current, row, both)).toBeNull();
+    expect(participantCorrection({ ...current, ranking: '', oddsToWin: '9' }, current, row, both))
       .toEqual({ sportEventParticipantId: 'a', ranking: null, oddsToWin: 9 });
   });
 
@@ -75,18 +75,18 @@ describe('the participant dialog\'s corrections', () => {
     const current = participantValuesOf(row, TIERS);
     const changed = { ...current, ranking: '1', price: '500', tierKey: 'TIER_2' };
 
-    expect(participantCorrection(changed, current, row, { editable: { tierAndPrice: true, orderValues: false }, field: [row], tiers: TIERS }).patch)
-      .toEqual({ sportEventParticipantId: 'a', price: 500 });
-    expect(participantCorrection(changed, current, row, { editable: { tierAndPrice: false, orderValues: true }, field: [row], tiers: TIERS }))
-      .toEqual({ patch: { sportEventParticipantId: 'a', ranking: 1 }, tierMove: null });
+    expect(participantCorrection(changed, current, row, { tierAndPrice: true, orderValues: false }))
+      .toEqual({ sportEventParticipantId: 'a', price: 500, tierKey: 'TIER_2' });
+    expect(participantCorrection(changed, current, row, { tierAndPrice: false, orderValues: true }))
+      .toEqual({ sportEventParticipantId: 'a', ranking: 1 });
   });
 
-  it('moves a participant last into its new tier, counting only the others already there', () => {
+  it('sends a move into another tier in the same patch, with no place, which the server picks; a blank or unchanged tier sends none', () => {
     const moving = entry('a', { valuation: valuationFixture({ sportEventTierId: 'tier-1' }) });
-    const field = [moving, entry('b', { valuation: valuationFixture({ sportEventTierId: 'tier-2' }) }), entry('c', { valuation: valuationFixture({ sportEventTierId: 'tier-2' }) })];
     const current = participantValuesOf(moving, TIERS);
 
-    expect(participantCorrection({ ...current, tierKey: 'TIER_2' }, current, moving, { editable: both, field, tiers: TIERS }).tierMove)
-      .toEqual({ sportEventParticipantId: 'a', tierKey: 'TIER_2', tierOrderIndex: 2 });
+    expect(participantCorrection({ ...current, tierKey: 'TIER_2' }, current, moving, both))
+      .toEqual({ sportEventParticipantId: 'a', tierKey: 'TIER_2' });
+    expect(participantCorrection({ ...current, tierKey: '' }, current, moving, both)).toBeNull();
   });
 });

@@ -379,6 +379,8 @@ export interface SportEventParticipantFieldUpdate {
   updates: SportEventParticipantPatch;
   /** A manually set price, or null to clear it; undefined leaves the valuation alone. */
   price?: number | null;
+  /** A manual move into another tier, at this place in it; undefined leaves the tier alone. */
+  tier?: { sportEventTierId: string; tierOrderIndex: number };
 }
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */

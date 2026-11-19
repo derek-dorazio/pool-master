@@ -290,7 +290,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     })));
   });
 
-  it('moves a participant to another tier, placed last in it, and sends a corrected price as a field patch', async () => {
+  it('moves a participant to another tier, and its corrected price, in one field patch so the save stands or falls whole', async () => {
     seed({
       entries: [
         fieldEntry(),
@@ -299,7 +299,6 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
       tournament: { status: 'DRAFT' },
     });
     updateEventParticipantsMock.mockResolvedValue({ data: { participants: [fieldEntry()] } });
-    replaceEventTierAssignmentsMock.mockResolvedValue({ data: { tiers: [] } });
     renderPage();
 
     const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
@@ -311,13 +310,12 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     await userEvent.type(price, '8000');
     await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-save'));
 
-    await waitFor(() => expect(replaceEventTierAssignmentsMock).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { eventId: 'evt-1' },
-      body: { assignments: [{ sportEventParticipantId: 'sep-rory', tierKey: 'TIER_2', tierOrderIndex: 1 }] },
+      body: { participants: [{ sportEventParticipantId: 'sep-rory', price: 8000, tierKey: 'TIER_2' }] },
     })));
-    expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { participants: [{ sportEventParticipantId: 'sep-rory', price: 8000 }] },
-    }));
+    expect(updateEventParticipantsMock).toHaveBeenCalledTimes(1);
+    expect(replaceEventTierAssignmentsMock).not.toHaveBeenCalled();
   });
 
   it('keeps Save off while a typed odds value is not a number', async () => {

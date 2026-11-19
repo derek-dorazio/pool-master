@@ -49,20 +49,17 @@ export function participantValuesOf(entry: EventFieldEntry, tiers: readonly Spor
 /** What the dialog may correct: tier and price until release; rank, odds and seed only where no feed sets them. */
 export type ParticipantEditable = { tierAndPrice: boolean; orderValues: boolean };
 
-/** One participant moved into a tier, as the tier assignments save takes it. */
-export type ParticipantTierMove = { sportEventParticipantId: string; tierKey: string; tierOrderIndex: number };
-
 /**
- * The changes a Save sends, each only when its value changed: the field row patch (price, rank,
- * odds, seed; blank clears) and the move into another tier, placed last in it. A tier can't be
- * cleared here: blank means the participant stays untiered.
+ * The one patch a Save sends, or null when nothing changed: each value only when it changed
+ * (blank clears), and the move into another tier, which the server places last in it, all in
+ * one write. A tier can't be cleared here: blank means the participant stays untiered.
  */
 export function participantCorrection(
   values: ParticipantValues,
   current: ParticipantValues,
   entry: EventFieldEntry,
-  { editable, field, tiers }: { editable: ParticipantEditable; field: readonly EventFieldEntry[]; tiers: readonly SportEventTierDto[] },
-): { patch: EventFieldPatch | null; tierMove: ParticipantTierMove | null } {
+  editable: ParticipantEditable,
+): EventFieldPatch | null {
   const keys: EventFieldNumericKey[] = [
     ...(editable.tierAndPrice ? ['price' as const] : []),
     ...(editable.orderValues ? (['ranking', 'oddsToWin', 'seedNumber'] as const) : []),
@@ -73,13 +70,7 @@ export function participantCorrection(
       changes[key] = values[key] === '' ? null : Number(values[key]);
     }
   }
-  const patch = Object.keys(changes).length === 0 ? null : { sportEventParticipantId: entry.id, ...changes };
-
-  let tierMove: ParticipantTierMove | null = null;
-  if (editable.tierAndPrice && values.tierKey !== '' && values.tierKey !== current.tierKey) {
-    const tier = tiers.find((candidate) => candidate.tierKey === values.tierKey);
-    const alreadyIn = field.filter((row) => row.id !== entry.id && tier !== undefined && row.valuation?.sportEventTierId === tier.id).length;
-    tierMove = { sportEventParticipantId: entry.id, tierKey: values.tierKey, tierOrderIndex: alreadyIn };
-  }
-  return { patch, tierMove };
+  const tierKey = editable.tierAndPrice && values.tierKey !== '' && values.tierKey !== current.tierKey ? values.tierKey : undefined;
+  if (Object.keys(changes).length === 0 && tierKey === undefined) return null;
+  return { sportEventParticipantId: entry.id, ...changes, ...(tierKey !== undefined && { tierKey }) };
 }
