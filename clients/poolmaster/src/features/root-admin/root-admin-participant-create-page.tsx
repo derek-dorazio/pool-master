@@ -8,7 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { buildSportParticipantListPath } from './manage-navigation';
+import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { upperFirst } from '@/lib/upper-first';
 import { useManagedSport } from './use-managed-sport';
@@ -35,13 +35,16 @@ export function RootAdminParticipantCreatePage() {
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
   const { participant, sportLeague } = definition.vocabulary;
-  const listPath = buildSportParticipantListPath(sport);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const [searchParams] = useSearchParams();
+  const startLeagueId = searchParams.get('sportLeague');
+  // Back to the League page's Participants tab it came from (#1866), else the Sports page.
+  const participantsPath = (sportLeagueId: string) => `${buildSportLeaguePath(sport, sportLeagueId)}/participants`;
+  const cancelPath = startLeagueId ? participantsPath(startLeagueId) : SPORTS_PATH;
 
   const form = useForm<NewPlayerValues>({
     resolver: zodResolver(newPlayerSchema),
-    defaultValues: { sportLeagueId: searchParams.get('sportLeague') ?? '', name: '', shortName: '', nationality: '', externalId: '' },
+    defaultValues: { sportLeagueId: startLeagueId ?? '', name: '', shortName: '', nationality: '', externalId: '' },
     mode: 'onChange',
   });
 
@@ -66,7 +69,7 @@ export function RootAdminParticipantCreatePage() {
     },
     // The new participant joins its league's roster and count.
     invalidates: [QueryKeys.rootAdmin.manageSport.participants, QueryKeys.rootAdmin.manageSport.leagues],
-    onSuccess: () => navigate(listPath),
+    onSuccess: (created) => navigate(participantsPath(created.sportLeagueId)),
     onError: (error) => {
       logger.warn(
         { action: 'participant.create.failed', err: error },
@@ -84,7 +87,7 @@ export function RootAdminParticipantCreatePage() {
 
   return (
     <FormPage
-      cancelTo={listPath}
+      cancelTo={cancelPath}
       errorMessage={errorMessage}
       isPending={createMutation.isPending}
       isSubmitDisabled={!form.formState.isValid}

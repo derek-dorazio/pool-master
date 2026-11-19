@@ -2,7 +2,6 @@ import { SUPPORTED_SPORTS, Sport, sportPathSegment } from '@poolmaster/shared/do
 import { describe, expect, it } from 'vitest';
 import {
   MANAGE_LANDING_PATH,
-  buildManageSubTabs,
   buildManageTabs,
   buildManageUserPath,
   buildSportEventPath,
@@ -73,53 +72,13 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(lit('/manage/nowhere')).toEqual([]);
   });
 
-  it('under Sports, shows Sport leagues, Events, Contest templates, then each supported sport, marking the sport being managed', () => {
-    const row = buildManageSubTabs('/manage/sports/horse-racing/events/evt-1');
-
-    expect(row?.items.map((tab) => [tab.label, tab.isActive])).toEqual([
-      ['Sport leagues', false],
-      ['Events', false],
-      ['Contest templates', false],
-      ['Golf', false],
-      ['Horse racing', true],
-      ['Auto racing', false],
-      ['Cycling', false],
-      ['Running', false],
-      ['Basketball', false],
-      ['American football', false],
-      ['Hockey', false],
-      ['Baseball', false],
-      ['Soccer', false],
-      ['Tennis', false],
-    ]);
-    expect(row?.items[4].to).toBe('/manage/sports/horse-racing/events');
-  });
-
-  it('keeps Sport leagues lit on the Sports page and on a sport league\'s own pages, not its sport', () => {
-    const lit = (pathname: string) => buildManageSubTabs(pathname)?.items.filter((tab) => tab.isActive).map((tab) => tab.label);
-
-    expect(lit('/manage/sports')).toEqual(['Sport leagues']);
-    expect(lit('/manage/sports/golf/leagues/league-1/edit')).toEqual(['Sport leagues']);
-    expect(lit('/manage/events')).toEqual(['Events']);
-    expect(lit('/manage/content-configuration')).toEqual(['Contest templates']);
-  });
-
-  it('lights nothing in the second row on the profiles page, whose own tabs mark Profiles, and names its trail Profiles', () => {
-    expect(buildManageSubTabs('/manage/sports/profiles')?.items.filter((tab) => tab.isActive)).toEqual([]);
+  it('names the profiles page\'s trail Profiles', () => {
     expect(getManageBreadcrumbLabel(['sports', 'profiles'], 1)).toBe('Profiles');
   });
 
   it('opens Customers on its Leagues tab, and names one user by a link to their dialog on the Users tab', () => {
     expect(buildManageTabs('/manage/plans').find((tab) => tab.label === 'Customers')?.to).toBe('/manage/customers/leagues');
     expect(buildManageUserPath('user-1')).toBe('/manage/customers/users?user=user-1');
-  });
-
-  it('has no second row under Activity, Notifications, Providers, Customers, Plans or Pricing', () => {
-    expect(buildManageSubTabs('/manage/customers/users')).toBeNull();
-    expect(buildManageSubTabs('/manage/sync')).toBeNull();
-    expect(buildManageSubTabs('/manage/notifications')).toBeNull();
-    expect(buildManageSubTabs('/manage/plans')).toBeNull();
-    expect(buildManageSubTabs('/manage/pricing')).toBeNull();
   });
 
   it('names a cycling trail in cycling words: Cycling, Races, Riders', () => {

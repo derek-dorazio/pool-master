@@ -1,4 +1,4 @@
-import { ProviderSyncKind, type ReleaseCheckKey } from '@poolmaster/shared/domain';
+import { ProviderSyncKind, SportLeagueSyncHealth, type ReleaseCheckKey } from '@poolmaster/shared/domain';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { plural } from '@/lib/plural';
 
@@ -44,3 +44,11 @@ export function sportsCountLine(overviews: readonly SportLeagueOverviewDto[]): s
   const on = overviews.filter((overview) => overview.isActive).length;
   return `${plural(sports, 'sport')} · ${String(on)} of ${plural(overviews.length, 'sport league')}`;
 }
+
+/** Each sync health's chip word, as the Sync health column and its filter name it. */
+export const SYNC_HEALTH_LABELS: Record<SportLeagueSyncHealth, string> = {
+  [SportLeagueSyncHealth.OK]: 'OK',
+  [SportLeagueSyncHealth.ERROR]: 'ERROR',
+  [SportLeagueSyncHealth.NOT_RUN_YET]: 'NOT RUN YET',
+  [SportLeagueSyncHealth.OFF]: 'OFF',
+};
