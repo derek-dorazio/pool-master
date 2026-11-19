@@ -4,7 +4,7 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { IngestionJobStatus, ProviderSyncKind, ProviderSyncRunStatus, JobTrigger, Sport } from '@poolmaster/shared/domain';
+import { IngestionJobStatus, JobTrigger, ProviderHealthStatus, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -51,8 +51,7 @@ export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
 
 // --- Providers ---
 
-export const ProviderHealthStatusSchema = z.enum(['HEALTHY', 'DEGRADED', 'DOWN']);
-export type ProviderHealthStatus = z.infer<typeof ProviderHealthStatusSchema>;
+export const ProviderHealthStatusSchema = z.enum(ProviderHealthStatus);
 
 export const ProviderSummaryDtoSchema = z.object({
   providerId: z.string().describe('Registered provider identifier.'),

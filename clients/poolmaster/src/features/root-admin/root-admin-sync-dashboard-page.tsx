@@ -15,12 +15,11 @@ import type { ProviderSyncRun } from './root-admin-sync-utils';
 import { SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { SyncRunDialog } from './sync-run-dialog';
 import { SyncRunHistory } from './sync-run-history';
-import { SyncStatusSection } from './sync-status-section';
 import { useProvidersQuery } from './use-providers-query';
 
 /**
- * /manage/sync: the run counts in the header with its two actions, the sync order and provider
- * health, and the recent runs; a run opens its detail dialog. Each section is its own file.
+ * /manage/sync: the run counts in the header with its two actions, and the recent runs (provider
+ * health is on the Providers page, #1873); a run opens its detail dialog. Each section is its own file.
  */
 export function RootAdminSyncDashboardPage() {
   const displayPreferences = useDisplayPreferences();
@@ -93,7 +92,6 @@ export function RootAdminSyncDashboardPage() {
         testId="root-admin-sync-header"
         title="Sync"
       />
-      <SyncStatusSection providers={providersQuery.data} providersFailed={providersQuery.isError} />
       <SyncRunHistory onOpenRun={setOpenRun} providers={providersQuery.data} runsQuery={syncRunsQuery} />
       {openRun ? (
         <SyncRunDialog onClose={() => setOpenRun(null)} providers={providersQuery.data} run={openRun} />

@@ -140,9 +140,8 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(
       screen.queryByText(/Most recent runs are shown first/),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-workflow-sequence')).toHaveTextContent(
-      'ParticipantsMock stateLive scores',
-    );
+    // Provider health moved to the Providers page (#1873).
+    expect(screen.queryByText('Sync status')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('root-admin-open-run-sport-sync-page'),
     ).not.toBeInTheDocument();

@@ -21,7 +21,7 @@ import { BillingSettingsForm } from '@/features/billing/billing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
-import { PLANS_PATH, SETTINGS_PATH } from './manage-navigation';
+import { PLANS_PATH, PROVIDERS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeBilling,
@@ -34,7 +34,7 @@ import {
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * its own pages under Settings, and Plans on its own Manage page; Email and Payments are edited in
+ * the Providers page, and Plans on its own Manage page; Email and Payments are edited in
  * their sections. Pricing profiles are their own rows, not a settings group (#1844).
  */
 export function RootAdminSettingsPage() {
@@ -128,8 +128,8 @@ function groupContent(group: SettingsGroup, locale: string): { summary: Settings
       return {
         summary: summarizeIngestionSchedule(group.value),
         actions: (
-          <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to={`${SETTINGS_PATH}/ingestion-schedule`}>
-            Edit ingestion schedule
+          <LinkButton data-testid="root-admin-settings-edit-INGESTION_SCHEDULE_CONFIG" to={PROVIDERS_PATH}>
+            Edit on Providers
           </LinkButton>
         ),
       };

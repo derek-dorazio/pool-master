@@ -17,6 +17,7 @@ import type {
 import {
   BackgroundJobType,
   JobTrigger,
+  type ProviderHealthStatus,
   ProviderSyncRunStatus,
   type BackgroundJobOutcome,
   type JobStart,
@@ -48,8 +49,6 @@ import { syncChangedRows } from './core/sync-write-diagnostics';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export type ProviderHealthStatus = 'HEALTHY' | 'DEGRADED' | 'DOWN';
 
 export interface ProviderSummary {
   providerId: string;
