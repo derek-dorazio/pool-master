@@ -81,7 +81,12 @@ export type ReleaseAttemptSkipReason = (typeof ReleaseAttemptSkipReason)[keyof t
 
 /** One automatic release attempt's result: what the release job reports and Activity shows. */
 export type ReleaseAttemptResult =
-  | { outcome: typeof ReleaseAttemptOutcome.RELEASED | typeof ReleaseAttemptOutcome.HELD; checks: ReleaseCheck[] }
+  | { outcome: typeof ReleaseAttemptOutcome.RELEASED; checks: ReleaseCheck[] }
+  /**
+   * `sameHoldAsBefore`: the event's stored check already held it for exactly these failed checks
+   * (#1865), so the attempt only moved the check's time and Activity keeps no row for it.
+   */
+  | { outcome: typeof ReleaseAttemptOutcome.HELD; checks: ReleaseCheck[]; sameHoldAsBefore: boolean }
   | { outcome: typeof ReleaseAttemptOutcome.SKIPPED; reason: ReleaseAttemptSkipReason };
 
 /** The longest automatic release window a sport league may set, in days; the database checks the same bound (#1823). */

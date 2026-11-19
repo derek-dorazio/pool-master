@@ -621,12 +621,71 @@ export const SportLeagueIssueType = {
   SYNC: 'SYNC',
   /** A draft event whose latest automatic release check held it. */
   RELEASE: 'RELEASE',
+  /**
+   * An event still not completed or cancelled well after its last round or match should have
+   * ended (#1865): its results are missing.
+   */
+  OVERDUE: 'OVERDUE',
 } as const;
 export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
-/** The fixed order the chips show in (#1847). */
+/** The fixed order the chips show in (#1847, #1865). */
 export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
   [SportLeagueIssueType.SYNC]: 0,
   [SportLeagueIssueType.RELEASE]: 1,
+  [SportLeagueIssueType.OVERDUE]: 2,
+});
+
+/** How a sport event is released for contests, on the League page (#1865). */
+export const SportEventReleaseMode = {
+  /** Its sport league releases its synced drafts on their own, a window before the start. */
+  AUTO: 'AUTO',
+  /** A root admin releases it. */
+  MANUAL: 'MANUAL',
+} as const;
+export type SportEventReleaseMode = (typeof SportEventReleaseMode)[keyof typeof SportEventReleaseMode];
+/** The order the values are declared in. */
+export const SportEventReleaseModeOrder = explicitOrder<SportEventReleaseMode>({
+  [SportEventReleaseMode.AUTO]: 0,
+  [SportEventReleaseMode.MANUAL]: 1,
+});
+
+/** What a sport event's release date is, on the League page (#1865). */
+export const SportEventReleaseAtKind = {
+  /** When the automatic release window opens for a draft: its start less the league's window. */
+  PLANNED: 'PLANNED',
+  /** When it was released. */
+  ACTUAL: 'ACTUAL',
+} as const;
+export type SportEventReleaseAtKind = (typeof SportEventReleaseAtKind)[keyof typeof SportEventReleaseAtKind];
+/** Planned comes before actual, as a release does. */
+export const SportEventReleaseAtKindOrder = explicitOrder<SportEventReleaseAtKind>({
+  [SportEventReleaseAtKind.PLANNED]: 0,
+  [SportEventReleaseAtKind.ACTUAL]: 1,
+});
+
+/** Who added a participant to its sport league, on the League page (#1865). */
+export const ParticipantAddedBy = {
+  /** A sync found it in its provider's feed: it has a provider mapping. */
+  FEED: 'FEED',
+  /** A root admin added it: it has no provider mapping. */
+  ADMIN: 'ADMIN',
+} as const;
+export type ParticipantAddedBy = (typeof ParticipantAddedBy)[keyof typeof ParticipantAddedBy];
+/** No natural order: A to Z by the label each screen shows. */
+export const ParticipantAddedByOrder: EnumOrder<ParticipantAddedBy> = alphabeticalOrder();
+
+/** What runs a sport league's sync next, on the League page (#1865). */
+export const SportLeagueSyncMode = {
+  /** The ingestion schedule's interval for the sync. */
+  SCHEDULE: 'SCHEDULE',
+  /** The provider's webhook, with a safety-net poll while an event is in play. */
+  WEBHOOK: 'WEBHOOK',
+} as const;
+export type SportLeagueSyncMode = (typeof SportLeagueSyncMode)[keyof typeof SportLeagueSyncMode];
+/** The order the values are declared in. */
+export const SportLeagueSyncModeOrder = explicitOrder<SportLeagueSyncMode>({
+  [SportLeagueSyncMode.SCHEDULE]: 0,
+  [SportLeagueSyncMode.WEBHOOK]: 1,
 });
 
 /** What an issue item opens (#1847). */

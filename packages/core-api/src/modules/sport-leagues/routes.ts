@@ -24,6 +24,8 @@ import { PrismaSportLeagueOverviewReader } from '../../adapters/prisma-sport-lea
 import { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import { createSportLeagueHandlers } from './handler';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
+import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
+import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
 
 const TAGS = ['Sport leagues'];
 
@@ -42,6 +44,9 @@ export interface SportLeaguesModuleOptions {
   cdn: CdnInvalidator;
   /** The providers a sport league's event sync may name (ADR 0011). */
   providerRegistry: ProviderRegistry;
+  /** The League page's syncs read (#1865): the one ingestion schedule, and which providers' webhooks drive their live scores. */
+  schedule: SportLeaguePageServiceDeps['schedule'];
+  webhookProviderIds: readonly string[];
 }
 
 export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
@@ -49,7 +54,12 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   const services = createSportEventServices(getAppPrisma(fastify), fastify.log, undefined, undefined, opts.providerRegistry);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
   const overviews = new SportLeagueOverviewService({ reader: new PrismaSportLeagueOverviewReader(getAppPrisma(fastify)) });
-  const handler = createSportLeagueHandlers(services.sportLeagues, lists, overviews);
+  const page = new SportLeaguePageService({
+    reader: new PrismaSportLeaguePageReader(getAppPrisma(fastify)),
+    schedule: opts.schedule,
+    webhookProviderIds: opts.webhookProviderIds,
+  });
+  const handler = createSportLeagueHandlers(services.sportLeagues, lists, overviews, page);
   const write = { onRequest: requireRootAdmin };
 
   // A ranking write changes the participants every event of the sport league shows on its field
@@ -151,6 +161,50 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       response: { 204: { type: 'null' }, ...errors(403, 404, 409) },
     },
     handler: handler.deleteSportLeague,
+  });
+
+  fastify.get('/:sportLeagueId/syncs', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport league\'s syncs with their health, latest run and next run',
+      description: 'The League page\'s Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. '
+        + 'A Clutch Card reports its parent league\'s event list sync, which creates its events. Health follows the Sports page\'s rule from that sync\'s latest run; '
+        + 'the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.',
+      operationId: 'listSportLeagueSyncs',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueSyncListResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listSyncs,
+  });
+
+  fastify.get('/:sportLeagueId/events/overview', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List every event of a sport league with its release, field, issues and last sync',
+      description: 'The League page\'s Events grid (#1865): every event of the sport league, every year, never paged, by start. '
+        + 'Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. '
+        + 'Read from a fixed number of grouped queries, however many events. Root admin only.',
+      operationId: 'listSportLeagueEventOverviews',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueEventOverviewListResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listEventOverviews,
+  });
+
+  fastify.get('/:sportLeagueId/participants/overview', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List every participant of a sport league with its feed id and who added it',
+      description: 'The League page\'s Participants grid (#1865): every participant of the sport league, never paged, by name, '
+        + 'with its provider\'s feed id, when a sync last saw it in the feed, and whether the feed or a root admin added it. Read in a fixed number of queries. Root admin only.',
+      operationId: 'listSportLeagueParticipantOverviews',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueParticipantOverviewListResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listParticipantOverviews,
   });
 
   fastify.get('/:sportLeagueId/participants', {

@@ -343,6 +343,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         data: {
           status: transition.to,
           ...(transition.endDate && { endDate: transition.endDate }),
+          ...(transition.releasedAt && { releasedAt: transition.releasedAt }),
         },
       });
       if (result.count > 0 && jobs.length > 0) await insertBackgroundJobs(db, jobs);
@@ -476,6 +477,16 @@ export class PrismaSportEventRepository implements SportEventRepository {
       },
       select: { id: true },
     }));
+  }
+
+  async findAutoReleaseCheck(sportEventId: string): Promise<AutoReleaseCheck | null> {
+    const row = await this.prisma.sportEvent.findUnique({
+      where: { id: sportEventId },
+      select: { autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true },
+    });
+    // The check constraint sets the time and the outcome together.
+    if (row?.autoReleaseCheckedAt == null || row.autoReleaseOutcome === null) return null;
+    return { checkedAt: row.autoReleaseCheckedAt, outcome: row.autoReleaseOutcome, failedChecks: row.autoReleaseFailedChecks };
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {

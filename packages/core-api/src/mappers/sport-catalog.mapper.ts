@@ -3,13 +3,26 @@
  * canonical DTOs.
  */
 
-import { SportLeagueIssueType, assertNever, type SportConfig, type SportLeagueIssue, type SportLeagueIssueTarget, type SportLeagueOverview } from '@poolmaster/shared/domain';
+import {
+  SportLeagueIssueType,
+  assertNever,
+  type SportConfig,
+  type SportLeagueEventOverview,
+  type SportLeagueIssue,
+  type SportLeagueIssueTarget,
+  type SportLeagueOverview,
+  type SportLeagueParticipantOverview,
+  type SportLeagueSync,
+} from '@poolmaster/shared/domain';
 import type {
   SportDto,
   SportLeagueDto,
   SportLeagueRankingUploadPreviewRowDto,
   SportLeagueIssueDto,
+  SportLeagueEventOverviewDto,
   SportLeagueOverviewDto,
+  SportLeagueParticipantOverviewDto,
+  SportLeagueSyncDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import type { RankingUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
 
@@ -77,7 +90,7 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
   };
 }
 
-function mapSportLeagueIssueToDto(issue: SportLeagueIssue): SportLeagueIssueDto {
+export function mapSportLeagueIssueToDto(issue: SportLeagueIssue): SportLeagueIssueDto {
   const item = (entry: { label: string; occurredAt: Date; target: SportLeagueIssueTarget }) => ({
     label: entry.label,
     occurredAt: entry.occurredAt.toISOString(),
@@ -88,7 +101,65 @@ function mapSportLeagueIssueToDto(issue: SportLeagueIssue): SportLeagueIssueDto 
       return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ ...item(entry), syncKind: entry.syncKind })) };
     case SportLeagueIssueType.RELEASE:
       return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ ...item(entry), failedChecks: entry.failedChecks })) };
+    case SportLeagueIssueType.OVERDUE:
+      return { type: issue.type, count: issue.count, items: issue.items.map(item) };
     default:
       return assertNever(issue);
   }
+}
+
+export function mapSportLeagueSyncToDto(sync: SportLeagueSync): SportLeagueSyncDto {
+  return {
+    kind: sync.kind,
+    health: sync.health,
+    mode: sync.mode,
+    lastRun: sync.lastRun === null
+      ? null
+      : {
+        id: sync.lastRun.id,
+        status: sync.lastRun.status,
+        createdAt: sync.lastRun.createdAt.toISOString(),
+        startedAt: sync.lastRun.startedAt?.toISOString() ?? null,
+        summary: sync.lastRun.summary,
+        changedCount: sync.lastRun.changedCount,
+      },
+    nextRunAt: sync.nextRunAt?.toISOString() ?? null,
+  };
+}
+
+export function mapSportLeagueEventOverviewToDto(event: SportLeagueEventOverview): SportLeagueEventOverviewDto {
+  return {
+    id: event.id,
+    name: event.name,
+    eventYear: event.eventYear,
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate?.toISOString() ?? null,
+    status: event.status,
+    releaseMode: event.releaseMode,
+    releaseAt: event.releaseAt?.toISOString() ?? null,
+    releaseAtKind: event.releaseAtKind,
+    lastReleaseCheck: event.lastReleaseCheck === null
+      ? null
+      : { checkedAt: event.lastReleaseCheck.checkedAt.toISOString(), outcome: event.lastReleaseCheck.outcome, failedChecks: event.lastReleaseCheck.failedChecks },
+    fieldSize: event.fieldSize,
+    issues: event.issues.map(mapSportLeagueIssueToDto),
+    lastSyncedAt: event.lastSyncedAt?.toISOString() ?? null,
+  };
+}
+
+export function mapSportLeagueParticipantOverviewToDto(participant: SportLeagueParticipantOverview): SportLeagueParticipantOverviewDto {
+  return {
+    id: participant.id,
+    name: participant.name,
+    participantType: participant.participantType,
+    shortName: participant.shortName,
+    nationality: participant.nationality,
+    teamAffiliation: participant.teamAffiliation,
+    role: participant.role,
+    ranking: participant.ranking,
+    feedId: participant.feedId,
+    lastInFeedAt: participant.lastInFeedAt?.toISOString() ?? null,
+    addedBy: participant.addedBy,
+    createdAt: participant.createdAt.toISOString(),
+  };
 }
