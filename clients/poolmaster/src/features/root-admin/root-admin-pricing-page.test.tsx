@@ -226,10 +226,10 @@ describe('RootAdminPricingPage', () => {
     const price = screen.getByTestId('root-admin-plan-price-dialog-band-price-1');
     await userEvent.clear(price);
     await userEvent.type(price, '5');
+    await userEvent.click(screen.getByTestId('root-admin-plan-price-dialog-save'));
 
     expect(await screen.findByText('Above 50, the band before.')).toBeInTheDocument();
     expect(screen.getByText('Above the band before\'s price.')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-plan-price-dialog-save')).toBeDisabled();
     expect(mocks.updateSettingsGroup).not.toHaveBeenCalled();
   });
 
@@ -240,13 +240,14 @@ describe('RootAdminPricingPage', () => {
     await openPlanEdit('PLATINUM');
     await userEvent.click(screen.getByTestId('root-admin-plan-price-dialog-band-add'));
     await userEvent.type(screen.getByTestId('root-admin-plan-price-dialog-band-price-0'), '20000');
+    await userEvent.click(screen.getByTestId('root-admin-plan-price-dialog-save'));
     expect(await screen.findByText('Enter a number of entries.')).toBeInTheDocument();
     expect(screen.getByText('At most $10,000.')).toBeInTheDocument();
 
     await userEvent.type(screen.getByTestId('root-admin-plan-price-dialog-band-entries-0'), '0');
     expect(await screen.findByText('At least 1 entry.')).toBeInTheDocument();
     expect(screen.queryByText('Enter a number of entries.')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-plan-price-dialog-save')).toBeDisabled();
+    expect(mocks.updateSettingsGroup).not.toHaveBeenCalled();
   });
 
   it('offers + Add band only while the plan has fewer than 10 bands', async () => {
@@ -274,7 +275,7 @@ describe('RootAdminPricingPage', () => {
     expect(mocks.updateSettingsGroup).not.toHaveBeenCalled();
   });
 
-  it('keeps the dialog in edit with the server\'s reason when a save is refused', async () => {
+  it('keeps the dialog in edit with the server\'s reason when someone saved first, and Load the latest prices starts the form from theirs', async () => {
     seed();
     mocks.updateSettingsGroup.mockResolvedValue({
       error: { error: { code: 'SETTINGS_CONFLICT', message: 'Someone else saved the payments settings first. Reload to see them.' } },
@@ -290,6 +291,12 @@ describe('RootAdminPricingPage', () => {
 
     expect(await screen.findByText('Someone else saved the payments settings first. Reload to see them.')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-plan-price-dialog-save')).toBeInTheDocument();
+
+    const theirs = billingGroup({ ...BILLING, planPrices: { ...BILLING.planPrices, PRO: { yearlyCents: 7000, monthlyCents: 700 } } });
+    seed({ billing: { ...theirs, updatedAt: '2026-11-13T15:00:00.000Z' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Load the latest prices' }));
+    await waitFor(() => expect(screen.getByTestId('root-admin-plan-price-dialog-monthly-input')).toHaveValue(7));
+    expect(screen.queryByTestId('root-admin-plan-price-dialog-error')).not.toBeInTheDocument();
   });
 
   it('opens ⚙ Payments in view with Off and who last changed it, then Edit switches payments on and saves only that', async () => {

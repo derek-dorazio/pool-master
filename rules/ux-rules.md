@@ -629,7 +629,9 @@ administration area (root admin included), reusing the same shared components.
     template), never a sport's member words such as Tournament or Golfer, so one
     page reads the same for every sport. A settings dialog in Manage opens in view
     mode, its settings as facts with Close and Edit, and Edit swaps in the form
-    with Cancel and Save (`DetailEditModal`).
+    with Cancel and Save (`DetailEditModal`). What the thing itself can do, such as
+    an email's Preview and Send me this email, sits between Close and Edit
+    (`viewActions`), never in the form. A thing with nothing to change has no Edit.
 
 ## 13. Event Pages
 

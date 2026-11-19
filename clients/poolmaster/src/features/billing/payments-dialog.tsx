@@ -1,36 +1,37 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { z } from 'zod';
 import { DateDisplay, DetailEditModal, FormField, HelpTip, Select, showToast } from '@/features/shared/ui';
-import { useSaveBillingConfig, type BillingSettingsGroup } from './use-save-billing-config';
+import { SettingsSaveError } from '@/features/root-admin/settings-save-error';
+import { useSettingsGroupForm } from '@/features/root-admin/use-settings-group-form';
+import type { BillingSettingsGroup } from './billing-settings-group';
 
-type PaymentsChoice = 'on' | 'off';
+const PaymentsFormSchema = z.object({ payments: z.enum(['on', 'off']) });
+type PaymentsForm = z.infer<typeof PaymentsFormSchema>;
 
 /**
  * The Pricing page's ⚙ Payments (#1886): whether payments are on and who last changed the payments
  * settings, with Close and Edit; Edit switches payments on or off and saves the whole settings
- * with only that changed (rules/ux-rules.md §12 item 14).
+ * with only that changed, against the version it read (rules/ux-rules.md §12 item 14); when
+ * someone else saved first it offers to load theirs.
  */
 export function PaymentsDialog({ group, onClose }: { group: BillingSettingsGroup; onClose: () => void }) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
-  const current: PaymentsChoice = group.value.paymentsEnabled ? 'on' : 'off';
-  const [choice, setChoice] = useState<PaymentsChoice>(current);
-  // The version Edit started from, so a save over a newer one is refused, not lost.
-  const [editedGroup, setEditedGroup] = useState(group);
   const testId = 'root-admin-payments-dialog';
-
-  const saveMutation = useSaveBillingConfig({
-    onSaved: (saved) => {
-      showToast({ title: saved.value.paymentsEnabled ? 'Payments are on' : 'Payments are off', tone: 'success' });
-      setMode('view');
-    },
+  const toForm = (value: BillingSettingsGroup['value']): PaymentsForm => ({ payments: value.paymentsEnabled ? 'on' : 'off' });
+  const { conflicted, form, loadLatest, saveMutation } = useSettingsGroupForm<BillingSettingsGroup, PaymentsForm>({
+    group,
+    resolver: zodResolver(PaymentsFormSchema),
+    subject: 'Payments settings',
+    toForm,
+    toValue: (values) => ({ ...group.value, paymentsEnabled: values.payments === 'on' }),
   });
 
   return (
     <DetailEditModal
-      canSave={choice !== (editedGroup.value.paymentsEnabled ? 'on' : 'off')}
-      error={saveMutation.error}
-      errorFallback="We could not save the payments setting."
+      canSave={form.formState.isDirty}
       facts={[
-        { id: 'payments', label: 'Payments', value: current === 'on' ? 'On' : 'Off', testId: `${testId}-payments` },
+        { id: 'payments', label: 'Payments', value: group.value.paymentsEnabled ? 'On' : 'Off', testId: `${testId}-payments` },
         {
           id: 'last-changed',
           label: 'Last changed by',
@@ -48,16 +49,17 @@ export function PaymentsDialog({ group, onClose }: { group: BillingSettingsGroup
         setMode('view');
       }}
       onEdit={() => {
-        setEditedGroup(group);
-        setChoice(current);
+        form.reset(toForm(group.value));
         saveMutation.reset();
         setMode('edit');
       }}
       onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={() => saveMutation.mutate({
-        value: { ...editedGroup.value, paymentsEnabled: choice === 'on' },
-        expectedUpdatedAt: editedGroup.updatedAt,
-      })}
+      onSave={() => void form.handleSubmit((values) => saveMutation.mutate(values, {
+        onSuccess: (saved) => {
+          showToast({ title: saved.value.paymentsEnabled ? 'Payments are on' : 'Payments are off', tone: 'success' });
+          setMode('view');
+        },
+      }))()}
       open
       pendingLabel="Saving..."
       saveLabel="Save"
@@ -72,16 +74,22 @@ export function PaymentsDialog({ group, onClose }: { group: BillingSettingsGroup
         </span>
       )}
     >
-      <FormField label="Payments">
-        <Select
-          data-testid={`${testId}-payments-input`}
-          onChange={(event) => setChoice(event.target.value === 'on' ? 'on' : 'off')}
-          value={choice}
-        >
-          <option value="off">Off</option>
-          <option value="on">On</option>
-        </Select>
-      </FormField>
+      <div className="grid gap-4">
+        <FormField label="Payments">
+          <Select data-testid={`${testId}-payments-input`} {...form.register('payments')}>
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </Select>
+        </FormField>
+        <SettingsSaveError
+          conflicted={conflicted}
+          error={saveMutation.error}
+          fallback="We could not save the payments setting."
+          loadLabel="Load the latest settings"
+          onLoadLatest={loadLatest}
+          testId={`${testId}-error`}
+        />
+      </div>
     </DetailEditModal>
   );
 }

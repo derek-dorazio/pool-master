@@ -115,7 +115,13 @@ export type DetailEditModalProps = BaseModalTemplateProps & {
   /** Edit's own label, such as "Edit"; the button switches to `edit`. */
   editLabel?: string;
   editTestId?: string;
-  onEdit: () => void;
+  /** Switches to `edit`. Without it the view has no Edit button: nothing about the thing can be changed. */
+  onEdit?: () => void;
+  /**
+   * A few more buttons in the view's footer, between Close and Edit, for what the thing itself
+   * can do, such as an email's Preview. The form never shows them.
+   */
+  viewActions?: ReactNode;
   /** Cancel in `edit`: back to the facts, unsaved. */
   onCancelEdit: () => void;
   onSave: () => void;
@@ -156,6 +162,7 @@ export function DetailEditModal({
   saveTestId,
   testId,
   title,
+  viewActions,
   viewContent,
 }: DetailEditModalProps) {
   return (
@@ -166,9 +173,12 @@ export function DetailEditModal({
           <Button onClick={onCancel} type="button" variant="secondary">
             Close
           </Button>
-          <Button data-testid={editTestId ?? (testId ? `${testId}-edit` : undefined)} onClick={onEdit} type="button" variant="primary">
-            {editLabel}
-          </Button>
+          {viewActions}
+          {onEdit ? (
+            <Button data-testid={editTestId ?? (testId ? `${testId}-edit` : undefined)} onClick={onEdit} type="button" variant="primary">
+              {editLabel}
+            </Button>
+          ) : null}
         </>
       ) : (
         <DialogActions

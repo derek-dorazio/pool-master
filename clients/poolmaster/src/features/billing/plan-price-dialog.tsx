@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray } from 'react-hook-form';
 import {
   Button,
   DetailEditModal,
@@ -20,6 +20,8 @@ import {
   showToast,
   useDisplayPreferences,
 } from '@/features/shared/ui';
+import { SettingsSaveError } from '@/features/root-admin/settings-save-error';
+import { useSettingsGroupForm } from '@/features/root-admin/use-settings-group-form';
 import {
   MAX_EXPANSION_BANDS,
   PlanPriceFormSchema,
@@ -29,13 +31,14 @@ import {
   type PlanPriceForm,
   type PlanPriceRow,
 } from './plan-price-rows';
-import { useSaveBillingConfig, type BillingSettingsGroup } from './use-save-billing-config';
+import type { BillingSettingsGroup } from './billing-settings-group';
 
 /**
  * One plan's prices (#1886): its subscription and its expansion bands, with Close and Edit; Edit
  * changes the yearly and monthly prices and every band (add, remove, size, price), then Save sends
- * the whole payments settings with only this plan changed and comes back to the view
- * (rules/ux-rules.md §12 item 14). Entries included is the Plans page's, so it only reads here.
+ * the whole payments settings with only this plan changed, against the version it read, and comes
+ * back to the view (rules/ux-rules.md §12 item 14); when someone else saved first it offers to load
+ * theirs. Entries included is the Plans page's, so it only reads here.
  */
 export function PlanPriceDialog({
   group,
@@ -48,47 +51,20 @@ export function PlanPriceDialog({
 }) {
   const { locale } = useDisplayPreferences();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
-  // The version Edit started from, so a save over a newer one is refused, not lost.
-  const [editedGroup, setEditedGroup] = useState(group);
   const testId = 'root-admin-plan-price-dialog';
-  const form = useForm<PlanPriceForm>({
+  const { conflicted, form, loadLatest, saveMutation } = useSettingsGroupForm<BillingSettingsGroup, PlanPriceForm>({
+    group,
     resolver: zodResolver(PlanPriceFormSchema),
-    defaultValues: planPriceForm(row),
-    mode: 'onChange',
+    subject: 'Payments settings',
+    toForm: (value) => planPriceForm(value, row.plan),
+    toValue: (values) => withPlanPrices(group.value, row.plan, values),
   });
   const bands = useFieldArray({ control: form.control, name: 'bands' });
   const errors = form.formState.errors;
 
-  const saveMutation = useSaveBillingConfig({
-    onSaved: () => {
-      showToast({ title: `Saved ${row.label}'s prices`, tone: 'success' });
-      setMode('view');
-    },
-  });
-
-  const startEdit = () => {
-    setEditedGroup(group);
-    form.reset(planPriceForm(row));
-    saveMutation.reset();
-    setMode('edit');
-  };
-
-  const cancelEdit = () => {
-    form.reset(planPriceForm(row));
-    saveMutation.reset();
-    setMode('view');
-  };
-
-  const save = form.handleSubmit((values) => saveMutation.mutate({
-    value: withPlanPrices(editedGroup.value, row.plan, values),
-    expectedUpdatedAt: editedGroup.updatedAt,
-  }));
-
   return (
     <DetailEditModal
-      canSave={form.formState.isValid && form.formState.isDirty}
-      error={saveMutation.error}
-      errorFallback={`We could not save ${row.label}'s prices.`}
+      canSave={form.formState.isDirty}
       facts={[
         { id: 'yearly', label: 'Yearly', value: formatMoneyCents(row.yearlyCents, locale), testId: `${testId}-yearly` },
         { id: 'monthly', label: 'Monthly', value: formatMoneyCents(row.monthlyCents, locale), testId: `${testId}-monthly` },
@@ -104,10 +80,22 @@ export function PlanPriceDialog({
       isPending={saveMutation.isPending}
       mode={mode}
       onCancel={onClose}
-      onCancelEdit={cancelEdit}
-      onEdit={startEdit}
+      onCancelEdit={() => {
+        saveMutation.reset();
+        setMode('view');
+      }}
+      onEdit={() => {
+        form.reset(planPriceForm(group.value, row.plan));
+        saveMutation.reset();
+        setMode('edit');
+      }}
       onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={() => void save()}
+      onSave={() => void form.handleSubmit((values) => saveMutation.mutate(values, {
+        onSuccess: () => {
+          showToast({ title: `Saved ${row.label}'s prices`, tone: 'success' });
+          setMode('view');
+        },
+      }))()}
       open
       pendingLabel="Saving..."
       saveLabel="Save"
@@ -201,6 +189,14 @@ export function PlanPriceDialog({
             </div>
           ) : null}
         </div>
+        <SettingsSaveError
+          conflicted={conflicted}
+          error={saveMutation.error}
+          fallback={`We could not save ${row.label}'s prices.`}
+          loadLabel="Load the latest prices"
+          onLoadLatest={loadLatest}
+          testId={`${testId}-error`}
+        />
       </div>
     </DetailEditModal>
   );

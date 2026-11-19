@@ -83,11 +83,12 @@ export type PlanPriceForm = z.infer<typeof PlanPriceFormSchema>;
 const toDollars = (cents: number) => cents / 100;
 const toCents = (amount: number) => Math.round(amount * 100);
 
-export function planPriceForm(row: PlanPriceRow): PlanPriceForm {
+/** One plan's prices and bands from the payments settings, in dollars, as the form edits them. */
+export function planPriceForm(config: BillingConfig, plan: LeaguePlan): PlanPriceForm {
   return {
-    yearly: toDollars(row.yearlyCents),
-    monthly: toDollars(row.monthlyCents),
-    bands: row.bands.map((band) => ({ entriesPerContest: band.entriesPerContest, dollars: toDollars(band.priceCents) })),
+    yearly: toDollars(config.planPrices[plan].yearlyCents),
+    monthly: toDollars(config.planPrices[plan].monthlyCents),
+    bands: config.expansionPrices[plan].map((band) => ({ entriesPerContest: band.entriesPerContest, dollars: toDollars(band.priceCents) })),
   };
 }
 

@@ -58,6 +58,15 @@ export function buildSportLeagueCreatePath(sport: Sport) {
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
 export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 
+/** Every system email and the email settings (#1872). */
+export const NOTIFICATIONS_PATH = '/manage/notifications';
+
+/**
+ * The old settings page's path, gone since every group moved to its own page (#1886). It redirects
+ * to Pricing, the last group to leave it.
+ */
+export const SETTINGS_PATH = '/manage/settings';
+
 /** The old event list and contest template pages, reached from Sports' second row until the League page's tabs replace them. */
 export const EVENTS_PATH = '/manage/events';
 export const CONTEST_TEMPLATES_PATH = '/manage/content-configuration';
@@ -70,14 +79,13 @@ export const PRICING_PATH = '/manage/pricing';
 
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans · Pricing. Activity and Notifications have no pages of their own yet, so each opens today's page for
- * it: the sync runs and the settings. Providers keeps Run event sync and Unmapped participants lit
- * until they move.
+ * Plans · Pricing. Activity has no page of its own yet, so it opens today's sync runs. Providers
+ * keeps Run event sync and Unmapped participants lit until they move.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, EVENTS_PATH, CONTEST_TEMPLATES_PATH] },
   { key: 'activity', title: 'Activity', to: '/manage/sync', paths: ['/manage/sync'] },
-  { key: 'notifications', title: 'Notifications', to: '/manage/settings', paths: ['/manage/settings'] },
+  { key: 'notifications', title: 'Notifications', to: NOTIFICATIONS_PATH, paths: [NOTIFICATIONS_PATH] },
   {
     key: 'providers',
     title: 'Providers',
@@ -179,7 +187,7 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   events: 'Events',
   'content-configuration': 'Contest templates',
   sync: 'Activity',
-  settings: 'Notifications',
+  notifications: 'Notifications',
   leagues: 'Leagues',
   users: 'Users',
   plans: 'Plans',
