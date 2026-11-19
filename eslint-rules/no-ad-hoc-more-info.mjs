@@ -39,7 +39,9 @@ export default {
           node.name.type === 'JSXIdentifier' &&
           node.name.name === 'title' &&
           element.name.type === 'JSXIdentifier' &&
-          /^[a-z]/.test(element.name.name)
+          /^[a-z]/.test(element.name.name) &&
+          // A frame's title is its accessible name, which jsx-a11y requires, not a tooltip.
+          element.name.name !== 'iframe'
         ) {
           context.report({ node, messageId: 'titleTooltip' });
         }
