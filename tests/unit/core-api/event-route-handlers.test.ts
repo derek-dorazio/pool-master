@@ -8,6 +8,7 @@ import { SportEventStatus, SportEventSyncScope, type SportEvent, type SportEvent
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
+import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import type { SportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import {
   SportEventSyncScopeError,
@@ -133,14 +134,16 @@ function fakes() {
   };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
   const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
+  const leaderboards = { eventsChanged: fn(undefined) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
     eventLifecycle: lifecycle as unknown as EventLifecycleService,
     scoreSource: scoreSource as unknown as EventScoreSourceService,
     ingestion: ingestion as unknown as IngestionService,
+    leaderboards,
     eventOverviews,
   });
-  return { services, lifecycle, scoreSource, ingestion, eventOverviews, handlers };
+  return { services, lifecycle, scoreSource, ingestion, leaderboards, eventOverviews, handlers };
 }
 const params = { eventId: EVENT_ID };
 
@@ -333,6 +336,27 @@ describe('field refresh from the provider', () => {
     ingestion.syncEventData.mockRejectedValueOnce(boom);
 
     await expect(callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }))).rejects.toBe(boom);
+  });
+});
+
+describe('settle again: rebuilding an event\'s leaderboards (#1890)', () => {
+  it('queues one rebuild of the event\'s contests\' boards and answers 204 with no body', async () => {
+    const { services, leaderboards, handlers } = fakes();
+
+    const reply = await callHandler(handlers.rebuildEventLeaderboards, stubRequest({ params, authUser: admin }));
+
+    expect(services.sportEvents.requireEvent).toHaveBeenCalledWith(EVENT_ID);
+    expect(leaderboards.eventsChanged).toHaveBeenCalledWith([EVENT_ID]);
+    expect(reply.statusCode).toBe(204);
+  });
+
+  it('queues nothing for an unknown event and passes its 404 on', async () => {
+    const { services, leaderboards, handlers } = fakes();
+    const missing = new SportEventError('Sport event not found.', 'EVENT_NOT_FOUND', 404);
+    services.sportEvents.requireEvent.mockRejectedValueOnce(missing);
+
+    await expect(callHandler(handlers.rebuildEventLeaderboards, stubRequest({ params, authUser: admin }))).rejects.toBe(missing);
+    expect(leaderboards.eventsChanged).not.toHaveBeenCalled();
   });
 });
 

@@ -83302,6 +83302,62 @@
         }
       }
     },
+    "/api/v1/events/{eventId}/leaderboards/rebuild": {
+      "post": {
+        "operationId": "rebuildEventLeaderboards",
+        "summary": "Settle an event's contests again",
+        "tags": [
+          "Events"
+        ],
+        "description": "Queues a rebuild of every leaderboard on the event's contests from the results stored now, and returns at once; the job shows in Activity. Changes no result. For a rebuild that failed or never ran, or after a scoring fix. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/{eventId}/participants/refresh": {
       "post": {
         "operationId": "refreshEventParticipants",

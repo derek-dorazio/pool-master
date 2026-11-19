@@ -49,7 +49,6 @@ import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
-import { RootAdminSportEventSchedulePage } from '@/features/root-admin/root-admin-sport-event-schedule-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
 import { EventFieldTab } from '@/features/root-admin/event-field-tab';
@@ -446,7 +445,8 @@ export const router = createBrowserRouter([
                               // Its old tiers page: tiers and prices are on the Field tab, corrected per participant.
                               { path: 'tiers', element: <Navigate replace to="../field" relative="path" /> },
                               // Reached from the Rounds and matches tab until its dialogs replace it.
-                              { path: 'schedule', element: <RootAdminSportEventSchedulePage /> },
+                              // Its old schedule page: each round's ⤢ dialog reschedules it.
+                              { path: 'schedule', element: <Navigate replace to="../rounds" relative="path" /> },
                               // Its old edit page: the details are the ⚙ dialog on the page now.
                               { path: 'edit', element: <Navigate replace to="../field" relative="path" /> },
                               // Its old results page: results are on the Rounds and matches tab.

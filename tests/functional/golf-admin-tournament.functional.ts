@@ -18,6 +18,7 @@ import {
   listEventTiers,
   previewEventGolfRoundScores,
   previewEventParticipantUpload,
+  rebuildEventLeaderboards,
   releaseEvent,
   replaceEventTierAssignments,
   replaceEventTiers,
@@ -416,6 +417,20 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(toDone.response?.status).toBe(200);
     expect(expectDefined(toDone.data).event.status).toBe('COMPLETED');
 
+    // --- Settle again: one rebuild of the event's boards from the stored results, which it leaves alone ---
+    const resettleSentAt = new Date();
+    const resettle = await rebuildEventLeaderboards({ client: c, path: { eventId } });
+    expect(resettle.response?.status).toBe(204);
+    const rebuilds = await getFunctionalPrisma().backgroundJob.findMany({
+      where: { type: 'REBUILD_LEADERBOARDS', createdAt: { gte: resettleSentAt }, payload: { path: ['id'], equals: eventId } },
+      select: { status: true },
+    });
+    expect(rebuilds).toEqual([{ status: 'SUCCEEDED' }]);
+    const correctedId = expectDefined(field.data).participants[0].id;
+    const afterResettle = await listEventParticipants({ client: c, path: { eventId } });
+    const corrected = expectDefined(expectDefined(afterResettle.data).participants.find((row) => row.id === correctedId));
+    expect(corrected.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
+
     // --- Set the current year: refused for a year with no events (plans/147 decision 6) ---
     const noEvents = await updateSportLeague({ client: c, path: { sportLeagueId }, body: { currentEventYear: 1823 } });
     expectFunctionalError(noEvents, { status: 422, code: 'EVENT_YEAR_HAS_NO_EVENTS' });
@@ -550,6 +565,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await cloneEventYear({ client: c, body: { sportLeagueId: 'x', eventYear: 2030 } }), deny);
     expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);
     expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
+    expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: {} }), deny);
     expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardEventPricing() }), deny);

@@ -32,6 +32,7 @@ const {
   listSportLeaguesMock,
   listSportLeagueParticipantsMock,
   listProvidersMock,
+  rebuildEventLeaderboardsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -60,6 +61,7 @@ const {
     listSportLeaguesMock: vi.fn(),
     listSportLeagueParticipantsMock: vi.fn(),
     listProvidersMock: vi.fn(),
+    rebuildEventLeaderboardsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -85,6 +87,7 @@ bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
   listSportLeagueParticipants: listSportLeagueParticipantsMock,
   listProviders: listProvidersMock,
+  rebuildEventLeaderboards: rebuildEventLeaderboardsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -917,5 +920,73 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
 
       expect(await screen.findByRole('alert')).toHaveTextContent('That team\'s game has started, so enter the withdrawal as a walkover.');
     });
+  });
+});
+
+describe('The Matches section of a match event\'s Rounds and matches tab', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockLogger.child.mockReturnValue(mockLogger);
+  });
+
+  function renderTab(isSynced: boolean) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/manage/sports/basketball/events/evt-1/rounds']}>
+          <Routes>
+            <Route element={<EventTabOutlet isSynced={isSynced} />} path="/manage/sports/:sport/events/:eventId">
+              <Route element={<EventRoundsTab />} path="rounds" />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  const final = match({
+    id: 'm1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2',
+    status: 'COMPLETED', winnerSide: 'HOME', homeScore: 78, awayScore: 64, resultSource: 'PROVIDER', completedAt: '2026-03-20T03:00:00.000Z',
+  });
+  const waiting = match({ id: 'm2', matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: 'sep-3', isNeutralSite: false });
+
+  it('lists every match with its sides, status and score, a side not decided yet as TBD, and ⤢ shows its winner and that the feed set it', async () => {
+    seed([final, waiting]);
+    renderTab(false);
+
+    const first = await screen.findByTestId('root-admin-event-match-1');
+    expect(first).toHaveTextContent('(1) Duke vs (16) Vermont');
+    expect(first).toHaveTextContent('Final');
+    expect(first).toHaveTextContent('78–64');
+    expect(screen.getByTestId('root-admin-event-match-2')).toHaveTextContent('TBD @ (2) Houston');
+
+    await userEvent.click(within(first).getByRole('button', { name: /Open details/ }));
+    const dialog = await screen.findByTestId('root-admin-event-match-dialog');
+    expect(within(dialog).getByTestId('root-admin-event-match-dialog-winner')).toHaveTextContent('(1) Duke');
+    expect(within(dialog).getByTestId('root-admin-event-match-dialog-source')).toHaveTextContent('Feed');
+    expect(within(dialog).queryByTestId('root-admin-event-match-dialog-edit')).not.toBeInTheDocument();
+  });
+
+  it('offers Settle again on a decided match, which after its confirm queues one rebuild of the event\'s boards, and none on a match not played', async () => {
+    seed([final, waiting]);
+    rebuildEventLeaderboardsMock.mockResolvedValue({ data: undefined, response: new Response(null, { status: 204 }) });
+    renderTab(true);
+
+    await userEvent.click(within(await screen.findByTestId('root-admin-event-match-1')).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(within(await screen.findByTestId('root-admin-event-match-dialog')).getByTestId('root-admin-event-match-dialog-settle-again'));
+    await userEvent.click(await screen.findByTestId('root-admin-event-match-dialog-settle-again-confirm'));
+    await waitFor(() => expect(rebuildEventLeaderboardsMock).toHaveBeenCalledWith({ path: { eventId: 'evt-1' } }));
+
+    await userEvent.click(within(await screen.findByTestId('root-admin-event-match-dialog')).getByRole('button', { name: 'Close', exact: true }));
+    await userEvent.click(within(screen.getByTestId('root-admin-event-match-2')).getByRole('button', { name: /Open details/ }));
+    expect(within(await screen.findByTestId('root-admin-event-match-dialog')).queryByTestId('root-admin-event-match-dialog-settle-again')).not.toBeInTheDocument();
+  });
+
+  it('on a synced event shows the Matches grid and none of the bracket results tools, whose results are the feed\'s', async () => {
+    seed([final]);
+    renderTab(true);
+
+    expect(await screen.findByTestId('root-admin-event-match-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-bracket-round-1')).not.toBeInTheDocument();
   });
 });

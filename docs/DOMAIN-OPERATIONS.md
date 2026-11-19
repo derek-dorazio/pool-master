@@ -696,6 +696,7 @@ Children of an event; always reached through it.
 |---|---|---|
 | List for an event | `authenticated` | `listEventRounds` in `roundNumber` order; `listEventTiers` in `tierNumber` order. Each round carries where it stands, read off its results in two grouped reads and never stored (#1889, `roundProgressOf`): a round with matches is `COMPLETED` once every match is finished or cancelled and `IN_PROGRESS` once any has started; a round without (a golf round) is `COMPLETED` once some participant rounds are recorded and none is under way. `resultCount` counts the matches with a result or the finished participant rounds; `completedAt` is the latest result's time once the round is `COMPLETED` |
 | Reschedule rounds | `rootAdmin` | `updateEventRounds` |
+| Settle again | `rootAdmin` | `rebuildEventLeaderboards`, `POST /events/:eventId/leaderboards/rebuild` (#1890): queues one `REBUILD_LEADERBOARDS` job for the event and answers 204 at once; the job rebuilds every stored board of the event's contests from the results stored now and shows in Activity. It changes no result, and one already waiting is not queued twice. For a rebuild that failed or never ran, or after a scoring fix. The Event page's round and match dialogs offer it |
 | Replace tiers | `rootAdmin` | `replaceEventTiers`. 409 `TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS` unless `reassignOrphansTo` names a tier that survives; 409 `SPORT_EVENT_TIERS_LOCKED` once the event is released |
 
 ### SportEventParticipant — the Participant↔SportEvent edge

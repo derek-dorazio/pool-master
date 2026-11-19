@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type {
   AddSportEventParticipantsRequest,
   AddSportEventParticipantsResponse,
@@ -113,6 +114,8 @@ export interface EventHandlerDeps {
   eventLifecycle: EventLifecycleService;
   scoreSource: EventScoreSourceService;
   ingestion: IngestionService;
+  /** Settle again (#1890): the event's contests' boards rebuilt from the results stored now. */
+  leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   /** The Event page's header and sync rows (#1889), by the League page's rules. */
   eventOverviews: Pick<SportLeaguePageService, 'getEventOverview'>;
 }
@@ -122,7 +125,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion, eventOverviews }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
@@ -280,6 +283,14 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
+    rebuildEventLeaderboards: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
+      const { eventId } = request.params;
+      await requireEvent(eventId);
+      await leaderboards.eventsChanged([eventId]);
+      (request.contextLogger ?? request.log).info({ action: 'events.route.leaderboards.rebuild.queued', data: { eventId } }, 'Queued a rebuild of the event\'s leaderboards');
+      return reply.status(204).send();
+    },
+
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);
       if (event.syncScope === SportEventSyncScope.NONE) {
