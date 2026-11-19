@@ -7,7 +7,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   LeagueRepository,
-  LeagueSearch,
   LeagueSearchFilters,
   SquadMembershipRepository,
   SquadRepository,
@@ -58,17 +57,12 @@ export interface UpdateLeagueCupSettingsInput {
   hallOfLameVisible: boolean;
 }
 
-// #202 — `UserLeagueView` and `findByUser` are gone. `listLeagues({ scope: 'mine' })` is that
-// read, and `LeagueListRow` is its row: the same league-plus-membership pairing, with the counts
-// the old one omitted and a nullable membership so the unscoped scope shares the shape.
-
 /**
- * A league in a list, with its counts and the VIEWER's membership in it (#202).
+ * A league in the caller's list, with its counts and the VIEWER's membership in it (#202).
  *
- * `membership` is null only under `scope: 'all'`, for a league the viewer does not belong to.
- * The counts are always real: the member-scoped list used to omit them, so every league it
- * returned reported `memberCount: 0` and `activeContestCount: 0` while the root-admin list
- * reported the truth. One operation computes them once.
+ * `membership` is null only when the viewer's membership in a listed league was not among
+ * their memberships read beside it, which a concurrent removal can cause. The counts are
+ * always real: one operation computes them once.
  */
 export interface LeagueListRow {
   league: League;
@@ -77,16 +71,11 @@ export interface LeagueListRow {
   activeContestCount: number;
 }
 
-export type LeagueListScope = 'mine' | 'all';
-
-/**
- * What `listLeagues` reads: the caller's own leagues, optionally narrowed, or every league
- * matching a search term, which `all` requires (#1313).
- */
-export type LeagueListQuery =
-  | { scope: 'mine'; userId: string; filters?: LeagueSearchFilters }
-  | { scope: 'all'; userId: string; filters: LeagueSearch };
-
+/** What `listLeagues` reads: the caller's own leagues, optionally narrowed. */
+export interface LeagueListQuery {
+  userId: string;
+  filters?: LeagueSearchFilters;
+}
 
 /**
  * Everything LeagueService reads and writes (#211). It replaced a six-parameter positional
@@ -177,41 +166,22 @@ export class LeagueService {
   }
 
   /**
-   * The league list — ONE operation, scope as a parameter (#202).
-   *
-   * This replaced `listLeagues` + `adminListLeagues`, which
-   * `docs/DOMAIN-OPERATIONS.md` names as one operation split in two. They disagreed in two
-   * ways beyond scope, and both are settled here rather than merged:
-   *
-   * - **Counts.** The member-scoped list called `toLeagueDto(league)` with no counts, so it
-   *   reported `memberCount: 0` and `activeContestCount: 0` for every league; only the
-   *   root-admin list computed them. They are computed once now, for both scopes.
-   * - **Filters.** `search` and `isActive` existed only on the root-admin half. They are
-   *   properties of the query, not of the caller, so they apply to both.
-   *
-   * `scope: 'all'` is access rule A1's unscoped read; the CALLER of this method is
-   * responsible for having established root-admin authority, because a service cannot see
-   * the request. The route does that.
+   * The caller's own leagues (access rule A2), with their counts and memberships (#202). A
+   * root admin reads every league through `CustomerService.listLeagues` (#1896).
    */
   async listLeagues(options: LeagueListQuery): Promise<LeagueListRow[]> {
-    const { scope, userId, filters } = options;
+    const { userId, filters } = options;
     this.logger?.debug({
       action: 'league.list.enter',
       data: {
-        scope,
         userId,
         hasSearch: Boolean(filters?.search),
         isActive: filters?.isActive ?? null,
       },
     }, 'Listing leagues');
 
-    // Under 'mine' the viewer's memberships come back with the leagues, so no second read
-    // is needed to pair them. Under 'all' the memberships are looked up separately, because
-    // most of the returned leagues will have none for this viewer.
     const [leagues, viewerMemberships] = await Promise.all([
-      options.scope === 'all'
-        ? this.deps.leagues.search(options.filters)
-        : this.deps.leagues.findByUser(userId, options.filters),
+      this.deps.leagues.findByUser(userId, filters),
       this.deps.memberships.findByUser(userId),
     ]);
 
@@ -229,7 +199,7 @@ export class LeagueService {
 
     this.logger?.info({
       action: 'league.list.success',
-      data: { scope, userId, leagueCount: rows.length },
+      data: { userId, leagueCount: rows.length },
     }, 'Listed leagues');
     return rows;
   }

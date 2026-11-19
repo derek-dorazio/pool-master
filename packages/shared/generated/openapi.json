@@ -336,102 +336,6 @@
         "additionalProperties": false,
         "description": "Single-user response."
       },
-      "UserListResponse": {
-        "type": "object",
-        "properties": {
-          "users": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Stable user identifier."
-                },
-                "email": {
-                  "type": "string",
-                  "description": "Primary email address for the user account."
-                },
-                "username": {
-                  "type": "string",
-                  "description": "Unique login identifier for the account."
-                },
-                "firstName": {
-                  "type": "string",
-                  "description": "First name shown in account and member-management surfaces."
-                },
-                "lastName": {
-                  "type": "string",
-                  "description": "Last name shown in account and member-management surfaces."
-                },
-                "isActive": {
-                  "type": "boolean",
-                  "description": "Whether the account is currently active for normal sign-in and product usage."
-                },
-                "isRootAdmin": {
-                  "type": "boolean",
-                  "description": "Whether the user has platform-level root-admin access."
-                },
-                "authProvider": {
-                  "description": "Authentication provider used for the account when known.",
-                  "type": "string",
-                  "enum": [
-                    "email",
-                    "google",
-                    "apple"
-                  ]
-                },
-                "timezone": {
-                  "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.",
-                  "type": "string"
-                },
-                "locale": {
-                  "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US.",
-                  "type": "string"
-                },
-                "timeFormat": {
-                  "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.",
-                  "type": "string",
-                  "enum": [
-                    "12H",
-                    "24H"
-                  ]
-                },
-                "colorScheme": {
-                  "description": "Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.",
-                  "type": "string",
-                  "enum": [
-                    "DEVICE",
-                    "LIGHT",
-                    "DARK"
-                  ]
-                },
-                "createdAt": {
-                  "description": "Account creation timestamp in ISO 8601 format.",
-                  "type": "string",
-                  "format": "date-time"
-                }
-              },
-              "required": [
-                "id",
-                "email",
-                "username",
-                "firstName",
-                "lastName",
-                "isActive",
-                "isRootAdmin"
-              ],
-              "additionalProperties": false,
-              "description": "A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row."
-            }
-          }
-        },
-        "required": [
-          "users"
-        ],
-        "additionalProperties": false,
-        "description": "User-list response."
-      },
       "UserProfileUpdateRequest": {
         "type": "object",
         "properties": {
@@ -5194,16 +5098,8 @@
       "LeagueListQuery": {
         "type": "object",
         "properties": {
-          "scope": {
-            "description": "Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.",
-            "type": "string",
-            "enum": [
-              "mine",
-              "all"
-            ]
-          },
           "search": {
-            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.",
+            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16.",
             "type": "string",
             "minLength": 1,
             "x-transform": [
@@ -6944,7 +6840,7 @@
               "additionalProperties": false,
               "description": "A membership of a user in a league, with the member embedded."
             },
-            "description": "The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to."
+            "description": "The viewer's own memberships, one per returned league."
           }
         },
         "required": [
@@ -74144,87 +74040,6 @@
         }
       }
     },
-    "/api/v1/users/": {
-      "get": {
-        "operationId": "listUsers",
-        "summary": "List users",
-        "tags": [
-          "Users"
-        ],
-        "description": "Returns the users matching `search`: a case-insensitive substring of the email, username, first or last name. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it. `search` is required, at least 3 characters once trimmed, so the list never reads every user: 400 SEARCH_TERM_REQUIRED otherwise.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "search",
-            "required": false,
-            "description": "Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed."
-          },
-          {
-            "schema": {
-              "type": "boolean"
-            },
-            "in": "query",
-            "name": "isActive",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User-list response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/users/{userId}": {
       "get": {
         "operationId": "getUser",
@@ -75436,21 +75251,8 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise; it also requires `search` (at least 3 characters once trimmed), so it never reads every league, and returns 400 SEARCH_TERM_REQUIRED without one. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.",
+        "description": "Returns the leagues the caller belongs to, together with the caller's own memberships once as an array. It powers the welcome page, header selector and My Leagues overview. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). `search` and `isActive` narrow it; nothing pages it.\n\nA root admin reads every league through `listCustomerLeagues`.",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "mine",
-                "all"
-              ]
-            },
-            "in": "query",
-            "name": "scope",
-            "required": false,
-            "description": "Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access."
-          },
           {
             "schema": {
               "type": "string",
@@ -75462,7 +75264,7 @@
             "in": "query",
             "name": "search",
             "required": false,
-            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters."
+            "description": "Case-insensitive substring matched against the league name. A filter, never a slice — see §16."
           },
           {
             "schema": {
@@ -75496,16 +75298,6 @@
             }
           },
           "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

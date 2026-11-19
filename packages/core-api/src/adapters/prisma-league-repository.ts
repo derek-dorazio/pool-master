@@ -3,7 +3,7 @@
  */
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
-import type { LeaguePlanChange, LeagueRepository, LeagueSearch, LeagueUpdates, LeagueSearchFilters } from '@poolmaster/shared/db';
+import type { LeaguePlanChange, LeagueRepository, LeagueUpdates, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
@@ -32,16 +32,6 @@ export class PrismaLeagueRepository implements LeagueRepository {
       where: { leagueCode: code },
     });
     return row ? mapToLeague(row) : null;
-  }
-
-  async search(filters: LeagueSearch): Promise<League[]> {
-    const rows = await this.prisma.league.findMany({
-      where: leagueSearchWhere(filters),
-      // updatedAt first so the admin management surface shows recently-touched leagues at
-      // the top, which is the ordering it already relied on.
-      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-    });
-    return rows.map(mapToLeague);
   }
 
   async findActive(): Promise<League[]> {
@@ -242,7 +232,7 @@ function mapToLeague(row: PrismaLeague): League {
   };
 }
 
-/** A league search's filters as a `where`: a case-insensitive name substring and the active flag. */
+/** A member's league filters as a `where`: a case-insensitive name substring and the active flag. */
 function leagueSearchWhere(filters: LeagueSearchFilters): Prisma.LeagueWhereInput {
   const search = filters.search?.trim();
   return {

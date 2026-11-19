@@ -1,12 +1,11 @@
 import type {
   PrismaClient,
-  Prisma,
   User as PrismaUser,
   UserAuthProvider as PrismaUserAuthProvider,
   UserTimeFormat as PrismaUserTimeFormat,
   UserColorScheme as PrismaUserColorScheme,
 } from '@prisma/client';
-import type { UserRepository, UserSearch, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
+import type { UserRepository, UserUpdate } from '@poolmaster/shared/db';
 import { AuthProvider, ColorScheme, LeagueMembershipStatus, TimeFormat, type LeagueRole, type User } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
@@ -46,15 +45,6 @@ export class PrismaUserRepository implements UserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.prisma.user.findUnique({ where: { email } });
     return row ? mapToUser(row) : null;
-  }
-
-  async search(filters: UserSearch): Promise<User[]> {
-    // Not paged — §16. Narrowing is the filter's job; the caller gets the whole result.
-    const rows = await this.prisma.user.findMany({
-      where: buildUserWhere(filters),
-      orderBy: { createdAt: 'desc' },
-    });
-    return rows.map(mapToUser);
   }
 
   async findActiveRootAdmins(): Promise<User[]> {
@@ -183,31 +173,6 @@ export class PrismaUserRepository implements UserRepository {
     return mapToUser(row);
   }
 
-}
-
-/**
- * Every word of the search must match one of the user's text columns, so a full name ("Ali
- * Smith") finds the user whose first name holds one word and last name the other. Each word is
- * its own substring match, which the trigram indexes on those columns serve (#1180).
- */
-function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
-  const words = filters.search?.trim().split(/\s+/).filter((word) => word.length > 0) ?? [];
-  return {
-    ...(words.length > 0
-      ? {
-        AND: words.map((word) => ({
-          OR: [
-            { email: { contains: word, mode: 'insensitive' as const } },
-            { username: { contains: word, mode: 'insensitive' as const } },
-            { firstName: { contains: word, mode: 'insensitive' as const } },
-            { lastName: { contains: word, mode: 'insensitive' as const } },
-          ],
-        })),
-      }
-      : {}),
-    ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
-    ...(typeof filters.isRootAdmin === 'boolean' ? { isRootAdmin: filters.isRootAdmin } : {}),
-  };
 }
 
 /**

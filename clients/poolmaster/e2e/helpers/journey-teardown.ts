@@ -181,15 +181,19 @@ export async function removePlayers(api: APIRequestContext, headers: AuthHeaders
   }
 }
 
-// Lifted from the #278 plumbing probe, which first proved it. Shared with the squad-management
-// teardown (#363).
-export async function removeUser(api: APIRequestContext, headers: AuthHeaders, created: Pick<JourneyUser, 'username' | 'email'>, log: Log) {
-  const search = await api.get('/api/v1/users/', { headers, params: { search: created.username } });
-  if (!search.ok()) {
-    throw new Error(`search failed: ${search.status()}`);
-  }
-  const { users } = (await search.json()) as { users: { id: string; username: string }[] };
-  const user = users.find((candidate) => candidate.username === created.username);
+/**
+ * Disables and deletes a user a spec made (from the #278 plumbing probe; shared with the
+ * squad-management teardown, #363). The residue sweep, which already holds the user's id from
+ * its Customers listing, passes it; anyone else is looked up in one read of every user, since
+ * there is no server search of users.
+ */
+export async function removeUser(
+  api: APIRequestContext,
+  headers: AuthHeaders,
+  created: Pick<JourneyUser, 'username' | 'email'> & { id?: string },
+  log: Log,
+) {
+  const user = created.id === undefined ? await findUserByUsername(api, headers, created.username) : { id: created.id };
   if (!user) {
     log(`user ${created.username} was never created; nothing to remove`);
     return;
@@ -202,4 +206,14 @@ export async function removeUser(api: APIRequestContext, headers: AuthHeaders, c
   const reread = await api.get(`/api/v1/users/${user.id}`, { headers });
   if (reread.status() !== 404) throw new Error(`user ${created.username} STILL PRESENT after delete (re-read ${reread.status()})`);
   log(`user ${created.username} removed (re-read 404)`);
+}
+
+/** The user holding `username`, from the root admin's Customers list of every user. */
+async function findUserByUsername(api: APIRequestContext, headers: AuthHeaders, username: string) {
+  const list = await api.get('/api/v1/customers/users', { headers });
+  if (!list.ok()) {
+    throw new Error(`list users failed: ${list.status()}`);
+  }
+  const { users } = (await list.json()) as { users: { id: string; username: string }[] };
+  return users.find((candidate) => candidate.username === username) ?? null;
 }

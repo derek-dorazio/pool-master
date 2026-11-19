@@ -210,66 +210,6 @@ export type UserResponse = {
 };
 
 /**
- * User-list response.
- */
-export type UserListResponse = {
-    users: Array<{
-        /**
-         * Stable user identifier.
-         */
-        id: string;
-        /**
-         * Primary email address for the user account.
-         */
-        email: string;
-        /**
-         * Unique login identifier for the account.
-         */
-        username: string;
-        /**
-         * First name shown in account and member-management surfaces.
-         */
-        firstName: string;
-        /**
-         * Last name shown in account and member-management surfaces.
-         */
-        lastName: string;
-        /**
-         * Whether the account is currently active for normal sign-in and product usage.
-         */
-        isActive: boolean;
-        /**
-         * Whether the user has platform-level root-admin access.
-         */
-        isRootAdmin: boolean;
-        /**
-         * Authentication provider used for the account when known.
-         */
-        authProvider?: 'email' | 'google' | 'apple';
-        /**
-         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
-         */
-        timezone?: string;
-        /**
-         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
-         */
-        locale?: string;
-        /**
-         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
-         */
-        timeFormat?: '12H' | '24H';
-        /**
-         * Appearance the member chose: follow the device, light or dark. Absent means no choice yet; the website then follows the device.
-         */
-        colorScheme?: 'DEVICE' | 'LIGHT' | 'DARK';
-        /**
-         * Account creation timestamp in ISO 8601 format.
-         */
-        createdAt?: string;
-    }>;
-};
-
-/**
  * Profile update payload. Sent by the user themselves or by a root admin (access rule A6).
  */
 export type UserProfileUpdateRequest = {
@@ -2526,11 +2466,7 @@ export type ImportLeagueMembersRequest = {
  */
 export type LeagueListQuery = {
     /**
-     * Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
-     */
-    scope?: 'mine' | 'all';
-    /**
-     * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
+     * Case-insensitive substring matched against the league name. A filter, never a slice — see §16.
      */
     search?: string;
     /**
@@ -3345,7 +3281,7 @@ export type LeagueListResponse = {
         eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
     }>;
     /**
-     * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
+     * The viewer's own memberships, one per returned league.
      */
     memberships: Array<{
         /**
@@ -29977,49 +29913,6 @@ export type UndoEmailChangeResponses = {
 
 export type UndoEmailChangeResponse = UndoEmailChangeResponses[keyof UndoEmailChangeResponses];
 
-export type ListUsersData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Case-insensitive substring of the email, username, first or last name; at least 3 characters once trimmed.
-         */
-        search?: string;
-        isActive?: boolean;
-    };
-    url: '/api/v1/users/';
-};
-
-export type ListUsersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
-
-export type ListUsersResponses = {
-    /**
-     * User-list response.
-     */
-    200: UserListResponse;
-};
-
-export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
-
 export type DeleteUserData = {
     body: UserDeleteRequest;
     path: {
@@ -30661,11 +30554,7 @@ export type ListLeaguesData = {
     path?: never;
     query?: {
         /**
-         * Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
-         */
-        scope?: 'mine' | 'all';
-        /**
-         * Case-insensitive substring matched against the league name. A filter, never a slice — see §16. Optional for 'mine'; required for 'all', at least 3 characters.
+         * Case-insensitive substring matched against the league name. A filter, never a slice — see §16.
          */
         search?: string;
         /**
@@ -30685,10 +30574,6 @@ export type ListLeaguesErrors = {
      * Standard API error envelope.
      */
     401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
 };
 
 export type ListLeaguesError = ListLeaguesErrors[keyof ListLeaguesErrors];

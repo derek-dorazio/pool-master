@@ -283,18 +283,14 @@ describe('poolmaster API client correlation headers', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     try {
-      const { listUsers } = await import('./api');
+      const { listCustomerUsers } = await import('./api');
 
-      const response = await listUsers({
-        query: {
-          search: 'Commis',
-        },
-      });
+      const response = await listCustomerUsers();
 
       expect(response.data?.users).toEqual([]);
       expect(fetchSpy).toHaveBeenCalledTimes(3);
       expect(new URL(fetchCallUrl(fetchSpy.mock.calls[1]?.[0])).pathname).toBe('/api/v1/auth/refresh');
-      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/users/');
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/customers/users');
     } finally {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();
